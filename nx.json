@@ -17,7 +17,7 @@
     ],
     "sharedGlobals": ["{workspaceRoot}/.github/workflows/ci.yml"]
   },
-  "nxCloudId": "67726ee0c60c400ee02006b7",
+  "nxCloudId": "677b9abe91601cc3535f4585",
   "targetDefaults": {
     "@angular-devkit/build-angular:application": {
       "cache": true,
@@ -36,19 +36,10 @@
     "@nx/jest:jest": {
       "cache": true,
       "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
-      "options": {
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
-      }
+      "options": { "passWithNoTests": true },
+      "configurations": { "ci": { "ci": true, "codeCoverage": true } }
     },
-    "e2e-ci--**/*": {
-      "dependsOn": ["^build"]
-    }
+    "e2e-ci--**/*": { "dependsOn": ["^build"] }
   },
   "plugins": [
     {
@@ -60,12 +51,7 @@
         "ciTargetName": "e2e-ci"
       }
     },
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
-    },
+    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } },
     "@nxext/capacitor/plugin",
     {
       "plugin": "@nx/webpack/plugin",
@@ -83,12 +69,7 @@
       "style": "scss",
       "unitTestRunner": "jest"
     },
-    "@nx/angular:library": {
-      "linter": "eslint",
-      "unitTestRunner": "jest"
-    },
-    "@nx/angular:component": {
-      "style": "css"
-    }
+    "@nx/angular:library": { "linter": "eslint", "unitTestRunner": "jest" },
+    "@nx/angular:component": { "style": "css" }
   }
 }
