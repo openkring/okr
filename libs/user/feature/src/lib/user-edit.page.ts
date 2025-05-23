@@ -1,0 +1,98 @@
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { IonContent } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
+import { Photo } from '@capacitor/camera';
+
+import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent } from '@bk2/shared/ui';
+import { ModelType, UserCollection } from '@bk2/shared/models';
+import { TranslatePipe } from '@bk2/shared/i18n';
+import { debugFormModel, getFullPersonName } from '@bk2/shared/util';
+
+import { AvatarService } from '@bk2/avatar/data';
+import { AvatarToolbarComponent } from '@bk2/avatar/ui';
+import { CommentsCardComponent } from '@bk2/comment/feature';
+
+import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user/util';
+import { UserAuthFormComponent, UserDisplayFormComponent, UserModelFormComponent, UserNotificationFormComponent, UserPrivacyFormComponent } from '@bk2/user/ui';
+import { UserEditStore } from './user-edit.store';
+
+@Component({
+  selector: 'bk-user-page',
+  imports: [
+    TranslatePipe, AsyncPipe,
+    HeaderComponent, ChangeConfirmationComponent, AvatarToolbarComponent, ChipsComponent, CommentsCardComponent,
+    UserModelFormComponent, UserDisplayFormComponent, UserAuthFormComponent, UserPrivacyFormComponent, UserNotificationFormComponent,
+    IonContent
+  ],
+  providers: [UserEditStore],
+  template: `
+    <bk-header title="{{ headerTitle() | translate | async }}" [showCloseButton]="false" />
+    @if(formIsValid()) {
+        <bk-change-confirmation (okClicked)="save()" />
+      } 
+    <ion-content>
+      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [isEditable]="true" title="{{ avatarTitle() }}"/>
+      @if(user(); as user) {
+        <bk-user-model [(vm)]="userModelVm" (validChange)="formIsValid.set($event)" />
+        <bk-user-auth [(vm)]="userAuthVm" (validChange)="formIsValid.set($event)" />
+        <bk-user-display [(vm)]="userDisplayVm" (validChange)="formIsValid.set($event)" />
+        <bk-user-privacy [(vm)]="userPrivacyVm" (validChange)="formIsValid.set($event)" />
+        <bk-user-notification [(vm)]="userNotificationVm" (validChange)="formIsValid.set($event)" />
+        <bk-chips chipName="tag" [storedChips]="user.tags" [allChips]="userTags()" chipName="tag" (changed)="onTagsChanged($event)" />
+      }
+      <bk-comments-card [collectionName]="userCollection" [parentKey]="userKey()" />
+    </ion-content>
+  `
+})
+export class UserPageComponent{
+  private readonly avatarService = inject(AvatarService);
+  private readonly userEditStore = inject(UserEditStore);
+
+  protected userKey = input.required<string>();
+
+  protected readonly user = computed(() => this.userEditStore.user());
+  protected readonly headerTitle = computed(() => this.user()?.bkey ? '@user.operation.update.label' : '@user.operation.create.label');
+  protected readonly avatarTitle = computed(() => getFullPersonName(this.user().firstName, this.user().lastName));
+  protected readonly avatarKey = computed(() => `${ModelType.Person}.${this.user().bkey}`);
+  protected readonly userTags = computed(() => this.userEditStore.getTags());
+
+  protected userAuthVm = linkedSignal(() => convertUserToAuthForm(this.user()));
+  protected userDisplayVm = linkedSignal(() => convertUserToDisplayForm(this.user()));
+  protected userModelVm = linkedSignal(() => convertUserToModelForm(this.user()));
+  protected userPrivacyVm = linkedSignal(() => convertUserToPrivacyForm(this.user()));
+  protected userNotificationVm = linkedSignal(() => convertUserToNotificationForm(this.user()));
+  protected tags = linkedSignal(() => this.user().tags);
+
+  protected formIsValid = signal(false);
+  protected userCollection = UserCollection;
+
+  constructor() {
+    effect(() => { this.userEditStore.setUserKey(this.userKey()); });
+    effect(() => { debugFormModel<UserAuthFormModel>('userAuth', this.userAuthVm(), this.userEditStore.currentUser()); });
+    effect(() => { debugFormModel<UserDisplayFormModel>('userDisplay', this.userDisplayVm(), this.userEditStore.currentUser()); });
+    effect(() => { debugFormModel<UserModelFormModel>('userModel', this.userModelVm(), this.userEditStore.currentUser()); });
+    effect(() => { debugFormModel<UserNotificationFormModel>('userNotification', this.userNotificationVm(), this.userEditStore.currentUser()); });
+    effect(() => { debugFormModel<UserPrivacyFormModel>('userPrivacy', this.userPrivacyVm(), this.userEditStore.currentUser()); });
+  }
+
+  /******************************* actions *************************************** */
+  protected async save(): Promise<void> {
+    this.formIsValid.set(false);
+    let _user = convertAuthFormToUser(this.userAuthVm(), this.user());
+    _user = convertDisplayFormToUser(this.userDisplayVm(), this.user());
+    _user = convertModelFormToUser(this.userModelVm(), this.user());
+    _user = convertNotificationFormToUser(this.userNotificationVm(), this.user());
+    _user = convertPrivacyFormToUser(this.userPrivacyVm(), this.user());
+    this.userEditStore.save(_user);
+  }
+
+  protected async onImageSelected(photo: Photo): Promise<void> {
+    const _user = this.user();
+    if (!_user) return;
+    await this.avatarService.uploadPhoto(photo, ModelType.User, _user.bkey);
+  }
+
+  protected onTagsChanged(tags: string): void {
+    this.tags.set(tags);
+    this.formIsValid.set(true);
+  }}

@@ -1,0 +1,20 @@
+{
+  "name": "task/util",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/task/util/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:util", "scope:task", "platform:mobile", "platform:web"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/task/util/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

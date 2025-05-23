@@ -1,0 +1,71 @@
+import { getCallingCode, getCapital, getContinent, getContinentName, getCountryName, getCurrency, getNativeCountryName, getWikipediaUrl } from './country.util';
+
+const _url = 'https://de.wikipedia.org/wiki/Schweiz';
+
+describe('country.util', () => {
+
+    // countries-list
+    it('getContinentName("EU") should be Europe', () => {
+        const _result = getContinentName('EU');
+        expect(_result).toEqual('Europe');
+    });
+    it('getNativeCountryName("ua") should be Україна', () => {
+        const _result = getNativeCountryName('ua');
+        expect(_result).toEqual('Україна');
+    });
+    it('getCallingCode("ch") should be 41', () => {
+        const _result = getCallingCode('ch');
+        expect(_result).toEqual('41');
+    });
+    it('getCallingCode("ae") should be 971', () => {
+        const _result = getCallingCode('ae');
+        expect(_result).toEqual('971');
+    });
+    it('getContinent("ae") should be AS', () => {
+        const _result = getContinent('ae');
+        expect(_result).toEqual('AS');
+    });
+    it('getCapital("ua") should be Kyiv', () => {
+        const _result = getCapital('ua');
+        expect(_result).toEqual('Kyiv');
+    });
+    it('getCurrency("ua") should be UAH', () => {
+        const _result = getCurrency('ua');
+        expect(_result).toEqual('UAH');
+    });
+
+    // getCountryName
+    it('getCountryName("CH") should be Schweiz (with default lang de).', () => {
+        const _result = getCountryName('CH');
+        expect(_result).toEqual('Schweiz');
+    });
+    it('getCountryName("TR", "de") should be Türkei.', () => {
+        const _result = getCountryName('TR', 'de');
+        expect(_result).toEqual('Türkei');
+    });
+    it('getCountryName("CH", "en") should be Switzerland.', () => {
+        const _result = getCountryName('CH', 'en');
+        expect(_result).toEqual('Switzerland');
+    });
+
+    it('getCountryName("CH", "FR") should be Suisse.', () => {
+        const _result = getCountryName('CH', 'FR');
+        expect(_result).toEqual('Suisse');
+    });
+
+    // getWikipediaUrl
+    it('getWikipediaUrl("CH", "DE   ") should be ' + _url, () => {
+        const _result = getWikipediaUrl('CH', 'DE   ');
+        expect(_result).toEqual(_url);
+    });
+
+    // libphonenumber-js
+
+    // todo: parsePhoneNumberFromString
+    // todo: getInternationalPhoneNumber
+    // todo: getNationalPhoneNumber
+    // todo: getPhoneNumberURI
+    // todo: getPhoneNumberType
+    // todo: isValidPhoneNumber
+    // todo: isEqualPhoneNumber
+});

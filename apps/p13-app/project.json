@@ -1,0 +1,101 @@
+{
+  "name": "p13-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "bk",
+  "sourceRoot": "apps/p13-app/src",
+  "tags": ["type:app", "platform:mobile", "platform:web"],
+  "targets": {
+    "config": {
+      "command": "ts-node ./set-env.js",
+      "cache": true
+    },
+    "build": {
+      "dependsOn": ["config"],
+      "executor": "@angular-devkit/build-angular:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/p13-app",
+        "index": "apps/p13-app/src/index.html",
+        "browser": "apps/p13-app/src/main.ts",
+        "polyfills": [],
+        "tsConfig": "apps/p13-app/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          "apps/p13-app/src/assets",
+          "libs/subject/swisscities/ui/src/lib/swisscities.data.ts",
+          {
+            "glob": "**/*.svg",
+            "input": "node_modules/ionicons/dist/ionicons/svg",
+            "output": "./svg"
+          }
+        ],
+        "styles": [
+          "apps/p13-app/src/styles.scss",
+          "apps/p13-app/src/theme/variables.scss"
+        ],
+        "scripts": []
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "4mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "p13-app:build:production"
+        },
+        "development": {
+          "buildTarget": "p13-app:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "p13-app:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/p13-app/jest.config.ts"
+      }
+    },
+    "serve-static": {
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "p13-app:build",
+        "port": 4200,
+        "staticFilePath": "dist/apps/p13-app/browser",
+        "spa": true
+      }
+    }
+  }
+}

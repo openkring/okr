@@ -1,0 +1,20 @@
+{
+  "name": "comment/ui",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/comment/ui/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:comment", "platform:mobile", "platform:web"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/comment/ui/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

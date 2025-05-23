@@ -1,0 +1,20 @@
+export enum AddressChannel {
+  Phone,
+  Email,
+  Web,
+  Twitter,
+  Linkedin,
+  Facebook,
+  Xing,
+  Skype,
+  Custom,
+  Postal,
+  Instagram,
+  Signal,
+  Wire,
+  Github,
+  Threema,
+  Telegram,
+  Whatsapp,
+  BankAccount
+}

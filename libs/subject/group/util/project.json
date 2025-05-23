@@ -1,0 +1,20 @@
+{
+  "name": "group/util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/group/util/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:util", "scope:group", "platform:mobile", "platform:web"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/group/util/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

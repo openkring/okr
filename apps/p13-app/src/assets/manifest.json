@@ -1,0 +1,22 @@
+{
+  "name": "bruno-kaiser",
+  "short_name": "p13",
+  "id": "/public/welcome",
+  "start_url": "/public/welcome",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display_override": ["fullscreen", "minimal-ui"],
+  "display": "standalone",
+  "orientation": "any",
+  "description": "p13",
+  "categories": ["productivity", "utilities", "photo"],
+  "lang": "de",
+  "icons": [
+    {
+      "src": "https://bkaiser.imgix.net/tenant/p13/logo/logo_square.svg",
+      "sizes": "48x48 72x72 96x96 128x128 144x144 152x152 192x192 256x256 384x384 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

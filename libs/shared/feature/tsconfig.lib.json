@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/out-tsc",
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSources": true,
+    "types": []
+  },
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/test-setup.ts",
+    "jest.config.ts",
+    "src/**/*.test.ts"
+  ],
+  "include": ["src/**/*.ts", "../ui/src/lib/time-select.modal.ts", "../ui/src/lib/image-view.modal.ts", "../ui/src/lib/color-select.modal.ts", "../ui/src/lib/label-select.modal.ts", "../ui/src/lib/map-view.modal.ts", "../ui/src/lib/date-input.component.ts", "../ui/src/lib/card-select.modal.ts", "../ui/src/lib/category-select.modal.ts"]
+}

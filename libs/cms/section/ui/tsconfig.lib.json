@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../../dist/out-tsc",
+    "declaration": true,
+    "declarationMap": true,
+    "types": []
+  },
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/test-setup.ts",
+    "jest.config.ts",
+    "src/**/*.test.ts"
+  ],
+  "include": ["src/**/*.ts", "../feature/src/lib/gallery.modal.ts", "../feature/src/lib/image-edit.modal.ts", "../feature/src/lib/swiper.modal.ts", "src/lib/image-list.component.ts", "src/lib/single-image.component.ts", "../feature/src/lib/section.form.ts"]
+}

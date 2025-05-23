@@ -1,0 +1,20 @@
+{
+  "name": "person/util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/person/util/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:util", "scope:person", "platform:mobile", "platform:web"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/person/util/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

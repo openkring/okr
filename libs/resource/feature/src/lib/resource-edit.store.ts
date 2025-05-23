@@ -1,0 +1,82 @@
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { computed, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { ModalController } from '@ionic/angular/standalone';
+
+import { ENV } from '@bk2/shared/config';
+import { AppStore } from '@bk2/auth/feature';
+import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
+
+import { ResourceService } from '@bk2/resource/data';
+import { ModelType, ResourceModel} from '@bk2/shared/models';
+import { convertFormToResource, ResourceFormModel } from '@bk2/resource/util';
+import { Observable, of } from 'rxjs';
+
+/**
+ * the resourceEditPage is setting the resourceKey, the store needs to read the corresponding resource 
+ */
+export type ResourceEditState = {
+  resourceKey: string | undefined;
+};
+
+export const initialState: ResourceEditState = {
+  resourceKey: undefined,
+};
+
+export const ResourceEditStore = signalStore(
+  withState(initialState),
+  withProps(() => ({
+    resourceService: inject(ResourceService),
+    appNavigationService: inject(AppNavigationService),
+    appStore: inject(AppStore),
+    env: inject(ENV),
+    modalController: inject(ModalController),    
+  })),
+
+  withProps((store) => ({
+    resResource: rxResource({
+      request: () => ({
+        resourceKey: store.resourceKey()
+      }),
+      loader: ({request}) => {
+        let resource$: Observable<ResourceModel | undefined> = of(undefined);
+        if (request.resourceKey) {
+          resource$ = store.resourceService.read(request.resourceKey);
+          debugItemLoaded('ResourceEditStore.resource', resource$, store.appStore.currentUser());
+        }
+        return resource$;
+      }
+    }),    
+  })),
+  
+  withComputed((state) => {
+    return {
+      resource: computed(() => state.resResource.value()),
+      currentUser: computed(() => state.appStore.currentUser()),
+      isLoading: computed(() => state.resResource.isLoading()),
+    };
+  }),
+
+  withMethods((store) => {
+    return {
+      
+      /************************************ SETTERS ************************************* */
+      setResourceKey(resourceKey: string): void {
+        patchState(store, { resourceKey });
+      },
+
+      /******************************** getters ******************************************* */
+      getTags(): string {
+        return store.appStore.getTags(ModelType.Resource);
+      },
+
+      /************************************ ACTIONS ************************************* */
+
+      async save(vm: ResourceFormModel): Promise<void> {
+        const _resource = convertFormToResource(store.resource(), vm, store.env.owner.tenantId);
+        await (!_resource.bkey ? store.resourceService.create(_resource) : store.resourceService.update(_resource));
+        store.appNavigationService.back();
+      }
+    }
+  }),
+);

@@ -1,0 +1,571 @@
+{
+  "menu": {
+    "main": {
+      "title": "Main Menu",
+      "home": "Home",
+      "profile": "Profile",
+      "userSettings": "Settings",
+      "login": "Login",
+      "logout": "Logout",
+      "news": {
+        "title": "News",
+        "clubRegatta": "Club Regatta",
+        "scsWebsite": "Website Seeclub Stäfa",
+        "scsTwitter": "Twitter @staefarowing",
+        "scsInstagram": "Instagram Seeclub Stäfa",
+        "stuerbord": "Stüürbord Archive",
+        "srvWebsite": "Website SRV",
+        "srvTwitter": "Twitter @swissrowing",
+        "srvMagazin": "SRV Magazine",
+        "srvNews": "SRV Newsletter"
+      },
+      "gallery": {
+        "personal": "Personal Album",
+        "club": "Club Album"
+      },
+      "info": {
+        "title": "Information",
+        "club": "Clubinformation",
+        "boathouse": "Boathouse Project",
+        "album": "Album",
+        "directives": "Statutes and regulations",
+        "meetings": "General Assembly",
+        "weather": "Weather",
+        "map": "Map",
+        "marketing": "Logos & Templates",
+        "training": "Training Material"
+      },
+      "board": {
+        "title": "Board",
+        "meetings": "Board Meetings",
+        "igsport": "IG Sport Stäfa (Files)",
+        "docs": "Documents",
+        "projects": "Projects",
+        "orgs": "Organisations"
+      },
+      "members": {
+        "title": "Members",
+        "info": "Member Statistics",
+        "active": "Aktive Members",
+        "persons": "Persons",
+        "contacts": "Contacts",
+        "competitionLevels": "Competition-Levels",
+        "applications": "Applications",
+        "birthdays": "Birthdays",
+        "passive": "Passive Members",
+        "deceased": "Deceased Members",
+        "srvall": "SRV Members",
+        "alumni": "Alumni",
+        "men": "Men",
+        "women": "Women",
+        "entries": "Entires",
+        "exits": "Exits",
+        "oldJuniors": "Juniors > 18"
+      },
+      "boat": {
+        "title": "Boats",
+        "club": "Club Boats",
+        "archived": "Archived Boats",
+        "private": "Private Skiffs",
+        "info": "Boat Statistics",
+        "all": "All Boats",
+        "test": "Test Boats"
+      },
+      "finance": {
+        "title": "Finance",
+        "fees": "Fees",
+        "srvFees": "SRV Fees",
+        "docs": "Financial Material"
+      },
+      "resources": {
+        "title": "Resources",
+        "resources": "Ressources",
+        "maleLockers": "Men Lockers",
+        "femaleLockers": "Women Lockers",
+        "keys": "Keys",
+        "motorboats": "Motorboats",
+        "vehicle": "Vehicles",
+        "other": "Other Resources",
+        "archivedResources": "Archived Resources"
+      },
+      "misc": {
+        "title": "Miscellaneous",
+        "impressum": "Impressum",
+        "terms": "Legal",
+        "privacy": "Privacy",
+        "help": "Help"
+      },
+      "aoc": {
+        "title": "AOC - Operation Centre",
+        "icon": "Icon Tests",
+        "translation": "Translation Tests",
+        "storage": "Storage Tests",
+        "consistencyChecks": "Tests of Data Consistency",
+        "bk3migration": "Admin Operations",
+        "documents": "Documents",
+        "regex": "Regex (Regular Expressions)",
+        "comps": "Form Components",
+        "users": "Users",
+        "roles": "Roles",
+        "test": "Tests",
+        "testcms": "CMS Tests",
+        "iterableSubjects": "Subjects",
+        "geotracker": "GeoTracker"
+      },
+      "version": {
+        "title": "Version"
+      }
+    }
+  },
+  "general": {
+    "category": {
+      "singular": "Category",
+      "plural": "Categories",
+      "all": {
+        "label": "All",
+        "description": "All elements of a category"
+      },
+      "undefined": {
+        "label": "Undefined",
+        "description": "The category was not assigned or is unknown."
+      },
+      "archived": {
+        "label": "Archived",
+        "description": "Archived (deleted) category."
+      },
+      "countries": {
+        "CH": "Switzerland",
+        "DE": "Germany",
+        "US": "USA",
+        "FR": "France",
+        "IT": "Italy",
+        "LI": "Liechtenstein",
+        "HU": "Hungary"
+      },
+      "states": {
+        "CH": {
+          "AG": "Aargau",
+          "AI": "Appenzell Innerrhoden",
+          "AR": "Appenzell Ausserrhoden",
+          "BE": "Berne",
+          "BL": "Basel Land",
+          "BS": "Basel Stadt",
+          "DE": "Germany",
+          "FR": "Fribourg",
+          "GE": "Genf",
+          "GL": "Glarus",
+          "GR": "Graubuenden",
+          "IT": "Italien",
+          "JU": "Jura",
+          "LU": "Luzern",
+          "NE": "Neuenburg",
+          "NW": "Nidwalden",
+          "OW": "Obwalden",
+          "SG": "St. Gallen",
+          "SH": "Schaffhausen",
+          "SO": "Solothurn",
+          "SZ": "Schwyz",
+          "TG": "Thurgau",
+          "TI": "Tessin",
+          "UR": "Uri",
+          "VD": "Waadt",
+          "VS": "Wallis",
+          "ZG": "Zug",
+          "ZH": "Zurich"
+        }
+      }
+    },
+    "operation": {
+      "copy": {
+        "conf": "The value was copied."
+      },
+      "change": {
+        "confirm": "Save the changes ?",
+        "ok": "OK",
+        "cancel": "Cancel"
+      },
+      "search": {
+        "placeholder": "Search...",
+        "byTag": "Tag-Search"
+      },
+      "select": {
+        "tag": "Select a tag"
+      },
+      "insert": {
+        "password": "Insert password"
+      },
+      "nyi": "This function is not yet implemented.",
+      "inspect": "Inspect"
+    },
+    "validate": {
+      "email": "Please insert a valid email address.",
+      "zip": "Zip code must be a number with {{max}} digits.",
+      "url": "Please insert a valid URL, e.g. https://www.google.ch"
+    },
+    "error": {
+      "notAuthorised": "Sorry, you don't have the needed permission for this."
+    },
+    "debug": {
+      "model": {
+        "label": "Analyze the object",
+        "title": "Content of the object"
+      }
+    },
+    "util": {
+      "since": "since",
+      "note": "note",
+      "twitter": "Twitter",
+      "email": "email",
+      "search": "search",
+      "id": "ID",
+      "type": "type",
+      "url": "URL",
+      "name": "name",
+      "tags": "tags",
+      "description": "description",
+      "allYears": "All years"
+    }
+  },
+  "input": {
+    "abbreviation": {
+      "label": "Abbreviation",
+      "placeholder": "Abbreviation of a name, e.g. for lists, minutes."
+    },
+    "addressChannel": {
+      "label": "Address Channel",
+      "placeholder": "Address type, e.g. phone, email"
+    },
+    "addressUsage": {
+      "label": "Address Usage",
+      "placeholder": "Usage of the address",
+      "helper": "A description about the purpose of the address, e.g. private, business"
+    },
+    "addressValue": {
+      "label": "Address value",
+      "placeholder": "e.g. 079 123 45 67"
+    },
+    "addressValue2": {
+      "label": "Address extension",
+      "placeholder": "e.g. c/o, level, etc."
+    },
+    "bexioId": {
+      "label": "Bexio ID",
+      "placeholder": "ID of the matching data within Bexio"
+    },
+    "boatName": {
+      "label": "Boat name",
+      "placeholder": "Name of a boat",
+      "error": "A boat name is mandatory and must consist of letters and digits, but no special characters."
+    },
+    "boatType": {
+      "label": "Boat type"
+    },
+    "city": {
+      "label": "City",
+      "placeholder": "Name of a city or village",
+      "error": "Only letters are allowed, not digits nor special characters."
+    },
+    "color": {
+      "label": "Color"
+    },
+    "channelLabel": {
+      "label": "Label of the channel",
+      "placeholder": "e.g. Handy"
+    },
+    "comment": {
+      "label": "Comment",
+      "placeholder": "Insert your comment here and finish with a carriage return.",
+      "authorId": "Author ID",
+      "authorName": "Author",
+      "date": "Date"
+    },
+    "count": {
+      "label": "Count",
+      "placeholder": "Count",
+      "error": "This must be an integer consisting of just digits."
+    },
+    "country": {
+      "label": "Country",
+      "placeholder": "CH",
+      "error": "Country Code must consist of two letters, e.g. CH for Switzerland."
+    },
+    "currentValue": {
+      "label": "Current Value",
+      "placeholder": "Current value in CHF",
+      "error": "This must be an integer consisting of just digits."
+    },
+    "dateOfBirth": {
+      "label": "Date of birth",
+      "placeholder": "tt.mm.jjjj",
+      "helper": "We need your correct birthdate, e.g. for statistics or for the registration with the SRV association. You may turn off the visibility of your birthdate for other members.",
+      "error": "The format of the date is not correct."
+    },
+    "dateOfDeath": {
+      "label": "Date of death",
+      "placeholder": "tt.mm.jjjj",
+      "error": "The format of the date is not correct."
+    },
+    "dateOfEntry": {
+      "label": "Date of entry",
+      "placeholder": "tt.mm.jjjj",
+      "error": "The format of the date is not correct."
+    },
+    "dateOfExit": {
+      "label": "Date of exit",
+      "placeholder": "tt.mm.jjjj",
+      "error": "The format of the date is not correct."
+    },
+    "dateOfFoundation": {
+      "label": "Date of foundation",
+      "placeholder": "tt.mm.jjjj",
+      "error": "The format of the date is not correct."
+    },
+    "dateOfLiquidation": {
+      "label": "Date of termination",
+      "placeholder": "tt.mm.jjjj",
+      "error": "The format of the date is not correct."
+    },
+    "email": {
+      "label": "E-Mail",
+      "placeholder": "ssss@ssssssss.sss",
+      "error": "Please insert a valid email address."
+    },
+    "firstName": {
+      "label": "Firstname",
+      "placeholder": "The given name(s)",
+      "error": "Only letters are allowed, no digits nor special characters."
+    },
+    "gender": {
+      "label": "Gender"
+    },
+    "iban": {
+      "label": "IBAN-Number",
+      "placeholder": "CHnn nnnn nnnn nnnn nnnn n",
+      "helper": "The bank account number facilitates reimbursements.",
+      "error": "The IBAN-number must be given in the following format: CHnn nnnn nnnn nnnn nnnn n."
+    },
+    "keyNr": {
+      "label": "Key Nr.",
+      "placeholder": "nnnnn",
+      "error": "This must be an integer number consisting of just digits."
+    },
+    "lastName": {
+      "label": "Lastname",
+      "placeholder": "The family name(s)",
+      "error": "The lastname is mandatory and must consist of just letters, but no digits nor special characters."
+    },
+    "load": {
+      "label": "Load",
+      "placeholder": "Load in kg [min-max]",
+      "error": "Die Eingabe besteht aus einem optionalen Mindestgewicht (2-stellige Nummer) - Maximalgewicht (2-3 stellige Nummer)"
+    },
+    "lockerNr": {
+      "label": "Garderobe Nr.",
+      "placeholder": "n[nn]",
+      "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
+    },
+    "lockerOwnership": {
+      "label": "Mitglied/Club"
+    },
+    "loginEmail": {
+      "label": "E-Mail",
+      "placeholder": "ssss@ssssssss.sss",
+      "error": "Bitte eine gültige Email Adresse eingeben."
+    },
+    "loginPassword": {
+      "label": "Passwort",
+      "placeholder": "Passwort",
+      "error": "Das Passwort muss mindestens 6 Zeichen lang sein."
+    },
+    "memberCategory": {
+      "label": "Mitgliederkategorie"
+    },
+    "memberId": {
+      "label": "Mitglied ID",
+      "placeholder": "nnnnn",
+      "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
+    },
+    "name": {
+      "label": "Name",
+      "placeholder": "Name"
+    },
+    "nickName": {
+      "label": "Übername",
+      "placeholder": "Übername (Spitzname)"
+    },
+    "notes": {
+      "label": "Notizen",
+      "placeholder": "Notizen"
+    },
+    "number": {
+      "label": "Nummer"
+    },
+    "orgFunction": {
+      "label": "Funktion",
+      "placeholder": "Funktion in der Organisation"
+    },
+    "orgName": {
+      "label": "Organisationsname",
+      "company": "Firmenname",
+      "association": "Vereinsname",
+      "group": "Gruppenname",
+      "placeholder": "Organisationsname",
+      "error": "Die Eingabe des Organisationsnamens ist obligatorisch. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
+    },
+    "orgType": {
+      "label": "Organisations-Typ"
+    },
+    "owner": {
+      "label": "Besitzer"
+    },
+    "phone": {
+      "label": "Telefon",
+      "placeholder": "+41 (nn) nnn-nnnn",
+      "error": "Die Telefonnummer muss in folgendem Format angegeben werden: +41 (nn) nnn-nnnn."
+    },
+    "price": {
+      "label": "Preis",
+      "placeholder": "Preis in CHF",
+      "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
+    },
+    "content": {
+      "label": "HTML-Inhalt",
+      "placeholder": "Text des Artikels in HTML Format."
+    },
+    "resourceType": {
+      "label": "Resourcenart"
+    },
+    "ssn": {
+      "label": "AHV-Nummer",
+      "placeholder": "756.xxxx.xxxx.xc",
+      "helper": "Die AHV-Nummer ist eine optionale Eingabe. Sie wird z.B. bei Reinigungspersonal für AHV-Meldungen oder Versicherungen verwendet.",
+      "error": "Die AHV-Nummber besteht aus 13 Nummern in folgendem Format 756.xxxx.xxxx.xc."
+    },
+    "state": {
+      "label": "Status"
+    },
+    "street": {
+      "label": "Strasse",
+      "placeholder": "Strassenname mit Hausnummer",
+      "error": "Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
+    },
+    "subtitle": {
+      "label": "Untertitel",
+      "placeholder": "Untertitel der Sektion (oftmals das Datum)"
+    },
+    "taxId": {
+      "label": "MwSt-Nummer",
+      "placeholder": "CHE-123.456.789",
+      "helper": "Mehrwertsteuer ID (oder Unternehmens-ID UID)",
+      "error": "Die MwSt-Nummber besteht aus CHE gefolgt von 9 Ziffern."
+    },
+    "title": {
+      "label": "Titel",
+      "placeholder": "Titel der Sektion"
+    },
+    "usage": {
+      "label": "Verwendung"
+    },
+    "usageLabel": {
+      "label": "Verwendungsname",
+      "placeholder": "Bezeichnung der eigenen Verwendung",
+      "helper": "Ein Name dafür, wie die Adresse verwendet wird, z.B. Oma, Mutter, Notfall."
+    },
+    "validFrom": {
+      "label": "Gültig ab",
+      "placeholder": "tt.mm.jjjj",
+      "helper": "Das Datum, ab dem die Angabe gültig ist.",
+      "error": "Das Datumsformat ist nicht korrekt."
+    },
+    "validTo": {
+      "label": "Gültig bis",
+      "placeholder": "tt.mm.jjjj",
+      "helper": "Das Datum, bis zu dem die Angabe gültig ist.",
+      "error": "Das Datumsformat ist nicht korrekt."
+    },
+    "value": {
+      "label": "Wert",
+      "placeholder": "Wert in CHF",
+      "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden"
+    },
+    "weight": {
+      "label": "Gewicht",
+      "placeholder": "Gewicht [kg]",
+      "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
+    },
+    "zip": {
+      "label": "PLZ",
+      "placeholder": "nnnn",
+      "error": "Es muss eine vierstellige Postleitzahl eingegeben werden."
+    }
+  },
+  "checkbox": {
+    "isArchived": {
+      "label": "Archiviert"
+    },
+    "isFavorite": {
+      "label": "Hauptadresse"
+    },
+    "isCc": {
+      "label": "CC:-Addresse"
+    },
+    "isPublic": {
+      "label": "Öffentlich"
+    },
+    "showTestData": {
+      "label": "Testdaten anzeigen"
+    },
+    "useDisplayName": {
+      "label": "Anzeigenamen verwenden"
+    },
+    "useTouchId": {
+      "label": "Touch ID verwenden"
+    },
+    "useFaceId": {
+      "label": "Face ID verwenden"
+    }
+  },
+  "language": {
+    "label": "Language",
+    "select": "Select language",
+    "de": "German",
+    "en": "English",
+    "fr": "French",
+    "es": "Spanish",
+    "it": "Italien"
+  },
+  "tag": {
+    "advertiser": "Inserent",
+    "bexio": "Bexio",
+    "billable": "Verrechenbar",
+    "business": "Geschäft",
+    "cancelled": "Abgesagt",
+    "cgig": "CGIG",
+    "draft": "Entwurf",
+    "family": "Familie",
+    "friend": "Freund",
+    "important": "Wichtig",
+    "invalid": "Ungültig",
+    "jole": "Jole",
+    "lattenberg": "Lattenberg Cup",
+    "liteboat": "Liteboat",
+    "lost": "Verloren",
+    "offering": "Angebot",
+    "pending": "Pendent",
+    "planned": "Geplant",
+    "private": "Privat",
+    "public": "Öffentlich",
+    "repairing": "In Reparatur",
+    "reserved": "Reserviert",
+    "review": "Review",
+    "selectable": "Selektierbar",
+    "sponsor": "Sponsor",
+    "tent20": "Zeltsponsor 2020",
+    "test": "Test",
+    "training": "Training",
+    "unavailable": "Nicht verfügbar",
+    "unpaid": "Unbezahlt",
+    "valid": "Gültig",
+    "tourboat": "Tourboot"
+  }
+}

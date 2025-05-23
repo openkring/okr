@@ -1,12 +1,23 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
+# sensitive production keys
+**/environment.ts
+**/environment.prod.ts
+**/.env
+emulator-storage
+**/firebase.config.ts
+environment.global.ts
+**/bk-config.ts
+**/schema.json
+
 # compiled output
 dist
 tmp
-out-tsc
+/out-tsc
+**/data
 
 # dependencies
-node_modules
+**/node_modules
 
 # IDEs and editors
 /.idea
@@ -28,17 +39,35 @@ node_modules
 /.sass-cache
 /connect.lock
 /coverage
+/typings
+.firebase
+
+# log files
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
 testem.log
-/typings
+ui-debug.log
+pubsub-debug.log
+firestore-debug.log
 
 # System Files
 .DS_Store
 Thumbs.db
 
+**/nx.json
 .nx/cache
 .nx/workspace-data
 
 .angular
+# Nx-Firebase
+.runtimeconfig.json
+**/.emulators/*
+**/.firebase/*
+database-debug.log
+firebase-debug.log
+firebase-export*
+.secret.local
+
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md

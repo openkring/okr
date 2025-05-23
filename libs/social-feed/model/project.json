@@ -1,0 +1,20 @@
+{
+  "name": "social-feed/model",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/social-feed/social-feed-model/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["type:model", "platform:node", "platform:mobile", "platform:web"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/social-feed/social-feed-model/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

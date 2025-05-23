@@ -2,7 +2,7 @@
   "name": "social-feed-app",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "prefix": "app",
+  "prefix": "bk",
   "sourceRoot": "apps/social-feed-app/src",
   "tags": ["type:app", "platform:mobile", "platform:web"],
   "targets": {
