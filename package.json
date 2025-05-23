@@ -113,7 +113,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "jest-environment-node": "^29.7.0",
     "jest-preset-angular": "~14.4.2",
-    "nx": "20.8.0",
+    "nx": "21.1.1",
     "prettier": "^2.8.8",
     "react-refresh": "^0.10.0",
     "ts-jest": "^29.3.2",
@@ -135,5 +135,6 @@
       "nx",
       "protobufjs"
     ]
-  }
+  },
+  "nx": {}
 }
