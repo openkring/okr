@@ -1,6 +1,7 @@
 {
   "name": "@bk2/source",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.11.0",
   "license": "MIT",
   "type": "module",
   "scripts": {},
