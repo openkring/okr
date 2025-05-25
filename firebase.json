@@ -6,7 +6,7 @@
   },
   "apphosting": {
     "backendId": "bko-euw4-backend",
-    "rootDir": "apps/test-app",
+    "rootDir": "dist/apps/test-app/browser",
     "ignore": [
       "node_modules",
       ".git",
