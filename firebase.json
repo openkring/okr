@@ -16,7 +16,8 @@
       "../../dist"
     ],
     "environmentVariables": {
-      "GOOGLE_NODE_RUN_SCRIPTS": ""
+      "GOOGLE_NODE_RUN_SCRIPTS": "",
+      "NODE_VERSION": "23.8.0"
     }
   },
   "storage": {
