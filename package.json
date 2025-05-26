@@ -5,8 +5,9 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "pnpm install --frozen-lockfile && pnpm nx build test-app --configuration=production",
-    "start": "pnpm exec serve -s dist/apps/test-app/browser -l tcp://0.0.0.0:${PORT:-8080}",
+    "build": "echo \"ROOT build script triggered - CWD: $(pwd)\" && echo \"Node version: $(node --version)\" && echo \"Ensuring corepack is enabled...\" && corepack enable && echo \"Verifying pnpm version (Corepack should use packageManager field): $(pnpm --version)\" && echo \"Running pnpm install (frozen lockfile, debug loglevel) from monorepo root...\" && pnpm install --frozen-lockfile --loglevel debug && echo \"Listing /workspace/node_modules/.bin AFTER pnpm install...\" && ls -la /workspace/node_modules/.bin && echo \"Running nx build for test-app...\" && pnpm exec nx build test-app --configuration=production && echo \"ROOT build script finished.\"",
+    "start": "echo \"ROOT start script triggered - CWD: $(pwd)\" && echo \"Serving dist/apps/test-app/browser...\" && pnpm exec serve -s dist/apps/test-app/browser -l tcp://0.0.0.0:${PORT:-8080}",
+
     "test": "pnpm nx test test-app",
     "lint": "pnpm nx lint",
     "e2e": "pnpm nx e2e test-app-e2e",
@@ -90,8 +91,7 @@
     "stream-chat-angular": "^5.14.0",
     "swiper": "^11.2.8",
     "vest": "^5.4.6",
-    "xlsx": "^0.18.5",
-    "serve": "^14.2.1"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~19.2.13",
@@ -138,6 +138,7 @@
     "pnpm": "10.11.0",
     "prettier": "^2.8.8",
     "react-refresh": "^0.10.0",
+    "serve": "^14.2.1",
     "ts-jest": "^29.3.4",
     "ts-node": "10.9.1",
     "tslib": "^2.8.1",

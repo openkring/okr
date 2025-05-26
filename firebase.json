@@ -6,18 +6,22 @@
   },
   "apphosting": {
     "backendId": "bko-euw4-backend",
-    "rootDir": "apps/test-app",
+    "rootDir": ".",
     "ignore": [
       "node_modules",
+      ".pnpm-store",
+      ".pnpm_home_local",
       ".git",
       "firebase-debug.log",
       "firebase-debug.*.log",
       "functions",
-      "../../dist"
+      "dist"
     ],
     "environmentVariables": {
       "GOOGLE_NODE_RUN_SCRIPTS": "",
-      "NODE_VERSION": "23.8.0"
+      "NODE_VERSION": "23.8.0",
+      "NPM_CONFIG_USERCONFIG": "/dev/null",
+      "NPM_CONFIG_GLOBALCONFIG": "/dev/null"
     }
   },
   "storage": {
@@ -26,7 +30,11 @@
   "emulators": {
     "apphosting": {
       "port": 5002,
-      "rootDirectory": "apps/test-app"
+      "rootDirectory": ".",
+      "environmentVariables": {
+        "GOOGLE_NODE_RUN_SCRIPTS": "",
+        "NODE_VERSION": "23.8.0"
+      }
     },
     "auth": {
       "port": 9099
