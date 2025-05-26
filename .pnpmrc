@@ -1,0 +1,2 @@
+store-dir=/workspace/.pnpm-store # where to store pnpm packages
+shared-workspace-lockfile=false # do not share lockfile across builds
