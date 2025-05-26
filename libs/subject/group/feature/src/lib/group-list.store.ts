@@ -5,8 +5,7 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { catchError, finalize, of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { AppNavigationService, chipMatches, nameMatches, navigateByUrl } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data-access';
+import { AppNavigationService, chipMatches, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
 import { GroupCollection, GroupModel, ModelType } from '@bk2/shared/models';
 import { GroupService } from '@bk2/group/data-access';
 import { AppStore } from '@bk2/auth/feature';

@@ -5,8 +5,7 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { catchError, finalize, of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { AppNavigationService, chipMatches, nameMatches, navigateByUrl } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data-access';
+import { AppNavigationService, chipMatches, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared/models';
 import { OrgService } from '@bk2/org/data-access';

@@ -2,15 +2,14 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { chipMatches, DateFormat, debugItemLoaded, debugListLoaded, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared/util';
-import { getSystemQuery, readModel, searchData } from '@bk2/shared/data-access';
+import { chipMatches, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches, readModel, searchData } from '@bk2/shared/util';
 import { memberTypeMatches } from '@bk2/shared/categories';
 import { AllCategories, CategoryCollection, CategoryListModel, GenderType, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, OrgType, PersonCollection, PersonModel } from '@bk2/shared/models';
-import { MembershipService } from '@bk2/membership/data-access';
+
 import { AppStore } from '@bk2/auth/feature';
-import { of } from 'rxjs';
 
 export type MembershipListState = {
   orgId: string;

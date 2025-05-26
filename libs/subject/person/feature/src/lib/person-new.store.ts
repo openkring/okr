@@ -5,9 +5,8 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
-import { readModel } from '@bk2/shared/data-access';
 import { AppStore } from '@bk2/auth/feature';
-import { debugItemLoaded } from '@bk2/shared/util';
+import { debugItemLoaded, readModel } from '@bk2/shared/util';
 
 export type PersonNewState = {
   orgId: string | undefined;

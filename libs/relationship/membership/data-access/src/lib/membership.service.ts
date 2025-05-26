@@ -3,15 +3,14 @@ import { combineLatest, firstValueFrom, map, Observable, of } from 'rxjs';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { END_FUTURE_DATE_STR, ENV, FIRESTORE } from '@bk2/shared/config';
 import { CategoryItemModel, CategoryListModel, MembershipCollection, MembershipModel, ModelType, OrgModel, PersonCollection, PersonModel } from '@bk2/shared/models';
-import { createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
 import { saveComment } from '@bk2/comment/util';
-import { addDuration, convertDateFormatToString, DateFormat, getTodayStr, isMembership } from '@bk2/shared/util';
-import { selectDate } from '@bk2/shared/ui';
+import { addDuration, convertDateFormatToString, createModel, DateFormat, getSystemQuery, getTodayStr, isMembership, searchData, updateModel } from '@bk2/shared/util';
 import { CategoryChangeFormModel, convertFormToNewMembership, getMembershipCategoryChangeComment, getMembershipSearchIndex, getMembershipSearchIndexInfo, getRelLogEntry, MembershipNewFormModel, newMembershipForPerson } from '@bk2/membership/util';
 import { AppStore } from '@bk2/auth/feature';
 import { CategoryChangeModalComponent, MembershipEditModalComponent, MembershipNewModalComponent } from '@bk2/membership/feature';
 import { getCategoryAttribute } from '@bk2/category/util';
 import { copyToClipboardWithConfirmation } from '@bk2/shared/i18n';
+import { selectDate } from '@bk2/shared/ui';
   
 
   @Injectable({
@@ -94,9 +93,7 @@ import { copyToClipboardWithConfirmation } from '@bk2/shared/i18n';
    */
   public async edit(membership?: MembershipModel): Promise<void> {
     let _membership = membership;
-    if (!_membership) {
-      _membership = new MembershipModel(this.tenantId);
-    }
+    _membership ??= new MembershipModel(this.tenantId);
     const _modal = await this.modalController.create({
       component: MembershipEditModalComponent,
       componentProps: {

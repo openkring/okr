@@ -6,8 +6,7 @@ import { firstValueFrom, Observable, of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
-import { debugItemLoaded, debugListLoaded, isValidAt } from '@bk2/shared/util';
-import { readModel } from '@bk2/shared/data-access';
+import { debugItemLoaded, debugListLoaded, isValidAt, readModel } from '@bk2/shared/util';
 import { confirm } from '@bk2/shared/i18n';
 import { getAvatarImgixUrl } from '@bk2/shared/pipes';
 

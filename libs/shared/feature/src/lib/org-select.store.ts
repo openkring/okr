@@ -4,8 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data-access';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util';
 import { OrgCollection, OrgModel, UserModel } from '@bk2/shared/models';
 
 export type OrgSelectState = {

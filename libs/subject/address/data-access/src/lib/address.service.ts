@@ -3,32 +3,31 @@ import { Observable, map, of } from "rxjs";
 import { ModalController, Platform, ToastController } from "@ionic/angular/standalone";
 import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera";
 
-import { GeocodingService } from "./geocode.service";
 import { ENV, FIRESTORE } from "@bk2/shared/config";
-import { browseUrl, copyAddress, getAddressCollection, getStringifiedPostalAddress, isAddress } from "@bk2/address/util";
 import { AddressChannel, AddressModel, DefaultLanguage, EZS_DIR, ModelType, UserModel } from "@bk2/shared/models";
-import { createModel, getSystemQuery, readModel, searchData, updateModel } from "@bk2/shared/data";
-import { die, getModelAndKey, warn } from "@bk2/shared/util";
-import { saveComment } from "@bk2/comment/util";
-import { ImageViewModalComponent, MapViewModalComponent, UploadTaskComponent } from "@bk2/shared/ui";
-import { readAsFile } from "@bk2/avatar/util";
+import { createModel, die, getModelAndKey, getSystemQuery, readModel, searchData, updateModel, warn } from "@bk2/shared/util";
 import { getModelSlug, Languages } from "@bk2/shared/categories";
 import { error } from "@bk2/shared/i18n";
-import { AddressEditModalComponent } from "@bk2/address/feature";
+
+import { saveComment } from "@bk2/comment/util";
+import { readAsFile } from "@bk2/avatar/util";
+
+import { browseUrl, copyAddress, getAddressCollection, getStringifiedPostalAddress, isAddress } from "@bk2/address/util";
+import { GeocodingService } from "./geocode.service";
 
 @Injectable({
     providedIn: 'root'
 })
 export class AddressService {
-  private env = inject(ENV);
+  private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
-  private toastController = inject(ToastController);
-  private modalController = inject(ModalController);
+  private readonly toastController = inject(ToastController);
+  private readonly modalController = inject(ModalController);
 
-  private geocodeService = inject(GeocodingService);
-  private platform = inject(Platform);
+  private readonly geocodeService = inject(GeocodingService);
+  private readonly platform = inject(Platform);
 
-  private tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.owner.tenantId;
 
   public groupedItems$ = of([]);
 
@@ -114,7 +113,7 @@ export class AddressService {
       if (_addresses.length > 1) die(`AddressUtil.getFavoriteAddressByChannel -> ERROR: only one favorite adress can exist per channel type (${_collection})`);
       if (_addresses.length === 1) return _addresses[0];
       return null;
-    })) as Observable<AddressModel | null>;
+    }));
   }
 
   /***************************  edit modal  *************************** */

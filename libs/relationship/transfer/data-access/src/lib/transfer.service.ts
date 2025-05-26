@@ -3,12 +3,11 @@ import { ToastController } from '@ionic/angular/standalone';
 import { Observable } from 'rxjs';
 
 import { FIRESTORE } from '@bk2/shared/config';
-import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
 import { TransferCollection, TransferModel } from '@bk2/shared/models';
 
 import { saveComment } from '@bk2/comment/util';
-import { AppStore } from '@bk2/auth/feature';
 import { getTransferSearchIndex, getTransferSearchIndexInfo } from '@bk2/transfer/util';
+import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
 
 @Injectable({
   providedIn: 'root'

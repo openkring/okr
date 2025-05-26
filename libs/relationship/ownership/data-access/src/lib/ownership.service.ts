@@ -1,15 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
+
 import { FIRESTORE } from '@bk2/shared/config';
-import { AppStore } from '@bk2/auth/feature';
 import { ModelType, OrgModel, OwnershipCollection, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared/models';
-import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
+import { convertDateFormatToString, createModel, DateFormat, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+
 import { saveComment } from '@bk2/comment/util';
-import { OwnershipEditModalComponent, OwnershipNewModalComponent } from '@bk2/ownership/feature';
+
 import { convertFormToOwnership, getOwnershipSearchIndex, getOwnershipSearchIndexInfo, isOwnership, OwnershipNewFormModel } from '@bk2/ownership/util';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared/util';
-import { selectDate } from '@bk2/shared/ui';
 
 @Injectable({
     providedIn: 'root'
@@ -89,9 +88,7 @@ export class OwnershipService {
    */
   public async edit(ownership?: OwnershipModel): Promise<void> {
     let _ownership = ownership;
-    if (!_ownership) {
-      _ownership = new OwnershipModel(this.tenantId);
-    }
+    _ownership ??= new OwnershipModel(this.tenantId);
     
     const _modal = await this.modalController.create({
       component: OwnershipEditModalComponent,

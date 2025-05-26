@@ -1,10 +1,10 @@
 import { inject, Injectable } from "@angular/core";
 import { Observable } from "rxjs";
-import { ToastController, ModalController } from "@ionic/angular/standalone";
+import { ToastController } from "@ionic/angular/standalone";
 
 import { ENV, FIRESTORE } from "@bk2/shared/config";
-import { createModel, findByKey, getSystemQuery, searchData, updateModel } from "@bk2/shared/data";
 import { LocationCollection, LocationModel, UserModel } from "@bk2/shared/models";
+import { createModel, findByKey, getSystemQuery, searchData, updateModel } from "@bk2/shared/util";
 
 import { saveComment } from "@bk2/comment/util";
 
@@ -15,7 +15,6 @@ export class LocationService {
   private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly modalController = inject(ModalController);
 
   private readonly tenantId = this.env.owner.tenantId;
 

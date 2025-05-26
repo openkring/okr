@@ -4,8 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { AppNavigationService, chipMatches, nameMatches, navigateByUrl } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data-access';
+import { AppNavigationService, chipMatches, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
 import { UserService } from '@bk2/user/data-access';
 import { ModelType, UserCollection, UserModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/auth/feature';

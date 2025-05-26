@@ -1,15 +1,18 @@
 import { AsyncPipe } from "@angular/common";
 import { Component, inject, input, model, output } from "@angular/core";
-import { AddressService } from "@bk2/address/data";
-import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/address/util";
-import { AppStore } from "@bk2/auth/feature";
+import { IonAccordion, IonButton, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, ModalController } from "@ionic/angular/standalone";
+
 import { AddressChannels, AddressUsages, getCategoryIcon } from "@bk2/shared/categories";
 import { ENV } from "@bk2/shared/config";
 import { TranslatePipe } from "@bk2/shared/i18n";
 import { AddressChannel, AddressModel, AddressUsage, ModelType } from "@bk2/shared/models";
 import { SvgIconPipe } from "@bk2/shared/pipes";
 import { EmptyListComponent } from "@bk2/shared/ui";
-import { IonAccordion, IonButton, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, ModalController } from "@ionic/angular/standalone";
+
+import { AppStore } from "@bk2/auth/feature";
+
+import { AddressService } from "@bk2/address/data-access";
+import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/address/util";
 
 @Component({
   selector: 'bk-addresses-accordion',

@@ -9,10 +9,9 @@ import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgForm
 
 import { getCategoryAbbreviation, OrgTypes } from '@bk2/shared/categories';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { AddressCollection, AddressModel, ModelType, OrgCollection, OrgModel, UserModel } from '@bk2/shared/models';
 import { AddressService } from '@bk2/address/data-access';
-import { addIndexElement, createModel, updateModel } from '@bk2/shared/util';
+import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
 
 
 @Injectable({

@@ -5,10 +5,9 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, OrgCollection, OrgModel } from '@bk2/shared/models';
-import { MembershipService } from '@bk2/membership/data-access';
-import { readModel } from '@bk2/shared/data-access';
+import { debugItemLoaded, readModel } from '@bk2/shared/util';
+
 import { AppStore } from '@bk2/auth/feature';
-import { debugItemLoaded } from '@bk2/shared/util';
 
 export type MembershipNewState = {
   orgId: string | undefined;

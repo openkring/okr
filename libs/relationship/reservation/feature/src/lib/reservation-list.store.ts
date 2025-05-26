@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { chipMatches, DateFormat, debugItemLoaded, debugListLoaded, getTodayStr, nameMatches } from '@bk2/shared/util';
+import { chipMatches, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, nameMatches, searchData } from '@bk2/shared/util';
 import { AllCategories, ModelType, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared/models';
 import { categoryMatches, yearMatches } from '@bk2/shared/categories';
 
@@ -12,7 +12,6 @@ import { AppStore } from '@bk2/auth/feature';
 
 import { ReservationService } from '@bk2/reservation/data-access';
 import { ReservationModalsService } from './reservation-modals.service';
-import { findByKey, getSystemQuery, searchData } from '@bk2/shared/data-access';
 
 export type ReservationListState = {
   resourceId: string;

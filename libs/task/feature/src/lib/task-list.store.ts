@@ -4,8 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { FIRESTORE } from '@bk2/shared/config';
-import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getTodayStr, nameMatches } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data-access';
+import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQuery, getTodayStr, nameMatches, searchData } from '@bk2/shared/util';
 import { AllCategories, ModelType, Priority, TaskCollection, TaskModel, TaskState } from '@bk2/shared/models';
 
 import { AppStore } from '@bk2/auth/feature';

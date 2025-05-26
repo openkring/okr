@@ -2,16 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 import { ref, getDownloadURL, getMetadata, listAll, FullMetadata } from "firebase/storage";
 import { ModalController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular';
 
 import { DocumentTypes, categoryMatches, getCategoryAbbreviation } from '@bk2/shared/categories';
 import { DocumentCollection, DocumentModel, DocumentType, Image, MenuItemCollection, ModelType } from '@bk2/shared/models';
-import { DateFormat, addIndexElement, chipMatches, convertDateFormatToString, createModel, die, dirname, fileSizeUnit, generateRandomString, getTodayStr, nameMatches, updateModel, warn } from '@bk2/shared/util';
+import { DateFormat, addIndexElement, chipMatches, convertDateFormatToString, createModel, die, dirname, fileSizeUnit, generateRandomString, getSystemQuery, getTodayStr, nameMatches, searchData, updateModel, warn } from '@bk2/shared/util';
 import { ENV, FIRESTORE, STORAGE } from '@bk2/shared/config';
-import { getDocumentStoragePath } from '@bk2/document/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data-access';
-import { ToastController } from '@ionic/angular';
-import { saveComment } from '@bk2/comment/util';
 import { error } from '@bk2/shared/i18n';
+
+import { saveComment } from '@bk2/comment/util';
+
+import { getDocumentStoragePath } from '@bk2/document/util';
 
 @Injectable({
   providedIn: 'root'

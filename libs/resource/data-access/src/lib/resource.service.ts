@@ -4,9 +4,8 @@ import { Observable } from 'rxjs';
 
 import { getCategoryAbbreviation, ResourceTypes } from '@bk2/shared/categories';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { findByKey, getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { ResourceCollection, ResourceModel, ResourceType, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, isResource, updateModel } from '@bk2/shared/util';
+import { addIndexElement, createModel, findByKey, getSystemQuery, isResource, searchData, updateModel } from '@bk2/shared/util';
 
 import { getResourceSlug } from '@bk2/resource/util';
 import { saveComment } from '@bk2/comment/util';

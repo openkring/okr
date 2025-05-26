@@ -4,8 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { FIRESTORE } from '@bk2/shared/config';
-import { chipMatches, getYear, nameMatches } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data-access';
+import { chipMatches, getSystemQuery, getYear, nameMatches, searchData } from '@bk2/shared/util';
 import { categoryMatches, yearMatches } from '@bk2/shared/categories';
 import { AllCategories, ModelType, TransferCollection, TransferModel, TransferType } from '@bk2/shared/models';
 

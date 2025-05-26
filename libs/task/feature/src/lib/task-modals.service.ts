@@ -5,7 +5,7 @@ import { AvatarInfo, TaskModel } from "@bk2/shared/models";
 
 import { AppStore } from "@bk2/auth/feature";
 
-import { TaskService } from "@bk2/task/data";
+import { TaskService } from "@bk2/task/data-access";
 import { isTask } from "@bk2/task/util";
 import { TaskNewModalComponent } from "./task-new.modal";
 import { TaskEditModalComponent } from "./task-edit.modal";

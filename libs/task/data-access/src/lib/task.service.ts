@@ -3,11 +3,10 @@ import { Observable } from 'rxjs';
 import { ToastController } from '@ionic/angular/standalone';
 
 import { TaskCollection, TaskModel, UserModel } from '@bk2/shared/models';
-import { findByKey, getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { FIRESTORE, ENV } from '@bk2/shared/config';
 
 import { saveComment } from '@bk2/comment/util';
-import { addIndexElement, createModel, updateModel } from '@bk2/shared/util';
+import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
 
 @Injectable({
   providedIn: 'root'

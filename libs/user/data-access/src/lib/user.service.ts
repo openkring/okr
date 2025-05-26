@@ -4,12 +4,10 @@ import { Observable } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { UserCollection, UserModel } from '@bk2/shared/models';
-import { createModel, findAllByField, findByField, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 
 import { saveComment } from '@bk2/comment/util';
-
-import { isUser } from '@bk2/user/util';
+import { createModel, findAllByField, findByField, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
 
 @Injectable({
     providedIn: 'root'
@@ -18,7 +16,7 @@ export class UserService  {
   private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
   private readonly modalController = inject(ModalController);
-  private toastController = inject(ToastController);
+  private readonly toastController = inject(ToastController);
   private readonly tenantId = this.env.owner.tenantId;
 
   /* ---------------------- Standard CRUD operations -------------------------------*/

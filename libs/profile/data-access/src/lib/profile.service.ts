@@ -1,14 +1,15 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ToastController } from '@ionic/angular/standalone';
-
-import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared/models';
-import { readModel, updateModel } from '@bk2/shared/data-access';
-import { FIRESTORE } from '@bk2/shared/config';
-import { AppStore } from '@bk2/auth/feature';
-import { confirmAction } from '@bk2/shared/i18n';
 import { collection, query } from 'firebase/firestore';
 import { collectionData } from 'rxfire/firestore';
+
+import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared/models';
+import { FIRESTORE } from '@bk2/shared/config';
+import { confirmAction } from '@bk2/shared/i18n';
+
+import { AppStore } from '@bk2/auth/feature';
+import { readModel, updateModel } from '@bk2/shared/util';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +19,7 @@ export class ProfileService {
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
 
-  private toastLength = computed(() => this.appStore.toastLength());
+  private readonly toastLength = computed(() => this.appStore.toastLength());
 
   /** a profile can not be created. */
 
@@ -32,8 +33,8 @@ export class ProfileService {
    * @param vm the ProfileFormModel with the new values. It contains data of the currentUser and the person corresponding to it.
    */
   public async update(person: PersonModel, user: UserModel): Promise<void> {
-    await updateModel(this.firestore, PersonCollection, person, undefined, undefined);
-    await updateModel(this.firestore, UserCollection, user, undefined, undefined);
+    await updateModel(this.firestore, PersonCollection, person);
+    await updateModel(this.firestore, UserCollection, user);
     await confirmAction('@profile.operation.update.conf', true, this.toastController, this.toastLength());
   }
 

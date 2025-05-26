@@ -2,13 +2,13 @@ import { inject, Injectable } from '@angular/core';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { map, Observable, of } from 'rxjs';
 
+import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { GroupCollection, GroupModel, ModelType, UserModel } from '@bk2/shared/models';
+import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+
 import { saveComment } from '@bk2/comment/util';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
-import { GroupCollection, GroupModel, ModelType, UserModel } from '@bk2/shared/models';
 import { convertFormToNewGroup, GroupNewFormModel } from '@bk2/group/util';
-import { GroupNewModalComponent } from '@bk2/group/feature';
 
 
 @Injectable({

@@ -4,16 +4,11 @@ import { ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { PersonalRelCollection, PersonalRelModel, PersonModel } from '@bk2/shared/models';
-import { createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
-import { selectDate } from '@bk2/shared/ui';
-import { convertDateFormatToString, DateFormat, isPerson, isPersonalRel, removeDuplicatesFromArray } from '@bk2/shared/util';
-import { PersonSelectModalComponent } from '@bk2/shared/feature';
+import { convertDateFormatToString, createModel, DateFormat, getSystemQuery, isPerson, isPersonalRel, removeDuplicatesFromArray, searchData, updateModel } from '@bk2/shared/util';
 
-import { AppStore } from '@bk2/auth/feature';
 import { saveComment } from '@bk2/comment/util';
 
 import { convertFormToNewPersonalRel, getPersonalRelSearchIndex, getPersonalRelSearchIndexInfo, PersonalRelNewFormModel } from '@bk2/personal-rel/util';
-import { PersonalRelEditModalComponent, PersonalRelNewModalComponent } from '@bk2/personal-rel/feature';
 
 @Injectable({
     providedIn: 'root'
@@ -120,9 +115,7 @@ export class PersonalRelService {
    */
   public async edit(personalRel?: PersonalRelModel): Promise<void> {
     let _personalRel = personalRel;
-    if (!_personalRel) {
-      _personalRel = new PersonalRelModel(this.tenantId);
-    }
+    _personalRel ??= new PersonalRelModel(this.tenantId);
     
     const _modal = await this.modalController.create({
       component: PersonalRelEditModalComponent,

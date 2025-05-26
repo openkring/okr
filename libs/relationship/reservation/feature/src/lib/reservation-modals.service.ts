@@ -6,7 +6,7 @@ import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } fro
 import { AppStore } from "@bk2/auth/feature";
 
 import { convertFormToNewReservation, isReservation, ReservationNewFormModel } from "@bk2/reservation/util";
-import { ReservationService } from "@bk2/reservation/data";
+import { ReservationService } from "@bk2/reservation/data-access";
 import { ReservationNewModalComponent } from "./reservation-new.modal";
 import { ReservationEditModalComponent } from "./reservation-edit.modal";
 
