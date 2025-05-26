@@ -3,7 +3,7 @@ import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
 import { ColorIonic, SectionModel, SectionType } from '@bk2/shared/models';
 import { categoryValidations, stringValidations } from '@bk2/shared/util';
-import { baseValidations } from '@bk2/shared/data';
+import { baseValidations } from '@bk2/shared/data-access';
 
 
 export const sectionValidations = staticSuite((model: SectionModel, field?: string) => {

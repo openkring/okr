@@ -5,7 +5,7 @@ import { AlertController } from '@ionic/angular/standalone';
 
 import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/auth/feature';
-import { OwnershipService } from '@bk2/ownership/data';
+import { OwnershipService } from '@bk2/ownership/data-access';
 import { debugListLoaded, isValidAt } from '@bk2/shared/util';
 import { of } from 'rxjs';
 import { confirm } from '@bk2/shared/i18n';

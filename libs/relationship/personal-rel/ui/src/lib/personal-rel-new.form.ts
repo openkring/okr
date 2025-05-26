@@ -10,9 +10,9 @@ import { debugFormErrors, hasRole } from '@bk2/shared/util';
 import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
 import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidations, PersonalRelNewFormModel, personalRelNewFormValidations } from '@bk2/personal-rel/util';
+import { PersonalRelFormModel, personalRelFormModelShape, PersonalRelNewFormModel, personalRelNewFormValidations } from '@bk2/personal-rel/util';
 import { PersonalRelTypes } from '@bk2/shared/categories';
-import { PersonalRelService } from '@bk2/personal-rel/data';
+import { PersonalRelService } from '@bk2/personal-rel/data-access';
 
 @Component({
   selector: 'bk-personal-rel-new-form',

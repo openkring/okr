@@ -1,6 +1,6 @@
 import { enforce, only, staticSuite, test} from 'vest';
 import { ContentState, PageModel, PageType } from '@bk2/shared/models';
-import { baseValidations } from '@bk2/shared/data';
+import { baseValidations } from '@bk2/shared/data-access';
 import { categoryValidations, isArrayOfStrings, stringValidations } from '@bk2/shared/util';
 import { DESCRIPTION_LENGTH, NAME_LENGTH } from '@bk2/shared/config';
 

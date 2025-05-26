@@ -8,9 +8,9 @@ import { ENV } from '@bk2/shared/config';
 import { WorkingRelModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/auth/feature';
 import { debugListLoaded, isValidAt } from '@bk2/shared/util';
-import { AvatarService } from '@bk2/avatar/data';
+import { AvatarService } from '@bk2/avatar/data-access';
 import { confirm } from '@bk2/shared/i18n';
-import { WorkingRelService } from '@bk2/working-rel/data';
+import { WorkingRelService } from '@bk2/working-rel/data-access';
 
 export type WorkingRelAccordionState = {
   personKey: string | undefined;

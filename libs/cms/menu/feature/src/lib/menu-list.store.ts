@@ -5,7 +5,7 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared/config';
 import { AllCategories, MenuAction, MenuItemModel } from '@bk2/shared/models';
-import { MenuService } from '@bk2/cms/menu/data';
+import { MenuService } from '@bk2/cms/menu/data-access';
 import { categoryMatches } from '@bk2/shared/categories';
 import { isMenuItem } from '@bk2/cms/menu/util';
 import { MenuItemModalComponent } from './menu.modal';

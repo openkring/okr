@@ -8,7 +8,7 @@ import { ModelType, UserCollection } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { debugFormModel, getFullPersonName } from '@bk2/shared/util';
 
-import { AvatarService } from '@bk2/avatar/data';
+import { AvatarService } from '@bk2/avatar/data-access';
 import { AvatarToolbarComponent } from '@bk2/avatar/ui';
 import { CommentsCardComponent } from '@bk2/comment/feature';
 

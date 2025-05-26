@@ -1,0 +1,302 @@
+import { Injectable, inject } from '@angular/core';
+import { map, Observable, of } from 'rxjs';
+import { ref, getDownloadURL, getMetadata, listAll, FullMetadata } from "firebase/storage";
+import { ModalController } from '@ionic/angular/standalone';
+
+import { DocumentTypes, categoryMatches, getCategoryAbbreviation } from '@bk2/shared/categories';
+import { DocumentCollection, DocumentModel, DocumentType, Image, MenuItemCollection, ModelType } from '@bk2/shared/models';
+import { DateFormat, chipMatches, convertDateFormatToString, die, dirname, fileSizeUnit, generateRandomString, getTodayStr, nameMatches, warn } from '@bk2/shared/util';
+import { ENV, FIRESTORE, STORAGE } from '@bk2/shared/config';
+import { getDocumentStoragePath } from '@bk2/document/util';
+import { addIndexElement, createModel, getSystemQuery, readModel, searchData, updateModel } from '@bk2/shared/data-access';
+import { ToastController } from '@ionic/angular';
+import { saveComment } from '@bk2/comment/util';
+import { error } from '@bk2/shared/i18n';
+import { ImageSelectModalComponent } from '@bk2/document/feature';
+import { AppStore } from '@bk2/auth/feature';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DocumentService {
+  private readonly env = inject(ENV);
+  private readonly firestore = inject(FIRESTORE);
+  private readonly toastController = inject(ToastController);
+  private readonly modalController = inject(ModalController);
+  private readonly storage = inject(STORAGE);
+  private readonly appStore = inject(AppStore);
+
+  private readonly tenantId = this.env.owner.tenantId;
+
+  /*-------------------------- CRUD operations --------------------------------*/
+  /**
+   * Save a new document into the database.
+   * @param document the new document to be saved
+   * @returns the document id of the new DocumentModel in the database
+   */
+  public async create(document: DocumentModel): Promise<string> {
+    document.index = this.getSearchIndex(document);
+    const _key = await createModel(this.firestore, DocumentCollection, document, this.tenantId, `@document.operation.create`, this.toastController);
+    await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), MenuItemCollection, _key, '@comment.operation.initial.conf');
+    return _key;
+  }
+
+  /**
+   * Read a document from the database by returning an Observable of a DocumentModel by uid.
+   * @param firestore a handle to the Firestore database
+   * @param uid the key of the model document
+   */
+  public read(key: string): Observable<DocumentModel | undefined> {
+    if (!key || key.length === 0) return of(undefined);
+    return this.list().pipe(
+      map((documents: DocumentModel[]) => {
+        return documents.find((document: DocumentModel) => document.bkey === key);
+      }));
+  }
+
+  /**
+   * Update an existing document with new values.
+   * @param document the DocumentModel with the new values
+   */
+  public async update(document: DocumentModel, confirmationMessage = '@document.operation.update'): Promise<void> {
+    document.index = this.getSearchIndex(document);
+    await updateModel(this.firestore, DocumentCollection, document, confirmationMessage, this.toastController);
+  }
+
+  /**
+   * Delete an existing document in the database by archiving it.
+   * @param document the DocumentModel to be deleted.
+   */
+  public async delete(document: DocumentModel): Promise<void> {
+    document.isArchived = true;
+    await this.update(document, '@document.operation.delete');
+  }
+
+ /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
+ /**
+   * List all documents.
+   * @param orderBy 
+   * @param sortOrder 
+   * @returns 
+   */
+  public list(orderBy = 'name', sortOrder = 'asc'): Observable<DocumentModel[]> {
+    return searchData<DocumentModel>(this.firestore, DocumentCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+  }
+
+  public listDocumentsByStorageDirectory(modelType: ModelType, key: string): Observable<DocumentModel[]> {
+    const _dir = getDocumentStoragePath(this.tenantId, modelType, key);
+    return _dir ? this.listDocumentsByDirectory(_dir) : of<DocumentModel[]>([]);
+  }
+
+  public listDocumentsByDirectory(dir: string, orderBy = 'name', sortOrder = 'asc'): Observable<DocumentModel[]> {
+    const _dbQuery = getSystemQuery(this.tenantId);
+    _dbQuery.push({ key: 'dir', operator: '==', value: dir });
+    return searchData<DocumentModel>(this.firestore, DocumentCollection, _dbQuery, orderBy, sortOrder);
+  }
+
+  public async listDocumentsFromStorageDirectory(modelType: ModelType, key: string): Promise<DocumentModel[]> {
+    const _docs: DocumentModel[] = [];
+    const _path = getDocumentStoragePath(this.tenantId, modelType, key);
+    const _ref = ref(this.storage, _path);
+    try {
+      const _items = await listAll(_ref);
+      await Promise.all(_items.items.map(async (_item) => {
+        const _metadata = await getMetadata(_item);
+        const _doc = await this.convertStorageMetadataToDocumentModel(_metadata);
+        _docs.push(_doc);
+      }));
+    }
+    catch(_ex) {
+      error(undefined, 'DocumentService.listDocumentsFromStorageDirectory: ERROR: ' + JSON.stringify(_ex));
+    }
+    return _docs;
+  }
+
+  public filter(searchTerm: string, selectedCategory: number, selectedTag: string): Observable<DocumentModel[]> {
+    return this.list().pipe(
+      map((_documents) => _documents.filter((_document) =>  {
+        if (!_document.docType) {
+          warn('DocumentService.filter: ERROR: document.docType is mandatory.');
+          return false;
+        }
+        return nameMatches(_document.name, searchTerm) && 
+        categoryMatches(_document.docType, selectedCategory) &&
+        chipMatches(_document.tags, selectedTag)
+      }
+      ))
+    );
+  }
+
+  /*-------------------------- UPLOAD -------------------------------*/
+  public async pickAndUploadImage(key: string): Promise<Image | undefined> {
+    const _modal = await this.modalController.create({
+      component: ImageSelectModalComponent,
+      cssClass: 'wide-modal',
+      componentProps: {
+        key: key,
+        currentUser: this.appStore.currentUser()
+      }
+    });
+    _modal.present();
+
+    const { data, role } = await _modal.onWillDismiss();
+    if(role === 'confirm') {
+      return data as Image;
+    }
+    return undefined;
+  }
+  
+  /*-------------------------- CONVERSION --------------------------------*/
+  /**
+   * Convert a file to a DocumentModel.
+   * @param file the file to convert
+   * @param fullPath the full path of the file (/dir/filename.extension)
+   * @returns the DocumentModel
+   */
+  public async getDocumentFromFile(file: File, fullPath: string): Promise<DocumentModel> {
+    const _doc = new DocumentModel(this.tenantId);
+    _doc.name = file.name;
+    _doc.fileName = file.name.split('.')[0];
+    _doc.extension = file.name.split('.')[1];
+    _doc.description = '';
+    _doc.docType = DocumentType.InternalFile;
+
+    _doc.url = await getDownloadURL(ref(this.storage, fullPath));
+    _doc.dateOfDocCreation = getTodayStr();
+    _doc.dateOfDocLastUpdate = getTodayStr();
+    _doc.dir = dirname(fullPath);
+    _doc.mimeType = file.type;
+    _doc.size = file.size;
+    _doc.priorVersionKey = '';
+    _doc.version = '1.0.0';
+    _doc.isArchived = false;
+    return _doc;
+  }
+
+  private async convertStorageMetadataToDocumentModel(metadata: FullMetadata): Promise<DocumentModel> {
+    const _doc = new DocumentModel(this.tenantId);
+    _doc.bkey = generateRandomString(10);
+    _doc.name = metadata.name;
+    _doc.fileName = metadata.name.split('.')[0];
+    _doc.extension = metadata.name.split('.')[1];
+    _doc.description = '';
+    _doc.docType = DocumentType.InternalFile;
+    _doc.url = await getDownloadURL(ref(this.storage, metadata.fullPath));
+    //_doc.url = getImgixUrl(metadata.fullPath, undefined);
+    _doc.dateOfDocCreation = convertDateFormatToString(metadata.timeCreated.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
+    _doc.dateOfDocLastUpdate = convertDateFormatToString(metadata.updated.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
+    _doc.dir = dirname(metadata.fullPath);
+    _doc.mimeType = metadata.contentType ?? '';
+    _doc.size = metadata.size;
+    _doc.priorVersionKey = '';
+    _doc.version = '1.0.0';
+    _doc.isArchived = false;
+    _doc.md5hash = metadata.md5Hash ?? '';
+    return _doc;
+  }
+  
+  /*-------------------------- SEARCH INDEX --------------------------------*/
+  public getSearchIndex(document: DocumentModel): string {
+    if (!document.docType) die('DocumentService.getSearchIndex: ERROR: document.docType is mandatory.');
+    let _index = '';
+    _index = addIndexElement(_index, 'n', document.name);
+    _index = addIndexElement(_index, 'c', getCategoryAbbreviation(DocumentTypes, document.docType));
+    _index = addIndexElement(_index, 'e', document.extension);
+    _index = addIndexElement(_index, 'd', document.dir);
+    return _index;
+    }
+
+  /**
+   * Returns a string explaining the structure of the index.
+   * This can be used in info boxes on the GUI.
+   */
+  public getSearchIndexInfo(): string {
+    return 'n:name c:documentTypeAbbreviation e:extension, d:directory';
+  }
+
+  /*-------------------------- STORAGE --------------------------------*/
+  /**
+   * Check if a document exists at a specific location in the storage.
+   * @param fullPath the specific location in the storage
+   * @param isStrict if true, the functiond throws an error if the document does not exist
+   * @returns true if the document exists in the given storage location, false otherwise
+   */
+  public async doesDocumentExistInStorage(fullPath: string, isStrict = true): Promise<boolean> {
+    try {
+      await getDownloadURL(ref(this.storage, fullPath));
+      return true;
+    }
+    catch {
+      if (isStrict === true) {
+        error(undefined, 'DocumentService.doesDocumentExistInStorage: ERROR: document ' + fullPath + ' does not exist in storage.');
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Returns the size of a document.
+   * @param path the full path of the document in the storage
+   * @returns the size of the document in bytes or undefined if the document does not exist
+   */
+  public async getSize(path: string): Promise<number | undefined>{
+    const _ref = ref(this.storage, path);
+    try {
+      const _metadata = await getMetadata(_ref);
+      console.log('DocumentService.getSize: metadata: ' + JSON.stringify(_metadata));
+      return _metadata.size;
+    }
+    catch(_ex) {
+      error(undefined, 'DocumentService.getSize: ERROR: ' + JSON.stringify(_ex));
+    }
+    return undefined;
+  }
+
+  /**
+   * Calculates the sum of the sizes of all files in a given path.
+   * items = files, prefixes = folders
+   * @param path a directory in the storage
+   * @param isRecursive 
+   */
+  public async calculateStorageConsumption(path: string, isRecursive = false): Promise<void> {
+    const _ref = ref(this.storage, path);
+    let _totalSize = 0;
+    console.log('Calculating storage consumption for ' + path);
+    try {
+      const _result = await listAll(_ref);
+      for (const _item of _result.items) {
+        const _size = (await getMetadata(_item)).size;
+        console.log('    ' + _item.fullPath + ': ' + _size);
+        _totalSize += _size;
+      }
+      console.log(path + ': ' + _result.items.length + ' files with ' + fileSizeUnit(_totalSize));
+      if (isRecursive === true) {
+        for (const _prefix of _result.prefixes) {
+          await this.calculateStorageConsumption(_prefix.fullPath, true);
+        }
+      }
+    }
+    catch(_ex) {
+      error(undefined, 'DocumentService.calculateStorageConsumption: ERROR: ' + JSON.stringify(_ex));
+    }
+  }
+
+  /**
+   * Print the metadata of a document in the storage for debugging purposes.
+   * @param path the full path of the document in the storage
+   */
+  public async getRefInfo(path: string): Promise<void> {
+    const _ref = ref(this.storage, path);
+    console.log(_ref.fullPath + ': ');
+    try {
+      const _metadata = await getMetadata(_ref);
+      console.log('    contentType: ' + _metadata.contentType);
+      console.log('    size: ' + fileSizeUnit(_metadata.size));
+      console.log('    created: ' + _metadata.timeCreated);
+      console.log('    hash: ' + _metadata.md5Hash);
+    }
+    catch(_ex) {
+      console.log('    no metadata; probably it is a folder.', _ex);
+    }
+  }
+}

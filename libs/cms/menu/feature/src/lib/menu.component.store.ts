@@ -1,6 +1,6 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
-import { MenuService } from '@bk2/cms/menu/data';
+import { MenuService } from '@bk2/cms/menu/data-access';
 import { rxResource } from '@angular/core/rxjs-interop';
 
 export type MenuState = {

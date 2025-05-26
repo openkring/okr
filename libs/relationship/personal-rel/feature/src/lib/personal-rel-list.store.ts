@@ -9,7 +9,7 @@ import { AllCategories, ModelType, PersonalRelModel, PersonalRelType } from '@bk
 
 import { AppStore } from '@bk2/auth/feature';
 
-import { PersonalRelService } from '@bk2/personal-rel/data';
+import { PersonalRelService } from '@bk2/personal-rel/data-access';
 import { categoryMatches } from '@bk2/shared/categories';
 
 export type PersonalRelListState = {

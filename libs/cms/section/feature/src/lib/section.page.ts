@@ -8,7 +8,7 @@ import { ChangeConfirmationComponent, HeaderComponent, SpinnerComponent } from '
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { ModelType, SectionModel } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { SectionService } from '@bk2/cms/section/data';
+import { SectionService } from '@bk2/cms/section/data-access';
 import { convertFormToSection, convertSectionToForm, SectionFormModel } from '@bk2/cms/section/util';
 import { PreviewModalComponent } from './section-preview.modal';
 import { rxResource } from '@angular/core/rxjs-interop';

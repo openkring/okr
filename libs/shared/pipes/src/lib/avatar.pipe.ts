@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
 import { getCategoryIcon, ModelTypes, ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
 import { ENV, FIRESTORE } from "@bk2/shared/config";
-import { readModel } from '@bk2/shared/data';
+import { readModel } from '@bk2/shared/data-access';
 import { AvatarCollection, AvatarModel, ModelType, ResourceType } from '@bk2/shared/models';
 import { addImgixParams, getModelAndKey } from '@bk2/shared/util';
 import { Firestore } from 'firebase/firestore';

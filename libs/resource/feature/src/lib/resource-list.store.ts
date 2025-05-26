@@ -5,10 +5,10 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { AppNavigationService, chipMatches, nameMatches, navigateByUrl } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AllCategories, GenderType, ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
-import { ResourceService } from '@bk2/resource/data';
+import { ResourceService } from '@bk2/resource/data-access';
 import { AppStore } from '@bk2/auth/feature';
 import { Router } from '@angular/router';
 

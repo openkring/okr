@@ -7,7 +7,7 @@ import { CategoryPlainNamePipe, getAvatarImgixUrl, SvgIconPipe } from '@bk2/shar
 import { ColorsIonic } from '@bk2/shared/categories';
 import { newImage } from '@bk2/cms/section/util';
 import { showZoomedImage } from '@bk2/shared/ui';
-import { AvatarService } from '@bk2/avatar/data';
+import { AvatarService } from '@bk2/avatar/data-access';
 import { ColorIonic, ImageAction } from '@bk2/shared/models';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 

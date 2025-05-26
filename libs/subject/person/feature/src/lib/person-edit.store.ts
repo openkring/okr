@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { AddressModel, ModelType, PersonModel, ResourceModel } from '@bk2/shared/models';
-import { PersonService } from '@bk2/person/data';
+import { PersonService } from '@bk2/person/data-access';
 import { Observable, of } from 'rxjs';
 import { AppStore } from '@bk2/auth/feature';
 import { convertFormToPerson, PersonFormModel } from '@bk2/person/util';

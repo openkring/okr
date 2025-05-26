@@ -4,14 +4,14 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { FIRESTORE } from '@bk2/shared/config';
-import { chipMatches, getYear, getYearFromDate, nameMatches } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data';
+import { chipMatches, getYear, nameMatches } from '@bk2/shared/util';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { categoryMatches, yearMatches } from '@bk2/shared/categories';
 import { AllCategories, ModelType, TransferCollection, TransferModel, TransferType } from '@bk2/shared/models';
 
 import { AppStore } from '@bk2/auth/feature';
 
-import { TransferService } from '@bk2/transfer/data';
+import { TransferService } from '@bk2/transfer/data-access';
 import { TransferModalsService } from './transfer-modals.service';
 
 export type TransferListState = {

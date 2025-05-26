@@ -9,7 +9,7 @@ import { categoryMatches, ownerTypeMatches } from '@bk2/shared/categories';
 
 import { AppStore } from '@bk2/auth/feature';
 
-import { OwnershipService } from '@bk2/ownership/data';
+import { OwnershipService } from '@bk2/ownership/data-access';
 import { confirm } from '@bk2/shared/i18n';
 
 export type OwnershipListState = {

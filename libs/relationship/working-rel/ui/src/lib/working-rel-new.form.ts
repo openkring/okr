@@ -12,7 +12,7 @@ import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { WorkingRelFormModel, workingRelFormModelShape, WorkingRelNewFormModel, workingRelNewFormValidations } from '@bk2/working-rel/util';
 import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared/categories';
-import { WorkingRelService } from '@bk2/working-rel/data';
+import { WorkingRelService } from '@bk2/working-rel/data-access';
 
 @Component({
   selector: 'bk-working-rel-new-form',

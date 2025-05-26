@@ -7,7 +7,7 @@ import { ENV } from '@bk2/shared/config';
 import { AddressModel, ModelType, OrgModel } from '@bk2/shared/models';
 import { Observable, of } from 'rxjs';
 import { AppStore } from '@bk2/auth/feature';
-import { OrgService } from '@bk2/org/data';
+import { OrgService } from '@bk2/org/data-access';
 import { convertFormToOrg, OrgFormModel } from '@bk2/org/util';
 import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
 

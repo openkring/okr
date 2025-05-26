@@ -7,14 +7,14 @@ import { firstValueFrom, Observable, of } from 'rxjs';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
 import { debugItemLoaded, debugListLoaded, isValidAt } from '@bk2/shared/util';
-import { readModel } from '@bk2/shared/data';
+import { readModel } from '@bk2/shared/data-access';
 import { confirm } from '@bk2/shared/i18n';
 import { getAvatarImgixUrl } from '@bk2/shared/pipes';
 
-import { AvatarService } from '@bk2/avatar/data';
+import { AvatarService } from '@bk2/avatar/data-access';
 import { AppStore } from '@bk2/auth/feature';
 
-import { MembershipService } from '@bk2/membership/data';
+import { MembershipService } from '@bk2/membership/data-access';
 
 
 export type MembersAccordionState = {

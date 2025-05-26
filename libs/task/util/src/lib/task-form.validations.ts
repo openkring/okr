@@ -2,7 +2,7 @@ import { only, staticSuite} from 'vest';
 import { categoryValidations, dateValidations, stringValidations } from '@bk2/shared/util';
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
 import { TaskFormModel } from './task-form.model';
-import { avatarInfoValidations } from '@bk2/shared/data';
+import { avatarInfoValidations } from '@bk2/shared/data-access';
 import { Importance, Priority, TaskState } from '@bk2/shared/models';
 
 

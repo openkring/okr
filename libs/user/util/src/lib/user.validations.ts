@@ -1,5 +1,5 @@
 import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
-import { baseValidations } from '@bk2/shared/data';
+import { baseValidations } from '@bk2/shared/data-access';
 import { AvatarUsage, DeliveryType, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@bk2/shared/models';
 import { booleanValidations, categoryValidations, numberValidations, stringValidations } from '@bk2/shared/util';
 import { only, staticSuite} from 'vest';

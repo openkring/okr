@@ -7,7 +7,7 @@ import { ENV } from '@bk2/shared/config';
 import { AppStore } from '@bk2/auth/feature';
 import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
 
-import { ResourceService } from '@bk2/resource/data';
+import { ResourceService } from '@bk2/resource/data-access';
 import { ModelType, ResourceModel} from '@bk2/shared/models';
 import { convertFormToResource, ResourceFormModel } from '@bk2/resource/util';
 import { Observable, of } from 'rxjs';

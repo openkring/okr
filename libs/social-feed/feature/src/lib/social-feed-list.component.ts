@@ -5,7 +5,7 @@ import { IonContent, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLi
 
 import { SocialPostComponent } from '@bk2/social-feed/ui';
 import { SocialPostModel } from '@bk2/social-feed/model';
-import { SocialFeedService } from '@bk2/social-feed/data';
+import { SocialFeedService } from '@bk2/social-feed/data-access';
 
 
 @Component({

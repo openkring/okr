@@ -8,7 +8,7 @@ import { ImageComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { ViewPositions } from '@bk2/shared/categories';
 import { deleteFileFromStorage, TranslatePipe } from '@bk2/shared/i18n';
 import { newImage, SectionFormModel } from '@bk2/cms/section/util';
-import { SectionService } from '@bk2/cms/section/data';
+import { SectionService } from '@bk2/cms/section/data-access';
 
 /**
  * This form lets a user pick an image and define its properties.

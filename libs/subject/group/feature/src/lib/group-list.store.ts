@@ -6,9 +6,9 @@ import { catchError, finalize, of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { AppNavigationService, chipMatches, nameMatches, navigateByUrl } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { GroupCollection, GroupModel, ModelType } from '@bk2/shared/models';
-import { GroupService } from '@bk2/group/data';
+import { GroupService } from '@bk2/group/data-access';
 import { AppStore } from '@bk2/auth/feature';
 import { Router } from '@angular/router';
 

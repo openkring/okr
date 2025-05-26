@@ -8,8 +8,8 @@ import { ImageComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { arrayMove } from '@bk2/shared/util';
 import { deleteFileFromStorage, TranslatePipe } from '@bk2/shared/i18n';
 import { SectionFormModel } from '@bk2/cms/section/util';
-import { SectionService } from '@bk2/cms/section/data';
-import { DocumentService } from '@bk2/document/data';
+import { SectionService } from '@bk2/cms/section/data-access';
+import { DocumentService } from '@bk2/document/data-access';
 
 /**
  * This form lets a user compose a list of images.

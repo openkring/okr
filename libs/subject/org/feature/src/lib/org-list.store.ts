@@ -6,10 +6,10 @@ import { catchError, finalize, of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { AppNavigationService, chipMatches, nameMatches, navigateByUrl } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared/models';
-import { OrgService } from '@bk2/org/data';
+import { OrgService } from '@bk2/org/data-access';
 import { AppStore } from '@bk2/auth/feature';
 import { Router } from '@angular/router';
 import { copyToClipboardWithConfirmation } from '@bk2/shared/i18n';

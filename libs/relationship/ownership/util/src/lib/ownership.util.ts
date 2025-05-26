@@ -2,7 +2,7 @@ import { END_FUTURE_DATE_STR } from '@bk2/shared/config';
 import { AccountModel, AccountType, GenderType, ModelType, OrgModel, OwnershipModel, OwnershipType, Periodicity, PersonModel, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
 import { die, getTodayStr, isPerson, isResource, isType } from '@bk2/shared/util';
 import { OwnershipFormModel } from './ownership-form.model';
-import { addIndexElement } from '@bk2/shared/data';
+import { addIndexElement } from '@bk2/shared/data-access';
 
 export function newOwnershipFormModel(): OwnershipFormModel {
   return {

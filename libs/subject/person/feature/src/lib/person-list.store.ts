@@ -7,12 +7,12 @@ import { ENV } from '@bk2/shared/config';
 import { AppNavigationService, chipMatches, debugListLoaded, hasRole, nameMatches, navigateByUrl } from '@bk2/shared/util';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AllCategories, GenderType, ModelType, PersonModel } from '@bk2/shared/models';
-import { PersonService } from '@bk2/person/data';
+import { PersonService } from '@bk2/person/data-access';
 import { AppStore } from '@bk2/auth/feature';
 import { copyToClipboardWithConfirmation } from '@bk2/shared/i18n';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CategoryService } from '@bk2/category/data';
+import { CategoryService } from '@bk2/category/data-access';
 
 export type PersonListState = {
   orgId: string;

@@ -10,9 +10,9 @@ import { categoryMatches, yearMatches } from '@bk2/shared/categories';
 
 import { AppStore } from '@bk2/auth/feature';
 
-import { ReservationService } from '@bk2/reservation/data';
+import { ReservationService } from '@bk2/reservation/data-access';
 import { ReservationModalsService } from './reservation-modals.service';
-import { findByKey, getSystemQuery, searchData } from '@bk2/shared/data';
+import { findByKey, getSystemQuery, searchData } from '@bk2/shared/data-access';
 
 export type ReservationListState = {
   resourceId: string;

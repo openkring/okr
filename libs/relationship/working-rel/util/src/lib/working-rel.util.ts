@@ -1,6 +1,6 @@
 import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
 import { die, getTodayStr, isType } from "@bk2/shared/util";
-import { addIndexElement } from '@bk2/shared/data';
+import { addIndexElement } from '@bk2/shared/data-access';
 import { WorkingRelFormModel } from "./working-rel-form.model";
 import { GenderType, WorkingRelModel, WorkingRelType, PersonModel, UserModel, OrgModel, OrgType, WorkingRelState, Periodicity, ModelType } from "@bk2/shared/models";
 import { WorkingRelNewFormModel } from "./working-rel-new-form.model";

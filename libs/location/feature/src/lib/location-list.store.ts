@@ -6,7 +6,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { ENV } from '@bk2/shared/config';
 import { chipMatches, nameMatches } from '@bk2/shared/util';
 import { AllCategories, LocationModel, LocationType, ModelType } from '@bk2/shared/models';
-import { LocationService } from '@bk2/location/data';
+import { LocationService } from '@bk2/location/data-access';
 import { categoryMatches } from '@bk2/shared/categories';
 import { isLocation } from '@bk2/location/util';
 import { LocationEditModalComponent } from './location-edit.modal';

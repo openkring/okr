@@ -10,7 +10,7 @@ import { ModelType, PersonCollection } from '@bk2/shared/models';
 import { getFullPersonName, hasRole } from '@bk2/shared/util';
 
 import { AvatarToolbarComponent } from '@bk2/avatar/ui';
-import { AvatarService } from '@bk2/avatar/data';
+import { AvatarService } from '@bk2/avatar/data-access';
 
 import { AddressesAccordionComponent } from '@bk2/address/feature';
 import { CommentsAccordionComponent } from '@bk2/comment/feature';

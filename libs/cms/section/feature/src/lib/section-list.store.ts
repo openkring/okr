@@ -7,7 +7,7 @@ import { ENV } from '@bk2/shared/config';
 import { AllCategories, SectionModel, SectionType } from '@bk2/shared/models';
 import { categoryMatches, SectionTypes } from '@bk2/shared/categories';
 import { nameMatches } from '@bk2/shared/util';
-import { SectionService } from '@bk2/cms/section/data';
+import { SectionService } from '@bk2/cms/section/data-access';
 import { createSection, isSection } from '@bk2/cms/section/util';
 import { firstValueFrom } from 'rxjs';
 import { SectionEditModalComponent } from './section-edit.modal';

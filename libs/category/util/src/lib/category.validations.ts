@@ -1,5 +1,5 @@
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
-import { baseValidations } from '@bk2/shared/data';
+import { baseValidations } from '@bk2/shared/data-access';
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared/models';
 import { booleanValidations, numberValidations, stringValidations } from '@bk2/shared/util';
 import { only, staticSuite} from 'vest';

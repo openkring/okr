@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared/config';
-import { CalEventService } from '@bk2/calevent/data';
+import { CalEventService } from 'libs/calevent/data-access/src';
 import { CalEventModel } from '@bk2/shared/models';
 import { convertCalEventToFullCalendar } from '@bk2/calevent/util';
 import { map, of } from 'rxjs';

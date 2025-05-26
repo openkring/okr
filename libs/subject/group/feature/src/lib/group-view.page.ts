@@ -7,7 +7,7 @@ import { RoleName } from '@bk2/shared/config';
 import { GroupCollection, ModelType } from '@bk2/shared/models';
 import { hasRole } from '@bk2/shared/util';
 
-import { AvatarService } from '@bk2/avatar/data';
+import { AvatarService } from '@bk2/avatar/data-access';
 import { getDocumentStoragePath } from '@bk2/document/util';
 
 import { GroupEditStore } from './group-edit.store';

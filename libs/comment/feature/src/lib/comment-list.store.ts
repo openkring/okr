@@ -5,7 +5,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { debugListLoaded } from '@bk2/shared/util';
 import { AppStore } from '@bk2/auth/feature';
 import { of } from 'rxjs';
-import { CommentService } from '@bk2/comment/data';
+import { CommentService } from '@bk2/comment/data-access';
 
 export type CommentListState = {
   collectionName: string;

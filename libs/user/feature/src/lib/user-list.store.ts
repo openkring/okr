@@ -5,8 +5,8 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { AppNavigationService, chipMatches, nameMatches, navigateByUrl } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data';
-import { UserService } from '@bk2/user/data';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
+import { UserService } from '@bk2/user/data-access';
 import { ModelType, UserCollection, UserModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/auth/feature';
 import { Router } from '@angular/router';

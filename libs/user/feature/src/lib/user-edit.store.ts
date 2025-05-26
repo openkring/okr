@@ -5,7 +5,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { AppStore } from '@bk2/auth/feature';
 import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
-import { UserService } from '@bk2/user/data';
+import { UserService } from '@bk2/user/data-access';
 import { ModelType, UserModel } from '@bk2/shared/models';
 
 export type UserEditState = {

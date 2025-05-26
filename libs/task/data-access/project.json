@@ -1,0 +1,20 @@
+{
+  "name": "task/data-access",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/task/data-access/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:task", "platform:mobile", "platform:web"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/task/data-access/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

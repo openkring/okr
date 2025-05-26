@@ -10,7 +10,7 @@ import { categoryMatches } from '@bk2/shared/categories';
 
 import { AppStore } from '@bk2/auth/feature';
 
-import { WorkingRelService } from '@bk2/working-rel/data';
+import { WorkingRelService } from '@bk2/working-rel/data-access';
 
 export type WorkingRelListState = {
   searchTerm: string;

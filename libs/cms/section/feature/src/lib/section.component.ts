@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 
-import { SectionService } from '@bk2/cms/section/data';
+import { SectionService } from '@bk2/cms/section/data-access';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RoleName } from '@bk2/shared/config';
 import { AppStore } from '@bk2/auth/feature';

@@ -2,7 +2,7 @@ import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
 import { GenderType, ModelType, OrgModel, Periodicity, PersonModel, ReservationModel, ReservationReason, ReservationState, ResourceModel, ResourceType, UserModel } from "@bk2/shared/models";
 import { die, getTodayStr, isType } from "@bk2/shared/util";
 import { ReservationFormModel } from "./reservation-form.model";
-import { addIndexElement } from '@bk2/shared/data';
+import { addIndexElement } from '@bk2/shared/data-access';
 import { ReservationNewFormModel } from "./reservation-new-form.model";
 
 export function newReservationFormModel(): ReservationFormModel {

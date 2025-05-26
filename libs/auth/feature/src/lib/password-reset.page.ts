@@ -7,7 +7,7 @@ import { EMAIL_LENGTH, ENV } from '@bk2/shared/config';
 import { getImgixUrlWithAutoParams, navigateByUrl } from '@bk2/shared/util';
 import { HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AuthService } from '@bk2/auth/data';
+import { AuthService } from '@bk2/auth/data-access';
 
 @Component({
     selector: 'bk-password-reset-page',

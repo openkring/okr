@@ -6,7 +6,6 @@ import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon,
 import { CategoryComponent, EmptyListComponent, SearchbarComponent, SingleTagComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { CategoryAbbreviationPipe, FileLogoPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { DocumentService } from '@bk2/document/data';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { hasRole } from '@bk2/shared/util';
 import { AppStore } from '@bk2/auth/feature';

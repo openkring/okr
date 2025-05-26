@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 
 import { ENV } from '@bk2/shared/config';
-import { SectionService } from '@bk2/cms/section/data';
+import { SectionService } from '@bk2/cms/section/data-access';
 import { SectionModel } from '@bk2/shared/models';
 import { convertToKml, warn } from '@bk2/shared/util';
 import { downloadZipFile, error } from '@bk2/shared/i18n';

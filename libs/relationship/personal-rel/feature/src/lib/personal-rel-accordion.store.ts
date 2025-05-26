@@ -9,10 +9,10 @@ import { PersonalRelModel } from '@bk2/shared/models';
 import { debugListLoaded, isValidAt } from '@bk2/shared/util';
 import { confirm } from '@bk2/shared/i18n';
 
-import { AvatarService } from '@bk2/avatar/data';
+import { AvatarService } from '@bk2/avatar/data-access';
 import { AppStore } from '@bk2/auth/feature';
 
-import { PersonalRelService } from '@bk2/personal-rel/data';
+import { PersonalRelService } from '@bk2/personal-rel/data-access';
 
 export type PersonalRelAccordionState = {
   personKey: string | undefined;

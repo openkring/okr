@@ -12,7 +12,7 @@ import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidations } from '@bk2/personal-rel/util';
 import { PersonalRelTypes } from '@bk2/shared/categories';
-import { PersonalRelService } from '@bk2/personal-rel/data';
+import { PersonalRelService } from '@bk2/personal-rel/data-access';
 import { Router } from '@angular/router';
 
 @Component({

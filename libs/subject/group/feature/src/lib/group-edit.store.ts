@@ -10,7 +10,7 @@ import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
 
 import { AppStore } from '@bk2/auth/feature';
 import { convertFormToGroup, GroupFormModel } from '@bk2/group/util';
-import { GroupService } from '@bk2/group/data';
+import { GroupService } from '@bk2/group/data-access';
 
 export type GroupEditState = {
   groupKey: string | undefined;

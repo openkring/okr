@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util';
-import { CategoryService } from '@bk2/category/data';
+import { CategoryService } from '@bk2/category/data-access';
 import { CategoryListModel, ModelType } from '@bk2/shared/models';
 import { firstValueFrom } from 'rxjs';
 import { AppStore } from '@bk2/auth/feature';

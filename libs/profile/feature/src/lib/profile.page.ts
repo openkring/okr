@@ -5,9 +5,9 @@ import { Photo } from '@capacitor/camera';
 
 import { AvatarToolbarComponent } from '@bk2/avatar/ui';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { AvatarService } from '@bk2/avatar/data';
+import { AvatarService } from '@bk2/avatar/data-access';
 import { ModelType } from '@bk2/shared/models';
-import { ProfileService } from '@bk2/profile/data';
+import { ProfileService } from '@bk2/profile/data-access';
 import { I18nService, TranslatePipe } from '@bk2/shared/i18n';
 import { AddressesAccordionComponent } from '@bk2/address/feature';
 import { firstValueFrom } from 'rxjs';

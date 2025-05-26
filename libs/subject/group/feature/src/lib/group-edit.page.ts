@@ -9,7 +9,7 @@ import { GroupCollection, ModelType } from '@bk2/shared/models';
 import { AvatarToolbarComponent } from '@bk2/avatar/ui';
 import { Photo } from '@capacitor/camera';
 import { hasRole } from '@bk2/shared/util';
-import { AvatarService } from '@bk2/avatar/data';
+import { AvatarService } from '@bk2/avatar/data-access';
 import { getDocumentStoragePath } from '@bk2/document/util';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';

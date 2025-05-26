@@ -1,5 +1,5 @@
 import { ABBREVIATION_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
-import { baseValidations } from '@bk2/shared/data';
+import { baseValidations } from '@bk2/shared/data-access';
 import { AccountType, GenderType, ModelType, OrgType, OwnershipModel, OwnershipType, Periodicity, ResourceType, RowingBoatType } from '@bk2/shared/models';
 import { categoryValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared/util';
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';

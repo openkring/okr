@@ -5,12 +5,12 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { FIRESTORE } from '@bk2/shared/config';
 import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getTodayStr, nameMatches } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { AllCategories, ModelType, Priority, TaskCollection, TaskModel, TaskState } from '@bk2/shared/models';
 
 import { AppStore } from '@bk2/auth/feature';
 
-import { TaskService } from '@bk2/task/data';
+import { TaskService } from '@bk2/task/data-access';
 import { TaskModalsService } from './task-modals.service';
 
 export type TaskListState = {

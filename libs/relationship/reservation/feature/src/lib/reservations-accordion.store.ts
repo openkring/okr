@@ -9,7 +9,7 @@ import { debugListLoaded, isValidAt } from '@bk2/shared/util';
 import { confirm } from '@bk2/shared/i18n';
 
 import { AppStore } from '@bk2/auth/feature';
-import { ReservationService } from '@bk2/reservation/data';
+import { ReservationService } from '@bk2/reservation/data-access';
 import { ReservationModalsService } from './reservation-modals.service';
 
 export type ReservationsAccordionState = {

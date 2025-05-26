@@ -1,4 +1,4 @@
-import { baseValidations } from '@bk2/shared/data';
+import { baseValidations } from '@bk2/shared/data-access';
 import { AddressChannel, AddressModel, AddressUsage } from '@bk2/shared/models';
 import { booleanValidations, categoryValidations, stringValidations, urlValidations } from '@bk2/shared/util';
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';

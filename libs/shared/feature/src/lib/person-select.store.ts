@@ -5,7 +5,7 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util';
-import { getSystemQuery, searchData } from '@bk2/shared/data';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
 
 export type PersonSelectState = {

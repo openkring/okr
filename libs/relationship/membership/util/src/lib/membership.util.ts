@@ -4,7 +4,7 @@ import { DateFormat, die, getFullPersonName, getTodayStr, isType } from '@bk2/sh
 import { END_FUTURE_DATE_STR } from '@bk2/shared/config';
 import { CategoryChangeFormModel } from './category-change-form.model';
 import { MembershipNewFormModel } from './membership-new-form.model';
-import { addIndexElement } from '@bk2/shared/data';
+import { addIndexElement } from '@bk2/shared/data-access';
 
 export function newMembershipFormModel(): MembershipFormModel {
   return {

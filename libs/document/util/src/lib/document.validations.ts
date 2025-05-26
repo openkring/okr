@@ -3,7 +3,7 @@ import { categoryValidations, compareDate, dateValidations, isFutureDate, number
 import { DocumentModel } from '@bk2/shared/models';
 import { dirValidations } from './dir.validations';
 import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
-import { baseValidations } from '@bk2/shared/data';
+import { baseValidations } from '@bk2/shared/data-access';
 
 export const documentValidations = staticSuite((model: DocumentModel, field?: string) => {
   if (field) only(field);
