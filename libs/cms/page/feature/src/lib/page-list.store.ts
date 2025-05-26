@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared/config';
-import { PageService } from '@bk2/cms/page/data';
+import { PageService } from '@bk2/cms/page/data-access';
 import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util';
 import { AllCategories, ModelType, PageModel } from '@bk2/shared/models';
 import { PageEditModalComponent } from './page-edit.modal';

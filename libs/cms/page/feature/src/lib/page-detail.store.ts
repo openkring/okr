@@ -2,14 +2,14 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { ENV } from '@bk2/shared/config';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { PageService } from '@bk2/cms/page/data';
+import { PageService } from '@bk2/cms/page/data-access';
 import { die } from '@bk2/shared/util';
 import { ModalController } from '@ionic/angular/standalone';
 import { PageSortModalComponent } from './page-sort.modal';
 import { SectionModel } from '@bk2/shared/models';
 import { SectionTypes } from '@bk2/shared/categories';
 import { createSection } from '@bk2/cms/section/util';
-import { SectionService } from '@bk2/cms/section/data';
+import { SectionService } from '@bk2/cms/section/data-access';
 import { firstValueFrom } from 'rxjs';
 import { SectionSelectModalComponent } from '@bk2/cms/section/feature';
 import { CardSelectModalComponent } from '@bk2/shared/ui';
