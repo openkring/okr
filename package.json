@@ -1,10 +1,28 @@
 {
-  "name": "@bk2/source",
+  "name": "bk2monorepo",
   "version": "1.0.0",
   "packageManager": "pnpm@10.11.0",
   "license": "MIT",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "build": "pnpm install --frozen-lockfile && pnpm nx build test-app --configuration=production",
+    "start": "pnpm exec serve -s dist/apps/test-app/browser -l tcp://0.0.0.0:${PORT:-8080}",
+    "test": "pnpm nx test test-app",
+    "lint": "pnpm nx lint",
+    "e2e": "pnpm nx e2e test-app-e2e",
+
+    "build-test": "pnpm install --frozen-lockfile && pnpm nx build test-app --configuration=production",
+    "start-test": "pnpm exec serve -s dist/apps/test-app/browser -l tcp://0.0.0.0:${PORT:-8080}",
+    "test-test": "pnpm nx test test-app",
+    "e2e-test": "pnpm nx e2e test-app-e2e",
+
+    "build-p13": "pnpm install --frozen-lockfile && pnpm nx build p13-app --configuration=production",
+    "start-p13": "pnpm exec serve -s dist/apps/p13-app/browser -l tcp://0.0.0.0:${PORT:-8080}",
+    "test-p13": "pnpm nx test p13-app",
+    "e2e-p13": "pnpm nx e2e p13-app-e2e",
+
+    "format": "npx nx format:write"
+  },
   "private": true,
   "dependencies": {
     "@angular/animations": "~19.2.13",
@@ -72,7 +90,8 @@
     "stream-chat-angular": "^5.14.0",
     "swiper": "^11.2.8",
     "vest": "^5.4.6",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "serve": "^14.2.1"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~19.2.13",
@@ -116,6 +135,7 @@
     "jest-environment-node": "^29.7.0",
     "jest-preset-angular": "~14.4.2",
     "nx": "21.1.2",
+    "pnpm": "10.11.0",
     "prettier": "^2.8.8",
     "react-refresh": "^0.10.0",
     "ts-jest": "^29.3.4",
