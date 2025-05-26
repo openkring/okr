@@ -87,6 +87,7 @@
       "options": {
         "buildTargetName": "build",
         "serveTargetName": "serve",
+        "serveStaticTargetName": "serve-static",
         "previewTargetName": "preview"
       }
     }
