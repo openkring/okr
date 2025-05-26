@@ -1,8 +1,8 @@
 import { test, enforce, omitWhen } from 'vest';
 import { LONG_NAME_LENGTH, STORE_DATE_LENGTH, STORE_DATETIME_LENGTH, TIME_LENGTH, URL_LENGTH } from '@bk2/shared/config';
 import { checkDate, DateFormat } from './date.util';
-import { isArrayOfStrings, isRole } from './type.util';
-import { AllRoles, ModelType, Roles } from '@bk2/shared/models';
+import { isArrayOfStrings } from './type.util';
+import { AllRoles, Roles } from '@bk2/shared/models';
 
 /**
  * Validates a boolean field

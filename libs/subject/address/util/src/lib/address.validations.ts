@@ -1,6 +1,5 @@
-import { baseValidations } from '@bk2/shared/data-access';
 import { AddressChannel, AddressModel, AddressUsage } from '@bk2/shared/models';
-import { booleanValidations, categoryValidations, stringValidations, urlValidations } from '@bk2/shared/util';
+import { baseValidations, booleanValidations, categoryValidations, stringValidations, urlValidations } from '@bk2/shared/util';
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { CITY_LENGTH, COUNTRY_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared/config';
 

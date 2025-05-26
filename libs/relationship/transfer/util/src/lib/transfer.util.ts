@@ -1,6 +1,5 @@
 import { DefaultResourceInfo, ModelType, OrgModel, Periodicity, PersonModel, ResourceInfo, ResourceModel, TransferModel, TransferState, TransferType } from "@bk2/shared/models";
-import { getAvatarInfoArray, getAvatarKeys, getAvatarNames, getTodayStr, isType } from "@bk2/shared/util";
-import { addIndexElement } from '@bk2/shared/data-access';
+import { addIndexElement, getAvatarInfoArray, getAvatarKeys, getAvatarNames, getTodayStr, isType } from "@bk2/shared/util";
 
 import { TransferFormModel } from "./transfer-form.model";
 

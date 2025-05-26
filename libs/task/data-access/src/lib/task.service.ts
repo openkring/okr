@@ -3,10 +3,11 @@ import { Observable } from 'rxjs';
 import { ToastController } from '@ionic/angular/standalone';
 
 import { TaskCollection, TaskModel, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
+import { findByKey, getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { FIRESTORE, ENV } from '@bk2/shared/config';
 
 import { saveComment } from '@bk2/comment/util';
+import { addIndexElement, createModel, updateModel } from '@bk2/shared/util';
 
 @Injectable({
   providedIn: 'root'
@@ -64,7 +65,7 @@ export class TaskService {
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
   
   public list(orderBy = 'dueDate', sortOrder = 'asc'): Observable<TaskModel[]> {
-    return searchData(this.firestore, TaskCollection, getSystemQuery(this.tenantId), orderBy, sortOrder) as Observable<TaskModel[]>;
+    return searchData(this.firestore, TaskCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
   }
 
   /*-------------------------- export --------------------------------*/

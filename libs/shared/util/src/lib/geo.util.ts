@@ -42,9 +42,9 @@ export async function getCurrentPosition(): Promise<GeoPosition> {
   return {
       latitude: _coord.coords.latitude,
       longitude: _coord.coords.longitude,
-      altitude: _coord.coords.altitude ? _coord.coords.altitude : undefined,
-      speed: _coord.coords.speed ? _coord.coords.speed : undefined,
-      heading: _coord.coords.heading ? _coord.coords.heading : undefined
+      altitude: _coord.coords.altitude ?? undefined,
+      speed: _coord.coords.speed ?? undefined,
+      heading: _coord.coords.heading ?? undefined
   }
 }
 

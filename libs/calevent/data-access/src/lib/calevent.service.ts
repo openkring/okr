@@ -4,10 +4,10 @@ import { EventInput } from '@fullcalendar/core';
 import { ToastController } from '@ionic/angular/standalone';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { CalEventCollection, CalEventModel, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { saveComment } from '@bk2/comment/util';
 import { CalEventTypes, getCategoryAbbreviation } from '@bk2/shared/categories';
-import { die } from '@bk2/shared/util';
+import { addIndexElement, createModel, die, updateModel } from '@bk2/shared/util';
 
 
 @Injectable({

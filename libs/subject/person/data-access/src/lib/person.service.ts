@@ -7,11 +7,11 @@ import { map, Observable, of } from 'rxjs';
 import { AddressService } from '@bk2/address/data-access';
 import { saveComment } from '@bk2/comment/util';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
+import { findByKey, getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { AddressCollection, AddressModel, GenderType, MembershipCollection, ModelType, PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
 
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/person/util';
-import { PersonNewModalComponent } from '@bk2/person/feature';
+import { addIndexElement, createModel, updateModel } from '@bk2/shared/util';
 
 @Injectable({
   providedIn: 'root'

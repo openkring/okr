@@ -5,14 +5,14 @@ import { collectionData } from 'rxfire/firestore';
 import { map, Observable, of } from 'rxjs';
 
 import { saveComment } from '@bk2/comment/util';
-import { OrgNewModalComponent } from '@bk2/org/feature';
 import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel } from '@bk2/org/util';
 
 import { getCategoryAbbreviation, OrgTypes } from '@bk2/shared/categories';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { AddressCollection, AddressModel, ModelType, OrgCollection, OrgModel, UserModel } from '@bk2/shared/models';
 import { AddressService } from '@bk2/address/data-access';
+import { addIndexElement, createModel, updateModel } from '@bk2/shared/util';
 
 
 @Injectable({

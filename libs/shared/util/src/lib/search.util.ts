@@ -3,8 +3,8 @@ import { Firestore, OrderByDirection, QueryConstraint, WhereFilterOp, collection
 import { collectionData } from 'rxfire/firestore';
 
 import { AllCategories, BkModel, DbQuery, TagCollection, TagModel, UserModel } from '@bk2/shared/models';
-import { die, warn } from '@bk2/shared/util';
 import { getRangeQuery, getSystemQuery } from './query.util';
+import { die, warn } from './log.util';
 
 /*----------------------- SEARCH ----------------------------------------------*/
 /**

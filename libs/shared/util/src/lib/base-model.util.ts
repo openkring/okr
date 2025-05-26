@@ -3,9 +3,11 @@ import { ToastController } from '@ionic/angular';
 import { docData } from 'rxfire/firestore';
 import { collection, deleteDoc, doc, Firestore, setDoc, updateDoc } from 'firebase/firestore';
 
-import { die, warn, SortCriteria, SortDirection, sortAscending, sortDescending, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared/util';
 import { ActionType, BkModel } from '@bk2/shared/models';
+import { die, warn } from './log.util';
+import { removeKeyFromBkModel, removeUndefinedFields } from './type.util';
 import { bkTranslate, confirmAction } from '@bk2/shared/i18n';
+import { sortAscending, SortCriteria, sortDescending, SortDirection } from './sort.util';
 
 /*----------------------- CRUD ----------------------------------------------*/
 
@@ -345,23 +347,4 @@ export function addIndexElement(index: string, key: string, value: string | numb
     }
   }
   return `${index} ${key}:${value}`;
-}
-
-/* ---------------------- helpers -------------------------------*/
-
-/**
- * Determine the color to highlight test and archived items in a list.
- *   --bk-test-color: #ccffff;
- *   --bk-archived-color: #ffcc99;
- * @param isTest  it is a test item
- * @param isArchived  it is an archived item
- */
-export function getListItemColor(isTest: boolean, isArchived: boolean): string {
-  let _color = '';
-  if (isTest === true) {
-    _color = 'light';
-  } else if (isArchived === true) {
-    _color = 'dark';
-  }
-  return _color;
 }

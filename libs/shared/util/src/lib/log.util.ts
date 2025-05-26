@@ -30,16 +30,3 @@ export function generateRandomString(size: number): string {
   return Math.random().toString(36).substring(2, size);
 }
 
-/**
- *   --bk-test-color: #ccffff;
- *   --bk-archived-color: #ffcc99;
- * @param model the model defined the color
- */
-export function getListItemColor(isArchived: boolean): string {
-  if (isArchived) return getArchivedItemColor();
-  return '';
-}
-
-function getArchivedItemColor(): string {
-  return 'light';
-}

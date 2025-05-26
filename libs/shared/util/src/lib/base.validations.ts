@@ -2,7 +2,7 @@
 import { only, staticSuite} from 'vest';
 import { AvatarInfo, BkModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, ModelType } from '@bk2/shared/models';
 import { LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
-import { booleanValidations, categoryValidations, stringValidations } from '@bk2/shared/util';
+import { booleanValidations, categoryValidations, stringValidations } from './vest.util';
 
 /**
  * Validates BkModel attributes:

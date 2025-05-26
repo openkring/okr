@@ -3,9 +3,10 @@ import { map, Observable, of } from 'rxjs';
 import { ToastController } from '@ionic/angular/standalone';
 
 import { CategoryCollection, CategoryListModel, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { saveComment } from '@bk2/comment/util';
+import { addIndexElement, createModel, updateModel } from '@bk2/shared/util';
 
 
 @Injectable({

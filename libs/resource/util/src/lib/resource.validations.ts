@@ -1,7 +1,6 @@
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
-import { baseValidations } from '@bk2/shared/data-access';
 import { CarType, GenderType, ResourceModel, ResourceType, RowingBoatType, RowingBoatUsage } from '@bk2/shared/models';
-import { categoryValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@bk2/shared/util';
+import { baseValidations, categoryValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@bk2/shared/util';
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import 'vest/enforce/compounds';
 

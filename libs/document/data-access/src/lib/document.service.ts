@@ -5,15 +5,13 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { DocumentTypes, categoryMatches, getCategoryAbbreviation } from '@bk2/shared/categories';
 import { DocumentCollection, DocumentModel, DocumentType, Image, MenuItemCollection, ModelType } from '@bk2/shared/models';
-import { DateFormat, chipMatches, convertDateFormatToString, die, dirname, fileSizeUnit, generateRandomString, getTodayStr, nameMatches, warn } from '@bk2/shared/util';
+import { DateFormat, addIndexElement, chipMatches, convertDateFormatToString, createModel, die, dirname, fileSizeUnit, generateRandomString, getTodayStr, nameMatches, updateModel, warn } from '@bk2/shared/util';
 import { ENV, FIRESTORE, STORAGE } from '@bk2/shared/config';
 import { getDocumentStoragePath } from '@bk2/document/util';
-import { addIndexElement, createModel, getSystemQuery, readModel, searchData, updateModel } from '@bk2/shared/data-access';
+import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { ToastController } from '@ionic/angular';
 import { saveComment } from '@bk2/comment/util';
 import { error } from '@bk2/shared/i18n';
-import { ImageSelectModalComponent } from '@bk2/document/feature';
-import { AppStore } from '@bk2/auth/feature';
 
 @Injectable({
   providedIn: 'root'

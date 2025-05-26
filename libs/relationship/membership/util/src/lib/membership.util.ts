@@ -1,10 +1,9 @@
 import { CategoryItemModel, GenderType, MembershipModel, ModelType, OrgModel, OrgType, Periodicity, PersonModel, UserModel } from '@bk2/shared/models';
 import { MembershipFormModel } from './membership-form.model';
-import { DateFormat, die, getFullPersonName, getTodayStr, isType } from '@bk2/shared/util';
+import { addIndexElement, DateFormat, die, getFullPersonName, getTodayStr } from '@bk2/shared/util';
 import { END_FUTURE_DATE_STR } from '@bk2/shared/config';
 import { CategoryChangeFormModel } from './category-change-form.model';
 import { MembershipNewFormModel } from './membership-new-form.model';
-import { addIndexElement } from '@bk2/shared/data-access';
 
 export function newMembershipFormModel(): MembershipFormModel {
   return {

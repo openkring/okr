@@ -114,7 +114,6 @@
       // shared
       "@bk2/shared/categories": ["libs/shared/categories/src/index.ts"],
       "@bk2/shared/config": ["libs/shared/config/src/index.ts"],
-      "@bk2/shared/data-access": ["libs/shared/data-access/src/index.ts"],
       "@bk2/shared/i18n": ["libs/shared/i18n/src/index.ts"],
       "@bk2/shared/models": ["libs/shared/models/src/index.ts"],
       "@bk2/shared/pipes": ["libs/shared/pipes/src/index.ts"],

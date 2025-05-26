@@ -4,13 +4,12 @@ import { Observable } from 'rxjs';
 
 import { getCategoryAbbreviation, ResourceTypes } from '@bk2/shared/categories';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/data-access';
+import { findByKey, getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { ResourceCollection, ResourceModel, ResourceType, UserModel } from '@bk2/shared/models';
-import { isResource } from '@bk2/shared/util';
+import { addIndexElement, createModel, isResource, updateModel } from '@bk2/shared/util';
 
 import { getResourceSlug } from '@bk2/resource/util';
 import { saveComment } from '@bk2/comment/util';
-import { ResourceEditModalComponent } from '@bk2/resource/feature';
 
 @Injectable({
     providedIn: 'root'
