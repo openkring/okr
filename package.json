@@ -5,23 +5,19 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "echo \"ROOT build script triggered - CWD: $(pwd)\" && echo \"Node version: $(node --version)\" && echo \"Ensuring corepack is enabled...\" && corepack enable && echo \"Verifying pnpm version (Corepack should use packageManager field): $(pnpm --version)\" && echo \"Running pnpm install (frozen lockfile, debug loglevel) from monorepo root...\" && pnpm install --frozen-lockfile --loglevel debug && echo \"Listing /workspace/node_modules/.bin AFTER pnpm install...\" && ls -la /workspace/node_modules/.bin && echo \"Running nx build for test-app...\" && pnpm nx build test-app --configuration=production && echo \"ROOT build script finished.\"",
-    "start": "echo \"ROOT start script triggered - CWD: $(pwd)\" && echo \"Serving dist/apps/test-app/browser...\" && pnpm nx serve -s dist/apps/test-app/browser -l tcp://0.0.0.0:${PORT:-8080}",
-
+    "build": "echo 'ROOT build script triggered - CWD: $(pwd)' && echo 'Node version: $(node --version)' && echo 'Ensuring corepack is enabled...' && corepack enable && echo 'Verifying pnpm version (Corepack should use packageManager field): $(pnpm --version)' && echo 'Running pnpm install (frozen lockfile, debug loglevel) from monorepo root...' && pnpm install --frozen-lockfile --loglevel debug && echo 'Listing /workspace/node_modules/.bin AFTER pnpm install...' && ls -la /workspace/node_modules/.bin && echo 'Running nx build for test-app...' && pnpm nx build test-app --configuration=production && echo 'ROOT build script finished.'",
+    "start": "npx --no pnpm nx serve test-app --host 0.0.0.0 --port ${PORT:-4200}",
     "test": "pnpm nx test test-app",
     "lint": "pnpm nx lint",
     "e2e": "pnpm nx e2e test-app-e2e",
-
     "build-test": "pnpm install --frozen-lockfile && pnpm nx build test-app --configuration=production",
     "start-test": "pnpm exec serve -s dist/apps/test-app/browser -l tcp://0.0.0.0:${PORT:-8080}",
     "test-test": "pnpm nx test test-app",
     "e2e-test": "pnpm nx e2e test-app-e2e",
-
     "build-p13": "pnpm install --frozen-lockfile && pnpm nx build p13-app --configuration=production",
     "start-p13": "pnpm exec serve -s dist/apps/p13-app/browser -l tcp://0.0.0.0:${PORT:-8080}",
     "test-p13": "pnpm nx test p13-app",
     "e2e-p13": "pnpm nx e2e p13-app-e2e",
-
     "format": "npx nx format:write"
   },
   "private": true,
