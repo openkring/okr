@@ -2,7 +2,14 @@ import * as fs from 'fs';
 import dotenv from 'dotenv';
 
 console.log('Current NODE_ENV:', process.env.NODE_ENV);
-if (process.env.NODE_ENV !== 'production') {
+console.log('K_SERVICE:', process.env.K_SERVICE); // For debugging
+
+// If K_SERVICE is set, we assume we are in a Google Cloud environment (like Firebase App Hosting)
+// and should rely on environment variables provided by that environment, not a .env file.
+if (process.env.K_SERVICE) {
+  console.log('K_SERVICE detected, assuming Firebase App Hosting. Skipping .env load.');
+} else {
+  console.log('K_SERVICE not detected, assuming local or non-Firebase CI. Loading .env.');
   dotenv.config(); // load environment variables from .env file
 }
 const writeFile = fs.writeFile;
