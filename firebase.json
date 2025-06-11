@@ -20,6 +20,7 @@
     "environmentVariables": {
       "GOOGLE_NODE_RUN_SCRIPTS": "",
       "NODE_VERSION": "23.8.0",
+      "NODE_ENV": "production",
       "NPM_CONFIG_USERCONFIG": "/dev/null",
       "NPM_CONFIG_GLOBALCONFIG": "/dev/null"
     }
