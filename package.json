@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "echo 'ROOT build script triggered - CWD: $(pwd)' && echo 'Node version: $(node --version)' && echo 'Ensuring corepack is enabled...' && corepack enable && echo 'Verifying pnpm version (Corepack should use packageManager field): $(pnpm --version)' && echo 'Running pnpm install (frozen lockfile, debug loglevel) from monorepo root...' && pnpm install --frozen-lockfile --loglevel debug && echo 'Listing /workspace/node_modules/.bin AFTER pnpm install...' && ls -la /workspace/node_modules/.bin && echo 'Running nx build for test-app...' && pnpm nx build test-app --configuration=production && echo 'ROOT build script finished.'",
+    "build": "echo 'ROOT build script triggered - CWD: $(pwd)' && echo 'Node version: $(node --version)' && echo 'Current NODE_ENV before pnpm install in build script: [$NODE_ENV]' && echo 'Ensuring corepack is enabled...' && corepack enable && echo 'Verifying pnpm version (Corepack should use packageManager field): $(pnpm --version)' && echo 'Running pnpm install --omit=dev (frozen lockfile, debug loglevel) from monorepo root...' && pnpm install --omit=dev --frozen-lockfile --loglevel debug && echo 'Listing /workspace/node_modules/.bin AFTER pnpm install...' && ls -la /workspace/node_modules/.bin && echo 'Current NODE_ENV before nx build: [$NODE_ENV]' && echo 'Running nx build for test-app...' && pnpm nx build test-app --configuration=production && echo 'ROOT build script finished.'",
     "start": "npx --no pnpm nx serve test-app --host 0.0.0.0 --port ${PORT:-4200}",
     "test": "pnpm nx test test-app",
     "lint": "pnpm nx lint",
