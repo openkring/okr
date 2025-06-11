@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 
 console.log('Current NODE_ENV:', process.env.NODE_ENV);
 console.log('K_SERVICE:', process.env.K_SERVICE); // For debugging
+console.log('Environment: ', process.env);
 
 // If K_SERVICE is set, we assume we are in a Google Cloud environment (like Firebase App Hosting)
 // and should rely on environment variables provided by that environment, not a .env file.
@@ -46,7 +47,6 @@ function checkRequiredEnvVars() {
     process.exit(1); // Exit with an error code
   }
   console.log('All required environment variables are present.');
-  console.log(process.env);
 }
 
 // Perform checks before proceeding
