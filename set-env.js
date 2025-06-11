@@ -1,7 +1,9 @@
 import * as fs from 'fs';
 import dotenv from 'dotenv';
 
-dotenv.config(); // load environment variables from .env file
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config(); // load environment variables from .env file
+}
 const writeFile = fs.writeFile;
 
 // Get the project name from Nx environment variable
@@ -36,6 +38,7 @@ function checkRequiredEnvVars() {
     process.exit(1); // Exit with an error code
   }
   console.log('All required environment variables are present.');
+  console.log(process.env);
 }
 
 // Perform checks before proceeding
