@@ -3,17 +3,19 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 
 import { Image, ImageAction, SectionProperties } from '@bk2/shared/models';
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { AsyncPipe } from '@angular/common';
 import { ImageComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { ViewPositions } from '@bk2/shared/categories';
 import { deleteFileFromStorage, TranslatePipe } from '@bk2/shared/i18n';
+
+import { AsyncPipe } from '@angular/common';
+
 import { newImage, SectionFormModel } from '@bk2/cms/section/util';
-import { SectionService } from '@bk2/cms/section/data-access';
+import { SectionModalsService } from './section-modals.service';
+import { DocumentModalsService } from '@bk2/document/feature';
 
 /**
- * This form lets a user pick an image and define its properties.
- * The image is picked from the local file system or from the camera.
- * It is then uploaded and user needs to insert some metadata about the image.
+ * Pick one single image from the local file system or from the camera.
+ * The image is then uploaded to Firebase storage and the user needs to insert some metadata about the image.
  * The image can be removed and replaced.
  */
 @Component({
@@ -58,8 +60,9 @@ import { SectionService } from '@bk2/cms/section/data-access';
   `
 })
 export class SingleImageComponent {
-  private readonly sectionService = inject(SectionService);
   private readonly toastController = inject(ToastController);
+  private readonly sectionModalsService = inject(SectionModalsService);
+  private readonly documentModalsService = inject(DocumentModalsService);
 
   public vm = model.required<SectionFormModel>();
   protected image = computed(() => this.vm().properties?.image ?? newImage());
@@ -70,14 +73,13 @@ export class SingleImageComponent {
 
   // call modal with input form to select an image and add metadata
   protected async addImage() {
-    console.log('SingleImageComponent.addImage is not yet implemented');
-/*     const _sectionKey = this.vm().bkey;
+    const _sectionKey = this.vm().bkey;
     if (_sectionKey) {
-      const _image = await this.documentService.pickAndUploadImage(_sectionKey);
+      const _image = await this.documentModalsService.pickAndUploadImage(_sectionKey);
       if (_image) {
         this.saveAndNotify(_image);    
       }
-    } */
+    }
   }
 
   patchImage(image: Image): Image {
@@ -91,7 +93,7 @@ export class SingleImageComponent {
   }
 
   protected async editImage(image: Image) {
-    const _image = await this.sectionService.editImage(image);
+    const _image = await this.sectionModalsService.editImage(image);
     if (_image) {
       this.saveAndNotify(_image);
     }

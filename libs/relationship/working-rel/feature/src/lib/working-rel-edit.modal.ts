@@ -4,7 +4,7 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { ENV, RoleName } from '@bk2/shared/config';
+import { RoleName } from '@bk2/shared/config';
 import { getFullPersonName, hasRole } from '@bk2/shared/util';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
@@ -12,6 +12,7 @@ import { AppStore } from '@bk2/auth/feature';
 import { ModelType, UserModel, WorkingRelCollection, WorkingRelModel } from '@bk2/shared/models';
 import { convertFormToWorkingRel, convertWorkingRelToForm } from '@bk2/working-rel/util';
 import { WorkingRelFormComponent } from '@bk2/working-rel/ui';
+import { WorkingRelModalsService } from './working-rel-modals.service';
 
 @Component({
   selector: 'bk-working-rel-edit-modal',
@@ -27,7 +28,10 @@ import { WorkingRelFormComponent } from '@bk2/working-rel/ui';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-working-rel-form [(vm)]="vm" [currentUser]="currentUser()" [workingRelTags]="workingRelTags()" (validChange)="formIsValid.set($event)" />
+      <bk-working-rel-form [(vm)]="vm" [currentUser]="currentUser()" [workingRelTags]="workingRelTags()" 
+      (selectPerson)="selectPerson()"
+      (selectOrg)="selectOrg()"
+      (validChange)="formIsValid.set($event)" />
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-accordion-group value="comments">
@@ -38,8 +42,8 @@ import { WorkingRelFormComponent } from '@bk2/working-rel/ui';
   `
 })
 export class WorkingRelEditModalComponent {
+  private readonly workingRelModalsService = inject(WorkingRelModalsService);
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
   private readonly appStore = inject(AppStore);
 
   public workingRel = input.required<WorkingRelModel>();
@@ -60,10 +64,33 @@ export class WorkingRelEditModalComponent {
   public workingRelCollection = WorkingRelCollection;
 
   public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToWorkingRel(this.workingRel(), this.vm(), this.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToWorkingRel(this.workingRel(), this.vm(), this.appStore.env.owner.tenantId), 'confirm');
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  protected async selectPerson(): Promise<void> {
+    const _person = await this.workingRelModalsService.selectPerson();
+    if (!_person) return;
+    this.vm.update((_vm) => ({
+      ..._vm, 
+      subjectKey: _person.bkey, 
+      subjectName1: _person.firstName,
+      subjectName2: _person.lastName,
+      subjectType: _person.gender,
+    }));
+  }
+
+  protected async selectOrg(): Promise<void> {
+    const _org = await this.workingRelModalsService.selectOrg();
+    if (!_org) return;
+    this.vm.update((_vm) => ({
+      ..._vm, 
+      objectKey: _org.bkey, 
+      objectName: _org.name,
+      objectType: _org.type,
+    }));
   }
 }

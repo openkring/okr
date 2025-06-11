@@ -1,18 +1,15 @@
 import { inject, Injectable } from '@angular/core';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular/standalone';
 import { collection, query } from 'firebase/firestore';
 import { collectionData } from 'rxfire/firestore';
 import { map, Observable, of } from 'rxjs';
 
-import { saveComment } from '@bk2/comment/util';
-import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel } from '@bk2/org/util';
-
 import { getCategoryAbbreviation, OrgTypes } from '@bk2/shared/categories';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { AddressCollection, AddressModel, ModelType, OrgCollection, OrgModel, UserModel } from '@bk2/shared/models';
-import { AddressService } from '@bk2/address/data-access';
+import { AddressCollection, AddressModel, OrgCollection, OrgModel, UserModel } from '@bk2/shared/models';
 import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
 
+import { saveComment } from '@bk2/comment/util';
 
 @Injectable({
   providedIn: 'root'
@@ -21,8 +18,6 @@ export class OrgService  {
   private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly modalController = inject(ModalController);
-  private readonly addressService = inject(AddressService);
 
   private readonly tenantId = this.env.owner.tenantId;
 
@@ -69,41 +64,6 @@ export class OrgService  {
   public async delete(org: OrgModel): Promise<void> {
     org.isArchived = true;
     await this.update(org, `@subject.org.operation.delete`);
-  }
-
-  /**
-   * Show a modal to add a new org.
-   */
-  public async add(currentUser?: UserModel): Promise<void> {
-    const _modal = await this.modalController.create({
-      component: OrgNewModalComponent,
-      componentProps: {
-        currentUser: currentUser
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm') {
-      const _vm = data as OrgNewFormModel;
-      const _key = ModelType.Org + '.' + await this.create(convertFormToNewOrg(_vm, this.tenantId), currentUser);
-      if ((_vm.email ?? '').length > 0) {
-        this.saveAddress(convertNewOrgFormToEmailAddress(_vm, this.tenantId), _key, currentUser);
-      }
-      if ((_vm.phone ?? '').length > 0) {
-        this.saveAddress(convertNewOrgFormToPhoneAddress(_vm, this.tenantId), _key, currentUser);
-      }
-      if ((_vm.web ?? '').length > 0) {
-        this.saveAddress(convertNewOrgFormToWebAddress(_vm, this.tenantId), _key, currentUser);
-      }
-      if ((_vm.city ?? '').length > 0) {
-        this.saveAddress(convertNewOrgFormToPostalAddress(_vm, this.tenantId), _key, currentUser);
-      }
-    }
-  }  
-
-  private saveAddress(address: AddressModel, orgKey: string, currentUser?: UserModel): void {
-    address.parentKey = orgKey;
-    this.addressService.create(address, currentUser);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/

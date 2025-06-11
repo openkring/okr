@@ -4,8 +4,9 @@ import { IonThumbnail, ModalController } from '@ionic/angular/standalone';
 
 import { Image } from '@bk2/shared/models';
 import { ImgixUrlPipe } from '@bk2/shared/pipes';
-import { showZoomedImage } from './ui.util';
 import { ENV } from '@bk2/shared/config';
+
+import { showZoomedImage } from './ui.util';
 
 /**
  * This image loading implementation is based on Angular's NgOptimizedImage together with Imgix CDN to provide optimized images.
@@ -111,11 +112,11 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
     protected slot = computed(() => this.image()?.slot ?? 'start');
     protected width = computed(() => {
       const _width = this.image()?.width;
-      return !_width ? this.getValue('width', 'auto') : _width;
+      return _width ?? this.getValue('width', 'auto');
     });
     protected height = computed(() => {
       const _height = this.image()?.height;
-      return !_height ? this.getValue('height', 'auto') : _height;
+      return _height ?? this.getValue('height', 'auto');
     });
 
     protected async onImageClicked(): Promise<void> {

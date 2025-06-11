@@ -1,15 +1,12 @@
 import { inject, Injectable } from '@angular/core';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular/standalone';
 import { map, Observable, of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { GroupCollection, GroupModel, ModelType, UserModel } from '@bk2/shared/models';
+import { GroupCollection, GroupModel, UserModel } from '@bk2/shared/models';
 import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
 
 import { saveComment } from '@bk2/comment/util';
-
-import { convertFormToNewGroup, GroupNewFormModel } from '@bk2/group/util';
-
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +15,6 @@ export class GroupService  {
   private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly modalController = inject(ModalController);
 
   private readonly tenantId = this.env.owner.tenantId;
 
@@ -52,25 +48,6 @@ export class GroupService  {
     group.isArchived = true;
     await this.update(group, `@subject.group.operation.delete`);
   }
-
-  /**
-   * Show a modal to add a new group.
-   */
-  public async add(currentUser?: UserModel): Promise<void> {
-    const _modal = await this.modalController.create({
-      component: GroupNewModalComponent,
-      componentProps: {
-        currentUser: currentUser
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm') {
-      const _vm = data as GroupNewFormModel;
-      const _key = ModelType.Group + '.' + await this.create(convertFormToNewGroup(_vm, this.tenantId), currentUser);
-
-    }
-  }  
 
   /*-------------------------- LIST / QUERY  --------------------------------*/
   public list(orderBy = 'id', sortOrder = 'asc'): Observable<GroupModel[]> {

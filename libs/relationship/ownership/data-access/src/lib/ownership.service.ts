@@ -1,25 +1,24 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular/standalone';
 
-import { FIRESTORE } from '@bk2/shared/config';
-import { ModelType, OrgModel, OwnershipCollection, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared/models';
-import { convertDateFormatToString, createModel, DateFormat, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ModelType, OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared/models';
+import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
 
 import { saveComment } from '@bk2/comment/util';
 
-import { convertFormToOwnership, getOwnershipSearchIndex, getOwnershipSearchIndexInfo, isOwnership, OwnershipNewFormModel } from '@bk2/ownership/util';
+import { getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from '@bk2/ownership/util';
 
 @Injectable({
     providedIn: 'root'
 })
 export class OwnershipService {
+  private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
 
-  private readonly tenantId = this.appStore.tenantId();
+  private readonly tenantId = this.env.owner.tenantId;
 
   /*-------------------------- CRUD operations Ownership --------------------------------*/
   /**
@@ -27,10 +26,10 @@ export class OwnershipService {
    * @param ownership the new ownership to save
    * @returns the document id of the stored ownership in the database
    */
-  public async create(ownership: OwnershipModel): Promise<string> {
+  public async create(ownership: OwnershipModel, currentUser?: UserModel): Promise<string> {
     ownership.index = this.getSearchIndex(ownership);
     const _key = await createModel(this.firestore, OwnershipCollection, ownership, this.tenantId, '@ownership.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), OwnershipCollection, _key, '@comment.operation.initial.conf');  
+    await saveComment(this.firestore, this.tenantId, currentUser, OwnershipCollection, _key, '@comment.operation.initial.conf');  
     return _key;    
   }
 
@@ -59,74 +58,15 @@ export class OwnershipService {
   }
 
   /**
-     * Show a modal to add a new ownership.
-     * @param person or org to add as an owner
-     * @param resource the owned resource
-     * @param modelType the type of the member (Person or Org)
-     */
-  public async add(owner: PersonModel | OrgModel, modelType: ModelType, resource: ResourceModel): Promise<void> {
-    const _modal = await this.modalController.create({
-      component: OwnershipNewModalComponent,
-      cssClass: 'small-modal',
-      componentProps: {
-        owner: owner,
-        resource: resource,
-        modelType: modelType,
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm') {
-      const _ownership = convertFormToOwnership(undefined, data as OwnershipNewFormModel, this.tenantId);
-      await this.create(_ownership);
-    }
-  }  
-  
-  /**
-   * Show a modal to edit an existing ownership.
-   * @param ownership the ownership to edit
-   */
-  public async edit(ownership?: OwnershipModel): Promise<void> {
-    let _ownership = ownership;
-    _ownership ??= new OwnershipModel(this.tenantId);
-    
-    const _modal = await this.modalController.create({
-      component: OwnershipEditModalComponent,
-      componentProps: {
-        ownership: _ownership,
-        currentUser: this.appStore.currentUser()
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm') {
-      if (isOwnership(data, this.tenantId)) {
-        await (!data.bkey ? this.create(data) : this.update(data));
-      }
-    }  }
-
-  /**
-   * End an existing Ownership.
-   * We do not archive ownerships as we want to make them visible in the lists.
-   * Therefore, we end an ownership by setting its validTo date.
-   * @param ownership the Ownership to delete, its bkey needs to be valid so that we can find it in the database. 
-   */
-  public async end(ownership: OwnershipModel): Promise<void> {
-    const _date = await selectDate(this.modalController);    
-    if (!_date) return;
-    await this.endOwnershipByDate(ownership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false));    
-  }
-
-  /**
    * End an existing ownership by setting its validTo date.
    * @param ownership the ownership to end
    * @param validTo the end date of the ownership
    */
-  public async endOwnershipByDate(ownership: OwnershipModel, validTo: string): Promise<void> {
+  public async endOwnershipByDate(ownership: OwnershipModel, validTo: string, currentUser?: UserModel): Promise<void> {
     if (ownership.validTo.startsWith('9999') && validTo && validTo.length === 8) {
       ownership.validTo = validTo;
       await this.update(ownership);
-      await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), OwnershipCollection, ownership.bkey, '@comment.message.ownership.deleted');  
+      await saveComment(this.firestore, this.tenantId, currentUser, OwnershipCollection, ownership.bkey, '@comment.message.ownership.deleted');  
     }
   }
 

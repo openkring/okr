@@ -1,13 +1,12 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAvatar, IonIcon, IonImg, IonItem, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonAvatar, IonIcon, IonImg, IonItem, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { rxResource } from '@angular/core/rxjs-interop';
 
 import { CategoryPlainNamePipe, getAvatarImgixUrl, SvgIconPipe } from '@bk2/shared/pipes';
 import { ColorsIonic } from '@bk2/shared/categories';
 import { newImage } from '@bk2/cms/section/util';
-import { showZoomedImage } from '@bk2/shared/ui';
-import { AvatarService } from '@bk2/avatar/data-access';
+import { UploadService } from '@bk2/shared/ui';
 import { ColorIonic, ImageAction } from '@bk2/shared/models';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 
@@ -45,8 +44,7 @@ import { ENV, FIRESTORE } from '@bk2/shared/config';
   `]
 })
 export class AvatarToolbarComponent {
-  protected avatarService = inject(AvatarService);
-  private readonly modalController = inject(ModalController);
+  private readonly uploadService = inject(UploadService);
   private readonly firestore = inject(FIRESTORE);
   private readonly env = inject(ENV);
 
@@ -84,12 +82,12 @@ export class AvatarToolbarComponent {
       _image.width = 160;
       _image.height = 83;
       _image.imageAction = ImageAction.Zoom;
-      await showZoomedImage(this.modalController, this.title() ?? '', _image);
+      await this.uploadService.showZoomedImage(_image, this.title() ?? '');
     } 
   }
 
   private async uploadPhoto(): Promise<void> {
-    const _photo = await this.avatarService.takePhoto();
+    const _photo = await this.uploadService.takePhoto();
 
     if (_photo) {
       this.imageSelected.emit(_photo);

@@ -5,11 +5,14 @@ import { ModalController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { chipMatches, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches, readModel, searchData } from '@bk2/shared/util';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches, readModel, searchData } from '@bk2/shared/util';
 import { memberTypeMatches } from '@bk2/shared/categories';
 import { AllCategories, CategoryCollection, CategoryListModel, GenderType, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, OrgType, PersonCollection, PersonModel } from '@bk2/shared/models';
 
 import { AppStore } from '@bk2/auth/feature';
+import { MembershipService } from '@bk2/membership/data-access';
+import { MembershipModalsService } from './membership-modals.service';
+import { selectDate } from '@bk2/shared/ui';
 
 export type MembershipListState = {
   orgId: string;
@@ -37,6 +40,7 @@ export const MembershipListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     membershipService: inject(MembershipService),
+    membershipModalsService: inject(MembershipModalsService),
     firestore: inject(FIRESTORE),
     appStore: inject(AppStore),
     env: inject(ENV),
@@ -297,12 +301,12 @@ export const MembershipListStore = signalStore(
  
       /******************************** actions ******************************************* */
       async add(): Promise<void> {
-        await store.membershipService.add(store.currentPerson(), store.defaultOrg(), ModelType.Person);
+        await store.membershipModalsService.add(store.currentPerson(), store.defaultOrg(), ModelType.Person);
         store.membershipsResource.reload();
       },
 
       async edit(membership?: MembershipModel): Promise<void> {
-        await store.membershipService.edit(membership);
+        await store.membershipModalsService.edit(membership);
         store.membershipsResource.reload();
       },
 
@@ -310,7 +314,7 @@ export const MembershipListStore = signalStore(
         if(membership) {
           const _mcat = store.membershipCategory();
           if (_mcat) {
-            await store.membershipService.changeMembershipCategory(membership, _mcat);
+            await store.membershipModalsService.changeMembershipCategory(membership, _mcat);
             store.membershipsResource.reload();
           }
         }
@@ -322,7 +326,9 @@ export const MembershipListStore = signalStore(
 
       async end(membership?: MembershipModel): Promise<void> {
         if (membership) {
-          await store.membershipService.end(membership);
+          const _date = await selectDate(store.modalController);
+          if (!_date) return;
+          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
           store.membershipsResource.reload();  
         }
       },

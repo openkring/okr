@@ -8,13 +8,13 @@ import { ImageComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { arrayMove } from '@bk2/shared/util';
 import { deleteFileFromStorage, TranslatePipe } from '@bk2/shared/i18n';
 import { SectionFormModel } from '@bk2/cms/section/util';
-import { SectionService } from '@bk2/cms/section/data-access';
-import { DocumentService } from '@bk2/document/data-access';
+import { SectionModalsService } from './section-modals.service';
+import { DocumentModalsService } from '@bk2/document/feature';
 
 /**
- * This form lets a user compose a list of images.
+ * Compose a list of images.
  * Each image is picked from the local file system or from the camera.
- * It is then uploaded and user needs to insert some metadata about the image.
+ * The image is then uploaded to Firebase storage and the user needs to insert some metadata about the image.
  * The list of images can be reordered.
  * The images can be removed.
  */
@@ -71,9 +71,9 @@ import { DocumentService } from '@bk2/document/data-access';
   `
 })
 export class ImageListComponent {
-  private readonly documentService = inject(DocumentService);
-  private readonly sectionService = inject(SectionService);
   private readonly toastController = inject(ToastController);
+  private readonly sectionModalsService = inject(SectionModalsService);
+  private readonly documentModalsService = inject(DocumentModalsService);
 
   public vm = model.required<SectionFormModel>();
 
@@ -83,12 +83,12 @@ export class ImageListComponent {
 
   // call modal with input form to select an image and add metadata
   protected async addImage() {
-    const _imageList = this.vm().properties?.imageList ?? [];
     const _sectionKey = this.vm().bkey;
     if (_sectionKey) {
-      const _image = await this.documentService.pickAndUploadImage(_sectionKey);
+      const _imageList = this.imageList();
+      const _image = await this.documentModalsService.pickAndUploadImage(_sectionKey);
       if (_image) {
-        _imageList.push(_image);
+        _imageList.push(this.patchImage(_image));
         this.saveAndNotify(_imageList);    
       }
     }
@@ -105,7 +105,7 @@ export class ImageListComponent {
   }
 
   protected async editImage(image: Image, index: number) {
-    const _image = await this.sectionService.editImage(image);
+    const _image = await this.sectionModalsService.editImage(image);
     if (_image) {
       const _imageList = this.imageList();
       _imageList[index] = _image;

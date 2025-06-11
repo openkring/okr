@@ -4,7 +4,7 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { ENV, RoleName } from '@bk2/shared/config';
+import { RoleName } from '@bk2/shared/config';
 import { getFullPersonName, hasRole } from '@bk2/shared/util';
 import { ModelType, PersonalRelCollection, PersonalRelModel, UserModel } from '@bk2/shared/models';
 
@@ -12,6 +12,7 @@ import { CommentsAccordionComponent } from '@bk2/comment/feature';
 import { PersonalRelFormComponent } from '@bk2/personal-rel/ui';
 import { convertFormToPersonalRel, convertPersonalRelToForm } from '@bk2/personal-rel/util';
 import { AppStore } from '@bk2/auth/feature';
+import { PersonalRelModalsService } from './personal-rel-modals.service';
 
 @Component({
   selector: 'bk-personal-rel-edit-modal',
@@ -27,7 +28,10 @@ import { AppStore } from '@bk2/auth/feature';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-personal-rel-form [(vm)]="vm" [currentUser]="currentUser()" [personalRelTags]="personalRelTags()" (validChange)="formIsValid.set($event)" />
+      <bk-personal-rel-form [(vm)]="vm" [currentUser]="currentUser()" 
+      [personalRelTags]="personalRelTags()"
+      (selectPerson)="selectPerson($event)"
+      (validChange)="formIsValid.set($event)" />
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-accordion-group value="comments">
@@ -38,8 +42,8 @@ import { AppStore } from '@bk2/auth/feature';
   `
 })
 export class PersonalRelEditModalComponent {
+  private readonly personalRelModalsService = inject(PersonalRelModalsService);
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
   private readonly appStore = inject(AppStore);
 
   public personalRel = input.required<PersonalRelModel>();
@@ -60,10 +64,32 @@ export class PersonalRelEditModalComponent {
   public personalRelCollection = PersonalRelCollection;
 
   public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToPersonalRel(this.personalRel(), this.vm(), this.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToPersonalRel(this.personalRel(), this.vm(), this.appStore.env.owner.tenantId), 'confirm');
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+ protected async selectPerson(isSubject: boolean): Promise<void> {
+    const _person = await this.personalRelModalsService.selectPerson();
+    if (!_person) return;
+    if (isSubject) {
+      this.vm.update((_vm) => ({
+        ..._vm, 
+        subjectKey: _person.bkey, 
+        subjectFirstName: _person.firstName,
+        subjectLastName: _person.lastName,
+        subjectGender: _person.gender,
+      }));
+    } else {
+      this.vm.update((_vm) => ({
+        ..._vm, 
+        objectKey: _person.bkey, 
+        objectFirstName: _person.firstName,
+        objectLastName: _person.lastName,
+        objectGender: _person.gender,
+      }));
+    }
   }
 }

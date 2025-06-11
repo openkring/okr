@@ -4,13 +4,15 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared/config';
-import { chipMatches, debugListLoaded, die, nameMatches } from '@bk2/shared/util';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, nameMatches } from '@bk2/shared/util';
 import { AllCategories, ModelType, PersonalRelModel, PersonalRelType } from '@bk2/shared/models';
 
 import { AppStore } from '@bk2/auth/feature';
 
 import { PersonalRelService } from '@bk2/personal-rel/data-access';
 import { categoryMatches } from '@bk2/shared/categories';
+import { selectDate } from '@bk2/shared/ui';
+import { PersonalRelModalsService } from './personal-rel-modals.service';
 
 export type PersonalRelListState = {
   searchTerm: string;
@@ -30,7 +32,8 @@ export const PersonalRelListStore = signalStore(
     appStore: inject(AppStore),
     env: inject(ENV),
     modalController: inject(ModalController),
-    personalRelService: inject(PersonalRelService)
+    personalRelService: inject(PersonalRelService),
+    personalRelModalsService: inject(PersonalRelModalsService),
   })),
   withProps((store) => ({
     personalRelsResource: rxResource({
@@ -82,7 +85,7 @@ export const PersonalRelListStore = signalStore(
 
       /******************************** actions ******************************************* */
       async add(): Promise<void> {
-        await store.personalRelService.add(store.currentPerson(), store.currentPerson());
+        await store.personalRelModalsService.add(store.currentPerson(), store.currentPerson());
         store.personalRelsResource.reload();
       },
 
@@ -91,13 +94,15 @@ export const PersonalRelListStore = signalStore(
       },
 
       async edit(personalRel?: PersonalRelModel): Promise<void> {
-        await store.personalRelService.edit(personalRel);
+        await store.personalRelModalsService.edit(personalRel);
         store.personalRelsResource.reload();
       },
 
       async end(personalRel?: PersonalRelModel): Promise<void> {
         if (personalRel) {
-          await store.personalRelService.end(personalRel);
+          const _date = await selectDate(store.modalController);
+          if (!_date) return;
+          await store.personalRelService.endPersonalRelByDate(personalRel, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
           store.personalRelsResource.reload();  
         }
       },

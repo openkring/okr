@@ -11,6 +11,7 @@ import { categoryMatches } from '@bk2/shared/categories';
 import { AppStore } from '@bk2/auth/feature';
 
 import { WorkingRelService } from '@bk2/working-rel/data-access';
+import { WorkingRelModalsService } from './working-rel-modals.service';
 
 export type WorkingRelListState = {
   searchTerm: string;
@@ -32,7 +33,8 @@ export const WorkingRelListStore = signalStore(
     appStore: inject(AppStore),
     env: inject(ENV),
     modalController: inject(ModalController),
-    workingRelService: inject(WorkingRelService),  
+    workingRelService: inject(WorkingRelService),
+    workingRelModalsService: inject(WorkingRelModalsService),  
   })),
   withProps((store) => ({
     workingRelsResource: rxResource({
@@ -90,7 +92,7 @@ export const WorkingRelListStore = signalStore(
 
       /******************************** actions ******************************************* */
       async add(): Promise<void> {
-        await store.workingRelService.add(store.currentPerson(), store.currentOrg());
+        await store.workingRelModalsService.add(store.currentPerson(), store.currentOrg());
         store.workingRelsResource.reload();
       },
 
@@ -99,13 +101,13 @@ export const WorkingRelListStore = signalStore(
       },
 
       async edit(workingRel?: WorkingRelModel): Promise<void> {
-        await store.workingRelService.edit(workingRel);
+        await store.workingRelModalsService.edit(workingRel);
         store.workingRelsResource.reload();
       },
 
       async end(workingRel?: WorkingRelModel): Promise<void> {
         if (workingRel) {
-          await store.workingRelService.end(workingRel);
+          await store.workingRelModalsService.end(workingRel);
           store.workingRelsResource.reload();  
         }
       },

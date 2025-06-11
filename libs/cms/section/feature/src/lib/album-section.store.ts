@@ -1,13 +1,15 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { listAll, ref, StorageReference } from 'firebase/storage';
 import { computed, inject } from '@angular/core';
+import { ModalController } from '@ionic/angular/standalone';
+
 import { ENV, STORAGE } from '@bk2/shared/config';
 import { AlbumConfig, AlbumStyle, Image, ImageAction, ImageType } from '@bk2/shared/models';
-import { newAlbumConfig } from '@bk2/cms/section/util';
 import { die, getImageType } from '@bk2/shared/util';
-import { ModalController } from '@ionic/angular/standalone';
-import { GalleryModalComponent } from './gallery.modal';
 import { GalleryEffects, getCategoryName } from '@bk2/shared/categories';
-import { listAll, ref, StorageReference } from 'firebase/storage';
+
+import { newAlbumConfig } from '@bk2/cms/section/util';
+import { GalleryModalComponent } from './gallery.modal';
 
 export interface AlbumState {
   config: AlbumConfig;

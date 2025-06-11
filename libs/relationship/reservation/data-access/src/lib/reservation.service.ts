@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular/standalone';
 
-import { FIRESTORE } from '@bk2/shared/config';
-import { ModelType, ReservationCollection, ReservationModel } from '@bk2/shared/models';
+import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ModelType, ReservationCollection, ReservationModel, UserModel } from '@bk2/shared/models';
 import { saveComment } from '@bk2/comment/util';
-import { convertDateFormatToString, createModel, DateFormat, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
 
 import { getReservationSearchIndex, getReservationSearchIndexInfo } from '@bk2/reservation/util';
 
@@ -15,10 +15,9 @@ import { getReservationSearchIndex, getReservationSearchIndexInfo } from '@bk2/r
 export class ReservationService {
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
+  private readonly env = inject(ENV);
 
-  private readonly tenantId = this.appStore.tenantId();
+  private readonly tenantId = this.env.owner.tenantId;
 
   /*-------------------------- CRUD operations on reservation --------------------------------*/
   /**
@@ -26,10 +25,10 @@ export class ReservationService {
    * @param reservation the new reservation to save
    * @returns the document id of the stored reservation in the database
    */
-  public async create(reservation: ReservationModel): Promise<string> {
+  public async create(reservation: ReservationModel, currentUser?: UserModel): Promise<string> {
     reservation.index = this.getSearchIndex(reservation);
     const _key = await createModel(this.firestore, ReservationCollection, reservation, this.tenantId, '@reservation.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), ReservationCollection, _key, '@comment.operation.initial.conf');  
+    await saveComment(this.firestore, this.tenantId, currentUser, ReservationCollection, _key, '@comment.operation.initial.conf');  
     return _key;
   }
 
@@ -62,25 +61,15 @@ export class ReservationService {
   }
 
   /**
-   * End an existing reservation.
-   * @param reservation the reservation to delete, its bkey needs to be valid so that we can find it in the database. 
-   */
-  public async end(reservation: ReservationModel): Promise<void> {
-    const _date = await selectDate(this.modalController);
-    if (!_date) return;
-    await this.endReservationByDate(reservation, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false));    
-  }
-
-  /**
    * End an existing reservation by setting its validTo date.
    * @param reservation the reservation to end
    * @param dateOfExit the end date of the reservation
    */
-  public async endReservationByDate(reservation: ReservationModel, endDate: string): Promise<void> {
+  public async endReservationByDate(reservation: ReservationModel, endDate: string, currentUser?: UserModel): Promise<void> {
     if (reservation.endDate.startsWith('9999') && endDate && endDate.length === 8) {
       reservation.endDate = endDate;
       await this.update(reservation);
-      await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), ReservationCollection, reservation.bkey, '@comment.message.reservation.deleted');  
+      await saveComment(this.firestore, this.tenantId, currentUser, ReservationCollection, reservation.bkey, '@comment.message.reservation.deleted');  
     }
   }
 

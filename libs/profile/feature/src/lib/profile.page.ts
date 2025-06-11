@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { IonAccordionGroup, IonContent, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonContent, IonItem, IonLabel, Platform } from '@ionic/angular/standalone';
 import { Photo } from '@capacitor/camera';
 
 import { AvatarToolbarComponent } from '@bk2/avatar/ui';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
+import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
 import { AvatarService } from '@bk2/avatar/data-access';
 import { ModelType } from '@bk2/shared/models';
 import { ProfileService } from '@bk2/profile/data-access';
@@ -15,6 +15,8 @@ import { convertPersonalDataFormToPerson, convertPersonToDataForm, convertPrivac
 import { ProfileDataAccordionComponent, ProfilePrivacyAccordionComponent, ProfileSettingsAccordionComponent } from '@bk2/profile/ui';
 import { AppStore } from '@bk2/auth/feature';
 import { debugFormModel } from '@bk2/shared/util';
+import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
+import { ENV } from '@bk2/shared/config';
 
 @Component({
   selector: 'bk-profile-page',
@@ -47,9 +49,12 @@ import { debugFormModel } from '@bk2/shared/util';
 })
 export class ProfilePageComponent {
   protected readonly appStore = inject(AppStore);
-  private readonly avatarService = inject(AvatarService);
+  private readonly uploadService = inject(UploadService);
   private readonly profileService = inject(ProfileService);
+  private readonly avatarService = inject(AvatarService);
   private readonly i18nService = inject(I18nService);
+  private readonly platform = inject(Platform);
+  private readonly env = inject(ENV);
 
   protected formIsValid = signal(false);
 
@@ -76,10 +81,19 @@ export class ProfilePageComponent {
     effect(() => { debugFormModel<PrivacyFormModel>('privacy', this.privacy(), this.appStore.currentUser()); });
   }
 
+  /**
+   * Uploads an image to Firebase storage and saves it as an avatar model in the database.
+   * @param photo the avatar photo that is uploaded to and stored in the firebase storage
+   */
   public async onImageSelected(photo: Photo): Promise<void> {
     const _personKey = this.personKey();
-    if (_personKey !== undefined) {
-      await this.avatarService.uploadPhoto(photo, ModelType.Person, _personKey);
+    if (!_personKey) return;
+    const _file = await readAsFile(photo, this.platform);
+    const _avatar = newAvatarModel([this.env.owner.tenantId], ModelType.Person, _personKey, _file.name);
+    const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
+
+    if (_downloadUrl) {
+      await this.avatarService.updateOrCreate(_avatar);
     }
   }
 

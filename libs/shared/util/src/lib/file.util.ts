@@ -1,57 +1,70 @@
 import mime from 'mime';
+import { die } from './log.util';
 
 /*------------------------ file pathes -----------------------*/
-/*  path = {/}dir{/dir}
-    basename = filename.extension
-    fullPath = {path/}basename */
+/**
+ * Terminology:
+ * 
+ * fullPath = path/to/a/filename.txt (can be relative or absolute, ie starting with /)
+ * (file)name = baseName.txt                  fileName(fullPath), baseName + . + extension
+ * dir = path/to/a                            dirname(fullPath)
+ * baseName = baseName                        baseName(fullPath) = fileName without extension
+ * extension = txt                            fileExtension(fullPath)
+ */
 
 /**
- * Extracts the basename from a file path.
- * e.g. path/to/a/filename.txt -> filename.txt
- * @param fullPath path/basename
- * @param sep the separator character
+ * Extracts the fileName from a full file path, i.e. stripping its directory.
+ * e.g. path/to/a/filename.txt -> baseName.ext
+ * @param fullPath dir{/dir}/baseName.ext
+ * @param dirSep the separator character, default is / on unix
+ * @returns fileName = baseName.ext
  */
-export function basename(fullPath: string, sep = '/'): string {
-    return fullPath.substring(fullPath.lastIndexOf(sep) + 1);
+export function fileName(fullPath: string, dirSep = '/'): string {
+    return fullPath.substring(fullPath.lastIndexOf(dirSep) + 1);
 }
   
 /**
- * Strips the filename from a fullPath.
+ * Strips the fileName off a fullPath.
  * e.g. path/to/a/filename.txt -> path/to/a
  * Will not work on Urls (because of / in queries).
  * See: https://stackoverflow.com/questions/2187256/js-most-optimized-way-to-remove-a-filename-from-a-path-in-a-string
- * @param fullPath 
- * @param sep 
+ * @param fullPath dir{/dir}/baseName.ext
+ * @param dirSep the separator character between dirs, default is / on unix
  */
-export function dirname(fullPath: string, sep = '/'): string {
-    return fullPath.substring(0, fullPath.lastIndexOf(sep));
+export function dirName(fullPath: string, dirSep = '/'): string {
+  // simple check on the most common url protocols
+  if (fullPath.startsWith('http') || fullPath.startsWith('ftp')) die('file.util: dirName can not be applied on urls');
+  return fullPath.substring(0, fullPath.lastIndexOf(dirSep));
 }
 
 /**
- * Returns the blank baseName without its extension.
- * e.g. filename.txt -> filename
- * @param baseName 
+ * Returns the blank baseName without its dir(s) and extension.
+ * e.g. /a/b/c/baseName.txt -> fileName
+ * @param fullPath the baseName of the fileName
  */
-export function stripExtension(baseName: string): string {
-    return baseName.substring(0, baseName.lastIndexOf('.'));
+export function baseName(fullPath: string, fileSep = '.', dirSep = '/'): string {
+  const _fn = fileName(fullPath, dirSep);
+  return _fn.substring(0, _fn.lastIndexOf(fileSep));
 }
 
 /**
  * Returns the extension of a full path name.
  * e.g. /a/b/c/filename.txt -> txt
- * @param baseName the base name (e.g. filename.txt)
+ * @param fullPath the full path name (e.g. /a/b/c/filename.txt)
+ * @returns the file extension (e.g. txt)
  */
-export function getFileExtension(baseName: string): string {
-    return baseName.substring(baseName.lastIndexOf('.') + 1)
+export function fileExtension(fullPath: string, fileSep = '.'): string {
+    return fullPath.substring(fullPath.lastIndexOf(fileSep) + 1)
 }
 
 /**
- * Return the svg logo for a file based on its extension.
- * @param extension the file extension
+ * Return the svg logo of a file
+ * @param fullPath the full path name (e.g. /a/b/c/filename.txt)
  * @returns the svg icon name of the logo
  */
-export function getLogoByExtension(extension: string): string {
-  switch(extension) {
+export function fileLogo(fullPath: string): string {
+  const _ext = fileExtension(fullPath);
+  switch(_ext) {
     case 'pdf': return 'assets/filetypes/pdf.svg';
     case 'csv': return 'assets/filetypes/csv.svg';
     case 'xls': 
@@ -90,22 +103,6 @@ export function getLogoByExtension(extension: string): string {
     case 'ppt': return 'assets/filetypes/ppt.svg';
     default: return 'assets/filetypes/file.svg';
   }
-}
-
-/**
- * Splits a basename into its parts blank basename and extension.
- * e.g. filename.txt -> ['filename', 'txt]
- * @param baseName the base name
- */
-export function splitBaseName(baseName: string): string[] {
-    if (!baseName) return [];
-    const _parts = baseName.split('.');
-    if (_parts.length < 1 || _parts.length > 2) {
-        console.warn(`util/splitBasename(${baseName}) -> ERROR: invalid basename`);
-        return [];
-    } else {
-        return _parts;
-    }
 }
 
 export const FileSizeUnits = [
@@ -157,7 +154,7 @@ export function isMimeTypeAccepted(mimeType: string, imagesOnly = false): boolea
 
 export function isOfFileType(pathOrExtension: string, mimeType: string): boolean {
   const _mimeType = getMimeType(pathOrExtension);
-  return !!((_mimeType && _mimeType.startsWith(mimeType)));
+  return !!_mimeType?.startsWith(mimeType);
 }
 
 export function isImage(pathOrExtension: string): boolean {

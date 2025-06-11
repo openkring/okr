@@ -4,8 +4,9 @@ import { AlertController, ToastController } from "@ionic/angular/standalone";
 
 import { ENV, FIRESTORE } from "@bk2/shared/config";
 import { PageCollection, PageModel, UserModel } from "@bk2/shared/models";
-import { createModel, getSystemQuery, searchData, updateModel } from "libs/shared/data/src";
 import { bkPrompt } from "@bk2/shared/i18n";
+import { createModel, getSystemQuery, searchData, updateModel } from "@bk2/shared/util";
+
 import { saveComment } from "@bk2/comment/util";
 
 @Injectable({

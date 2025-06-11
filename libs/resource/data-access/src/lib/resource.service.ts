@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular/standalone';
 import { Observable } from 'rxjs';
 
 import { getCategoryAbbreviation, ResourceTypes } from '@bk2/shared/categories';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { ResourceCollection, ResourceModel, ResourceType, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, findByKey, getSystemQuery, isResource, searchData, updateModel } from '@bk2/shared/util';
+import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
 
 import { getResourceSlug } from '@bk2/resource/util';
 import { saveComment } from '@bk2/comment/util';
@@ -17,7 +17,6 @@ export class ResourceService {
   private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly modalController = inject(ModalController);
 
   private readonly tenantId = this.env.owner.tenantId;
 
@@ -59,25 +58,6 @@ export class ResourceService {
   /*-------------------------- LIST / QUERY --------------------------------*/
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<ResourceModel[]> {
     return searchData<ResourceModel>(this.firestore, ResourceCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
-  }
-
-  /*-------------------------- add modal --------------------------------*/
-  public async add(currentUser?: UserModel, isTypeEditable = false): Promise<void> {
-    const _resource = new ResourceModel(this.tenantId);
-    const _modal = await this.modalController.create({
-      component: ResourceEditModalComponent,
-      componentProps: {
-        resource: _resource,
-        isTypeEditable: isTypeEditable
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm') {
-      if (isResource(data, this.tenantId)) {
-        await (!data.bkey ? this.create(data, currentUser) : this.update(data));
-      }
-    }
   }
 
   /*-------------------------- search index --------------------------------*/

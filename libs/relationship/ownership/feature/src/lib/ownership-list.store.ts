@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared/util';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared/util';
 import { AllCategories, GenderType, ModelType, OrgType, OwnershipModel, OwnershipType, OwnerTypeSelect, ResourceType, RowingBoatType } from '@bk2/shared/models';
 import { categoryMatches, ownerTypeMatches } from '@bk2/shared/categories';
 
@@ -11,6 +11,8 @@ import { AppStore } from '@bk2/auth/feature';
 
 import { OwnershipService } from '@bk2/ownership/data-access';
 import { confirm } from '@bk2/shared/i18n';
+import { selectDate } from '@bk2/shared/ui';
+import { OwnershipModalsService } from './ownership-modals.service';
 
 export type OwnershipListState = {
   ownerKey: string;
@@ -44,6 +46,7 @@ export const OwnershipListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     ownershipService: inject(OwnershipService),
+    ownershipModalsService: inject(OwnershipModalsService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController)     
@@ -256,21 +259,29 @@ export const OwnershipListStore = signalStore(
         const _currentPerson = store.appStore.currentPerson();
         const _defaultResource = store.appStore.defaultResource();
         if (!_currentPerson || !_defaultResource) return;
-        await store.ownershipService.add(_currentPerson, ModelType.Person, _defaultResource);
+        await store.ownershipModalsService.add(_currentPerson, ModelType.Person, _defaultResource);
         store.ownershipsResource.reload();
       },
 
       async edit(ownership?: OwnershipModel): Promise<void> {
-        await store.ownershipService.edit(ownership);
+        await store.ownershipModalsService.edit(ownership);
         store.ownershipsResource.reload();
       },
 
-      async end(ownership?: OwnershipModel): Promise<void> {
+      /**
+       * End an existing Ownership.
+       * We do not archive ownerships as we want to make them visible in the lists.
+       * Therefore, we end an ownership by setting its validTo date.
+       * @param ownership the Ownership to delete, its bkey needs to be valid so that we can find it in the database. 
+       */
+      async end(ownership: OwnershipModel): Promise<void> {
         if (ownership) {
-          await store.ownershipService.end(ownership);
+          const _date = await selectDate(store.modalController);
+          if (!_date) return;
+          await store.ownershipService.endOwnershipByDate(ownership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
           store.ownershipsResource.reload();  
         }
-      },
+      },   
 
       async export(type: string): Promise<void> {
         console.log(`OwnershipListStore.export(${type}) is not yet implemented.`);

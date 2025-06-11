@@ -4,9 +4,10 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { chipMatches, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, nameMatches, searchData } from '@bk2/shared/util';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, nameMatches, searchData } from '@bk2/shared/util';
 import { AllCategories, ModelType, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared/models';
 import { categoryMatches, yearMatches } from '@bk2/shared/categories';
+import { selectDate } from '@bk2/shared/ui';
 
 import { AppStore } from '@bk2/auth/feature';
 
@@ -132,7 +133,9 @@ export const ReservationListStore = signalStore(
 
       async end(reservation?: ReservationModel): Promise<void> {
         if (reservation) {
-          await store.reservationService.end(reservation);
+          const _date = await selectDate(store.modalController);
+          if (!_date) return;
+          await store.reservationService.endReservationByDate(reservation, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false));    
           store.reservationsResource.reload();  
         }
       },

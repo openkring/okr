@@ -204,7 +204,7 @@ export class OwnershipListComponent {
 
   public async end(slidingItem?: IonItemSliding, ownership?: OwnershipModel): Promise<void> {
     if (slidingItem) slidingItem.close();
-    await this.ownershipListStore.end(ownership);
+    if (ownership) await this.ownershipListStore.end(ownership);
   }
 
   public async edit(slidingItem?: IonItemSliding, ownership?: OwnershipModel): Promise<void> {

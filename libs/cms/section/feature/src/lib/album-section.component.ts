@@ -3,14 +3,15 @@ import { AsyncPipe, NgStyle } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { die, getSizedImgixParamsByExtension } from '@bk2/shared/util';
 import { AlbumStyle, Image, ImageAction, ImageMetaData, ImageType, SectionModel } from '@bk2/shared/models';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { CategoryComponent, ImageComponent, LabelComponent, SpinnerComponent, VideoComponent, browse, showZoomedImage } from '@bk2/shared/ui';
-import { TranslatePipe } from '@ngx-translate/core';
 import { ENV } from '@bk2/shared/config';
 import { downloadToBrowser } from '@bk2/shared/i18n';
+
 import { AlbumStyles } from '@bk2/cms/section/util';
 import { AlbumStore } from './album-section.store';
 

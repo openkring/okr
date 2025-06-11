@@ -4,18 +4,17 @@ import { IonAccordion, IonButton, IonIcon, IonItem, IonItemOption, IonItemOption
 import { Browser } from '@capacitor/browser';
 
 import { DocumentModel } from '@bk2/shared/models';
-import { EmptyListComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { FileLogoPipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { EmptyListComponent, SpinnerComponent, UploadService } from '@bk2/shared/ui';
+import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore } from '@bk2/auth/feature';
-import { DocumentUploadService } from '@bk2/document/ui';
 import { RoleName } from '@bk2/shared/config';
 import { hasRole } from '@bk2/shared/util';
 
 @Component({
   selector: 'bk-documents-accordion',
   imports: [
-    TranslatePipe, AsyncPipe, FileLogoPipe, PrettyDatePipe, FileSizePipe, SvgIconPipe,
+    TranslatePipe, AsyncPipe, FileLogoPipe, PrettyDatePipe, FileSizePipe, SvgIconPipe, FileNamePipe,
     SpinnerComponent, EmptyListComponent,
     IonItem, IonLabel, IonButton, IonIcon, IonList,
     IonItemSliding, IonItemOptions, IonItemOption, IonAccordion
@@ -39,8 +38,8 @@ import { hasRole } from '@bk2/shared/util';
             @for(document of documents; track document.bkey) {
               <ion-item-sliding #slidingItem>
                 <ion-item (click)="showDocument(document.url)">
-                  <ion-icon src="{{ document.extension | fileLogo }}"></ion-icon>&nbsp;
-                  <ion-label>{{ document.fileName }}</ion-label>
+                  <ion-icon src="{{ document.fullPath | fileLogo }}"></ion-icon>&nbsp;
+                  <ion-label>{{ document.fullPath | fileName }}</ion-label>
                   <ion-label class="ion-hide-md-down">{{ document.dateOfDocCreation | prettyDate }} / {{ document.size | fileSize }}</ion-label>
                 </ion-item>
                 @if(hasRole('contentAdmin')) {
@@ -63,20 +62,18 @@ import { hasRole } from '@bk2/shared/util';
 export class DocumentsAccordionComponent {
   public appStore = inject(AppStore);
   public modalController = inject(ModalController); 
-  private readonly documentUploadService = inject(DocumentUploadService);
+  private readonly uploadService = inject(UploadService);
 
   public documents = input.required<DocumentModel[]>();
   public path = input.required<string>();
   public color = input('primary');
   public title = input('@document.plural');
-  //protected path = computed(() => getDocumentStoragePath(this.env.owner.tenantId, this.parentModelType(), this.parentKey()));
 
    /**
    * Show a modal to upload a file.
    */
   public async upload(): Promise<void> {
-    // show a file dialog to select the file to upload
-    const _file = await this.documentUploadService.pickFile([
+    const _file = await this.uploadService.pickFile([
       'image/png', 
       'image/jpg', 
       'application/pdf', 
@@ -88,8 +85,7 @@ export class DocumentsAccordionComponent {
       'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ]);
     if (_file) {
-      // upload the file to the storage
-        await this.documentUploadService.uploadFile(_file, this.path());
+        await this.uploadService.uploadFile(_file, this.path(), '@document.operation.upload.single.title');
     }
   }
 

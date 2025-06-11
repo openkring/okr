@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonContent } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 import { Photo } from '@capacitor/camera';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
+import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/config';
+import { ENV, RoleName } from '@bk2/shared/config';
 import { ModelType, PersonCollection } from '@bk2/shared/models';
 import { getFullPersonName, hasRole } from '@bk2/shared/util';
 
@@ -23,6 +23,7 @@ import { WorkingRelAccordionComponent } from '@bk2/working-rel/feature';
 import { convertPersonToForm } from '@bk2/person/util';
 import { PersonFormComponent } from '@bk2/person/ui';
 import { PersonEditStore } from './person-edit.store';
+import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
 
 @Component({
   selector: 'bk-person-edit-page',
@@ -66,6 +67,9 @@ import { PersonEditStore } from './person-edit.store';
 export class PersonEditPageComponent {
   private readonly avatarService = inject(AvatarService);
   private readonly personEditStore = inject(PersonEditStore);
+  private readonly uploadService = inject(UploadService);
+  private readonly platform = inject(Platform);
+  private readonly env = inject(ENV);
 
   public personKey = input.required<string>();
 
@@ -93,10 +97,20 @@ export class PersonEditPageComponent {
     await this.personEditStore.save(this.vm());
   }
 
+  /**
+   * Uploads an image to Firebase storage and saves it as an avatar model in the database.
+   * @param photo the avatar photo that is uploaded to and stored in the firebase storage
+   */
   public async onImageSelected(photo: Photo): Promise<void> {
     const _person = this.person();
     if (!_person) return;
-    await this.avatarService.uploadPhoto(photo, ModelType.Person, _person.bkey);
+    const _file = await readAsFile(photo, this.platform);
+    const _avatar = newAvatarModel([this.env.owner.tenantId], ModelType.Group, _person.bkey, _file.name);
+    const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
+
+    if (_downloadUrl) {
+      await this.avatarService.updateOrCreate(_avatar);
+    }
   }
 
   protected onAddressesChanged(): void {

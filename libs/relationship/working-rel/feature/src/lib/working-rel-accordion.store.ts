@@ -11,6 +11,7 @@ import { debugListLoaded, isValidAt } from '@bk2/shared/util';
 import { AvatarService } from '@bk2/avatar/data-access';
 import { confirm } from '@bk2/shared/i18n';
 import { WorkingRelService } from '@bk2/working-rel/data-access';
+import { WorkingRelModalsService } from './working-rel-modals.service';
 
 export type WorkingRelAccordionState = {
   personKey: string | undefined;
@@ -31,6 +32,7 @@ export const WorkingRelAccordionStore = signalStore(
   withState(initialState),
   withProps(() => ({
     workingRelService: inject(WorkingRelService),
+    workingRelModalsService: inject(WorkingRelModalsService),
     avatarService: inject(AvatarService),
     appStore: inject(AppStore),
     env: inject(ENV),
@@ -99,13 +101,13 @@ export const WorkingRelAccordionStore = signalStore(
 
       /******************************** actions ******************************************* */
       async edit(workingRel?: WorkingRelModel): Promise<void> {
-        await store.workingRelService.edit(workingRel);
+        await store.workingRelModalsService.edit(workingRel);
         store.workingRelsResource.reload();
       },
 
       async end(workingRel?: WorkingRelModel): Promise<void> {
         if (workingRel) {
-          await store.workingRelService.end(workingRel);
+          await store.workingRelModalsService.end(workingRel);
           store.workingRelsResource.reload();  
         }
       },

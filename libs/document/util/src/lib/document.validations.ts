@@ -1,17 +1,14 @@
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { baseValidations, categoryValidations, compareDate, dateValidations, isFutureDate, numberValidations, stringValidations } from '@bk2/shared/util';
 import { DocumentModel } from '@bk2/shared/models';
-import { dirValidations } from './dir.validations';
-import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
 
 export const documentValidations = staticSuite((model: DocumentModel, field?: string) => {
   if (field) only(field);
 
   baseValidations(model, field);
-  categoryValidations('docType', model.docType, DocumentType);
-  dirValidations('dir', model.dir);
-  stringValidations('fileName', model.fileName, SHORT_NAME_LENGTH);
-  stringValidations('extension', model.extension, SHORT_NAME_LENGTH);
+  categoryValidations('docType', model.type, DocumentType);
+  stringValidations('fullPath', model.fullPath, LONG_NAME_LENGTH);
   stringValidations('mimeType', model.mimeType, SHORT_NAME_LENGTH);
   numberValidations('size', model.size, true, 0, 1000000000);
   stringValidations('title', model.title, SHORT_NAME_LENGTH);

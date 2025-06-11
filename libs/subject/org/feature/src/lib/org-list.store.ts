@@ -3,15 +3,20 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { catchError, finalize, of } from 'rxjs';
+import { Router } from '@angular/router';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { AppNavigationService, chipMatches, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
 import { categoryMatches } from '@bk2/shared/categories';
-import { AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared/models';
-import { OrgService } from '@bk2/org/data-access';
-import { AppStore } from '@bk2/auth/feature';
-import { Router } from '@angular/router';
+import { AddressModel, AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared/models';
 import { copyToClipboardWithConfirmation } from '@bk2/shared/i18n';
+
+import { AddressService } from '@bk2/address/data-access';
+import { AppStore } from '@bk2/auth/feature';
+
+import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel } from '@bk2/org/util';
+import { OrgService } from '@bk2/org/data-access';
+import { OrgNewModalComponent } from './org-new.modal';
 
 export type OrgListState = {
   searchTerm: string;
@@ -28,6 +33,7 @@ export const OrgListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     orgService: inject(OrgService),
+    addressService: inject(AddressService),
     appNavigationService: inject(AppNavigationService),
     firestore: inject(FIRESTORE),
     router: inject(Router),
@@ -121,8 +127,36 @@ export const OrgListStore = signalStore(
       console.log(`OrgListStore.export(${type}) is not yet implemented.`);
     },
     async add(): Promise<void> {
-      await store.orgService.add(store.currentUser());
+      const _modal = await store.modalController.create({
+        component: OrgNewModalComponent,
+        componentProps: {
+          currentUser: store.currentUser()
+        }
+      });
+      _modal.present();
+      const { data, role } = await _modal.onDidDismiss();
+      if (role === 'confirm') {
+        const _vm = data as OrgNewFormModel;
+        const _key = ModelType.Org + '.' + await store.orgService.create(convertFormToNewOrg(_vm, store.tenantId()), store.currentUser());
+        if ((_vm.email ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToEmailAddress(_vm, store.tenantId()), _key);
+        }
+        if ((_vm.phone ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToPhoneAddress(_vm, store.tenantId()), _key);
+        }
+        if ((_vm.web ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToWebAddress(_vm, store.tenantId()), _key);
+        }
+        if ((_vm.city ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToPostalAddress(_vm, store.tenantId()), _key);
+        }
+      }
       store.orgsResource.reload();
+    },
+
+    saveAddress(address: AddressModel, orgKey: string): void {
+      address.parentKey = orgKey;
+      store.addressService.create(address, store.currentUser());
     },
 
     /**

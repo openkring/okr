@@ -1,125 +1,85 @@
-import { basename, dirname, fileSizeUnit, getFileExtension, splitBaseName, stripExtension } from './file.util';
+import { baseName, dirName, fileExtension, fileName, fileSizeUnit } from './file.util';
 
 describe('file.util', () => {
 
     // basename
-    it('basename("path/to/a/filename.txt") should be filename.txt.', () => {
-        const _result = basename('path/to/a/filename.txt');
-        expect(_result).toEqual('filename.txt');
+    it('fileName("path/to/a/baseName.txt") should be baseName.txt.', () => {
+        const _result = fileName('path/to/a/baseName.txt');
+        expect(_result).toEqual('baseName.txt');
     });
-    it('basename("path_to_a_filename.txt", "_") should be filename.txt.', () => {
-        const _result = basename('path_to_a_filename.txt', '_');
-        expect(_result).toEqual('filename.txt');
+    it('fileName("path_to_a_baseName.txt", "_") should be baseName.txt.', () => {
+        const _result = fileName('path_to_a_baseName.txt', '_');
+        expect(_result).toEqual('baseName.txt');
     });
-    it('basename("path\\to\\a\\filename.txt", "\\") should be filename.txt.', () => {
-        const _result = basename('path\\to\\a\\filename.txt', '\\');
-        expect(_result).toEqual('filename.txt');
+    it('fileName("path\\to\\a\\baseName.txt", "\\") should be baseName.txt.', () => {
+        const _result = fileName('path\\to\\a\\baseName.txt', '\\');
+        expect(_result).toEqual('baseName.txt');
     });
-    it('basename("filename.txt") should be filename.txt.', () => {
-        const _result = basename('filename.txt');
-        expect(_result).toEqual('filename.txt');
+    it('fileName("baseName.txt") should be baseName.txt.', () => {
+        const _result = fileName('baseName.txt');
+        expect(_result).toEqual('baseName.txt');
     });
-    it('basename("filename") should be filename.', () => {
-        const _result = basename('filename');
-        expect(_result).toEqual('filename');
+    it('baseName("baseName.ext") should be baseName.ext', () => {
+        const _result = baseName('baseName.ext');
+        expect(_result).toEqual('baseName.ext');
     });
-    it('basename("/path/to/a/filename.txt") should be filename.txt.', () => {
-        const _result = basename('/path/to/a/filename.txt');
-        expect(_result).toEqual('filename.txt');
+    it('baseName("/path/to/a/baseName.ext") should be baseName.ext.', () => {
+        const _result = baseName('/path/to/a/baseName.ext');
+        expect(_result).toEqual('baseName.ext');
+    });
+    it('baseName(".ext") should be empty.', () => {
+      const _result = baseName('.ext');
+      expect(_result).toEqual('');
     });
 
-    // dirname
-    it('dirname("path/to/a/filename.txt") should be path/to/a.', () => {
-        const _result = dirname('path/to/a/filename.txt');
+    // dirName
+    it('dirName("path/to/a/baseName.ext") should be path/to/a.', () => {
+        const _result = dirName('path/to/a/baseName.ext');
         expect(_result).toEqual('path/to/a');
     });
-    it('dirname("path_to_a_filename.txt", "_") should be path_to_a.', () => {
-        const _result = dirname('path_to_a_filename.txt', '_');
+    it('dirName("path_to_a_baseName.ext", "_") should be path_to_a.', () => {
+        const _result = dirName('path_to_a_baseName.ext', '_');
         expect(_result).toEqual('path_to_a');
     });
-    it('dirname("path\\to\\a\\filename.txt", "\\") should be path\\to\\a.', () => {
-        const _result = dirname('path\\to\\a\\filename.txt', '\\');
+    it('dirName("path\\to\\a\\baseName.ext", "\\") should be path\\to\\a.', () => {
+        const _result = dirName('path\\to\\a\\baseName.ext', '\\');
         expect(_result).toEqual('path\\to\\a');
     });
-    it('dirname("filename.txt") should be empty string.', () => {
-        const _result = dirname('filename.txt');
+    it('dirName("baseName.ext") should be empty string.', () => {
+        const _result = dirName('baseName.ext');
         expect(_result).toEqual('');
     });
-    it('dirname("filename") should be empty string.', () => {
-        const _result = dirname('filename');
+    it('dirName("baseName") should be empty string.', () => {
+        const _result = dirName('baseName');
         expect(_result).toEqual('');
     });
-    it('dirname("/path/to/a/filename.txt") should be /path/to/a.', () => {
-        const _result = dirname('/path/to/a/filename.txt');
-        expect(_result).toEqual('/path/to/a');
+    it('dirName(".ext") should be empty.', () => {
+        const _result = dirName('.ext');
+        expect(_result).toEqual('');
     });
 
-    // stripExtension
-    it('stripExtension("/path/to/a/filename.txt") should be /path/to/a/filename.', () => {
-        const _result = stripExtension('/path/to/a/filename.txt');
-        expect(_result).toEqual('/path/to/a/filename');
+    // fileExtension
+    it('fileExtension("/path/to/a/baseName.ext") should be ext.', () => {
+        const _result = fileExtension('/path/to/a/baseName.ext');
+        expect(_result).toEqual('ext');
     });
-    it('stripExtension("path/to/a/filename.txt") should be path/to/a/filename.', () => {
-        const _result = stripExtension('path/to/a/filename.txt');
-        expect(_result).toEqual('path/to/a/filename');
+    it('fileExtension("path/to/a/baseName.ext") should be ext.', () => {
+        const _result = fileExtension('path/to/a/baseName.ext');
+        expect(_result).toEqual('ext');
     });
-    it('stripExtension("filename.txt") should be filename.', () => {
-        const _result = stripExtension('filename.txt');
-        expect(_result).toEqual('filename');
+    it('fileExtension("baseName.ext") should be ext.', () => {
+        const _result = fileExtension('baseName.ext');
+        expect(_result).toEqual('ext');
     });
-    it('stripExtension("") should be empty string.', () => {
-        const _result = stripExtension('');
+    it('fileExtension("") should be empty string.', () => {
+        const _result = fileExtension('');
         expect(_result).toEqual('');
     });
-    it('stripExtension("part.part.part.txt") should be part.part.part.', () => {
-        const _result = stripExtension('part.part.part.txt');
-        expect(_result).toEqual('part.part.part');
+    it('fileExtension("part.part.part.txt") should be ext.', () => {
+        const _result = fileExtension('part.part.part.ext');
+        expect(_result).toEqual('ext');
     });
 
-    // getExtension
-    it('getExtension("/path/to/a/filename.txt") should be txt.', () => {
-        const _result = getFileExtension('/path/to/a/filename.txt');
-        expect(_result).toEqual('txt');
-    });
-    it('getExtension("path/to/a/filename.txt") should be txt.', () => {
-        const _result = getFileExtension('path/to/a/filename.txt');
-        expect(_result).toEqual('txt');
-    });
-    it('getExtension("filename.txt") should be txt.', () => {
-        const _result = getFileExtension('filename.txt');
-        expect(_result).toEqual('txt');
-    });
-    it('getExtension("") should be empty string.', () => {
-        const _result = getFileExtension('');
-        expect(_result).toEqual('');
-    });
-    it('getExtension("part.part.part.txt") should be txt.', () => {
-        const _result = getFileExtension('part.part.part.txt');
-        expect(_result).toEqual('txt');
-    });
-
-    // splitBaseName
-    it('splitBaseName("/path/to/a/filename.txt") should be ["/path/to/a/filename", "txt"].', () => {
-        const _result = splitBaseName('/path/to/a/filename.txt');
-        expect(_result).toEqual(['/path/to/a/filename', 'txt']);
-    });
-    it('splitBaseName("path/to/a/filename.txt") should be [path/to/a/filename, txt].', () => {
-        const _result = splitBaseName('path/to/a/filename.txt');
-        expect(_result).toEqual(['path/to/a/filename', 'txt']);
-    });
-    it('splitBaseName("filename.txt") should be [filename, txt].', () => {
-        const _result = splitBaseName('filename.txt');
-        expect(_result).toEqual(['filename', 'txt']);
-    });
-    // null and undefined are forbidden by strong type checking
-    it('splitBaseName("") should be empty array', () => {
-        const _result = splitBaseName('');
-        expect(_result).toEqual([]);
-    });
-    it('splitBaseName("part.part.part.txt") should be empty array because of invalid name.', () => {
-        const _result = splitBaseName('part.part.part.txt');
-        expect(_result).toEqual([]);
-    });
     // fileSizeUnit
     it('fileSizeUnit() should be 0 bytes.', () => {
         const _result = fileSizeUnit();

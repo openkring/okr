@@ -4,12 +4,13 @@ import { IonButton, IonContent, IonIcon, ModalController, Platform } from '@ioni
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { getImgixUrlWithAutoParams } from '@bk2/shared/util';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
+import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { newImage } from '@bk2/cms/section/util';
-import { pickPhoto } from '@bk2/document/util';
-import { DocumentUploadService, ImageConfigFormComponent } from '@bk2/document/ui';
+import { getDocumentStoragePath, pickPhoto } from '@bk2/document/util';
+import { ImageConfigFormComponent } from '@bk2/document/ui';
 import { ModelType, UserModel } from '@bk2/shared/models';
+import { ENV } from '@bk2/shared/config';
 
 /**
  * This modal requests a user to select an image file and provide some metadata about the image.
@@ -38,7 +39,8 @@ import { ModelType, UserModel } from '@bk2/shared/models';
 export class ImageSelectModalComponent {
   private readonly modelController = inject(ModalController);
   private readonly platform = inject(Platform);
-  private readonly documentUploadService = inject(DocumentUploadService);
+  private readonly uploadService = inject(UploadService);
+  private readonly env = inject(ENV);
 
   public key = input.required<string>();     // usually the key of a section
   public modelType = input(ModelType.Section); // the model type of the key
@@ -47,20 +49,21 @@ export class ImageSelectModalComponent {
   protected vm = signal(newImage());
   protected validChange = signal(false);
 
-  // select a photo from the camera or the photo library
-  protected async pickImage() {
+  // select a photo from the camera or the photo library and upload it to the storage
+  protected async pickImage(): Promise<void> {
     const _file = await pickPhoto(this.platform);
     const _key = this.key();
     if (_file && _key) {
-      // upload the file to the storage
-      const _path = await this.documentUploadService.uploadFileToModel(_file, this.modelType(), _key);
-      if (_path) {
+      const _storageLocation = getDocumentStoragePath(this.env.owner.tenantId, this.modelType(), _key);
+      if (_storageLocation) {
+        const _path = _storageLocation + '/' + _file.name;
+        await this.uploadService.uploadFile(_file, _path, '@document.operation.upload.single.title');
         this.vm.update((vm) => ({
           ...vm,
           url: _path,
           actionUrl: getImgixUrlWithAutoParams(_path)
         }));
-      }      
+      }
     }
   }
   

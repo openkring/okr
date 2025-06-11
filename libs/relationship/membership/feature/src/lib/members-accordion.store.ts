@@ -1,12 +1,12 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController } from '@ionic/angular/standalone';
+import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom, Observable, of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
-import { debugItemLoaded, debugListLoaded, isValidAt, readModel } from '@bk2/shared/util';
+import { convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, isValidAt, readModel } from '@bk2/shared/util';
 import { confirm } from '@bk2/shared/i18n';
 import { getAvatarImgixUrl } from '@bk2/shared/pipes';
 
@@ -14,6 +14,8 @@ import { AvatarService } from '@bk2/avatar/data-access';
 import { AppStore } from '@bk2/auth/feature';
 
 import { MembershipService } from '@bk2/membership/data-access';
+import { MembershipModalsService } from './membership-modals.service';
+import { selectDate } from '@bk2/shared/ui';
 
 
 export type MembersAccordionState = {
@@ -30,11 +32,13 @@ export const MembersAccordionStore = signalStore(
   withState(initialState),
   withProps(() => ({
     membershipService: inject(MembershipService),
+    membershipModalsService: inject(MembershipModalsService),
     avatarService: inject(AvatarService),
     appStore: inject(AppStore),
     firestore: inject(FIRESTORE),
     env: inject(ENV),
-    alertController: inject(AlertController)
+    alertController: inject(AlertController),
+    modalController: inject(ModalController)
   })),
   withProps((store) => ({
       // load all the memberships of the given org = its members
@@ -89,18 +93,20 @@ export const MembersAccordionStore = signalStore(
 
       /******************************** actions ******************************************* */
       async addMember(): Promise<void> {
-        await store.membershipService.add(store.currentPerson(), store.currentOrg(), ModelType.Person);
+        await store.membershipModalsService.add(store.currentPerson(), store.currentOrg(), ModelType.Person);
         store.membersResource.reload();
       },
 
       async edit(membership?: MembershipModel): Promise<void> {
-        await store.membershipService.edit(membership);
+        await store.membershipModalsService.edit(membership);
         store.membersResource.reload();
       },
 
       async end(membership?: MembershipModel): Promise<void> {
         if (membership) {
-          await store.membershipService.end(membership);
+          const _date = await selectDate(store.modalController);
+          if (!_date) return;
+          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
           store.membersResource.reload();  
         }
       },
@@ -109,7 +115,7 @@ export const MembersAccordionStore = signalStore(
         if(membership) {
           const _mcat = await firstValueFrom(readModel<CategoryListModel>(store.firestore, CategoryCollection, 'mcat_' + membership.orgKey));            
           if (_mcat) {
-            await store.membershipService.changeMembershipCategory(membership, _mcat);
+            await store.membershipModalsService.changeMembershipCategory(membership, _mcat);
             store.membersResource.reload();
           }
         }

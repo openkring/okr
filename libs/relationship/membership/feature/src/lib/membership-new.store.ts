@@ -8,6 +8,7 @@ import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, Or
 import { debugItemLoaded, readModel } from '@bk2/shared/util';
 
 import { AppStore } from '@bk2/auth/feature';
+import { MembershipService } from '@bk2/membership/data-access';
 
 export type MembershipNewState = {
   orgId: string | undefined;

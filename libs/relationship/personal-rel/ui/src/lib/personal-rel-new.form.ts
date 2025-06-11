@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, computed, input, model, output, signal } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -6,13 +6,13 @@ import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputCompon
 import { GenderType, ModelType, PersonalRelType, UserModel } from '@bk2/shared/models';
 import { RoleName } from '@bk2/shared/config';
 import { debugFormErrors, hasRole } from '@bk2/shared/util';
-
 import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
-import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { PersonalRelFormModel, personalRelFormModelShape, PersonalRelNewFormModel, personalRelNewFormValidations } from '@bk2/personal-rel/util';
 import { PersonalRelTypes } from '@bk2/shared/categories';
-import { PersonalRelService } from '@bk2/personal-rel/data-access';
+
+import { AsyncPipe } from '@angular/common';
+
+import { PersonalRelFormModel, personalRelFormModelShape, PersonalRelNewFormModel, personalRelNewFormValidations } from '@bk2/personal-rel/util';
 
 @Component({
   selector: 'bk-personal-rel-new-form',
@@ -47,7 +47,7 @@ import { PersonalRelService } from '@bk2/personal-rel/data-access';
             </ion-col>
             <ion-col size="3">
               <ion-item lines="none">
-                <ion-button slot="start" fill="clear" (click)="selectPerson(true)">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                <ion-button slot="start" fill="clear" (click)="selectPerson.emit(true)">{{ '@general.operation.select.label' | translate | async }}</ion-button>
               </ion-item>
             </ion-col>
           </ion-row>
@@ -72,7 +72,7 @@ import { PersonalRelService } from '@bk2/personal-rel/data-access';
             </ion-col>
             <ion-col size="3">
               <ion-item lines="none">
-              <ion-button slot="start" fill="clear" (click)="selectPerson(false)">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+              <ion-button slot="start" fill="clear" (click)="selectPerson.emit(false)">{{ '@general.operation.select.label' | translate | async }}</ion-button>
               </ion-item>
             </ion-col>
           </ion-row>        
@@ -99,21 +99,21 @@ import { PersonalRelService } from '@bk2/personal-rel/data-access';
     </ion-card>
       
     @if(hasRole('privileged')) {
-          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="personalRelTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="personalRelTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
     }
 
     @if(hasRole('admin')) {
-          <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
+      <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
     }
   </form>
   `
 })
 export class PersonalRelNewFormComponent {
-  private readonly personalRelService = inject(PersonalRelService);
-
   public vm = model.required<PersonalRelNewFormModel>();
   public currentUser = input<UserModel | undefined>();
   public personalRelTags = input.required<string>();
+
+  public selectPerson = output<boolean>();
 
   public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser())); 
   protected subjectKey = computed(() => this.vm().subjectKey ?? '');
@@ -158,30 +158,5 @@ export class PersonalRelNewFormComponent {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
-  }
-
-  protected async selectPerson(isSubject: boolean): Promise<void> {
-    const _person = await this.personalRelService.selectPerson();
-    if (!_person) return;
-    if (isSubject) {
-      this.vm.update((_vm) => ({
-        ..._vm, 
-        subjectKey: _person.bkey, 
-        subjectFirstName: _person.firstName,
-        subjectLastName: _person.lastName,
-        subjectGender: _person.gender,
-      }));
-    } else {
-      this.vm.update((_vm) => ({
-        ..._vm, 
-        objectKey: _person.bkey, 
-        objectFirstName: _person.firstName,
-        objectLastName: _person.lastName,
-        objectGender: _person.gender,
-      }));
-    }
-    debugFormErrors('PersonalRel ' + isSubject, this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 }

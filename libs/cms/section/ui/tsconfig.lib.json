@@ -12,5 +12,5 @@
     "jest.config.ts",
     "src/**/*.test.ts"
   ],
-  "include": ["src/**/*.ts", "../feature/src/lib/gallery.modal.ts", "../feature/src/lib/image-edit.modal.ts", "../feature/src/lib/swiper.modal.ts", "src/lib/image-list.component.ts", "src/lib/single-image.component.ts", "../feature/src/lib/section.form.ts"]
+  "include": ["src/**/*.ts", "../feature/src/lib/gallery.modal.ts", "../feature/src/lib/image-edit.modal.ts", "../feature/src/lib/swiper.modal.ts", "../feature/src/lib/image-list.component.ts", "../feature/src/lib/single-image.component.ts", "../feature/src/lib/section.form.ts"]
 }

@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonContent } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
+import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/config';
+import { ENV, RoleName } from '@bk2/shared/config';
 import { GroupCollection, ModelType } from '@bk2/shared/models';
 import { AvatarToolbarComponent } from '@bk2/avatar/ui';
 import { Photo } from '@capacitor/camera';
@@ -17,6 +17,7 @@ import { MembersAccordionComponent } from '@bk2/membership/feature';
 import { GroupEditStore } from './group-edit.store';
 import { convertGroupToForm } from '@bk2/group/util';
 import { GroupFormComponent } from '@bk2/group/ui';
+import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
 
 @Component({
   selector: 'bk-group-edit-page',
@@ -48,6 +49,9 @@ import { GroupFormComponent } from '@bk2/group/ui';
 export class GroupEditPageComponent {
   private readonly avatarService = inject(AvatarService);
   private readonly groupEditStore = inject(GroupEditStore);
+  private readonly uploadService = inject(UploadService);
+  private readonly platform = inject(Platform);
+  private readonly env = inject(ENV);
 
   public groupKey = input.required<string>();
 
@@ -73,10 +77,20 @@ export class GroupEditPageComponent {
     await this.groupEditStore.save(this.vm());
   }
 
+  /**
+   * Uploads an image to Firebase storage and saves it as an avatar model in the database.
+   * @param photo the avatar photo that is uploaded to and stored in the firebase storage
+   */
   public async onImageSelected(photo: Photo): Promise<void> {
     const _group = this.group();
     if (!_group) return;
-    await this.avatarService.uploadPhoto(photo, ModelType.Group, _group.bkey);
+    const _file = await readAsFile(photo, this.platform);
+    const _avatar = newAvatarModel([this.env.owner.tenantId], ModelType.Group, _group.bkey, _file.name);
+    const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
+
+    if (_downloadUrl) {
+      await this.avatarService.updateOrCreate(_avatar);
+    }
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

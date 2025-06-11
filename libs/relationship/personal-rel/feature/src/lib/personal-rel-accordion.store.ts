@@ -6,13 +6,15 @@ import { Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared/config';
 import { PersonalRelModel } from '@bk2/shared/models';
-import { debugListLoaded, isValidAt } from '@bk2/shared/util';
+import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util';
 import { confirm } from '@bk2/shared/i18n';
 
 import { AvatarService } from '@bk2/avatar/data-access';
 import { AppStore } from '@bk2/auth/feature';
 
 import { PersonalRelService } from '@bk2/personal-rel/data-access';
+import { PersonalRelModalsService } from './personal-rel-modals.service';
+import { selectDate } from '@bk2/shared/ui';
 
 export type PersonalRelAccordionState = {
   personKey: string | undefined;
@@ -31,6 +33,7 @@ export const PersonalRelAccordionStore = signalStore(
   withState(initialState),
   withProps(() => ({
     personalRelService: inject(PersonalRelService),
+    personalRelModalsService: inject(PersonalRelModalsService),
     avatarService: inject(AvatarService),
     appStore: inject(AppStore),
     env: inject(ENV),
@@ -78,18 +81,20 @@ export const PersonalRelAccordionStore = signalStore(
 
       /******************************** actions ******************************************* */
       async add(): Promise<void> {
-        await store.personalRelService.add(store.appStore.currentPerson(), store.appStore.currentPerson());
+        await store.personalRelModalsService.add(store.appStore.currentPerson(), store.appStore.currentPerson());
         store.personalRelsResource.reload();
       },
 
       async edit(personalRel?: PersonalRelModel): Promise<void> {
-        await store.personalRelService.edit(personalRel);
+        await store.personalRelModalsService.edit(personalRel);
         store.personalRelsResource.reload();
       },
 
       async end(personalRel?: PersonalRelModel): Promise<void> {
         if (personalRel) {
-          await store.personalRelService.end(personalRel);
+          const _date = await selectDate(store.modalController);
+          if (!_date) return;
+          await store.personalRelService.endPersonalRelByDate(personalRel, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
           store.personalRelsResource.reload();  
         }
       },

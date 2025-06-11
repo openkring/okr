@@ -1,29 +1,36 @@
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from "./base.model";
+import { BkModel, SearchableModel, TaggedModel } from "./base.model";
 import { DocumentType } from "./enums/document-type.enum";
 
 export const DOCUMENT_DIR = 'documents';
 export const EZS_DIR = 'ezs';
 
-export class DocumentModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
+/**
+ * Terminology:
+ * 
+ * fullPath = {/dir}/baseName.ext (can be relative or absolute, ie starting with /)
+ * (file)name = baseName.ext                  fileName(fullPath), baseName + . + extension
+ * dir = path/to/a                            dirName(fullPath)
+ * baseName = baseName                        baseName(fullPath) = fileName without extension
+ * extension = ext                            fileExtension(fullPath)
+ * 
+ * fullPath is set explicitly. All other parts can be derived from fullPath.
+ */
+export class DocumentModel implements BkModel, SearchableModel, TaggedModel {
   public bkey = '';
   public tenants: string[] = [];
   public isArchived = false;
   public index = '';
   public tags = '';
-  public name = '';                                       // name must match with the name of the file in firebase storage (fileName + . + extension)
+
+  public fullPath = '';                                   // {/dir}/baseName.extension in firebase storage
   public description = '';                                // a human-readable, translatable file name (i18n)
-  public docType: DocumentType | undefined = undefined;
-  public url = '';                                        // url: url of the original file
-  public creationDate = '';                               // firestorage timeCreated
-  public lastUpdate = '';                                 // firestorage updated
-  public fullPath = '';                                   // dir + / + fileName + . + extension in firebase storage
-  public dir = '';
-  public fileName = '';                                   // the file name without extension
-  public extension = '';
-  public mimeType = '';                                   // = firestorage:  contentType
-  public size = 0;
   public title = '';                                      // e.g. short image title
   public altText = '';                                    // alternate text for images (default = name)
+
+  public type: DocumentType | undefined = undefined;
+  public url = '';                                        // url: url of the original file
+  public mimeType = '';                                   // = firestorage:  contentType
+  public size = 0;
   public authorKey = '';                                  // the author of the document, does not need to be the same as the person that saved the file
   public authorName = '';                                 // the author of the document, does not need to be the same as the person that save the file
   public dateOfDocCreation = '';                          // the date the document was created

@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, CUSTOM_ELEMENTS_SCHEMA, inject, input, viewChild } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { IonContent } from '@ionic/angular/standalone';
+import { register, SwiperContainer } from 'swiper/element/bundle';
 
 import { Image } from '@bk2/shared/models';
 import { HeaderComponent, LabelComponent } from '@bk2/shared/ui';
-import { register, SwiperContainer } from 'swiper/element/bundle';
 import { die, getSizedImgixParamsByExtension } from '@bk2/shared/util';
 import { downloadToBrowser, TranslatePipe } from '@bk2/shared/i18n';
 import { ENV } from '@bk2/shared/config';

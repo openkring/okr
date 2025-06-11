@@ -10,5 +10,5 @@
     "jest.config.ts",
     "src/**/*.test.ts"
   ],
-  "include": ["src/**/*.ts", "src/lib/section.form.ts", "../ui/src/lib/image-list.component.ts", "../ui/src/lib/single-image.component.ts"]
+  "include": ["src/**/*.ts", "src/lib/section.form.ts", "src/lib/image-list.component.ts", "src/lib/single-image.component.ts"]
 }

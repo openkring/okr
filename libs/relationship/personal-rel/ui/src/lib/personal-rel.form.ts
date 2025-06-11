@@ -1,19 +1,18 @@
 import { Component, computed, inject, input, model, output, signal } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
+import { AsyncPipe } from '@angular/common';
+import { Router } from '@angular/router';
 
 import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { GenderType, ModelType, PersonalRelType, UserModel } from '@bk2/shared/models';
 import { RoleName } from '@bk2/shared/config';
 import { debugFormErrors, hasRole } from '@bk2/shared/util';
-
 import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
-import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidations } from '@bk2/personal-rel/util';
 import { PersonalRelTypes } from '@bk2/shared/categories';
-import { PersonalRelService } from '@bk2/personal-rel/data-access';
-import { Router } from '@angular/router';
+
+import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidations } from '@bk2/personal-rel/util';
 
 @Component({
   selector: 'bk-personal-rel-form',
@@ -49,7 +48,7 @@ import { Router } from '@angular/router';
             </ion-col>
             <ion-col size="3">
               <ion-item lines="none">
-                <ion-button slot="start" fill="clear" (click)="selectPerson(true)">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                <ion-button slot="start" fill="clear" (click)="selectPerson.emit(true)">{{ '@general.operation.select.label' | translate | async }}</ion-button>
               </ion-item>
             </ion-col>
           </ion-row>
@@ -74,7 +73,7 @@ import { Router } from '@angular/router';
             </ion-col>
             <ion-col size="3">
               <ion-item lines="none">
-              <ion-button slot="start" fill="clear" (click)="selectPerson(false)">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+              <ion-button slot="start" fill="clear" (click)="selectPerson.emit(false)">{{ '@general.operation.select.label' | translate | async }}</ion-button>
               </ion-item>
             </ion-col>
           </ion-row>        
@@ -111,9 +110,10 @@ import { Router } from '@angular/router';
   `
 })
 export class PersonalRelFormComponent {
-  private readonly personalRelService = inject(PersonalRelService);
   private readonly router = inject(Router);
   private readonly modalController = inject(ModalController);
+
+  public selectPerson = output<boolean>();
 
   public vm = model.required<PersonalRelFormModel>();
   public currentUser = input<UserModel | undefined>();
@@ -162,31 +162,6 @@ export class PersonalRelFormComponent {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
-  }
-
-  protected async selectPerson(isSubject: boolean): Promise<void> {
-    const _person = await this.personalRelService.selectPerson();
-    if (!_person) return;
-    if (isSubject) {
-      this.vm.update((_vm) => ({
-        ..._vm, 
-        subjectKey: _person.bkey, 
-        subjectFirstName: _person.firstName,
-        subjectLastName: _person.lastName,
-        subjectGender: _person.gender,
-      }));
-    } else {
-      this.vm.update((_vm) => ({
-        ..._vm, 
-        objectKey: _person.bkey, 
-        objectFirstName: _person.firstName,
-        objectLastName: _person.lastName,
-        objectGender: _person.gender,
-      }));
-    }
-    debugFormErrors('PersonalRel ' + isSubject, this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 
   protected async showPerson(personKey: string): Promise<void> {

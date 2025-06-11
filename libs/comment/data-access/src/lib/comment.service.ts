@@ -1,21 +1,19 @@
 import { Injectable, inject } from "@angular/core";
 import { Observable, of } from "rxjs";
 
-import { DateFormat, die, getFullPersonName, getTodayStr } from "@bk2/shared/util";
-import { CommentCollection, CommentModel } from "@bk2/shared/models";
-import { createModel, getSystemQuery, searchData } from "@bk2/shared/data-access";
-import { FIRESTORE } from "@bk2/shared/config";
+import { createModel, DateFormat, die, getFullPersonName, getSystemQuery, getTodayStr, searchData } from "@bk2/shared/util";
+import { CommentCollection, CommentModel, UserModel } from "@bk2/shared/models";
+import { ENV, FIRESTORE } from "@bk2/shared/config";
 import { createComment } from "@bk2/comment/util";
-import { AppStore } from "@bk2/auth/feature";
 
 @Injectable({
     providedIn: 'root'
 })
 export class CommentService {
   private readonly firestore = inject(FIRESTORE);
-  private readonly appStore = inject(AppStore);
+  private readonly env = inject(ENV);
 
-  private readonly tenantId = this.appStore.env.owner.tenantId;
+  private readonly tenantId = this.env.owner.tenantId;
 
   /* ---------------------- CRUD operations -------------------------------*/
 
@@ -31,12 +29,12 @@ export class CommentService {
    * @param parentKey the key of the parent object
    * @param comment the new comment to save
    */
-  public async create(collectionName: string, parentKey: string, comment: string): Promise<string> {
-    const _user = this.appStore.currentUser() ?? die('CommentService.createComment: inconsistent app state: there is no current user.');
+  public async create(collectionName: string, parentKey: string, comment: string, currentUser?: UserModel): Promise<string> {
+    const _user = currentUser ?? die('CommentService.createComment: inconsistent app state: there is no current user.');
     const _commentModel = createComment(_user.personKey, getFullPersonName(_user.firstName, _user.lastName), comment, collectionName, parentKey, this.tenantId);
     _commentModel.creationDate = getTodayStr(DateFormat.StoreDateTime);
     _commentModel.index = `${collectionName}/${parentKey} ${_commentModel.creationDate}`;
-    return await createModel(this.firestore, `${collectionName}/${parentKey}/${CommentCollection}`, _commentModel, this.appStore.env.owner.tenantId);
+    return await createModel(this.firestore, `${collectionName}/${parentKey}/${CommentCollection}`, _commentModel, this.tenantId);
   }
   
   /**
@@ -48,6 +46,6 @@ export class CommentService {
     if (collectionName?.length === 0 || parentKey?.length === 0) {
       return of([]);
     }
-    return searchData(this.firestore, `${collectionName}/${parentKey}/${CommentCollection}`, getSystemQuery(this.tenantId), 'creationDate', 'desc') as Observable<CommentModel[]>;
+    return searchData<CommentModel>(this.firestore, `${collectionName}/${parentKey}/${CommentCollection}`, getSystemQuery(this.tenantId), 'creationDate', 'desc');
   }
 }

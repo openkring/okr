@@ -2,8 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
 import { Observable } from 'rxjs';
 
-import { FIRESTORE } from '@bk2/shared/config';
-import { TransferCollection, TransferModel } from '@bk2/shared/models';
+import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { TransferCollection, TransferModel, UserModel } from '@bk2/shared/models';
 
 import { saveComment } from '@bk2/comment/util';
 import { getTransferSearchIndex, getTransferSearchIndexInfo } from '@bk2/transfer/util';
@@ -15,9 +15,9 @@ import { createModel, findByKey, getSystemQuery, searchData, updateModel } from 
 export class TransferService  {
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly appStore = inject(AppStore);
+  private readonly env = inject(ENV);
 
-  private readonly tenantId = this.appStore.tenantId();
+  private readonly tenantId = this.env.owner.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
     /**
@@ -25,10 +25,10 @@ export class TransferService  {
    * @param transfer the new transfer to save
    * @returns the document id of the stored transfer in the database
    */
-  public async create(transfer: TransferModel): Promise<string> {
+  public async create(transfer: TransferModel, currentUser?: UserModel): Promise<string> {
     transfer.index = this.getSearchIndex(transfer);
     const _key = await createModel(this.firestore, TransferCollection, transfer, this.tenantId, '@transfer.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), TransferCollection, _key, '@comment.operation.initial.conf');
+    await saveComment(this.firestore, this.tenantId, currentUser, TransferCollection, _key, '@comment.operation.initial.conf');
     return _key;
   }
   

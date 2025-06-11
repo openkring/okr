@@ -1,12 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 import { ref, getDownloadURL, getMetadata, listAll, FullMetadata } from "firebase/storage";
-import { ModalController } from '@ionic/angular/standalone';
 import { ToastController } from '@ionic/angular';
 
-import { DocumentTypes, categoryMatches, getCategoryAbbreviation } from '@bk2/shared/categories';
-import { DocumentCollection, DocumentModel, DocumentType, Image, MenuItemCollection, ModelType } from '@bk2/shared/models';
-import { DateFormat, addIndexElement, chipMatches, convertDateFormatToString, createModel, die, dirname, fileSizeUnit, generateRandomString, getSystemQuery, getTodayStr, nameMatches, searchData, updateModel, warn } from '@bk2/shared/util';
+import { DocumentTypes, getCategoryAbbreviation } from '@bk2/shared/categories';
+import { DocumentCollection, DocumentModel, DocumentType, MenuItemCollection, ModelType, UserModel } from '@bk2/shared/models';
+import { DateFormat, addIndexElement, convertDateFormatToString, createModel, die, dirName, fileExtension, fileName, fileSizeUnit, generateRandomString, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util';
 import { ENV, FIRESTORE, STORAGE } from '@bk2/shared/config';
 import { error } from '@bk2/shared/i18n';
 
@@ -21,9 +20,7 @@ export class DocumentService {
   private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly modalController = inject(ModalController);
   private readonly storage = inject(STORAGE);
-  private readonly appStore = inject(AppStore);
 
   private readonly tenantId = this.env.owner.tenantId;
 
@@ -33,10 +30,10 @@ export class DocumentService {
    * @param document the new document to be saved
    * @returns the document id of the new DocumentModel in the database
    */
-  public async create(document: DocumentModel): Promise<string> {
+  public async create(document: DocumentModel, currentUser?: UserModel): Promise<string> {
     document.index = this.getSearchIndex(document);
     const _key = await createModel(this.firestore, DocumentCollection, document, this.tenantId, `@document.operation.create`, this.toastController);
-    await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), MenuItemCollection, _key, '@comment.operation.initial.conf');
+    await saveComment(this.firestore, this.tenantId, currentUser, MenuItemCollection, _key, '@comment.operation.initial.conf');
     return _key;
   }
 
@@ -110,40 +107,6 @@ export class DocumentService {
     }
     return _docs;
   }
-
-  public filter(searchTerm: string, selectedCategory: number, selectedTag: string): Observable<DocumentModel[]> {
-    return this.list().pipe(
-      map((_documents) => _documents.filter((_document) =>  {
-        if (!_document.docType) {
-          warn('DocumentService.filter: ERROR: document.docType is mandatory.');
-          return false;
-        }
-        return nameMatches(_document.name, searchTerm) && 
-        categoryMatches(_document.docType, selectedCategory) &&
-        chipMatches(_document.tags, selectedTag)
-      }
-      ))
-    );
-  }
-
-  /*-------------------------- UPLOAD -------------------------------*/
-  public async pickAndUploadImage(key: string): Promise<Image | undefined> {
-    const _modal = await this.modalController.create({
-      component: ImageSelectModalComponent,
-      cssClass: 'wide-modal',
-      componentProps: {
-        key: key,
-        currentUser: this.appStore.currentUser()
-      }
-    });
-    _modal.present();
-
-    const { data, role } = await _modal.onWillDismiss();
-    if(role === 'confirm') {
-      return data as Image;
-    }
-    return undefined;
-  }
   
   /*-------------------------- CONVERSION --------------------------------*/
   /**
@@ -154,16 +117,13 @@ export class DocumentService {
    */
   public async getDocumentFromFile(file: File, fullPath: string): Promise<DocumentModel> {
     const _doc = new DocumentModel(this.tenantId);
-    _doc.name = file.name;
-    _doc.fileName = file.name.split('.')[0];
-    _doc.extension = file.name.split('.')[1];
+    _doc.fullPath = fullPath;
     _doc.description = '';
-    _doc.docType = DocumentType.InternalFile;
+    _doc.type = DocumentType.InternalFile;
 
     _doc.url = await getDownloadURL(ref(this.storage, fullPath));
     _doc.dateOfDocCreation = getTodayStr();
     _doc.dateOfDocLastUpdate = getTodayStr();
-    _doc.dir = dirname(fullPath);
     _doc.mimeType = file.type;
     _doc.size = file.size;
     _doc.priorVersionKey = '';
@@ -175,16 +135,13 @@ export class DocumentService {
   private async convertStorageMetadataToDocumentModel(metadata: FullMetadata): Promise<DocumentModel> {
     const _doc = new DocumentModel(this.tenantId);
     _doc.bkey = generateRandomString(10);
-    _doc.name = metadata.name;
-    _doc.fileName = metadata.name.split('.')[0];
-    _doc.extension = metadata.name.split('.')[1];
+    _doc.fullPath = metadata.fullPath;
     _doc.description = '';
-    _doc.docType = DocumentType.InternalFile;
+    _doc.type = DocumentType.InternalFile;
     _doc.url = await getDownloadURL(ref(this.storage, metadata.fullPath));
     //_doc.url = getImgixUrl(metadata.fullPath, undefined);
     _doc.dateOfDocCreation = convertDateFormatToString(metadata.timeCreated.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
     _doc.dateOfDocLastUpdate = convertDateFormatToString(metadata.updated.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
-    _doc.dir = dirname(metadata.fullPath);
     _doc.mimeType = metadata.contentType ?? '';
     _doc.size = metadata.size;
     _doc.priorVersionKey = '';
@@ -196,12 +153,12 @@ export class DocumentService {
   
   /*-------------------------- SEARCH INDEX --------------------------------*/
   public getSearchIndex(document: DocumentModel): string {
-    if (!document.docType) die('DocumentService.getSearchIndex: ERROR: document.docType is mandatory.');
+    if (document.type === undefined) die('DocumentService.getSearchIndex: ERROR: document.type is mandatory.');
     let _index = '';
-    _index = addIndexElement(_index, 'n', document.name);
-    _index = addIndexElement(_index, 'c', getCategoryAbbreviation(DocumentTypes, document.docType));
-    _index = addIndexElement(_index, 'e', document.extension);
-    _index = addIndexElement(_index, 'd', document.dir);
+    _index = addIndexElement(_index, 'n', fileName(document.fullPath));
+    _index = addIndexElement(_index, 'c', getCategoryAbbreviation(DocumentTypes, document.type));
+    _index = addIndexElement(_index, 'e', fileExtension(document.fullPath));
+    _index = addIndexElement(_index, 'd', dirName(document.fullPath));
     return _index;
     }
 

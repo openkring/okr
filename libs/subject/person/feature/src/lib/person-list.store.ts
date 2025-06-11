@@ -3,16 +3,20 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared/config';
-import { AppNavigationService, chipMatches, debugListLoaded, hasRole, nameMatches, navigateByUrl } from '@bk2/shared/util';
+import { FIRESTORE } from '@bk2/shared/config';
+import { AppNavigationService, chipMatches, createModel, debugListLoaded, hasRole, nameMatches, navigateByUrl } from '@bk2/shared/util';
 import { categoryMatches } from '@bk2/shared/categories';
-import { AllCategories, GenderType, ModelType, PersonModel } from '@bk2/shared/models';
+import { AddressModel, AllCategories, GenderType, MembershipCollection, ModelType, PersonModel } from '@bk2/shared/models';
 import { PersonService } from '@bk2/person/data-access';
 import { AppStore } from '@bk2/auth/feature';
 import { copyToClipboardWithConfirmation } from '@bk2/shared/i18n';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { CategoryService } from '@bk2/category/data-access';
+import { PersonNewModalComponent } from './person-new.modal';
+import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/person/util';
+import { AddressService } from '@bk2/address/data-access';
+import { saveComment } from '@bk2/comment/util';
 
 export type PersonListState = {
   orgId: string;
@@ -32,11 +36,12 @@ export const PersonListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     personService: inject(PersonService),
+    addressService: inject(AddressService),
     categoryService: inject(CategoryService),
+    firestore: inject(FIRESTORE),
     appNavigationService: inject(AppNavigationService),
     router: inject(Router),
     appStore: inject(AppStore),
-    env: inject(ENV),
     modalController: inject(ModalController),
     toastController: inject(ToastController) 
   })),
@@ -54,10 +59,10 @@ export const PersonListStore = signalStore(
     return {
       persons: computed(() => state.personsResource.value()),
       deceased: computed(() => state.personsResource.value()?.filter((person: PersonModel) => person.dateOfDeath !== undefined && person.dateOfDeath.length > 0) ?? []),
-      showGender: computed(() => hasRole(state.env.privacy.showGender, state.appStore.currentUser())),
+      showGender: computed(() => hasRole(state.appStore.env.privacy.showGender, state.appStore.currentUser())),
       currentUser: computed(() => state.appStore.currentUser()),
       toastLength: computed(() => state.appStore.toastLength()),
-      tenantId: computed(() => state.env.owner.tenantId),
+      tenantId: computed(() => state.appStore.env.owner.tenantId),
       membershipCategoryKey: computed(() => 'mcat_' + state.orgId()),
     };
   }),
@@ -128,8 +133,53 @@ export const PersonListStore = signalStore(
 
       /******************************* actions *************************************** */
       async add(): Promise<void> {
-        await store.personService.add(store.currentUser());
+        const _modal = await store.modalController.create({
+          component: PersonNewModalComponent
+        });
+        _modal.present();
+        const { data, role } = await _modal.onWillDismiss();
+        if (role === 'confirm') {
+          const _vm = data as PersonNewFormModel;
+          const _personKey = await store.personService.create(convertFormToNewPerson(_vm, store.tenantId()), store.currentUser());
+          const _avatarKey = ModelType.Person + '.' + _personKey;
+          if ((_vm.email ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToEmailAddress(_vm, store.tenantId()), _avatarKey);
+          }
+          if ((_vm.phone ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToPhoneAddress(_vm, store.tenantId()), _avatarKey);
+          }
+          if ((_vm.web ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToWebAddress(_vm, store.tenantId()), _avatarKey);
+          }
+          if ((_vm.city ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToPostalAddress(_vm, store.tenantId()), _avatarKey);
+          }
+          if (_vm.shouldAddMembership) {
+            if ((_vm.orgKey ?? '').length > 0 && (_vm.membershipCategory ?? '').length > 0) {
+              await this.saveMembership(_vm, _personKey);
+            }
+          }
+        }
+        
         store.personsResource.reload();
+      },
+
+      /**
+       * Optionally add a membership to a person.
+       * We do not want to use MembershipService.create() in order to avoid the dependency to the membership module
+       * @param vm  the form data for a new person
+       * @param personKey the key of the newly created person
+       */
+      async saveMembership(vm: PersonNewFormModel, personKey: string): Promise<void> {
+        const _membership = convertNewPersonFormToMembership(vm, personKey, store.tenantId());
+        _membership.index = 'mn:' + _membership.memberName1 + ' ' + _membership.memberName2 + ' mk:' + _membership.memberKey + ' ok:' + _membership.orgKey;
+        const _key = await createModel(store.firestore, MembershipCollection, _membership, store.tenantId(), '@membership.operation.create', store.toastController);
+        await saveComment(store.firestore, store.tenantId(), store.currentUser(), MembershipCollection, _key, '@comment.operation.initial.conf');  
+      },
+
+      saveAddress(address: AddressModel, avatarKey: string): void {
+        address.parentKey = avatarKey;
+        store.addressService.create(address, store.currentUser());
       },
 
       async export(type: string): Promise<void> {
@@ -157,7 +207,7 @@ export const PersonListStore = signalStore(
 
   withHooks({
     onInit(store) {
-      patchState(store, { orgId: store.env.owner.tenantId });
+      patchState(store, { orgId: store.appStore.env.owner.tenantId });
     }
   })
 );

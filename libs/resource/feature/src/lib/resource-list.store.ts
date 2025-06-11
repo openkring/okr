@@ -4,12 +4,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { AppNavigationService, chipMatches, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
+import { AppNavigationService, chipMatches, getSystemQuery, isResource, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AllCategories, GenderType, ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
 import { ResourceService } from '@bk2/resource/data-access';
 import { AppStore } from '@bk2/auth/feature';
 import { Router } from '@angular/router';
+import { ResourceEditModalComponent } from './resource-edit.modal';
 
 export type ResourceListState = {
   searchTerm: string;
@@ -131,7 +132,21 @@ export const ResourceListStore = signalStore(
 
       /******************************** actions ******************************************* */
       async add(isTypeEditable = false): Promise<void> {
-        await store.resourceService.add(store.currentUser(), isTypeEditable);
+        const _resource = new ResourceModel(store.tenantId());
+        const _modal = await store.modalController.create({
+          component: ResourceEditModalComponent,
+          componentProps: {
+            resource: _resource,
+            isTypeEditable: isTypeEditable
+          }
+        });
+        _modal.present();
+        const { data, role } = await _modal.onDidDismiss();
+        if (role === 'confirm') {
+          if (isResource(data, store.tenantId())) {
+            await (!data.bkey ? store.resourceService.create(data, store.currentUser()) : store.resourceService.update(data));
+          }
+        }
         store.resourceResource.reload();
       },
 

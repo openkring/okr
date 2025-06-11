@@ -16,7 +16,10 @@ import { PersonSelectModalComponent } from '@bk2/shared/feature';
 import { AppStore } from '@bk2/auth/feature';
 
 import { newButton, newIcon, newTable, SectionFormModel, sectionFormValidations } from '@bk2/cms/section/util';
-import { AlbumSectionConfigComponent, ArticleSectionConfigComponent, ButtonSectionConfigComponent, IframeSectionFormComponent, ImageConfigFormComponent, ImageListComponent, MapSectionFormComponent, PeopleListFormComponent, SingleImageComponent, TableSectionFormComponent, VideoSectionFormComponent } from '@bk2/cms/section/ui';
+import { AlbumSectionConfigComponent, ArticleSectionConfigComponent, ButtonSectionConfigComponent, IframeSectionFormComponent, ImageConfigFormComponent, MapSectionFormComponent, PeopleListFormComponent, TableSectionFormComponent, VideoSectionFormComponent } from '@bk2/cms/section/ui';
+import { DocumentModalsService } from '@bk2/document/feature';
+import { SingleImageComponent } from './single-image.component';
+import { ImageListComponent } from './image-list.component';
 
 @Component({
   selector: 'bk-section-form',
@@ -118,31 +121,20 @@ import { AlbumSectionConfigComponent, ArticleSectionConfigComponent, ButtonSecti
           <bk-iframe-section-form [vm]="vm()" />
         }
       }
-
-      <!---------------------------------------------------
-      TAG, NOTES 
-      --------------------------------------------------->
-      @if(hasRole('privileged')) {
-        <ion-row>                       
-          <ion-col>
-            <bk-chips chipName="tag" [storedChips]="vm().tags ?? ''" [allChips]="sectionTags()" />
-          </ion-col>
-        </ion-row>
-      }
-      @if(hasRole('admin')) {
-        <ion-row>
-          <ion-col>
-          <bk-notes [value]="vm().description ?? ''" />
-          </ion-col>
-        </ion-row>
-      }
     </ion-grid>
+    @if(hasRole('privileged')) {
+      <bk-chips chipName="tag" [storedChips]="vm().tags ?? ''" [allChips]="sectionTags()" />
+    }
+    @if(hasRole('admin')) {
+      <bk-notes [value]="vm().description ?? ''" />
+    }
   </form>
   `
 })
 export class SectionFormComponent {
   protected modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
+  private readonly documentModalsService = inject(DocumentModalsService);
 
   public readonly vm = model.required<SectionFormModel>();
   public currentUser = input<UserModel | undefined>();
@@ -152,7 +144,6 @@ export class SectionFormComponent {
   protected dirtyChange = signal(false);
   
   protected readonly suite = sectionFormValidations;
-  //protected readonly shape = sectionFormModelShape;
   private readonly validationResult = computed(() => sectionFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
@@ -187,7 +178,6 @@ export class SectionFormComponent {
   }
 
   public async selectPerson(): Promise<void> {
-    console.log('selectPerson');
     const _modal = await this.modalController.create({
       component: PersonSelectModalComponent,
       cssClass: 'list-modal',

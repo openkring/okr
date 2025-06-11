@@ -1,24 +1,21 @@
 import { Injectable, inject } from "@angular/core";
 import { Observable, first, forkJoin, map, of } from "rxjs";
-import { ModalController, ToastController } from "@ionic/angular/standalone";
+import { ToastController } from "@ionic/angular/standalone";
 
-import { DbQuery, Image, SectionCollection, SectionModel } from "@bk2/shared/models";
+import { DbQuery, SectionCollection, SectionModel, UserModel } from "@bk2/shared/models";
 import { SectionTypes, getCategoryName } from "@bk2/shared/categories";
 import { ENV, FIRESTORE } from "@bk2/shared/config";
-import { addSystemQueries, createModel, getSystemQuery, searchData, updateModel } from "libs/shared/data/src";
+import { addSystemQueries, createModel, getSystemQuery, searchData, updateModel } from "@bk2/shared/util";
+
 import { saveComment } from "@bk2/comment/util";
-import { ImageEditModalComponent } from "@bk2/cms/section/feature";
-import { AppStore } from "@bk2/auth/feature";
 
 @Injectable({
     providedIn: 'root'
 })
 export class SectionService {
   private readonly env = inject(ENV);
-  private readonly modalController = inject(ModalController);
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly appStore = inject(AppStore);
 
   private readonly tenantId = this.env.owner.tenantId;
 
@@ -28,10 +25,10 @@ export class SectionService {
    * @param section the new SectionModel
    * @returns the key of the newly created SectionModel
    */
-  public async create(section: SectionModel): Promise<string> {
+  public async create(section: SectionModel, currentUser?: UserModel): Promise<string> {
       section.index = this.getSearchIndex(section);
       const _key = await createModel(this.firestore, SectionCollection, section, this.tenantId, '@content.section.operation.create', this.toastController);
-      await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), SectionCollection, _key, '@comment.operation.initial.conf');
+      await saveComment(this.firestore, this.tenantId, currentUser, SectionCollection, _key, '@comment.operation.initial.conf');
     return _key;
   }
 
@@ -75,12 +72,11 @@ export class SectionService {
 
   public query(dbQuery: DbQuery[], orderBy = 'name', sortOrder = 'asc'): Observable<SectionModel[]> {
     const _dbQuery = addSystemQueries(dbQuery, this.tenantId);
-    return searchData(this.firestore, SectionCollection, _dbQuery, orderBy, sortOrder) as Observable<SectionModel[]>;
+    return searchData<SectionModel>(this.firestore, SectionCollection, _dbQuery, orderBy, sortOrder);
   }
 
   /*-------------------------- SEARCH --------------------------------*/
   public searchByKeys(sectionKeys: string[]): Observable<SectionModel[]> {
-    console.log('SectionService.searchByKeys: ', sectionKeys);
     if (!sectionKeys || sectionKeys.length === 0) {
       return of([]);    // Return an empty array if no keys are provided
     }
@@ -103,24 +99,5 @@ export class SectionService {
   public getSearchIndexInfo(): string {
     return 'n:ame cn:categoryName';
   }
-
-  /*-------------------------- MODALS --------------------------------*/
-  public async editImage(imageDesc: Image): Promise<Image | undefined> {
-    const _modal = await this.modalController.create({
-      component: ImageEditModalComponent,
-      cssClass: 'wide-modal',
-      componentProps: {
-        imageDesc: imageDesc
-      }
-    });
-    _modal.present();
-
-    const { data, role } = await _modal.onWillDismiss();
-    if(role === 'confirm') {
-      return data as Image;
-    }
-    return undefined;
-  }
-
 }
 

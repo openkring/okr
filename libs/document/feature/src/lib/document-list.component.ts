@@ -1,55 +1,63 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Browser } from '@capacitor/browser';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonItemSliding } from '@ionic/angular';
 
-import { CategoryComponent, EmptyListComponent, SearchbarComponent, SingleTagComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { CategoryAbbreviationPipe, FileLogoPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
+import { CategoryAbbreviationPipe, FileExtensionPipe, FileLogoPipe, FileNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { error, TranslatePipe } from '@bk2/shared/i18n';
 import { hasRole } from '@bk2/shared/util';
-import { AppStore } from '@bk2/auth/feature';
-import { DocumentTypes } from '@bk2/shared/categories';
-import { AllCategories, DocumentType, ModelType } from '@bk2/shared/models';
+import { addAllCategory, DocumentTypes } from '@bk2/shared/categories';
+import { DocumentModel } from '@bk2/shared/models';
 import { RoleName } from '@bk2/shared/config';
 
+import { MenuComponent } from '@bk2/cms/menu/feature';
+
+import { DocumentListStore } from './document-list.store';
+
 @Component({
-  selector: 'bk-document-all-list',
+  selector: 'bk-document-list',
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
-    SearchbarComponent, SingleTagComponent, CategoryComponent, SpinnerComponent,
-    FileLogoPipe, CategoryAbbreviationPipe, EmptyListComponent,
+    TranslatePipe, AsyncPipe, SvgIconPipe, FileNamePipe, FileLogoPipe, FileExtensionPipe,
+    SpinnerComponent, ListFilterComponent,
+    CategoryAbbreviationPipe, EmptyListComponent, MenuComponent,
     IonToolbar, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
-    IonTitle, IonMenuButton, IonContent, IonItem
+    IonTitle, IonMenuButton, IonContent, IonItem, IonPopover
   ],
+  providers: [DocumentListStore],
   template: `
   <ion-header>
-  <ion-toolbar color="secondary" id="bkheader">
+    <!-- title and actions -->
+  <ion-toolbar color="secondary">
     <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-    <ion-title>{{ filteredDocuments().length }} {{ '@document.plural' | translate | async }}</ion-title>
-    <ion-buttons slot="end">
-      @if(hasRole('privileged') || hasRole('contentAdmin')) {
-        <ion-button (click)="export()">
-          <ion-icon slot="icon-only" src="{{'download' | svgIcon }}" />
+    <ion-title>{{ selectedDocumentsCount()}}/{{documentsCount()}} {{ '@document.plural' | translate | async }}</ion-title>
+    @if(hasRole('privileged') || hasRole('contentAdmin')) {
+      <ion-buttons slot="end">
+        <ion-button id="c-docs">
+          <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
         </ion-button>
-      }
-    </ion-buttons>
+        <ion-popover trigger="c-docs" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+          <ng-template>
+            <ion-content>
+              <bk-menu [menuName]="contextMenuName()"/>
+            </ion-content>
+          </ng-template>
+        </ion-popover>
+      </ion-buttons>
+    }
   </ion-toolbar>
-  <ion-toolbar>
-    <ion-grid>
-      <ion-row>
-        <ion-col size="12" size-md="6">
-          <bk-searchbar placeholder="{{ '@general.operation.search.placeholder' | translate | async  }}"  (ionInput)="onSearchtermChange($event)" />
-        </ion-col>
-        <ion-col size="6" size-md="3">
-          <bk-single-tag (selectedTag)="onTagSelected($event)" [tags]="documentTags()" />
-        </ion-col>
-        <ion-col size="6" size-md="3">
-          <bk-cat name="documentType" [(value)]="selectedCategory" [categories]="DTS"/>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
-  </ion-toolbar>
+
+  <!-- search and filters -->
+  <bk-list-filter 
+    [tags]="documentTags()"
+    [types]="docTypes"
+    [typeName]="typeName"
+    (searchTermChanged)="onSearchtermChange($event)"
+    (tagChanged)="onTagSelected($event)"
+    (typeChanged)="onTypeSelected($event)"
+  />
+
   <ion-toolbar color="primary">
     <ion-grid>
       <ion-row>
@@ -67,28 +75,28 @@ import { RoleName } from '@bk2/shared/config';
   </ion-toolbar>
 </ion-header>
 <ion-content #content>
-  @if(!loading()) {
+  @if(!isLoading()) {
     @if (filteredDocuments.length === 0) {
       <bk-empty-list message="@content.page.field.empty" />
     } @else {
       <ion-grid>
-        // don't use 'document' here as it leads to confusions with HTML document
+        <!-- don't use 'document' here as it leads to confusions with HTML document -->
         @for(doc of filteredDocuments(); track doc.bkey) {
           <ion-row (click)="showDocument(doc.url)">
             <ion-col size="12" size-sm="8">
               <ion-item lines="none">
-                <ion-icon src="{{ doc.extension | fileLogo }}" />&nbsp;
-                <ion-label>{{ doc.name }}</ion-label>
+                <ion-icon src="{{ doc.fullPath | fileLogo }}" />&nbsp;
+                <ion-label>{{ doc.fullPath | fileName }}</ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="2" class="ion-hide-sm-down">
               <ion-item lines="none">
-                <ion-label>{{ doc.docType ?? DT.LocalFile | categoryAbbreviation:DTS }}</ion-label>
+                <ion-label>{{ doc.type ?? 0 | categoryAbbreviation:docTypes }}</ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="2" class="ion-hide-sm-down">
               <ion-item lines="none">
-                <ion-label>{{ doc.extension }}</ion-label>
+                <ion-label>{{ doc.fullPath | fileExtension }}</ion-label>
               </ion-item>
             </ion-col>
           </ion-row>
@@ -102,53 +110,54 @@ import { RoleName } from '@bk2/shared/config';
 `
 })
 export class DocumentAllListComponent {
-  public documentService = inject(DocumentService);
-  protected appStore = inject(AppStore);
+  protected documentListStore = inject(DocumentListStore);
 
-  protected searchTerm = signal('');
-  protected selectedCategory = signal(AllCategories);
-  protected selectedTag = signal('');
+  public listId = input.required<string>();
+  public contextMenuName = input.required<string>();
 
-  
-  // each time the search term changes, the filtered menu items are updated
-  private readonly filteredDocumentsRef = rxResource({
-    request: () => ({
-      searchTerm: this.searchTerm(),
-      category: this.selectedCategory(),
-      tag: this.selectedTag()
-    }),
-    loader: ({request}) => this.documentService.filter(request.searchTerm, request.category, request.tag)
-  });
-  protected filteredDocuments = computed(() => this.filteredDocumentsRef.value() ?? []);
-  protected loading = computed(() => this.filteredDocumentsRef.isLoading);
-  protected readonly documentTags = computed(() => this.appStore.getTags(ModelType.Document));
+  protected filteredDocuments = computed(() => this.documentListStore.filteredDocuments() ?? []);
+  protected documentsCount = computed(() => this.documentListStore.documentsCount());
+  protected selectedDocumentsCount = computed(() => this.filteredDocuments().length);
+  protected isLoading = computed(() => this.documentListStore.isLoading());
+  protected documentTags = computed(() => this.documentListStore.getTags());
 
-  public DTS = DocumentTypes;
-  protected DT = DocumentType;
+  protected docTypes = addAllCategory(DocumentTypes);
+  protected typeName = 'documentType';
 
-  public onSearchtermChange($event: Event): void {
-    this.searchTerm.set(($event.target as HTMLInputElement).value);
+  /******************************* actions *************************************** */
+  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    const _selectedMethod = $event.detail.data;
+    switch(_selectedMethod) {
+      case 'add':  await this.documentListStore.add(); break;
+      case 'export': await this.documentListStore.export(); break;
+      default: error(undefined, `DocumentListComponent.call: unknown method ${_selectedMethod}`);
+    }
   }
-
-  public onCategoryChange(selectedCategoryId: number): void {
-    this.selectedCategory.set(selectedCategoryId);
-  }
-
-  public onTagSelected(selectedTag: string): void {
-    this.selectedTag.set(selectedTag);
+  public async edit(slidingItem?: IonItemSliding, doc?: DocumentModel): Promise<void> {
+    if (slidingItem) slidingItem.close();
+    if (doc) await this.documentListStore.edit(doc);
   }
 
   public async showDocument(url: string): Promise<void> {
     await Browser.open({ url: url, windowName: '_blank' });
   }
 
-  public async export(): Promise<void> {
-    //await this.baseService.export2excel(bkTranslate('@document.plural'), ALL_DOCUMENT_FIELDS);
-    console.log('export ist not yet implemented');
+  /******************************* change notifications *************************************** */
+  public onSearchtermChange(searchTerm: string): void {
+    this.documentListStore.setSearchTerm(searchTerm);
   }
 
+  public onTypeSelected(type: number): void {
+    this.documentListStore.setSelectedType(type);
+  }
+
+  public onTagSelected(selectedTag: string): void {
+    this.documentListStore.setSelectedTag(selectedTag);
+  }
+
+  /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.appStore.currentUser());
+    return hasRole(role, this.documentListStore.currentUser());
   }
 }
 

@@ -1,16 +1,10 @@
 import { Injectable, inject } from "@angular/core";
 import { doc, setDoc } from "firebase/firestore";
 import { Observable, of } from "rxjs";
-import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera";
-import { ModalController, Platform } from "@ionic/angular/standalone";
 
-import { removeKeyFromBkModel } from "@bk2/shared/util";
-import { ENV, FIRESTORE } from "@bk2/shared/config";
-import { UploadTaskComponent } from "@bk2/shared/ui";
-import { AvatarCollection, AvatarModel, ModelType } from "@bk2/shared/models";
-import { readModel } from "@bk2/shared/data-access";
-
-import { newAvatarModel, readAsFile } from "@bk2/avatar/util";
+import { readModel, removeKeyFromBkModel } from "@bk2/shared/util";
+import { FIRESTORE } from "@bk2/shared/config";
+import { AvatarCollection, AvatarModel } from "@bk2/shared/models";
 
 export interface UserPhoto {
   filepath: string;
@@ -21,12 +15,7 @@ export interface UserPhoto {
   providedIn: 'root'
 })
 export class AvatarService {
-  private readonly modalController = inject(ModalController);
-  private readonly platform = inject(Platform);
   private readonly firestore = inject(FIRESTORE);
-  private readonly env = inject(ENV);
-
-  public photos: UserPhoto[] = [];
 
 /**
  * Save a model as a new Firestore document into the database. 
@@ -56,44 +45,5 @@ export class AvatarService {
   public read(key: string): Observable<AvatarModel | undefined> {
     if (!key || key.length === 0) return of(undefined);
     return readModel<AvatarModel>(this.firestore, AvatarCollection, key);
-  }
-
-  /**
-   * Uploads an image to Firebase storage and saves it as an avatar model in the database.
-   * @param photo the avatar photo that is uploaded to and stored in the firebase storage
-   * @param modelType the type of the model that the avatar belongs to
-   * @param key the key of the model that the avatar belongs to
-   * @param tenants the tenant that should be able to access the avatar, typically the tenants of the model
-   */
-  public async uploadPhoto(photo: Photo, modelType: ModelType, key: string, tenants?: string[]): Promise<void> {
-    const _file = await readAsFile(photo, this.platform);
-
-    if (key) {
-      const _avatar = newAvatarModel(tenants ?? [this.env.owner.tenantId], modelType, key, _file.name)
-      const _modal = await this.modalController.create({
-        component: UploadTaskComponent,
-        cssClass: 'upload-modal',
-        componentProps: {
-          file: _file,
-          fullPath: _avatar.storagePath,
-          title: '@document.operation.upload.avatar.title'
-        }
-      });
-      _modal.present();
-
-      const { role } = await _modal.onWillDismiss();
-
-      if (role === 'confirm') {
-        await this.updateOrCreate(_avatar);
-      }
-    }
-  }
-
-  public async takePhoto(): Promise<Photo> {
-    return await Camera.getPhoto({
-      resultType: CameraResultType.Uri,
-      source: CameraSource.Camera,
-      quality: 100
-    });
   }
 }

@@ -3,11 +3,11 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 
 import { FIRESTORE } from '@bk2/shared/config';
-import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 import { AppStore } from '@bk2/auth/feature';
 import { BkModel, LogInfo, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared/models';
 
 import { Observable, of } from 'rxjs';
+import { getSystemQuery, searchData } from '@bk2/shared/util';
 
 export type AocStatisticsState = {
   modelType: ModelType | undefined;

@@ -10,6 +10,8 @@ import { GroupCollection, GroupModel, ModelType } from '@bk2/shared/models';
 import { GroupService } from '@bk2/group/data-access';
 import { AppStore } from '@bk2/auth/feature';
 import { Router } from '@angular/router';
+import { GroupNewModalComponent } from './group-new.modal';
+import { convertFormToNewGroup, GroupNewFormModel } from '@bk2/group/util';
 
 export type GroupListState = {
   searchTerm: string;
@@ -111,9 +113,26 @@ export const GroupListStore = signalStore(
     async export(type: string): Promise<void> {
       console.log(`GroupListStore.export(${type}) is not yet implemented.`);
     },
+
     async add(): Promise<void> {
-      await store.groupService.add(store.currentUser());
+      const _modal = await store.modalController.create({
+        component: GroupNewModalComponent,
+        componentProps: {
+          currentUser: store.currentUser()
+        }
+      });
+      _modal.present();
+      const { data, role } = await _modal.onDidDismiss();
+      if (role === 'confirm') {
+        const _vm = data as GroupNewFormModel;
+        const _key = ModelType.Group + '.' + await this.saveGroup(_vm);
+        // tbd: save avatar image if provided
+      }
       store.groupsResource.reload();
+    },
+
+    async saveGroup(groupFormModel: GroupNewFormModel): Promise<string> {
+      return await store.groupService.create(convertFormToNewGroup(groupFormModel, store.tenantId()), store.currentUser());
     },
 
     /**

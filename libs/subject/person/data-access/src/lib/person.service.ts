@@ -1,16 +1,14 @@
 import { inject, Injectable } from '@angular/core';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular/standalone';
 import { collection, query } from 'firebase/firestore';
 import { collectionData } from 'rxfire/firestore';
 import { map, Observable, of } from 'rxjs';
 
-import { AddressService } from '@bk2/address/data-access';
-import { saveComment } from '@bk2/comment/util';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { AddressCollection, AddressModel, GenderType, MembershipCollection, ModelType, PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
-
-import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/person/util';
+import { AddressCollection, AddressModel, GenderType, PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
 import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+
+import { saveComment } from '@bk2/comment/util';
 
 @Injectable({
   providedIn: 'root'
@@ -19,8 +17,6 @@ export class PersonService {
   private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly modalController = inject(ModalController);
-  private readonly addressService = inject(AddressService);
 
   private readonly tenantId = this.env.owner.tenantId;
 
@@ -68,55 +64,6 @@ export class PersonService {
   /*-------------------------- LIST / QUERY  --------------------------------*/
   public list(orderBy = 'lastName', sortOrder = 'asc'): Observable<PersonModel[]> {
     return searchData<PersonModel>(this.firestore, PersonCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
-  }
-
-  /*-------------------------- add modal --------------------------------*/
-  public async add(currentUser?: UserModel): Promise<void> {
-    const _modal = await this.modalController.create({
-      component: PersonNewModalComponent
-    });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
-    if (role === 'confirm') {
-      const _vm = data as PersonNewFormModel;
-      const _personKey = await this.create(convertFormToNewPerson(_vm, this.tenantId), currentUser);
-      const _avatarKey = ModelType.Person + '.' + _personKey;
-      if ((_vm.email ?? '').length > 0) {
-        this.saveAddress(convertNewPersonFormToEmailAddress(_vm, this.tenantId), _avatarKey, currentUser);
-      }
-      if ((_vm.phone ?? '').length > 0) {
-        this.saveAddress(convertNewPersonFormToPhoneAddress(_vm, this.tenantId), _avatarKey, currentUser);
-      }
-      if ((_vm.web ?? '').length > 0) {
-        this.saveAddress(convertNewPersonFormToWebAddress(_vm, this.tenantId), _avatarKey, currentUser);
-      }
-      if ((_vm.city ?? '').length > 0) {
-        this.saveAddress(convertNewPersonFormToPostalAddress(_vm, this.tenantId), _avatarKey, currentUser);
-      }
-      if (_vm.shouldAddMembership) {
-        if ((_vm.orgKey ?? '').length > 0 && (_vm.membershipCategory ?? '').length > 0) {
-          await this.saveMembership(_vm, _personKey, currentUser);
-        }
-      }
-    }
-  }
-
-  /**
-   * Optionally add a membership to a person.
-   * We do not want to use MembershipService.create() in order to avoid the dependency to the membership module
-   * @param vm  the form data for a new person
-   * @param personKey the key of the newly created person
-   */
-  private async saveMembership(vm: PersonNewFormModel, personKey: string, currentUser?: UserModel): Promise<void> {
-    const _membership = convertNewPersonFormToMembership(vm, personKey, this.tenantId);
-    _membership.index = 'mn:' + _membership.memberName1 + ' ' + _membership.memberName2 + ' mk:' + _membership.memberKey + ' ok:' + _membership.orgKey;
-    const _key = await createModel(this.firestore, MembershipCollection, _membership, this.tenantId, '@membership.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, _key, '@comment.operation.initial.conf');  
-  }
-
-  private saveAddress(address: AddressModel, avatarKey: string, currentUser?: UserModel): void {
-    address.parentKey = avatarKey;
-    this.addressService.create(address, currentUser);
   }
 
   /*-------------------------- addresses  --------------------------------*/

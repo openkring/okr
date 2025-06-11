@@ -41,7 +41,7 @@ export class ReservationModalsService {
     const { data, role } = await _modal.onDidDismiss();
     if (role === 'confirm') {
       const _reservation = convertFormToNewReservation(data as ReservationNewFormModel, this.tenantId);
-      await this.reservationService.create(_reservation);
+      await this.reservationService.create(_reservation, this.appStore.currentUser());
     }
   } 
   
@@ -64,7 +64,7 @@ export class ReservationModalsService {
     const { data, role } = await _modal.onDidDismiss();
     if (role === 'confirm') {
       if (isReservation(data, this.tenantId)) {
-        await (!data.bkey ? this.reservationService.create(data) : this.reservationService.update(data));
+        await (!data.bkey ? this.reservationService.create(data, this.appStore.currentUser()) : this.reservationService.update(data));
       }
     }
   }

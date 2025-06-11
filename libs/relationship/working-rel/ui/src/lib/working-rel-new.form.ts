@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, computed, input, model, output, signal } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -6,13 +6,13 @@ import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputCompon
 import { GenderType, ModelType, WorkingRelType, UserModel, WorkingRelState, Periodicity } from '@bk2/shared/models';
 import { RoleName } from '@bk2/shared/config';
 import { debugFormErrors, hasRole } from '@bk2/shared/util';
-
 import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
-import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { WorkingRelFormModel, workingRelFormModelShape, WorkingRelNewFormModel, workingRelNewFormValidations } from '@bk2/working-rel/util';
 import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared/categories';
-import { WorkingRelService } from '@bk2/working-rel/data-access';
+
+import { AsyncPipe } from '@angular/common';
+
+import { WorkingRelFormModel, workingRelFormModelShape, WorkingRelNewFormModel, workingRelNewFormValidations } from '@bk2/working-rel/util';
 
 @Component({
   selector: 'bk-working-rel-new-form',
@@ -47,7 +47,7 @@ import { WorkingRelService } from '@bk2/working-rel/data-access';
             </ion-col>
             <ion-col size="3">
               <ion-item lines="none">
-                <ion-button slot="start" fill="clear" (click)="selectPerson()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                <ion-button slot="start" fill="clear" (click)="selectPerson.emit()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
               </ion-item>
             </ion-col>
           </ion-row>
@@ -72,7 +72,7 @@ import { WorkingRelService } from '@bk2/working-rel/data-access';
             </ion-col>
             <ion-col size="3">
               <ion-item lines="none">
-              <ion-button slot="start" fill="clear" (click)="selectOrg()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+              <ion-button slot="start" fill="clear" (click)="selectOrg.emit()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
               </ion-item>
             </ion-col>
           </ion-row>        
@@ -136,11 +136,12 @@ import { WorkingRelService } from '@bk2/working-rel/data-access';
   `
 })
 export class WorkingRelNewFormComponent {
-  private readonly workingRelService = inject(WorkingRelService);
-
   public vm = model.required<WorkingRelNewFormModel>();
   public currentUser = input<UserModel | undefined>();
   public workingRelTags = input.required<string>();
+
+  public selectPerson = output<void>();
+  public selectOrg = output<void>();
 
   public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser())); 
   protected subjectKey = computed(() => this.vm().subjectKey ?? '');
@@ -191,34 +192,5 @@ export class WorkingRelNewFormComponent {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
-  }
-
-  protected async selectPerson(): Promise<void> {
-    const _person = await this.workingRelService.selectPerson();
-    if (!_person) return;
-    this.vm.update((_vm) => ({
-      ..._vm, 
-      subjectKey: _person.bkey, 
-      subjectName1: _person.firstName,
-      subjectName2: _person.lastName,
-      subjectType: _person.gender,
-    }));
-    debugFormErrors('WorkingRel (person)', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
-  }
-
-  protected async selectOrg(): Promise<void> {
-    const _org = await this.workingRelService.selectOrg();
-    if (!_org) return;
-    this.vm.update((_vm) => ({
-      ..._vm, 
-      objectKey: _org.bkey, 
-      objectName: _org.name,
-      objectType: _org.type,
-    }));
-    debugFormErrors('WorkingRel (org)', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 }

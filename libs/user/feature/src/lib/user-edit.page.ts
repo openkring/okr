@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonContent, Platform } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 import { Photo } from '@capacitor/camera';
 
-import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent } from '@bk2/shared/ui';
+import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
 import { ModelType, UserCollection } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { debugFormModel, getFullPersonName } from '@bk2/shared/util';
@@ -15,6 +15,8 @@ import { CommentsCardComponent } from '@bk2/comment/feature';
 import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user/util';
 import { UserAuthFormComponent, UserDisplayFormComponent, UserModelFormComponent, UserNotificationFormComponent, UserPrivacyFormComponent } from '@bk2/user/ui';
 import { UserEditStore } from './user-edit.store';
+import { ENV } from '@bk2/shared/config';
+import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
 
 @Component({
   selector: 'bk-user-page',
@@ -47,6 +49,9 @@ import { UserEditStore } from './user-edit.store';
 export class UserPageComponent{
   private readonly avatarService = inject(AvatarService);
   private readonly userEditStore = inject(UserEditStore);
+  private readonly uploadService = inject(UploadService);
+  private readonly platform = inject(Platform);
+  private readonly env = inject(ENV);
 
   protected userKey = input.required<string>();
 
@@ -86,10 +91,20 @@ export class UserPageComponent{
     this.userEditStore.save(_user);
   }
 
-  protected async onImageSelected(photo: Photo): Promise<void> {
+ /**
+   * Uploads an image to Firebase storage and saves it as an avatar model in the database.
+   * @param photo the avatar photo that is uploaded to and stored in the firebase storage
+   */
+  public async onImageSelected(photo: Photo): Promise<void> {
     const _user = this.user();
     if (!_user) return;
-    await this.avatarService.uploadPhoto(photo, ModelType.User, _user.bkey);
+    const _file = await readAsFile(photo, this.platform);
+    const _avatar = newAvatarModel([this.env.owner.tenantId], ModelType.User, _user.bkey, _file.name);
+    const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
+
+    if (_downloadUrl) {
+      await this.avatarService.updateOrCreate(_avatar);
+    }
   }
 
   protected onTagsChanged(tags: string): void {

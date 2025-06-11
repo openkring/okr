@@ -1,16 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { combineLatest, firstValueFrom, map, Observable, of } from 'rxjs';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular/standalone';
+
 import { END_FUTURE_DATE_STR, ENV, FIRESTORE } from '@bk2/shared/config';
-import { CategoryItemModel, CategoryListModel, MembershipCollection, MembershipModel, ModelType, OrgModel, PersonCollection, PersonModel } from '@bk2/shared/models';
-import { saveComment } from '@bk2/comment/util';
-import { addDuration, convertDateFormatToString, createModel, DateFormat, getSystemQuery, getTodayStr, isMembership, searchData, updateModel } from '@bk2/shared/util';
-import { CategoryChangeFormModel, convertFormToNewMembership, getMembershipCategoryChangeComment, getMembershipSearchIndex, getMembershipSearchIndexInfo, getRelLogEntry, MembershipNewFormModel, newMembershipForPerson } from '@bk2/membership/util';
-import { AppStore } from '@bk2/auth/feature';
-import { CategoryChangeModalComponent, MembershipEditModalComponent, MembershipNewModalComponent } from '@bk2/membership/feature';
-import { getCategoryAttribute } from '@bk2/category/util';
+import { CategoryListModel, MembershipCollection, MembershipModel, ModelType, PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
+import { addDuration, createModel, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util';
 import { copyToClipboardWithConfirmation } from '@bk2/shared/i18n';
-import { selectDate } from '@bk2/shared/ui';
+
+import { saveComment } from '@bk2/comment/util';
+import { getCategoryAttribute } from '@bk2/category/util';
+
+import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipSearchIndex, getMembershipSearchIndexInfo, getRelLogEntry } from '@bk2/membership/util';
   
 
   @Injectable({
@@ -20,8 +20,6 @@ import { selectDate } from '@bk2/shared/ui';
   private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
 
   private readonly tenantId = this.env.owner.tenantId;
 
@@ -31,10 +29,10 @@ import { selectDate } from '@bk2/shared/ui';
    * @param membership the new membership to save
    * @returns the document id of the stored membership in the database
    */
-  public async create(membership: MembershipModel): Promise<string> {
+  public async create(membership: MembershipModel, currentUser?: UserModel): Promise<string> {
     membership.index = this.getSearchIndex(membership);
     const _key = await createModel(this.firestore, MembershipCollection, membership, this.tenantId, '@membership.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), MembershipCollection, _key, '@comment.operation.initial.conf');  
+    await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, _key, '@comment.operation.initial.conf');  
     return _key;
   }
 
@@ -62,106 +60,16 @@ import { selectDate } from '@bk2/shared/ui';
   }
 
   /**
-   * Show a modal to add a new membership.
-   * @param member to add as a member to an org (Person or Org)
-   * @param org the organization to add a membership to
-   * @param modelType the type of the member (Person or Org)
-   */
-  public async add(member?: PersonModel | OrgModel, org?: OrgModel, modelType?: ModelType): Promise<void> {
-    if (org && member && modelType) {
-      const _modal = await this.modalController.create({
-        component: MembershipNewModalComponent,
-        cssClass: 'small-modal',
-        componentProps: {
-          member: member,
-          org: org,
-          modelType: modelType,
-        }
-      });
-      _modal.present();
-      const { data, role } = await _modal.onDidDismiss();
-      if (role === 'confirm') {
-        const _membership = convertFormToNewMembership(data as MembershipNewFormModel, this.tenantId);
-        await this.create(_membership);
-      }
-    }
-  }  
-
-  /**
-   * Show a modal to edit an existing membership.
-   * @param membership the membership to edit
-   */
-  public async edit(membership?: MembershipModel): Promise<void> {
-    let _membership = membership;
-    _membership ??= new MembershipModel(this.tenantId);
-    const _modal = await this.modalController.create({
-      component: MembershipEditModalComponent,
-      componentProps: {
-        membership: _membership,
-        currentUser: this.appStore.currentUser()
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm') {
-      if (isMembership(data, this.tenantId)) {
-        await (!data.bkey ? this.create(data) : this.update(data));
-      }
-    }
-  }  
-
-  /**
-   * Ask user for the end date of an existing membership and end it.
-   * We do not archive memberships as we want to make them visible for entries & exits.
-   * Therefore, we end an membership by setting its validTo date.
-   * @param membership the membership to delete
-   */
-  public async end(membership: MembershipModel): Promise<void> {    
-    const _date = await selectDate(this.modalController);
-    if (!_date) return;
-    await this.endMembershipByDate(membership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false));
-  }
-
-  /**
    * End an existing membership by setting its validTo date.
    * @param membership the membership to end
    * @param dateOfExit the end date of the membership
    */
-  public async endMembershipByDate(membership: MembershipModel, dateOfExit: string): Promise<void> {
+  public async endMembershipByDate(membership: MembershipModel, dateOfExit: string, currentUser?: UserModel): Promise<void> {
     if (membership.dateOfExit.startsWith('9999') && dateOfExit && dateOfExit.length === 8) {
       membership.dateOfExit = dateOfExit;
       membership.relIsLast = true;
       await this.update(membership);
-      await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), MembershipCollection, membership.bkey, '@comment.message.membership.deleted');  
-    }
-  }
-
-  /*------------------------------ members ----------------------------------------------*/
-  /**
-   * Adds a new member to the given organization.
-   * @param org the organization to add a member to
-   */
-   public async addPersonAsMember(person: PersonModel, org: OrgModel): Promise<void> {
-      const _date = await selectDate(this.modalController);
-      if (!_date) return;
-      const _validFrom = convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate);
-      const _membership = newMembershipForPerson(person, org.bkey, org.name, new CategoryItemModel('active', 'A', 'member_active'), _validFrom);
-      _membership.index = this.getSearchIndex(_membership);
-      await this.create(_membership);
-  } 
-    
-  public async changeMembershipCategory(oldMembership: MembershipModel, membershipCategory: CategoryListModel): Promise<void> {
-    const _modal = await this.modalController.create({
-      component: CategoryChangeModalComponent,
-      componentProps: {
-        membership: oldMembership,
-        membershipCategory: membershipCategory
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm' && data !== undefined) {   // result is vm: CategoryChangeFormModel
-      await this.saveMembershipCategoryChange(oldMembership, data, membershipCategory);
+      await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, membership.bkey, '@comment.message.membership.deleted');  
     }
   }
 
@@ -172,21 +80,21 @@ import { selectDate } from '@bk2/shared/ui';
    * @param oldMembership the existing membership that will be ended
    * @param membershipChange the view model from the modal with the new membership category and the date of the category change
    */
-  public async saveMembershipCategoryChange(oldMembership: MembershipModel, membershipChange: CategoryChangeFormModel, membershipCategory: CategoryListModel): Promise<void> {
+  public async saveMembershipCategoryChange(oldMembership: MembershipModel, membershipChange: CategoryChangeFormModel, membershipCategory: CategoryListModel, currentUser?: UserModel): Promise<void> {
     oldMembership.relIsLast = false;
     oldMembership.dateOfExit = addDuration(membershipChange.dateOfChange ?? getTodayStr(), { days: -1});
     await this.update(oldMembership);
 
     // add a comment about the category change to the current membership
     const _comment = getMembershipCategoryChangeComment(membershipChange.membershipCategoryOld ?? 'undefined', membershipChange.membershipCategoryNew ?? 'undefined');
-    await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), MembershipCollection, oldMembership.bkey, _comment);  
+    await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, oldMembership.bkey, _comment);  
 
     // create a new membership with the new type and the start date
     const _newMembership = this.copyMembershipWithNewType(oldMembership, membershipChange, membershipCategory);
     const _key = await this.create(_newMembership);
 
     // add a comment about the category change to the new membership
-    await saveComment(this.firestore, this.tenantId, this.appStore.currentUser(), MembershipCollection, _key, _comment);  
+    await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, _key, _comment);  
  
   }
 

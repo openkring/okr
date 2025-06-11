@@ -7,12 +7,12 @@ import { authState } from 'rxfire/auth';
 
 import { AUTH, DEFAULT_TOAST_LENGTH, ENV, FIRESTORE } from '@bk2/shared/config';
 import { AddressCollection, AddressModel, OrgCollection, OrgModel, PersonCollection, PersonModel, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared/models';
-import { getSystemQuery, searchData } from '@bk2/shared/data-access';
 
 import { UserService } from '@bk2/user/data-access';
 import { AuthCredentials } from '@bk2/auth/model';
 import { AuthService } from '@bk2/auth/data-access';
 import { Observable, of } from 'rxjs';
+import { getSystemQuery, searchData } from '@bk2/shared/util';
 
 export type AppState = {
   title: string;

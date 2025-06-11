@@ -176,11 +176,6 @@ export class TaskListComponent {
     bkTaskName.value = '';
   }
 
-  public async edit(slidingItem?: IonItemSliding, task?: TaskModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.taskListStore.edit(task);
-  }
-
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const _selectedMethod = $event.detail.data;
     switch(_selectedMethod) {
@@ -190,9 +185,14 @@ export class TaskListComponent {
     }
   }
 
-  public async delete(slidingItem: IonItemSliding, task: TaskModel): Promise<void> {
+  public async edit(slidingItem?: IonItemSliding, task?: TaskModel): Promise<void> {
     if (slidingItem) slidingItem.close();
-    await this.taskListStore.delete(task);
+    if (task) await this.taskListStore.edit(task);
+  }
+
+  public async delete(slidingItem?: IonItemSliding, task?: TaskModel): Promise<void> {
+    if (slidingItem) slidingItem.close();
+    if (task) await this.taskListStore.delete(task);
   }
 
   public async toggleCompleted(task: TaskModel): Promise<void> {

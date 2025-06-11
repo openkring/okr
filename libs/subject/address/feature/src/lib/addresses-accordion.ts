@@ -3,16 +3,14 @@ import { Component, inject, input, model, output } from "@angular/core";
 import { IonAccordion, IonButton, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, ModalController } from "@ionic/angular/standalone";
 
 import { AddressChannels, AddressUsages, getCategoryIcon } from "@bk2/shared/categories";
-import { ENV } from "@bk2/shared/config";
 import { TranslatePipe } from "@bk2/shared/i18n";
 import { AddressChannel, AddressModel, AddressUsage, ModelType } from "@bk2/shared/models";
 import { SvgIconPipe } from "@bk2/shared/pipes";
 import { EmptyListComponent } from "@bk2/shared/ui";
 
-import { AppStore } from "@bk2/auth/feature";
-
 import { AddressService } from "@bk2/address/data-access";
 import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/address/util";
+import { AddressModalsService } from "./address-modals.service";
 
 @Component({
   selector: 'bk-addresses-accordion',
@@ -45,7 +43,7 @@ import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/add
         <ion-list lines="inset">
           @for(address of addresses(); track $index) {
             <ion-item-sliding #slidingItem>
-              <ion-item (click)="addressService.use(address)">
+              <ion-item (click)="use(slidingItem, address)">
                 <ion-label>
                   <ion-icon src="{{ address.isFavorite | favoriteIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
                   @if(address.isCc) {
@@ -81,10 +79,9 @@ import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/add
   `,
 })
 export class AddressesAccordionComponent {
-  public readonly appStore = inject(AppStore);
   protected readonly modalController = inject(ModalController);
   public readonly addressService = inject(AddressService);
-  private readonly env = inject(ENV);
+  private readonly addressModalsService = inject(AddressModalsService);
 
   public addresses = model.required<AddressModel[]>(); // the addresses shown in the accordion
   public parentKey = input.required<string>(); // the parent key of the addresses
@@ -122,6 +119,11 @@ export class AddressesAccordionComponent {
     this.addressesChanged.emit();
   }
 
+  public async use(slidingItem?: IonItemSliding, address?: AddressModel): Promise<void> {
+    if (slidingItem) slidingItem.close();
+    if (address) await this.addressModalsService.use(address);
+  }
+
   public async copy(slidingItem?: IonItemSliding, address?: AddressModel): Promise<void> {
     if (slidingItem) slidingItem.close();
     if (address) await this.addressService.copy(address);
@@ -129,11 +131,11 @@ export class AddressesAccordionComponent {
 
   public async edit(slidingItem?: IonItemSliding, address?: AddressModel): Promise<void> {
     if (slidingItem) slidingItem.close();
-    if (address) await this.addressService.edit(address, this.appStore.currentUser());
+    if (address) await this.addressModalsService.edit(address);
     else {
-      const _newAddress = new AddressModel(this.env.owner.tenantId);
+      const _newAddress = new AddressModel(this.addressModalsService.tenantId);
       _newAddress.parentKey = this.parentModelType() + '.' + this.parentKey();
-      await this.addressService.edit(_newAddress, this.appStore.currentUser());
+      await this.addressModalsService.edit(_newAddress);
     }
     this.addressesChanged.emit();
   }
@@ -141,7 +143,7 @@ export class AddressesAccordionComponent {
   public async uploadEzs(slidingItem?: IonItemSliding, address?: AddressModel): Promise<void> {
     if (slidingItem) slidingItem.close();
     if (address) {
-      const _url = await this.addressService.uploadEzs(address);
+      const _url = await this.addressModalsService.uploadEzs(address);
       if (_url) {
         address.url = _url;
         await this.addressService.update(address);

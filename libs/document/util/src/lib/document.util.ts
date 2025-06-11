@@ -2,7 +2,7 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
 import { getModelSlug } from '@bk2/shared/categories';
-import { DOCUMENT_DIR, DocumentModel, ModelType } from '@bk2/shared/models';
+import { DOCUMENT_DIR, ModelType } from '@bk2/shared/models';
 import { checkUrlType, warn } from '@bk2/shared/util';
 import { readAsFile } from '@bk2/avatar/util';
 
@@ -29,10 +29,6 @@ import { readAsFile } from '@bk2/avatar/util';
  */
 export function getDocumentTitle(operation: string): string {
   return `document.operation.${operation}.label`;
-}
-
-export function getFullPath(document: DocumentModel): string {
-  return document.dir + '/' + document.name; // dir + / + fileName + . + extension
 }
 
 export function checkMimeType(mimeType: string, imagesOnly = false): boolean {

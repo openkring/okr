@@ -5,7 +5,7 @@
    Firebase storage is linked as a source to imgix CDN and the images can be served from there.
 */
 import { ImageType } from "@bk2/shared/models";
-import { getFileExtension, getLogoByExtension, isAudio, isDocument, isImage, isPdf, isStreamingVideo, isVideo } from './file.util';
+import { fileExtension, fileLogo, isAudio, isDocument, isImage, isPdf, isStreamingVideo, isVideo } from './file.util';
 import { die, warn } from './log.util';
 
 
@@ -103,8 +103,8 @@ export function fixHttpUrl(url: string | undefined): string | undefined {
 export function getThumbnailUrl(path: string, width: number, height: number): string {
   const _params = getSizedImgixParamsByExtension(path, width, height);
   if (_params.length === 0) {   // neither image nor pdf -> return path to file icon
-    const _extension = getFileExtension(path);
-    return getLogoByExtension(_extension);
+    const _extension = fileExtension(path);
+    return fileLogo(_extension);
   } else {
     return getImgixUrl(path, _params);
   }

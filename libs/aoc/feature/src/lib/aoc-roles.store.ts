@@ -5,8 +5,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
 import { FIRESTORE } from '@bk2/shared/config';
-import { debugListLoaded, isPerson, warn } from '@bk2/shared/util';
-import { findUserByPersonKey, getSystemQuery, searchData } from '@bk2/shared/data-access';
+import { debugListLoaded, findUserByPersonKey, getSystemQuery, isPerson, searchData, warn } from '@bk2/shared/util';
 import { LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared/models';
 import { PersonSelectModalComponent } from '@bk2/shared/feature';
 

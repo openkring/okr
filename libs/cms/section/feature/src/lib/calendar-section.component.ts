@@ -8,8 +8,9 @@ import interactionPlugin from '@fullcalendar/interaction';
 
 import { SectionModel } from '@bk2/shared/models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { die } from '@bk2/shared/util';
+import { debugData, debugMessage, die } from '@bk2/shared/util';
 import { CalendarStore } from './calendar-section.store';
+import { EventInput } from '@fullcalendar/core';
 
 @Component({
   selector: 'bk-calendar-section',
@@ -63,9 +64,11 @@ export class CalendarSectionComponent implements OnInit {
   constructor() {
     effect(() => {
       this.calendarStore.setCalendarName(this.section()?.name);
+      const _calName = this.section()?.name ?? 'undefined';
+      debugMessage(`CalendarSection(): calendarName=${_calName}`);
     });
     effect(() => {
-      console.log('CalendarSection() events:', this.filteredEvents());
+      debugData<EventInput[]>('CalendarSection(): events: ', this.filteredEvents());
     });
   }
 
@@ -80,16 +83,17 @@ export class CalendarSectionComponent implements OnInit {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onDateClick(arg: any) {
-    console.log('date selected: ', arg);
+    debugData<unknown>('CalendarSection(): onDateClick: ', arg);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async onEventClick(arg: any) {
-    console.log('event: ', arg);
-    console.log('title: ', arg.event.title);
-    console.log('start: ', arg.event.startStr);
+    debugMessage('CalendarSection.onEventClick: event selected');
+    debugData<string>('event: ', arg);
+    debugData<string>('title: ', arg.event.title);
+    debugData<string>('start: ', arg.event.startStr);
     const _eventKey = arg.event.extendedProps.eventKey;
-    console.log('event selected: ' + _eventKey);
+    debugData<unknown>('event selected: ', _eventKey);
     /* const _event = await firstValueFrom(this.eventService.readEvent(_eventKey));
     if (!_event) {
       warn('CalendarSectionComponent.onEventClick: event ' + _eventKey + ' not found');

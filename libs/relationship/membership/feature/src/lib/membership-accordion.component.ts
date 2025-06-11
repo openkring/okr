@@ -95,7 +95,7 @@ export class MembershipAccordionComponent {
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    await this.membershipStore.addMembership(this.member(), this.modelType());
+    await this.membershipStore.add(this.member(), this.modelType());
   }
 
   protected async edit(slidingItem?: IonItemSliding, membership?: MembershipModel): Promise<void> {

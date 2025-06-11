@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util';
 import { AllCategories, CalEventCollection, CalEventModel, CalEventType, ModelType } from '@bk2/shared/models';
 import { categoryMatches } from '@bk2/shared/categories';
 
@@ -12,7 +12,6 @@ import { AppStore } from '@bk2/auth/feature';
 
 import { isCalEvent } from '@bk2/calevent/util';
 import { CalEventEditModalComponent } from './calevent-edit.modal';
-import { searchData } from '@bk2/shared/data-access';
 import { CalEventService } from '@bk2/calevent/data-access';
 
 export type CalEventListState = {

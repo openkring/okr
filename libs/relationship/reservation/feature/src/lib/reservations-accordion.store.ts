@@ -1,16 +1,17 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController } from '@ionic/angular/standalone';
+import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
 import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } from '@bk2/shared/models';
-import { debugListLoaded, isValidAt } from '@bk2/shared/util';
+import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util';
 import { confirm } from '@bk2/shared/i18n';
 
 import { AppStore } from '@bk2/auth/feature';
 import { ReservationService } from '@bk2/reservation/data-access';
 import { ReservationModalsService } from './reservation-modals.service';
+import { selectDate } from '@bk2/shared/ui';
 
 export type ReservationsAccordionState = {
   reserver: PersonModel | OrgModel | undefined;
@@ -34,7 +35,8 @@ export const ReservationsAccordionStore = signalStore(
     reservationService: inject(ReservationService),
     reservationModalsService: inject(ReservationModalsService),
     appStore: inject(AppStore),
-    alertController: inject(AlertController)
+    alertController: inject(AlertController),
+    modalController: inject(ModalController),
   })),
   withProps((store) => ({
       // load all the reservations of the given reserver (person or org)
@@ -93,10 +95,13 @@ export const ReservationsAccordionStore = signalStore(
 
       async end(reservation?: ReservationModel): Promise<void> {
         if (reservation) {
-          await store.reservationService.end(reservation);
+          const _date = await selectDate(store.modalController);
+          if (!_date) return;
+          await store.reservationService.endReservationByDate(reservation, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false));    
           store.reservationsResource.reload();  
         }
       },
+      
 
       async delete(reservation?: ReservationModel): Promise<void> {
         if (reservation) {
