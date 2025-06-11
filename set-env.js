@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import dotenv from 'dotenv';
 
+console.log('Current NODE_ENV:', process.env.NODE_ENV);
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config(); // load environment variables from .env file
 }
