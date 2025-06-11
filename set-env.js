@@ -3,8 +3,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();    // load environment variables from .env file
 const writeFile = fs.writeFile;
-const envPath = `./apps/${process.env['NEXT_PUBLIC_AUTH_TENANTID']}-app/src/environments/environment.ts`;
-const envProdPath = `./apps/${process.env['NEXT_PUBLIC_AUTH_TENANTID']}-app/src/environments/environment.prod.ts`;
+// Get the project name from Nx environment variable
+const projectName = process.env.NX_TASK_TARGET_PROJECT;
+
+if (!projectName) {
+  console.error('ERROR: NX_TASK_TARGET_PROJECT is not defined. This script expects to be run by Nx.');
+  console.error('Current process.env:', process.env);
+  process.exit(1);
+}
+
+// Construct paths using the Nx project name
+const envPath = `./apps/${projectName}/src/environments/environment.ts`;
+const envProdPath = `./apps/${projectName}/src/environments/environment.prod.ts`;
 
 export const setEnv = () => {
 // example to read version from package.json: import { version as appVersion } from '../../package.json';
