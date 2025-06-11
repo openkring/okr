@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import dotenv from 'dotenv';
 
-dotenv.config();    // load environment variables from .env file
+dotenv.config(); // load environment variables from .env file
 const writeFile = fs.writeFile;
+
 // Get the project name from Nx environment variable
 const projectName = process.env.NX_TASK_TARGET_PROJECT;
 
@@ -11,15 +12,37 @@ if (!projectName) {
   console.error('Current process.env:', process.env);
   process.exit(1);
 }
-
-// Construct paths using the Nx project name
 const envPath = `./apps/${projectName}/src/environments/environment.ts`;
 const envProdPath = `./apps/${projectName}/src/environments/environment.prod.ts`;
+const tenantId = projectName.replace(/-app$/, '');
+
+// Define required environment variables for the script to function
+const REQUIRED_ENV_VARS = [
+  'NEXT_PUBLIC_FIREBASE_API_KEY',
+  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+  'NEXT_PUBLIC_APP_TITLE',
+  'NEXT_PUBLIC_APP_NAME',
+  'NEXT_PUBLIC_CHAT_API_KEY'
+];
+
+function checkRequiredEnvVars() {
+  const missingVars = REQUIRED_ENV_VARS.filter(varName => !process.env[varName]);
+  if (missingVars.length > 0) {
+    console.error('ERROR: The following required environment variables are not defined:');
+    missingVars.forEach(varName => console.error(`- ${varName}`));
+    console.error('Please ensure these secrets are set in Firebase App Hosting and available to the build environment.');
+    console.error('Current process.env.NEXT_PUBLIC_AUTH_TENANTID:', process.env['NEXT_PUBLIC_AUTH_TENANTID']);
+    process.exit(1); // Exit with an error code
+  }
+  console.log('All required environment variables are present.');
+}
+
+// Perform checks before proceeding
+checkRequiredEnvVars();
+
 
 export const setEnv = () => {
-// example to read version from package.json: import { version as appVersion } from '../../package.json';
-
-// `environment.ts` file structure
   const envConfigFile = `
   import {BkEnvironment} from '@bk2/shared/config';
 
@@ -45,16 +68,16 @@ export const setEnv = () => {
       domain: '${process.env['NEXT_PUBLIC_APP_DOMAIN']}',
       imgixBaseUrl: '${process.env['NEXT_PUBLIC_APP_IMGIX_BASE_URL']}',
       rootUrl: '/public/welcome',
-      logoUrl: 'tenant/${process.env['NEXT_PUBLIC_AUTH_TENANTID']}/logo/logo_round.svg',
-      welcomeBannerUrl: 'tenant/${process.env['NEXT_PUBLIC_AUTH_TENANTID']}/app/welcome.jpg',
-      notfoundBannerUrl: 'tenant/${process.env['NEXT_PUBLIC_AUTH_TENANTID']}/app/not-found.jpg',
+      logoUrl: 'tenant/${tenantId}/logo/logo_round.svg',
+      welcomeBannerUrl: 'tenant/${tenantId}/app/welcome.jpg',
+      notfoundBannerUrl: 'tenant/${tenantId}/app/not-found.jpg',
       osiLogoUrl: 'logo/general/osi.svg'
     },
     owner: {
-      tenantId: '${process.env['NEXT_PUBLIC_AUTH_TENANTID']}',
-      orgId: '${process.env['NEXT_PUBLIC_AUTH_TENANTID']}',
-      repId: 'owner_${process.env['NEXT_PUBLIC_AUTH_TENANTID']}',
-      locationId: 'loc_${process.env['NEXT_PUBLIC_AUTH_TENANTID']}',
+      tenantId: '${tenantId}',
+      orgId: '${tenantId}',
+      repId: 'owner_${tenantId}',
+      locationId: 'loc_${tenantId}',
       latitude: '${process.env['NEXT_PUBLIC_APP_LATITUDE']}',
       longitude: '${process.env['NEXT_PUBLIC_APP_LONGITUDE']}',
       zoom: '${process.env['NEXT_PUBLIC_APP_ZOOM']}'
@@ -121,22 +144,22 @@ export const setEnv = () => {
       toastLength: 3000,
       useFaceId: false,
       useTouchId: false,
-      defaultResource: '${process.env['NEXT_PUBLIC_AUTH_TENANTID']}_default',
+      defaultResource: '${tenantId}_default',
     }
   };
 `;
   writeFile(envPath, envConfigFile, (err) => {
     if (err) {
-      console.error('Angular environment.ts file could not be generated with writeFile().');
+      console.error(`Angular environment.ts file could not be generated at ${envPath}.`);
       console.error(err);
       throw err;
     } else {
-      console.log(`Angular environment.ts file generated correctly at ${envPath} \n`);
+      console.log(`Angular environment.ts file generated correctly at ${envPath} 
+`);
     }
   });
 };
 
-// /apps/TENANT/src/environments/environment.prod.ts
 export const setProdEnv = () => {
     const prodEnvConfigFile = `
     import {BkEnvironment} from '@bk2/shared/config';
@@ -163,16 +186,16 @@ export const setProdEnv = () => {
       domain: '${process.env['NEXT_PUBLIC_APP_DOMAIN']}',
       imgixBaseUrl: '${process.env['NEXT_PUBLIC_APP_IMGIX_BASE_URL']}',
       rootUrl: '/public/welcome',
-      logoUrl: 'tenant/${process.env['NEXT_PUBLIC_AUTH_TENANTID']}/logo/logo_round.svg',
-      welcomeBannerUrl: 'tenant/${process.env['NEXT_PUBLIC_AUTH_TENANTID']}/app/welcome.jpg',
-      notfoundBannerUrl: 'tenant/${process.env['NEXT_PUBLIC_AUTH_TENANTID']}/app/not-found.jpg',
+      logoUrl: 'tenant/${tenantId}/logo/logo_round.svg',
+      welcomeBannerUrl: 'tenant/${tenantId}/app/welcome.jpg',
+      notfoundBannerUrl: 'tenant/${tenantId}/app/not-found.jpg',
       osiLogoUrl: 'logo/general/osi.svg'
       },
       owner: {
-        tenantId: '${process.env['NEXT_PUBLIC_AUTH_TENANTID']}',
-        orgId: '${process.env['NEXT_PUBLIC_AUTH_TENANTID']}',
-        repId: 'owner_${process.env['NEXT_PUBLIC_AUTH_TENANTID']}',
-        locationId: 'loc_${process.env['NEXT_PUBLIC_AUTH_TENANTID']}',
+        tenantId: '${tenantId}',
+        orgId: '${tenantId}',
+        repId: 'owner_${tenantId}',
+        locationId: 'loc_${tenantId}',
         latitude: '${process.env['NEXT_PUBLIC_APP_LATITUDE']}',
         longitude: '${process.env['NEXT_PUBLIC_APP_LONGITUDE']}',
         zoom: '${process.env['NEXT_PUBLIC_APP_ZOOM']}'
@@ -239,17 +262,18 @@ export const setProdEnv = () => {
         toastLength: 3000,
         useFaceId: false,
         useTouchId: false,
-        defaultResource: '${process.env['NEXT_PUBLIC_AUTH_TENANTID']}_default',
+        defaultResource: '${tenantId}_default',
       }
     };
   `;
     writeFile(envProdPath, prodEnvConfigFile, (err) => {
       if (err) {
-        console.error('Angular environment.prod.ts file could not be generated with writeFile().');
+        console.error(`Angular environment.prod.ts file could not be generated at ${envProdPath}.`);
         console.error(err);
         throw err;
       } else {
-        console.log(`Angular environment.prod.ts file generated correctly at ${envProdPath} \n`);
+        console.log(`Angular environment.prod.ts file generated correctly at ${envProdPath} 
+`);
       }
     });
   };
