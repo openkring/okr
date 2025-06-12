@@ -2,17 +2,78 @@ import * as fs from 'fs';
 import dotenv from 'dotenv';
 
 console.log('Current NODE_ENV:', process.env.NODE_ENV);
-console.log('K_SERVICE:', process.env.K_SERVICE); // For debugging
 console.log('Environment: ', process.env);
 
-// If K_SERVICE is set, we assume we are in a Google Cloud environment (like Firebase App Hosting)
+// Determine Firebase configuration source
+let firebaseConfig = {
+  apiKey: '',
+  authDomain: '',
+  databaseUrl: '',
+  projectId: '',
+  storageBucket: '',
+  messagingSenderId: '',
+  appId: '',
+  measurementId: '',
+  appcheckRecaptchaEnterpriseKey: '', // Always from NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY
+};
+const servicesConfig = {
+  gmapKey: '',
+  nxCloudAccessToken: ''
+}
+let usingFirebaseWebappConfig = false;
+
+// If NODE_ENV is 'production', we assume we are in a Firebase App Hosting environment.
 // and should rely on environment variables provided by that environment, not a .env file.
-if (process.env.K_SERVICE) {
-  console.log('K_SERVICE detected, assuming Firebase App Hosting. Skipping .env load.');
+if (process.env.NODE_ENV === 'production') {
+  console.log('NODE_ENV is "production", assuming deployed environment. Skipping .env load, trying to read FIREBASE_WEBAPP_CONFIG.');
+  if (process.env.FIREBASE_WEBAPP_CONFIG) {
+    try {
+      const fbWebConfig = JSON.parse(process.env.FIREBASE_WEBAPP_CONFIG);
+      if (fbWebConfig.apiKey && fbWebConfig.projectId && fbWebConfig.appId) { // Basic validation
+        firebaseConfig = {
+          apiKey: fbWebConfig.apiKey || '',
+          authDomain: fbWebConfig.authDomain || '',
+          projectId: fbWebConfig.projectId || '',
+          storageBucket: fbWebConfig.storageBucket || '',
+          messagingSenderId: fbWebConfig.messagingSenderId || '',
+          appId: fbWebConfig.appId || '',
+          measurementId: fbWebConfig.measurementId || '',
+        };
+        usingFirebaseWebappConfig = true;
+        console.log('Successfully parsed and will use FIREBASE_WEBAPP_CONFIG for Firebase settings.');
+      } else {
+        console.warn('FIREBASE_WEBAPP_CONFIG was present but did not contain expected primary keys (apiKey, projectId, appId). Falling back to individual env vars for Firebase.');
+      }
+    } catch (e) {
+      console.error('Error parsing FIREBASE_WEBAPP_CONFIG. Will rely on individual env vars for Firebase.', e);
+    }
+  } else {
+    console.log('FIREBASE_WEBAPP_CONFIG not found in production. Will rely on individual NEXT_PUBLIC_FIREBASE_* env vars.');
+  }
 } else {
-  console.log('K_SERVICE not detected, assuming local or non-Firebase CI. Loading .env.');
+  console.log('NODE_ENV is not production (' + process.env.NODE_ENV + '), assuming local or CI. Loading .env.');
   dotenv.config(); // load environment variables from .env file
 }
+
+// Fallback or local development: Populate from individual NEXT_PUBLIC_FIREBASE_* if FIREBASE_WEBAPP_CONFIG wasn't used
+if (!usingFirebaseWebappConfig) {
+  console.log('Populating Firebase config from individual NEXT_PUBLIC_FIREBASE_* environment variables.');
+  firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
+  };
+}
+
+// config parameters that are always sourced from the env
+firebaseConfig.appcheckRecaptchaEnterpriseKey = process.env.NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY || '';
+servicesConfig.gmapKey = process.env.NEXT_PUBLIC_SVC_GMAP_KEY || '';
+servicesConfig.nxCloudAccessToken = process.env.NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN || '';
+
 const writeFile = fs.writeFile;
 
 // Get the project name from Nx environment variable
@@ -20,278 +81,104 @@ const projectName = process.env.NX_TASK_TARGET_PROJECT;
 
 if (!projectName) {
   console.error('ERROR: NX_TASK_TARGET_PROJECT is not defined. This script expects to be run by Nx.');
-  console.error('Current process.env:', process.env);
   process.exit(1);
 }
 const envPath = `./apps/${projectName}/src/environments/environment.ts`;
 const envProdPath = `./apps/${projectName}/src/environments/environment.prod.ts`;
 const tenantId = projectName.replace(/-app$/, '');
 
-// Define required environment variables for the script to function
-const REQUIRED_ENV_VARS = [
+// Enhanced check for required environment variables
+const ALWAYS_REQUIRED_PROCESS_ENV_VARS = [
+  'NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY', // Because it's sourced directly
+  'NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN',
+  'NEXT_PUBLIC_SVC_GMAP_KEY'
+  // Add other non-Firebase essential process.env vars here
+];
+
+const FIREBASE_FALLBACK_PROCESS_ENV_VARS = [
   'NEXT_PUBLIC_FIREBASE_API_KEY',
   'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-  'NEXT_PUBLIC_FIREBASE_DATABASE_URL',
   'NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID',
   'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
   'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-  'NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY',
   'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-  'NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN',
-  'NEXT_PUBLIC_SVC_GMAP_KEY'
+  // 'NEXT_PUBLIC_FIREBASE_APP_ID' // Often optional or might not be in .env by default
 ];
 
-function checkRequiredEnvVars() {
-  const missingVars = REQUIRED_ENV_VARS.filter(varName => !process.env[varName]);
-  if (missingVars.length > 0) {
-    console.error('ERROR: The following required environment variables are not defined:');
-    missingVars.forEach(varName => console.error(`- ${varName}`));
-    console.error('Please ensure these secrets are set in Firebase App Hosting and available to the build environment.');
-    console.error('Current process.env.NEXT_PUBLIC_AUTH_TENANTID:', process.env['NEXT_PUBLIC_AUTH_TENANTID']);
-    process.exit(1); // Exit with an error code
+function checkRequiredSettings() {
+  let missingVars = ALWAYS_REQUIRED_PROCESS_ENV_VARS.filter(varName => !process.env[varName]);
+  const errors = [];
+
+  if (usingFirebaseWebappConfig) {
+    if (!firebaseConfig.apiKey) errors.push('apiKey (from parsed FIREBASE_WEBAPP_CONFIG)');
+    if (!firebaseConfig.projectId) errors.push('projectId (from parsed FIREBASE_WEBAPP_CONFIG)');
+    // Add checks for other essential fields from firebaseConfig if their absence is critical
+  } else {
+    // If not using webapp config, then all individual Firebase vars are required from process.env
+    missingVars = missingVars.concat(FIREBASE_FALLBACK_PROCESS_ENV_VARS.filter(varName => !process.env[varName]));
   }
-  console.log('All required environment variables are present.');
+
+  missingVars.forEach(varName => errors.push(`${varName} (from process.env)`));
+
+  if (errors.length > 0) {
+    console.error('ERROR: The following required environment variables/config values are not defined or missing:');
+    errors.forEach(varName => console.error(`- ${varName}`));
+    console.error('Please ensure these are set in your .env file (for local) or as secrets in your hosting environment.');
+    process.exit(1);
+  }
+  console.log('All required environment variables/config values appear to be present.');
 }
 
-// Perform checks before proceeding
-checkRequiredEnvVars();
+checkRequiredSettings();
 
-
-export const setEnv = () => {
-  const envConfigFile = `
-  import {BkEnvironment} from '@bk2/shared/config';
-
-  export const environment: BkEnvironment = {
-    production: false,
-    useEmulators: false,
-    firebase: {
-      apiKey: '${process.env['NEXT_PUBLIC_FIREBASE_API_KEY']}',
-      authDomain: '${process.env['NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN']}',
-      databaseUrl: '${process.env['NEXT_PUBLIC_FIREBASE_DATABASE_URL']}',
-      projectId: '${process.env['NEXT_PUBLIC_FIREBASE_PROJECT_ID']}',
-      storageBucket: '${process.env['NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET']}',
-      messagingSenderId: '${process.env['NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID']}',
-      appId: '${process.env['NEXT_PUBLIC_FIREBASE_APP_ID']}',
-      measurementId: '${process.env['NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID']}',
-      appcheckRecaptchaEnterpriseKey: '${process.env['NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY']}'
-    },
-    app: {
-      title: '${process.env['NEXT_PUBLIC_APP_TITLE']}',
-      subTitle: '${process.env['NEXT_PUBLIC_APP_SUBTITLE']}',
-      name: '${process.env['NEXT_PUBLIC_APP_NAME']}',
-      version: '${process.env['NEXT_PUBLIC_APP_VERSION']}',
-      domain: '${process.env['NEXT_PUBLIC_APP_DOMAIN']}',
-      imgixBaseUrl: '${process.env['NEXT_PUBLIC_APP_IMGIX_BASE_URL']}',
-      rootUrl: '/public/welcome',
-      logoUrl: 'tenant/${tenantId}/logo/logo_round.svg',
-      welcomeBannerUrl: 'tenant/${tenantId}/app/welcome.jpg',
-      notfoundBannerUrl: 'tenant/${tenantId}/app/not-found.jpg',
-      osiLogoUrl: 'logo/general/osi.svg'
-    },
-    owner: {
-      tenantId: '${tenantId}',
-      orgId: '${tenantId}',
-      repId: 'owner_${tenantId}',
-      locationId: 'loc_${tenantId}',
-      latitude: '${process.env['NEXT_PUBLIC_APP_LATITUDE']}',
-      longitude: '${process.env['NEXT_PUBLIC_APP_LONGITUDE']}',
-      zoom: '${process.env['NEXT_PUBLIC_APP_ZOOM']}'
-    },
-    auth: {
-      loginUrl: '/auth/login',
-      passwordResetUrl: '/auth/pwdreset',
-    },
-    chat: {
-      apiKey: '${process.env['NEXT_PUBLIC_CHAT_API_KEY']}',
-      appSecret: '${process.env['NEXT_PUBLIC_CHAT_APP_SECRET']}',
-      userToken: ''
-    },
-    thumbnail: {
-      width: 200,
-      height: 300
-    },
-    privacy: {
-      dpo_email: '${process.env['NEXT_PUBLIC_DPO_EMAIL']}',
-      dpo_name: '${process.env['NEXT_PUBLIC_DPO_NAME']}',
-      showDateOfBirth: 'admin',
-      showDateOfDeath: 'admin',
-      showGender: 'admin',
-      showTaxId: 'admin',
-      showBexioId: 'admin',
-      showTags: 'admin',
-      showNotes: 'admin',
-      showMemberships: 'admin',
-      showOwnerships: 'admin',
-      showComments: 'admin',
-      showDocuments: 'admin'
-    },
-    git: {
-      repo: '${process.env['NEXT_PUBLIC_GIT_REPO']}',
-      org: '${process.env['NEXT_PUBLIC_GIT_ORG']}',
-      issueUrl: 'https://github.com/${process.env['NEXT_PUBLIC_GIT_ORG']}/${process.env['NEXT_PUBLIC_GIT_REPO']}/issues/new'
-    },
-    services: {
-      gmapKey: '${process.env['NEXT_PUBLIC_SVC_GMAP_KEY']}'
-    },
-    i18n: {
-      locale: 'de-ch'
-    },
-    operator: {
-      name: '${process.env['NEXT_PUBLIC_OP_NAME']}',
-      street: '${process.env['NEXT_PUBLIC_OP_STREET']}',
-      zipcode: '${process.env['NEXT_PUBLIC_OP_ZIP']}',
-      city: '${process.env['NEXT_PUBLIC_OP_CITY']}',
-      email: '${process.env['NEXT_PUBLIC_OP_EMAIL']}',
-      web: '${process.env['NEXT_PUBLIC_OP_WEB']}'
-    },
-    settingsDefaults: {
-      avatarUsage: 3,
-      gravatarEmail: '',
-      invoiceDelivery: 1,
-      maxYear: 2050,
-      minYear: 1850,
-      nameDisplay: 0,
-      newsDelivery: 2,
-      personSortCriteria: 1,
-      showArchivedData: false,
-      showDebugInfo: false,
-      showTestData: false,
-      toastLength: 3000,
-      useFaceId: false,
-      useTouchId: false,
-      defaultResource: '${tenantId}_default',
-    }
-  };
-`;
-  writeFile(envPath, envConfigFile, (err) => {
-    if (err) {
-      console.error(`Angular environment.ts file could not be generated at ${envPath}.`);
-      console.error(err);
-      throw err;
-    } else {
-      console.log(`Angular environment.ts file generated correctly at ${envPath} 
-`);
-    }
-  });
-};
-
-export const setProdEnv = () => {
-    const prodEnvConfigFile = `
+function generateEnvFileContent(isProduction) {
+  return `
     import {BkEnvironment} from '@bk2/shared/config';
   
     export const environment: BkEnvironment = {
-      production: true,
-      useEmulators: false,
+      production: ${isProduction},
+      useEmulators: false, // Assuming emulators are not used in generated files by this script
+      tenantId: ${tenantId},
       firebase: {
-        apiKey: '${process.env['NEXT_PUBLIC_FIREBASE_API_KEY']}',
-        authDomain: '${process.env['NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN']}',
-        databaseUrl: '${process.env['NEXT_PUBLIC_FIREBASE_DATABASE_URL']}',
-        projectId: '${process.env['NEXT_PUBLIC_FIREBASE_PROJECT_ID']}',
-        storageBucket: '${process.env['NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET']}',
-        messagingSenderId: '${process.env['NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID']}',
-        appId: '${process.env['NEXT_PUBLIC_FIREBASE_APP_ID']}',
-        measurementId: '${process.env['NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID']}',
-        appcheckRecaptchaEnterpriseKey: '${process.env['NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY']}'
-      },
-      app: {
-      title: '${process.env['NEXT_PUBLIC_APP_TITLE']}',
-      subTitle: '${process.env['NEXT_PUBLIC_APP_SUBTITLE']}',
-      name: '${process.env['NEXT_PUBLIC_APP_NAME']}',
-      version: '${process.env['NEXT_PUBLIC_APP_VERSION']}',
-      domain: '${process.env['NEXT_PUBLIC_APP_DOMAIN']}',
-      imgixBaseUrl: '${process.env['NEXT_PUBLIC_APP_IMGIX_BASE_URL']}',
-      rootUrl: '/public/welcome',
-      logoUrl: 'tenant/${tenantId}/logo/logo_round.svg',
-      welcomeBannerUrl: 'tenant/${tenantId}/app/welcome.jpg',
-      notfoundBannerUrl: 'tenant/${tenantId}/app/not-found.jpg',
-      osiLogoUrl: 'logo/general/osi.svg'
-      },
-      owner: {
-        tenantId: '${tenantId}',
-        orgId: '${tenantId}',
-        repId: 'owner_${tenantId}',
-        locationId: 'loc_${tenantId}',
-        latitude: '${process.env['NEXT_PUBLIC_APP_LATITUDE']}',
-        longitude: '${process.env['NEXT_PUBLIC_APP_LONGITUDE']}',
-        zoom: '${process.env['NEXT_PUBLIC_APP_ZOOM']}'
-      },
-      auth: {
-        loginUrl: '/auth/login',
-        passwordResetUrl: '/auth/pwdreset',
-      },
-      chat: {
-        apiKey: '${process.env['NEXT_PUBLIC_CHAT_API_KEY']}',
-        appSecret: '${process.env['NEXT_PUBLIC_CHAT_APP_SECRET']}',
-        userToken: ''
-      },
-      thumbnail: {
-        width: 200,
-        height: 300
-      },
-      privacy: {
-        dpo_email: '${process.env['NEXT_PUBLIC_DPO_EMAIL']}',
-        dpo_name: '${process.env['NEXT_PUBLIC_DPO_NAME']}',
-        showDateOfBirth: 'admin',
-        showDateOfDeath: 'admin',
-        showGender: 'admin',
-        showTaxId: 'admin',
-        showBexioId: 'admin',
-        showTags: 'admin',
-        showNotes: 'admin',
-        showMemberships: 'admin',
-        showOwnerships: 'admin',
-        showComments: 'admin',
-        showDocuments: 'admin'
-      },
-      git: {
-        repo: '${process.env['NEXT_PUBLIC_GIT_REPO']}',
-        org: '${process.env['NEXT_PUBLIC_GIT_ORG']}',
-        issueUrl: 'https://github.com/${process.env['NEXT_PUBLIC_GIT_ORG']}/${process.env['NEXT_PUBLIC_GIT_REPO']}/issues/new'
-      },
+        apiKey: '${firebaseConfig.apiKey}',
+        authDomain: '${firebaseConfig.authDomain}',
+        projectId: '${firebaseConfig.projectId}',
+        storageBucket: '${firebaseConfig.storageBucket}',
+        messagingSenderId: '${firebaseConfig.messagingSenderId}',
+        appId: '${firebaseConfig.appId}',
+        measurementId: '${firebaseConfig.measurementId}',
+        appcheckRecaptchaEnterpriseKey: '${firebaseConfig.appcheckRecaptchaEnterpriseKey}'
+        },
       services: {
-        gmapKey: '${process.env['NEXT_PUBLIC_SVC_GMAP_KEY']}'
-      },
-      i18n: {
-        locale: 'de-ch'
-      },
-      operator: {
-        name: '${process.env['NEXT_PUBLIC_OP_NAME']}',
-        street: '${process.env['NEXT_PUBLIC_OP_STREET']}',
-        zipcode: '${process.env['NEXT_PUBLIC_OP_ZIP']}',
-        city: '${process.env['NEXT_PUBLIC_OP_CITY']}',
-        email: '${process.env['NEXT_PUBLIC_OP_EMAIL']}',
-        web: '${process.env['NEXT_PUBLIC_OP_WEB']}'
-      },
-      settingsDefaults: {
-        avatarUsage: 3,
-        gravatarEmail: '',
-        invoiceDelivery: 1,
-        maxYear: 2050,
-        minYear: 1850,
-        nameDisplay: 0,
-        newsDelivery: 2,
-        personSortCriteria: 1,
-        showArchivedData: false,
-        showDebugInfo: false,
-        showTestData: false,
-        toastLength: 3000,
-        useFaceId: false,
-        useTouchId: false,
-        defaultResource: '${tenantId}_default',
+        gmapKey: '${process.env['NEXT_PUBLIC_SVC_GMAP_KEY']}',
+        nxCloudAccessToken: '${process.env['NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN']}'
       }
     };
   `;
-    writeFile(envProdPath, prodEnvConfigFile, (err) => {
-      if (err) {
-        console.error(`Angular environment.prod.ts file could not be generated at ${envProdPath}.`);
-        console.error(err);
-        throw err;
-      } else {
-        console.log(`Angular environment.prod.ts file generated correctly at ${envProdPath} 
-`);
-      }
-    });
-  };
+}
 
-setEnv();
-setProdEnv();
+// Generate environment.ts
+const envFileContent = generateEnvFileContent(false);
+writeFile(envPath, envFileContent, (err) => {
+  if (err) {
+    console.error(`Angular environment.ts file could not be generated at ${envPath}.`);
+    console.error(err);
+    throw err;
+  } else {
+    console.log(`Angular environment.ts file generated correctly at ${envPath}`);
+  }
+});
+
+// Generate environment.prod.ts
+const prodEnvFileContent = generateEnvFileContent(true);
+writeFile(envProdPath, prodEnvFileContent, (err) => {
+  if (err) {
+    console.error(`Angular environment.prod.ts file could not be generated at ${envProdPath}.`);
+    console.error(err);
+    throw err;
+  } else {
+    console.log(`Angular environment.prod.ts file generated correctly at ${envProdPath}`);
+  }
+});
+
+console.log('Environment file generation process complete.');
