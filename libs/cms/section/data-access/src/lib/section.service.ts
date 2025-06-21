@@ -17,7 +17,7 @@ export class SectionService {
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
 
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -38,6 +38,7 @@ export class SectionService {
    * @param uid the key of the model document
    */
   public read(key: string): Observable<SectionModel | undefined> {
+    console.log(`SectionService.read(${key})`);
     if (!key || key.length === 0) return of(undefined);
     return this.list().pipe(
       map((sections: SectionModel[]) => {

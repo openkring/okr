@@ -21,12 +21,11 @@
       // auth
       "@bk2/auth/data-access": ["libs/auth/data-access/src/index.ts"],
       "@bk2/auth/feature": ["libs/auth/feature/src/index.ts"],
-      "@bk2/auth/model": ["libs/auth/model/src/index.ts"],
       "@bk2/auth/ui": ["libs/auth/ui/src/index.ts"],
       "@bk2/auth/util": ["libs/auth/util/src/index.ts"],
       // avatar
       "@bk2/avatar/data-access": ["libs/avatar/data-access/src/index.ts"],
-      "@bk2/avatar/ui": ["libs/avatar/ui/src/index.ts"],
+      "@bk2/avatar/feature": ["libs/avatar/feature/src/index.ts"],
       "@bk2/avatar/util": ["libs/avatar/util/src/index.ts"],
       // calevent
       "@bk2/calevent/data-access": ["libs/calevent/data-access/src/index.ts"],

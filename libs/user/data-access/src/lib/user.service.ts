@@ -1,7 +1,6 @@
 import { ToastController } from '@ionic/angular';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ModalController } from '@ionic/angular/standalone';
 
 import { UserCollection, UserModel } from '@bk2/shared/models';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
@@ -15,9 +14,8 @@ import { createModel, findAllByField, findByField, findByKey, getSystemQuery, se
 export class UserService  {
   private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
-  private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /* ---------------------- Standard CRUD operations -------------------------------*/
   /**
@@ -127,7 +125,7 @@ export class UserService  {
     const _password = password ? password : generateRandomString(12);
     try {
       const _userCredential = await createUserWithEmailAndPassword(this.auth, loginEmail, _password);
-      await showToast(this.toastController, '@auth.operation.create.confirmation', this.env.settingsDefaults.toastLength);
+      await showToast(this.toastController, '@auth.operation.create.confirmation');
       await this.updateUser(fbUser); // reset the logged-in user
       return _userCredential.user.uid;
     } catch (_ex) {

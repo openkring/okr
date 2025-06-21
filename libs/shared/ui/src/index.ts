@@ -19,7 +19,6 @@ export * from './lib/color-select.modal';
 export * from './lib/counter.component';
 export * from './lib/date-input.component';
 export * from './lib/date-select.modal';
-export * from './lib/debug-info.component';
 export * from './lib/editor.component';
 export * from './lib/editor-toolbar.component';
 export * from './lib/email-input.component';

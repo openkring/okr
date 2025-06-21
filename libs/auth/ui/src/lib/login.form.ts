@@ -3,9 +3,10 @@ import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 import { FormsModule } from '@angular/forms';
 
-import { AuthCredentials, authCredentialsShape } from '@bk2/auth/model';
-import { authCredentialsValidations } from '@bk2/auth/util';
 import { EmailInputComponent, ErrorNoteComponent, PasswordInputComponent } from '@bk2/shared/ui';
+import { AuthCredentials, authCredentialsShape } from '@bk2/shared/models';
+
+import { authCredentialsValidations } from '@bk2/auth/util';
 
 @Component({
   selector: 'bk-login-form',

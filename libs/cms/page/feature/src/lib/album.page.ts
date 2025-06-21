@@ -45,10 +45,10 @@ export class AlbumPageComponent {
   protected title = computed(() => extractFirstPartOfOptionalTupel(this.id(), '@'));
 
   protected section = computed(() => {
-    const _section = createSection(SectionType.Album, this.env.owner.tenantId);
+    const _section = createSection(SectionType.Album, this.env.tenantId);
     const _id = this.id();
     if (_id.indexOf('@') === -1) {   // show the default album of the current tenant
-      _section.properties.album = newAlbumConfig(this.env.owner.tenantId, _id);
+      _section.properties.album = newAlbumConfig(this.env.tenantId, _id);
     } else {                         // show the album from a different tenant
       const [_key, _tenantId] = getPartsOfTupel(_id, '@');
       _section.properties.album = newAlbumConfig(_tenantId, _key);

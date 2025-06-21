@@ -4,10 +4,11 @@ import { AsyncPipe } from '@angular/common';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryListFormComponent } from '@bk2/category/ui';
 import { CategoryListModel, ModelType, UserModel } from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared/feature';
+
 import { convertCategoryListToForm, convertFormToCategoryList } from '@bk2/category/util';
-import { AppStore } from '@bk2/auth/feature';
+import { CategoryListFormComponent } from '@bk2/category/ui';
 
 @Component({
   selector: 'bk-category-edit-modal',
@@ -39,6 +40,6 @@ export class CategoryEditModalComponent {
   protected categoryTags = computed(() => this.appStore.getTags(ModelType.Category));
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToCategoryList(this.category(), this.vm(), this.appStore.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToCategoryList(this.category(), this.vm(), this.appStore.env.tenantId), 'confirm');
   }
 }

@@ -8,6 +8,6 @@ export class FileTypeIconPipe implements PipeTransform {
   private readonly env = inject(ENV);
 
   transform(fileTypeIcon: string): string {
-    return `${this.env.app.imgixBaseUrl}/logo/filetypes/${fileTypeIcon}.svg`;
+    return `${this.env.services.imgixBaseUrl}/logo/filetypes/${fileTypeIcon}.svg`;
   }
 }

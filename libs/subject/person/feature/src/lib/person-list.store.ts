@@ -2,21 +2,21 @@ import { patchState, signalStore, withComputed, withHooks, withMethods, withProp
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
-
-import { FIRESTORE } from '@bk2/shared/config';
-import { AppNavigationService, chipMatches, createModel, debugListLoaded, hasRole, nameMatches, navigateByUrl } from '@bk2/shared/util';
-import { categoryMatches } from '@bk2/shared/categories';
-import { AddressModel, AllCategories, GenderType, MembershipCollection, ModelType, PersonModel } from '@bk2/shared/models';
-import { PersonService } from '@bk2/person/data-access';
-import { AppStore } from '@bk2/auth/feature';
-import { copyToClipboardWithConfirmation } from '@bk2/shared/i18n';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
+
+import { AppNavigationService, chipMatches, copyToClipboardWithConfirmation, createModel, debugListLoaded, hasRole, nameMatches, navigateByUrl } from '@bk2/shared/util';
+import { categoryMatches } from '@bk2/shared/categories';
+import { AddressModel, AllCategories, GenderType, MembershipCollection, ModelType, PersonModel } from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared/feature';
+
 import { CategoryService } from '@bk2/category/data-access';
-import { PersonNewModalComponent } from './person-new.modal';
-import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/person/util';
 import { AddressService } from '@bk2/address/data-access';
 import { saveComment } from '@bk2/comment/util';
+
+import { PersonService } from '@bk2/person/data-access';
+import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/person/util';
+import { PersonNewModalComponent } from './person-new.modal';
 
 export type PersonListState = {
   orgId: string;
@@ -38,7 +38,6 @@ export const PersonListStore = signalStore(
     personService: inject(PersonService),
     addressService: inject(AddressService),
     categoryService: inject(CategoryService),
-    firestore: inject(FIRESTORE),
     appNavigationService: inject(AppNavigationService),
     router: inject(Router),
     appStore: inject(AppStore),
@@ -59,10 +58,9 @@ export const PersonListStore = signalStore(
     return {
       persons: computed(() => state.personsResource.value()),
       deceased: computed(() => state.personsResource.value()?.filter((person: PersonModel) => person.dateOfDeath !== undefined && person.dateOfDeath.length > 0) ?? []),
-      showGender: computed(() => hasRole(state.appStore.env.privacy.showGender, state.appStore.currentUser())),
+      showGender: computed(() => hasRole(state.appStore.privacySettings().showGender, state.appStore.currentUser())),
       currentUser: computed(() => state.appStore.currentUser()),
-      toastLength: computed(() => state.appStore.toastLength()),
-      tenantId: computed(() => state.appStore.env.owner.tenantId),
+      tenantId: computed(() => state.appStore.tenantId()),
       membershipCategoryKey: computed(() => 'mcat_' + state.orgId()),
     };
   }),
@@ -173,8 +171,8 @@ export const PersonListStore = signalStore(
       async saveMembership(vm: PersonNewFormModel, personKey: string): Promise<void> {
         const _membership = convertNewPersonFormToMembership(vm, personKey, store.tenantId());
         _membership.index = 'mn:' + _membership.memberName1 + ' ' + _membership.memberName2 + ' mk:' + _membership.memberKey + ' ok:' + _membership.orgKey;
-        const _key = await createModel(store.firestore, MembershipCollection, _membership, store.tenantId(), '@membership.operation.create', store.toastController);
-        await saveComment(store.firestore, store.tenantId(), store.currentUser(), MembershipCollection, _key, '@comment.operation.initial.conf');  
+        const _key = await createModel(store.appStore.firestore, MembershipCollection, _membership, store.tenantId(), '@membership.operation.create', store.toastController);
+        await saveComment(store.appStore.firestore, store.tenantId(), store.currentUser(), MembershipCollection, _key, '@comment.operation.initial.conf');  
       },
 
       saveAddress(address: AddressModel, avatarKey: string): void {
@@ -200,14 +198,14 @@ export const PersonListStore = signalStore(
       async copyEmailAddresses(): Promise<void> {
         const _allEmails = store.filteredPersons().map(_person => _person.fav_email);
         const _emails = _allEmails.filter(e => e); // this filters all empty emails, because '' is a falsy value
-        await copyToClipboardWithConfirmation(store.toastController, store.toastLength(), _emails.toString() ?? '', '@subject.address.operation.emailCopy.conf');
+        await copyToClipboardWithConfirmation(store.toastController, _emails.toString() ?? '', '@subject.address.operation.emailCopy.conf');
       }
     }
   }),
 
   withHooks({
     onInit(store) {
-      patchState(store, { orgId: store.appStore.env.owner.tenantId });
+      patchState(store, { orgId: store.tenantId() });
     }
   })
 );

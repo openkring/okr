@@ -3,12 +3,10 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { FIRESTORE } from '@bk2/shared/config';
 import { chipMatches, getSystemQuery, getYear, nameMatches, searchData } from '@bk2/shared/util';
 import { categoryMatches, yearMatches } from '@bk2/shared/categories';
 import { AllCategories, ModelType, TransferCollection, TransferModel, TransferType } from '@bk2/shared/models';
-
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 
 import { TransferService } from '@bk2/transfer/data-access';
 import { TransferModalsService } from './transfer-modals.service';
@@ -35,13 +33,12 @@ export const TransferListStore = signalStore(
     transferService: inject(TransferService),
     transferModalsService: inject(TransferModalsService),
     appStore: inject(AppStore),
-    firestore: inject(FIRESTORE),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     transfersResource: rxResource({
       loader: () => {
-        return searchData<TransferModel>(store.firestore, TransferCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
+        return searchData<TransferModel>(store.appStore.firestore, TransferCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
       }
     })
   })),

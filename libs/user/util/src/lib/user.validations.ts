@@ -1,6 +1,6 @@
 import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
 import { AvatarUsage, DeliveryType, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@bk2/shared/models';
-import { baseValidations, booleanValidations, categoryValidations, numberValidations, stringValidations } from '@bk2/shared/util';
+import { baseValidations, booleanValidations, categoryValidations, stringValidations } from '@bk2/shared/util';
 import { only, staticSuite} from 'vest';
 
 export const userValidations = staticSuite((model: UserModel, field?: string) => {
@@ -14,7 +14,6 @@ export const userValidations = staticSuite((model: UserModel, field?: string) =>
   booleanValidations('useTouchId', model.useTouchId);
   booleanValidations('useFaceId', model.useFaceId);
   categoryValidations('userLanguage', model.userLanguage, Language);
-  numberValidations('toastLength', model.toastLength, true, 0, 10000);
   categoryValidations('avatarUsage', model.avatarUsage, AvatarUsage);
   stringValidations('gravatarEmail', model.gravatarEmail, SHORT_NAME_LENGTH);
   categoryValidations('nameDisplay', model.nameDisplay, NameDisplay);

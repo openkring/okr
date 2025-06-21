@@ -26,7 +26,6 @@ export class UserModel implements BkModel, TaggedModel, SearchableModel {
   public useTouchId = false;
   public useFaceId = false;
   public userLanguage = DefaultLanguage; 
-  public toastLength = 3000;
   public avatarUsage = AvatarUsage.PhotoFirst;           // PhotoFirst
   public gravatarEmail = '';
   public nameDisplay = NameDisplay.FirstLast;           // FirstLast
@@ -39,12 +38,12 @@ export class UserModel implements BkModel, TaggedModel, SearchableModel {
   public showHelpers = true;
 
   // privacy restrictions
-  public usage_images = PrivacyUsage.None;
-  public usage_dateOfBirth = PrivacyUsage.Registered; 
-  public usage_postalAddress = PrivacyUsage.Registered;
-  public usage_email = PrivacyUsage.Registered;
-  public usage_phone = PrivacyUsage.Registered;
-  public usage_name = PrivacyUsage.Registered;
+  public usage_images = PrivacyUsage.Public;
+  public usage_dateOfBirth = PrivacyUsage.Restricted; 
+  public usage_postalAddress = PrivacyUsage.Restricted;
+  public usage_email = PrivacyUsage.Restricted;
+  public usage_phone = PrivacyUsage.Restricted;
+  public usage_name = PrivacyUsage.Restricted;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

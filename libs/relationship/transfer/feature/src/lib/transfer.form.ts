@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, model, output, signal} from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
+import { AsyncPipe } from '@angular/common';
 
 import { AvatarsComponent, CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { debugFormErrors, getTodayStr, hasRole, isPerson, isResource } from '@bk2/shared/util';
@@ -8,10 +9,7 @@ import { AvatarInfo, DefaultResourceInfo, ModelType, Periodicity, ResourceInfo, 
 import { NAME_LENGTH, RoleName } from '@bk2/shared/config';
 import { PeriodicityTypes, TransferStates, TransferTypes } from '@bk2/shared/categories';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared/feature';
-
-import { AsyncPipe } from '@angular/common';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared/feature';
 
 import { TransferFormModel, transferFormModelShape, transferFormValidations } from '@bk2/transfer/util';
 
@@ -91,7 +89,7 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
             </ion-col>
 
             <ion-col size="12" size-md="6">
-              <bk-date-input name="dateOfTransfer" [storeDate]="dateOfTransfer()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfTransfer', $event)" />
+              <bk-date-input name="dateOfTransfer" [storeDate]="dateOfTransfer()" [locale]="locale()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfTransfer', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -156,6 +154,7 @@ export class TransferFormComponent {
   protected price = computed(() => this.vm().price ?? 0);
   protected currency = computed(() => this.vm().currency ?? 'CHF');
   protected periodicity = computed(() => this.vm().periodicity ?? Periodicity.Yearly);
+  protected readonly locale = computed(() => this.appStore.appConfig().locale);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
@@ -207,7 +206,7 @@ export class TransferFormComponent {
     _modal.present();
     const { data, role } = await _modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isPerson(data, this.appStore.env.owner.tenantId)) {
+      if (isPerson(data, this.appStore.env.tenantId)) {
         if (name === 'subjects') {
           const subjects = this.subjects();
           subjects.push({
@@ -245,7 +244,7 @@ export class TransferFormComponent {
     _modal.present();
     const { data, role } = await _modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isResource(data, this.appStore.env.owner.tenantId)) {
+      if (isResource(data, this.appStore.env.tenantId)) {
         const resource = {
           key: data.bkey,
           name: data.name,

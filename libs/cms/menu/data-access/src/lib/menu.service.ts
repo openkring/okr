@@ -5,8 +5,8 @@ import { collection, doc, DocumentReference, setDoc, updateDoc } from "firebase/
 
 import { ENV, FIRESTORE } from "@bk2/shared/config";
 import { MenuItemCollection, MenuItemModel, UserModel } from "@bk2/shared/models";
-import { bkTranslate, confirmAction } from "@bk2/shared/i18n";
-import { die, getSystemQuery, removeProperty, searchData } from "@bk2/shared/util";
+import { bkTranslate } from "@bk2/shared/i18n";
+import { confirmAction, die, getSystemQuery, removeProperty, searchData } from "@bk2/shared/util";
 
 import { saveComment } from "@bk2/comment/util";
 
@@ -20,7 +20,7 @@ export class MenuService {
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
 
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**

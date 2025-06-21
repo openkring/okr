@@ -7,9 +7,8 @@ import { of } from 'rxjs';
 import { FIRESTORE } from '@bk2/shared/config';
 import { debugListLoaded, findUserByPersonKey, getSystemQuery, isPerson, searchData, warn } from '@bk2/shared/util';
 import { LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared/models';
-import { PersonSelectModalComponent } from '@bk2/shared/feature';
+import { PersonSelectModalComponent, AppStore } from '@bk2/shared/feature';
 
-import { AppStore } from '@bk2/auth/feature';
 import { AuthService } from '@bk2/auth/data-access';
 
 export type AocRolesState = {
@@ -41,14 +40,14 @@ export const AocRolesStore = signalStore(
   withProps((store) => ({
     personsResource: rxResource({
       loader: () => {
-        const persons$ = searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.appStore.env.owner.tenantId), 'lastName', 'asc');
+        const persons$ = searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
         debugListLoaded<PersonModel>('RolesStore.persons', persons$, store.appStore.currentUser());
         return persons$;
       }
     }),
     usersResource: rxResource({
       loader: () => {
-        const users$ = searchData<UserModel>(store.firestore, UserCollection, getSystemQuery(store.appStore.env.owner.tenantId), 'loginEmail', 'asc');
+        const users$ = searchData<UserModel>(store.firestore, UserCollection, getSystemQuery(store.appStore.env.tenantId), 'loginEmail', 'asc');
         debugListLoaded<UserModel>('RolesStore.users', users$, store.appStore.currentUser());
         return users$;
       }
@@ -105,7 +104,7 @@ export const AocRolesStore = signalStore(
         _modal.present();
         const { data, role } = await _modal.onWillDismiss();
         if (role === 'confirm') {
-          if (isPerson(data, store.appStore.env.owner.tenantId)) {
+          if (isPerson(data, store.appStore.env.tenantId)) {
             console.log('RolesStore: selected person: ', data);
             this.setSelectedPerson(data);
           } 

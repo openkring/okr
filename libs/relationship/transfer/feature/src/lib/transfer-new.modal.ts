@@ -7,8 +7,7 @@ import { TranslatePipe } from '@bk2/shared/i18n';
 import { RoleName } from '@bk2/shared/config';
 import { ModelType, OrgModel, PersonModel, ResourceModel } from '@bk2/shared/models';
 import { hasRole } from '@bk2/shared/util';
-
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 
 import { convertFormToTransfer, newTransferFormModel } from '@bk2/transfer/util';
 import { TransferFormComponent } from './transfer.form';

@@ -2,12 +2,13 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, computed, inject, input } fr
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { ChannelService, ChatClientService, StreamAutocompleteTextareaModule, StreamChatModule, StreamI18nService } from 'stream-chat-angular';
 import { User } from 'stream-chat';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { ModelType, SectionModel } from '@bk2/shared/models';
-import { TranslateModule } from '@ngx-translate/core';
 import { SpinnerComponent } from '@bk2/shared/ui';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 import { getAvatarImgixUrl } from '@bk2/shared/pipes';
+import { THUMBNAIL_SIZE } from '@bk2/shared/config';
 
 @Component({
   selector: 'bk-chat-section',
@@ -67,10 +68,10 @@ export class ChatSectionComponent implements OnInit {
   protected readonly userId = computed(() => this.currentUser()?.bkey);
   protected readonly userName = computed(() => this.currentUser()?.firstName);
   protected readonly userAvatar = computed(() => 
-    getAvatarImgixUrl(this.appStore.firestore, ModelType.Person + '.' + this.currentUser()?.personKey, this.appStore.env.thumbnail.width, this.appStore.env.app.imgixBaseUrl)
+    getAvatarImgixUrl(this.appStore.firestore, ModelType.Person + '.' + this.currentUser()?.personKey, THUMBNAIL_SIZE, this.appStore.services.imgixBaseUrl())
   );
   protected readonly streamUser = computed(() => {
-    return {
+    return {               
       id: this.userId() ?? '',
       name: this.userName(),
       image: this.userAvatar()
@@ -78,7 +79,7 @@ export class ChatSectionComponent implements OnInit {
   });
   
   constructor() {
-    const apiKey = this.appStore.env.chat.apiKey;
+    //  const apiKey = this.appStore.env.chat.apiKey;
 
     /**
      * The user token should be calculated on the server based on appid (= tenantId), apiKey and appSecret.
@@ -87,8 +88,8 @@ export class ChatSectionComponent implements OnInit {
      * This can be generated per user here (given the userId and the appSecret): 
      * https://getstream.io/chat/docs/react/token_generator?_gl=1*aesoge*_up*MQ..*_ga*MTgwMDMxNjMzMi4xNzQ3OTk4MzUw*_ga_FX552ZCLHK*czE3NDc5OTgzNDkkbzEkZzAkdDE3NDc5OTgzNDkkajAkbDAkaDEzNTg3NzUyNDQkZDVJUG10dHUxWHJGYUpxRmpJOGFySklsbjRxeDNsVy1xRXc.
      */
-    const userToken = this.appStore.env.chat.userToken;     // temporary solution for testing purposes
-    this.chatService.init(apiKey, this.streamUser(), userToken);
+    //const userToken = this.appStore.env.chat.userToken;     // temporary solution for testing purposes
+    //this.chatService.init(apiKey, this.streamUser(), userToken);
     this.streamI18nService.setTranslation();
   }
   

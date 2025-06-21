@@ -182,7 +182,7 @@ export class GroupViewPageComponent {
     const _group = this.group();
     if (!_group) return;
     const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.owner.tenantId], ModelType.Group, _group.bkey, _file.name);
+    const _avatar = newAvatarModel([this.env.tenantId], ModelType.Group, _group.bkey, _file.name);
     const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
 
     if (_downloadUrl) {

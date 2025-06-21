@@ -6,9 +6,9 @@ import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shar
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ModelType, ResourceModel, UserModel } from '@bk2/shared/models';
 import { AvatarPipe } from '@bk2/shared/pipes';
+import { getAvatarKey } from '@bk2/shared/util';
 
 import { ResourceSelectStore } from './resource-select.store';
-import { getAvatarKey } from '@bk2/shared/util';
 
 @Component({
   selector: 'bk-resource-select-modal',

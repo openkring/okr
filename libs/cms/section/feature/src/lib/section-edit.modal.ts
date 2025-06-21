@@ -5,9 +5,10 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { ModelType, SectionModel } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { convertFormToSection, convertSectionToForm } from '@bk2/cms/section/util';
 import { ENV } from '@bk2/shared/config';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
+
+import { convertFormToSection, convertSectionToForm } from '@bk2/cms/section/util';
 import { SectionFormComponent } from './section.form';
 
 @Component({
@@ -43,6 +44,6 @@ export class SectionEditModalComponent {
    * Save the changes to the section into the database.
    */
   public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToSection(this.section(), this.vm(), this.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToSection(this.section(), this.vm(), this.env.tenantId), 'confirm');
   }
 }

@@ -4,13 +4,14 @@ import { AsyncPipe } from '@angular/common';
 
 import { ModelType, OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared/models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared/ui';
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { convertFormToOwnership, convertOwnershipToForm, getOwnerName } from '@bk2/ownership/util';
-import { ENV, RoleName } from '@bk2/shared/config';
+import { RoleName } from '@bk2/shared/config';
 import { hasRole } from '@bk2/shared/util';
+import { AppStore } from '@bk2/shared/feature';
+
+import { CommentsAccordionComponent } from '@bk2/comment/feature';
+import { convertFormToOwnership, convertOwnershipToForm, getOwnerName } from '@bk2/ownership/util';
 import { OwnershipFormComponent } from '@bk2/ownership/ui';
-import { AppStore } from '@bk2/auth/feature';
 
 @Component({
   selector: 'bk-ownership-edit-modal',
@@ -45,7 +46,6 @@ import { AppStore } from '@bk2/auth/feature';
 })
 export class OwnershipEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
   private readonly appStore = inject(AppStore);
 
   public ownership = input.required<OwnershipModel>();
@@ -73,7 +73,7 @@ export class OwnershipEditModalComponent {
   protected formIsValid = signal(false);
 
   public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToOwnership(this.ownership(), this.vm(), this.env.owner.tenantId), 'confirm');    
+    return this.modalController.dismiss(convertFormToOwnership(this.ownership(), this.vm(), this.appStore.tenantId()), 'confirm');    
   }
 
   private getModalTitle(): string {

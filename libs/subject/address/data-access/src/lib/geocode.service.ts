@@ -5,8 +5,7 @@ import { ToastController } from '@ionic/angular';
 import { ENV } from '@bk2/shared/config';
 import { AddressChannel, AddressModel } from '@bk2/shared/models';
 import { stringifyAddress } from '@bk2/address/util';
-import { error } from '@bk2/shared/i18n';
-
+import { error } from '@bk2/shared/util';
 
 export interface GeoCoordinates {
   lat: number;
@@ -17,11 +16,10 @@ export interface GeoCoordinates {
   providedIn: 'root'
 })
 export class GeocodingService {
-  private toastController = inject(ToastController);
-  private env = inject(ENV);
-  private apiUrl = 'https://maps.googleapis.com/maps/api/geocode/json';
-
-  constructor(private http: HttpClient) {}
+  private readonly toastController = inject(ToastController);
+  private readonly env = inject(ENV);
+  private readonly apiUrl = 'https://maps.googleapis.com/maps/api/geocode/json';
+  private readonly http = inject(HttpClient);
 
   /**
    * Convert an address to latitude and longitude coordinates using the Google Maps Geocoding API

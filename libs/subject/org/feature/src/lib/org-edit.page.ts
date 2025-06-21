@@ -6,7 +6,7 @@ import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ENV, RoleName } from '@bk2/shared/config';
 import { ModelType, OrgCollection, OrgType } from '@bk2/shared/models';
-import { AvatarToolbarComponent } from '@bk2/avatar/ui';
+import { AvatarToolbarComponent } from 'libs/avatar/feature/src';
 import { Photo } from '@capacitor/camera';
 import { hasRole } from '@bk2/shared/util';
 import { AvatarService } from '@bk2/avatar/data-access';
@@ -108,7 +108,7 @@ export class OrgEditPageComponent {
     const _org = this.org();
     if (!_org) return;
     const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.owner.tenantId], ModelType.Org, _org.bkey, _file.name);
+    const _avatar = newAvatarModel([this.env.tenantId], ModelType.Org, _org.bkey, _file.name);
     const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
 
     if (_downloadUrl) {

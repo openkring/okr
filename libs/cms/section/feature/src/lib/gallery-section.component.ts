@@ -4,9 +4,9 @@ import { register } from 'swiper/element/bundle';
 
 import { Image, SectionModel } from '@bk2/shared/models';
 import { LabelComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { downloadToBrowser, TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
-import { die, getSizedImgixParamsByExtension } from '@bk2/shared/util';
+import { TranslatePipe } from '@bk2/shared/i18n';
+import { die, downloadToBrowser, getSizedImgixParamsByExtension } from '@bk2/shared/util';
+import { AppStore } from '@bk2/shared/feature';
 
 register(); // globally register Swiper's custom elements.
 
@@ -58,7 +58,7 @@ register(); // globally register Swiper's custom elements.
   `
 })
 export class GallerySectionComponent {
-  public env = inject(ENV);
+  private readonly appStore = inject(AppStore);
 
   public section = input<SectionModel>();
   protected initialSlide = input(2);
@@ -67,7 +67,6 @@ export class GallerySectionComponent {
   protected readonly imageList = computed(() => this.section()?.properties.imageList ?? []);
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);  
-  protected baseImgixUrl = this.env.app.imgixBaseUrl;
 
   public show(image: Image): void {
     downloadToBrowser(this.getImgixUrlFromImage(image));
@@ -87,6 +86,6 @@ export class GallerySectionComponent {
     if (!image.url) die('GallerySectionComponent.getImgixUrlFromImage: image url must be set');
     if (!image.width || !image.height) die('GallerySectionComponent.getImgixUrlFromImage: image width and height must be set');
     const _params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
-    return this.baseImgixUrl + '/' + image.url + '?' + _params;
+    return this.appStore.services.imgixBaseUrl() + '/' + image.url + '?' + _params;
   }
 }

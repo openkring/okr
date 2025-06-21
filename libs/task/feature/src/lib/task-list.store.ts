@@ -1,13 +1,10 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
 
-import { FIRESTORE } from '@bk2/shared/config';
 import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQuery, getTodayStr, nameMatches, searchData } from '@bk2/shared/util';
 import { AllCategories, ModelType, Priority, TaskCollection, TaskModel, TaskState } from '@bk2/shared/models';
-
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 
 import { TaskService } from '@bk2/task/data-access';
 import { TaskModalsService } from './task-modals.service';
@@ -34,13 +31,11 @@ export const TaskListStore = signalStore(
     taskService: inject(TaskService),
     taskModalsService: inject(TaskModalsService),
     appStore: inject(AppStore),
-    firestore: inject(FIRESTORE),
-    modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     tasksResource: rxResource({
       loader: () => {
-        const tasks$ = searchData<TaskModel>(store.firestore, TaskCollection, getSystemQuery(store.appStore.tenantId()), 'dueDate', 'asc');
+        const tasks$ = searchData<TaskModel>(store.appStore.firestore, TaskCollection, getSystemQuery(store.appStore.tenantId()), 'dueDate', 'asc');
         debugListLoaded<TaskModel>('TaskListStore.tasks', tasks$, store.appStore.currentUser());
         return tasks$;
       }

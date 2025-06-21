@@ -12,10 +12,10 @@ export type UserPrivacyFormModel = {
 
 
 export const userPrivacyFormModelShape: DeepRequired<UserPrivacyFormModel> = {
-  usage_images: PrivacyUsage.None,          
-  usage_dateOfBirth: PrivacyUsage.Registered,
-  usage_postalAddress: PrivacyUsage.Registered,
-  usage_email: PrivacyUsage.Registered,
-  usage_phone: PrivacyUsage.Registered,
-  usage_name: PrivacyUsage.Registered
+  usage_images: PrivacyUsage.Public,          
+  usage_dateOfBirth: PrivacyUsage.Restricted,
+  usage_postalAddress: PrivacyUsage.Restricted,
+  usage_email: PrivacyUsage.Restricted,
+  usage_phone: PrivacyUsage.Restricted,
+  usage_name: PrivacyUsage.Restricted
 };

@@ -5,13 +5,11 @@ import { IonButton, IonIcon, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 
 import { ColorsIonic } from '@bk2/shared/categories';
-import { ButtonAction, ColorIonic, ImageAction, SectionModel } from '@bk2/shared/models';
+import { ButtonAction, ColorIonic, ImageAction, newButton, newIcon, newImage, SectionModel } from '@bk2/shared/models';
 import { CategoryPlainNamePipe, FileTypeIconPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { navigateByUrl } from '@bk2/shared/util';
-import { ENV } from '@bk2/shared/config';
-import { downloadToBrowser } from '@bk2/shared/i18n';
+import { downloadToBrowser, navigateByUrl } from '@bk2/shared/util';
 import { showZoomedImage } from '@bk2/shared/ui';
-import { newButton, newIcon, newImage } from '@bk2/cms/section/util';
+import { BUTTON_HEIGHT, BUTTON_WIDTH, ENV, ICON_SIZE } from '@bk2/shared/config';
 
 @Component({
   selector: 'bk-button-widget',
@@ -46,10 +44,11 @@ import { newButton, newIcon, newImage } from '@bk2/cms/section/util';
 })
 export class ButtonWidgetComponent {
   private readonly modalController = inject(ModalController);
-  protected env = inject(ENV);
   private readonly router = inject(Router);
+  protected readonly env = inject(ENV);
 
-  public section = input<SectionModel>();
+  public section = input.required<SectionModel>();
+
   protected button = computed(() => this.section()?.properties.button ?? newButton());
   protected icon = computed(() => this.section()?.properties.icon ?? newIcon());
   protected iconName = computed(() => this.icon().name ?? '');
@@ -61,14 +60,14 @@ export class ButtonWidgetComponent {
 
   protected iconStyle = computed(() => {
     return {
-      'font-size': (this.icon().size ?? '40') + 'px'
+      'font-size': (this.icon().size ?? ICON_SIZE) + 'px'
     };
   });
 
   protected buttonStyle = computed(() => {
     return {
-      'width': (this.button().width ?? '60') + 'px',
-      'height': (this.button().height ?? '60') + 'px',
+      'width': (this.button().width ?? BUTTON_WIDTH) + 'px',
+      'height': (this.button().height ?? BUTTON_HEIGHT) + 'px',
       'color': this.button().color ?? ColorIonic.Primary
     };
   });
@@ -77,7 +76,7 @@ export class ButtonWidgetComponent {
     if (this.url()) {
       switch (this.button().buttonAction) {
         case ButtonAction.Download:
-          await downloadToBrowser(this.env.app.imgixBaseUrl + this.url());
+          await downloadToBrowser(this.env.services.imgixBaseUrl + this.url());
           break;
         case ButtonAction.Navigate:
           await navigateByUrl(this.router, this.url());

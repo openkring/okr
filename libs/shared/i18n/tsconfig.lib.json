@@ -13,5 +13,5 @@
     "jest.config.ts",
     "src/**/*.test.ts"
   ],
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "../util/src/lib/alert.util.ts", "../util/src/lib/phone.util.ts"]
 }

@@ -1,10 +1,11 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 
 import { debugListLoaded } from '@bk2/shared/util';
-import { AppStore } from '@bk2/auth/feature';
-import { of } from 'rxjs';
+import { AppStore } from '@bk2/shared/feature';
+
 import { CommentService } from '@bk2/comment/data-access';
 
 export type CommentListState = {
@@ -42,8 +43,7 @@ export const CommentListStore = signalStore(
     return {
       comments: computed(() => state.commentsResource.value()),
       currentUser: computed(() => state.appStore.currentUser()),
-      toastLength: computed(() => state.appStore.toastLength()),
-      tenantId: computed(() => state.appStore.env.owner.tenantId),
+      tenantId: computed(() => state.appStore.env.tenantId),
       isLoading: computed(() => state.commentsResource.isLoading()),
     };
   }),

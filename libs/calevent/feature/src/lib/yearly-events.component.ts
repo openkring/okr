@@ -3,12 +3,12 @@ import { Router } from '@angular/router';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonList, IonPopover } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { error, TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared/i18n';
 import { LabelPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { AvatarDisplayComponent, EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { AllCategories, CalEventModel } from '@bk2/shared/models';
 import { addAllCategory, CalEventTypes } from '@bk2/shared/categories';
-import { hasRole, navigateByUrl } from '@bk2/shared/util';
+import { error, hasRole, navigateByUrl } from '@bk2/shared/util';
 import { RoleName } from '@bk2/shared/config';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';

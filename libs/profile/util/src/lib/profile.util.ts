@@ -1,6 +1,5 @@
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonModel, PersonSortCriteria, PrivacyUsage, UserModel } from '@bk2/shared/models';
 import { AhvFormat, die, formatAhv } from '@bk2/shared/util';
-import { DEFAULT_TOAST_LENGTH } from '@bk2/shared/config';
 import { PersonalDataFormModel } from './personal-data-form.model';
 import { SettingsFormModel } from './settings-form.model';
 import { PrivacyFormModel } from './privacy-form.model';
@@ -35,7 +34,6 @@ export function convertUserToSettingsForm(user?: UserModel): SettingsFormModel {
       userKey: user.bkey,
       useTouchId: user.useTouchId,
       useFaceId: user.useFaceId,
-      toastLength: user.toastLength,
       avatarUsage: user.avatarUsage,
       gravatarEmail: user.gravatarEmail,
       nameDisplay: user.nameDisplay,
@@ -72,7 +70,6 @@ export function convertSettingsFormToUser(vm: SettingsFormModel, user?: UserMode
   user.showHelpers = vm.showHelpers ?? true;
   user.useTouchId = vm.useTouchId ?? false;
   user.useFaceId = vm.useFaceId ?? false;
-  user.toastLength = vm.toastLength ?? DEFAULT_TOAST_LENGTH;
   user.avatarUsage = vm.avatarUsage ?? AvatarUsage.PhotoFirst;
   user.gravatarEmail = vm.gravatarEmail ?? '';
   user.nameDisplay = vm.nameDisplay ?? NameDisplay.FirstLast;
@@ -84,11 +81,11 @@ export function convertSettingsFormToUser(vm: SettingsFormModel, user?: UserMode
 }
 
 export function convertPrivacyFormToUser(vm: PrivacyFormModel, user: UserModel): UserModel {
-  user.usage_images = vm.usage_images ?? PrivacyUsage.None;
-  user.usage_dateOfBirth = vm.usage_dateOfBirth ?? PrivacyUsage.Registered;
-  user.usage_postalAddress = vm.usage_postalAddress ?? PrivacyUsage.Registered;
-  user.usage_email = vm.usage_email ?? PrivacyUsage.Registered;
-  user.usage_phone = vm.usage_phone ?? PrivacyUsage.Registered;
-  user.usage_name = vm.usage_name ?? PrivacyUsage.Registered;
+  user.usage_images = vm.usage_images ?? PrivacyUsage.Public;
+  user.usage_dateOfBirth = vm.usage_dateOfBirth ?? PrivacyUsage.Restricted;
+  user.usage_postalAddress = vm.usage_postalAddress ?? PrivacyUsage.Restricted;
+  user.usage_email = vm.usage_email ?? PrivacyUsage.Restricted;
+  user.usage_phone = vm.usage_phone ?? PrivacyUsage.Restricted;
+  user.usage_name = vm.usage_name ?? PrivacyUsage.Restricted;
   return user;
 }

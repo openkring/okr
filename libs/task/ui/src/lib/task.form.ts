@@ -1,12 +1,12 @@
-import { Component, computed, input, linkedSignal, model, output, signal } from '@angular/core';
+import { Component, computed, input, model, output, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { AvatarSelectComponent, CategoryComponent, ChipsComponent, DateInputComponent, ErrorNoteComponent, StringsComponent, TextInputComponent } from '@bk2/shared/ui';
+import { CategoryComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from '@bk2/shared/ui';
 import { UserModel } from '@bk2/shared/models';
-import { debugFormErrors, hasRole } from '@bk2/shared/util';
+import { debugFormErrors } from '@bk2/shared/util';
 import { Importances, Priorities, TaskStates } from '@bk2/shared/categories';
-import { LONG_NAME_LENGTH, LowercaseWordMask, RoleName } from '@bk2/shared/config';
+import { LONG_NAME_LENGTH } from '@bk2/shared/config';
 
 import { TaskFormModel, taskFormModelShape, taskFormValidations } from '@bk2/task/util';
 
@@ -14,9 +14,8 @@ import { TaskFormModel, taskFormModelShape, taskFormValidations } from '@bk2/tas
   selector: 'bk-task-form',
   imports: [
     vestForms,
-    ChipsComponent, DateInputComponent, CategoryComponent,
-    AvatarSelectComponent,
-    TextInputComponent, ChipsComponent, ErrorNoteComponent, StringsComponent,
+    DateInputComponent, CategoryComponent,
+    TextInputComponent, ErrorNoteComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
 ],
   template: `
@@ -58,24 +57,6 @@ import { TaskFormModel, taskFormModelShape, taskFormValidations } from '@bk2/tas
         </ion-grid>
       </ion-card-content>
     </ion-card>
- 
-    <!-- <bk-editor [(content)]="notes" [readOnly]="false" /> -->
-
-      <bk-avatar-select title="@task.field.author" [avatar]="author()" [readOnly]="true" />
-      <bk-avatar-select title="@task.field.assignee" [avatar]="assignee()" (selectClicked)="select()" />
-      <bk-avatar-select title="@task.field.scope" [avatar]="scope()" (selectClicked)="select()" />    
-
-      @if(hasRole('privileged')) {
-        <bk-strings (changed)="onChange('calendars', $event)"
-              [strings]="calendars()" 
-              [mask]="calendarMask" 
-              [maxLength]="20" 
-              title="@input.calendarName.label"
-              description="@input.calendarName.description"
-              addLabel="@input.calendarName.addLabel" />    
-
-        <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="taskTags()" (changed)="onChange('tags', $event)" />
-      }
   </form>
 `
 })
@@ -91,27 +72,17 @@ export class TaskFormComponent {
   protected readonly shape = taskFormModelShape;
 
   protected name = computed(() => this.vm().name);
-  protected author = computed(() => this.vm().author);
-  protected assignee = computed(() => this.vm().assignee);
   protected dueDate = computed(() => this.vm().dueDate);
   protected completionDate = computed(() => this.vm().completionDate);
   protected taskState = computed(() => this.vm().state);
   protected priority = computed(() => this.vm().priority);
   protected importance = computed(() => this.vm().importance);
-  protected notes = linkedSignal(() => this.vm().notes);
-  protected tags = computed(() => this.vm().tags);
-  protected scope = computed(() => this.vm().scope);
-  protected calendars = computed(() => this.vm().calendars);
-
   private readonly validationResult = computed(() => taskFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
-  protected authorKeyErrors = computed(() => this.validationResult().getErrors('authorKey'));
-  protected authorNameErrors = computed(() => this.validationResult().getErrors('authorName'));
-  protected assigneeKeyErrors = computed(() => this.validationResult().getErrors('assigneeKey'));
+
   protected taskStates = TaskStates;
   protected priorities = Priorities;
   protected importances = Importances;
-  protected calendarMask = LowercaseWordMask;
   protected nameLength = LONG_NAME_LENGTH;
 
   protected onValueChange(value: TaskFormModel): void {
@@ -124,13 +95,5 @@ export class TaskFormComponent {
     debugFormErrors('TaskForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
-  }
-
-  protected select(): void {
-    console.log('select clicked');
-  }
-
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
   }
 }

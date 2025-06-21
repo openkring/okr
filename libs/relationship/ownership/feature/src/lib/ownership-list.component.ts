@@ -2,11 +2,11 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonBackdrop, IonAvatar, IonImg, IonList, IonPopover } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { error, TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarPipe, CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { RoleName } from '@bk2/shared/config';
-import { getYearList, hasRole } from '@bk2/shared/util';
+import { error, getYearList, hasRole } from '@bk2/shared/util';
 import { OwnershipModel } from '@bk2/shared/models';
 import { addAllCategory, GenderTypes, ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
 

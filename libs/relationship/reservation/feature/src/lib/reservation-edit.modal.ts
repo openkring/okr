@@ -4,14 +4,14 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared/ui';
-import { ENV, RoleName } from '@bk2/shared/config';
+import { RoleName } from '@bk2/shared/config';
 import { hasRole } from '@bk2/shared/util';
 import { ModelType, ReservationCollection, ReservationModel, UserModel } from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared/feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
 import { ReservationFormComponent } from '@bk2/reservation/ui';
 import { convertFormToReservation, convertReservationToForm, getReserverName } from '@bk2/reservation/util';
-import { AppStore } from '@bk2/auth/feature';
 
 @Component({
   selector: 'bk-reservation-edit-modal',
@@ -40,7 +40,6 @@ import { AppStore } from '@bk2/auth/feature';
 })
 export class ReservationEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
   private readonly appStore = inject(AppStore);
 
   public reservation = input.required<ReservationModel>();
@@ -71,7 +70,7 @@ export class ReservationEditModalComponent {
   public reservationCollection = ReservationCollection;
 
   public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToReservation(this.reservation(), this.vm(), this.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToReservation(this.reservation(), this.vm(), this.appStore.tenantId()), 'confirm');
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

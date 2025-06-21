@@ -1,13 +1,11 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
+import { ToastController } from '@ionic/angular/standalone';
 
 import { FIRESTORE } from '@bk2/shared/config';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 import { LogInfo } from '@bk2/shared/models';
-
-import { warn } from '@bk2/shared/util';
-import { copyToClipboard, showToast } from '@bk2/shared/i18n';
-import { ToastController } from '@ionic/angular/standalone';
+import { copyToClipboard, showToast, warn } from '@bk2/shared/util';
 
 export type AocStorageState = {
   filePath: string;
@@ -82,7 +80,7 @@ export const AocStorageStore = signalStore(
       async copyPath(isFilePath: boolean) {
         const _path = isFilePath ? store.filePath() : store.dirPath();
         copyToClipboard(_path);
-        showToast(store.toastController, '@general.operation.copy.conf', store.appStore.env.settingsDefaults.toastLength);  
+        showToast(store.toastController, '@general.operation.copy.conf');  
       },
 
       clearPath(isFilePath: boolean): void {

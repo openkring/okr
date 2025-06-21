@@ -1,13 +1,14 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonInput, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
-import { EMAIL_LENGTH, ENV } from '@bk2/shared/config';
+import { EMAIL_LENGTH } from '@bk2/shared/config';
 import { getImgixUrlWithAutoParams, navigateByUrl } from '@bk2/shared/util';
 import { HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AuthService } from '@bk2/auth/data-access';
+import { AppStore } from '@bk2/shared/feature';
 
 @Component({
     selector: 'bk-password-reset-page',
@@ -21,13 +22,12 @@ import { AuthService } from '@bk2/auth/data-access';
       .title { text-align: center; font-size: 2rem; padding: 20px; }
       .logo { max-width: 150px; text-align: center; display: block; margin-left: auto; margin-right: auto; width: 50%; z-index: 10; padding: 20px; }
       .button-container { margin: 20px; }
-      .native-input { background-color: white; }
       @media (width <= 600px) {
-        .login-form { background-color: white; width: 100%; text-align: center; z-index: 5; }
+        .login-form { width: 100%; text-align: center; z-index: 5; }
         .login-container {  display: flex; height: 100%; padding: 10px; }
       }
       @media (width > 600px) {
-        .login-form { background-color: white; border-radius: 10px; max-width: 600px; width: 90%; text-align: center; z-index: 5; }
+        .login-form { border-radius: 10px; max-width: 600px; width: 90%; text-align: center; z-index: 5; }
         .login-container {  display: flex; align-items: center; justify-content: center; height: 100%; padding: 20px; margin: 20px; }
       }
     `,
@@ -35,9 +35,9 @@ import { AuthService } from '@bk2/auth/data-access';
       <bk-header title="{{'@auth.operation.pwdreset.title' | translate | async }}" />
       <ion-content>
         <div class="login-container">
-          <img class="background-image" [src]="backgroundImageUrl" alt="Background Image" />
+          <img class="background-image" [src]="backgroundImageUrl()" alt="Background Image" />
           <div class="login-form">
-            <ion-img class="logo" [src]="logoUrl" alt="logo" (click)="gotoHome()"></ion-img>
+            <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()"></ion-img>
             <ion-label class="title"><strong>{{ '@auth.operation.pwdreset.title' | translate | async }}</strong></ion-label>
             <ion-item lines="none">
               <ion-input name="email" [value]="email" (ionChange)="changeEmail($event)" 
@@ -76,10 +76,11 @@ import { AuthService } from '@bk2/auth/data-access';
 export class PasswordResetPageComponent {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
-  private readonly env = inject(ENV);
+  private readonly appStore = inject(AppStore);
 
-  public logoUrl = `${this.env.app.imgixBaseUrl}/${getImgixUrlWithAutoParams(this.env.app.logoUrl)}`;
-  public backgroundImageUrl = `${this.env.app.imgixBaseUrl}/${getImgixUrlWithAutoParams(this.env.app.welcomeBannerUrl)}`;
+  public logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
+  public backgroundImageUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`);
+
   public email: string | undefined;
   protected maxLength = EMAIL_LENGTH;
 
@@ -93,7 +94,7 @@ export class PasswordResetPageComponent {
   */
     public async resetPassword(): Promise<void> {
       if (this.email) {
-        await this.authService.resetPassword(this.email);
+        await this.authService.resetPassword(this.email, this.appStore.appConfig().loginUrl);
       }
     }
 
@@ -101,6 +102,6 @@ export class PasswordResetPageComponent {
    * Change to the Home page.
    */
   public async gotoHome(): Promise<void> {
-    await navigateByUrl(this.router, this.env.app.rootUrl);
+    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
   }
 }

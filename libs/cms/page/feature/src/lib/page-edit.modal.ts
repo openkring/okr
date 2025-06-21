@@ -4,12 +4,13 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { ModelType, PageModel, UserModel } from '@bk2/shared/models';
-import { convertFormToPage, convertPageToForm, PageFormModel } from '@bk2/cms/page/util';
-import { PageFormComponent } from '@bk2/cms/page/ui';
-import { ENV, RoleName } from '@bk2/shared/config';
+import { RoleName } from '@bk2/shared/config';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { hasRole } from '@bk2/shared/util';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
+
+import { convertFormToPage, convertPageToForm, PageFormModel } from '@bk2/cms/page/util';
+import { PageFormComponent } from '@bk2/cms/page/ui';
 
 @Component({
   selector: 'bk-page-edit-modal',
@@ -30,7 +31,6 @@ import { AppStore } from '@bk2/auth/feature';
 })
 export class PageEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
   private readonly appStore = inject(AppStore);
 
   public page = input.required<PageModel>();
@@ -41,7 +41,7 @@ export class PageEditModalComponent {
   protected formIsValid = signal(false);
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToPage(this.page(), this.vm() as PageFormModel, this.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToPage(this.page(), this.vm() as PageFormModel, this.appStore.tenantId()), 'confirm');
   }
 
   protected hasRole(role: RoleName): boolean {

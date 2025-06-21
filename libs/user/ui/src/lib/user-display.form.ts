@@ -5,7 +5,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared/categories";
 import { DeliveryType, UserModel } from "@bk2/shared/models";
-import { CategoryComponent, CheckboxComponent, NumberInputComponent } from "@bk2/shared/ui";
+import { CategoryComponent, CheckboxComponent } from "@bk2/shared/ui";
 import { TranslatePipe } from "@bk2/shared/i18n";
 
 import { UserDisplayFormModel, userDisplayFormModelShape, userDisplayFormValidations } from "@bk2/user/util";
@@ -16,7 +16,7 @@ import { debugFormErrors } from "@bk2/shared/util";
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
-    CategoryComponent, NumberInputComponent, CheckboxComponent,
+    CategoryComponent, CheckboxComponent,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonCardSubtitle, IonGrid, IonRow, IonCol
   ],
   viewProviders: [vestFormsViewProviders],
@@ -43,9 +43,6 @@ import { debugFormErrors } from "@bk2/shared/util";
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
                 <bk-cat name="userLanguage" [value]="userLanguage()" [categories]="languages" (changed)="onChange('userLanguage', $event)" [readOnly]="false" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-number-input name="toastLength" [value]="toastLength()" (changed)="onChange('toastLength', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
                 <bk-cat name="nameDisplay" [value]="nameDisplay()" [categories]="nameDisplays" (changed)="onChange('nameDisplay', $event)" [readOnly]="false" />
@@ -76,7 +73,6 @@ export class UserDisplayFormComponent {
   protected avatarUsage = computed(() => this.vm().avatarUsage);
   protected personSortCriteria = computed(() => this.vm().personSortCriteria);
   protected userLanguage = computed(() => this.vm().userLanguage);
-  protected toastLength = computed(() => this.vm().toastLength);
   protected nameDisplay = computed(() => this.vm().nameDisplay);
   protected useDisplayName = computed(() => this.vm().useDisplayName);
   protected showArchivedData = computed(() => this.vm().showArchivedData);

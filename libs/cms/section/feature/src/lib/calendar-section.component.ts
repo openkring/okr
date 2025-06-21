@@ -65,7 +65,7 @@ export class CalendarSectionComponent implements OnInit {
     effect(() => {
       this.calendarStore.setCalendarName(this.section()?.name);
       const _calName = this.section()?.name ?? 'undefined';
-      debugMessage(`CalendarSection(): calendarName=${_calName}`);
+      debugMessage(`CalendarSection(): calendarName=${_calName}`, this.calendarStore.currentUser());
     });
     effect(() => {
       debugData<EventInput[]>('CalendarSection(): events: ', this.filteredEvents());
@@ -88,7 +88,7 @@ export class CalendarSectionComponent implements OnInit {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async onEventClick(arg: any) {
-    debugMessage('CalendarSection.onEventClick: event selected');
+    debugMessage('CalendarSection.onEventClick: event selected', this.calendarStore.currentUser());
     debugData<string>('event: ', arg);
     debugData<string>('title: ', arg.event.title);
     debugData<string>('start: ', arg.event.startStr);

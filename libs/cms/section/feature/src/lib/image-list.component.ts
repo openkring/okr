@@ -5,8 +5,8 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 import { Image, ImageAction, SectionProperties } from '@bk2/shared/models';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { ImageComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { arrayMove } from '@bk2/shared/util';
-import { deleteFileFromStorage, TranslatePipe } from '@bk2/shared/i18n';
+import { arrayMove, deleteFileFromStorage } from '@bk2/shared/util';
+import { TranslatePipe } from '@bk2/shared/i18n';
 import { SectionFormModel } from '@bk2/cms/section/util';
 import { SectionModalsService } from './section-modals.service';
 import { DocumentModalsService } from '@bk2/document/feature';

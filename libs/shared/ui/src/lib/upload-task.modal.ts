@@ -3,9 +3,9 @@ import { AsyncPipe, DecimalPipe } from '@angular/common';
 import { IonCol, IonContent, IonGrid, IonLabel, IonProgressBar, IonRow, ModalController } from '@ionic/angular/standalone';
 import { UploadTask, UploadTaskSnapshot, getDownloadURL } from 'firebase/storage';
 
-import { error, TranslatePipe} from '@bk2/shared/i18n';
+import { TranslatePipe} from '@bk2/shared/i18n';
 import { uploadToFirebaseStorage } from '@bk2/shared/config';
-import { die } from '@bk2/shared/util';
+import { die, error } from '@bk2/shared/util';
 import { HeaderComponent } from './header.component';
 
 @Component({

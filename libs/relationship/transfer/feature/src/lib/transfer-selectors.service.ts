@@ -1,11 +1,9 @@
 import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { PersonSelectModalComponent, ResourceSelectModalComponent } from "@bk2/shared/feature";
+import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from "@bk2/shared/feature";
 import { PersonModel, ResourceModel } from "@bk2/shared/models";
 import { isPerson, isResource } from "@bk2/shared/util";
-
-import { AppStore } from "@bk2/auth/feature";
 
 @Injectable({
     providedIn: 'root'

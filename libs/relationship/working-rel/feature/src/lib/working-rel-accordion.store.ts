@@ -4,14 +4,15 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { Observable, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
 import { WorkingRelModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/auth/feature';
-import { debugListLoaded, isValidAt } from '@bk2/shared/util';
+import { AppStore } from '@bk2/shared/feature';
+import { confirm, debugListLoaded, isValidAt } from '@bk2/shared/util';
+
 import { AvatarService } from '@bk2/avatar/data-access';
-import { confirm } from '@bk2/shared/i18n';
 import { WorkingRelService } from '@bk2/working-rel/data-access';
 import { WorkingRelModalsService } from './working-rel-modals.service';
+import { WorkingRelEditModalComponent } from './working-rel-edit.modal';
+import { isWorkingRel } from '@bk2/working-rel/util';
 
 export type WorkingRelAccordionState = {
   personKey: string | undefined;
@@ -35,7 +36,6 @@ export const WorkingRelAccordionStore = signalStore(
     workingRelModalsService: inject(WorkingRelModalsService),
     avatarService: inject(AvatarService),
     appStore: inject(AppStore),
-    env: inject(ENV),
     modalController: inject(ModalController),
     alertController: inject(AlertController)
   })),
@@ -100,9 +100,30 @@ export const WorkingRelAccordionStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
+      /**
+       * Show a modal to edit an existing workingRel.
+       * @param workingRel the workingRel to edit
+       */
       async edit(workingRel?: WorkingRelModel): Promise<void> {
-        await store.workingRelModalsService.edit(workingRel);
-        store.workingRelsResource.reload();
+        let _workingRel = workingRel;
+        _workingRel ??= new WorkingRelModel(store.appStore.tenantId());
+        
+        const _modal = await store.modalController.create({
+          component: WorkingRelEditModalComponent,
+          componentProps: {
+            workingRel: _workingRel,
+            currentUser: store.appStore.currentUser(),
+          }
+        });
+        _modal.present();
+        await _modal.onWillDismiss();
+        const { data, role } = await _modal.onDidDismiss();
+        if (role === 'confirm') {
+          if (isWorkingRel(data, store.appStore.tenantId())) {
+            await (!data.bkey ? store.workingRelService.create(data, store.appStore.tenantId(), store.appStore.currentUser()) : store.workingRelService.update(data));
+            store.workingRelsResource.reload();
+          }
+        }  
       },
 
       async end(workingRel?: WorkingRelModel): Promise<void> {

@@ -9,6 +9,8 @@ import { HorizontalPosition } from './enums/horizontal-position.enum';
 import { ButtonAction } from './enums/button-action.enum';
 import { CalendarOptions } from '@fullcalendar/core';
 import { AvatarInfo } from './avatar-info';
+import { ImageAction } from './enums/image-action.enum';
+import { ImageType } from './enums/image-type.enum';
 
 export type Slot = 'start' | 'end' | 'icon-only' | 'none';
 
@@ -236,3 +238,61 @@ export class SectionModel implements BkModel, NamedModel, SearchableModel, Tagge
 }
 
 export const SectionCollection = 'sections3';
+
+// -----------------------------------------------------
+
+export function newImage(title = '', url = '', actionUrl = '', altText = '', defaultImageConfig = newDefaultImageConfig()): Image {
+  return {
+    imageLabel: title,
+    imageType: ImageType.Image,
+    url: url,
+    actionUrl: actionUrl,
+    altText: altText,
+    imageOverlay: '',  
+    fill: true,
+    hasPriority: false,
+    imgIxParams: defaultImageConfig.imgIxParams,
+    width: defaultImageConfig.width,
+    height: defaultImageConfig.height,
+    sizes: defaultImageConfig.sizes,
+    borderRadius: defaultImageConfig.borderRadius,
+    imageAction: defaultImageConfig.imageAction,
+    zoomFactor: defaultImageConfig.zoomFactor,
+    isThumbnail: defaultImageConfig.isThumbnail,
+    slot: defaultImageConfig.slot
+  }
+}
+
+export function newDefaultImageConfig(): DefaultImageConfig {
+  return {
+    imgIxParams: '',
+    width: 160,
+    height: 90,
+    sizes: '(max-width: 786px) 50vw, 100vw',
+    borderRadius: 4,
+    imageAction: ImageAction.None,
+    zoomFactor: 2,
+    isThumbnail: false,
+    slot: 'none'
+  }
+}
+
+export function newButton(width = '60px', height = '60px'): Button {
+  return {
+      label: '',
+      shape: 'round',
+      fill: 'clear',
+      width: width,
+      height: height,
+      color: ColorIonic.Primary,
+      buttonAction: ButtonAction.None
+  };
+}
+
+export function newIcon(): Icon {
+  return {
+      name: 'pdf',
+      size: '40px',
+      slot: 'start'
+  };
+}

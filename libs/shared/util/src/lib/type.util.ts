@@ -1,7 +1,6 @@
 import { BaseProperty, BaseType, BkModel, MembershipModel, MetaTag, ModelType, OrgModel, PersistedModel, PersonalRelModel, PersonModel, ResourceModel, RoleEnum } from '@bk2/shared/models';
 import { die, warn } from './log.util';
 
-
 /************************************************* Tupel ********************************************************** */
 /**
  * Takes a string that consists of two parts (i.e. a tupel) that are combined with a separator (e.g. . or @) and returns a tuple with the two parts.

@@ -2,14 +2,14 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { Router } from '@angular/router';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { AppNavigationService, chipMatches, getSystemQuery, isResource, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AllCategories, GenderType, ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared/feature';
+
 import { ResourceService } from '@bk2/resource/data-access';
-import { AppStore } from '@bk2/auth/feature';
-import { Router } from '@angular/router';
 import { ResourceEditModalComponent } from './resource-edit.modal';
 
 export type ResourceListState = {
@@ -34,15 +34,13 @@ export const ResourceListStore = signalStore(
     resourceService: inject(ResourceService),
     appNavigationService: inject(AppNavigationService),
     router: inject(Router),
-    firestore: inject(FIRESTORE),
     appStore: inject(AppStore),
-    env: inject(ENV),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     resourceResource: rxResource({
       loader: () => {
-        return searchData<ResourceModel>(store.firestore, ResourceCollection, getSystemQuery(store.env.owner.tenantId), 'name', 'asc');
+        return searchData<ResourceModel>(store.appStore.firestore, ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
       }
     })
   })),
@@ -61,7 +59,7 @@ export const ResourceListStore = signalStore(
       lockers: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === ResourceType.Locker) ?? []),
       keys: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === ResourceType.Key) ?? []),
       currentUser: computed(() => state.appStore.currentUser()),
-      tenantId: computed(() => state.env.owner.tenantId),
+      tenantId: computed(() => state.appStore.tenantId()),
       isLoading: computed(() => state.resourceResource.isLoading()),
     };
   }),

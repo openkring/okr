@@ -2,13 +2,13 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonItemSliding, IonList, IonTextarea, IonAvatar, IonImg, IonChip } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { error, TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarPipe, CategoryAbbreviationPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared/ui';
 import { TaskModel } from '@bk2/shared/models';
 import { addAllCategory, Importances, Priorities, TaskStates } from '@bk2/shared/categories';
 import { RoleName } from '@bk2/shared/config';
-import { extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared/util';
+import { error, extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared/util';
 
 import { TaskListStore } from './task-list.store';
 

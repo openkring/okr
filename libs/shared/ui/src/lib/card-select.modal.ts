@@ -3,9 +3,10 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonImg, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
 import { CategoryModel } from '@bk2/shared/models';
+
 import { HeaderComponent } from './header.component';
+import { ENV } from '@bk2/shared/config';
 
 @Component({
   selector: 'bk-card-select-modal',
@@ -44,13 +45,12 @@ import { HeaderComponent } from './header.component';
   `,
 })
 export class CardSelectModalComponent {
+  private readonly env = inject(ENV);
   private readonly modalController = inject(ModalController);
-  protected env = inject(ENV);
-
 
   public categories = input.required<CategoryModel[]>();
   public slug = input.required<string>();
-  protected path = computed(() => `${this.env.app.imgixBaseUrl}/logo/${this.slug()}/`);
+  protected path = computed(() => `${this.env.services.imgixBaseUrl}/logo/${this.slug()}/`);
   
   public async select(index: number): Promise<boolean> {
     return await this.modalController.dismiss(index, 'confirm');

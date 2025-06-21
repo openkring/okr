@@ -3,15 +3,15 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { catchError, finalize, of } from 'rxjs';
+import { Router } from '@angular/router';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { AppNavigationService, chipMatches, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
 import { GroupCollection, GroupModel, ModelType } from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared/feature';
+
 import { GroupService } from '@bk2/group/data-access';
-import { AppStore } from '@bk2/auth/feature';
-import { Router } from '@angular/router';
-import { GroupNewModalComponent } from './group-new.modal';
 import { convertFormToNewGroup, GroupNewFormModel } from '@bk2/group/util';
+import { GroupNewModalComponent } from './group-new.modal';
 
 export type GroupListState = {
   searchTerm: string;
@@ -27,10 +27,8 @@ export const GroupListStore = signalStore(
   withProps(() => ({
     groupService: inject(GroupService),
     appNavigationService: inject(AppNavigationService),
-    firestore: inject(FIRESTORE),
     router: inject(Router),
     appStore: inject(AppStore),
-    env: inject(ENV),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
@@ -39,7 +37,7 @@ export const GroupListStore = signalStore(
     groupsResource: rxResource({
       loader: () => {
         console.log('GroupListStore: loading groups');
-        return searchData<GroupModel>(store.firestore, GroupCollection, getSystemQuery(store.env.owner.tenantId), 'id', 'asc')
+        return searchData<GroupModel>(store.appStore.firestore, GroupCollection, getSystemQuery(store.appStore.tenantId()), 'id', 'asc')
         .pipe(
           finalize(() => {
             console.log('GroupListStore: groups loaded');
@@ -77,8 +75,7 @@ export const GroupListStore = signalStore(
       ) ?? []
     ),
     currentUser: computed(() => state.appStore.currentUser()),
-    toastLength: computed(() => state.appStore.toastLength()),
-    tenantId: computed(() => state.env.owner.tenantId),
+    tenantId: computed(() => state.appStore.tenantId()),
   })),
   withMethods((store) => ({
     reset() {
@@ -98,7 +95,6 @@ export const GroupListStore = signalStore(
       console.log('  filteredGroups: ' + JSON.stringify(store.filteredGroups()));
       console.log('  currentUser: ' + JSON.stringify(store.currentUser()));
       console.log('  tenantId: ' + store.tenantId());
-      console.log('  toastLength: ' + store.toastLength());
       console.log('------------------------------------');
     },
     setSearchTerm(searchTerm: string) {
@@ -127,6 +123,7 @@ export const GroupListStore = signalStore(
         const _vm = data as GroupNewFormModel;
         const _key = ModelType.Group + '.' + await this.saveGroup(_vm);
         // tbd: save avatar image if provided
+        console.log(`GroupListStore.add: new group created with key ${_key}`);
       }
       store.groupsResource.reload();
     },

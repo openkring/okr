@@ -1,10 +1,9 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { ColorsIonic } from '@bk2/shared/categories';
-import { AvatarPipe, CategoryPlainNamePipe } from '@bk2/shared/pipes';
-import { AvatarInfo, ColorIonic } from '@bk2/shared/models';
-import { createFullName } from '@bk2/shared/util';
+import { CategoryPlainNamePipe } from '@bk2/shared/pipes';
+import { ColorIonic } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
 
 import { AsyncPipe } from '@angular/common';
@@ -12,7 +11,7 @@ import { AsyncPipe } from '@angular/common';
 @Component({
   selector: 'bk-avatar-select',
   imports: [
-    AvatarPipe, AsyncPipe, CategoryPlainNamePipe, TranslatePipe,
+    AsyncPipe, CategoryPlainNamePipe, TranslatePipe,
     IonItem, IonAvatar, IonImg, IonLabel, IonButton,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle
   ],
@@ -23,12 +22,11 @@ import { AsyncPipe } from '@angular/common';
     </ion-card-header>
     <ion-card-content>
       <ion-item lines="none" [color]="color() | categoryPlainName:colorsIonic">
-        @if(avatar()) {
-          <ion-avatar slot="start">
-            <ion-img src="{{ modelType() + '.' + key() | avatar | async }}" alt="Avatar icon" />
-          </ion-avatar>
-          <ion-label>{{name()}}</ion-label>
-        }
+        <ion-avatar slot="start">
+          <ion-img src="{{ avatarUrl() }}" alt="Avatar icon" />
+          <!-- <ion-img src="{{ modelType() + '.' + key() | avatar | async }}" alt="Avatar icon" /> -->
+        </ion-avatar>
+        <ion-label>{{name()}}</ion-label>
         @if(!readOnly()) {
           <ion-label>
             <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ selectLabel() | translate | async }}</ion-button>
@@ -40,18 +38,14 @@ import { AsyncPipe } from '@angular/common';
   `,
 })
 export class AvatarSelectComponent {
-
-  public avatar = input<AvatarInfo>();
+  public avatarUrl = input.required<string>();
+  public name = input.required<string>();
   public title = input('Avatar');
   public color = input<ColorIonic>(ColorIonic.White);
   public selectLabel = input('@general.operation.select.label');
   public readOnly = input(false);
 
   public selectClicked = output<void>();
-
-  modelType = computed(() => this.avatar()?.modelType);
-  key = computed(() => this.avatar()?.key);
-  name = computed(() => createFullName(this.avatar()?.name1 ?? '', this.avatar()?.name2 ?? ''));
 
   protected colorsIonic = ColorsIonic;
 }

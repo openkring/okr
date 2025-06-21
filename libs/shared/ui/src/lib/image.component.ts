@@ -1,12 +1,13 @@
-import { NgOptimizedImage, NgStyle, provideImgixLoader } from '@angular/common';
+import { IMAGE_LOADER, ImageLoaderConfig, NgOptimizedImage, NgStyle } from '@angular/common';
 import { Component, computed, ElementRef, inject, input, viewChild } from '@angular/core';
 import { IonThumbnail, ModalController } from '@ionic/angular/standalone';
 
 import { Image } from '@bk2/shared/models';
 import { ImgixUrlPipe } from '@bk2/shared/pipes';
-import { ENV } from '@bk2/shared/config';
+import { BkEnvironment, ENV } from '@bk2/shared/config';
 
 import { showZoomedImage } from './ui.util';
+import { die } from '@bk2/shared/util';
 
 /**
  * This image loading implementation is based on Angular's NgOptimizedImage together with Imgix CDN to provide optimized images.
@@ -64,7 +65,33 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
       IonThumbnail
     ],
     providers: [
-      provideImgixLoader('https://bkaiser.imgix.net')
+      {
+        provide: IMAGE_LOADER,
+        // factory function for the IMAGE_LOADER provider with ENV as a dependency
+        useFactory: (env: BkEnvironment) => {
+          const baseUrl = env.services.imgixBaseUrl;
+
+          if (!baseUrl) {
+            die('Imgix base URL is not defined in environment variables (env.services.imgixBaseUrl). Using fallback or error image.');
+          }
+
+          return (config: ImageLoaderConfig) => {
+            let url = `${baseUrl}/${config.src}`;
+            const params = new URLSearchParams('');
+            if (config.width) {
+              params.set('w', config.width.toString());
+            }
+            // add more imigx parameters here as needed
+            // e.g. params.set('auto', 'format,compress');
+            const paramsString = params.toString();
+            if (paramsString) {
+              url += `?${paramsString}`;
+            }
+            return url;
+          };
+        },
+        deps: [ENV] // declares ENV as a dependency for the factory function
+      }
     ],
     styles: [`
       ion-thumbnail { margin: auto; height: 100px; width: 100px; padding: 10px; text-align: right; position: relative;}
@@ -93,11 +120,11 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
   })
   export class ImageComponent {
     private readonly modalController = inject(ModalController);
-    private readonly env = inject(ENV);
+
     public image = input.required<Image>();
+
     protected imageContainer = viewChild('.image-container', { read: ElementRef });
     // we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
-    // protected baseImgixUrl = this.env.app.imgixBaseUrl;
 
     // by default, image is 100% of screen width on devices under 768px wide, and 50% on bigger screens
     // alternatively when excluding the menu: calc(100vw - 128px)

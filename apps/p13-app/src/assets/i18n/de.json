@@ -437,7 +437,7 @@
     "cellBackgroundColor": {
       "label": "Hintergrundfarbe",
       "placeholder": "Farbe",
-      "helper": "Die Hintergrundfarbe der Felder, z.B. #f0f0f0, grey etc."
+      "helper": "Die Hintergrundfarbe der Felder, z.B. #f0f0f0, grey etc. Empfehlung: verwende Referenzen auf die Ionic Themes, damit auch dark mode funktioniert, z.b. var(--ion-color-background)."
     },
     "cellTextAlign": {
       "label": "Textausrichtung",
@@ -646,7 +646,7 @@
     "gridBackgroundColor": {
       "label": "Hintergrundfarbe",
       "placeholder": "Farbe",
-      "helper": "Die Hintergrundfarbe der Tabelle, z.B. #f0f0f0, grey etc."
+      "helper": "Die Hintergrundfarbe der Tabelle, z.B. #f0f0f0, grey etc. Empfehlung: verwende Referenzen auf die Ionic Themes, damit auch dark mode funktioniert, z.b. var(--ion-color-step-200)."
     },
     "gridGap": {
       "label": "Gap",
@@ -666,7 +666,7 @@
     "headerBackgroundColor": {
       "label": "Hintergrundfarbe",
       "placeholder": "Farbe",
-      "helper": "Die Hintergrundfarbe des Headers, z.B. #f0f0f0, grey etc."
+      "helper": "Die Hintergrundfarbe des Headers, z.B. #f0f0f0, grey etc. Empfehlung: verwende Referenzen auf die Ionic Themes, damit auch dark mode funktioniert, z.b. var(--ion-color-step-150)."
     },
     "headerTextAlign": {
       "label": "Textausrichtung",
@@ -3863,7 +3863,6 @@
       "useTouchId": "TouchID benutzen",
       "useFaceId": "FaceID benutzen",
       "userLang": "Sprache",
-      "toastLength": "Anzeigedauer der Mitteilungen",
       "avatarUsage": "Avatar Benutzung",
       "nameDisplay": "Anzeigeart des Namens",
       "gravatarEmail": "Gravatar E-Mail",

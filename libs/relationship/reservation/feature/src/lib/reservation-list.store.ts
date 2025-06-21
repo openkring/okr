@@ -3,13 +3,11 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, nameMatches, searchData } from '@bk2/shared/util';
 import { AllCategories, ModelType, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared/models';
 import { categoryMatches, yearMatches } from '@bk2/shared/categories';
 import { selectDate } from '@bk2/shared/ui';
-
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 
 import { ReservationService } from '@bk2/reservation/data-access';
 import { ReservationModalsService } from './reservation-modals.service';
@@ -36,8 +34,6 @@ export const ReservationListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
-    env: inject(ENV),
-    firestore: inject(FIRESTORE),
     modalController: inject(ModalController),
     reservationService: inject(ReservationService),
     reservationModalsService: inject(ReservationModalsService),
@@ -55,7 +51,7 @@ export const ReservationListStore = signalStore(
         resourceId: store.resourceId()
       }),  
       loader: ({request}) => {
-        const allResources$ = searchData<ResourceModel>(store.firestore, ResourceCollection, getSystemQuery(store.env.owner.tenantId), 'name', 'asc');
+        const allResources$ = searchData<ResourceModel>(store.appStore.firestore, ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
         const currentResource$ = findByKey<ResourceModel>(allResources$, request.resourceId); 
         debugItemLoaded('ReservationListStore.resource', currentResource$, store.appStore.currentUser()); 
         return currentResource$;

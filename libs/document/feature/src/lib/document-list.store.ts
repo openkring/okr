@@ -3,13 +3,12 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { FIRESTORE } from '@bk2/shared/config';
 import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util';
 import { AllCategories, DocumentCollection, DocumentModel, ModelType } from '@bk2/shared/models';
-
-import { AppStore } from '@bk2/auth/feature';
-import { DocumentModalsService } from './document-modals.service';
 import { categoryMatches } from '@bk2/shared/categories';
+import { AppStore } from '@bk2/shared/feature';
+
+import { DocumentModalsService } from './document-modals.service';
 
 export type DocumentListState = {
   searchTerm: string;
@@ -28,13 +27,12 @@ export const DocumentListStore = signalStore(
   withProps(() => ({
     documentModalsService: inject(DocumentModalsService),
     appStore: inject(AppStore),
-    firestore: inject(FIRESTORE),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     documentsResource: rxResource({
       loader: () => {
-        const documents$ = searchData<DocumentModel>(store.firestore, DocumentCollection, getSystemQuery(store.appStore.tenantId()), 'fullPath', 'asc');
+        const documents$ = searchData<DocumentModel>(store.appStore.firestore, DocumentCollection, getSystemQuery(store.appStore.tenantId()), 'fullPath', 'asc');
         debugListLoaded<DocumentModel>('DocumentListStore.tasks', documents$, store.appStore.currentUser());
         return documents$;
       }

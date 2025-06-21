@@ -2,15 +2,14 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { Observable, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
+import { ModelType, ResourceModel} from '@bk2/shared/models';
 
 import { ResourceService } from '@bk2/resource/data-access';
-import { ModelType, ResourceModel} from '@bk2/shared/models';
 import { convertFormToResource, ResourceFormModel } from '@bk2/resource/util';
-import { Observable, of } from 'rxjs';
 
 /**
  * the resourceEditPage is setting the resourceKey, the store needs to read the corresponding resource 
@@ -29,7 +28,6 @@ export const ResourceEditStore = signalStore(
     resourceService: inject(ResourceService),
     appNavigationService: inject(AppNavigationService),
     appStore: inject(AppStore),
-    env: inject(ENV),
     modalController: inject(ModalController),    
   })),
 
@@ -73,7 +71,7 @@ export const ResourceEditStore = signalStore(
       /************************************ ACTIONS ************************************* */
 
       async save(vm: ResourceFormModel): Promise<void> {
-        const _resource = convertFormToResource(store.resource(), vm, store.env.owner.tenantId);
+        const _resource = convertFormToResource(store.resource(), vm, store.appStore.tenantId());
         await (!_resource.bkey ? store.resourceService.create(_resource) : store.resourceService.update(_resource));
         store.appNavigationService.back();
       }

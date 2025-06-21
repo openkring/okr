@@ -6,8 +6,9 @@ import { collection, deleteDoc, doc, Firestore, setDoc, updateDoc } from 'fireba
 import { ActionType, BkModel } from '@bk2/shared/models';
 import { die, warn } from './log.util';
 import { removeKeyFromBkModel, removeUndefinedFields } from './type.util';
-import { bkTranslate, confirmAction } from '@bk2/shared/i18n';
 import { sortAscending, SortCriteria, sortDescending, SortDirection } from './sort.util';
+import { bkTranslate } from '@bk2/shared/i18n';
+import { confirmAction } from './alert.util';
 
 /*----------------------- CRUD ----------------------------------------------*/
 
@@ -75,7 +76,7 @@ export async function createModel(firestore: Firestore, collectionName: string, 
  * 
  * Note: This function uses `setDoc` and `doc` methods from Firestore SDK.
  */
-export async function createObject(firestore: Firestore, collectionName: string, object: object, key: string | undefined, i18nPrefix?: string, toastController?: ToastController): Promise<string> {
+export async function createObject<T>(firestore: Firestore, collectionName: string, object: T, key: string | undefined, i18nPrefix?: string, toastController?: ToastController): Promise<string> {
   if (collectionName?.length === 0) die('BaseModelUtil.createObject: collectionName is mandatory.');
   if (!object) die('BaseModelUtil.createObject: object is mandatory.');
   try {
@@ -126,7 +127,7 @@ export function enforceReadModel<T>(firestore: Firestore, collectionName: string
  * @param collectionName the name of the Firestore collection (this can be a path)
  * @param key the key of the document in the database
  */
-export function readObject<T>(firestore: Firestore, collectionName: string, key: string): Observable<T> {
+export function readObject<T>(firestore: Firestore, collectionName: string, key: string | undefined): Observable<T> {
   if (!collectionName) die('BaseModelUtil.readObject: collectionName is mandatory');
   if (!key) die('BaseModelUtil.readObject: key is mandatory');
   try {
@@ -192,7 +193,7 @@ export async function updateModel(firestore: Firestore, collectionName: string, 
  * @param toastController the toast controller to show the confirmation toast
  * @returns a Promise of the key of the updated object
  */
-export async function updateObject(firestore: Firestore, collectionName: string, key: string, object: unknown, i18nPrefix?: string, toastController?: ToastController): Promise<string> {
+export async function updateObject<T>(firestore: Firestore, collectionName: string, key: string, object: T, i18nPrefix?: string, toastController?: ToastController): Promise<string> {
   if (collectionName?.length === 0) die('BaseModelUtil.updateObject: collectionName is mandatory.');
   if (key?.length === 0) die('BaseModelUtil.updateObject: key is mandatory.');
   if (!object) die('BaseModelUtil.updateObject: object is mandatory.');

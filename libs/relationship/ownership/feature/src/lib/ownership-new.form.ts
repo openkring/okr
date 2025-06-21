@@ -3,12 +3,11 @@ import { IonAvatar, IonButton, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRo
 import { vestForms } from 'ngx-vest-forms';
 import { AsyncPipe } from '@angular/common';
 
-import { ENV } from '@bk2/shared/config';
 import { DateInputComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ModelType, UserModel } from '@bk2/shared/models';
 import { debugFormErrors, getAvatarKey, getFullPersonName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared/util';
-import { OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared/feature';
+import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared/feature';
 import { AvatarPipe } from '@bk2/shared/pipes';
 
 import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, ownershipNewFormValidations } from '@bk2/ownership/util';
@@ -74,7 +73,7 @@ import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, 
         </ion-row>
         <ion-row>
           <ion-col size="12"> 
-            <bk-date-input name="validFrom" [storeDate]="validFrom()" [showHelper]=true (changed)="onChange('validFrom', $event)" />
+            <bk-date-input name="validFrom" [storeDate]="validFrom()" [locale]="locale()" [showHelper]=true (changed)="onChange('validFrom', $event)" />
           </ion-col>      
         </ion-row>
       </ion-grid>
@@ -83,7 +82,7 @@ import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, 
 })
 export class OwnershipNewFormComponent {
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
+  private readonly appStore = inject(AppStore);
 
   public vm = model.required<OwnershipNewFormModel>();
   public currentUser = input<UserModel | undefined>();
@@ -96,6 +95,7 @@ export class OwnershipNewFormComponent {
   protected resourceModelType = computed(() => this.vm().resourceModelType ?? '');
   protected resourceName = computed(() => this.vm().resourceName ?? '');
   protected validFrom = computed(() => this.vm().validFrom ?? getTodayStr());
+  protected locale = computed(() => this.appStore.appConfig().locale);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(true);
@@ -138,7 +138,7 @@ export class OwnershipNewFormComponent {
     _modal.present();
     const { data, role } = await _modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isPerson(data, this.env.owner.tenantId)) {
+      if (isPerson(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
           ..._vm, 
           ownerKey: data.bkey, 
@@ -166,7 +166,7 @@ export class OwnershipNewFormComponent {
     _modal.present();
     const { data, role } = await _modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isOrg(data, this.env.owner.tenantId)) {
+      if (isOrg(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
           ..._vm, 
           ownerKey: data.bkey,
@@ -194,7 +194,7 @@ export class OwnershipNewFormComponent {
     _modal.present();
     const { data, role } = await _modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isResource(data, this.env.owner.tenantId)) {
+      if (isResource(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
           ..._vm, 
           resourceKey: data.bkey, 
@@ -217,6 +217,6 @@ export class OwnershipNewFormComponent {
     if (_ownership.resourceModelType !== undefined && _ownership.resourceKey) {
       return getAvatarKey(_ownership.resourceModelType, _ownership.resourceKey, _ownership.resourceType, _ownership.resourceSubType);
     }
-    return ModelType.Resource + '.' + this.env.settingsDefaults.defaultResource; // default avatar
+    return ModelType.Resource + '.' + this.appStore.defaultResource()?.bkey; // default avatar
   }
 }

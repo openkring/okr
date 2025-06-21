@@ -7,6 +7,7 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared/util';
 import { ChAnyDate, DATE_LENGTH, InputMode } from '@bk2/shared/config';
+
 import { DateSelectModalComponent } from './date-select.modal';
 import { ViewDateInputComponent } from './viewdate-input.component';
 
@@ -44,12 +45,7 @@ export class DateInputComponent {
   // for the DateSelection component, we need to convert into isoDate format.
   // for the ion-input field, we need to convert into viewDate format (using the view-date-input component).
   // optional date in StoreDate format (yyyyMMdd); default is today
-  public storeDate = model(getTodayStr(DateFormat.StoreDate)); 
-  protected viewDate = computed(() => convertDateFormatToString(this.storeDate(), DateFormat.StoreDate, DateFormat.ViewDate, false));
-  // the date in the calendar must be in ISO format (used as input into datetime picker), it may not be empty, instead default is today
-  protected isoDate = computed(() => convertDateFormatToString(this.storeDate(), DateFormat.StoreDate, DateFormat.IsoDate, false));
-  public changed = output<string>(); // output event when the value changes
-
+  public storeDate = model(getTodayStr(DateFormat.StoreDate));
   public name = input.required<string>(); // mandatory name of the input field
   public readOnly = input(false); // if true, the input field is read-only
   public clearInput = input(true); // show an icon to clear the input field
@@ -59,6 +55,12 @@ export class DateInputComponent {
   public mask = input<MaskitoOptions>(ChAnyDate);
   public showHelper = input(false);
   public showDateSelect = input(true);
+  public locale = input('de-ch'); // mandatory locale for the input field, used for formatting
+
+  protected viewDate = computed(() => convertDateFormatToString(this.storeDate(), DateFormat.StoreDate, DateFormat.ViewDate, false));
+  // the date in the calendar must be in ISO format (used as input into datetime picker), it may not be empty, instead default is today
+  protected isoDate = computed(() => convertDateFormatToString(this.storeDate(), DateFormat.StoreDate, DateFormat.IsoDate, false));
+  public changed = output<string>(); // output event when the value changes
 
   protected async selectDate(): Promise<void> {
     if (this.readOnly() === true) return;
@@ -66,7 +68,8 @@ export class DateInputComponent {
       component: DateSelectModalComponent,
       cssClass: 'date-modal',
       componentProps: {
-        isoDate: this.isoDate()
+        isoDate: this.isoDate(),
+        locale: this.locale(),
       }
     });
     _modal.present();

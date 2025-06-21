@@ -1,17 +1,18 @@
 import { Component, computed, inject, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonIcon, IonItem, IonLabel, IonRow, ToastController } from '@ionic/angular/standalone';
 
-import { Image, ImageAction, SectionProperties } from '@bk2/shared/models';
+import { Image, ImageAction, newImage, SectionProperties } from '@bk2/shared/models';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { ImageComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { ViewPositions } from '@bk2/shared/categories';
-import { deleteFileFromStorage, TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared/i18n';
 
 import { AsyncPipe } from '@angular/common';
 
-import { newImage, SectionFormModel } from '@bk2/cms/section/util';
+import { SectionFormModel } from '@bk2/cms/section/util';
 import { SectionModalsService } from './section-modals.service';
 import { DocumentModalsService } from '@bk2/document/feature';
+import { deleteFileFromStorage } from '@bk2/shared/util';
 
 /**
  * Pick one single image from the local file system or from the camera.

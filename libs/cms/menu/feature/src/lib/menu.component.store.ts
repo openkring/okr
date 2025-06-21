@@ -2,6 +2,8 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { MenuService } from '@bk2/cms/menu/data-access';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { AppStore } from '@bk2/shared/feature';
+import { debugMessage } from '@bk2/shared/util';
 
 export type MenuState = {
   name: string;
@@ -15,13 +17,16 @@ export const MenuStore = signalStore(
   withState(initialState),
   withProps(() => ({
     menuService: inject(MenuService),
+    appStore: inject(AppStore),
   })),
   withProps((store) => ({
     menuResource: rxResource({
       request: () => ({
-        name: store.name()
+        name: store.name(),
+        user: store.appStore.currentUser()
       }),
       loader: ({request}) => {
+        debugMessage(`MenuStore: loading menu with name:${request.name}`, request.user);
         return store.menuService.read(request.name);
       }
     })

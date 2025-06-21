@@ -25,7 +25,7 @@ import { SectionComponent } from './section.component';
                 <ion-label>{{sectionDesc.label | translate | async}}</ion-label>
               </ion-item>
               <div slot="content">
-                <bk-section [sectionKey]="sectionDesc.key" [readOnly]="readOnly()"/>
+                <bk-section [id]="sectionDesc.key" [readOnly]="readOnly()"/>
               </div>
             </ion-accordion>
           }

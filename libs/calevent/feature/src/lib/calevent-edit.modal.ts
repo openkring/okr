@@ -1,15 +1,16 @@
-import { Component, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { CalEventModel, UserModel } from '@bk2/shared/models';
-import { convertCalEventToForm, convertFormToCalEvent } from '@bk2/calevent/util';
-import { ENV, RoleName } from '@bk2/shared/config';
-import { CalEventFormComponent } from '@bk2/calevent/ui';
-import { AppStore } from '@bk2/auth/feature';
+import { RoleName } from '@bk2/shared/config';
 import { hasRole } from '@bk2/shared/util';
+import { AppStore } from '@bk2/shared/feature';
+
+import { convertCalEventToForm, convertFormToCalEvent } from '@bk2/calevent/util';
+import { CalEventFormComponent } from '@bk2/calevent/ui';
 
 @Component({
   selector: 'bk-calevent-edit-modal',
@@ -25,24 +26,30 @@ import { hasRole } from '@bk2/shared/util';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-calevent-form [(vm)]="vm" [isPrivileged]="hasRole('privileged')" [currentUser]="currentUser()" [calEventTags]="calEventTags()" [isAdmin]="hasRole('admin')" (validChange)="formIsValid.set($event)" />
+      <bk-calevent-form [(vm)]="vm" 
+        [isPrivileged]="hasRole('privileged')" 
+        [currentUser]="currentUser()"
+        [locale]="locale()"
+        [calEventTags]="calEventTags()" 
+        [isAdmin]="hasRole('admin')" 
+        (validChange)="formIsValid.set($event)" />
     </ion-content>
   `
 })
 export class CalEventEditModalComponent {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
-  private readonly env = inject(ENV);
 
   public event = input.required<CalEventModel>();
   public currentUser = input.required<UserModel | undefined>();
   public calEventTags = input.required<string>();
 
   public vm = linkedSignal(() => convertCalEventToForm(this.event()));
+  protected locale = computed(() => this.appStore.appConfig().locale);
   protected formIsValid = signal(false);
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToCalEvent(this.event(), this.vm(), this.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToCalEvent(this.event(), this.vm(), this.appStore.tenantId()), 'confirm');
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

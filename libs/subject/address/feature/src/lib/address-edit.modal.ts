@@ -39,6 +39,6 @@ export class AddressEditModalComponent {
   protected formIsValid = signal(false);
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToAddress(this.address(), this.vm(), this.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToAddress(this.address(), this.vm(), this.env.tenantId), 'confirm');
   }
 }

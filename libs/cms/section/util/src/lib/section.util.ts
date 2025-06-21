@@ -1,11 +1,12 @@
 import { SectionTypes } from "@bk2/shared/categories";
-import { Avatar, SectionModel, Button, Icon, TableConfig, Table, Image, DefaultImageConfig, AlbumConfig, ColorIonic, SectionType, NameDisplay, ButtonAction, ImageType, AlbumStyle, GalleryEffect, ImageAction, ViewPosition, ContentConfig } from "@bk2/shared/models";
-import { convertRoleEnumToName, convertRoleNameToEnum } from "@bk2/cms/menu/util";
+import { Avatar, SectionModel, TableConfig, Table, AlbumConfig, ColorIonic, SectionType, NameDisplay, AlbumStyle, GalleryEffect, ViewPosition, ContentConfig, newDefaultImageConfig, newImage, newButton, newIcon } from "@bk2/shared/models";
 import { RoleName } from "@bk2/shared/config";
-
-import { SectionFormModel } from "./section-form.model";
 import { bkTranslate } from "@bk2/shared/i18n";
 import { isType } from "@bk2/shared/util";
+
+import { convertRoleEnumToName, convertRoleNameToEnum } from "@bk2/cms/menu/util";
+
+import { SectionFormModel } from "./section-form.model";
 
 /**
  * Convenience function to create a new SectionModel with given values.
@@ -57,7 +58,7 @@ export function convertSectionToForm(section: SectionModel): SectionFormModel {
 }
 
 export function convertFormToSection(section: SectionModel | undefined, vm: SectionFormModel, tenantId: string): SectionModel {
-  if (!section) section = new SectionModel(tenantId);
+  section ??= new SectionModel(tenantId);
   section.name = vm.name ?? '';
   section.bkey = (!vm.bkey || vm.bkey.length === 0) ? section.name : vm.bkey; // we want to use the name as the key of the menu item in the database
   section.type = vm.type ?? SectionType.Article;
@@ -89,39 +90,6 @@ export function newContentConfig(text = '<p></p>', colSize = 4, position = ViewP
   }
 }
 
-export function newButton(width = '60px', height = '60px'): Button {
-  return {
-      label: '',
-      shape: 'round',
-      fill: 'clear',
-      width: width,
-      height: height,
-      color: ColorIonic.Primary,
-      buttonAction: ButtonAction.None
-  };
-}
-
-export function newImage(title = '', url = '', actionUrl = '', altText = '', defaultImageConfig = newDefaultImageConfig()): Image {
-  return {
-    imageLabel: title,
-    imageType: ImageType.Image,
-    url: url,
-    actionUrl: actionUrl,
-    altText: altText,
-    imageOverlay: '',  
-    fill: true,
-    hasPriority: false,
-    imgIxParams: defaultImageConfig.imgIxParams,
-    width: defaultImageConfig.width,
-    height: defaultImageConfig.height,
-    sizes: defaultImageConfig.sizes,
-    borderRadius: defaultImageConfig.borderRadius,
-    imageAction: defaultImageConfig.imageAction,
-    zoomFactor: defaultImageConfig.zoomFactor,
-    isThumbnail: defaultImageConfig.isThumbnail,
-    slot: defaultImageConfig.slot
-  }
-}
 
 export function newAlbumConfig(tenantId?: string, year?: string): AlbumConfig {
   const _directory = tenantId && tenantId.length > 0 && year ? `tenant/${tenantId}/album/${year}` : '';
@@ -136,28 +104,6 @@ export function newAlbumConfig(tenantId?: string, year?: string): AlbumConfig {
     showPdfs: true,
     galleryEffect: GalleryEffect.Slide
   }
-}
-
-export function newDefaultImageConfig(): DefaultImageConfig {
-  return {
-    imgIxParams: '',
-    width: 160,
-    height: 90,
-    sizes: '(max-width: 786px) 50vw, 100vw',
-    borderRadius: 4,
-    imageAction: ImageAction.None,
-    zoomFactor: 2,
-    isThumbnail: false,
-    slot: 'none'
-  }
-}
-
-export function newIcon(): Icon {
-  return {
-      name: 'pdf',
-      size: '40px',
-      slot: 'start'
-  };
 }
 
 export function newTableConfig(): TableConfig {

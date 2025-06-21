@@ -4,36 +4,61 @@ import { computed, inject } from '@angular/core';
 import { collection, query } from 'firebase/firestore';
 import { collectionData } from 'rxfire/firestore';
 import { authState } from 'rxfire/auth';
-
-import { AUTH, DEFAULT_TOAST_LENGTH, ENV, FIRESTORE } from '@bk2/shared/config';
-import { AddressCollection, AddressModel, OrgCollection, OrgModel, PersonCollection, PersonModel, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared/models';
-
-import { UserService } from '@bk2/user/data-access';
-import { AuthCredentials } from '@bk2/auth/model';
-import { AuthService } from '@bk2/auth/data-access';
 import { Observable, of } from 'rxjs';
+
+import { AUTH, ENV, FIRESTORE } from '@bk2/shared/config';
+import { AddressCollection, AddressModel, AppConfig, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared/models';
 import { getSystemQuery, searchData } from '@bk2/shared/util';
 
+import { AppConfigService } from './app-config.service';
+
 export type AppState = {
-  title: string;
-  appName: string;
-  version: string;
   tenantId: string;
+  production: boolean;
+  useEmulators: boolean;
+  firebase: {
+    apiKey: string;
+    authDomain: string;
+    projectId: string;
+    storageBucket: string;
+    messagingSenderId: string;
+    appId: string;
+    measurementId: string;
+  },
+  services: {
+    appcheckRecaptchaEnterpriseKey: string;
+    gmapKey: string;
+    nxCloudAccessToken: string;
+    imgixBaseUrl: string;
+  };
 };
 
 const initialState: AppState = {
-  title: '',
-  appName: '',
-  version: '',
   tenantId: '',
-}
+  production: false,
+  useEmulators: false,
+  firebase: {
+    apiKey: '',
+    authDomain: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: '',
+    measurementId: ''
+  },
+  services: {
+    appcheckRecaptchaEnterpriseKey: '',
+    gmapKey: '',
+    nxCloudAccessToken: '',
+    imgixBaseUrl: ''
+  }
+};
 
 export const AppStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
   withProps(() => ({
-    authService: inject(AuthService),
-    userService: inject(UserService),
+    appConfigService: inject(AppConfigService),
     firestore: inject(FIRESTORE),
     auth: inject(AUTH),
     env: inject(ENV),
@@ -42,6 +67,8 @@ export const AppStore = signalStore(
   
   withProps((store) => ({
     usersResource: rxResource({
+      // the resource will reload whenever the fbUser changes (login/logout).
+      request: () => store.fbUser(),
       loader: () => {
         return searchData<UserModel>(store.firestore, UserCollection, getSystemQuery(store.tenantId()), 'loginEmail', 'asc');
       }
@@ -65,6 +92,15 @@ export const AppStore = signalStore(
       loader: () => {
         return searchData<TagModel>(store.firestore, TagCollection, getSystemQuery(store.tenantId()), 'tagModel', 'asc');
       }
+    }),
+    appConfigResource: rxResource({
+      request: () => ({ 
+        tenantId: store.tenantId()
+      }),
+      loader: ({request}) => {
+        if (!request.tenantId) return of(undefined);
+        return store.appConfigService.read(request.tenantId);
+      }
     })
   })),
 
@@ -75,13 +111,38 @@ export const AppStore = signalStore(
       allOrgs: computed(() => state.orgsResource.value() ?? []),
       allResources: computed(() => state.resourcesResource.value() ?? []),
       allTags: computed(() => state.tagsResource.value() ?? []),
+      appConfig: computed(() => state.appConfigResource.value() ?? new AppConfig(state.tenantId())),
     };
   }),
 
   withComputed((state) => ({
     currentUser: computed(() => state.allUsers().find((user: UserModel) => user.loginEmail === state.fbUser()?.email)),
-    defaultOrg: computed(() => state.allOrgs().find((org: OrgModel) => org.bkey === state.env.owner.tenantId)),
-    defaultResource: computed(() => state.allResources().find((resource: ResourceModel) => resource.bkey === state.env.settingsDefaults.defaultResource)),
+    defaultOrg: computed(() => state.allOrgs().find((org: OrgModel) => org.bkey === state.tenantId())),
+    defaultResource: computed(() => state.allResources().find((resource: ResourceModel) => resource.bkey === state.appConfig().defaultResourceId)),
+    privacySettings: computed(() => {
+        return {
+          showName: state.appConfig().showName,
+          showDateOfBirth: state.appConfig().showDateOfBirth,
+          showDateOfDeath: state.appConfig().showDateOfDeath,
+          showEmail: state.appConfig().showEmail,
+          showPhone: state.appConfig().showPhone,
+          showPostalAddress: state.appConfig().showPostalAddress,
+          showIban: state.appConfig().showIban,
+          showGender: state.appConfig().showGender,
+          showTaxId: state.appConfig().showTaxId,
+          showBexioId: state.appConfig().showBexioId,
+          showTags: state.appConfig().showTags,
+          showNotes: state.appConfig().showNotes,
+          showMemberships: state.appConfig().showMemberships,
+          showOwnerships: state.appConfig().showOwnerships,
+          showComments: state.appConfig().showComments,
+          showDocuments: state.appConfig().showDocuments
+        } as PrivacySettings;
+      }
+    ),
+    // environment can be called directly on appStore:
+    // e.g.  appStore.firebase.apiKey()
+    // e.g. appStore.tenantId()
   })),
 
   withComputed((state) => ({
@@ -91,8 +152,7 @@ export const AppStore = signalStore(
     firebaseUid: computed(() => state.fbUser()?.uid ?? undefined),
     loginEmail: computed(() => state.fbUser()?.email ?? undefined),
     roles: computed(() => state.currentUser()?.roles ?? []),
-    isDebug: computed(() => state.currentUser()?.showDebugInfo ?? false),
-    toastLength: computed(() => state.currentUser()?.toastLength ?? DEFAULT_TOAST_LENGTH),
+    showDebugInfo: computed(() => state.currentUser()?.showDebugInfo ?? state.appConfig().showDebugInfo ?? false),
   })),
 
   withProps((store) => ({
@@ -118,14 +178,6 @@ export const AppStore = signalStore(
 
   withMethods((store) => {
     return {
-      /************************************ AUTH ************************************* */
-      login(credentials: AuthCredentials) {
-        store.authService.login(credentials);
-      },
-      logout() {
-        store.authService.logout();
-      },
-
       /************************************ GETTERS ************************************* */
       getUser(key: string) {
         if (!key) return undefined;
@@ -146,17 +198,18 @@ export const AppStore = signalStore(
       getTags(tagModel: number): string {
         if (!tagModel) return '';
         return store.allTags().filter((tag: TagModel) => tag.tagModel === tagModel + '')[0].tags;
-      } 
+      },
     }
   }),
 
   withHooks({
     onInit(store) {
       patchState(store, { 
-        title: store.env.app.title,
-        appName: store.env.app.name,
-        version: store.env.app.version,
-        tenantId: store.env.owner.tenantId 
+        tenantId: store.env.tenantId,
+        production: store.env.production,
+        useEmulators: store.env.useEmulators,
+        firebase: store.env.firebase,
+        services: store.env.services
       });
     }
   })

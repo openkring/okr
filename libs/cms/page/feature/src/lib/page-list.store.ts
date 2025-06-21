@@ -3,14 +3,14 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared/config';
-import { PageService } from '@bk2/cms/page/data-access';
 import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util';
 import { AllCategories, ModelType, PageModel } from '@bk2/shared/models';
-import { PageEditModalComponent } from './page-edit.modal';
-import { isPage } from '@bk2/cms/page/util';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 import { categoryMatches } from '@bk2/shared/categories';
+
+import { isPage } from '@bk2/cms/page/util';
+import { PageService } from '@bk2/cms/page/data-access';
+import { PageEditModalComponent } from './page-edit.modal';
 
 export type PageList = {
   searchTerm: string;
@@ -29,7 +29,6 @@ export const PageListStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     pageService: inject(PageService),
-    env: inject(ENV),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
@@ -100,7 +99,7 @@ export const PageListStore = signalStore(
         _modal.present();
         const { data, role } = await _modal.onWillDismiss();
         if (role === 'confirm') {
-          if (isPage(data, store.env.owner.tenantId)) {
+          if (isPage(data, store.appStore.tenantId())) {
             await store.pageService.update(data);
             store.pageResource.reload();
           }

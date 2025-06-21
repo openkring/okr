@@ -3,10 +3,10 @@ import { AsyncPipe } from '@angular/common';
 import { AlertController, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { bkPrompt, copyToClipboardWithConfirmation, TranslatePipe } from '@bk2/shared/i18n';
-import { DEFAULT_TOAST_LENGTH, NAME_LENGTH } from '@bk2/shared/config';
+import { TranslatePipe } from '@bk2/shared/i18n';
+import { NAME_LENGTH } from '@bk2/shared/config';
 import { AvatarInfo } from '@bk2/shared/models';
-import { getFullPersonName, newAvatarInfo } from '@bk2/shared/util';
+import { bkPrompt, copyToClipboardWithConfirmation, getFullPersonName, newAvatarInfo } from '@bk2/shared/util';
 
 import { AvatarDisplayComponent } from './avatar-display.component';
 
@@ -92,7 +92,6 @@ export class AvatarsComponent {
   public readOnly = input(false);
   public description = input<string>();
   public maxLength = input(NAME_LENGTH);
-  public toastLength = input(DEFAULT_TOAST_LENGTH);
 
   public changed = output<AvatarInfo[]>();
   public stringInput = viewChild<IonInput>('stringInput');
@@ -125,7 +124,7 @@ export class AvatarsComponent {
   }
 
   public async copy(avatar: AvatarInfo, confirmation?: string): Promise<void> {
-    await copyToClipboardWithConfirmation(this.toastController, this.toastLength(), getFullPersonName(avatar.name1, avatar.name2), confirmation);
+    await copyToClipboardWithConfirmation(this.toastController, getFullPersonName(avatar.name1, avatar.name2), confirmation);
   }
 
   public async edit(avatar: AvatarInfo, index: number): Promise<void> {

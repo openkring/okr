@@ -11,6 +11,6 @@ export class CategoryIconPipe implements PipeTransform {
 
   transform(categoryId: number, categories: CategoryModel[]): string {
     const _iconName = getCategoryIcon(categories, categoryId);
-    return `${this.env.app.imgixBaseUrl}/logo/ionic/${_iconName}.svg`;
+    return `${this.env.services.imgixBaseUrl}/logo/ionic/${_iconName}.svg`;
   }
 }

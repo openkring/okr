@@ -1,15 +1,16 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { MenuItemModel, ModelType, UserModel } from '@bk2/shared/models';
-import { MenuItemFormComponent } from '@bk2/cms/menu/ui';
-import { convertFormToMenuItem, convertMenuItemToForm, getMenuItemTitle } from '@bk2/cms/menu/util';
 import { ENV, RoleName } from '@bk2/shared/config';
 import { hasRole } from '@bk2/shared/util';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
+
+import { MenuItemFormComponent } from '@bk2/cms/menu/ui';
+import { convertFormToMenuItem, convertMenuItemToForm, getMenuItemTitle } from '@bk2/cms/menu/util';
 
 @Component({
   selector: 'bk-menu-item-modal',
@@ -43,7 +44,7 @@ export class MenuItemModalComponent {
   protected formIsValid = signal(false);
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToMenuItem(this.menuItem(), this.vm(), this.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToMenuItem(this.menuItem(), this.vm(), this.env.tenantId), 'confirm');
   }
 
   protected hasRole(role: RoleName): boolean {

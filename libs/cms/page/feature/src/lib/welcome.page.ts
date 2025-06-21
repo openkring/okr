@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButton, IonGrid, IonCol, IonContent, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
@@ -7,8 +7,7 @@ import { SvgIconPipe } from '@bk2/shared/pipes';
 import { HeaderComponent } from '@bk2/shared/ui';
 import { getImgixUrlWithAutoParams, navigateByUrl } from '@bk2/shared/util';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 
 @Component({
   selector: 'bk-welcome-page',
@@ -78,11 +77,11 @@ import { AppStore } from '@bk2/auth/feature';
     <bk-header title="{{ '@cms.welcome.header' | translate | async }}" [isRoot]="true" />
     <ion-content>
       <div class="welcome-container">
-        <img class="background-image" [src]="backgroundImageUrl" alt="Background" />
+        <img class="background-image" [src]="backgroundImageUrl()" alt="Background" />
         <ion-grid class="welcome-form">
           <ion-row>
             <ion-col>
-              <ion-img class="logo" [src]="logoUrl" alt="{{ logoAlt }}" (click)="gotoHome()" />
+              <ion-img class="logo" [src]="logoUrl()" alt="{{ logoAlt() }}" (click)="gotoHome()" />
             </ion-col>
           </ion-row>
           <ion-row>
@@ -119,17 +118,20 @@ import { AppStore } from '@bk2/auth/feature';
 export class BkWelcomePageComponent {
   private readonly router = inject(Router);
   public appStore = inject(AppStore);
-  protected env = inject(ENV);
 
-  public logoUrl = `${this.env.app.imgixBaseUrl}/${getImgixUrlWithAutoParams(this.env.app.logoUrl)}`;
-  public backgroundImageUrl = `${this.env.app.imgixBaseUrl}/${getImgixUrlWithAutoParams(this.env.app.welcomeBannerUrl)}`;
-  public logoAlt = `${this.env.owner.tenantId} Logo`;
+  public logoUrl = computed (() => {
+    return `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`;
+  });
+  public backgroundImageUrl = computed(() => {
+    return `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`;
+  });
+  public logoAlt = computed(() => `${this.appStore.tenantId()} Logo`);
 
   public async gotoHome(): Promise<void> {
-    await navigateByUrl(this.router, this.env.app.rootUrl);
+    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
   }
 
   public async login(): Promise<void> {
-    await navigateByUrl(this.router, this.env.auth.loginUrl);
+    await navigateByUrl(this.router, this.appStore.appConfig().loginUrl);
   }
 }

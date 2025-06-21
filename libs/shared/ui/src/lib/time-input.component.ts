@@ -5,7 +5,7 @@ import { AsyncPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaskitoDirective } from '@maskito/angular';
 
-import { ChTimeMask, InputMode, MaskPredicate } from '@bk2/shared/config';
+import { ChTimeMask, InputMode, MaskPredicate, TIME_LENGTH } from '@bk2/shared/config';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { getCurrentTime } from '@bk2/shared/util';
@@ -31,7 +31,7 @@ import { TimeSelectModalComponent } from './time-select.modal';
           placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
           [inputMode]="inputMode()"
           [counter]="!readOnly()"
-          [maxlength]="5"
+          [maxlength]="timeLength"
           autocomplete="off"
           [maskito]="timeMask"
           [maskitoElement]="maskPredicate"
@@ -55,10 +55,12 @@ export class TimeInputComponent {
   public clearInput = input(true); // show an icon to clear the input field
   public inputMode = input<InputMode>('numeric'); // A hint to the browser for which keyboard to display.
   public showHelper = input(false); // helper text to be shown below the input field
+  public locale = input.required<string>(); // mandatory locale for the input field, used for formatting
   public changed = output<string>(); // output event when the value changes
 
   protected timeMask = ChTimeMask;
   protected maskPredicate = MaskPredicate;
+  protected timeLength = TIME_LENGTH;
 
   public onChange(event: CustomEvent): void {
     this.value.set(event.detail.value);
@@ -72,7 +74,8 @@ export class TimeInputComponent {
       component: TimeSelectModalComponent,
       cssClass: 'time-modal',
       componentProps: {
-        time: _time
+        time: _time,
+        locale: this.locale()
       }
     });
     _modal.present();

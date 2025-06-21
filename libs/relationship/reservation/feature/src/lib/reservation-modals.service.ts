@@ -2,8 +2,7 @@ import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
 import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } from "@bk2/shared/models";
-
-import { AppStore } from "@bk2/auth/feature";
+import { AppStore } from "@bk2/shared/feature";
 
 import { convertFormToNewReservation, isReservation, ReservationNewFormModel } from "@bk2/reservation/util";
 import { ReservationService } from "@bk2/reservation/data-access";

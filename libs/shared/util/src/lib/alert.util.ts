@@ -1,20 +1,23 @@
 import { ToastController, AlertController, AlertOptions } from '@ionic/angular';
-import { warn } from '@bk2/shared/util';
-import { bkTranslate } from './i18n.util';
+
+import { bkTranslate } from '@bk2/shared/i18n';
+import { TOAST_LENGTH } from '@bk2/shared/config';
+
+import { warn } from './log.util';
 
 /**
 * In debug mode, write an error message to the console.
-* Optionally, show the error message as a toast for toastLength milliseconds.
+* Optionally (if toastController is set), show the error message as a toast for TOAST_LENGTH milliseconds.
 * @param toastController the ionic ToastController
 * @param message the message to log and show
 * @param isDebugMode debug modus
 */
-export function error(toastController: ToastController | undefined, message: string, isDebugMode = false, toastLength = 3000): void {
+export function error(toastController: ToastController | undefined, message: string, isDebugMode = false): void {
     if (isDebugMode === true) {
         console.error(bkTranslate(message));
     }
     if (toastController) {
-        showToast(toastController, message, toastLength);
+        showToast(toastController, message);
     }
 }
 
@@ -25,12 +28,11 @@ export function error(toastController: ToastController | undefined, message: str
  * This can be turned off by setting parameter writeLog to false.
  * @param toastController the ionic ToastController
  * @param message the message to be shown or the i18n key to be translated.
- * @param toastLength the display duration of the toast in milliseconds
  */
-export async function showToast(toastController: ToastController, message: string, toastLength: number): Promise<void> {
+export async function showToast(toastController: ToastController, message: string): Promise<void> {
     const _toast = await toastController.create({
         message: bkTranslate(message),
-        duration: toastLength
+        duration: TOAST_LENGTH
     });
     _toast.present();
 }
@@ -72,9 +74,9 @@ export async function confirm(
     return role === 'confirm';
   }
 
-export async function confirmAction(message: string, writeWarning = true, toastController?: ToastController, toastLength?: number): Promise<void> {
-    if (toastController !== undefined && toastLength !== undefined) {
-        await showToast(toastController, message, toastLength);
+export async function confirmAction(message: string, writeWarning = true, toastController?: ToastController): Promise<void> {
+    if (toastController !== undefined) {
+        await showToast(toastController, message);
     }
     if (writeWarning === true) warn(bkTranslate(message));
 }

@@ -3,12 +3,11 @@ import { IonAvatar, IonButton, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRo
 import { vestForms } from 'ngx-vest-forms';
 import { AsyncPipe } from '@angular/common';
 
-import { ENV } from '@bk2/shared/config';
 import { CategorySelectComponent, DateInputComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { CategoryListModel, ModelType, UserModel } from '@bk2/shared/models';
 import { debugFormErrors, getFullPersonName, getTodayStr, isOrg, isPerson } from '@bk2/shared/util';
-import { OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared/feature';
+import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared/feature';
 import { AvatarPipe } from '@bk2/shared/pipes';
 
 import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShape, membershipNewFormValidations } from '@bk2/membership/util';
@@ -73,7 +72,7 @@ import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShap
             <bk-cat-select [category]="membershipCategories()" popoverId="mcat-new" [selectedItemName]="currentMembershipCategoryItem()" (changed)="onCatChanged($event)" />
           </ion-col>
           <ion-col size="12"> 
-            <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [showHelper]=true (changed)="onChange('dateOfEntry', $event)" />
+            <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [locale]="locale()" [showHelper]=true (changed)="onChange('dateOfEntry', $event)" />
           </ion-col>      
         </ion-row>
       </ion-grid>
@@ -82,7 +81,7 @@ import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShap
 })
 export class MembershipNewFormComponent {
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
+  private readonly appStore = inject(AppStore);
 
   public vm = model.required<MembershipNewFormModel>();
   public membershipCategories = input.required<CategoryListModel>();
@@ -95,6 +94,7 @@ export class MembershipNewFormComponent {
   protected orgName = computed(() => this.vm().orgName ?? '');
   protected currentMembershipCategoryItem = computed(() => this.vm().membershipCategory ?? '');
   protected dateOfEntry = computed(() => this.vm().dateOfEntry ?? getTodayStr());
+  protected readonly locale = computed(() => this.appStore.appConfig().locale);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(true);
@@ -145,7 +145,7 @@ export class MembershipNewFormComponent {
     _modal.present();
     const { data, role } = await _modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isPerson(data, this.env.owner.tenantId)) {
+      if (isPerson(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
           ..._vm, 
           memberKey: data.bkey, 
@@ -178,7 +178,7 @@ export class MembershipNewFormComponent {
     _modal.present();
     const { data, role } = await _modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isOrg(data, this.env.owner.tenantId)) {
+      if (isOrg(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
           ..._vm, 
           orgKey: data.bkey, 

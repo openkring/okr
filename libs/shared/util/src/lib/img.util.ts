@@ -29,7 +29,7 @@ export function getImageType(fileName: string): ImageType {
  * Beware: this only works with urlTypes http/https/assets/storage, but not with urlType=key.
  * @param path a mandatory absolute or relative path to an image
  * @param params the imgix query parameters (optional)
- * @returns a valid imgix url or DEFAULT_AVATAR_URL if no path was given.
+ * @returns a valid imgix url or AVATAR_URL if no path was given.
  */
 export function getImgixUrl(path: string | undefined, params = 'auto=compress,enhance'): string {
   if (!path || path.length === 0) return '';

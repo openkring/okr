@@ -1,8 +1,8 @@
 import { AddressChannel, AddressCollection, AddressModel, AddressUsage, ModelType, OrgCollection, PersonCollection } from "@bk2/shared/models";
 import { Browser } from "@capacitor/browser";
 import { ToastController } from "@ionic/angular";
-import { bkTranslate, copyToClipboard, getCountryName, showToast } from "@bk2/shared/i18n";
-import { die, getModelAndKey } from "@bk2/shared/util";
+import { bkTranslate } from "@bk2/shared/i18n";
+import { copyToClipboard, die, getCountryName, getModelAndKey, showToast } from "@bk2/shared/util";
 
 
 /***************************  helpers *************************** */
@@ -160,13 +160,13 @@ export function createFavoritePostalAddress(usageType: AddressUsage, street: str
  * @param toastController used to show a confirmation message
  * @param address the address to copy
  */
-export async function copyAddress(toastController: ToastController, toastLength: number, address: AddressModel, lang: string): Promise<void> {
+export async function copyAddress(toastController: ToastController, address: AddressModel, lang: string): Promise<void> {
   if (address.channelType === AddressChannel.Postal) {
     await copyToClipboard(getStringifiedPostalAddress(address, lang));
   } else {
     await copyToClipboard(address.addressValue);
   }
-  await showToast(toastController, bkTranslate('@subject.address.operation.copy.conf'), toastLength);
+  await showToast(toastController, bkTranslate('@subject.address.operation.copy.conf'));
 }
 
 /**

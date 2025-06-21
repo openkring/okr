@@ -2,14 +2,14 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { of } from 'rxjs';
 
 import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/auth/feature';
-import { OwnershipService } from '@bk2/ownership/data-access';
-import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util';
-import { of } from 'rxjs';
-import { confirm } from '@bk2/shared/i18n';
+import { AppStore } from '@bk2/shared/feature';
+import { confirm, convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util';
 import { selectDate } from '@bk2/shared/ui';
+
+import { OwnershipService } from '@bk2/ownership/data-access';
 import { OwnershipModalsService } from './ownership-modals.service';
 
 export type OwnershipAccordionState = {

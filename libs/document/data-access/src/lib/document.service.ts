@@ -5,9 +5,8 @@ import { ToastController } from '@ionic/angular';
 
 import { DocumentTypes, getCategoryAbbreviation } from '@bk2/shared/categories';
 import { DocumentCollection, DocumentModel, DocumentType, MenuItemCollection, ModelType, UserModel } from '@bk2/shared/models';
-import { DateFormat, addIndexElement, convertDateFormatToString, createModel, die, dirName, fileExtension, fileName, fileSizeUnit, generateRandomString, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util';
+import { DateFormat, addIndexElement, convertDateFormatToString, createModel, die, dirName, error, fileExtension, fileName, fileSizeUnit, generateRandomString, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util';
 import { ENV, FIRESTORE, STORAGE } from '@bk2/shared/config';
-import { error } from '@bk2/shared/i18n';
 
 import { saveComment } from '@bk2/comment/util';
 
@@ -22,7 +21,7 @@ export class DocumentService {
   private readonly toastController = inject(ToastController);
   private readonly storage = inject(STORAGE);
 
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**

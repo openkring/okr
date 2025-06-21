@@ -1,5 +1,5 @@
 import { RoleName } from "@bk2/shared/config";
-import { Roles, UserModel } from "@bk2/shared/models";
+import { PrivacyAccessor, Roles, UserModel } from "@bk2/shared/models";
 import { die } from "./log.util";
 
 /**
@@ -55,4 +55,20 @@ export function isPrivileged(currentUser?: UserModel): boolean {
 
 export function isPrivilegedOr(roleName: RoleName, currentUser?: UserModel): boolean {
   return hasRole('privileged', currentUser) || hasRole(roleName, currentUser);
+}
+
+// privacy access checks
+export function isVisibleToUser(privacyAccessor: PrivacyAccessor, currentUser?: UserModel): boolean {
+  switch (privacyAccessor) {
+    case 'public':
+      return hasRole('public', currentUser);
+    case 'registered':
+      return hasRole('registered', currentUser);
+    case 'privileged':
+      return hasRole('privileged', currentUser);
+    case 'admin':
+      return hasRole('admin', currentUser);
+    default:
+      die('AuthUtil.isVisibleToUser: unknown privacy accessor: ' + privacyAccessor);
+  }
 }

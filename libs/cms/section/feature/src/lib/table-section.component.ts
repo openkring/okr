@@ -72,7 +72,7 @@ export class TableSectionComponent {
       'display': 'grid',
       'grid-template-columns': this.config()?.gridTemplate ?? 'auto auto',
       'gap': this.config()?.gridGap ?? '1px',
-      'background-color': this.config()?.gridBackgroundColor ?? 'grey',
+      'background-color': this.config()?.gridBackgroundColor ?? 'var(--ion-color-step-200)',
       'padding': this.config()?.gridPadding ?? '1px',
       'margin': '10px'
     };
@@ -80,7 +80,7 @@ export class TableSectionComponent {
 
   protected headerStyle = computed(() => {
     return {
-      'background-color': this.config()?.headerBackgroundColor ?? 'lightgrey',
+      'background-color': this.config()?.headerBackgroundColor ?? 'var(--ion-color-step-150)',
       'text-align': this.config()?.headerTextAlign ?? 'center',
       'font-size': this.config()?.headerFontSize ?? '1rem',
       'font-weight': this.config()?.headerFontWeight ?? 'bold',
@@ -90,7 +90,7 @@ export class TableSectionComponent {
 
   protected cellStyle = computed(() => {
     return {
-      'background-color': this.config()?.cellBackgroundColor ?? 'white',
+      'background-color': this.config()?.cellBackgroundColor ?? 'var(--ion-color-background)',
       'text-align': this.config()?.cellTextAlign ?? 'left',
       'font-size': this.config()?.cellFontSize ?? '0.8rem',
       'font-weight': this.config()?.cellFontWeight ?? 'normal',

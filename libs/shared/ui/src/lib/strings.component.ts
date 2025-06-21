@@ -5,8 +5,9 @@ import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 import { MaskitoDirective } from '@maskito/angular';
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { bkPrompt, copyToClipboardWithConfirmation, TranslatePipe } from '@bk2/shared/i18n';
-import { DEFAULT_TOAST_LENGTH, LowercaseWordMask, NAME_LENGTH } from '@bk2/shared/config';
+import { TranslatePipe } from '@bk2/shared/i18n';
+import { LowercaseWordMask, NAME_LENGTH } from '@bk2/shared/config';
+import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared/util';
 
 /**
  * Vest updates work by binding to ngModel.
@@ -92,7 +93,6 @@ export class StringsComponent {
   public description = input<string>();
   public mask = input<MaskitoOptions>(LowercaseWordMask);
   public maxLength = input(NAME_LENGTH);
-  public toastLength = input(DEFAULT_TOAST_LENGTH);
   public changed = output<string[]>();
   public stringInput = viewChild<IonInput>('stringInput');
 
@@ -120,7 +120,7 @@ export class StringsComponent {
   }
 
   public async copy(data: string | number | undefined, confirmation?: string): Promise<void> {
-    await copyToClipboardWithConfirmation(this.toastController, this.toastLength(), data ?? '', confirmation);
+    await copyToClipboardWithConfirmation(this.toastController, data ?? '', confirmation);
   }
 
   public async edit(text: string, index: number): Promise<void> {

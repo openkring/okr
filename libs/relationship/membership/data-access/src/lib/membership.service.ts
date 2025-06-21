@@ -4,8 +4,7 @@ import { ToastController } from '@ionic/angular/standalone';
 
 import { END_FUTURE_DATE_STR, ENV, FIRESTORE } from '@bk2/shared/config';
 import { CategoryListModel, MembershipCollection, MembershipModel, ModelType, PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
-import { addDuration, createModel, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util';
-import { copyToClipboardWithConfirmation } from '@bk2/shared/i18n';
+import { addDuration, copyToClipboardWithConfirmation, createModel, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util';
 
 import { saveComment } from '@bk2/comment/util';
 import { getCategoryAttribute } from '@bk2/category/util';
@@ -21,7 +20,7 @@ import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembers
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
 
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
     /**
@@ -169,7 +168,7 @@ import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembers
   // tbd: should we show a modal with all email addresses as deletable ion-chips ?
   public async copyAllEmailAddresses(memberships$: Observable<MembershipModel[]>): Promise<void> {
     const _emails = await firstValueFrom(this.getAllEmailAddresses(memberships$));
-    await copyToClipboardWithConfirmation(this.toastController, this.env.settingsDefaults.toastLength, _emails.toString() ?? '', '@subject.address.operation.emailCopy.conf');
+    await copyToClipboardWithConfirmation(this.toastController, _emails.toString() ?? '', '@subject.address.operation.emailCopy.conf');
   }
 
   /*-------------------------- exports --------------------------------*/

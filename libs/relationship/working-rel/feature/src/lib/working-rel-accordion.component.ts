@@ -11,8 +11,6 @@ import { EmptyListComponent } from '@bk2/shared/ui';
 import { WorkingRelAccordionStore } from './working-rel-accordion.store';
 import { WorkingRelTypes } from '@bk2/shared/categories';
 
-
-
 @Component({
   selector: 'bk-working-rel-accordion',
   imports: [

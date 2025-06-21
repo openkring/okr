@@ -1,13 +1,15 @@
 import { inject, Injectable } from "@angular/core";
-import { AppStore } from "@bk2/auth/feature";
-import { MembershipService } from "@bk2/membership/data-access";
-import { CategoryItemModel, CategoryListModel, MembershipModel, ModelType, OrgModel, PersonModel } from "@bk2/shared/models";
 import { ModalController } from "@ionic/angular/standalone";
-import { MembershipNewModalComponent } from "./membership-new.modal";
-import { convertFormToNewMembership, MembershipNewFormModel, newMembershipForPerson } from "@bk2/membership/util";
-import { MembershipEditModalComponent } from "./membership-edit.modal";
+
+import { AppStore } from "@bk2/shared/feature";
+import { CategoryItemModel, CategoryListModel, MembershipModel, ModelType, OrgModel, PersonModel } from "@bk2/shared/models";
 import { convertDateFormatToString, DateFormat, isMembership } from "@bk2/shared/util";
 import { selectDate } from "@bk2/shared/ui";
+
+import { MembershipService } from "@bk2/membership/data-access";
+import { convertFormToNewMembership, MembershipNewFormModel, newMembershipForPerson } from "@bk2/membership/util";
+import { MembershipNewModalComponent } from "./membership-new.modal";
+import { MembershipEditModalComponent } from "./membership-edit.modal";
 import { CategoryChangeModalComponent } from "./membership-category-change.modal";
 
 @Injectable({

@@ -4,10 +4,9 @@ import { Router } from '@angular/router';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { Meta, Title } from '@angular/platform-browser';
 
-import { AppNavigationService, hasRole, navigateByUrl } from '@bk2/shared/util';
-import { DebugInfoComponent } from '@bk2/shared/ui';
-import { ReplacePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { error, TranslatePipe } from '@bk2/shared/i18n';
+import { AppNavigationService, debugMessage, error, hasRole, navigateByUrl, replaceSubstring } from '@bk2/shared/util';
+import { SvgIconPipe } from '@bk2/shared/pipes';
+import { TranslatePipe } from '@bk2/shared/i18n';
 import { RoleName } from '@bk2/shared/config';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
@@ -18,8 +17,8 @@ import { PageDetailStore } from './page-detail.store';
 @Component({
   selector: 'bk-content-page',
   imports: [
-    SectionComponent, DebugInfoComponent, MenuComponent,
-    TranslatePipe, AsyncPipe, SvgIconPipe, ReplacePipe,
+    SectionComponent, MenuComponent,
+    TranslatePipe, AsyncPipe, SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton,
     IonContent, IonList, IonItemSliding, IonItem, IonItemOptions, IonItemOption, IonLabel,
     IonPopover
@@ -63,16 +62,16 @@ import { PageDetailStore } from './page-detail.store';
           </ion-item>
         } @else {     <!-- page contains sections -->
           <ion-list>
-            @for(section of pageStore.sections(); track $index) {
+            @for(sectionId of pageStore.sections(); track $index) {
               <ion-item-sliding #slidingList>
                 <ion-item lines="none">
-                  <bk-section sectionKey="{{ section | replace:'@TID@':tenantId() }}" />
+                  <bk-section [id]="sectionId" />
                 </ion-item>
                 <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="deleteSection(slidingList, section)">
+                  <ion-item-option color="danger" (click)="deleteSection(slidingList, sectionId)">
                     <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
                   </ion-item-option>
-                  <ion-item-option color="success" (click)="editSection(slidingList, section)">
+                  <ion-item-option color="success" (click)="editSection(slidingList, sectionId)">
                     <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
                   </ion-item-option>
                 </ion-item-options>
@@ -86,11 +85,10 @@ import { PageDetailStore } from './page-detail.store';
             <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPageReadOnly' | translate | async }}</ion-label>
           </ion-item>
         } @else {
-          @for(section of pageStore.sections(); track section) {
-            <bk-section sectionKey="{{ section | replace:'@TID@':tenantId() }}" />
+          @for(sectionId of pageStore.sections(); track $index) {
+            <bk-section [id]="sectionId" />
           } 
         }
-        <bk-debug-info title="Page:" [isDebug]="isDebug()" [data]="pageStore.page()" />
       }
     </ion-content>
   `
@@ -102,16 +100,18 @@ export class ContentPageComponent {
   private readonly router = inject(Router);
   private readonly appNavigationService = inject(AppNavigationService);
 
-  public id = input.required<string>();     // pageId
+  public id = input.required<string>();     // pageId (can contain @TID@ placeholder)
   public contextMenuName = input.required<string>();
 
-  protected tenantId = computed(() => this.pageStore.tenantId());
-  protected isDebug = computed(() => this.pageStore.isDebug());
+  protected tenantId = this.pageStore.appStore.env.tenantId;
+  protected showDebugInfo = computed(() => this.pageStore.showDebugInfo());
   protected popupId = computed(() => 'c_contentpage_' + this.id());
 
   constructor() {
     effect(() => {
-      this.pageStore.setPageId(this.id());
+      const _id = replaceSubstring(this.id(), '@TID@', this.pageStore.appStore.env.tenantId);
+      debugMessage(`ContentPageComponent: pageId=${this.id()} -> ${_id}`, this.pageStore.currentUser());
+      this.pageStore.setPageId(_id);
     });
     effect(() => {
       const _meta = this.pageStore.meta();
@@ -141,13 +141,18 @@ export class ContentPageComponent {
 
   public async editSection(slidingItem: IonItemSliding, sectionKey: string) { 
     if (slidingItem) slidingItem.close();
-    this.appNavigationService.pushLink('private/' + this.id());
-    navigateByUrl(this.router, `/section/${sectionKey}`);
+    const _sectionId = replaceSubstring(sectionKey, '@TID@', this.pageStore.appStore.env.tenantId);
+    debugMessage(`ContentPageComponent.editSection: sectionId=${sectionKey} -> ${_sectionId}`, this.pageStore.currentUser());
+
+    this.appNavigationService.pushLink('private/' + this.pageStore.pageId());
+    navigateByUrl(this.router, `/section/${_sectionId}`);
   } 
 
   public deleteSection(slidingItem: IonItemSliding, sectionKey: string) {
     if (slidingItem) slidingItem.close();
-    this.pageStore.deleteSectionFromPage(sectionKey);
+    const _sectionId = replaceSubstring(sectionKey, '@TID@', this.pageStore.appStore.env.tenantId);
+    debugMessage(`ContentPageComponent.deleteSection: sectionId=${sectionKey} -> ${_sectionId}`, this.pageStore.currentUser());
+    this.pageStore.deleteSectionFromPage(_sectionId);
   }
 
   protected hasRole(role: RoleName): boolean {

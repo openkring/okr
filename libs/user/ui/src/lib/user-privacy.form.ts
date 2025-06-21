@@ -68,12 +68,12 @@ export class UserPrivacyFormComponent {
   protected privacyUsages = PrivacyUsages;
   public changedField = output<FieldDescription>();
 
-  protected usage_images = computed(() => this.vm().usage_images ?? PrivacyUsage.Registered);
-  protected usage_dateOfBirth = computed(() => this.vm().usage_dateOfBirth ?? PrivacyUsage.Registered);
-  protected usage_postalAddress = computed(() => this.vm().usage_postalAddress ?? PrivacyUsage.Registered);
-  protected usage_email = computed(() => this.vm().usage_email ?? PrivacyUsage.Registered);
-  protected usage_phone = computed(() => this.vm().usage_phone ?? PrivacyUsage.Registered);
-  protected usage_name = computed(() => this.vm().usage_name ?? PrivacyUsage.Registered);
+  protected usage_images = computed(() => this.vm().usage_images ?? PrivacyUsage.Restricted);
+  protected usage_dateOfBirth = computed(() => this.vm().usage_dateOfBirth ?? PrivacyUsage.Restricted);
+  protected usage_postalAddress = computed(() => this.vm().usage_postalAddress ?? PrivacyUsage.Restricted);
+  protected usage_email = computed(() => this.vm().usage_email ?? PrivacyUsage.Restricted);
+  protected usage_phone = computed(() => this.vm().usage_phone ?? PrivacyUsage.Restricted);
+  protected usage_name = computed(() => this.vm().usage_name ?? PrivacyUsage.Restricted);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

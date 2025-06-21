@@ -3,8 +3,9 @@ import { Component, inject, input, model, output } from '@angular/core';
 import { IonItem, IonLabel, IonChip, ModalController } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { error, TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared/i18n';
 import { ColorSelectModalComponent } from './color-select.modal';
+import { error } from '@bk2/shared/util';
 
 /**
  * Color is in hex format e.g. #FF0000 for red.

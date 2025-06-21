@@ -3,7 +3,7 @@ import { Firestore } from 'firebase/firestore';
 import { map, Observable } from 'rxjs';
 
 import { getCategoryIcon, ModelTypes, ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
-import { ENV, FIRESTORE } from "@bk2/shared/config";
+import { ENV, FIRESTORE, THUMBNAIL_SIZE } from "@bk2/shared/config";
 import { AvatarCollection, AvatarModel, ModelType, ResourceType } from '@bk2/shared/models';
 import { addImgixParams, getModelAndKey, readModel } from '@bk2/shared/util';
 
@@ -15,7 +15,7 @@ export class AvatarPipe implements PipeTransform {
   private readonly env = inject(ENV);
 
   transform(key: string): Observable<string> {
-    return getAvatarImgixUrl(this.firestore, key, this.env.thumbnail.width, this.env.app.imgixBaseUrl);
+    return getAvatarImgixUrl(this.firestore, key, THUMBNAIL_SIZE, this.env.services.imgixBaseUrl);
   }
 }
 

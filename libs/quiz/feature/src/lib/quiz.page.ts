@@ -50,7 +50,7 @@ import { QuizStore } from './quiz.store';
 export class QuizPageComponent {
   // private readonly env = inject(ENV);
   //public id = input.required<string>();  
-  //private readonly tenantId = this.env.owner.tenantId;
+  //private readonly tenantId = this.env.tenantId;
 
   protected quizStore = inject(QuizStore);
 

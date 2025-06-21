@@ -6,10 +6,10 @@ import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { RoleName } from '@bk2/shared/config';
 import { getFullPersonName, hasRole } from '@bk2/shared/util';
+import { AppStore } from '@bk2/shared/feature';
+import { ModelType, UserModel, WorkingRelCollection, WorkingRelModel } from '@bk2/shared/models';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { AppStore } from '@bk2/auth/feature';
-import { ModelType, UserModel, WorkingRelCollection, WorkingRelModel } from '@bk2/shared/models';
 import { convertFormToWorkingRel, convertWorkingRelToForm } from '@bk2/working-rel/util';
 import { WorkingRelFormComponent } from '@bk2/working-rel/ui';
 import { WorkingRelModalsService } from './working-rel-modals.service';
@@ -64,7 +64,7 @@ export class WorkingRelEditModalComponent {
   public workingRelCollection = WorkingRelCollection;
 
   public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToWorkingRel(this.workingRel(), this.vm(), this.appStore.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToWorkingRel(this.workingRel(), this.vm(), this.appStore.env.tenantId), 'confirm');
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

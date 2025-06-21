@@ -4,8 +4,7 @@ import { AlertController, ToastController } from "@ionic/angular/standalone";
 
 import { ENV, FIRESTORE } from "@bk2/shared/config";
 import { PageCollection, PageModel, UserModel } from "@bk2/shared/models";
-import { bkPrompt } from "@bk2/shared/i18n";
-import { createModel, getSystemQuery, searchData, updateModel } from "@bk2/shared/util";
+import { bkPrompt, createModel, getSystemQuery, searchData, updateModel } from "@bk2/shared/util";
 
 import { saveComment } from "@bk2/comment/util";
 
@@ -17,7 +16,7 @@ export class PageService {
   private readonly firestore = inject(FIRESTORE);
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -82,7 +81,7 @@ export class PageService {
   public async addPage(currentUser?: UserModel): Promise<void> {
     const _pageName = await bkPrompt(this.alertController, '@content.page.operation.add.label', '@content.page.field.name');
     if (_pageName) {
-      const _page = new PageModel(this.env.owner.tenantId);
+      const _page = new PageModel(this.env.tenantId);
       _page.name = _pageName;
       _page.index = this.getSearchIndex(_page);
       await this.create(_page, currentUser);

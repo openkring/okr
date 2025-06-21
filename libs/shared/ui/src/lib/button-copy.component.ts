@@ -3,8 +3,8 @@ import { Component, inject, input } from '@angular/core';
 import { IonButton, IonIcon, ToastController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { copyToClipboard, showToast, TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
+import { TranslatePipe } from '@bk2/shared/i18n';
+import { copyToClipboard, showToast } from '@bk2/shared/util';
 
 @Component({
   selector: 'bk-button-copy',
@@ -25,7 +25,6 @@ import { ENV } from '@bk2/shared/config';
 })
 export class ButtonCopyComponent {
   private readonly toastController = inject(ToastController);
-  private readonly env = inject(ENV);
 
   public value = input.required<string | number | null | undefined>(); // data to copy
   public label = input(''); // optional label for the button
@@ -34,7 +33,7 @@ export class ButtonCopyComponent {
     const _value = this.value();
     if (_value !== undefined && _value !== null) {
       copyToClipboard(_value);
-      showToast(this.toastController, '@general.operation.copy.conf', this.env.settingsDefaults.toastLength);  
+      showToast(this.toastController, '@general.operation.copy.conf');  
     }
   }
 }

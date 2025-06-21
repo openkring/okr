@@ -4,24 +4,24 @@ export type PrivacyUsageCategory = CategoryModel;
 
 export const PrivacyUsages: PrivacyUsageCategory[] = [
   {
-    id: PrivacyUsage.None,
-    abbreviation: 'NONE',
-    name: 'none',
-    i18nBase: 'auth.privacyUsage.none',
-    icon: 'close_cancel'
+    id: PrivacyUsage.Public,
+    abbreviation: 'PUBLIC',
+    name: 'public',
+    i18nBase: 'auth.privacyUsage.public',
+    icon: 'eye-on'
   },
   {
-      id: PrivacyUsage.Registered,
-      abbreviation: 'REG',
-      name: 'registered',
-      i18nBase: 'auth.privacyUsage.registered',
-      icon: 'person'
+      id: PrivacyUsage.Restricted,
+      abbreviation: 'RESTR',
+      name: 'restricted',
+      i18nBase: 'auth.privacyUsage.restricted',
+      icon: 'shield-checkmark'
   },
   {
-      id: PrivacyUsage.Privileged,
-      abbreviation: 'PRIV',
-      name: 'privileged',
-      i18nBase: 'auth.privacyUsage.privileged',
-      icon: 'person-add'
+      id: PrivacyUsage.Protected,
+      abbreviation: 'PROT',
+      name: 'protected',
+      i18nBase: 'auth.privacyUsage.protected',
+      icon: 'eye-off'
   }
 ]

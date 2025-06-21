@@ -23,7 +23,12 @@ import { PersonNewFormComponent } from './person-new.form';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-person-new-form [(vm)]="vm" [currentUser]="currentUser()" [membershipCategories]="mcat()" [personTags]="tags()" (validChange)="onValidChange($event)" />
+      <bk-person-new-form [(vm)]="vm"
+        [currentUser]="currentUser()"
+        [priv]="priv()"
+        [membershipCategories]="mcat()"
+        [personTags]="tags()"
+        (validChange)="onValidChange($event)" />
     </ion-content>
   `
 })
@@ -34,7 +39,8 @@ export class PersonNewModalComponent {
   public org = input<OrgModel>(); 
   public vm = linkedSignal(() => createNewPersonFormModel(this.org()));
 
-  public currentUser = computed(() => this.personNewStore.currentUser());
+  protected priv = computed(() => this.personNewStore.privacySettings());
+  protected currentUser = computed(() => this.personNewStore.currentUser());
   protected mcat = computed(() => this.personNewStore.membershipCategory());
   protected tags = computed(() => this.personNewStore.getTags());
 

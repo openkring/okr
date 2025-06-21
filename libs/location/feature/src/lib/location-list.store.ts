@@ -3,14 +3,14 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared/config';
 import { chipMatches, nameMatches } from '@bk2/shared/util';
 import { AllCategories, LocationModel, LocationType, ModelType } from '@bk2/shared/models';
-import { LocationService } from '@bk2/location/data-access';
 import { categoryMatches } from '@bk2/shared/categories';
+import { AppStore } from '@bk2/shared/feature';
+
+import { LocationService } from '@bk2/location/data-access';
 import { isLocation } from '@bk2/location/util';
 import { LocationEditModalComponent } from './location-edit.modal';
-import { AppStore } from '@bk2/auth/feature';
 
 export type LocationListState = {
   searchTerm: string;
@@ -29,7 +29,6 @@ export const LocationListStore = signalStore(
   withProps(() => ({
     locationService: inject(LocationService),
     appStore: inject(AppStore),
-    env: inject(ENV),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
@@ -82,7 +81,7 @@ export const LocationListStore = signalStore(
 
       /******************************* actions *************************************** */
       async add(): Promise<void> {
-        const _location = new LocationModel(store.env.owner.tenantId);
+        const _location = new LocationModel(store.appStore.tenantId());
         const _modal = await store.modalController.create({
           component: LocationEditModalComponent,
           componentProps: {
@@ -93,7 +92,7 @@ export const LocationListStore = signalStore(
         _modal.present();
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
-          if (isLocation(data, store.env.owner.tenantId)) {
+          if (isLocation(data, store.appStore.tenantId())) {
             await store.locationService.create(data, store.currentUser());
           }
         }
@@ -116,7 +115,7 @@ export const LocationListStore = signalStore(
         _modal.present();
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
-          if (isLocation(data, store.env.owner.tenantId)) {
+          if (isLocation(data, store.appStore.tenantId())) {
             await store.locationService.update(data);
           }
         }

@@ -16,7 +16,7 @@ export class CalEventService {
   private readonly env = inject(ENV);
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**

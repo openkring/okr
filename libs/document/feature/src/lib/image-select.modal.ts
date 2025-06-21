@@ -6,10 +6,9 @@ import { SvgIconPipe } from '@bk2/shared/pipes';
 import { getImgixUrlWithAutoParams } from '@bk2/shared/util';
 import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { newImage } from '@bk2/cms/section/util';
 import { getDocumentStoragePath, pickPhoto } from '@bk2/document/util';
 import { ImageConfigFormComponent } from '@bk2/document/ui';
-import { ModelType, UserModel } from '@bk2/shared/models';
+import { ModelType, newImage, UserModel } from '@bk2/shared/models';
 import { ENV } from '@bk2/shared/config';
 
 /**
@@ -54,7 +53,7 @@ export class ImageSelectModalComponent {
     const _file = await pickPhoto(this.platform);
     const _key = this.key();
     if (_file && _key) {
-      const _storageLocation = getDocumentStoragePath(this.env.owner.tenantId, this.modelType(), _key);
+      const _storageLocation = getDocumentStoragePath(this.env.tenantId, this.modelType(), _key);
       if (_storageLocation) {
         const _path = _storageLocation + '/' + _file.name;
         await this.uploadService.uploadFile(_file, _path, '@document.operation.upload.single.title');

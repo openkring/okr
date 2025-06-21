@@ -3,12 +3,10 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util';
 import { AllCategories, CalEventCollection, CalEventModel, CalEventType, ModelType } from '@bk2/shared/models';
 import { categoryMatches } from '@bk2/shared/categories';
-
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 
 import { isCalEvent } from '@bk2/calevent/util';
 import { CalEventEditModalComponent } from './calevent-edit.modal';
@@ -33,14 +31,12 @@ export const CalEventListStore = signalStore(
   withProps(() => ({
     calEventService: inject(CalEventService),
     appStore: inject(AppStore),
-    firestore: inject(FIRESTORE),
-    env: inject(ENV),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     calEventResource: rxResource({
       loader: () => {
-        const calEvents$ = searchData<CalEventModel>(store.firestore, CalEventCollection, getSystemQuery(store.env.owner.tenantId), 'name', 'asc');
+        const calEvents$ = searchData<CalEventModel>(store.appStore.firestore, CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
         debugListLoaded<CalEventModel>('CalEventListStore.calEvents', calEvents$, store.appStore.currentUser());
         return calEvents$;
       }
@@ -104,7 +100,7 @@ export const CalEventListStore = signalStore(
 
       /******************************* actions *************************************** */
       async add(): Promise<void> {
-        const _calEvent = new CalEventModel(store.env.owner.tenantId);
+        const _calEvent = new CalEventModel(store.appStore.tenantId());
         const _modal = await store.modalController.create({
           component: CalEventEditModalComponent,
           componentProps: {
@@ -116,7 +112,7 @@ export const CalEventListStore = signalStore(
         _modal.present();
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
-          if (isCalEvent(data, store.env.owner.tenantId)) {
+          if (isCalEvent(data, store.appStore.tenantId())) {
             await store.calEventService.create(data, store.currentUser());
           }
         }
@@ -134,7 +130,7 @@ export const CalEventListStore = signalStore(
         _modal.present();
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
-          if (isCalEvent(data, store.env.owner.tenantId)) {
+          if (isCalEvent(data, store.appStore.tenantId())) {
             await store.calEventService.update(data);
           }
         }

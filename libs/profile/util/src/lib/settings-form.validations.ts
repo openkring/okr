@@ -1,5 +1,5 @@
 import { only, staticSuite} from 'vest';
-import { booleanValidations, categoryValidations, numberValidations, stringValidations } from '@bk2/shared/util';
+import { booleanValidations, categoryValidations, stringValidations } from '@bk2/shared/util';
 import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
 import { AvatarUsage, DeliveryType, Language, NameDisplay, PersonSortCriteria } from '@bk2/shared/models';
 import { SettingsFormModel } from './settings-form.model';
@@ -13,7 +13,6 @@ export const settingsFormValidations = staticSuite((model: SettingsFormModel, fi
   stringValidations('userKey', model.userKey, SHORT_NAME_LENGTH);
   booleanValidations('useTouchId', model.useTouchId);
   booleanValidations('useFaceId', model.useFaceId);
-  numberValidations('toastLength', model.toastLength, true, 0, 10000);
   categoryValidations('avatarUsage', model.avatarUsage, AvatarUsage);
   stringValidations('gravatarEmail', model.gravatarEmail, SHORT_NAME_LENGTH);
   categoryValidations('nameDisplay', model.nameDisplay, NameDisplay);

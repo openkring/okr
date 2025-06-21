@@ -49,7 +49,6 @@ export function convertUserToDisplayForm(user: UserModel): UserDisplayFormModel 
     avatarUsage: user.avatarUsage ?? AvatarUsage.PhotoFirst,
     personSortCriteria: user.personSortCriteria ?? PersonSortCriteria.Lastname,
     userLanguage: user.userLanguage ?? DefaultLanguage,
-    toastLength: user.toastLength ?? 3000,
     nameDisplay: user.nameDisplay ?? NameDisplay.FirstLast,
     useDisplayName: user.useDisplayName ?? false,
     showArchivedData: user.showArchivedData ?? false,
@@ -101,7 +100,6 @@ export function convertDisplayFormToUser(vm: UserDisplayFormModel, user?: UserMo
   user.avatarUsage = vm.avatarUsage ?? user.avatarUsage;
   user.personSortCriteria = vm.personSortCriteria ?? user.personSortCriteria;
   user.userLanguage = vm.userLanguage ?? user.userLanguage;
-  user.toastLength = vm.toastLength ?? user.toastLength;
   user.nameDisplay = vm.nameDisplay ?? user.nameDisplay;
   user.useDisplayName = vm.useDisplayName ?? user.useDisplayName;
   user.showDebugInfo = vm.showDebugInfo ?? user.showDebugInfo;

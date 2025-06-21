@@ -4,9 +4,11 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { HeaderComponent } from '@bk2/shared/ui';
+import { AppStore } from '@bk2/shared/feature';
+import { AuthCredentials } from '@bk2/shared/models';
+
 import { LoginFormComponent } from '@bk2/auth/ui';
-import { AuthCredentials } from '@bk2/auth/model';
-import { AppStore } from './app.store';
+import { AuthService } from '@bk2/auth/data-access';
 
 @Component({
   selector: 'bk-login-modal',
@@ -29,6 +31,7 @@ import { AppStore } from './app.store';
 export class LoginModalComponent {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
+  protected readonly authService = inject(AuthService);
 
   protected formIsValid = false;
   public currentCredentials = signal<AuthCredentials>({
@@ -45,7 +48,7 @@ export class LoginModalComponent {
 
   public async login(): Promise<void> {
     await this.modalController.dismiss(this.currentCredentials, 'cancel');
-    this.appStore.login(this.currentCredentials());
+    this.authService.login(this.currentCredentials(), this.appStore.appConfig().rootUrl, this.appStore.appConfig().loginUrl);
   }
 
   public async cancel(): Promise<void> {

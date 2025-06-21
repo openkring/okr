@@ -1,19 +1,20 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
-import { ENV } from '@bk2/shared/config';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { PageService } from '@bk2/cms/page/data-access';
-import { die } from '@bk2/shared/util';
 import { ModalController } from '@ionic/angular/standalone';
-import { PageSortModalComponent } from './page-sort.modal';
-import { SectionModel } from '@bk2/shared/models';
+import { firstValueFrom } from 'rxjs';
+
+import { debugItemLoaded, debugMessage, die } from '@bk2/shared/util';
+import { PageModel, SectionModel } from '@bk2/shared/models';
 import { SectionTypes } from '@bk2/shared/categories';
+import { CardSelectModalComponent } from '@bk2/shared/ui';
+import { AppStore } from '@bk2/shared/feature';
+
 import { createSection } from '@bk2/cms/section/util';
 import { SectionService } from '@bk2/cms/section/data-access';
-import { firstValueFrom } from 'rxjs';
 import { SectionSelectModalComponent } from '@bk2/cms/section/feature';
-import { CardSelectModalComponent } from '@bk2/shared/ui';
-import { AppStore } from '@bk2/auth/feature';
+import { PageSortModalComponent } from './page-sort.modal';
 
 export type PageDetailState = {
   pageId: string;
@@ -29,16 +30,26 @@ export const PageDetailStore = signalStore(
     appStore: inject(AppStore),
     pageService: inject(PageService),
     sectionService: inject(SectionService),
-    env: inject(ENV),
     modalController: inject(ModalController),
   })),
+  withComputed((state) => {
+    return {
+      tenantId: computed(() => state.appStore.tenantId()),
+      currentUser: computed(() => state.appStore.currentUser()),
+      showDebugInfo: computed(() => state.appStore.showDebugInfo()),
+      imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
+    };
+  }),
+
   withProps((store) => ({
     pageResource: rxResource({
       request: () => ({
         pageId: store.pageId()
       }),
       loader: ({ request }) => {
-        return store.pageService.read(request.pageId);
+        const _page$ = store.pageService.read(request.pageId);
+        debugItemLoaded<PageModel>(`PageDetailStore.pageResource`, _page$, store.currentUser());
+        return _page$;
       }
     })
   })),
@@ -49,10 +60,7 @@ export const PageDetailStore = signalStore(
       meta: computed(() => state.pageResource.value()?.meta),
       sections: computed(() => state.pageResource.value()?.sections ?? []),
       isEmptyPage: computed(() => state.pageResource.value()?.sections === undefined || state.pageResource.value()?.sections.length === 0),
-      isLoading: computed(() => state.pageResource.isLoading()),
-      tenantId: computed(() => state.appStore.tenantId()),
-      currentUser: computed(() => state.appStore.currentUser()),
-      isDebug: computed(() => state.appStore.isDebug()),
+      isLoading: computed(() => state.pageResource.isLoading())
     };
   }),
 
@@ -64,6 +72,7 @@ export const PageDetailStore = signalStore(
        * @param id the key of the page
        */
       setPageId(pageId: string) {
+        debugMessage(`PageDetailStore.setPageId(${pageId})`, store.currentUser());
         patchState(store, { pageId });
       },
 
@@ -82,11 +91,9 @@ export const PageDetailStore = signalStore(
        * @returns 
        */ 
       async sortSections() {
-        console.log('PageDetailStore.sortSections()');
         if (store.sections().length === 0) return;
         // convert the list of sectionKeys to a list of SectionModels
         const _sections = await firstValueFrom(store.sectionService.searchByKeys(store.sections()));
-        console.log('PageDetailStore.sortSections: sections', _sections);
         const _modal = await store.modalController.create({
           component: PageSortModalComponent,
           componentProps: {
@@ -114,7 +121,7 @@ export const PageDetailStore = signalStore(
           componentProps: {
             categories: SectionTypes,
             slug: 'section'
-          }
+            }
         });
         _modal.present();
         const { data, role } = await _modal.onWillDismiss();

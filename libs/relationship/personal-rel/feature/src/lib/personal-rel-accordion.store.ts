@@ -4,17 +4,18 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { Observable, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
 import { PersonalRelModel } from '@bk2/shared/models';
-import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util';
-import { confirm } from '@bk2/shared/i18n';
+import { AppStore } from '@bk2/shared/feature';
+import { confirm, convertDateFormatToString, DateFormat, debugListLoaded, isPersonalRel, isValidAt } from '@bk2/shared/util';
+import { selectDate } from '@bk2/shared/ui';
 
 import { AvatarService } from '@bk2/avatar/data-access';
-import { AppStore } from '@bk2/auth/feature';
 
 import { PersonalRelService } from '@bk2/personal-rel/data-access';
 import { PersonalRelModalsService } from './personal-rel-modals.service';
-import { selectDate } from '@bk2/shared/ui';
+import { PersonalRelEditModalComponent } from './personal-rel-edit.modal';
+import { PersonalRelNewModalComponent } from './personal-rel-new.modal';
+import { convertFormToNewPersonalRel, PersonalRelNewFormModel } from '@bk2/personal-rel/util';
 
 export type PersonalRelAccordionState = {
   personKey: string | undefined;
@@ -36,7 +37,6 @@ export const PersonalRelAccordionStore = signalStore(
     personalRelModalsService: inject(PersonalRelModalsService),
     avatarService: inject(AvatarService),
     appStore: inject(AppStore),
-    env: inject(ENV),
     modalController: inject(ModalController),
     alertController: inject(AlertController)
   })),
@@ -80,13 +80,53 @@ export const PersonalRelAccordionStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
+      /**
+       * Show a modal to add a new personalRel.
+       * @param subject first person to be related
+       * @param object second person to be related
+       */
       async add(): Promise<void> {
-        await store.personalRelModalsService.add(store.appStore.currentPerson(), store.appStore.currentPerson());
+        const _subject = structuredClone(store.appStore.currentPerson() ?? await store.personalRelModalsService.selectPerson());
+        const _object = structuredClone(store.appStore.currentPerson() ?? await store.personalRelModalsService.selectPerson());
+        if (_subject && _object) {
+          const _modal = await store.modalController.create({
+            component: PersonalRelNewModalComponent,
+            cssClass: 'small-modal',
+            componentProps: {
+              subject: _subject,
+              object: _object,
+              currentUser: store.appStore.currentUser()
+            }
+          });
+          _modal.present();
+          const { data, role } = await _modal.onDidDismiss();
+          if (role === 'confirm') {
+            const _personalRel = convertFormToNewPersonalRel(data as PersonalRelNewFormModel, store.appStore.tenantId());
+            await store.personalRelService.create(_personalRel, store.appStore.currentUser());
+          }
+        }
         store.personalRelsResource.reload();
       },
 
       async edit(personalRel?: PersonalRelModel): Promise<void> {
-        await store.personalRelModalsService.edit(personalRel);
+        let _personalRel = personalRel;
+        _personalRel ??= new PersonalRelModel(store.appStore.tenantId());
+        
+        const _modal = await store.modalController.create({
+          component: PersonalRelEditModalComponent,
+          componentProps: {
+            personalRel: _personalRel,
+            currentUser: store.appStore.currentUser()
+          }
+        });
+        _modal.present();
+        await _modal.onWillDismiss();
+        const { data, role } = await _modal.onDidDismiss();
+        if (role === 'confirm') {
+          if (isPersonalRel(data, store.appStore.tenantId())) {
+            await (!data.bkey ? store.personalRelService.create(data) : store.personalRelService.update(data));
+          }
+        }
         store.personalRelsResource.reload();
       },
 

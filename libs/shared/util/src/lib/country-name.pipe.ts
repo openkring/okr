@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
 import { ENV } from '@bk2/shared/config';
-import { I18nService } from './i18n.service';
+import { I18nService } from '@bk2/shared/i18n';
 import { getCountryName } from './country.util';
 
 @Pipe({

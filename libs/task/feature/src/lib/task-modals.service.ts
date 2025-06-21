@@ -2,8 +2,7 @@ import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
 import { AvatarInfo, TaskModel } from "@bk2/shared/models";
-
-import { AppStore } from "@bk2/auth/feature";
+import { AppStore } from '@bk2/shared/feature';
 
 import { TaskService } from "@bk2/task/data-access";
 import { isTask } from "@bk2/task/util";

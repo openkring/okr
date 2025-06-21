@@ -3,9 +3,9 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util';
 import { OrgCollection, OrgModel, UserModel } from '@bk2/shared/models';
+import { AppStore } from './app.store';
 
 export type OrgSelectState = {
   searchTerm: string;
@@ -22,14 +22,13 @@ export const orgInitialState: OrgSelectState = {
 export const OrgSelectStore = signalStore(
   withState(orgInitialState),
   withProps(() => ({
-    firestore: inject(FIRESTORE),
-    env: inject(ENV),
+    appStore: inject(AppStore),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     orgsResource: rxResource({
       loader: () => {
-        const orgs$ = searchData<OrgModel>(store.firestore, OrgCollection, getSystemQuery(store.env.owner.tenantId), 'name', 'asc');
+        const orgs$ = searchData<OrgModel>(store.appStore.firestore, OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
         debugListLoaded('orgs (to select)', orgs$, store.currentUser());
         return orgs$;
       }

@@ -74,7 +74,7 @@ export class WorkingRelService {
 
   /*-------------------------- list --------------------------------*/
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<WorkingRelModel[]> {
-    return searchData<WorkingRelModel>(this.firestore, WorkingRelCollection, getSystemQuery(this.env.owner.tenantId), orderBy, sortOrder);
+    return searchData<WorkingRelModel>(this.firestore, WorkingRelCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
   /**

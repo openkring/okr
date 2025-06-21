@@ -2,7 +2,6 @@ import { AsyncPipe } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared/config';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { HeaderComponent } from './header.component';
 
@@ -18,7 +17,7 @@ import { HeaderComponent } from './header.component';
       <ion-content class="ion-padding">
         <ion-datetime 
             [value]="time()"
-            [locale]="locale"
+            [locale]="locale()"
             presentation="time"
             [showDefaultButtons]="true"
             doneText="{{'@general.operation.change.ok' | translate | async}}"
@@ -29,11 +28,10 @@ import { HeaderComponent } from './header.component';
 })
 export class TimeSelectModalComponent {
   private readonly modalController = inject(ModalController);
-  protected env = inject(ENV);
 
   public time = input.required<string>();
   public title = input('@general.operation.select.time');
-  protected locale = this.env.i18n.locale;
+  protected locale = input.required<string>(); // mandatory locale for the input field, used for formatting
 
   /**
    * 

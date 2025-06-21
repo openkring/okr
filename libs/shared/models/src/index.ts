@@ -1,6 +1,8 @@
 // models
 export * from './lib/account.model';
 export * from './lib/address.model';
+export * from './lib/app-config.model';
+export * from './lib/auth-credentials.model';
 export * from './lib/avatar.model';
 export * from './lib/avatar-info'
 export * from './lib/base.model';

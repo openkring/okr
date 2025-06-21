@@ -2,18 +2,18 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { AsyncPipe } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { rxResource } from '@angular/core/rxjs-interop';
 
 import { AppNavigationService } from '@bk2/shared/util';
 import { ChangeConfirmationComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { ModelType, SectionModel } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
+import { AppStore } from '@bk2/shared/feature';
+
 import { SectionService } from '@bk2/cms/section/data-access';
 import { convertFormToSection, convertSectionToForm, SectionFormModel } from '@bk2/cms/section/util';
 import { PreviewModalComponent } from './section-preview.modal';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { ENV } from '@bk2/shared/config';
-import { AppStore } from '@bk2/auth/feature';
 import { SectionFormComponent } from './section.form';
 
 @Component({
@@ -60,7 +60,6 @@ export class SectionPageComponent {
   private readonly modalController = inject(ModalController);
   public sectionService = inject(SectionService);
   private readonly appNavigationService = inject(AppNavigationService);
-  private readonly env = inject(ENV);
   protected appStore = inject(AppStore);
 
   public id = input.required<string>();
@@ -70,7 +69,7 @@ export class SectionPageComponent {
     loader: () => this.sectionService.read(this.id())
   });
   public section = computed(() => this.sectionRef.value());
-  public vm = linkedSignal(() => convertSectionToForm(this.section() ?? new SectionModel(this.env.owner.tenantId)));
+  public vm = linkedSignal(() => convertSectionToForm(this.section() ?? new SectionModel(this.appStore.tenantId())));
   protected sectionTags = computed(() => this.appStore.getTags(ModelType.Section));
   protected formIsValid = signal(false);
 
@@ -79,7 +78,7 @@ export class SectionPageComponent {
    */
   public async save(): Promise<void> {
     const _originalSection = await firstValueFrom(this.sectionService.read(this.id()));
-    const _section = convertFormToSection(_originalSection, this.vm() as SectionFormModel, this.env.owner.tenantId);
+    const _section = convertFormToSection(_originalSection, this.vm() as SectionFormModel, this.appStore.tenantId());
     await this.sectionService.update(_section);
     this.formIsValid.set(false);
     this.appNavigationService.back();
@@ -95,7 +94,7 @@ export class SectionPageComponent {
       component: PreviewModalComponent,
       cssClass: 'full-modal',
       componentProps: { 
-        section: convertFormToSection(_originalSection, this.vm() as SectionFormModel, this.env.owner.tenantId)
+        section: convertFormToSection(_originalSection, this.vm() as SectionFormModel, this.appStore.tenantId())
       }
     });
     _modal.present();

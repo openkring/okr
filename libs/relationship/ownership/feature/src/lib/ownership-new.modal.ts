@@ -7,9 +7,10 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { RoleName } from '@bk2/shared/config';
 import { hasRole } from '@bk2/shared/util';
 import { AccountModel, ModelType, OrgModel, PersonModel, ResourceModel, UserModel} from '@bk2/shared/models';
-import { OwnershipNewFormComponent } from './ownership-new.form';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
+
 import { newOwnership } from '@bk2/ownership/util';
+import { OwnershipNewFormComponent } from './ownership-new.form';
 
 @Component({
   selector: 'bk-ownership-new-modal',

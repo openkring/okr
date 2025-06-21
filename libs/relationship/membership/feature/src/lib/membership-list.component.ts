@@ -2,12 +2,12 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList, IonPopover } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { error, TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarPipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { MembershipModel, ModelType } from '@bk2/shared/models';
 import { RoleName } from '@bk2/shared/config';
-import { getYearList, hasRole, isOngoing } from '@bk2/shared/util';
+import { error, getYearList, hasRole, isOngoing } from '@bk2/shared/util';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

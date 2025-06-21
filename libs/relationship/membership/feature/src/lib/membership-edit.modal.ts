@@ -77,7 +77,7 @@ export class MembershipEditModalComponent {
   }
 
   public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToMembership(this.membership(), this.vm(), this.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToMembership(this.membership(), this.vm(), this.env.tenantId), 'confirm');
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

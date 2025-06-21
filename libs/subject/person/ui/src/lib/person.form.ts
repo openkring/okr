@@ -1,13 +1,13 @@
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, computed, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { GenderTypes } from '@bk2/shared/categories';
-import { BexioIdMask, ChSsnMask, ENV, RoleName } from '@bk2/shared/config';
-import { GenderType, UserModel } from '@bk2/shared/models';
+import { BexioIdMask, ChSsnMask, RoleName } from '@bk2/shared/config';
+import { GenderType, PrivacyAccessor, PrivacySettings, UserModel } from '@bk2/shared/models';
 import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, hasRole } from '@bk2/shared/util';
+import { debugFormErrors, hasRole, isVisibleToUser } from '@bk2/shared/util';
 import { PersonFormModel, personFormModelShape, personFormValidations } from '@bk2/person/util';
 
 @Component({
@@ -43,15 +43,15 @@ import { PersonFormModel, personFormModelShape, personFormValidations } from '@b
 
                 <!-- tbd: these role checks are currently only checking against the default
                 they need to be extended to consider the settings of this person's user -->
-                @if(hasRole(env.privacy.showDateOfBirth) || hasRole(env.privacy.showDateOfDeath)) {
+                @if(isVisibleToUser(priv().showDateOfBirth) || isVisibleToUser(priv().showDateOfDeath)) {
                   <ion-row>
-                    @if(hasRole(env.privacy.showDateOfBirth)) {
+                    @if(isVisibleToUser(priv().showDateOfBirth)) {
                       <ion-col size="12" size-md="6"> 
                         <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" autocomplete="bday" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfBirth', $event)" />
                       </ion-col>
                     }
 
-                    @if(hasRole(env.privacy.showDateOfDeath)) {
+                    @if(isVisibleToUser(priv().showDateOfDeath)) {
                       <ion-col size="12" size-md="6">
                         <bk-date-input name="dateOfDeath"  [storeDate]="dateOfDeath()" [readOnly]="readOnly()" (changed)="onChange('dateOfDeath', $event)" />
                       </ion-col>
@@ -60,18 +60,18 @@ import { PersonFormModel, personFormModelShape, personFormValidations } from '@b
                 }
 
               <ion-row>
-                @if(hasRole(env.privacy.showGender)) {
+                @if(isVisibleToUser(priv().showGender)) {
                   <ion-col size="12" size-md="6">
                     <bk-cat name="gender" [value]="gender()" [categories]="genderTypes" [readOnly]="readOnly()" (changed)="onChange('gender', $event)" />
                   </ion-col>
                 }
         
-                @if(hasRole(env.privacy.showTaxId)) {
+                @if(isVisibleToUser(priv().showTaxId)) {
                   <ion-col size="12" size-md="6">
                     <bk-text-input name="ssnId" [value]="ssnId()" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="readOnly()" (changed)="onChange('ssnId', $event)" />                                        
                   </ion-col>
                 }
-                @if(hasRole(env.privacy.showBexioId)) {
+                @if(isVisibleToUser(priv().showBexioId)) {
                   <ion-col size="12" size-md="6">
                     <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('bexioId', $event)" />                                        
                   </ion-col>
@@ -81,21 +81,21 @@ import { PersonFormModel, personFormModelShape, personFormValidations } from '@b
           </ion-card-content>
         </ion-card>
 
-        @if(hasRole(env.privacy.showTags)) {
+        @if(isVisibleToUser(priv().showTags)) {
           <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="personTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
         }
         
-        @if(hasRole(env.privacy.showNotes)) {
+        @if(isVisibleToUser(priv().showNotes)) {
           <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
         }
       </form>
   `
 })
 export class PersonFormComponent {  
-  protected readonly env = inject(ENV);
   public vm = model.required<PersonFormModel>();
   public currentUser = input<UserModel | undefined>();
   public personTags = input.required<string>();
+  public priv = input.required<PrivacySettings>();
   
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
@@ -135,5 +135,9 @@ export class PersonFormComponent {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  protected isVisibleToUser(privacyAccessor: PrivacyAccessor): boolean {
+    return isVisibleToUser(privacyAccessor, this.currentUser());
   }
 }

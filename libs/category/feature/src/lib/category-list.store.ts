@@ -2,14 +2,15 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { firstValueFrom } from 'rxjs';
 
 import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util';
-import { CategoryService } from '@bk2/category/data-access';
 import { CategoryListModel, ModelType } from '@bk2/shared/models';
-import { firstValueFrom } from 'rxjs';
-import { AppStore } from '@bk2/auth/feature';
-import { CategoryEditModalComponent } from './category-edit.modal';
+import { AppStore } from '@bk2/shared/feature';
+
 import { isCategoryList } from '@bk2/category/util';
+import { CategoryService } from '@bk2/category/data-access';
+import { CategoryEditModalComponent } from './category-edit.modal';
 
 export type CategoryListState = {
   searchTerm: string;
@@ -79,7 +80,7 @@ export const CategoryListStore = signalStore(
           if (defaultCategoryName) {
             _defaultCategory = await firstValueFrom(store.categoryService.read(defaultCategoryName));
           }
-          const _newCategory = structuredClone(_defaultCategory) ?? new CategoryListModel(store.appStore.env.owner.tenantId);
+          const _newCategory = structuredClone(_defaultCategory) ?? new CategoryListModel(store.appStore.tenantId());
           const _modal = await store.modalController.create({
             component: CategoryEditModalComponent,
             componentProps: {
@@ -90,7 +91,7 @@ export const CategoryListStore = signalStore(
           _modal.present();
           const { data, role } = await _modal.onDidDismiss();
           if (role === 'confirm') {
-            if (isCategoryList(data, store.appStore.env.owner.tenantId)) {
+            if (isCategoryList(data, store.appStore.env.tenantId)) {
               await store.categoryService.create(data, store.currentUser());
             }
           }
@@ -108,7 +109,7 @@ export const CategoryListStore = signalStore(
         _modal.present();
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
-          if (isCategoryList(data, store.appStore.env.owner.tenantId)) {
+          if (isCategoryList(data, store.appStore.tenantId())) {
             await store.categoryService.update(data);
           }
         }

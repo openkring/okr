@@ -3,10 +3,10 @@ import { browserLocalPersistence, sendPasswordResetEmail, setPersistence, signIn
 import { ToastController } from "@ionic/angular";
 import { Router } from "@angular/router";
 
-import { AUTH, ENV } from "@bk2/shared/config";
-import { bkTranslate, showToast } from "@bk2/shared/i18n";
-import { die, navigateByUrl, warn } from "@bk2/shared/util";
-import { AuthCredentials } from "@bk2/auth/model";
+import { AUTH } from "@bk2/shared/config";
+import { bkTranslate } from "@bk2/shared/i18n";
+import { die, navigateByUrl, showToast, warn } from "@bk2/shared/util";
+import { AuthCredentials } from "@bk2/shared/models";
 
 /**
  * This provider centralizes the authentication functions
@@ -29,16 +29,16 @@ export class AuthService {
   private readonly auth = inject(AUTH);
   private readonly toastController = inject(ToastController);
   private readonly router = inject(Router);
-  private readonly env = inject(ENV);
-
 
   /*-------------------------- login / logout / password reset --------------------------------*/
   /**
    * Login a returning user with already existing credentials.
-   * @param loginEmail the uid (an email address)
+   * @param credentials the login credentials of the user (email and password)
+   * @param rootUrl the URL to navigate to after successful login
+   * @param loginUrl the URL to navigate to in case of an error
    * @param passwort the user password
    */
-  public async login(credentials: AuthCredentials, url = this.env.app.rootUrl): Promise<void> {
+  public async login(credentials: AuthCredentials, rootUrl: string, loginUrl: string): Promise<void> {
     try {
       if (!credentials.loginEmail || credentials.loginEmail.length === 0 || 
           !credentials.loginPassword || credentials.loginPassword.length === 0) die('AuthService.login: email and password are mandatory.');
@@ -50,43 +50,44 @@ export class AuthService {
       */
       await setPersistence(this.auth, browserLocalPersistence);
       await signInWithEmailAndPassword(this.auth, credentials.loginEmail, credentials.loginPassword);
-      showToast(this.toastController, '@auth.operation.login.confirmation', this.env.settingsDefaults.toastLength);
-      await navigateByUrl(this.router, url);  
+      showToast(this.toastController, '@auth.operation.login.confirmation');
+      await navigateByUrl(this.router, rootUrl);  
     } 
     catch(_ex) {
       console.error('AuthService.login: error: ', _ex);
-      await showToast(this.toastController, '@auth.operation.login.error', this.env.settingsDefaults.toastLength);
-      await navigateByUrl(this.router, this.env.auth.loginUrl)
+      await showToast(this.toastController, '@auth.operation.login.error');
+      await navigateByUrl(this.router, loginUrl)
     }
   }
 
   /**
    * Send a reset password link to an email address of a user who forgot her password.
    * @param loginEmail an email address of a user
+   * @param loginUrl the URL to navigate to in case of an error
    */
-  public async resetPassword(loginEmail: string): Promise<void> {
+  public async resetPassword(loginEmail: string, loginUrl: string): Promise<void> {
     try {
       if (!loginEmail || loginEmail.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
       await sendPasswordResetEmail(this.auth, loginEmail);
-      await showToast(this.toastController, bkTranslate('@auth.operation.pwdreset.confirmation') + loginEmail, this.env.settingsDefaults.toastLength);
-      await navigateByUrl(this.router, this.env.auth.loginUrl)
+      await showToast(this.toastController, bkTranslate('@auth.operation.pwdreset.confirmation') + loginEmail);
+      await navigateByUrl(this.router, loginUrl)
     } 
     catch (_ex) {
       console.error('AuthService.resetPassword: error: ', _ex);
-      await showToast(this.toastController, '@auth.operation.pwdreset.error', this.env.settingsDefaults.toastLength);
-      await navigateByUrl(this.router, this.env.auth.loginUrl)
+      await showToast(this.toastController, '@auth.operation.pwdreset.error');
+      await navigateByUrl(this.router, loginUrl)
     }
   }
 
   public async logout(): Promise<boolean> {
     try {
       await signOut(this.auth);
-      await showToast(this.toastController, '@auth.operation.logout.confirmation', this.env.settingsDefaults.toastLength);
+      await showToast(this.toastController, '@auth.operation.logout.confirmation');
       return Promise.resolve(true);
     } 
     catch (_ex) {
       console.error('AuthService.logout: error: ', _ex);
-      await showToast(this.toastController, '@auth.operation.logout.error', this.env.settingsDefaults.toastLength);
+      await showToast(this.toastController, '@auth.operation.logout.error');
       return Promise.resolve(false);
     }
   }

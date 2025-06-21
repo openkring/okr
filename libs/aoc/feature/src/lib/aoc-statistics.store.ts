@@ -1,12 +1,11 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { Observable, of } from 'rxjs';
 
 import { FIRESTORE } from '@bk2/shared/config';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 import { BkModel, LogInfo, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared/models';
-
-import { Observable, of } from 'rxjs';
 import { getSystemQuery, searchData } from '@bk2/shared/util';
 
 export type AocStatisticsState = {
@@ -35,11 +34,11 @@ export const AocStatisticsStore = signalStore(
       loader: ({request}): Observable<BkModel[] | undefined> => {
         switch(request.modelType) {
           case ModelType.Person:
-            return searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.appStore.env.owner.tenantId), 'lastName', 'asc');
+            return searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
           case ModelType.Org:
-            return searchData<OrgModel>(store.firestore, OrgCollection, getSystemQuery(store.appStore.env.owner.tenantId), 'name', 'asc');
+            return searchData<OrgModel>(store.firestore, OrgCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc');
           case ModelType.Membership:
-            return searchData<MembershipModel>(store.firestore, MembershipCollection, getSystemQuery(store.appStore.env.owner.tenantId), 'memberName2', 'asc');
+            return searchData<MembershipModel>(store.firestore, MembershipCollection, getSystemQuery(store.appStore.env.tenantId), 'memberName2', 'asc');
           default:
             return of(undefined);
         }

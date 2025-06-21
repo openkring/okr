@@ -1,18 +1,14 @@
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject, input, linkedSignal, viewChild } from '@angular/core';
 import { AsyncPipe, NgStyle } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { die, getSizedImgixParamsByExtension } from '@bk2/shared/util';
-import { AlbumStyle, Image, ImageAction, ImageMetaData, ImageType, SectionModel } from '@bk2/shared/models';
-import { SvgIconPipe } from '@bk2/shared/pipes';
+import { debugData, debugMessage, downloadToBrowser } from '@bk2/shared/util';
+import { AlbumStyle, Image, ImageAction, ImageType, SectionModel } from '@bk2/shared/models';
+import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared/pipes';
 import { CategoryComponent, ImageComponent, LabelComponent, SpinnerComponent, VideoComponent, browse, showZoomedImage } from '@bk2/shared/ui';
-import { ENV } from '@bk2/shared/config';
-import { downloadToBrowser } from '@bk2/shared/i18n';
 
-import { AlbumStyles } from '@bk2/cms/section/util';
+import { AlbumStyles, convertThumbnailToFullImage, getBackgroundStyle } from '@bk2/cms/section/util';
 import { AlbumStore } from './album-section.store';
 
 /**
@@ -34,7 +30,7 @@ import { AlbumStore } from './album-section.store';
   selector: 'bk-album-section',
   imports: [
     NgStyle,
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, JpgUrlPipe, PdfUrlPipe, ThumbnailUrlPipe,
     SpinnerComponent, LabelComponent, ImageComponent, CategoryComponent, VideoComponent,
     IonCard, IonCardContent, IonList, IonThumbnail,
     IonGrid, IonRow, IonCol, IonItem, IonToolbar, IonTitle, IonIcon, IonLabel
@@ -73,7 +69,7 @@ import { AlbumStore } from './album-section.store';
                 }
             </ion-col>
             <ion-col size="4">
-                <bk-cat name="albumStyle" [value]="selectedCategoryId()" [categories]="albumStyles" (changed)="onCategoryChange($event)" />
+                <bk-cat name="albumStyle" [value]="selectedAlbumStyle()" [categories]="albumStyles" (changed)="onCategoryChange($event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -92,23 +88,23 @@ import { AlbumStore } from './album-section.store';
                     @for(image of images; track image) {
                       @if(image.url; as url) {
                         <div class="pinterest-image">
-                        @switch(image.imageType) {
+                          @switch(image.imageType) {
                             @case(IT.Dir) {
-                              <img [src]="env.app.imgixBaseUrl + '/' + url + '?fm=jpg&auto=format,compress,enhance&fit=crop'" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
+                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
                               <ion-label>{{ image.imageLabel }}</ion-label>
                             } @case(IT.Image) {
-                              <img [src]="env.app.imgixBaseUrl + '/' + url + '?fm=jpg&auto=format,compress,enhance&fit=crop'" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
+                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
                             } @case(IT.StreamingVideo) {
                               <bk-video [url]="image.url" />
                             } @case (IT.Pdf) {
-                              <img [src]="env.app.imgixBaseUrl + '/' + url + '?page=1'" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
+                              <img [src]="url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
                             }
                             @default {
-                              <img [src]="env.app.imgixBaseUrl + '/' + url + '?fm=jpg&auto=format,compress,enhance&fit=crop'" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
+                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
                               <ion-label>{{ image.imageLabel }}</ion-label>
                             }
                           }
-                      </div>
+                        </div>
                       }
                     }
                   </div>
@@ -123,11 +119,11 @@ import { AlbumStore } from './album-section.store';
                               <bk-img [image]="image"  (click)="onImageClicked(image)"/>
                               <ion-label>{{ image.imageLabel }}</ion-label>
                             } @case(IT.Image) {
-                              <bk-img [image]="convertThumbnailToFullImage(image)"  (click)="getMetaData(image)"/>
+                              <bk-img [image]="convertThumbnailToFullImage(image)"  (click)="onImageClicked(image)"/>
                             } @case(IT.StreamingVideo) {
                               <bk-video [url]="image.url" />
                             } @case (IT.Pdf) {
-                              <img [src]="env.app.imgixBaseUrl + '/' + image.url + '?page=1'" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
+                              <img [src]="image.url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
                             }
                             @default {
                               <bk-img [image]="image"  (click)="onImageClicked(image)"/>
@@ -155,7 +151,7 @@ import { AlbumStore } from './album-section.store';
                       @if(image.url; as url) {
                         <ion-item>
                           <ion-thumbnail slot="start">
-                            <img [src]="env.app.imgixBaseUrl + '/' + url + '?fm=jpg&width=200&height=200&auto=format,compress,enhance&fit=crop'" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
+                            <img [src]="url | thumbnailUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
                           </ion-thumbnail>
                           <ion-label>{{ image.imageLabel }}</ion-label>
                         </ion-item>
@@ -209,18 +205,17 @@ import { AlbumStore } from './album-section.store';
 export class AlbumSectionComponent {
   private readonly modalController = inject(ModalController);
   protected albumStore = inject(AlbumStore);
-  private readonly httpClient = inject(HttpClient);
-  protected env = inject(ENV);
 
   public section = input<SectionModel>();
-  protected albumConfig = computed(() => this.section()?.properties.album);
-  protected selectedCategoryId = linkedSignal(() => this.albumStore.albumStyle as unknown as number);
 
+  protected selectedAlbumStyle = linkedSignal(() => this.albumStore.albumStyle as unknown as number);
+  protected imgixBaseUrl = computed(() => this.albumStore.imgixBaseUrl());
   protected imageContainer = viewChild('.imgix-image', { read: ElementRef });
+  protected metaData = computed(() => this.albumStore.metaData());
 
-  protected directory = this.albumStore.currentDirectory;
-  protected albumStyle = this.albumStore.albumStyle;
-  protected images = this.albumStore.images;
+  protected directory = computed(() => this.albumStore.currentDirectory());
+  protected albumStyle = computed(() => this.albumStore.config().albumStyle);
+  protected images = computed(() => this.albumStore.images());
   protected isLoading = this.albumStore.isLoading;
   protected error = this.albumStore.error;
   protected title = this.albumStore.title;
@@ -228,7 +223,6 @@ export class AlbumSectionComponent {
   protected parentDirectory = this.albumStore.parentDirectory;
   protected isTopDirectory = computed(() => this.albumStore.currentDirLength() === this.albumStore.initialDirLength());
 
-  protected baseImgixUrl = this.env.app.imgixBaseUrl;
   protected IA = ImageAction;
   protected IT = ImageType;
   protected AS = AlbumStyle;
@@ -236,12 +230,18 @@ export class AlbumSectionComponent {
 
   constructor() {
     effect(() => {
-      this.albumStore.setConfig(this.albumConfig());
+      const _config = this.section()?.properties.album;
+      this.albumStore.setConfig(_config); // set the album config from the section properties
+      // this also updates the current directory and the albumStyle in the store
     });
   }
   
-
   protected async onImageClicked(image: Image, index = 0): Promise<void> {
+    this.albumStore.setImage(image);    // loads metadata
+    debugData('AlbumSectionComponent.onImageClicked -> image: ', image, this.albumStore.currentUser());
+    debugData('AlbumSectionComponent.onImageClicked -> metaData: ', this.metaData(), this.albumStore.currentUser());
+    // tbd: show the metadata to the user, e.g. in a modal or as an overlay
+    // tbd: put the following into the store as a method, triggered by an effect each time the image changes
     switch (image.imageAction) {
       case ImageAction.Download: await downloadToBrowser(image.actionUrl); break;
       case ImageAction.Zoom: await showZoomedImage(this.modalController, '@content.type.article.zoomedImage', image, 'full-modal'); break;
@@ -249,25 +249,16 @@ export class AlbumSectionComponent {
       case ImageAction.OpenDirectory: this.albumStore.setDirectory(image.actionUrl); break;
       case ImageAction.FollowLink: browse(image.actionUrl); break;
       case ImageAction.None: break;
-      default: console.log('AlbumSectionComponent.onImageClicked -> no action defined');
+      default: debugMessage('AlbumSectionComponent.onImageClicked -> no action defined', this.albumStore.currentUser());
     }
   }
 
-  protected getBackgroundStyle(image: Image) {
-    if (!image.width || !image.height) die('AlbumSection: image width and height must be set');
-    const _params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
-    const _url = this.baseImgixUrl + '/' + image.url + '?' + _params;
-    return { 
-      'background-image': `url(${_url})`, 
-      'min-height': '200px',
-      'background-size': 'cover',
-      'background-position': 'center',
-      'border': '1px'
-    };
+  protected getBackgroundStyle(image: Image): { [key: string]: string } {
+    return getBackgroundStyle(this.imgixBaseUrl(), image);
   }
 
-  protected onCategoryChange($event: AlbumStyle): void {
-    this.albumStore.setAlbumStyle($event);
+  protected onCategoryChange(albumStyle: AlbumStyle): void {
+    this.albumStore.setAlbumStyle(albumStyle);
   }
 
   protected goUp(): void {
@@ -275,48 +266,20 @@ export class AlbumSectionComponent {
   }
 
   protected convertThumbnailToFullImage(image: Image): Image {
-    const _image = structuredClone(image);
-    _image.imageAction = ImageAction.Download;
-    _image.isThumbnail = false;
-    _image.fill = true;
-    _image.width = this.getValue('width', 900);
-    _image.height = this.getValue('height', 300);
-    return _image;
+    return convertThumbnailToFullImage(image, this.getValue('width', 900), this.getValue('height', 300));
   }
 
-  protected async getMetaData(image: Image): Promise<ImageMetaData> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const _data = await firstValueFrom(this.httpClient.get(this.baseImgixUrl + '/' + image.url + '?fm=json')) as any;
-    console.log('AlbumSectionComponent.getMetaData -> data: ', _data);
-
-    const _metaData: ImageMetaData = {
-      altitude: _data.GPS?.Altitude ?? undefined,
-      latitude: _data.GPS?.Latitude ?? undefined,
-      longitude: _data.GPS?.Longitude ?? undefined,
-      speed: _data.GPS?.Speed ?? undefined,
-      direction: _data.GPS?.ImgDirection ?? undefined,
-      size: _data['Content-Length'] ?? undefined,
-      height: _data.PixelHeight ?? undefined,
-      width: _data.PixelWidth ?? undefined,
-      cameraMake: _data.TIFF?.Make ?? undefined,
-      cameraModel: _data.TIFF?.Model ?? undefined,
-      software: _data.TIFF?.Software ?? undefined,
-      focalLength: _data.Exif?.FocalLength ?? undefined,
-      focalLengthIn35mmFilm: _data.Exif?.FocalLengthIn35mmFilm ?? undefined,
-      aperture: _data.Exif?.FNumber ?? undefined,
-      exposureTime: _data.Exif?.ExposureTime ?? undefined,
-      iso: _data.Exif?.ISOSpeedRatings ?? undefined,
-      lensModel: _data.Exif?.LensModel ?? undefined
-    };
-    console.log('AlbumSectionComponent.getMetaData -> metaData: ', _metaData);
-    return _metaData; 
-  }
-
-  private getValue(key: string, defaultValue: number): number {
+  /**
+   * This is used to get the width and height of the image container element imgix-image
+   * @param key 
+   * @param defaultValue 
+   * @returns 
+   */
+  private getValue(key: 'width' | 'height', defaultValue: number): number {
     const _el = this.imageContainer();
     if (_el) {
       const _value = (_el.nativeElement[key] ?? defaultValue) as number;
-      console.log(`AlbumSectionComponent.getValue -> element found: ${key} -> value: ${_value}`);
+      debugMessage(`AlbumSectionComponent.getValue -> imgix-image.${key} -> ${_value}`);
       return _value;
     }
     return defaultValue;

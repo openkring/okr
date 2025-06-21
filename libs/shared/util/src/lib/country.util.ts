@@ -2,7 +2,7 @@ import { CountryCode, PhoneNumber, parsePhoneNumberWithError } from 'libphonenum
 import * as countryDictionary from 'countries-list';
 import * as i18nIsoCountries from 'i18n-iso-countries';
 import { ICountry } from 'countries-list';
-import { die, warn } from '@bk2/shared/util';
+import { die, warn } from './log.util';
  
 /*
     This library contains funtions needed to provide internationalization, e.g.
@@ -82,7 +82,7 @@ export function getLanguages(countryCode: string): string[] {
 /*--------------------------------------------------------------------------
 i18n-iso-countries
 Country names can be translated based on npm library i18n-iso-countries.
-These entries need to match AVAILABLE_LANGS, e.g. ['en', 'de', 'fr'] and each 
+These entries need to match app.config.provideTransloco.config.availableLangs, e.g. ['en', 'de', 'fr'] and each 
 language needs to be registered in function registerCountryLanguages().
 i18n for ISO 3166-1 country codes. Source is Wikipedia: Officially assigned code elements
 

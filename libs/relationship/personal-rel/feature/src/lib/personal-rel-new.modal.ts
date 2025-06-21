@@ -7,8 +7,8 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { RoleName } from '@bk2/shared/config';
 import { hasRole } from '@bk2/shared/util';
 import { ModelType, PersonModel, UserModel} from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared/feature';
 
-import { AppStore } from '@bk2/auth/feature';
 import { PersonalRelNewFormComponent } from '@bk2/personal-rel/ui';
 import { convertPersonsToNewForm } from '@bk2/personal-rel/util';
 import { PersonalRelModalsService } from './personal-rel-modals.service';

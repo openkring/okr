@@ -5,9 +5,9 @@ import { register, SwiperContainer } from 'swiper/element/bundle';
 
 import { Image } from '@bk2/shared/models';
 import { HeaderComponent, LabelComponent } from '@bk2/shared/ui';
-import { die, getSizedImgixParamsByExtension } from '@bk2/shared/util';
-import { downloadToBrowser, TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
+import { die, downloadToBrowser, getSizedImgixParamsByExtension } from '@bk2/shared/util';
+import { TranslatePipe } from '@bk2/shared/i18n';
+import { AppStore } from '@bk2/shared/feature';
 
 register(); // globally register Swiper's custom elements.
 
@@ -54,13 +54,13 @@ register(); // globally register Swiper's custom elements.
   `
 })
 export class GalleryModalComponent implements AfterViewInit{
-  protected env = inject(ENV);
+  protected readonly appStore = inject(AppStore);
 
   protected imageList = input.required<Image[]>();
   protected initialSlide = input(0);
   protected title = input.required<string>();
   protected effect = input('slide');
-  protected baseImgixUrl = this.env.app.imgixBaseUrl;
+  protected baseImgixUrl = this.appStore.services.imgixBaseUrl();
   private readonly mainSwiper = viewChild<SwiperContainer>('mainSwiper');
 
   /*

@@ -5,9 +5,9 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { CategoryComponent, EditorComponent } from '@bk2/shared/ui';
 import { HorizontalPositions } from '@bk2/shared/categories';
 import { LowercaseWordMask, SizeMask } from '@bk2/shared/config';
-import { HorizontalPosition } from '@bk2/shared/models';
+import { HorizontalPosition, newButton, newIcon } from '@bk2/shared/models';
 
-import { newButton, newIcon, SectionFormModel } from '@bk2/cms/section/util';
+import { SectionFormModel } from '@bk2/cms/section/util';
 import { ButtonFormComponent } from './button.form';
 import { IconFormComponent } from './icon.form';
 import { ButtonActionConfigComponent } from './button-action-config.component';

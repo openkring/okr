@@ -2,12 +2,13 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { map, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
-import { CalEventService } from 'libs/calevent/data-access/src';
 import { CalEventModel } from '@bk2/shared/models';
 import { convertCalEventToFullCalendar } from '@bk2/calevent/util';
-import { map, of } from 'rxjs';
+import { AppStore } from '@bk2/shared/feature';
+
+import { CalEventService } from '@bk2/calevent/data-access';
 
 export type CalendarState = {
   calendarName: string | undefined;
@@ -21,7 +22,7 @@ export const CalendarStore = signalStore(
   withState(initialState),
   withProps(() => ({
     calEventService: inject(CalEventService),
-    env: inject(ENV),
+    appStore: inject(AppStore),
     modalController: inject(ModalController),  
   })),
   withProps((store) => ({
@@ -57,6 +58,7 @@ export const CalendarStore = signalStore(
         return _calEvents.map((calEvent: CalEventModel) => convertCalEventToFullCalendar(calEvent));
       }),
       isLoading: computed(() => state.calEventsResource.isLoading()),
+      currentUser: computed(() => state.appStore.currentUser()),
     }
   }),
 

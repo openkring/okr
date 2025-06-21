@@ -3,9 +3,9 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util';
 import { PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
+import { AppStore } from './app.store';
 
 export type PersonSelectState = {
   searchTerm: string;
@@ -22,8 +22,7 @@ export const personInitialState: PersonSelectState = {
 export const PersonSelectStore = signalStore(
   withState(personInitialState),
   withProps(() => ({
-    firestore: inject(FIRESTORE),
-    env: inject(ENV),
+    appStore: inject(AppStore),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
@@ -32,7 +31,7 @@ export const PersonSelectStore = signalStore(
         currentUser: store.currentUser()
       }),
       loader: ({request}) => {
-        const persons$ = searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.env.owner.tenantId), 'lastName', 'asc');
+        const persons$ = searchData<PersonModel>(store.appStore.firestore, PersonCollection, getSystemQuery(store.appStore.tenantId()), 'lastName', 'asc');
         debugListLoaded('persons (to select)', persons$, request.currentUser);
         return persons$;
       }

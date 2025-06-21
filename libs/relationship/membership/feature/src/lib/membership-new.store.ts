@@ -3,11 +3,10 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, OrgCollection, OrgModel } from '@bk2/shared/models';
 import { debugItemLoaded, readModel } from '@bk2/shared/util';
+import { AppStore } from '@bk2/shared/feature';
 
-import { AppStore } from '@bk2/auth/feature';
 import { MembershipService } from '@bk2/membership/data-access';
 
 export type MembershipNewState = {
@@ -24,8 +23,6 @@ export const MembershipNewStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     membershipService: inject(MembershipService),
-    firestore: inject(FIRESTORE),
-    env: inject(ENV),
     modalController: inject(ModalController) 
   })),
 
@@ -36,7 +33,7 @@ export const MembershipNewStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),  
       loader: ({request}) => {
-        const org$ = readModel<OrgModel>(store.firestore, OrgCollection, request.orgId);
+        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, request.orgId);
         debugItemLoaded<OrgModel>(`org ${request.orgId}`, org$, request.currentUser);
         return org$;
       }
@@ -55,7 +52,7 @@ export const MembershipNewStore = signalStore(
         mcatId: store.membershipCategoryKey()
       }),  
       loader: ({request}) => {
-        const mcat$ = readModel<CategoryListModel>(store.firestore, CategoryCollection, request.mcatId);
+        const mcat$ = readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, request.mcatId);
         debugItemLoaded<CategoryListModel>(`mcat ${request.mcatId}`, mcat$, store.appStore.currentUser());           
         return mcat$;
       }
@@ -63,7 +60,7 @@ export const MembershipNewStore = signalStore(
   })),
   withComputed((state) => {
     return {
-      membershipCategory: computed(() => state.mcatResource.value() ?? getDefaultMembershipCategory(state.env.owner.tenantId)),
+      membershipCategory: computed(() => state.mcatResource.value() ?? getDefaultMembershipCategory(state.appStore.tenantId())),
       currentUser: computed(() => state.appStore.currentUser()),
       isLoading: computed(() => state.mcatResource.isLoading() || state.orgResource.isLoading()),
     };
@@ -80,7 +77,7 @@ export const MembershipNewStore = signalStore(
   withHooks({
     onInit(store) {
       patchState(store, { 
-        orgId: store.env.owner.orgId 
+        orgId: store.appStore.appConfig().ownerOrgId 
       });
     }
   })

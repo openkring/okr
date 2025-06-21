@@ -2,16 +2,17 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { firstValueFrom } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
 import { AllCategories, SectionModel, SectionType } from '@bk2/shared/models';
 import { categoryMatches, SectionTypes } from '@bk2/shared/categories';
 import { nameMatches } from '@bk2/shared/util';
+import { CardSelectModalComponent } from '@bk2/shared/ui';
+import { AppStore } from '@bk2/shared/feature';
+
 import { SectionService } from '@bk2/cms/section/data-access';
 import { createSection, isSection } from '@bk2/cms/section/util';
-import { firstValueFrom } from 'rxjs';
 import { SectionEditModalComponent } from './section-edit.modal';
-import { CardSelectModalComponent } from '@bk2/shared/ui';
 
 export type SectionListState = {
   searchTerm: string;
@@ -27,7 +28,7 @@ export const SectionListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     sectionService: inject(SectionService),
-    env: inject(ENV),
+    appStore: inject(AppStore),
     modalController: inject(ModalController),  
   })),
   withProps((store) => ({
@@ -82,7 +83,7 @@ export const SectionListStore = signalStore(
         _modal.present();
         const { data, role } = await _modal.onWillDismiss();
         if (role === 'confirm') { // data = selected Category
-          const _section = createSection(data, store.env.owner.tenantId);
+          const _section = createSection(data, store.appStore.tenantId());
           this.edit(await store.sectionService.create(_section));
         }
         this.reset();
@@ -101,7 +102,7 @@ export const SectionListStore = signalStore(
             _modal.present();
             const { data, role } = await _modal.onWillDismiss();
             if (role === 'confirm') {
-              if (isSection(data, store.env.owner.tenantId)) {
+              if (isSection(data, store.appStore.tenantId())) {
                 store.sectionService.update(data);
               }
             }

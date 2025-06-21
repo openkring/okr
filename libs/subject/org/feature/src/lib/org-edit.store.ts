@@ -2,14 +2,15 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared/config';
 import { AddressModel, ModelType, OrgModel } from '@bk2/shared/models';
-import { Observable, of } from 'rxjs';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
+import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
+
 import { OrgService } from '@bk2/org/data-access';
 import { convertFormToOrg, OrgFormModel } from '@bk2/org/util';
-import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
 
 export type OrgEditState = {
   orgKey: string | undefined;
@@ -49,7 +50,7 @@ export const OrgEditStore = signalStore(
       org: computed(() => state.orgResource.value()),
       currentUser: computed(() => state.appStore.currentUser()),
       defaultResource : computed(() => state.appStore.defaultResource()),
-      tenantId: computed(() => state.env.owner.tenantId),
+      tenantId: computed(() => state.env.tenantId),
     };
   }),
 
@@ -99,7 +100,7 @@ export const OrgEditStore = signalStore(
       },
 
       async save(vm: OrgFormModel): Promise<void> {
-        const _org = convertFormToOrg(store.org(), vm, store.env.owner.tenantId);
+        const _org = convertFormToOrg(store.org(), vm, store.env.tenantId);
         await (!_org.bkey ? store.orgService.create(_org, store.currentUser()) : store.orgService.update(_org));
         store.appNavigationService.back();
       }

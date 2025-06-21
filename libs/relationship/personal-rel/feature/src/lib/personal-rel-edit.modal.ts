@@ -7,11 +7,11 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { RoleName } from '@bk2/shared/config';
 import { getFullPersonName, hasRole } from '@bk2/shared/util';
 import { ModelType, PersonalRelCollection, PersonalRelModel, UserModel } from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared/feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
 import { PersonalRelFormComponent } from '@bk2/personal-rel/ui';
 import { convertFormToPersonalRel, convertPersonalRelToForm } from '@bk2/personal-rel/util';
-import { AppStore } from '@bk2/auth/feature';
 import { PersonalRelModalsService } from './personal-rel-modals.service';
 
 @Component({
@@ -64,7 +64,7 @@ export class PersonalRelEditModalComponent {
   public personalRelCollection = PersonalRelCollection;
 
   public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToPersonalRel(this.personalRel(), this.vm(), this.appStore.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToPersonalRel(this.personalRel(), this.vm(), this.appStore.env.tenantId), 'confirm');
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

@@ -5,13 +5,12 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
 import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } from '@bk2/shared/models';
-import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util';
-import { confirm } from '@bk2/shared/i18n';
+import { confirm, convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util';
+import { AppStore } from '@bk2/shared/feature';
+import { selectDate } from '@bk2/shared/ui';
 
-import { AppStore } from '@bk2/auth/feature';
 import { ReservationService } from '@bk2/reservation/data-access';
 import { ReservationModalsService } from './reservation-modals.service';
-import { selectDate } from '@bk2/shared/ui';
 
 export type ReservationsAccordionState = {
   reserver: PersonModel | OrgModel | undefined;

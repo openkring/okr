@@ -4,15 +4,14 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches, readModel, searchData } from '@bk2/shared/util';
 import { memberTypeMatches } from '@bk2/shared/categories';
 import { AllCategories, CategoryCollection, CategoryListModel, GenderType, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, OrgType, PersonCollection, PersonModel } from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared/feature';
+import { selectDate } from '@bk2/shared/ui';
 
-import { AppStore } from '@bk2/auth/feature';
 import { MembershipService } from '@bk2/membership/data-access';
 import { MembershipModalsService } from './membership-modals.service';
-import { selectDate } from '@bk2/shared/ui';
 
 export type MembershipListState = {
   orgId: string;
@@ -41,15 +40,13 @@ export const MembershipListStore = signalStore(
   withProps(() => ({
     membershipService: inject(MembershipService),
     membershipModalsService: inject(MembershipModalsService),
-    firestore: inject(FIRESTORE),
     appStore: inject(AppStore),
-    env: inject(ENV),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     membershipsResource: rxResource({
       loader: () => {
-        const memberships$ = searchData<MembershipModel>(store.firestore, MembershipCollection, getSystemQuery(store.env.owner.tenantId), 'memberName2', 'asc');
+        const memberships$ = searchData<MembershipModel>(store.appStore.firestore, MembershipCollection, getSystemQuery(store.appStore.tenantId()), 'memberName2', 'asc');
         debugListLoaded('memberships', memberships$, store.appStore.currentUser());
         return memberships$;
       }
@@ -60,7 +57,7 @@ export const MembershipListStore = signalStore(
         orgId: store.orgId()
       }),  
       loader: ({request}) => {
-        const org$ = readModel<OrgModel>(store.firestore, OrgCollection, request.orgId);    
+        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, request.orgId);    
         debugItemLoaded('defaultOrg', org$, store.appStore.currentUser());
         return org$;
       }
@@ -138,7 +135,7 @@ export const MembershipListStore = signalStore(
         mcatId: store.membershipCategoryKey()
       }),  
       loader: ({request}) => {
-        return readModel<CategoryListModel>(store.firestore, CategoryCollection, request.mcatId);            
+        return readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, request.mcatId);            
       }
     }),
     currentPersonResource: rxResource({
@@ -147,7 +144,7 @@ export const MembershipListStore = signalStore(
       }),  
       loader: ({request}) => {
         if (request.currentUser) {
-          return readModel<PersonModel>(store.firestore, PersonCollection, request.currentUser.personKey);            
+          return readModel<PersonModel>(store.appStore.firestore, PersonCollection, request.currentUser.personKey);            
         }
         return of(undefined);
       }

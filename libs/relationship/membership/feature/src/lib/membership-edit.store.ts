@@ -3,12 +3,11 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
 import { debugItemLoaded, readModel } from '@bk2/shared/util';
 
-import { AppStore } from '@bk2/auth/feature';
 import { MembershipService } from '@bk2/membership/data-access';
+import { AppStore } from '@bk2/shared/feature';
 
 export type MembershipEditState = {
   membership: MembershipModel | undefined;
@@ -23,8 +22,6 @@ export const MembershipEditStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     membershipService: inject(MembershipService),
-    firestore: inject(FIRESTORE),
-    env: inject(ENV),
     modalController: inject(ModalController) 
   })),
   withProps((store) => ({
@@ -34,7 +31,7 @@ export const MembershipEditStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),  
       loader: ({request}) => {
-        const org$ = readModel<OrgModel>(store.firestore, OrgCollection, request.orgId);
+        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, request.orgId);
         debugItemLoaded<OrgModel>(`org ${request.orgId}`, org$, request.currentUser);
         return org$;
       }
@@ -54,7 +51,7 @@ export const MembershipEditStore = signalStore(
         mcatId: store.membershipCategoryKey()
       }),  
       loader: ({request}) => {
-        const mcat$ = readModel<CategoryListModel>(store.firestore, CategoryCollection, request.mcatId);
+        const mcat$ = readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, request.mcatId);
         debugItemLoaded<CategoryListModel>(`mcat ${request.mcatId}`, mcat$, store.appStore.currentUser());           
         return mcat$;
       }

@@ -6,7 +6,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { AddressModel, ModelType, PersonModel, ResourceModel } from '@bk2/shared/models';
 import { PersonService } from '@bk2/person/data-access';
 import { Observable, of } from 'rxjs';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 import { convertFormToPerson, PersonFormModel } from '@bk2/person/util';
 import { AppNavigationService, debugItemLoaded, debugListLoaded } from '@bk2/shared/util';
 
@@ -48,10 +48,11 @@ export const PersonEditStore = signalStore(
 
   withComputed((state) => {
     return {
-      person: computed(() => state.personResource.value() ?? new PersonModel(state.appStore.env.owner.tenantId)),
+      person: computed(() => state.personResource.value() ?? new PersonModel(state.appStore.env.tenantId)),
       currentUser: computed(() => state.appStore.currentUser()),
-      defaultResource : computed(() => state.appStore.defaultResource() ?? new ResourceModel(state.appStore.env.owner.tenantId)),
-      tenantId: computed(() => state.appStore.env.owner.tenantId),
+      defaultResource : computed(() => state.appStore.defaultResource() ?? new ResourceModel(state.appStore.env.tenantId)),
+      tenantId: computed(() => state.appStore.env.tenantId),
+      privacySettings: computed(() => state.appStore.privacySettings()),
     };
   }),
 
@@ -97,7 +98,7 @@ export const PersonEditStore = signalStore(
       },
 
       async save(vm: PersonFormModel): Promise<void> {
-        const _person = convertFormToPerson(store.person(), vm, store.appStore.env.owner.tenantId);
+        const _person = convertFormToPerson(store.person(), vm, store.appStore.env.tenantId);
         await (!_person.bkey ? store.personService.create(_person) : store.personService.update(_person));
         store.appNavigationService.back();
       }

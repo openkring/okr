@@ -1,4 +1,3 @@
-import { DEFAULT_TOAST_LENGTH } from '@bk2/shared/config';
 import { AvatarUsage, DefaultLanguage, DeliveryType, Language, NameDisplay, PersonSortCriteria } from '@bk2/shared/models';
 import { DeepPartial, DeepRequired} from 'ngx-vest-forms';
 
@@ -11,7 +10,6 @@ export type SettingsFormModel = DeepPartial<{
   userKey: string,
   useTouchId: boolean,
   useFaceId: boolean,
-  toastLength: number,
   avatarUsage: AvatarUsage,
   gravatarEmail: string,
   nameDisplay: NameDisplay,
@@ -29,7 +27,6 @@ export const settingsFormModelShape: DeepRequired<SettingsFormModel> = {
   userKey: '',
   useTouchId: false,
   useFaceId: false,
-  toastLength: DEFAULT_TOAST_LENGTH,
   avatarUsage: AvatarUsage.PhotoFirst,
   gravatarEmail: '',
   nameDisplay: NameDisplay.FirstLast,

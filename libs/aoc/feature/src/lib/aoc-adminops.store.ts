@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 
 import { FIRESTORE } from '@bk2/shared/config';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 import { BkModel, LogInfo, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared/models';
 
 import { Observable, of } from 'rxjs';
@@ -35,11 +35,11 @@ export const AocAdminOpsStore = signalStore(
       loader: ({request}): Observable<BkModel[] | undefined> => {
         switch(request.modelType) {
           case ModelType.Person:
-            return searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.appStore.env.owner.tenantId), 'lastName', 'asc');
+            return searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
           case ModelType.Org:
-            return searchData<OrgModel>(store.firestore, OrgCollection, getSystemQuery(store.appStore.env.owner.tenantId), 'name', 'asc');
+            return searchData<OrgModel>(store.firestore, OrgCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc');
           case ModelType.Membership:
-            return searchData<MembershipModel>(store.firestore, MembershipCollection, getSystemQuery(store.appStore.env.owner.tenantId), 'memberName2', 'asc');
+            return searchData<MembershipModel>(store.firestore, MembershipCollection, getSystemQuery(store.appStore.env.tenantId), 'memberName2', 'asc');
           default:
             return of(undefined);
         }
@@ -71,7 +71,7 @@ export const AocAdminOpsStore = signalStore(
         if (store.modelType() === ModelType.Membership) {
           const _log = store.data()
             .filter((model) => {
-              if (isMembership(model, store.appStore.env.owner.tenantId)) {
+              if (isMembership(model, store.appStore.env.tenantId)) {
                 if (model.membershipCategory === 'junior' && 
                     model.orgKey === orgKey &&
                     model.relIsLast === true &&
@@ -85,7 +85,7 @@ export const AocAdminOpsStore = signalStore(
               return false;
             })
             .map((model) => {
-              if (isMembership(model, store.appStore.env.owner.tenantId)) {
+              if (isMembership(model, store.appStore.env.tenantId)) {
                 const _name = getFullPersonName(model.memberName1, model.memberName2);
                 const _age = getAge(model.memberDateOfBirth, false, refYear);
                 const _message = _age < 0 ? 'no dateOfBirth' : `old junior: ${model.memberDateOfBirth} -> ${_age}`;

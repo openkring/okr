@@ -9,7 +9,7 @@ import { ENV, RoleName } from '@bk2/shared/config';
 import { ModelType, PersonCollection } from '@bk2/shared/models';
 import { getFullPersonName, hasRole } from '@bk2/shared/util';
 
-import { AvatarToolbarComponent } from '@bk2/avatar/ui';
+import { AvatarToolbarComponent } from 'libs/avatar/feature/src';
 import { AvatarService } from '@bk2/avatar/data-access';
 
 import { AddressesAccordionComponent } from '@bk2/address/feature';
@@ -44,7 +44,11 @@ import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
     <ion-content no-padding>
       <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [isEditable]="hasRole('memberAdmin')" title="{{ title() }}"/>
       @if(person(); as person) {
-        <bk-person-form [(vm)]="vm" [currentUser]="currentUser()" [personTags]="personTags()" (validChange)="formIsValid.set($event)" />
+        <bk-person-form [(vm)]="vm" 
+          [currentUser]="currentUser()"
+          [priv]="priv()"
+          [personTags]="personTags()"
+          (validChange)="formIsValid.set($event)" />
 
         <ion-accordion-group value="addresses" [multiple]="true">
           <bk-addresses-accordion [parentKey]="personKey()" [readOnly]="false" [parentModelType]="modelType.Person" [addresses]="addresses()" 
@@ -73,6 +77,7 @@ export class PersonEditPageComponent {
 
   public personKey = input.required<string>();
 
+  protected priv = computed(() => this.personEditStore.privacySettings());
   protected currentUser = computed(() => this.personEditStore.currentUser());
   protected person = computed(() => this.personEditStore.person());
   protected defaultResource = computed(() => this.personEditStore.defaultResource());
@@ -105,7 +110,7 @@ export class PersonEditPageComponent {
     const _person = this.person();
     if (!_person) return;
     const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.owner.tenantId], ModelType.Group, _person.bkey, _file.name);
+    const _avatar = newAvatarModel([this.env.tenantId], ModelType.Group, _person.bkey, _file.name);
     const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
 
     if (_downloadUrl) {

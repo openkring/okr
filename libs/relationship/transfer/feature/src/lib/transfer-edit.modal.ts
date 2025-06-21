@@ -4,12 +4,12 @@ import { AsyncPipe } from '@angular/common';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV, RoleName } from '@bk2/shared/config';
+import { RoleName } from '@bk2/shared/config';
 import { ModelType, TransferCollection, TransferModel } from '@bk2/shared/models';
 import { hasRole } from '@bk2/shared/util';
+import { AppStore } from '@bk2/shared/feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { AppStore } from '@bk2/auth/feature';
 
 import { convertFormToTransfer, convertTransferToForm } from '@bk2/transfer/util';
 import { TransferFormComponent } from './transfer.form';
@@ -41,7 +41,6 @@ import { TransferFormComponent } from './transfer.form';
 export class TransferEditModalComponent {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
-  private readonly env = inject(ENV);
 
   public transfer = input.required<TransferModel>();
 
@@ -55,7 +54,7 @@ export class TransferEditModalComponent {
   protected transferCollection = TransferCollection;
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToTransfer(this.transfer(), this.vm(), this.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToTransfer(this.transfer(), this.vm(), this.appStore.tenantId()), 'confirm');
   }
 
   protected hasRole(role?: RoleName): boolean {

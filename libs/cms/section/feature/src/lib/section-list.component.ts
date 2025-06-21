@@ -7,10 +7,11 @@ import { CategoryComponent, EmptyListComponent, SearchbarComponent, SpinnerCompo
 import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { addAllCategory, SectionTypes } from '@bk2/shared/categories';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AppStore } from '@bk2/auth/feature';
-import { SectionListStore } from './section-list.store';
+import { AppStore } from '@bk2/shared/feature';
 import { RoleName } from '@bk2/shared/config';
 import { hasRole } from '@bk2/shared/util';
+
+import { SectionListStore } from './section-list.store';
 
 @Component({
   selector: 'bk-section-all-list',

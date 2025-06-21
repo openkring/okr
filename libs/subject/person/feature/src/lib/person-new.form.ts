@@ -5,13 +5,13 @@ import { vestForms } from 'ngx-vest-forms';
 import { AsyncPipe } from '@angular/common';
 
 import { GenderTypes } from '@bk2/shared/categories';
-import { BexioIdMask, ChSsnMask, ENV, RoleName } from '@bk2/shared/config';
-import { CategoryListModel, GenderType, ModelType, SwissCity, UserModel } from '@bk2/shared/models';
+import { BexioIdMask, ChSsnMask, RoleName } from '@bk2/shared/config';
+import { CategoryListModel, GenderType, ModelType, PrivacyAccessor, PrivacySettings, SwissCity, UserModel } from '@bk2/shared/models';
 import { CategoryComponent, CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, debugFormModel, getTodayStr, hasRole, isOrg } from '@bk2/shared/util';
+import { debugFormErrors, debugFormModel, getTodayStr, hasRole, isOrg, isVisibleToUser } from '@bk2/shared/util';
 import { AvatarPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { OrgSelectModalComponent } from '@bk2/shared/feature';
+import { OrgSelectModalComponent, AppStore } from '@bk2/shared/feature';
 
 import { SwissCitySearchComponent } from '@bk2/swisscities/ui';
 
@@ -55,7 +55,7 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
             </ion-col>
           </ion-row>
 
-          @if(hasRole(env.privacy.showGender)) {
+          @if(isVisibleToUser(priv().showGender)) {
             <ion-row>
               <ion-col size="12" size-md="6">
                 <bk-cat name="gender" [value]="gender()" [categories]="genderTypes" (changed)="onChange('gender', $event)" />
@@ -65,17 +65,17 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
 
           <!-- tbd: these role checks are currently only checking against the default
             they need to be extended to consider the settings of this person's user -->
-          @if(hasRole(env.privacy.showDateOfBirth) || hasRole(env.privacy.showDateOfDeath)) {
+          @if(isVisibleToUser(priv().showDateOfBirth) || isVisibleToUser(priv().showDateOfDeath)) {
             <ion-row>
-              @if(hasRole(env.privacy.showDateOfBirth)) {
+              @if(isVisibleToUser(priv().showDateOfBirth)) {
                 <ion-col size="12" size-md="6"> 
-                  <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" autocomplete="bday" [showHelper]=true (changed)="onChange('dateOfBirth', $event)" />
+                  <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" [locale]="locale()" autocomplete="bday" [showHelper]=true (changed)="onChange('dateOfBirth', $event)" />
                 </ion-col>
               }
 
-              @if(hasRole(env.privacy.showDateOfDeath)) {
+              @if(isVisibleToUser(priv().showDateOfDeath)) {
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="dateOfDeath"  [storeDate]="dateOfDeath()" (changed)="onChange('dateOfDeath', $event)" />
+                  <bk-date-input name="dateOfDeath"  [storeDate]="dateOfDeath()" [locale]="locale()" (changed)="onChange('dateOfDeath', $event)" />
                 </ion-col>
               }
             </ion-row>
@@ -133,7 +133,7 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
     </ion-card>
 
     <!-------------------------------------- OTHER ------------------------------------->
-    @if(hasRole(env.privacy.showTaxId) || hasRole(env.privacy.showBexioId)) {
+    @if(isVisibleToUser(priv().showTaxId) || isVisibleToUser(priv().showBexioId)) {
       <ion-card>
         <ion-card-header>
           <ion-card-title>Verschiedenes</ion-card-title>
@@ -141,12 +141,12 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              @if(hasRole(env.privacy.showTaxId)) {
+              @if(isVisibleToUser(priv().showTaxId)) {
                 <ion-col size="12" size-md="6">
                   <bk-text-input name="ssnId" [value]="ssnId()" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true (changed)="onChange('ssnId', $event)" />                                        
                 </ion-col>
               }
-              @if(hasRole(env.privacy.showBexioId)) {
+              @if(isVisibleToUser(priv().showBexioId)) {
                 <ion-col size="12" size-md="6">
                   <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true (changed)="onChange('bexioId', $event)" />                                        
                 </ion-col>
@@ -198,11 +198,11 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
       </ion-card-content>
     </ion-card>
     
-    @if(hasRole(env.privacy.showTags)) {
+    @if(isVisibleToUser(priv().showTags)) {
           <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="personTags()" (changed)="onChange('tags', $event)" />
     }
 
-    @if(hasRole(env.privacy.showNotes)) {
+    @if(isVisibleToUser(priv().showNotes)) {
           <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
     }
   </form>
@@ -210,12 +210,13 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
 })
 export class PersonNewFormComponent {  
   private readonly modalController = inject(ModalController)
-  protected readonly env = inject(ENV);
+  protected readonly appStore = inject(AppStore);
   
   public vm = model.required<PersonNewFormModel>();
   public currentUser = input<UserModel | undefined>();
   public membershipCategories = input.required<CategoryListModel>();
   public personTags = input.required<string>();
+  public priv = input.required<PrivacySettings>();
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
@@ -230,6 +231,7 @@ export class PersonNewFormComponent {
   protected tags = computed(() => this.vm().tags ?? '');
   protected notes = computed(() => this.vm().notes ?? '');
   protected shouldAddMembership = computed(() => this.vm().shouldAddMembership ?? false);
+  protected readonly locale = computed(() => this.appStore.appConfig().locale);
 
   // address
   protected street = computed(() => this.vm().street ?? '');
@@ -274,7 +276,7 @@ export class PersonNewFormComponent {
     _modal.present();
     const { data, role } = await _modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isOrg(data, this.env.owner.tenantId)) {
+      if (isOrg(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
           ..._vm, 
           orgKey: data.bkey, 
@@ -315,5 +317,9 @@ export class PersonNewFormComponent {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  protected isVisibleToUser(privacyAccessor: PrivacyAccessor): boolean {
+    return isVisibleToUser(privacyAccessor, this.currentUser());
   }
 }

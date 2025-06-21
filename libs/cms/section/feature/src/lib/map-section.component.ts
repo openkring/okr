@@ -1,11 +1,12 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, computed, inject, input } from '@angular/core';
-import { SectionModel } from '@bk2/shared/models';
+import { Geolocation } from '@capacitor/geolocation';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
-import { ENV } from '@bk2/shared/config';
 import { GoogleMap, MapType } from '@capacitor/google-maps';
+
+import { SectionModel } from '@bk2/shared/models';
 import { die } from '@bk2/shared/util';
 import { OptionalCardHeaderComponent } from '@bk2/shared/ui';
-import { Geolocation } from '@capacitor/geolocation';
+import { AppStore } from '@bk2/shared/feature';
 
 @Component({
   selector: 'bk-map-section',
@@ -35,14 +36,14 @@ import { Geolocation } from '@capacitor/geolocation';
   `
 })
 export class MapSectionComponent implements OnInit, OnDestroy {
-  private readonly env = inject(ENV);
+  private readonly appStore = inject(AppStore);
 
   public section = input.required<SectionModel>();
 
-  // tbd: lookup env.owner.locationId and return its latitude
-  private readonly centerLatitude = computed(() => parseFloat(this.section()?.properties?.map?.centerLatitude ?? this.env.owner.latitude));
-  private readonly centerLongitude = computed(() => parseFloat(this.section()?.properties?.map?.centerLongitude ?? this.env.owner.longitude));
-  private readonly zoom = computed(() => parseFloat(this.section()?.properties?.map?.zoom ?? this.env.owner.zoom));
+  // tbd: lookup appStore.locationId and return its latitude, longitue and zoom level
+  private readonly centerLatitude = computed(() => parseFloat(this.section()?.properties?.map?.centerLatitude ?? ''));
+  private readonly centerLongitude = computed(() => parseFloat(this.section()?.properties?.map?.centerLongitude ?? ''));
+  private readonly zoom = computed(() => parseFloat(this.section()?.properties?.map?.zoom ?? '15'));
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
   protected readonly useCurrentLocation = computed(() => this.section()?.properties?.map?.useCurrentLocationAsCenter ?? false);
@@ -78,7 +79,7 @@ async loadMap() {
   this.map = await GoogleMap.create({
     id: 'bk-map',               // Unique identifier for this map instance
     element: _mapRef,
-    apiKey: this.env.services.gmapKey, // Google Maps API Key
+    apiKey: this.appStore.env.services.gmapKey, // Google Maps API Key
     config: {
       center: { lat: _centerLatitude, lng: _centerLongitude },
       zoom: this.zoom(), 

@@ -1,4 +1,3 @@
-export * from './lib/app.store';
 export * from './lib/isAdmin.guard';
 export * from './lib/isAuthenticated.guard';
 export * from './lib/isPrivileged.guard';

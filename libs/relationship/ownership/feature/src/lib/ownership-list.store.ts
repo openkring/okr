@@ -3,15 +3,13 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared/util';
+import { chipMatches, confirm, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared/util';
 import { AllCategories, GenderType, ModelType, OrgType, OwnershipModel, OwnershipType, OwnerTypeSelect, ResourceType, RowingBoatType } from '@bk2/shared/models';
 import { categoryMatches, ownerTypeMatches } from '@bk2/shared/categories';
-
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
+import { selectDate } from '@bk2/shared/ui';
 
 import { OwnershipService } from '@bk2/ownership/data-access';
-import { confirm } from '@bk2/shared/i18n';
-import { selectDate } from '@bk2/shared/ui';
 import { OwnershipModalsService } from './ownership-modals.service';
 
 export type OwnershipListState = {

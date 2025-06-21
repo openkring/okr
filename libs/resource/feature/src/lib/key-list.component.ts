@@ -3,8 +3,8 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItem
 import { AsyncPipe } from '@angular/common';
 
 import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
-import { error, TranslatePipe } from '@bk2/shared/i18n';
+import { error, hasRole } from '@bk2/shared/util';
+import { TranslatePipe } from '@bk2/shared/i18n';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { ResourceModel } from '@bk2/shared/models';

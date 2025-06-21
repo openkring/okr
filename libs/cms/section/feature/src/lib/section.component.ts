@@ -1,15 +1,14 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input } from '@angular/core';
+import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { SectionService } from '@bk2/cms/section/data-access';
-import { rxResource } from '@angular/core/rxjs-interop';
 import { RoleName } from '@bk2/shared/config';
-import { AppStore } from '@bk2/auth/feature';
-import { DebugInfoComponent } from '@bk2/shared/ui';
+import { SectionType } from '@bk2/shared/models';
+import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared/util';
+
 import { ArticleSectionComponent } from './article-section.component';
 import { MissingSectionComponent } from './missing-section.component';
 import { TableSectionComponent } from './table-section.component';
 import { VideoSectionComponent } from './video-section.component';
-import { SectionType } from '@bk2/shared/models';
 import { IframeSectionComponent } from './iframe-section.component';
 import { MapSectionComponent } from './map-section.component';
 import { AlbumSectionComponent } from './album-section.component';
@@ -20,10 +19,9 @@ import { GallerySectionComponent } from './gallery-section.component';
 import { HeroSectionComponent } from './hero-section.component';
 import { SwiperSectionComponent } from './swiper-section.component';
 import { ChartSectionComponent } from './chart-section.component';
-import { IonItem, IonLabel } from '@ionic/angular/standalone';
 import { ChatSectionComponent } from './chat-section.component';
 import { TrackerSectionComponent } from './tracker-section.component';
-import { hasRole } from '@bk2/shared/util';
+import { SectionDetailStore } from './section-detail.store';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -37,9 +35,9 @@ import { hasRole } from '@bk2/shared/util';
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleListSectionComponent, GallerySectionComponent, TrackerSectionComponent,
     HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent, ChatSectionComponent,
-    DebugInfoComponent,
     IonItem, IonLabel
   ],
+  providers: [SectionDetailStore],
   template: `
     @if (section(); as section) {
       @if (hasRole(roleNeeded())) {
@@ -94,10 +92,9 @@ import { hasRole } from '@bk2/shared/util';
           }
         }
       }
-      <bk-debug-info title="Section:" [isDebug]="appStore.isDebug()" [data]="section" />
     } @else {
       <ion-item color="warning">
-        <ion-label>Missing: {{ sectionKey() }}</ion-label>
+        <ion-label>Missing type on section {{ id() }}</ion-label>
       </ion-item>
     }
 <!--         
@@ -123,25 +120,25 @@ so they stand out on the page. Use clean fonts and subtle background colors that
   `
 })
 export class SectionComponent {
-  private readonly sectionService = inject(SectionService);
-  public appStore = inject(AppStore);
+  private readonly sectionStore = inject(SectionDetailStore);
 
-  public sectionKey = input.required<string>();
+  public id = input.required<string>();     // sectionId
   public readOnly = input(true);
 
-  private readonly sectionRef = rxResource({ 
-    request: () => ({
-      sectionKey: this.sectionKey(),
-      isAuthenticated: this.appStore.isAuthenticated()
-    }),
-    loader: ({request}) => this.sectionService.read(request.sectionKey) 
-  });
-  protected section = computed(() => this.sectionRef.value());
+  protected readonly section = computed(() => this.sectionStore.section());
   protected readonly roleNeeded = computed(() => this.section()?.roleNeeded as RoleName);
 
   public ST = SectionType;
 
+  constructor() {
+    effect(() => {
+      const _id = replaceSubstring(this.id(), '@TID@', this.sectionStore.appStore.env.tenantId);
+      debugMessage(`SectionComponent: sectionId=${this.id()} -> ${_id}`, this.sectionStore.currentUser());
+      this.sectionStore.setSectionId(_id);
+    });
+  }
+
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.appStore.currentUser());
+    return hasRole(role, this.sectionStore.currentUser());
   }
 }

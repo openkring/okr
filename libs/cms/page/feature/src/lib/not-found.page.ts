@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
@@ -7,7 +7,7 @@ import { getImgixUrlWithAutoParams, navigateByUrl } from '@bk2/shared/util';
 import { HeaderComponent } from '@bk2/shared/ui';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
+import { AppStore } from '@bk2/shared/feature';
 
 @Component({
   selector: 'bk-page-not-found',
@@ -70,11 +70,11 @@ import { ENV } from '@bk2/shared/config';
     <bk-header title="{{ '@cms.notfound.title' | translate | async }}" [showCloseButton]="false" />
     <ion-content>
       <div class="notfound-container">
-        <img class="notfound-image" [src]="backgroundImageUrl" alt="Background" />
+        <img class="notfound-image" [src]="backgroundImageUrl()" alt="Background" />
         <ion-grid class="notfound-form">
           <ion-row>
             <ion-col>
-              <ion-img class="logo" [src]="logoUrl" (click)="gotoHome()" alt="{{ logoAlt }}" />
+              <ion-img class="logo" [src]="logoUrl()" (click)="gotoHome()" alt="{{ logoAlt() }}" />
             </ion-col>
           </ion-row>
           <ion-row>
@@ -102,13 +102,14 @@ import { ENV } from '@bk2/shared/config';
 })
 export class PageNotFoundComponent {
   private readonly router = inject(Router);
-  private readonly env = inject(ENV);
+  private readonly appStore = inject(AppStore);
 
-  public backgroundImageUrl = `${this.env.app.imgixBaseUrl}/${getImgixUrlWithAutoParams(this.env.app.notfoundBannerUrl)}`;
-  public logoUrl = `${this.env.app.imgixBaseUrl}/${getImgixUrlWithAutoParams(this.env.app.logoUrl)}`;
-  public logoAlt = `${this.env.owner.tenantId} Logo`;
+  public imgixBaseUrl = computed(() => this.appStore.services.imgixBaseUrl());
+  public backgroundImageUrl = computed(() => `${this.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().notfoundBannerUrl)}`);
+  public logoUrl = computed(() => `${this.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
+  public logoAlt = computed(() => `${this.appStore.tenantId()} Logo`);
 
   public async gotoHome(): Promise<void> {
-    await navigateByUrl(this.router, this.env.app.rootUrl);
+    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
   }
 }

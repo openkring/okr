@@ -13,7 +13,7 @@ export class CommentService {
   private readonly firestore = inject(FIRESTORE);
   private readonly env = inject(ENV);
 
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /* ---------------------- CRUD operations -------------------------------*/
 

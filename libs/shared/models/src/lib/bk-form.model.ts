@@ -169,7 +169,6 @@ export type BkFormModel = Partial<{
   taxId: string,
   tenants: string[],
   title: string,
-  toastLength: number,
   thumbUrl: string,
   type: number,
   url: string,

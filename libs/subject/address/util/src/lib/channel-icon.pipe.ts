@@ -8,9 +8,8 @@ import { ENV } from '@bk2/shared/config';
 export class ChannelIconPipe implements PipeTransform {
   private readonly env = inject(ENV);
 
-
   transform(channelId: number): string {
     const _iconName = getCategoryIcon(AddressChannels, channelId);
-    return `${this.env.app.imgixBaseUrl}/logo/ionic/${_iconName}.svg`;
+    return `${this.env.services.imgixBaseUrl}/logo/ionic/${_iconName}.svg`;
   }
 }

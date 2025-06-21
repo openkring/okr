@@ -5,7 +5,8 @@ import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { ModelType, UserModel} from '@bk2/shared/models';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
+
 import { GroupNewFormComponent } from '@bk2/group/ui';
 import { createNewGroupFormModel } from '@bk2/group/util';
 

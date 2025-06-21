@@ -7,8 +7,8 @@ import { of } from 'rxjs';
 import { ENV } from '@bk2/shared/config';
 import { ModelType } from '@bk2/shared/models';
 import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
+import { AppStore } from '@bk2/shared/feature';
 
-import { AppStore } from '@bk2/auth/feature';
 import { convertFormToGroup, GroupFormModel } from '@bk2/group/util';
 import { GroupService } from '@bk2/group/data-access';
 
@@ -50,7 +50,7 @@ export const GroupEditStore = signalStore(
       group: computed(() => state.groupResource.value()),
       currentUser: computed(() => state.appStore.currentUser()),
       defaultResource : computed(() => state.appStore.defaultResource()),
-      tenantId: computed(() => state.env.owner.tenantId),
+      tenantId: computed(() => state.env.tenantId),
       isLoading: computed(() => state.groupResource.isLoading()),
       segment: computed(() => state.selectedSegment()),
     };
@@ -75,7 +75,7 @@ export const GroupEditStore = signalStore(
       /************************************ ACTIONS ************************************* */
 
       async save(vm: GroupFormModel): Promise<void> {
-        const _group = convertFormToGroup(store.group(), vm, store.env.owner.tenantId);
+        const _group = convertFormToGroup(store.group(), vm, store.env.tenantId);
         await (!_group.bkey ? store.groupService.create(_group, store.currentUser()) : store.groupService.update(_group));
         store.appNavigationService.logLinkHistory();
         store.appNavigationService.back();

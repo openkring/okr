@@ -16,7 +16,7 @@ export class GroupService  {
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
 
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(group: GroupModel, currentUser?: UserModel): Promise<string> {

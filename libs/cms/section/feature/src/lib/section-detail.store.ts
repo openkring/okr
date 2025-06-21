@@ -1,0 +1,76 @@
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { computed, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { ModalController } from '@ionic/angular/standalone';
+
+import { debugItemLoaded, debugMessage } from '@bk2/shared/util';
+import { SectionModel } from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared/feature';
+
+import { SectionService } from '@bk2/cms/section/data-access';
+
+export type SectionDetailState = {
+  sectionId: string;
+};
+
+export const initialState: SectionDetailState = {
+  sectionId: '',
+};
+
+export const SectionDetailStore = signalStore(
+  withState(initialState),
+  withProps(() => ({
+    appStore: inject(AppStore),
+    sectionService: inject(SectionService),
+    modalController: inject(ModalController),
+  })),
+
+  withComputed((state) => {
+    return {
+      tenantId: computed(() => state.appStore.tenantId()),
+      currentUser: computed(() => state.appStore.currentUser()),
+      showDebugInfo: computed(() => state.appStore.showDebugInfo()),
+      imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
+    };
+  }),
+
+  withProps((store) => ({
+    sectionResource: rxResource({
+      request: () => ({
+        sectionId: store.sectionId()
+      }),
+      loader: ({ request }) => {
+        const _section$ = store.sectionService.read(request.sectionId);
+        debugItemLoaded<SectionModel>(`SectionDetailStore.sectionResource`, _section$ , store.currentUser());
+        return _section$;
+      }
+    })
+  })),
+
+  withComputed((state) => {
+    return {
+      section: computed(() => state.sectionResource.value()),
+      isLoading: computed(() => state.sectionResource.isLoading()),
+    };
+  }),
+
+  withMethods((store) => {
+    return {
+      /******************************** setters (filter) ******************************************* */
+      /**
+       * Updates the page id which triggers the loading of the page.
+       * @param id the key of the page
+       */
+      setSectionId(sectionId: string) {
+        debugMessage(`SectionDetailStore.setSectionId(${sectionId})`, store.currentUser());
+        patchState(store, { sectionId });
+      },
+
+      /******************************** actions ******************************************* */
+
+      async export(type: string): Promise<void> {
+        console.log(`SectionDetailStore.export(${type}) is not yet implemented.`);
+      }
+    }
+  }),
+);

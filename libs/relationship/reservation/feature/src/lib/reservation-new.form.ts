@@ -10,6 +10,7 @@ import { debugFormErrors, die, hasRole } from '@bk2/shared/util';
 import { PeriodicityTypes, ReservationReasons, ReservationStates } from '@bk2/shared/categories';
 import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
+import { AppStore } from '@bk2/shared/feature';
 
 import { ReservationNewFormModel, reservationNewFormModelShape, reservationNewFormValidations } from '@bk2/reservation/util';
 import { ReservationSelectorsService } from './reservation-selectors.service';
@@ -83,13 +84,13 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-date-input name="startDate" [storeDate]="startDate()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('startDate', $event)" />
+              <bk-date-input name="startDate" [storeDate]="startDate()" [locale]="locale()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('startDate', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6"> 
               <bk-text-input name="startTime" [value]="startTime()" [maxLength]=5 [mask]="timeMask" [readOnly]="readOnly()" (changed)="onChange('startTime', $event)" />                                        
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-date-input name="endDate" [storeDate]="endDate()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('endDate', $event)" />
+              <bk-date-input name="endDate" [storeDate]="endDate()" [locale]="locale()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('endDate', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6"> 
               <bk-text-input name="endTime" [value]="endTime()" [maxLength]=5 [mask]="timeMask" [readOnly]="readOnly()" (changed)="onChange('endTime', $event)" />                                        
@@ -164,7 +165,8 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
   `
 })
 export class ReservationNewFormComponent {
-  private readonly reservationSelectorsService = inject(ReservationSelectorsService)
+  private readonly reservationSelectorsService = inject(ReservationSelectorsService);
+  private readonly appStore = inject(AppStore);
 
   public vm = model.required<ReservationNewFormModel>();
   public currentUser = input<UserModel | undefined>();
@@ -195,6 +197,7 @@ export class ReservationNewFormComponent {
   protected tags = computed(() => this.vm().tags ?? '');
   protected notes = computed(() => this.vm().notes ?? '');
   protected name = computed(() => this.vm().name ?? '');
+  protected locale = computed(() => this.appStore.appConfig().locale);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

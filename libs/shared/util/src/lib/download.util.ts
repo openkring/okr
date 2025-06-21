@@ -4,12 +4,14 @@ import { ToastController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 import * as XLSX from 'xlsx';
-import { STORAGE } from '@bk2/shared/config';
-import { DateFormat, getTodayStr } from '@bk2/shared/util';
-import { error, showToast } from './alert.util';
-// import * as papa from 'papaparse'; // for csv conversions
 import * as JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+
+import { STORAGE } from '@bk2/shared/config';
+
+import { error, showToast } from './alert.util';
+import { DateFormat, getTodayStr } from './date.util';
+// import * as papa from 'papaparse'; // for csv conversions
 
 /**
    * Generate a download URL (that can be used in a href tag).
@@ -172,7 +174,7 @@ export function downloadFileAndStore(file: File) {
       const _storage = Inject(STORAGE);
       const _ref = ref(_storage, path);
       deleteObject(_ref);
-      showToast(toastController, '@document.operation.delete.conf', 3000);
+      showToast(toastController, '@document.operation.delete.conf');
     }
     catch(_ex) {
       error(toastController, 'download.util/deleteFileFromStorage(' + path + ') -> ERROR: ' + JSON.stringify(_ex));

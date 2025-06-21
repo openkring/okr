@@ -1,6 +1,6 @@
 import { CountryCode, ParseError, PhoneNumber, getCountryCallingCode, isSupportedCountry, isValidPhoneNumber, parsePhoneNumberFromString, parsePhoneNumberWithError } from 'libphonenumber-js';
-import { die, warn } from '@bk2/shared/util';
 import { Pipe, PipeTransform } from '@angular/core';
+import { die, warn } from './log.util';
 
 /*---------------------------------------- PHONENUMBER -------------------------------------------------------*/
 /**
@@ -27,7 +27,7 @@ export function parsePhoneNumber(value: string, countryCode = 'CH'): PhoneNumber
       } catch (error) {
         if (error instanceof ParseError) {
           // Not a phone number, non-existent country, etc.
-          warn(`phone.util/parsePhoneNumber: ${(error as ParseError).message}`)
+          warn(`phone.util/parsePhoneNumber: ${error.message}`)
         } else {
           console.warn('phone.util/parsePhoneNumber: ', error);
         }
@@ -51,7 +51,7 @@ export function formatPhoneNumber(phoneNumber: number | string, countryCode = 'C
     if (!phoneNumber) return '';
     if (!isSupportedCountry(countryCode)) die(`phone.util.phonePrettyPrint() -> ERROR: countryCode ${countryCode} is not supported.`);
     const _stringPhone = phoneNumber + '';
-    const _phoneNumber = parsePhoneNumberFromString(_stringPhone, countryCode as CountryCode );
+    const _phoneNumber = parsePhoneNumberFromString(_stringPhone, countryCode);
     if (!_phoneNumber?.isValid()) {
         warn(`phone.util.phonePrettyPrint() -> ERROR: ${_stringPhone} is not a valid phone number.`);
         return phoneNumber + '';
@@ -66,7 +66,7 @@ export function formatPhoneNumber(phoneNumber: number | string, countryCode = 'C
  */
 export function getCountryPrefix(countryCode = 'CH'): string {
     if (!isSupportedCountry(countryCode)) die(`phone.util.phonePrettyPrint() -> ERROR: countryCode ${countryCode} is not supported.`);
-    return getCountryCallingCode(countryCode as CountryCode) as string;
+    return getCountryCallingCode(countryCode) as string;
 }
 
 /**

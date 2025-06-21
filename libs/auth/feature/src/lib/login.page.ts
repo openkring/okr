@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
@@ -6,10 +6,11 @@ import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from
 import { getImgixUrlWithAutoParams, navigateByUrl } from '@bk2/shared/util';
 import { HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
+import { AppStore } from '@bk2/shared/feature';
+import { AuthCredentials } from '@bk2/shared/models';
+
 import { LoginFormComponent } from '@bk2/auth/ui';
-import { AuthCredentials } from '@bk2/auth/model';
-import { AppStore } from './app.store';
+import { AuthService } from '@bk2/auth/data-access';
 
 @Component({
   selector: 'bk-login-page',
@@ -23,13 +24,12 @@ import { AppStore } from './app.store';
   .title { text-align: center; font-size: 2rem; padding: 20px; }
   .logo { max-width: 150px; text-align: center; display: block; margin-left: auto; margin-right: auto; width: 50%; z-index: 10; padding: 20px; }
   .button-container { margin: 20px; }
-  .native-input { background-color: white; }
   @media (width <= 600px) {
-     .login-form { background-color: white; width: 100%; text-align: center; z-index: 5; }
+     .login-form { width: 100%; text-align: center; z-index: 5; }
      .login-container {  display: flex; height: 100%; padding: 10px; }
    }
    @media (width > 600px) {
-     .login-form { background-color: white; border-radius: 10px; max-width: 600px; width: 90%; text-align: center; z-index: 5; }
+     .login-form { border-radius: 10px; max-width: 600px; width: 90%; text-align: center; z-index: 5; }
      .login-container {  display: flex; align-items: center; justify-content: center; height: 100%; padding: 20px; margin: 20px; }
    }
   `,
@@ -37,9 +37,9 @@ import { AppStore } from './app.store';
     <bk-header title="{{ '@auth.operation.login.title' | translate | async }}" />
     <ion-content>
       <div class="login-container">
-        <img class="background-image" [src]="backgroundImageUrl" alt="Background" />
+        <img class="background-image" [src]="backgroundImageUrl()" alt="Background" />
         <div class="login-form">
-            <ion-img class="logo" [src]="logoUrl" alt="logo" (click)="gotoHome()" />
+            <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
             <ion-label class="title"><strong>{{ '@auth.operation.login.title' | translate | async}}</strong></ion-label>
             <bk-login-form [(vm)]="currentCredentials" (validChange)="onValidChange($event)" />
             <div class="button-container">
@@ -63,11 +63,11 @@ import { AppStore } from './app.store';
 })
 export class LoginPageComponent {
   private readonly router = inject(Router);
-  private readonly env = inject(ENV);
   protected readonly appStore = inject(AppStore);
+  protected readonly authService = inject(AuthService);
 
-  public logoUrl = `${this.env.app.imgixBaseUrl}/${getImgixUrlWithAutoParams(this.env.app.logoUrl)}`;
-  public backgroundImageUrl = `${this.env.app.imgixBaseUrl}/${getImgixUrlWithAutoParams(this.env.app.welcomeBannerUrl)}`;
+  public logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
+  public backgroundImageUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`);
 
   protected formIsValid = signal(false);
   public currentCredentials = signal<AuthCredentials>({
@@ -76,18 +76,18 @@ export class LoginPageComponent {
   });
 
   public async resetPassword(): Promise<void> {
-    await navigateByUrl(this.router, this.env.auth.passwordResetUrl);
+    await navigateByUrl(this.router, this.appStore.appConfig().passwordResetUrl);
   }
 
   public async gotoHome(): Promise<void> {
-    await navigateByUrl(this.router, this.env.app.rootUrl);
+    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
   }
 
   /**
    * Login a returning user with already existing credentials.
    */
   public async login(): Promise<void> {
-    this.appStore.login(this.currentCredentials());
+    this.authService.login(this.currentCredentials(), this.appStore.appConfig().rootUrl, this.appStore.appConfig().loginUrl);
   }
 
   protected onValidChange(isValid: boolean): void {

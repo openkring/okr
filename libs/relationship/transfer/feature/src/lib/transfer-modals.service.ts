@@ -2,8 +2,7 @@ import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
 import { ModelType, OrgModel, PersonModel, ResourceModel, TransferModel } from "@bk2/shared/models";
-
-import { AppStore } from "@bk2/auth/feature";
+import { AppStore } from "@bk2/shared/feature";
 
 import { TransferService } from "@bk2/transfer/data-access";
 import { isTransfer } from "@bk2/transfer/util";

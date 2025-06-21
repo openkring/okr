@@ -1,15 +1,18 @@
 import { inject, Injectable } from "@angular/core";
-import { AddressService, GeocodingService } from "@bk2/address/data-access";
-import { AppStore } from "@bk2/auth/feature";
-import { AddressChannel, AddressModel, DefaultLanguage, EZS_DIR } from "@bk2/shared/models";
 import { ModalController, Platform } from "@ionic/angular/standalone";
-import { AddressEditModalComponent } from "./address-edit.modal";
-import { browseUrl, getStringifiedPostalAddress, isAddress } from "@bk2/address/util";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+
+import { AppStore } from "@bk2/shared/feature";
+import { AddressChannel, AddressModel, DefaultLanguage, EZS_DIR } from "@bk2/shared/models";
 import { getModelSlug, Languages } from "@bk2/shared/categories";
 import { ImageViewModalComponent, MapViewModalComponent, UploadService } from "@bk2/shared/ui";
-import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
-import { readAsFile } from "@bk2/avatar/util";
 import { getModelAndKey, warn } from "@bk2/shared/util";
+
+import { readAsFile } from "@bk2/avatar/util";
+
+import { AddressService, GeocodingService } from "@bk2/address/data-access";
+import { browseUrl, getStringifiedPostalAddress, isAddress } from "@bk2/address/util";
+import { AddressEditModalComponent } from "./address-edit.modal";
 
 @Injectable({
     providedIn: 'root'
@@ -22,7 +25,7 @@ export class AddressModalsService {
   private readonly platform = inject(Platform);
   private readonly uploadService = inject(UploadService);
 
-  public readonly tenantId = this.appStore.env.owner.tenantId;
+  public readonly tenantId = this.appStore.env.tenantId;
 
   /***************************  edit modal  *************************** */
   public async edit(address: AddressModel): Promise<void> {

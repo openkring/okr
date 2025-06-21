@@ -25,10 +25,16 @@ export const PHONE_PATTERN = '[- +()0-9]{6,}'
 
 
 // local images
-export const DEFAULT_AVATAR_URL = 'assets/img/logo_square.png';
-export const DEFAULT_AVATAR_ROUND_URL = 'assets/img/logo_round.png';
-export const DEFAULT_SHOW_FOOTER = false;
-
+export const AVATAR_URL = 'assets/img/logo_square.png';
+export const AVATAR_ROUND_URL = 'assets/img/logo_round.png';
+export const SHOW_FOOTER = false;
+export const THUMBNAIL_SIZE = 200; // in px
+export const AVATAR_SIZE_SMALL = 30; // in px
+export const LOGO_WIDTH = 300; // in px
+export const LOGO_HEIGHT = 200; // in px
+export const BUTTON_WIDTH = '60'; // in px
+export const BUTTON_HEIGHT = '60'; // in px
+export const ICON_SIZE = '40'; // in px
 //-----------------------------------------------
 // dates
 //-----------------------------------------------
@@ -47,7 +53,7 @@ export const MODAL_STYLE = '.modalContent { background: #fff; border-radius: 10p
 /**
  * User experience (UX)
  */
-export const DEFAULT_TOAST_LENGTH = 3000;
+export const TOAST_LENGTH = 3000;
 
 /**-------------------------------------------------------------------------
  * The length of a form field.
@@ -87,31 +93,6 @@ export const PASSWORD_MAX_LENGTH = 24;
 export const DESCRIPTION_ROWS = 5;
 export const COMMENT_ROWS = 2;
 export const DEBOUNCE_TIME = 500;
-
-/**-------------------------------------------------------------------------
- * Prices
- * tbd: https://github.com/bkaiserGmbh/bk4/issues/128
- * this app-specific information should be removed from here
----------------------------------------------------------------------------*/
-export const SCS_A1_FEE = 600;
-export const SCS_A2_FEE = 300;
-export const SCS_A3_FEE = 200;
-export const SCS_JUNIOR_FEE = 300;
-export const SCS_FREE_FEE = 200;
-export const SCS_HONORARY_FEE = 0;
-export const SCS_CANDIDATE_FEE = 600
-export const SCS_PASSIVE_FEE = 75;
-export const SCS_ENTRY_FEE = 750;
-
-export const SCS_LOCKER_FEE = 20;
-export const SCS_KEY_DEPOSIT = 50;
-export const SCS_SKIFF_INSURANCE = 50;
-export const SCS_SKIFF_STORAGE = 600;
-
-export const SRV_ACTIVE_FEE = 75;
-export const SRV_LICENSE_FEE = 50;
-export const SRV_JUNIOR_FEE = 0;
-export const SRV_DOUBLE_FEE = 0;
 
 /**-------------------------------------------------------------------------
  * Input Mode is a hint to the browser for which keyboard to display.

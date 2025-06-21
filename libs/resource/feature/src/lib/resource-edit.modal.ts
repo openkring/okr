@@ -2,17 +2,17 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { AppStore } from '@bk2/auth/feature';
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { ResourceFormComponent } from '@bk2/resource/ui';
-import { convertFormToResource, convertResourceToForm, isReservable } from '@bk2/resource/util';
-
+import { AppStore } from '@bk2/shared/feature';
 import { ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { RoleName } from '@bk2/shared/config';
 import { ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
 import { hasRole } from '@bk2/shared/util';
 import { ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
+
+import { CommentsAccordionComponent } from '@bk2/comment/feature';
+import { ResourceFormComponent } from '@bk2/resource/ui';
+import { convertFormToResource, convertResourceToForm, isReservable } from '@bk2/resource/util';
 
 @Component({
   selector: 'bk-resource-edit-modal',
@@ -69,7 +69,7 @@ export class ResourceEditModalComponent {
   protected formIsValid = signal(false);
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToResource(this.resource(), this.vm(), this.appStore.env.owner.tenantId), 'confirm');
+    return this.modalController.dismiss(convertFormToResource(this.resource(), this.vm(), this.appStore.env.tenantId), 'confirm');
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

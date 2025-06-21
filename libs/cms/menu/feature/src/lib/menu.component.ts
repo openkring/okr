@@ -10,10 +10,11 @@ import { MenuAction, MenuItemModel } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { SpinnerComponent } from '@bk2/shared/ui';
 import { RoleName } from '@bk2/shared/config';
+import { AppStore } from '@bk2/shared/feature';
 
-import { AppStore } from '@bk2/auth/feature';
 import { getTarget } from '@bk2/cms/menu/util';
 import { MenuStore } from './menu.component.store';
+import { AuthService } from '@bk2/auth/data-access';
 
 @Component({
   selector: 'bk-menu',
@@ -28,7 +29,7 @@ import { MenuStore } from './menu.component.store';
     @if(menuStore.isLoading()) {
       <bk-spinner />
     } @else {
-      @if (hasRole(roleNeeded())) {
+      @if (isVisible()) {
         @if(menuItem(); as menuItem) {
           @switch(action()) {
             @case(MA.Navigate) {
@@ -100,6 +101,7 @@ export class MenuComponent {
   protected readonly appStore = inject(AppStore);
   protected readonly menuStore = inject(MenuStore);
   protected readonly popoverController = inject(PopoverController);
+  protected readonly authService = inject(AuthService);
 
   public menuName = input.required<string>();
 
@@ -108,9 +110,13 @@ export class MenuComponent {
   protected action = computed(() => this.menuStore.menu()?.action ?? MenuAction.Navigate);
   protected icon = computed(() => this.menuStore.menu()?.icon ?? 'help-circle');
   protected label = computed(() => this.menuStore.menu()?.label ?? 'LABEL_UNDEFINED');
+  protected readonly isVisible = computed(() => this.hasRole(this.roleNeeded()));
 
   constructor() {
     effect(() => {
+      // By reading the currentUser signal, we create a dependency.
+      // This effect will now re-run whenever the user logs in or out.
+      this.appStore.currentUser();
       this.menuStore.setMenuName(this.menuName());
     });
   }
@@ -142,7 +148,7 @@ export class MenuComponent {
   }
 
   private async logout(): Promise<void> {
-    this.appStore.logout();
+    this.authService.logout();
     await navigateByUrl(this.router, '/auth/login', this.menuItem()?.data);
   }
 

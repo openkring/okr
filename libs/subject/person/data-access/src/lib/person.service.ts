@@ -18,7 +18,7 @@ export class PersonService {
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
 
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(person: PersonModel, currentUser?: UserModel): Promise<string> {

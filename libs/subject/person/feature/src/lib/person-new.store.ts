@@ -3,9 +3,8 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 import { debugItemLoaded, readModel } from '@bk2/shared/util';
 
 export type PersonNewState = {
@@ -21,8 +20,6 @@ export const PersonNewStore = signalStore(
 
   withProps(() => ({
     appStore: inject(AppStore),
-    firestore: inject(FIRESTORE),
-    env: inject(ENV),
     modalController: inject(ModalController) 
   })),
 
@@ -33,7 +30,7 @@ export const PersonNewStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),  
       loader: ({request}) => {
-        const org$ = readModel<OrgModel>(store.firestore, OrgCollection, request.orgId);
+        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, request.orgId);
         debugItemLoaded<OrgModel>(`org ${request.orgId}`, org$, request.currentUser);
         return org$;
       }
@@ -44,6 +41,9 @@ export const PersonNewStore = signalStore(
     return {
       org: computed(() => state.orgResource.value() ?? undefined),
       membershipCategoryKey: computed(() => `mcat_${state.orgId()}`),
+      currentUser: computed(() => state.appStore.currentUser()),
+      tenantId: computed(() => state.appStore.tenantId()),
+      privacySettings: computed(() => state.appStore.privacySettings()),
     };
   }),
   withProps((store) => ({
@@ -52,7 +52,7 @@ export const PersonNewStore = signalStore(
         mcatId: store.membershipCategoryKey()
       }),  
       loader: ({request}) => {
-        const mcat$ = readModel<CategoryListModel>(store.firestore, CategoryCollection, request.mcatId);
+        const mcat$ = readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, request.mcatId);
         debugItemLoaded<CategoryListModel>(`mcat ${request.mcatId}`, mcat$, store.appStore.currentUser());           
         return mcat$;
       }
@@ -60,8 +60,7 @@ export const PersonNewStore = signalStore(
   })),
   withComputed((state) => {
     return {
-      membershipCategory: computed(() => state.mcatResource.value() ?? getDefaultMembershipCategory(state.env.owner.tenantId)),
-      currentUser: computed(() => state.appStore.currentUser()),
+      membershipCategory: computed(() => state.mcatResource.value() ?? getDefaultMembershipCategory(state.appStore.tenantId())),
       isLoading: computed(() => state.orgResource.isLoading() || state.mcatResource.isLoading()),
     };
   }),
@@ -82,7 +81,7 @@ export const PersonNewStore = signalStore(
   withHooks({
     onInit(store) {
       patchState(store, { 
-        orgId: store.env.owner.orgId 
+        orgId: store.appStore.appConfig().ownerOrgId 
       });
     }
   })

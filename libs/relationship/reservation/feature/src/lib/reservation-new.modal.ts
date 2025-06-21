@@ -7,8 +7,7 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { RoleName } from '@bk2/shared/config';
 import { hasRole } from '@bk2/shared/util';
 import { ModelType, OrgModel, PersonModel, ResourceModel, UserModel} from '@bk2/shared/models';
-
-import { AppStore } from '@bk2/auth/feature';
+import { AppStore } from '@bk2/shared/feature';
 
 import { convertReserverAndResourceToNewForm } from '@bk2/reservation/util';
 import { ReservationNewFormComponent } from './reservation-new.form';

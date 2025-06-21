@@ -17,7 +17,7 @@ export class TransferService  {
   private readonly toastController = inject(ToastController);
   private readonly env = inject(ENV);
 
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
     /**

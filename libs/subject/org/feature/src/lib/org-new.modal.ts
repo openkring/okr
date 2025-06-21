@@ -5,9 +5,10 @@ import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { ModelType, UserModel} from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared/feature';
+
 import { createNewOrgFormModel } from '@bk2/org/util';
 import { OrgNewFormComponent } from '@bk2/org/ui';
-import { AppStore } from '@bk2/auth/feature';
 
 @Component({
   selector: 'bk-org-new-modal',

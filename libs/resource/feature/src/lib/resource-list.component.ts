@@ -3,12 +3,12 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItem
 import { AsyncPipe } from '@angular/common';
 
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { error, TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared/i18n';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { RoleName } from '@bk2/shared/config';
 import { AllCategories, ModelType, ResourceModel, ResourceType } from '@bk2/shared/models';
 import { addAllCategory, ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
-import { hasRole } from '@bk2/shared/util';
+import { error, hasRole } from '@bk2/shared/util';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

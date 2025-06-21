@@ -19,7 +19,7 @@ export class AddressService {
   private readonly firestore = inject(FIRESTORE);
   private readonly toastController = inject(ToastController);
 
-  private readonly tenantId = this.env.owner.tenantId;
+  private readonly tenantId = this.env.tenantId;
 
   public groupedItems$ = of([]);
 
@@ -113,7 +113,7 @@ export class AddressService {
    * @param address 
    */
   public async copy(address: AddressModel): Promise<void> {
-      await copyAddress(this.toastController, this.env.settingsDefaults.toastLength, address, Languages[DefaultLanguage].abbreviation);
+      await copyAddress(this.toastController, address, Languages[DefaultLanguage].abbreviation);
   }
 
   /*-------------------------- search index --------------------------------*/

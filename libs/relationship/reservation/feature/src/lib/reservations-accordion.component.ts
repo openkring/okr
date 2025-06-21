@@ -81,7 +81,7 @@ public title = input('@reservation.plural');
   public reserverModelType = input<ModelType>(ModelType.Person);
   public defaultResource = input<ResourceModel>();
   protected reservations = computed(() => this.reservationsStore.reservations());
-  
+
   protected modelType = ModelType;
 
   constructor() {

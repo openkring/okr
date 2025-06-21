@@ -7,16 +7,16 @@ import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent, UploadSer
 import { ModelType, UserCollection } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { debugFormModel, getFullPersonName } from '@bk2/shared/util';
+import { ENV } from '@bk2/shared/config';
 
 import { AvatarService } from '@bk2/avatar/data-access';
-import { AvatarToolbarComponent } from '@bk2/avatar/ui';
+import { AvatarToolbarComponent } from '@bk2/avatar/feature';
+import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
 import { CommentsCardComponent } from '@bk2/comment/feature';
 
 import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user/util';
 import { UserAuthFormComponent, UserDisplayFormComponent, UserModelFormComponent, UserNotificationFormComponent, UserPrivacyFormComponent } from '@bk2/user/ui';
 import { UserEditStore } from './user-edit.store';
-import { ENV } from '@bk2/shared/config';
-import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
 
 @Component({
   selector: 'bk-user-page',
@@ -99,7 +99,7 @@ export class UserPageComponent{
     const _user = this.user();
     if (!_user) return;
     const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.owner.tenantId], ModelType.User, _user.bkey, _file.name);
+    const _avatar = newAvatarModel([this.env.tenantId], ModelType.User, _user.bkey, _file.name);
     const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
 
     if (_downloadUrl) {

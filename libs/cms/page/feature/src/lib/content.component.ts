@@ -1,9 +1,9 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { hasRole } from '@bk2/shared/util';
-import { ReplacePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared/util';
+import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { RoleName } from '@bk2/shared/config';
 
@@ -14,7 +14,7 @@ import { PageDetailStore } from './page-detail.store';
   selector: 'bk-content',
   imports: [
     SectionComponent,
-    TranslatePipe, AsyncPipe, SvgIconPipe, ReplacePipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe,
     IonButton, IonIcon,
     IonContent, IonList, IonItem, IonLabel
   ],
@@ -40,7 +40,7 @@ import { PageDetailStore } from './page-detail.store';
         <ion-list>
           @for(section of pageStore.sections(); track $index) {
             <ion-item lines="none">
-              <bk-section sectionKey="{{ section | replace:'@TID@':tenantId() }}" />
+              <bk-section id="{{ section }}" />
             </ion-item>
           }
         </ion-list>
@@ -51,13 +51,15 @@ import { PageDetailStore } from './page-detail.store';
 export class ContentComponent {
   protected pageStore = inject(PageDetailStore);
 
-  public id = input.required<string>();     // pageId
+  public id = input.required<string>();     // pageId (can contain @TID@ placeholder)
 
-  protected tenantId = computed(() => this.pageStore.tenantId());
+  protected tenantId = this.pageStore.appStore.env.tenantId;
 
   constructor() {
     effect(() => {
-      this.pageStore.setPageId(this.id());
+      const _id = replaceSubstring(this.id(), '@TID@', this.pageStore.appStore.env.tenantId);
+      debugMessage(`ContentComponent: pageId=${this.id()} -> ${_id}`, this.pageStore.currentUser());
+      this.pageStore.setPageId(_id);
     });
   }
 

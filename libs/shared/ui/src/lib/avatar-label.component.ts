@@ -5,7 +5,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ColorsIonic } from '@bk2/shared/categories';
 import { CategoryPlainNamePipe, getAvatarImgixUrl } from '@bk2/shared/pipes';
 import { ColorIonic } from '@bk2/shared/models';
-import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV, FIRESTORE, THUMBNAIL_SIZE } from '@bk2/shared/config';
 
 @Component({
   selector: 'bk-avatar-label',
@@ -35,7 +35,7 @@ export class AvatarLabelComponent {
     request: () => ({
       key: this.key()
     }),
-    loader: ({request}) => getAvatarImgixUrl(this.firestore, request.key, this.env.thumbnail.width, this.env.app.imgixBaseUrl)
+    loader: ({request}) => getAvatarImgixUrl(this.firestore, request.key, THUMBNAIL_SIZE, this.env.services.imgixBaseUrl)
   });
   public url = computed(() => this.urlRef.value() ?? '');
 

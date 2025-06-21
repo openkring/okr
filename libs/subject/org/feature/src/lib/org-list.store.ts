@@ -5,14 +5,12 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { catchError, finalize, of } from 'rxjs';
 import { Router } from '@angular/router';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { AppNavigationService, chipMatches, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
+import { AppNavigationService, chipMatches, copyToClipboardWithConfirmation, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AddressModel, AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared/models';
-import { copyToClipboardWithConfirmation } from '@bk2/shared/i18n';
+import { AppStore } from '@bk2/shared/feature';
 
 import { AddressService } from '@bk2/address/data-access';
-import { AppStore } from '@bk2/auth/feature';
 
 import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel } from '@bk2/org/util';
 import { OrgService } from '@bk2/org/data-access';
@@ -35,10 +33,8 @@ export const OrgListStore = signalStore(
     orgService: inject(OrgService),
     addressService: inject(AddressService),
     appNavigationService: inject(AppNavigationService),
-    firestore: inject(FIRESTORE),
     router: inject(Router),
     appStore: inject(AppStore),
-    env: inject(ENV),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
@@ -47,7 +43,7 @@ export const OrgListStore = signalStore(
     orgsResource: rxResource({
       loader: () => {
         console.log('OrgListStore: loading orgs');
-        return searchData<OrgModel>(store.firestore, OrgCollection, getSystemQuery(store.env.owner.tenantId), 'name', 'asc')
+        return searchData<OrgModel>(store.appStore.firestore, OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc')
         .pipe(
           finalize(() => {
             console.log('OrgListStore: orgs loaded');
@@ -86,8 +82,7 @@ export const OrgListStore = signalStore(
       ) ?? []
     ),
     currentUser: computed(() => state.appStore.currentUser()),
-    toastLength: computed(() => state.appStore.toastLength()),
-    tenantId: computed(() => state.env.owner.tenantId),
+    tenantId: computed(() => state.appStore.tenantId()),
   })),
   withMethods((store) => ({
     reset() {
@@ -108,7 +103,6 @@ export const OrgListStore = signalStore(
       console.log('  filteredOrgs: ' + JSON.stringify(store.filteredOrgs()));
       console.log('  currentUser: ' + JSON.stringify(store.currentUser()));
       console.log('  tenantId: ' + store.tenantId());
-      console.log('  toastLength: ' + store.toastLength());
       console.log('------------------------------------');
     },
     setSearchTerm(searchTerm: string) {
@@ -187,7 +181,6 @@ export const OrgListStore = signalStore(
       const _emails = _allEmails.filter((e) => e);
       await copyToClipboardWithConfirmation(
         store.toastController,
-        store.toastLength(),
         _emails.toString() ?? '',
         '@subject.address.operation.emailCopy.conf'
       );

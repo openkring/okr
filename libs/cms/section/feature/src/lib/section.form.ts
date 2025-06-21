@@ -8,14 +8,12 @@ import { CategoryComponent, NotesInputComponent, TextInputComponent, ButtonCopyC
 import { RoleEnums, SectionTypes, ViewPositions } from '@bk2/shared/categories';
 import { CategoryNamePipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ModelType, RoleEnum, SectionType, Table, UserModel } from '@bk2/shared/models';
+import { ModelType, newButton, newIcon, RoleEnum, SectionType, Table, UserModel } from '@bk2/shared/models';
 import { RoleName } from '@bk2/shared/config';
 import { debugFormErrors, hasRole, isPerson } from '@bk2/shared/util';
-import { PersonSelectModalComponent } from '@bk2/shared/feature';
+import { PersonSelectModalComponent, AppStore } from '@bk2/shared/feature';
 
-import { AppStore } from '@bk2/auth/feature';
-
-import { newButton, newIcon, newTable, SectionFormModel, sectionFormValidations } from '@bk2/cms/section/util';
+import { newTable, SectionFormModel, sectionFormValidations } from '@bk2/cms/section/util';
 import { AlbumSectionConfigComponent, ArticleSectionConfigComponent, ButtonSectionConfigComponent, IframeSectionFormComponent, ImageConfigFormComponent, MapSectionFormComponent, PeopleListFormComponent, TableSectionFormComponent, VideoSectionFormComponent } from '@bk2/cms/section/ui';
 import { DocumentModalsService } from '@bk2/document/feature';
 import { SingleImageComponent } from './single-image.component';
@@ -189,7 +187,7 @@ export class SectionFormComponent {
     _modal.present();
     const { data, role } = await _modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isPerson(data, this.appStore.env.owner.tenantId)) {
+      if (isPerson(data, this.appStore.env.tenantId)) {
         const persons = this.persons();
         persons.push({
           key: data.bkey,

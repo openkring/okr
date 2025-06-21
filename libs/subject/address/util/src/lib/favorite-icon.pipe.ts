@@ -9,6 +9,6 @@ export class FavoriteIconPipe implements PipeTransform {
 
   transform(isFavorite: boolean): string {
     const _iconName = isFavorite ? 'star' : 'star-outline';
-    return `${this.env.app.imgixBaseUrl}/logo/ionic/${_iconName}.svg`;
+    return `${this.env.services.imgixBaseUrl}/logo/ionic/${_iconName}.svg`;
   }
 }

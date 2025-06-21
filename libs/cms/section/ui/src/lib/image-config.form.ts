@@ -4,9 +4,9 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { CategoryComponent, CheckboxComponent, NumberInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ImageAction, Slot } from '@bk2/shared/models';
+import { ImageAction, newDefaultImageConfig, Slot } from '@bk2/shared/models';
 import { ImageActions } from '@bk2/shared/categories';
-import { newDefaultImageConfig, SectionFormModel } from '@bk2/cms/section/util';
+import { SectionFormModel } from '@bk2/cms/section/util';
 
 @Component({
   selector: 'bk-image-config-form',

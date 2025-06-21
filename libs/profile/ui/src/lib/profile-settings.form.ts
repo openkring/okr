@@ -5,9 +5,8 @@ import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalControll
 import { TranslatePipe } from "@bk2/shared/i18n";
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, UserModel } from "@bk2/shared/models";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
-import { CategoryComponent, CheckboxComponent, ErrorNoteComponent, NumberInputComponent, TextInputComponent } from "@bk2/shared/ui";
+import { CategoryComponent, CheckboxComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared/ui";
 import { SettingsFormModel, settingsFormModelShape, settingsFormValidations } from "@bk2/profile/util";
-import { DEFAULT_TOAST_LENGTH } from "@bk2/shared/config";
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared/categories";
 import { debugFormErrors } from "@bk2/shared/util";
 
@@ -17,7 +16,7 @@ import { debugFormErrors } from "@bk2/shared/util";
     TranslatePipe, AsyncPipe,
     vestForms,
     IonAccordion, IonItem, IonLabel, IonGrid, IonRow, IonCol,
-    CategoryComponent, CheckboxComponent, NumberInputComponent, TextInputComponent, ErrorNoteComponent,
+    CategoryComponent, CheckboxComponent, TextInputComponent, ErrorNoteComponent,
   ],
   styles: [`
     ion-icon {
@@ -57,10 +56,6 @@ import { debugFormErrors } from "@bk2/shared/util";
             </ion-col>
             <ion-col size="12" size-md="6">
               <bk-checkbox name="showHelpers" [isChecked]="showHelpers()" [showHelper]="true" (changed)="onChange('showHelpers', $event)" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-number-input name="toastLength" [value]=toastLength() [maxLength]=4 [showHelper]="true" (changed)="onChange('toastLength', $event)" />   
-              <bk-error-note [errors]="toastLengthErrors()" />                                                                                      
             </ion-col>
             <ion-col size="12" size-md="6">
               <bk-checkbox name="useTouchId" [isChecked]="useTouchId()" [showHelper]="true" (changed)="onChange('useTouchId', $event)" />
@@ -117,13 +112,11 @@ export class ProfileSettingsAccordionComponent {
   protected dirtyChange = signal(false);
   private readonly validationResult = computed(() => settingsFormValidations(this.vm()));
   protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
-  protected toastLengthErrors = computed(() => this.validationResult().getErrors('toastLength'));
 
   protected language = computed(() => this.vm().language ?? DefaultLanguage);
   protected showDebugInfo = computed(() => this.vm().showDebugInfo ?? false);
   protected showArchivedData = computed(() => this.vm().showArchivedData ?? false);
   protected showHelpers = computed(() => this.vm().showHelpers ?? true);
-  protected toastLength = computed(() => this.vm().toastLength ?? DEFAULT_TOAST_LENGTH);
   protected useTouchId = computed(() => this.vm().useTouchId ?? false);
   protected useFaceId = computed(() => this.vm().useFaceId ?? false);
   protected avatarUsage = computed(() => this.vm().avatarUsage ?? AvatarUsage.PhotoFirst);

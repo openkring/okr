@@ -8,10 +8,10 @@ import { error, showToast } from './alert.util';
  * @param content The content to copy to the clipboard.
  * @param confirmMsg The message to display to the user on successful copy.
  */
-export async function copyToClipboardWithConfirmation(toastController: ToastController, toastLength: number, content: string | number, confirmMsg = '@general.operation.copy.conf') {
+export async function copyToClipboardWithConfirmation(toastController: ToastController, content: string | number, confirmMsg = '@general.operation.copy.conf') {
     copyToClipboard(content)
     .then(() => {
-        showToast(toastController, confirmMsg, toastLength);
+        showToast(toastController, confirmMsg);
     })
     .catch(_ex => {
         error(toastController, `copy.util/copyToClibboard(${content}, confirmMsg) -> ERROR with navigator.clipboard: ${_ex}`);

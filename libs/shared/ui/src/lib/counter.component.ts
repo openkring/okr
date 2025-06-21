@@ -108,7 +108,7 @@ const DEFAULT_COUNTER = {
     public setAdhocCount = (adhocCount: number) => this.counter.update((v) => ({ ...v, adhocCount }));
     public reset = () => this.counter.set(DEFAULT_COUNTER);
   
-    private ticker = effect(() => {
+    private readonly ticker = effect(() => {
       const ticking = this.ticking();
       const speed = this.speed();
       const diff = this.diff();

@@ -2,21 +2,23 @@ import { Component, computed, effect, inject, linkedSignal, signal } from '@angu
 import { AsyncPipe } from '@angular/common';
 import { IonAccordionGroup, IonContent, IonItem, IonLabel, Platform } from '@ionic/angular/standalone';
 import { Photo } from '@capacitor/camera';
-
-import { AvatarToolbarComponent } from '@bk2/avatar/ui';
-import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
-import { AvatarService } from '@bk2/avatar/data-access';
-import { ModelType } from '@bk2/shared/models';
-import { ProfileService } from '@bk2/profile/data-access';
-import { I18nService, TranslatePipe } from '@bk2/shared/i18n';
-import { AddressesAccordionComponent } from '@bk2/address/feature';
 import { firstValueFrom } from 'rxjs';
+
+import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
+import { ModelType } from '@bk2/shared/models';
+import { I18nService, TranslatePipe } from '@bk2/shared/i18n';
+import { AppStore } from '@bk2/shared/feature';
+import { debugFormModel } from '@bk2/shared/util';
+
+import { AddressesAccordionComponent } from '@bk2/address/feature';
+
+import { AvatarService } from '@bk2/avatar/data-access';
+import { AvatarToolbarComponent } from '@bk2/avatar/feature';
+import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
+
+import { ProfileService } from '@bk2/profile/data-access';
 import { convertPersonalDataFormToPerson, convertPersonToDataForm, convertPrivacyFormToUser, convertSettingsFormToUser, convertUserToPrivacyForm, convertUserToSettingsForm, PersonalDataFormModel, PrivacyFormModel, SettingsFormModel } from '@bk2/profile/util';
 import { ProfileDataAccordionComponent, ProfilePrivacyAccordionComponent, ProfileSettingsAccordionComponent } from '@bk2/profile/ui';
-import { AppStore } from '@bk2/auth/feature';
-import { debugFormModel } from '@bk2/shared/util';
-import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
-import { ENV } from '@bk2/shared/config';
 
 @Component({
   selector: 'bk-profile-page',
@@ -54,7 +56,6 @@ export class ProfilePageComponent {
   private readonly avatarService = inject(AvatarService);
   private readonly i18nService = inject(I18nService);
   private readonly platform = inject(Platform);
-  private readonly env = inject(ENV);
 
   protected formIsValid = signal(false);
 
@@ -70,7 +71,7 @@ export class ProfilePageComponent {
   protected title = computed(() => this.currentPerson()?.firstName + ' ' + this.currentPerson()?.lastName);
   protected introHtml = computed(async () => {
     const _intro = await firstValueFrom(this.i18nService.translate('@profile.intro'));
-    return _intro + ' <a href=mailto:"' + this.appStore.env.operator.email + '">Website Admin</a>.';
+    return _intro + ' <a href=mailto:"' + this.appStore.appConfig().opEmail + '">Website Admin</a>.';
   });
 
   public modelType = ModelType;
@@ -89,7 +90,7 @@ export class ProfilePageComponent {
     const _personKey = this.personKey();
     if (!_personKey) return;
     const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.owner.tenantId], ModelType.Person, _personKey, _file.name);
+    const _avatar = newAvatarModel([this.appStore.tenantId()], ModelType.Person, _personKey, _file.name);
     const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
 
     if (_downloadUrl) {

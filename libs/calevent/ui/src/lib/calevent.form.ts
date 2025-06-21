@@ -6,8 +6,9 @@ import { AvatarsComponent, CategoryComponent, ChipsComponent, DateInputComponent
 import { ChFutureDate, LowercaseWordMask, NAME_LENGTH } from '@bk2/shared/config';
 import { CalEventTypes, PeriodicityTypes } from '@bk2/shared/categories';
 import { AvatarInfo, CalEventType, Periodicity, UserModel } from '@bk2/shared/models';
-import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } from '@bk2/calevent/util';
 import { convertDateFormatToString, DateFormat, debugFormErrors } from '@bk2/shared/util';
+
+import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } from '@bk2/calevent/util';
 
 @Component({
   selector: 'bk-calevent-form',
@@ -42,23 +43,23 @@ import { convertDateFormatToString, DateFormat, debugFormErrors } from '@bk2/sha
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="startDate"  [storeDate]="startDate()" [showHelper]=true  (changed)="onChange('startDate', $event)" />
+                <bk-date-input name="startDate"  [storeDate]="startDate()" [locale]="locale()" [showHelper]=true  (changed)="onChange('startDate', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-time-input name="startTime" [value]="startTime()"  (changed)="onChange('startTime', $event)" />
+                <bk-time-input name="startTime" [value]="startTime()" [locale]="locale()"  (changed)="onChange('startTime', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-date-input name="endDate"  [storeDate]="endDate()" [showHelper]=true  (changed)="onChange('endDate', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-time-input name="endTime" [value]="endTime()"  (changed)="onChange('endTime', $event)" />
+                <bk-time-input name="endTime" [value]="endTime()" [locale]="locale()"  (changed)="onChange('endTime', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-cat name="periodicity" [value]="periodicity()" [categories]="periodicities"  (changed)="onChange('periodicity', $event)" />
               </ion-col>
               @if(periodicity() !== period.Once) {
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="repeatUntilDate" [storeDate]="repeatUntilDate()" [mask]="chFutureDate" [showHelper]=true  (changed)="onChange('repeatUntilDate', $event)" />
+                  <bk-date-input name="repeatUntilDate" [storeDate]="repeatUntilDate()" [locale]="locale()" [mask]="chFutureDate" [showHelper]=true  (changed)="onChange('repeatUntilDate', $event)" />
                 </ion-col>
               }
             </ion-row>
@@ -101,6 +102,7 @@ export class CalEventFormComponent {
   public isAdmin = input(false);
   public isPrivileged = input(false);
   public calEventTags = input.required<string>();
+  public locale = input.required<string>();
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

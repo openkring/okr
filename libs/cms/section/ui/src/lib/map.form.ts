@@ -39,9 +39,10 @@ export class MapSectionFormComponent {
   public vm = model.required<SectionFormModel>();
   public isContentAdmin = input(false);
 
-  protected centerLatitude = linkedSignal(() => this.vm().properties?.map?.centerLatitude ?? this.env.owner.latitude);
-  protected centerLongitude= linkedSignal(() => this.vm().properties?.map?.centerLongitude ?? this.env.owner.longitude);
-  protected zoom = linkedSignal(() => this.vm().properties?.map?.zoom ?? this.env.owner.zoom);
+  // tbd: lookup appStore.locationId and use it to determine the default values
+  protected centerLatitude = linkedSignal(() => this.vm().properties?.map?.centerLatitude ?? '');
+  protected centerLongitude= linkedSignal(() => this.vm().properties?.map?.centerLongitude ?? '');
+  protected zoom = linkedSignal(() => this.vm().properties?.map?.zoom ?? '15');
 
   protected latitudeMask = LatitudeMask;
   protected longitudeMask = LongitudeMask;

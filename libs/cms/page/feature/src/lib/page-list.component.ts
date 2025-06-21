@@ -5,9 +5,9 @@ import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon,
 import { PageModel } from '@bk2/shared/models';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { error, TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared/i18n';
 import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
+import { error, hasRole } from '@bk2/shared/util';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

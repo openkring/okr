@@ -1,24 +1,21 @@
 import { Injectable, inject } from "@angular/core";
 import { HashMap, TranslocoService, getBrowserLang } from "@jsverse/transloco";
 import { Observable, of } from "rxjs";
-import { ENV } from "@bk2/shared/config";
 import { selectLanguage } from "./i18n.util";
-import { getCategoryAbbreviation, Languages } from "@bk2/shared/categories";
-import { AvailableLanguages, DefaultLanguage } from "@bk2/shared/models";
+import { AvailableLanguages } from "@bk2/shared/models";
 
 @Injectable({
   providedIn: 'root'
 })
 export class I18nService {
   private readonly translocoService = inject(TranslocoService);
-  private readonly env = inject(ENV);
 
   public getBrowserLang(): string | undefined {
     return getBrowserLang();
   }
 
-  public setActiveLang(language: string) {
-    const _selectedLanguage = selectLanguage(AvailableLanguages, getCategoryAbbreviation(Languages, DefaultLanguage), language);
+  public setActiveLang(language: string, defaultLanguage: string) {
+    const _selectedLanguage = selectLanguage(AvailableLanguages, defaultLanguage, language);
     this.translocoService.setActiveLang(_selectedLanguage);
   }
 

@@ -1,14 +1,12 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { AppNavigationService, chipMatches, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
 import { UserService } from '@bk2/user/data-access';
 import { ModelType, UserCollection, UserModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/auth/feature';
 import { Router } from '@angular/router';
+import { AppStore } from '@bk2/shared/feature';
 
 export type UserListState = {
   searchTerm: string;
@@ -24,17 +22,14 @@ export const UserListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     userService: inject(UserService),
-    firestore: inject(FIRESTORE),
     appNavigationService: inject(AppNavigationService),
     router: inject(Router),
     appStore: inject(AppStore),
-    env: inject(ENV),
-    modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     userResource: rxResource({
       loader: () => {
-        return searchData<UserModel>(store.firestore, UserCollection, getSystemQuery(store.env.owner.tenantId), 'loginEmail', 'asc');
+        return searchData<UserModel>(store.appStore.firestore, UserCollection, getSystemQuery(store.appStore.tenantId()), 'loginEmail', 'asc');
       }
     })
   })),

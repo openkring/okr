@@ -1,5 +1,4 @@
 import { HashMap, getBrowserLang, translate } from '@jsverse/transloco';
-import { die } from '@bk2/shared/util';
 
 export function bkTranslate(key: string | null | undefined, argument?: HashMap): string {
   if (!key || key.length === 0) return '';
@@ -16,13 +15,16 @@ export function bkTranslate(key: string | null | undefined, argument?: HashMap):
 }
 
 /**
- * Select the used language based on 1) user settings (configured lang), 2) browser language, 3) default language DEFAULT_LANG
- * @param configuredLang the language as set in the user profile settings.
- * @returns the selected language code (one of AVAILABLE_LANGS)
+ * Select the used language based on 1) user settings (configuredLanguage), 2) _browserLanguage, 3) defaultLanguage
+ * @param availableLanguages the list of languages that are available in the application.
+ * @param defaultLang the default language to use if no other language is configured or available.
+ * @param configuredLanguage the language as set in the user profile settings.
+ * @returns the selected language code (one of app.config.provideTransloco.config.availableLangs)
  */
 export function selectLanguage(availableLanguages: string[], defaultLanguage: string, configuredLanguage?: string): string {
-  const _browserLanguage = getBrowserLang() ?? die('i18n.util.getSystemLang(): ERROR: browser language can not be determined.');
-  const _selectedLanguage = !configuredLanguage ? _browserLanguage : configuredLanguage;
+  const _browserLanguage = getBrowserLang();
+  if (!_browserLanguage) throw new Error('i18n.util.getSystemLang(): ERROR: browser language can not be determined.');
+  const _selectedLanguage = configuredLanguage ?? _browserLanguage;
 
   // if this language is not supported, choose the default language instead
   return (availableLanguages.indexOf(_selectedLanguage) < 0) ? defaultLanguage : _selectedLanguage;
