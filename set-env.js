@@ -1,9 +1,6 @@
 import * as fs from 'fs';
 import dotenv from 'dotenv';
 
-console.log('Current NODE_ENV:', process.env.NODE_ENV);
-console.log('Environment: ', process.env);
-
 // Determine Firebase configuration source
 let firebaseConfig = {
   apiKey: '',
@@ -24,16 +21,26 @@ const servicesConfig = {
 // load firebase configuration from FIREBASE_WEBAPP_CONFIG if available
 if (process.env.FIREBASE_WEBAPP_CONFIG) {
   try {
-    const fbWebConfig = JSON.parse(process.env.FIREBASE_WEBAPP_CONFIG);
-    if (fbWebConfig.apiKey && fbWebConfig.projectId && fbWebConfig.appId) { // Basic validation
+    const _rawConfig = process.env.FIREBASE_WEBAPP_CONFIG;
+    let _correctedConfig = ''; // Initialize for catch block scope
+
+    // FIREBASE_WEBAPP_CONFIG is in relaxed JSON format, we need to correct it
+    // Add quotes around keys: handles patterns like {key: "value"} or ,key:"value"
+    // It looks for an opening brace or a comma, followed by optional whitespace,
+    // then an unquoted key (starts with a letter or underscore, followed by alphanumeric or underscore),
+    // followed by optional whitespace and a colon.
+    _correctedConfig = _rawConfig.replace(/({\s*|,\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
+    const _fbWebConfig = JSON.parse(_correctedConfig);
+    
+    if (_fbWebConfig.apiKey && _fbWebConfig.projectId && _fbWebConfig.appId) { // Basic validation
       firebaseConfig = {
-        apiKey: fbWebConfig.apiKey || '',
-        authDomain: fbWebConfig.authDomain || '',
-        projectId: fbWebConfig.projectId || '',
-        storageBucket: fbWebConfig.storageBucket || '',
-        messagingSenderId: fbWebConfig.messagingSenderId || '',
-        appId: fbWebConfig.appId || '',
-        measurementId: fbWebConfig.measurementId || ''
+        apiKey: _fbWebConfig.apiKey || '',
+        authDomain: _fbWebConfig.authDomain || '',
+        projectId: _fbWebConfig.projectId || '',
+        storageBucket: _fbWebConfig.storageBucket || '',
+        messagingSenderId: _fbWebConfig.messagingSenderId || '',
+        appId: _fbWebConfig.appId || '',
+        measurementId: _fbWebConfig.measurementId || ''
       };
       console.log('Successfully parsed and will use FIREBASE_WEBAPP_CONFIG for Firebase settings.');
     } else {
@@ -61,10 +68,6 @@ servicesConfig.appcheckRecaptchaEnterpriseKey = process.env.NEXT_PUBLIC_FIREBASE
 servicesConfig.gmapKey = process.env.NEXT_PUBLIC_SVC_GMAP_KEY || '';
 servicesConfig.nxCloudAccessToken = process.env.NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN || '';
 servicesConfig.imgixBaseUrl = process.env.NEXT_PUBLIC_IMGIX_BASE_URL || '';
-
-console.log('appcheckRecaptchaEnterpriseKey:', firebaseConfig.appcheckRecaptchaEnterpriseKey);
-console.log('gmapKey:', firebaseConfig.gmapKey);
-console.log('nxCloudAccessToken:', firebaseConfig.nxCloudAccessToken);
 
 const writeFile = fs.writeFile;
 
