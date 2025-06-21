@@ -5,8 +5,8 @@
     "indexes": "firestore.indexes.json"
   },
   "apphosting": {
-    "backendId": "bko-euw4-backend",
-    "rootDir": ".",
+    "backendId": "bko-test-euw4-be",
+    "rootDir": "apps/test-app",
     "ignore": [
       "node_modules",
       ".pnpm-store",
@@ -14,8 +14,7 @@
       ".git",
       "firebase-debug.log",
       "firebase-debug.*.log",
-      "functions",
-      "dist"
+      "functions"
     ],
     "environmentVariables": {
       "GOOGLE_NODE_RUN_SCRIPTS": "",
