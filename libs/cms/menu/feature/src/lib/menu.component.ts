@@ -124,18 +124,23 @@ export class MenuComponent {
   protected MA = MenuAction;
 
   public async select(menuItem: MenuItemModel): Promise<void> {
-    this.appNavigationService.resetLinkHistory(menuItem.url);
-    switch(menuItem.url) {
-      case '/auth/login':
-        await this.login();
-        break;
-      case '/auth/logout':
-        await this.logout();
-        break;
-      default:
-        await this.selectMenuItem(this.router, menuItem);
+    try {
+      this.appNavigationService.resetLinkHistory(menuItem.url);
+      switch(menuItem.url) {
+        case '/auth/login':
+          await this.login();
+          break;
+        case '/auth/logout':
+          await this.logout();
+          break;
+        default:
+          await this.selectMenuItem(this.router, menuItem);
+      }
+      if (!isInSplitPane()) this.menuController.close('main');
     }
-    if (!isInSplitPane()) this.menuController.close('main');
+    catch(ex) {
+      warn('MenuComponent.select: ' + ex);
+    }
   }
 
   private async login(): Promise<void> {
