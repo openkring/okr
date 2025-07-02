@@ -3,7 +3,7 @@ import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ImageAction, SectionModel } from '@bk2/shared/models';
 import { ImageComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { die } from '@bk2/shared/util';
+import { die } from '@bk2/shared/util-core';
 
 @Component({
   selector: 'bk-hero-section',

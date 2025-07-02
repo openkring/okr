@@ -8,9 +8,8 @@ import { CategoryComponent, NotesInputComponent, TextInputComponent, ButtonCopyC
 import { RoleEnums, SectionTypes, ViewPositions } from '@bk2/shared/categories';
 import { CategoryNamePipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ModelType, newButton, newIcon, RoleEnum, SectionType, Table, UserModel } from '@bk2/shared/models';
-import { RoleName } from '@bk2/shared/config';
-import { debugFormErrors, hasRole, isPerson } from '@bk2/shared/util';
+import { ModelType, newButton, newIcon, RoleEnum, SectionType, Table, UserModel, RoleName } from '@bk2/shared/models';
+import { debugFormErrors, hasRole, isPerson } from '@bk2/shared/util-core';
 import { PersonSelectModalComponent, AppStore } from '@bk2/shared/feature';
 
 import { newTable, SectionFormModel, sectionFormValidations } from '@bk2/cms/section/util';

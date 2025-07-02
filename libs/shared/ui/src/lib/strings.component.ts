@@ -6,8 +6,9 @@ import { MaskitoDirective } from '@maskito/angular';
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { LowercaseWordMask, NAME_LENGTH } from '@bk2/shared/config';
-import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared/util';
+import { LowercaseWordMask } from '@bk2/shared/config';
+import { NAME_LENGTH } from '@bk2/shared/constants';
+import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared/util-angular';
 
 /**
  * Vest updates work by binding to ngModel.

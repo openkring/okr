@@ -1,10 +1,10 @@
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 
-import { die, getPropertyValue, isType, navigateByUrl, warn } from '@bk2/shared/util';
+import { die, getPropertyValue, isType, warn } from '@bk2/shared/util-core';
+import { navigateByUrl } from '@bk2/shared/util-angular';
 import { getCategoryAbbreviation, MenuActions, RoleEnums } from '@bk2/shared/categories';
-import { RoleName } from '@bk2/shared/config';
-import { MenuAction, MenuItemModel, RoleEnum } from '@bk2/shared/models';
+import { MenuAction, MenuItemModel, RoleEnum, RoleName } from '@bk2/shared/models';
 import { MenuItemFormModel } from './menu-item-form.model';
 
 export async function menuActionNavigate(router: Router, menuItem: MenuItemModel): Promise<void> {

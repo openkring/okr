@@ -4,10 +4,9 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { RoleName } from '@bk2/shared/config';
-import { getFullPersonName, hasRole } from '@bk2/shared/util';
+import { getFullPersonName, hasRole } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
-import { ModelType, UserModel, WorkingRelCollection, WorkingRelModel } from '@bk2/shared/models';
+import { ModelType, RoleName, UserModel, WorkingRelCollection, WorkingRelModel } from '@bk2/shared/models';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
 import { convertFormToWorkingRel, convertWorkingRelToForm } from '@bk2/working-rel/util';

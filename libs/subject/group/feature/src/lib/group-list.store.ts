@@ -5,7 +5,8 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { catchError, finalize, of } from 'rxjs';
 import { Router } from '@angular/router';
 
-import { AppNavigationService, chipMatches, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
+import { chipMatches, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
+import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
 import { GroupCollection, GroupModel, ModelType } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
@@ -111,6 +112,7 @@ export const GroupListStore = signalStore(
     },
 
     async add(): Promise<void> {
+      console.log('GroupListStore.add: opening modal to create a new group');
       const _modal = await store.modalController.create({
         component: GroupNewModalComponent,
         componentProps: {
@@ -157,7 +159,7 @@ export const GroupListStore = signalStore(
 
     async delete(group?: GroupModel): Promise<void> {
       if (!group) return;
-      await store.groupService.delete(group);
+      await store.groupService.delete(group, store.currentUser());
       this.reset();
     },
   }))

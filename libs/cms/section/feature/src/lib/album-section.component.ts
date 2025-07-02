@@ -3,7 +3,8 @@ import { AsyncPipe, NgStyle } from '@angular/common';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { debugData, debugMessage, downloadToBrowser } from '@bk2/shared/util';
+import { debugData, debugMessage } from '@bk2/shared/util-core';
+import { downloadToBrowser } from '@bk2/shared/util-angular';
 import { AlbumStyle, Image, ImageAction, ImageType, SectionModel } from '@bk2/shared/models';
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared/pipes';
 import { CategoryComponent, ImageComponent, LabelComponent, SpinnerComponent, VideoComponent, browse, showZoomedImage } from '@bk2/shared/ui';

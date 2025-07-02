@@ -1,6 +1,6 @@
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 import { AccountType, GenderType, ModelType, OrgType, Periodicity, ReservationReason, ReservationState, ResourceType } from '@bk2/shared/models';
-import { categoryValidations, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations, timeValidations } from '@bk2/shared/util';
+import { categoryValidations, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations, timeValidations } from '@bk2/shared/util-core';
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { ReservationFormModel } from './reservation-form.model';
 

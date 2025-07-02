@@ -7,9 +7,11 @@ import { map, Observable, of } from 'rxjs';
 import { getCategoryAbbreviation, OrgTypes } from '@bk2/shared/categories';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { AddressCollection, AddressModel, OrgCollection, OrgModel, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
+import { confirmAction } from '@bk2/shared/util-angular';
 
 import { saveComment } from '@bk2/comment/util';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
   providedIn: 'root'
@@ -23,10 +25,17 @@ export class OrgService  {
 
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(org: OrgModel, currentUser?: UserModel): Promise<string> {
-    org.index = this.getSearchIndex(org);
-    const _key = await createModel(this.firestore, OrgCollection, org, this.tenantId, '@subject.org.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, OrgCollection, _key, '@comment.operation.initial.conf');
-    return _key;
+     try {
+      org.index = this.getSearchIndex(org);
+      const _key = await createModel(this.firestore, OrgCollection, org, this.tenantId);
+      await confirmAction(bkTranslate('@subject.org.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, OrgCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@subject.org.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
   
   /**
@@ -56,14 +65,23 @@ export class OrgService  {
       }));
   }
 
-  public async update(org: OrgModel, confirmMessage = '@subject.org.operation.update'): Promise<void> {
-    org.index = this.getSearchIndex(org);
-    await updateModel(this.firestore, OrgCollection, org, confirmMessage, this.toastController);    
+  public async update(org: OrgModel, currentUser?: UserModel, confirmMessage = '@subject.org.operation.update'): Promise<string> {
+    try {
+      org.index = this.getSearchIndex(org);
+      const _key = await updateModel(this.firestore, OrgCollection, org);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, OrgCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
-  public async delete(org: OrgModel): Promise<void> {
+  public async delete(org: OrgModel, currentUser?: UserModel): Promise<void> {
     org.isArchived = true;
-    await this.update(org, `@subject.org.operation.delete`);
+    await this.update(org, currentUser, `@subject.org.operation.delete`);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/

@@ -1,6 +1,6 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
+import { END_FUTURE_DATE_STR } from "@bk2/shared/constants";
 import { GenderType, ModelType, OrgModel, Periodicity, PersonModel, ReservationModel, ReservationReason, ReservationState, ResourceModel, ResourceType, UserModel } from "@bk2/shared/models";
-import { addIndexElement, die, getTodayStr, isType } from "@bk2/shared/util";
+import { addIndexElement, die, getTodayStr, isType } from "@bk2/shared/util-core";
 import { ReservationFormModel } from "./reservation-form.model";
 import { ReservationNewFormModel } from "./reservation-new-form.model";
 

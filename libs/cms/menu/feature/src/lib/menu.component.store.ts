@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { MenuService } from '@bk2/cms/menu/data-access';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AppStore } from '@bk2/shared/feature';
-import { debugMessage } from '@bk2/shared/util';
+import { debugMessage } from '@bk2/shared/util-core';
 
 export type MenuState = {
   name: string;

@@ -74,7 +74,7 @@ export const CalendarStore = signalStore(
       },
 
       async delete(calEvent: CalEventModel): Promise<void> {
-        await store.calEventService.delete(calEvent);
+        await store.calEventService.delete(calEvent, store.appStore.currentUser());
         this.reset();
       }
     }

@@ -1,8 +1,8 @@
 import { DeepRequired } from 'ngx-vest-forms';
 import { Image, ImageType } from '@bk2/shared/models';
 import { only, staticSuite } from 'vest';
-import { stringValidations } from '@bk2/shared/util';
-import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { stringValidations } from '@bk2/shared/util-core';
+import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 
 export const imageConfigFormModelShape: DeepRequired<Image> = {
     imageLabel: '',

@@ -6,7 +6,8 @@ import { collection, doc, DocumentReference, setDoc, updateDoc } from "firebase/
 import { ENV, FIRESTORE } from "@bk2/shared/config";
 import { MenuItemCollection, MenuItemModel, UserModel } from "@bk2/shared/models";
 import { bkTranslate } from "@bk2/shared/i18n";
-import { confirmAction, die, getSystemQuery, removeProperty, searchData } from "@bk2/shared/util";
+import { die, getSystemQuery, removeProperty, searchData } from "@bk2/shared/util-core";
+import { confirmAction } from "@bk2/shared/util-angular";
 
 import { saveComment } from "@bk2/comment/util";
 

@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { extractSecondPartOfOptionalTupel } from '@bk2/shared/util';
+import { extractSecondPartOfOptionalTupel } from '@bk2/shared/util-core';
 
 /**
  * Takes a location string in the form of [locationKey]@[locationLabel]

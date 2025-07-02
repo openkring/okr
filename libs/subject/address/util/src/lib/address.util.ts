@@ -2,8 +2,8 @@ import { AddressChannel, AddressCollection, AddressModel, AddressUsage, ModelTyp
 import { Browser } from "@capacitor/browser";
 import { ToastController } from "@ionic/angular";
 import { bkTranslate } from "@bk2/shared/i18n";
-import { copyToClipboard, die, getCountryName, getModelAndKey, showToast } from "@bk2/shared/util";
-
+import { die, getCountryName, getModelAndKey } from "@bk2/shared/util-core";
+import { copyToClipboard, showToast } from "@bk2/shared/util-angular";
 
 /***************************  helpers *************************** */
 export function getAddressModalTitle(addressKey: string | undefined): string {
@@ -186,3 +186,4 @@ export function stringifyAddress(address: AddressModel): string {
     return address.addressValue;
   }
 }
+

@@ -1,0 +1,60 @@
+# Settings for Backend (on Cloud Run).
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  command: ["node", "main.js"] 
+  entryPoint: "dist/apps/functions"
+
+env:
+  - variable: NODE_ENV
+    value: production
+  - variable: NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY
+    secret: NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY
+  - variable: NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN
+    secret: NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN
+  - variable: NEXT_PUBLIC_SVC_GMAP_KEY
+    secret: NEXT_PUBLIC_SVC_GMAP_KEY
+  - variable: NEXT_PUBLIC_IMGIX_BASE_URL
+    secret: NEXT_PUBLIC_IMGIX_BASE_URL
+  - variable: IPINFO_TOKEN
+    secret: IPINFO_TOKEN
+
+buildConfig:
+  buildCommand: >
+    set -e &&
+    echo "--- installation of root-dependencies with pnpm ---" &&
+    pnpm install &&
+    echo "--- Starting build for functions ---" &&
+    npx nx build functions &&
+    echo "--- Build completed. Checking for package.json ---" &&
+    if [ ! -f dist/apps/functions/package.json ]; then
+      echo "ERROR: dist/apps/functions/package.json NOT FOUND after build!" >&2;
+      echo "--- Listing dist/apps ---" >&2;
+      ls -l dist/apps >&2;
+      echo "--- Listing dist/apps/functions (if exists) ---" >&2;
+      ls -l dist/apps/functions >&2 || echo "dist/apps/functions does not exist or ls failed" >&2;
+      exit 1;
+    else
+      echo "SUCCESS: dist/apps/functions/package.json found after build.";
+    fi &&
+    echo "--- Listing contents of dist/apps/functions ---" &&
+    ls -lA dist/apps/functions &&
+    echo "--- Build script finished ---"
+
+headers:
+  - path: /.*
+    headers:
+      - key: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains; preload
+      - key: X-Content-Type-Options
+        value: nosniff
+      - key: X-Frame-Options
+        value: DENY
+      - key: Referrer-Policy
+        value: no-referrer
+
+rewrites:
+  - source: /.*
+    run:
+      serviceId: default 
+      region: europe-west6 

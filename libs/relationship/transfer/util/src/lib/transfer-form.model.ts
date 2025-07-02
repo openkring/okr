@@ -1,5 +1,5 @@
 import { AvatarInfo, DefaultResourceInfo, Periodicity, ResourceInfo, TransferState, TransferType } from '@bk2/shared/models';
-import { getTodayStr } from '@bk2/shared/util';
+import { getTodayStr } from '@bk2/shared/util-core';
 import { DeepRequired } from 'ngx-vest-forms';
 
 export type TransferFormModel = {

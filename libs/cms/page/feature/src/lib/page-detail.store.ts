@@ -5,7 +5,7 @@ import { PageService } from '@bk2/cms/page/data-access';
 import { ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { debugItemLoaded, debugMessage, die } from '@bk2/shared/util';
+import { debugItemLoaded, debugMessage, die } from '@bk2/shared/util-core';
 import { PageModel, SectionModel } from '@bk2/shared/models';
 import { SectionTypes } from '@bk2/shared/categories';
 import { CardSelectModalComponent } from '@bk2/shared/ui';
@@ -84,7 +84,7 @@ export const PageDetailStore = signalStore(
       deleteSectionFromPage: (sectionKey: string) => {
         const _page = store.page() ?? die('PageStore.deleteSectionFromPage: page is mandatory.');
         _page.sections.splice(_page.sections.indexOf(sectionKey), 1);
-        store.pageService.update(_page);
+        store.pageService.update(_page, store.currentUser());
       },
       /**
        * Sort the sections of the page.
@@ -106,7 +106,7 @@ export const PageDetailStore = signalStore(
           const _sortedSections = (data as SectionModel[]).map((_section: SectionModel) => _section.bkey ?? die('PageDetailStore.sortSections: sectionKey is mandatory.'));
           const _page = store.page() ?? die('PageDetailStore.sortSections: page is mandatory.');
           _page.sections = _sortedSections;
-          store.pageService.update(_page);
+          store.pageService.update(_page, store.currentUser());
           store.pageResource.reload();
         }
       },
@@ -130,7 +130,7 @@ export const PageDetailStore = signalStore(
           const _sectionKey = await store.sectionService.create(_section);
           if (_sectionKey) {
             _page.sections.push(_sectionKey);
-            store.pageService.update(_page);
+            store.pageService.update(_page, store.currentUser());
             store.pageResource.reload();
           } 
         }
@@ -150,7 +150,7 @@ export const PageDetailStore = signalStore(
         const { data, role } = await _modal.onWillDismiss();
         if (role === 'confirm') { // data = selected sectionKey
           _page.sections.push(data);
-          store.pageService.update(_page);
+          store.pageService.update(_page, store.currentUser());
           store.pageResource.reload();
         }
       },

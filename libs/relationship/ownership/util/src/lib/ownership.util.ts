@@ -1,6 +1,6 @@
-import { END_FUTURE_DATE_STR } from '@bk2/shared/config';
-import { AccountModel, AccountType, GenderType, ModelType, OrgModel, OwnershipModel, OwnershipType, Periodicity, PersonModel, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
-import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from '@bk2/shared/util';
+import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
+import { AccountModel, AccountType, GenderType, ModelType, OrgModel, OwnershipModel, Periodicity, PersonModel, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
+import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from '@bk2/shared/util-core';
 import { OwnershipFormModel } from './ownership-form.model';
 
 export function newOwnershipFormModel(): OwnershipFormModel {
@@ -106,7 +106,7 @@ export function convertFormToOwnership(ownership?: OwnershipModel, vm?: Ownershi
  * @param validFrom 
  * @returns 
  */
-export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceModel | AccountModel, tenantId: string, validFrom = getTodayStr(), ownershipType = OwnershipType.Possession): OwnershipModel {
+export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceModel | AccountModel, tenantId: string, validFrom = getTodayStr()): OwnershipModel {
   if (!owner.bkey) die('ownership.util.newOwnership(): owner.bkey is mandatory.');
   const _ownership = new OwnershipModel(tenantId);
 
@@ -156,7 +156,6 @@ export function getOwnerName(ownership: OwnershipModel): string {
 export function isOwnership(ownership: unknown, tenantId: string): ownership is OwnershipModel {
   return isType(ownership, new OwnershipModel(tenantId));
 }
-
 
 /************************************************* Search Index ********************************************************** */
 export function getOwnershipSearchIndex(ownership: OwnershipModel): string {

@@ -3,7 +3,8 @@ import { Router } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { getImgixUrlWithAutoParams, navigateByUrl } from '@bk2/shared/util';
+import { getImgixUrlWithAutoParams } from '@bk2/shared/util-core';
+import { navigateByUrl } from '@bk2/shared/util-angular';
 import { HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore } from '@bk2/shared/feature';

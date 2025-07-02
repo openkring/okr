@@ -3,9 +3,8 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryItemsComponent, CheckboxComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { CategoryItemModel, UserModel } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util';
-import { RoleName } from '@bk2/shared/config';
+import { CategoryItemModel, UserModel, RoleName } from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
 import { CategoryListFormModel, categoryListFormModelShape, categoryListFormValidations } from '@bk2/category/util';
 
 @Component({

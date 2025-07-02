@@ -3,10 +3,9 @@ import { vestForms } from 'ngx-vest-forms';
 import { IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { AddressChannels, AddressUsages } from '@bk2/shared/categories';
-import { RoleName } from '@bk2/shared/config';
-import { AddressChannel, AddressUsage, SwissCity, UserModel } from '@bk2/shared/models';
+import { AddressChannel, AddressUsage, SwissCity, UserModel, RoleName } from '@bk2/shared/models';
 import { CategoryComponent, CheckboxComponent, EmailInputComponent, ErrorNoteComponent, IbanComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, hasRole } from '@bk2/shared/util';
+import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 
 import { SwissCitySearchComponent } from '@bk2/swisscities/ui';
 

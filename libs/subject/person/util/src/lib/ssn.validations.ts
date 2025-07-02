@@ -1,5 +1,6 @@
-import { SSN_LENGTH } from '@bk2/shared/config';
-import { checkAhv, stringValidations } from '@bk2/shared/util';
+import { SSN_LENGTH } from '@bk2/shared/constants';
+import { stringValidations } from '@bk2/shared/util-core';
+import { checkAhv } from '@bk2/shared/util-angular';
 import { test, enforce, omitWhen } from 'vest';
 
 export function ssnValidations(fieldName: string, ssn: unknown ) {

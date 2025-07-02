@@ -7,8 +7,9 @@ import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { DateFormat, getTodayStr } from '@bk2/shared/util';
-import { ChAnyDate, DATE_LENGTH, InputMode } from '@bk2/shared/config';
+import { DateFormat, getTodayStr } from '@bk2/shared/util-core';
+import { DATE_LENGTH, InputMode } from '@bk2/shared/constants';
+import { ChAnyDate } from '@bk2/shared/config';
 
 /**
  * This ui component enables to input a date in ViewDate format (dd.MM.yyyy) in a text input field.

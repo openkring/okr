@@ -1,6 +1,6 @@
 import { only, staticSuite} from 'vest';
-import { booleanValidations, numberValidations, stringValidations, tagValidations, tenantValidations } from '@bk2/shared/util';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { booleanValidations, numberValidations, stringValidations } from '@bk2/shared/util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 import { CategoryItemFormModel, CategoryListFormModel } from './category-form.model';
 
 

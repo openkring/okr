@@ -6,7 +6,8 @@ import { Observable, of } from 'rxjs';
 
 import { WorkingRelModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
-import { confirm, debugListLoaded, isValidAt } from '@bk2/shared/util';
+import { debugListLoaded, isValidAt } from '@bk2/shared/util-core';
+import { confirm } from '@bk2/shared/util-angular';
 
 import { AvatarService } from '@bk2/avatar/data-access';
 import { WorkingRelService } from '@bk2/working-rel/data-access';
@@ -120,7 +121,9 @@ export const WorkingRelAccordionStore = signalStore(
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
           if (isWorkingRel(data, store.appStore.tenantId())) {
-            await (!data.bkey ? store.workingRelService.create(data, store.appStore.tenantId(), store.appStore.currentUser()) : store.workingRelService.update(data));
+            await (!data.bkey ? 
+              store.workingRelService.create(data, store.appStore.tenantId(), store.appStore.currentUser()) : 
+              store.workingRelService.update(data, store.appStore.currentUser()));
             store.workingRelsResource.reload();
           }
         }  
@@ -137,7 +140,7 @@ export const WorkingRelAccordionStore = signalStore(
         if (workingRel) {
           const _result = await confirm(store.alertController, '@workingRel.operation.delete.confirm', true);
           if (_result === true) {
-            await store.workingRelService.delete(workingRel);
+            await store.workingRelService.delete(workingRel, store.appStore.currentUser());
             store.workingRelsResource.reload();
           } 
         }

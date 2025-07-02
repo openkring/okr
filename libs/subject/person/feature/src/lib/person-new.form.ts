@@ -5,10 +5,10 @@ import { vestForms } from 'ngx-vest-forms';
 import { AsyncPipe } from '@angular/common';
 
 import { GenderTypes } from '@bk2/shared/categories';
-import { BexioIdMask, ChSsnMask, RoleName } from '@bk2/shared/config';
-import { CategoryListModel, GenderType, ModelType, PrivacyAccessor, PrivacySettings, SwissCity, UserModel } from '@bk2/shared/models';
+import { BexioIdMask, ChSsnMask } from '@bk2/shared/config';
+import { CategoryListModel, GenderType, ModelType, RoleName, PrivacyAccessor, PrivacySettings, SwissCity, UserModel } from '@bk2/shared/models';
 import { CategoryComponent, CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, debugFormModel, getTodayStr, hasRole, isOrg, isVisibleToUser } from '@bk2/shared/util';
+import { debugFormErrors, debugFormModel, getTodayStr, hasRole, isOrg, isVisibleToUser } from '@bk2/shared/util-core';
 import { AvatarPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { OrgSelectModalComponent, AppStore } from '@bk2/shared/feature';

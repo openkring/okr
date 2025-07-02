@@ -5,7 +5,7 @@ import { SectionModel } from '@bk2/shared/models';
 import { CategoryNamePipe } from '@bk2/shared/pipes';
 import { HeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { SectionTypes } from '@bk2/shared/categories';
-import { arrayMove } from '@bk2/shared/util';
+import { arrayMove } from '@bk2/shared/util-core';
 
 /**
  * Modal to sort the sections of a page.

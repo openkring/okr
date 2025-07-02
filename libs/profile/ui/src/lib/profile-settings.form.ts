@@ -8,7 +8,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 import { CategoryComponent, CheckboxComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared/ui";
 import { SettingsFormModel, settingsFormModelShape, settingsFormValidations } from "@bk2/profile/util";
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared/categories";
-import { debugFormErrors } from "@bk2/shared/util";
+import { debugFormErrors } from "@bk2/shared/util-core";
 
 @Component({
   selector: 'bk-profile-settings-accordion',

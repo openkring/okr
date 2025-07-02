@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 
-import { debugListLoaded } from '@bk2/shared/util';
+import { debugListLoaded } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
 
 import { CommentService } from '@bk2/comment/data-access';

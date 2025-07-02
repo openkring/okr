@@ -6,7 +6,7 @@ import { AppStore } from "@bk2/shared/feature";
 import { AddressChannel, AddressModel, DefaultLanguage, EZS_DIR } from "@bk2/shared/models";
 import { getModelSlug, Languages } from "@bk2/shared/categories";
 import { ImageViewModalComponent, MapViewModalComponent, UploadService } from "@bk2/shared/ui";
-import { getModelAndKey, warn } from "@bk2/shared/util";
+import { getModelAndKey, warn } from "@bk2/shared/util-core";
 
 import { readAsFile } from "@bk2/avatar/util";
 
@@ -40,7 +40,9 @@ export class AddressModalsService {
     const { data, role } = await _modal.onWillDismiss();
     if (role === 'confirm') {
       if (isAddress(data, this.tenantId)) {
-        await (!data.bkey ? this.addressService.create(data, this.appStore.currentUser()) : this.addressService.update(data));
+        await (!data.bkey ? 
+          this.addressService.create(data, this.appStore.currentUser()) : 
+          this.addressService.update(data, this.appStore.currentUser()));
       }
     }
   }

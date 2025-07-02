@@ -1,5 +1,5 @@
 import { AvatarInfo, Importance, Priority, TaskModel, TaskState } from "@bk2/shared/models";
-import { isType } from "@bk2/shared/util";
+import { isType } from "@bk2/shared/util-core";
 import { TaskFormModel } from "./task-form.model";
 
 export function newTaskFormModel(author?: AvatarInfo, assignee?: AvatarInfo): TaskFormModel {

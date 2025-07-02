@@ -4,7 +4,8 @@ import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera";
 
 import { UploadTaskComponent } from "./upload-task.modal";
-import { error, warn } from "@bk2/shared/util";
+import { warn } from "@bk2/shared/util-core";
+import { error } from "@bk2/shared/util-angular";
 import { Image } from "@bk2/shared/models";
 import { showZoomedImage } from "./ui.util";
 

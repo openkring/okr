@@ -25,14 +25,14 @@ import { authCredentialsValidations } from '@bk2/auth/util';
       <ion-grid>
         <ion-row>
           <ion-col size="12">
-            <bk-email name="loginEmail" [value]="vm().loginEmail ?? ''" [showHelper]=true autocomplete="username email" />
+            <bk-email name="loginEmail" [value]="vm().loginEmail" [showHelper]=true autocomplete="username email" />
             <bk-error-note [errors]="emailErrors()" />
           </ion-col>
         </ion-row>
 
         <ion-row>
           <ion-col size="12">
-            <bk-password-input name="loginPassword" [value]="vm().loginPassword ?? ''" [showHelper]=true />
+            <bk-password-input name="loginPassword" [value]="vm().loginPassword" [showHelper]=true />
             <bk-error-note [errors]="passwordErrors()" />
           </ion-col>
         </ion-row>

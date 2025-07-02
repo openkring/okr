@@ -5,7 +5,8 @@ import { Geolocation, Position } from '@capacitor/geolocation';
 import { ENV } from '@bk2/shared/config';
 import { SectionService } from '@bk2/cms/section/data-access';
 import { SectionModel } from '@bk2/shared/models';
-import { convertToKml, downloadZipFile, error, warn } from '@bk2/shared/util';
+import { warn } from '@bk2/shared/util-core';
+import { convertToKml, downloadZipFile, error } from '@bk2/shared/util-angular';
 
 export type TrackerState = {
   section: SectionModel | undefined;

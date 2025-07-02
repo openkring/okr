@@ -2,7 +2,8 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 
-import { AppNavigationService, chipMatches, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
+import { chipMatches, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
+import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
 import { UserService } from '@bk2/user/data-access';
 import { ModelType, UserCollection, UserModel } from '@bk2/shared/models';
 import { Router } from '@angular/router';
@@ -83,7 +84,7 @@ export const UserListStore = signalStore(
       },
 
       async delete(user: UserModel): Promise<void> {
-        await store.userService.delete(user);
+        await store.userService.delete(user, store.appStore.currentUser());
         this.reset();
       },
 

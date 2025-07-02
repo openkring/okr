@@ -1,4 +1,3 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
 import { BkModel, SearchableModel, TaggedModel } from "./base.model";
 import { ModelType } from "./enums/model-type.enum";
 import { GenderType } from "./enums/gender-type.enum";
@@ -45,7 +44,7 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   // membership
   public memberId = '';
   public dateOfEntry = ''; 
-  public dateOfExit = END_FUTURE_DATE_STR; 
+  public dateOfExit = ''; 
   public membershipCategory = 'active';
   public membershipState = 'active';
   public orgFunction = ''; 

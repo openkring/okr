@@ -4,10 +4,10 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/org/util';
 import { OrgTypes } from '@bk2/shared/categories';
-import { BexioIdMask, ChVatMask, RoleName } from '@bk2/shared/config';
-import { OrgType, UserModel } from '@bk2/shared/models';
+import { BexioIdMask, ChVatMask } from '@bk2/shared/config';
+import { OrgType, UserModel, RoleName } from '@bk2/shared/models';
 import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, hasRole } from '@bk2/shared/util';
+import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 
 @Component({
   selector: 'bk-org-form',

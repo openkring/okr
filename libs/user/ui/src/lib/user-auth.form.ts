@@ -8,10 +8,10 @@ import { AllRoles, UserModel } from "@bk2/shared/models";
 import { CheckboxComponent, ChipsComponent } from "@bk2/shared/ui";
 
 import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormValidations } from "@bk2/user/util";
-import { debugFormErrors } from "@bk2/shared/util";
+import { debugFormErrors } from "@bk2/shared/util-core";
 
 @Component({
-  selector: 'bk-user-auth',
+  selector: 'bk-user-auth-form',
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
@@ -74,7 +74,7 @@ export class UserAuthFormComponent {
 
   protected onChange(fieldName: string, $event: string | number | boolean): void {
     this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('UserAuth', this.validationResult().errors, this.currentUser());
+    debugFormErrors('UserAuthForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }

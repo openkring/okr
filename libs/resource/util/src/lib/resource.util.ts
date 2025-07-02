@@ -1,6 +1,6 @@
 import { ResourceModel, ResourceType, RowingBoatUsage } from "@bk2/shared/models";
 import { ResourceFormModel } from "./resource-form.model";
-import { doubleNumber2name, extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from "@bk2/shared/util";
+import { doubleNumber2name, extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from "@bk2/shared/util-core";
 import { ResourceTypes } from "@bk2/shared/categories";
 
 

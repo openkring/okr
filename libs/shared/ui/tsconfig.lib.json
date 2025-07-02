@@ -13,5 +13,5 @@
     "jest.config.ts",
     "src/**/*.test.ts"
   ],
-  "include": ["src/**/*.ts", "../feature/src/lib/chips.component.ts"]
+  "include": ["src/**/*.ts"]
 }

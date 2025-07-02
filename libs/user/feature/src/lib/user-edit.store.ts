@@ -4,7 +4,8 @@ import { rxResource } from '@angular/core/rxjs-interop';
 
 import { of } from 'rxjs';
 import { AppStore } from '@bk2/shared/feature';
-import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
+import { debugItemLoaded } from '@bk2/shared/util-core';
+import { AppNavigationService } from '@bk2/shared/util-angular';
 import { UserService } from '@bk2/user/data-access';
 import { ModelType, UserModel } from '@bk2/shared/models';
 
@@ -61,7 +62,9 @@ export const UserEditStore = signalStore(
 
       /************************************ ACTIONS ************************************* */
       async save(user: UserModel): Promise<void> {
-        await (!user.bkey ? store.userService.create(user) : store.userService.update(user));
+        await (!user.bkey ? 
+          store.userService.create(user, store.currentUser()) : 
+          store.userService.update(user, store.currentUser()));
         store.appNavigationService.back();
       }
     }

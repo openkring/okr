@@ -8,7 +8,7 @@ import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk
 import { ModelType } from '@bk2/shared/models';
 import { I18nService, TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore } from '@bk2/shared/feature';
-import { debugFormModel } from '@bk2/shared/util';
+import { debugFormModel } from '@bk2/shared/util-core';
 
 import { AddressesAccordionComponent } from '@bk2/address/feature';
 
@@ -103,6 +103,6 @@ export class ProfilePageComponent {
     const _person = convertPersonalDataFormToPerson(this.personalData(), this.currentPerson());
     let _user = convertSettingsFormToUser(this.settings(), this.currentUser());
     _user = convertPrivacyFormToUser(this.privacy(), _user);
-    await this.profileService.update(_person, _user);
+    await this.profileService.update(_person, _user, this.currentUser());
   }
 }

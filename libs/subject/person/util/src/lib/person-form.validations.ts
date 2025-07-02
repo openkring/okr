@@ -1,7 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { PersonFormModel } from './person-form.model';
-import { categoryValidations, dateValidations, isAfterDate, isFutureDate, stringValidations } from '@bk2/shared/util';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { categoryValidations, dateValidations, isAfterDate, isFutureDate, stringValidations } from '@bk2/shared/util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 import { GenderType } from '@bk2/shared/models';
 import { ssnValidations } from './ssn.validations';
 

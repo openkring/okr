@@ -1,6 +1,6 @@
 import { Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { navigateByUrl } from '@bk2/shared/util';
+import { navigateByUrl } from '@bk2/shared/util-angular';
 import { IonButtons, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ButtonComponent } from './button.component';
 

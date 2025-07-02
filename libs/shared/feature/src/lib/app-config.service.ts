@@ -6,7 +6,9 @@ import { ToastController } from '@ionic/angular/standalone';
 
 import { FIRESTORE } from '@bk2/shared/config';
 import { AppConfig, AppConfigCollection } from '@bk2/shared/models';
-import { createObject, readObject, updateObject } from '@bk2/shared/util';
+import { createObject, readObject, updateObject } from '@bk2/shared/util-core';
+import { confirmAction } from '@bk2/shared/util-angular';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
   providedIn: 'root'
@@ -22,7 +24,18 @@ export class AppConfigService {
    * @returns the document id of the newly created AppConfig
    */
   public async create(appConfig: AppConfig): Promise<string> {
-    return createObject<AppConfig>(this.firestore, AppConfigCollection, appConfig, appConfig.tenantId, '@appConfig.operation.create', this.toastController);
+    try {
+      // By spreading appConfig into a new object, we create a plain object that satisfies 
+      // the generic constraint of updateObject, resolving the type conflict between
+      // the frontend and backend Firestore SDKs.
+      const _key = createObject(this.firestore, AppConfigCollection, { ...appConfig }, appConfig.tenantId);
+      await confirmAction(bkTranslate('@appConfig.operation.create.conf'), true, this.toastController);
+      return _key;
+    }
+    catch(error) {
+      await confirmAction(bkTranslate('@appConfig.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    } 
   }
 
   /**
@@ -39,7 +52,18 @@ export class AppConfigService {
    * @param appConfig the AppConfig with the new values. Its key must be valid (in order to find it in the database)
    */
   public async update(appConfig: AppConfig, message = '@appConfig.operation.update'): Promise<string> {
-    return updateObject<AppConfig>(this.firestore, AppConfigCollection, appConfig.tenantId, appConfig, message, this.toastController);
+    try {
+      // By spreading appConfig into a new object, we create a plain object that satisfies 
+      // the generic constraint of updateObject, resolving the type conflict between
+      // the frontend and backend Firestore SDKs.
+      const _key = updateObject(this.firestore, AppConfigCollection, appConfig.tenantId, { ...appConfig });
+      await confirmAction(bkTranslate(`${message}.conf`), true, this.toastController);
+      return _key;
+    }
+    catch(error) {
+      await confirmAction(bkTranslate(`${message}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    } 
   }
 
   /**

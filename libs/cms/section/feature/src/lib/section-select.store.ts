@@ -5,7 +5,7 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared/config';
 import { SectionModel } from '@bk2/shared/models';
-import { nameMatches } from '@bk2/shared/util';
+import { nameMatches } from '@bk2/shared/util-core';
 import { SectionService } from '@bk2/cms/section/data-access';
 import { Router } from '@angular/router';
 

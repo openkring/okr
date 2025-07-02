@@ -60,7 +60,9 @@ export class TaskModalsService {
     const { data, role } = await _modal.onDidDismiss();
     if (role === 'confirm') {
       if (isTask(data, this.tenantId)) {
-        await (!data.bkey ? this.taskService.create(data, this.appStore.currentUser()) : this.taskService.update(data));
+        await (!data.bkey ? 
+          this.taskService.create(data, this.appStore.currentUser()) : 
+          this.taskService.update(data, this.appStore.currentUser()));
       }
     }
   }

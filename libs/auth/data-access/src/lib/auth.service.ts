@@ -5,7 +5,8 @@ import { Router } from "@angular/router";
 
 import { AUTH } from "@bk2/shared/config";
 import { bkTranslate } from "@bk2/shared/i18n";
-import { die, navigateByUrl, showToast, warn } from "@bk2/shared/util";
+import { die, warn } from "@bk2/shared/util-core";
+import { navigateByUrl, showToast } from "@bk2/shared/util-angular";
 import { AuthCredentials } from "@bk2/shared/models";
 
 /**

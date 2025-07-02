@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:util", "scope:auth", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/auth/util",
+        "main": "libs/auth/util/src/index.ts",
+        "tsConfig": "libs/auth/util/tsconfig.lib.json",
+        "assets": ["libs/auth/util/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

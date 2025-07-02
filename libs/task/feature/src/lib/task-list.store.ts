@@ -2,7 +2,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 
-import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQuery, getTodayStr, nameMatches, searchData } from '@bk2/shared/util';
+import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQuery, getTodayStr, nameMatches, searchData } from '@bk2/shared/util-core';
 import { AllCategories, ModelType, Priority, TaskCollection, TaskModel, TaskState } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
@@ -136,7 +136,7 @@ export const TaskListStore = signalStore(
           task.completionDate = getTodayStr();
           task.state = TaskState.Done;
         }
-        await store.taskService.update(task);
+        await store.taskService.update(task, store.currentUser());
         store.tasksResource.reload();
       }
     }

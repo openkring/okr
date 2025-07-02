@@ -1,8 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { IonApp, IonContent, IonHeader, IonMenu, IonRouterOutlet, IonSplitPane, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
-import { RoleName } from '@bk2/shared/config';
-import { getImgixUrlWithAutoParams, hasRole } from '@bk2/shared/util';
+
+import { RoleName } from '@bk2/shared/models';
+import { getImgixUrlWithAutoParams, hasRole } from '@bk2/shared/util-core';
 import { MenuComponent } from '@bk2/cms/menu/feature';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AuthInfoComponent } from '@bk2/auth/ui';

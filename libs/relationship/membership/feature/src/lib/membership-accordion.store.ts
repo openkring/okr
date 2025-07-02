@@ -5,7 +5,8 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom, Observable, of } from 'rxjs';
 
 import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgModel, PersonModel } from '@bk2/shared/models';
-import { confirm, convertDateFormatToString, DateFormat, debugListLoaded, isValidAt, readModel } from '@bk2/shared/util';
+import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt, readModel } from '@bk2/shared/util-core';
+import { confirm } from '@bk2/shared/util-angular';
 import { AvatarService } from '@bk2/avatar/data-access';
 import { getAvatarImgixUrl } from '@bk2/shared/pipes';
 import { OrgService } from '@bk2/org/data-access';
@@ -13,7 +14,7 @@ import { MembershipService } from '@bk2/membership/data-access';
 import { MembershipModalsService } from './membership-modals.service';
 import { selectDate } from '@bk2/shared/ui';
 import { AppStore } from '@bk2/shared/feature';
-import { THUMBNAIL_SIZE } from '@bk2/shared/config';
+import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
 
 export type MembershipAccordionState = {
   member: PersonModel | OrgModel | undefined;

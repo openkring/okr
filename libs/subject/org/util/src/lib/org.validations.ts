@@ -1,7 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
-import { categoryValidations, dateValidations, isAfterDate, stringValidations } from '@bk2/shared/util';
+import { categoryValidations, dateValidations, isAfterDate, stringValidations } from '@bk2/shared/util-core';
 import { OrgModel, OrgType } from '@bk2/shared/models';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 
 export const orgValidations = staticSuite((model: OrgModel, field?: string) => {
   if (field) only(field);

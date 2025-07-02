@@ -3,13 +3,12 @@ import { AsyncPipe } from '@angular/common';
 import { IonAccordion, IonButton, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 
-import { DocumentModel } from '@bk2/shared/models';
+import { DocumentModel, RoleName } from '@bk2/shared/models';
 import { EmptyListComponent, SpinnerComponent, UploadService } from '@bk2/shared/ui';
 import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore } from '@bk2/shared/feature';
-import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
+import { hasRole } from '@bk2/shared/util-core';
 
 @Component({
   selector: 'bk-documents-accordion',

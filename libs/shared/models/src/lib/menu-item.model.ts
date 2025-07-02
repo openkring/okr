@@ -1,6 +1,7 @@
-import { RoleName } from "@bk2/shared/config";
 import { BaseProperty, BkModel, NamedModel, SearchableModel, TaggedModel } from "./base.model";
 import { MenuAction } from "./enums/menu-action.enum";
+
+export type RoleName = 'none' | 'anonymous' | 'registered' | 'privileged' | 'contentAdmin' | 'resourceAdmin' | 'memberAdmin' | 'eventAdmin' | 'treasurer' | 'admin'| 'public' | 'groupAdmin' ;
 
 export class MenuItemModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
   public bkey = '';                         // unique key of the model in the database

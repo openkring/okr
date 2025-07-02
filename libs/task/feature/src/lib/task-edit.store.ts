@@ -3,10 +3,10 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 
 import { AvatarInfo, ModelType } from '@bk2/shared/models';
-import { createFullName, debugItemLoaded } from '@bk2/shared/util';
+import { createFullName, debugItemLoaded } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
 import { getAvatarImgixUrl } from '@bk2/shared/pipes';
-import { THUMBNAIL_SIZE } from '@bk2/shared/config';
+import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
 
 export type TaskEditState = {
   author: AvatarInfo | undefined;

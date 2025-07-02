@@ -1,5 +1,6 @@
-import { IBAN_LENGTH } from '@bk2/shared/config';
-import { checkIban, stringValidations } from '@bk2/shared/util';
+import { IBAN_LENGTH } from '@bk2/shared/constants';
+import { stringValidations } from '@bk2/shared/util-core';
+import { checkIban } from '@bk2/shared/util-angular';
 import { test, enforce, omitWhen } from 'vest';
 
 export function ibanValidations(fieldName: string, iban: unknown) {

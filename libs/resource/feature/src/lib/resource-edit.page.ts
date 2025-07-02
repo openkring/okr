@@ -4,9 +4,8 @@ import { AsyncPipe } from '@angular/common';
 
 import { ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
-import { ModelType, ResourceCollection, ResourceType, RowingBoatType } from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
+import { ModelType, ResourceCollection, ResourceType, RowingBoatType, RoleName } from '@bk2/shared/models';
 import { ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';

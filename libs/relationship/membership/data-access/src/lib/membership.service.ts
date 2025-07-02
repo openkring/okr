@@ -2,14 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { combineLatest, firstValueFrom, map, Observable, of } from 'rxjs';
 import { ToastController } from '@ionic/angular/standalone';
 
-import { END_FUTURE_DATE_STR, ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
 import { CategoryListModel, MembershipCollection, MembershipModel, ModelType, PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
-import { addDuration, copyToClipboardWithConfirmation, createModel, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util';
+import { addDuration, createModel, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util-core';
+import { confirmAction, copyToClipboardWithConfirmation } from '@bk2/shared/util-angular';
 
 import { saveComment } from '@bk2/comment/util';
 import { getCategoryAttribute } from '@bk2/category/util';
 
 import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipSearchIndex, getMembershipSearchIndexInfo, getRelLogEntry } from '@bk2/membership/util';
+import { bkTranslate } from '@bk2/shared/i18n';
   
 
   @Injectable({
@@ -29,10 +32,17 @@ import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembers
    * @returns the document id of the stored membership in the database
    */
   public async create(membership: MembershipModel, currentUser?: UserModel): Promise<string> {
-    membership.index = this.getSearchIndex(membership);
-    const _key = await createModel(this.firestore, MembershipCollection, membership, this.tenantId, '@membership.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, _key, '@comment.operation.initial.conf');  
-    return _key;
+      try {
+      membership.index = this.getSearchIndex(membership);
+      const _key = await createModel(this.firestore, MembershipCollection, membership, this.tenantId);
+      await confirmAction(bkTranslate('@membership.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@membership.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -48,14 +58,23 @@ import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembers
       }));
   }
 
-  public async update(membership: MembershipModel, confirmMessage = '@membership.operation.update'): Promise<void> {
-    membership.index = this.getSearchIndex(membership);
-    await updateModel(this.firestore, MembershipCollection, membership, confirmMessage, this.toastController);
+  public async update(membership: MembershipModel, currentUser?: UserModel, confirmMessage = '@membership.operation.update'): Promise<string> {
+      try {
+      membership.index = this.getSearchIndex(membership);
+      const _key = await updateModel(this.firestore, MembershipCollection, membership);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
-  public async delete(membership: MembershipModel): Promise<void> {
+  public async delete(membership: MembershipModel, currentUser?: UserModel): Promise<void> {
     membership.isArchived = true;
-    await this.update(membership, `@membership.operation.delete`);
+    await this.update(membership, currentUser, `@membership.operation.delete`);
   }
 
   /**
@@ -67,7 +86,7 @@ import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembers
     if (membership.dateOfExit.startsWith('9999') && dateOfExit && dateOfExit.length === 8) {
       membership.dateOfExit = dateOfExit;
       membership.relIsLast = true;
-      await this.update(membership);
+      await this.update(membership, currentUser);
       await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, membership.bkey, '@comment.message.membership.deleted');  
     }
   }
@@ -82,7 +101,7 @@ import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembers
   public async saveMembershipCategoryChange(oldMembership: MembershipModel, membershipChange: CategoryChangeFormModel, membershipCategory: CategoryListModel, currentUser?: UserModel): Promise<void> {
     oldMembership.relIsLast = false;
     oldMembership.dateOfExit = addDuration(membershipChange.dateOfChange ?? getTodayStr(), { days: -1});
-    await this.update(oldMembership);
+    await this.update(oldMembership, currentUser);
 
     // add a comment about the category change to the current membership
     const _comment = getMembershipCategoryChangeComment(membershipChange.membershipCategoryOld ?? 'undefined', membershipChange.membershipCategoryNew ?? 'undefined');

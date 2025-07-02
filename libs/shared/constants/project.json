@@ -1,0 +1,23 @@
+{
+  "name": "shared/constants",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/constants/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:constants", "scope:shared", "platform:web", "platform:mobile", "platform:node"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/shared/constants",
+        "main": "libs/shared/constants/src/index.ts",
+        "tsConfig": "libs/shared/constants/tsconfig.lib.json",
+        "assets": ["libs/shared/constants/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

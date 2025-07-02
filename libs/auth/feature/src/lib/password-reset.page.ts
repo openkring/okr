@@ -3,8 +3,9 @@ import { Router } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonInput, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
-import { EMAIL_LENGTH } from '@bk2/shared/config';
-import { getImgixUrlWithAutoParams, navigateByUrl } from '@bk2/shared/util';
+import { EMAIL_LENGTH } from '@bk2/shared/constants';
+import { getImgixUrlWithAutoParams } from '@bk2/shared/util-core';
+import { navigateByUrl } from '@bk2/shared/util-angular';
 import { HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AuthService } from '@bk2/auth/data-access';

@@ -4,11 +4,13 @@ import { ToastController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { WorkingRelCollection, WorkingRelModel, UserModel } from '@bk2/shared/models';
-import { createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+import { createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
+import { confirmAction } from '@bk2/shared/util-angular';
 
 import { saveComment } from '@bk2/comment/util';
 
 import { getWorkingRelSearchIndex, getWorkingRelSearchIndexInfo } from '@bk2/working-rel/util';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
     providedIn: 'root'
@@ -25,10 +27,17 @@ export class WorkingRelService {
    * @returns the document id of the stored workingRel in the database
    */
   public async create(workingRel: WorkingRelModel, tenantId: string, currentUser?: UserModel): Promise<string> {
-    workingRel.index = this.getSearchIndex(workingRel);
-    const _key = await createModel(this.firestore, WorkingRelCollection, workingRel, tenantId, '@workingRel.operation.create', this.toastController);
-    await saveComment(this.firestore, tenantId, currentUser, WorkingRelCollection, _key, '@comment.operation.initial.conf');  
-    return _key;
+    try {
+      workingRel.index = this.getSearchIndex(workingRel);
+      const _key = await createModel(this.firestore, WorkingRelCollection, workingRel, this.env.tenantId);
+      await confirmAction(bkTranslate('@calEvent.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.env.tenantId, currentUser, WorkingRelCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@calEvent.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -49,14 +58,23 @@ export class WorkingRelService {
    * @param workingRel the workingRel to update
    * @param i18nPrefix the prefix for the i18n key to use for the toast message (can be used for a delete confirmation)
    */
-  public async update(workingRel: WorkingRelModel, confirmMessage = '@workingRel.operation.update'): Promise<void> {
-    workingRel.index = this.getSearchIndex(workingRel);
-    await updateModel(this.firestore, WorkingRelCollection, workingRel, confirmMessage, this.toastController);
+  public async update(workingRel: WorkingRelModel, currentUser?: UserModel, confirmMessage = '@workingRel.operation.update'): Promise<string> {
+    try {
+      workingRel.index = this.getSearchIndex(workingRel);
+      const _key = await updateModel(this.firestore, WorkingRelCollection, workingRel);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.env.tenantId, currentUser, WorkingRelCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
-  public async delete(workingRel: WorkingRelModel): Promise<void> {
+  public async delete(workingRel: WorkingRelModel, currentUser?: UserModel): Promise<void> {
     workingRel.isArchived = true;
-    await this.update(workingRel, `@workingRel.operation.delete`);
+    await this.update(workingRel, currentUser, `@workingRel.operation.delete`);
   }
 
   /**
@@ -67,7 +85,7 @@ export class WorkingRelService {
   public async endWorkingRelByDate(workingRel: WorkingRelModel, validTo: string, tenantId: string, currentUser?: UserModel): Promise<void> {
     if (workingRel.validTo.startsWith('9999') && validTo && validTo.length === 8) {
       workingRel.validTo = validTo;
-      await this.update(workingRel);
+      await this.update(workingRel, currentUser);
       await saveComment(this.firestore, tenantId, currentUser, WorkingRelCollection, workingRel.bkey, '@comment.message.workingRel.deleted');  
     }
   }

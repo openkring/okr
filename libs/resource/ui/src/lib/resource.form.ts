@@ -2,9 +2,8 @@ import { Component, computed, input, model, output, signal } from '@angular/core
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { BaseProperty, ResourceType, RowingBoatUsage, UserModel } from '@bk2/shared/models';
-import { debugFormErrors, hasRole } from '@bk2/shared/util';
-import { RoleName } from '@bk2/shared/config';
+import { BaseProperty, ResourceType, RowingBoatUsage, UserModel, RoleName } from '@bk2/shared/models';
+import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 import { CategoryComponent, ChipsComponent, NotesInputComponent, PropertyListComponent } from '@bk2/shared/ui';
 import { ResourceFormModel, resourceFormShape, resourceFormValidations } from '@bk2/resource/util';
 import { ResourceTypes } from '@bk2/shared/categories';

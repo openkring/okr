@@ -6,7 +6,8 @@ import { of } from 'rxjs';
 
 import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
-import { confirm, convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util';
+import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util-core';
+import { confirm } from '@bk2/shared/util-angular';
 import { selectDate } from '@bk2/shared/ui';
 
 import { OwnershipService } from '@bk2/ownership/data-access';

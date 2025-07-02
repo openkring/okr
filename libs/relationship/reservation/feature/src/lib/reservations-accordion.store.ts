@@ -5,7 +5,8 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
 import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } from '@bk2/shared/models';
-import { confirm, convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util';
+import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util-core';
+import { confirm } from '@bk2/shared/util-angular';
 import { AppStore } from '@bk2/shared/feature';
 import { selectDate } from '@bk2/shared/ui';
 

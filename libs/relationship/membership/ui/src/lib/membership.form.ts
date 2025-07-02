@@ -3,9 +3,10 @@ import { IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angu
 import { vestForms } from 'ngx-vest-forms';
 import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { MembershipFormModel, membershipFormModelShape, membershipFormValidations } from '@bk2/membership/util';
-import { CategoryListModel, GenderType, ModelType, OrgType, Periodicity, UserModel } from '@bk2/shared/models';
-import { BexioIdMask, END_FUTURE_DATE_STR, RoleName } from '@bk2/shared/config';
-import { debugFormErrors, getItemLabel, hasRole } from '@bk2/shared/util';
+import { CategoryListModel, GenderType, ModelType, OrgType, Periodicity, UserModel, RoleName } from '@bk2/shared/models';
+import { BexioIdMask } from '@bk2/shared/config';
+import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
+import { debugFormErrors, getItemLabel, hasRole } from '@bk2/shared/util-core';
 import { OrgTypes } from '@bk2/shared/categories';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AsyncPipe } from '@angular/common';

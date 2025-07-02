@@ -3,10 +3,9 @@ import { AsyncPipe } from '@angular/common';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { ModelType, PageModel, UserModel } from '@bk2/shared/models';
-import { RoleName } from '@bk2/shared/config';
+import { ModelType, PageModel, UserModel, RoleName } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { hasRole } from '@bk2/shared/util';
+import { hasRole } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
 
 import { convertFormToPage, convertPageToForm, PageFormModel } from '@bk2/cms/page/util';

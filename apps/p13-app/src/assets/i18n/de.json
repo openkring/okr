@@ -949,6 +949,12 @@
       "placeholder": "Passwort",
       "error": "Das Passwort muss mindestens 6 Zeichen lang sein."
     },
+    "passwordAoc": {
+      "label": "Passwort",
+      "placeholder": "Passwort",
+      "error": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+      "helper": "Du kannst hier ein explizites Passwort setzen (z.B. für Testzwecke). Wenn du keines setzts, dann wir ein zufälliges Passwort gewählt und der User kann anschliessend mit Passwort Reset sein eigenes setzen."
+    },
     "participants": {
       "label": "Teilnehmer",
       "placeholder": "Anzahl und Art Teilnehmer",

@@ -5,10 +5,10 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabe
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { CategoryNamePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { AvatarDisplayComponent, EmptyListComponent, ListFilterComponent } from '@bk2/shared/ui';
-import { TransferModel } from '@bk2/shared/models';
+import { TransferModel, RoleName } from '@bk2/shared/models';
 import { addAllCategory, TransferStates, TransferTypes } from '@bk2/shared/categories';
-import { RoleName } from '@bk2/shared/config';
-import { error, getYearList, hasRole } from '@bk2/shared/util';
+import { getYearList, hasRole } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

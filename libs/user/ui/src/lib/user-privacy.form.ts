@@ -7,12 +7,12 @@ import { PrivacyUsages } from "@bk2/shared/categories";
 import { TranslatePipe } from "@bk2/shared/i18n";
 import { FieldDescription, PrivacyUsage, UserModel } from "@bk2/shared/models";
 import { CategoryComponent } from "@bk2/shared/ui";
-import { debugFormErrors } from "@bk2/shared/util";
+import { debugFormErrors } from "@bk2/shared/util-core";
 
 import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidations } from "@bk2/user/util";
 
 @Component({
-  selector: 'bk-user-privacy',
+  selector: 'bk-user-privacy-form',
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
@@ -89,7 +89,7 @@ export class UserPrivacyFormComponent {
 
   protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
     this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('UserPrivacy', this.validationResult().errors, this.currentUser());
+    debugFormErrors('UserPrivacyForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }

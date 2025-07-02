@@ -4,9 +4,8 @@ import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { ResourceTypes } from '@bk2/shared/categories';
 import { CategoryComponent, ColorComponent, ErrorNoteComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { ResourceType, UserModel } from '@bk2/shared/models';
-import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
+import { ResourceType, UserModel, RoleName } from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
 import { ResourceFormModel, resourceFormValidations } from '@bk2/resource/util';
 
 @Component({

@@ -3,7 +3,7 @@ import { Component, computed, input, model, output } from '@angular/core';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { URL_LENGTH } from '@bk2/shared/config';
+import { URL_LENGTH } from '@bk2/shared/constants';
 import { ButtonCopyComponent } from './button-copy.component';
 import { FormsModule } from '@angular/forms';
 import { vestFormsViewProviders } from 'ngx-vest-forms';

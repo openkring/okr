@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, nameMatches } from '@bk2/shared/util';
+import { chipMatches, nameMatches } from '@bk2/shared/util-core';
 import { AllCategories, LocationModel, LocationType, ModelType } from '@bk2/shared/models';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AppStore } from '@bk2/shared/feature';
@@ -100,7 +100,7 @@ export const LocationListStore = signalStore(
       },
 
       async delete(location: LocationModel): Promise<void> {
-        await store.locationService.delete(location);
+        await store.locationService.delete(location, store.currentUser());
         this.reset();
       },
 
@@ -116,7 +116,7 @@ export const LocationListStore = signalStore(
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
           if (isLocation(data, store.appStore.tenantId())) {
-            await store.locationService.update(data);
+            await store.locationService.update(data, store.currentUser());
           }
         }
         store.locationsResource.reload();

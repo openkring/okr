@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { rxResource } from '@angular/core/rxjs-interop';
 
-import { AppNavigationService } from '@bk2/shared/util';
+import { AppNavigationService } from '@bk2/shared/util-angular';
 import { ChangeConfirmationComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { ModelType, SectionModel } from '@bk2/shared/models';
@@ -79,7 +79,7 @@ export class SectionPageComponent {
   public async save(): Promise<void> {
     const _originalSection = await firstValueFrom(this.sectionService.read(this.id()));
     const _section = convertFormToSection(_originalSection, this.vm() as SectionFormModel, this.appStore.tenantId());
-    await this.sectionService.update(_section);
+    await this.sectionService.update(_section, this.appStore.currentUser());
     this.formIsValid.set(false);
     this.appNavigationService.back();
   }

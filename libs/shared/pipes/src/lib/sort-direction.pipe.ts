@@ -1,6 +1,6 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
 import { ENV } from '@bk2/shared/config';
-import { SortDirection } from '@bk2/shared/util';
+import { SortDirection } from '@bk2/shared/util-core';
 
 @Pipe({
   name: 'sortDirection',

@@ -1,6 +1,6 @@
 import { Firestore } from "firebase/firestore";
 
-import { createModel, DateFormat, getFullPersonName, getTodayStr, warn } from "@bk2/shared/util";
+import { createModel, DateFormat, getFullPersonName, getTodayStr, warn } from "@bk2/shared/util-core";
 import { CommentCollection, CommentModel, UserModel } from "@bk2/shared/models";
 
 /* ---------------------- Model  -------------------------------*/

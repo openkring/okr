@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, debugListLoaded, die, nameMatches } from '@bk2/shared/util';
+import { chipMatches, debugListLoaded, die, nameMatches } from '@bk2/shared/util-core';
 import { AllCategories, ModelType, WorkingRelModel, WorkingRelType } from '@bk2/shared/models';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AppStore } from '@bk2/shared/feature';
@@ -143,7 +143,9 @@ export const WorkingRelListStore = signalStore(
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
           if (isWorkingRel(data, store.appStore.tenantId())) {
-            await (!data.bkey ? store.workingRelService.create(data, store.appStore.tenantId(), store.appStore.currentUser()) : store.workingRelService.update(data));
+            await (!data.bkey ? 
+              store.workingRelService.create(data, store.appStore.tenantId(), store.appStore.currentUser()) : 
+              store.workingRelService.update(data, store.appStore.currentUser()));
             store.workingRelsResource.reload();
           }
         }  
@@ -158,7 +160,7 @@ export const WorkingRelListStore = signalStore(
 
       async delete(workingRel?: WorkingRelModel): Promise<void> {
         if (workingRel) {
-          await store.workingRelService.delete(workingRel);
+          await store.workingRelService.delete(workingRel, store.appStore.currentUser());
           store.workingRelsResource.reload();  
         }
       },

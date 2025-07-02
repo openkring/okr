@@ -1,7 +1,7 @@
 
-import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared/config';
+import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared/constants';
 import { GenderType, ModelType, OrgType, Periodicity } from '@bk2/shared/models';
-import { booleanValidations, categoryValidations, dateValidations, isAfterDate, isFutureDate, numberValidations, stringValidations } from '@bk2/shared/util';
+import { booleanValidations, categoryValidations, dateValidations, isAfterDate, isFutureDate, numberValidations, stringValidations } from '@bk2/shared/util-core';
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { MembershipFormModel } from './membership-form.model';
 

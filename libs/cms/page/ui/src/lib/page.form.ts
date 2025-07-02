@@ -8,10 +8,10 @@ import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ButtonCopyComponent, CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent } from '@bk2/shared/ui';
 import { PageFormModel, pageFormModelShape, pageFormValidations } from '@bk2/cms/page/util';
-import { CaseInsensitiveWordMask, RoleName } from '@bk2/shared/config';
+import { CaseInsensitiveWordMask } from '@bk2/shared/config';
 import { FormsModule } from '@angular/forms';
-import { ContentState, PageType, UserModel } from '@bk2/shared/models';
-import { debugFormErrors, debugFormModel, hasRole } from '@bk2/shared/util';
+import { ContentState, PageType, UserModel, RoleName } from '@bk2/shared/models';
+import { debugFormErrors, debugFormModel, hasRole } from '@bk2/shared/util-core';
 import { ContentStates, PageTypes } from '@bk2/shared/categories';
 
 @Component({

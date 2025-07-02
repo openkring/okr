@@ -5,10 +5,13 @@ const allowedFrontendExternalImports = [
   '@angular/*',
   '@ionic/*',
   'ionicons*',
+  'axios',
+  'express',
   'crypto-js',
   'countries-list',
   '*capacitor*',
   'i18n-iso-countries',
+  'ibantools',
   'rxjs',
   '*fire*',
   '*echarts*',
@@ -30,7 +33,18 @@ const allowedFrontendExternalImports = [
   'file-saver'
 ];
 
-const allowedBackendExternalImports = ['express', '@faker-js/faker'];
+const allowedBackendExternalImports = [
+  'express', 
+  'axios',
+  '@faker-js/faker', 
+  'firebase*',
+  'rxfire*',
+  'stream*',
+  'rxjs',
+  '*vest*',
+  'echarts',
+  '@fullcalendar*',
+];
 
 module.exports = [
   ...nx.configs['flat/base'],
@@ -48,6 +62,7 @@ module.exports = [
           enforceBuildableLibDependency: true,
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?js$'],
           depConstraints: [
+// TYPES
             {
               sourceTag: 'type:app',
               onlyDependOnLibsWithTags: [
@@ -73,7 +88,8 @@ module.exports = [
                 'type:data-access',
                 'type:util',
                 'type:model',
-                'type:config'
+                'type:config',
+                'type:constants',
               ],
               allowedExternalImports: allowedFrontendExternalImports,
             },
@@ -84,7 +100,8 @@ module.exports = [
                 'type:data-access',
                 'type:util',
                 'type:model',
-                'type:config'
+                'type:config',
+                'type:constants',
               ],
               allowedExternalImports: allowedFrontendExternalImports,
             },
@@ -95,6 +112,7 @@ module.exports = [
                 'type:util',
                 'type:model',
                 'type:config',
+                'type:constants',
               ],
               allowedExternalImports: allowedFrontendExternalImports,
             },
@@ -103,7 +121,8 @@ module.exports = [
               onlyDependOnLibsWithTags: [
                 'type:util',
                 'type:model',
-                'type:config'
+                'type:config',
+                'type:constants',
               ],
               allowedExternalImports: [
                 'echarts',
@@ -130,27 +149,34 @@ module.exports = [
                 'mime'
               ],
             },
-            {
+            { // buildable
               sourceTag: 'type:model',
-              onlyDependOnLibsWithTags: [
-                'type:model',
-                'type:config'
-              ],
+              onlyDependOnLibsWithTags: [],
               allowedExternalImports: [
                 'echarts',
-                '*angular*',
-                'ngx-vest-forms',
                 '*fullcalendar*'
               ],
             },
             {
               sourceTag: 'type:config',
-              onlyDependOnLibsWithTags: []
+              onlyDependOnLibsWithTags: [],
+              allowedExternalImports: [
+                '*angular*',
+                'firebase*',
+                'maskito*',
+              ]
             },
+            { // buildable
+              sourceTag: 'type:constants',
+              onlyDependOnLibsWithTags: []
+              // No external imports allowed for constants
+            },
+// SCOPES
             {
               sourceTag: 'scope:shared',
               onlyDependOnLibsWithTags: [ 'scope:shared']
             },
+// PLATFORMS
             {
               sourceTag: 'platform:node',
               onlyDependOnLibsWithTags: ['platform:node'],
@@ -158,12 +184,12 @@ module.exports = [
             },
             {
               sourceTag: 'platform:mobile',
-              onlyDependOnLibsWithTags: ['platform:mobile'],
+              onlyDependOnLibsWithTags: ['platform:mobile','platform:node'],
               allowedExternalImports: allowedFrontendExternalImports,
             },
             {
               sourceTag: 'platform:web',
-              onlyDependOnLibsWithTags: ['platform:web'],
+              onlyDependOnLibsWithTags: ['platform:web','platform:node'],
               allowedExternalImports: allowedFrontendExternalImports,
             },
           ],

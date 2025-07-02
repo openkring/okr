@@ -5,8 +5,9 @@ import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared/util';
-import { ChAnyDate, DATE_LENGTH, InputMode } from '@bk2/shared/config';
+import { convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared/util-core';
+import { ChAnyDate } from '@bk2/shared/config';
+import { DATE_LENGTH, InputMode } from '@bk2/shared/constants';
 
 import { DateSelectModalComponent } from './date-select.modal';
 import { ViewDateInputComponent } from './viewdate-input.component';

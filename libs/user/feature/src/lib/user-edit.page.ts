@@ -6,7 +6,7 @@ import { Photo } from '@capacitor/camera';
 import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
 import { ModelType, UserCollection } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { debugFormModel, getFullPersonName } from '@bk2/shared/util';
+import { debugFormModel, getFullPersonName } from '@bk2/shared/util-core';
 import { ENV } from '@bk2/shared/config';
 
 import { AvatarService } from '@bk2/avatar/data-access';
@@ -35,11 +35,11 @@ import { UserEditStore } from './user-edit.store';
     <ion-content>
       <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [isEditable]="true" title="{{ avatarTitle() }}"/>
       @if(user(); as user) {
-        <bk-user-model [(vm)]="userModelVm" (validChange)="formIsValid.set($event)" />
-        <bk-user-auth [(vm)]="userAuthVm" (validChange)="formIsValid.set($event)" />
-        <bk-user-display [(vm)]="userDisplayVm" (validChange)="formIsValid.set($event)" />
-        <bk-user-privacy [(vm)]="userPrivacyVm" (validChange)="formIsValid.set($event)" />
-        <bk-user-notification [(vm)]="userNotificationVm" (validChange)="formIsValid.set($event)" />
+        <bk-user-model-form [(vm)]="userModelVm" (validChange)="formIsValid.set($event)" />
+        <bk-user-auth-form [(vm)]="userAuthVm" (validChange)="formIsValid.set($event)" />
+        <bk-user-display-form [(vm)]="userDisplayVm" (validChange)="formIsValid.set($event)" />
+        <bk-user-privacy-form [(vm)]="userPrivacyVm" (validChange)="formIsValid.set($event)" />
+        <bk-user-notification-form [(vm)]="userNotificationVm" (validChange)="formIsValid.set($event)" />
         <bk-chips chipName="tag" [storedChips]="user.tags" [allChips]="userTags()" chipName="tag" (changed)="onTagsChanged($event)" />
       }
       <bk-comments-card [collectionName]="userCollection" [parentKey]="userKey()" />

@@ -7,7 +7,7 @@ import { ImageAction, newImage } from '@bk2/shared/models';
 import { UploadService } from '@bk2/shared/ui';
 import { getAvatarImgixUrl } from '@bk2/shared/pipes';
 import { AppStore } from '@bk2/shared/feature';
-import { THUMBNAIL_SIZE } from '@bk2/shared/config';
+import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
 
 export interface AvatarToolbarState {
   key: string;              // = ModelType.ModelKey e.g. 1.lasdfölj

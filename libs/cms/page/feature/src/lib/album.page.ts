@@ -6,7 +6,7 @@ import { ENV } from '@bk2/shared/config';
 import { AlbumSectionComponent } from '@bk2/cms/section/feature';
 import { createSection, newAlbumConfig } from '@bk2/cms/section/util';
 import { SectionType } from '@bk2/shared/models';
-import { extractFirstPartOfOptionalTupel, getPartsOfTupel } from '@bk2/shared/util';
+import { extractFirstPartOfOptionalTupel, getPartsOfTupel } from '@bk2/shared/util-core';
 
 @Component({
   selector: 'bk-album-page',

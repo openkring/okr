@@ -8,7 +8,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 import { CategoryComponent } from "@bk2/shared/ui";
 import { PrivacyFormModel, privacyFormModelShape, privacyFormValidations } from "@bk2/profile/util";
 import { PrivacyUsages } from "@bk2/shared/categories";
-import { debugFormErrors } from "@bk2/shared/util";
+import { debugFormErrors } from "@bk2/shared/util-core";
 
 @Component({
   selector: 'bk-profile-privacy-accordion',

@@ -4,7 +4,7 @@ import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonTitle, Ion
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AppNavigationService } from '@bk2/shared/util';
+import { AppNavigationService } from '@bk2/shared/util-angular';
 import { SearchbarComponent } from './searchbar.component';
 
 @Component({

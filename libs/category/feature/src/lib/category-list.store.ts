@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util';
+import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util-core';
 import { CategoryListModel, ModelType } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
@@ -110,14 +110,14 @@ export const CategoryListStore = signalStore(
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
           if (isCategoryList(data, store.appStore.tenantId())) {
-            await store.categoryService.update(data);
+            await store.categoryService.update(data, store.currentUser());
           }
         }
         store.categoriesResource.reload();
       },
 
       async delete(cat: CategoryListModel): Promise<void> {
-        await store.categoryService.delete(cat);
+        await store.categoryService.delete(cat, store.currentUser());
         this.reset();
       },
 

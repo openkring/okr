@@ -2,7 +2,7 @@ import { Injectable, inject } from "@angular/core";
 import { doc, setDoc } from "firebase/firestore";
 import { Observable, of } from "rxjs";
 
-import { readModel, removeKeyFromBkModel } from "@bk2/shared/util";
+import { readModel, removeKeyFromBkModel } from "@bk2/shared/util-core";
 import { FIRESTORE } from "@bk2/shared/config";
 import { AvatarCollection, AvatarModel } from "@bk2/shared/models";
 

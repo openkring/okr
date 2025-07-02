@@ -1,7 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { CalEventFormModel } from './calevent-form.model';
-import { categoryValidations, dateValidations, isAfterDate, isAfterOrEqualDate, stringValidations, urlValidations } from '@bk2/shared/util';
-import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { categoryValidations, dateValidations, isAfterDate, isAfterOrEqualDate, stringValidations, urlValidations } from '@bk2/shared/util-core';
+import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 import { CalEventType, Periodicity } from '@bk2/shared/models';
 
 

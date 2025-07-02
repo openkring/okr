@@ -5,9 +5,8 @@ import { AsyncPipe } from '@angular/common';
 import { CategoryLogPipe } from '@bk2/membership/util';
 
 import { AvatarPipe, DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { MembershipModel, ModelType } from '@bk2/shared/models';
-import { RoleName } from '@bk2/shared/config';
-import { hasRole, isOngoing } from '@bk2/shared/util';
+import { MembershipModel, ModelType, RoleName } from '@bk2/shared/models';
+import { hasRole, isOngoing } from '@bk2/shared/util-core';
 import { EmptyListComponent } from '@bk2/shared/ui';
 
 import { MembersAccordionStore } from './members-accordion.store';

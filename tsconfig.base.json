@@ -15,148 +15,152 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      // aoc
+      "@bk2/shared/constants": ["dist/libs/shared/constants"],
+      "@bk2/shared/models": ["dist/libs/shared/models"],
+      "@bk2/shared/util-core": ["dist/libs/shared/util-core"],
+      "@bk2/shared/util-functions": ["dist/libs/shared/util-functions"],
+
+      "@bk2/shared/config": ["dist/libs/shared/config"],
+      "@bk2/shared/i18n": ["dist/libs/shared/i18n"],
+      "@bk2/shared/util-angular": ["dist/libs/shared/util-angular"],
+      "@bk2/shared/categories": ["dist/libs/shared/categories"],
+      "@bk2/shared/pipes": ["dist/libs/shared/pipes"],
+      "@bk2/shared/ui": ["dist/libs/shared/ui"],
+      "@bk2/shared/feature": ["dist/libs/shared/feature"],
+
+      "@bk2/auth/util": ["dist/libs/auth/util"],
+      "@bk2/auth/data-access": ["dist/libs/auth/data-access"],
+      "@bk2/auth/ui": ["dist/libs/auth/ui"],
+      "@bk2/auth/feature": ["dist/libs/auth/feature"],
+
+
+      
+
+      "@bk2/address/data-access": ["libs/subject/address/data-access/src/index.ts"],
+      "@bk2/address/feature": ["libs/subject/address/feature/src/index.ts"],
+      "@bk2/address/util": ["libs/subject/address/util/src/index.ts"],
+      
       "@bk2/aoc/feature": ["libs/aoc/feature/src/index.ts"],
       "@bk2/aoc/util": ["libs/aoc/util/src/index.ts"],
-      // auth
-      "@bk2/auth/data-access": ["libs/auth/data-access/src/index.ts"],
-      "@bk2/auth/feature": ["libs/auth/feature/src/index.ts"],
-      "@bk2/auth/ui": ["libs/auth/ui/src/index.ts"],
-      "@bk2/auth/util": ["libs/auth/util/src/index.ts"],
-      // avatar
+
+
       "@bk2/avatar/data-access": ["libs/avatar/data-access/src/index.ts"],
       "@bk2/avatar/feature": ["libs/avatar/feature/src/index.ts"],
       "@bk2/avatar/util": ["libs/avatar/util/src/index.ts"],
-      // calevent
+
       "@bk2/calevent/data-access": ["libs/calevent/data-access/src/index.ts"],
       "@bk2/calevent/feature": ["libs/calevent/feature/src/index.ts"],
       "@bk2/calevent/ui": ["libs/calevent/ui/src/index.ts"],
-      "@bk2/calevent/util": ["libs/calevent/util/src/index.ts"],      
-      // category
+      "@bk2/calevent/util": ["libs/calevent/util/src/index.ts"],
+
       "@bk2/category/data-access": ["libs/category/data-access/src/index.ts"],
       "@bk2/category/feature": ["libs/category/feature/src/index.ts"],
       "@bk2/category/ui": ["libs/category/ui/src/index.ts"],
       "@bk2/category/util": ["libs/category/util/src/index.ts"],
-      // cms/menu
+
       "@bk2/cms/menu/data-access": ["libs/cms/menu/data-access/src/index.ts"],
       "@bk2/cms/menu/feature": ["libs/cms/menu/feature/src/index.ts"],
       "@bk2/cms/menu/ui": ["libs/cms/menu/ui/src/index.ts"],
       "@bk2/cms/menu/util": ["libs/cms/menu/util/src/index.ts"],
-      // cms/page
+
       "@bk2/cms/page/data-access": ["libs/cms/page/data-access/src/index.ts"],
       "@bk2/cms/page/feature": ["libs/cms/page/feature/src/index.ts"],
       "@bk2/cms/page/ui": ["libs/cms/page/ui/src/index.ts"],
       "@bk2/cms/page/util": ["libs/cms/page/util/src/index.ts"],
-      // cms/section
+
       "@bk2/cms/section/data-access": ["libs/cms/section/data-access/src/index.ts"],
       "@bk2/cms/section/feature": ["libs/cms/section/feature/src/index.ts"],
       "@bk2/cms/section/ui": ["libs/cms/section/ui/src/index.ts"],
       "@bk2/cms/section/util": ["libs/cms/section/util/src/index.ts"],
-      // comment
+
       "@bk2/comment/data-access": ["libs/comment/data-access/src/index.ts"],
       "@bk2/comment/feature": ["libs/comment/feature/src/index.ts"],
       "@bk2/comment/ui": ["libs/comment/ui/src/index.ts"],
       "@bk2/comment/util": ["libs/comment/util/src/index.ts"],
-      // document
+
       "@bk2/document/data-access": ["libs/document/data-access/src/index.ts"],
       "@bk2/document/feature": ["libs/document/feature/src/index.ts"],
       "@bk2/document/ui": ["libs/document/ui/src/index.ts"],
       "@bk2/document/util": ["libs/document/util/src/index.ts"],
-      // location
-      "@bk2/location/data-access": ["libs/location/data-access/src/index.ts"],
-      "@bk2/location/feature": ["libs/location/feature/src/index.ts"],
-      "@bk2/location/ui": ["libs/location/ui/src/index.ts"],
-      "@bk2/location/util": ["libs/location/util/src/index.ts"],
-      // profile
-      "@bk2/profile/data-access": ["libs/profile/data-access/src/index.ts"],
-      "@bk2/profile/feature": ["libs/profile/feature/src/index.ts"],
-      "@bk2/profile/ui": ["libs/profile/ui/src/index.ts"],
-      "@bk2/profile/util": ["libs/profile/util/src/index.ts"],
-      // quiz
-      "@bk2/quiz/feature": ["libs/quiz/feature/src/index.ts"],
-      // resource
-      "@bk2/resource/data-access": ["libs/resource/data-access/src/index.ts"],
-      "@bk2/resource/feature": ["libs/resource/feature/src/index.ts"],
-      "@bk2/resource/ui": ["libs/resource/ui/src/index.ts"],
-      "@bk2/resource/util": ["libs/resource/util/src/index.ts"],
-      // relationship
-      // relationship/membership
-      "@bk2/membership/data-access": ["libs/relationship/membership/data-access/src/index.ts"],
-      "@bk2/membership/feature": ["libs/relationship/membership/feature/src/index.ts"],
-      "@bk2/membership/ui": ["libs/relationship/membership/ui/src/index.ts"],
-      "@bk2/membership/util": ["libs/relationship/membership/util/src/index.ts"],
-      // relationship/ownership
-      "@bk2/ownership/data-access": ["libs/relationship/ownership/data-access/src/index.ts"],
-      "@bk2/ownership/feature": ["libs/relationship/ownership/feature/src/index.ts"],
-      "@bk2/ownership/ui": ["libs/relationship/ownership/ui/src/index.ts"],
-      "@bk2/ownership/util": ["libs/relationship/ownership/util/src/index.ts"],
-      // relationship/personal-rel
-      "@bk2/personal-rel/data-access": ["libs/relationship/personal-rel/data-access/src/index.ts"],
-      "@bk2/personal-rel/feature": ["libs/relationship/personal-rel/feature/src/index.ts"],
-      "@bk2/personal-rel/ui": ["libs/relationship/personal-rel/ui/src/index.ts"],
-      "@bk2/personal-rel/util": ["libs/relationship/personal-rel/util/src/index.ts"],
-      // relationship/reservation
-      "@bk2/reservation/data-access": ["libs/relationship/reservation/data-access/src/index.ts"],
-      "@bk2/reservation/feature": ["libs/relationship/reservation/feature/src/index.ts"],
-      "@bk2/reservation/ui": ["libs/relationship/reservation/ui/src/index.ts"],
-      "@bk2/reservation/util": ["libs/relationship/reservation/util/src/index.ts"],
-      // relationship/transfer
-      "@bk2/transfer/data-access": ["libs/relationship/transfer/data-access/src/index.ts"],
-      "@bk2/transfer/feature": ["libs/relationship/transfer/feature/src/index.ts"],
-      "@bk2/transfer/ui": ["libs/relationship/transfer/ui/src/index.ts"],
-      "@bk2/transfer/util": ["libs/relationship/transfer/util/src/index.ts"],
-      // relationship/working-rel
-      "@bk2/working-rel/data-access":    ["libs/relationship/working-rel/data-access/src/index.ts"],
-      "@bk2/working-rel/feature": ["libs/relationship/working-rel/feature/src/index.ts"],
-      "@bk2/working-rel/ui":      ["libs/relationship/working-rel/ui/src/index.ts"],
-      "@bk2/working-rel/util":    ["libs/relationship/working-rel/util/src/index.ts"],
-      // shared
-      "@bk2/shared/categories": ["libs/shared/categories/src/index.ts"],
-      "@bk2/shared/config": ["libs/shared/config/src/index.ts"],
-      "@bk2/shared/i18n": ["libs/shared/i18n/src/index.ts"],
-      "@bk2/shared/models": ["libs/shared/models/src/index.ts"],
-      "@bk2/shared/pipes": ["libs/shared/pipes/src/index.ts"],
-      "@bk2/shared/feature": ["libs/shared/feature/src/index.ts"],
-      "@bk2/shared/ui": ["libs/shared/ui/src/index.ts"],
-      "@bk2/shared/util": ["libs/shared/util/src/index.ts"],
-      // social-feed
-      "@bk2/social-feed/data-access": ["libs/social-feed/data-access/src/index.ts"],
-      "@bk2/social-feed/feature": ["libs/social-feed/feature/src/index.ts"],
-      "@bk2/social-feed/model": ["libs/social-feed/model/src/index.ts"],
-      "@bk2/social-feed/ui": ["libs/social-feed/ui/src/index.ts"],
-      // subject
-      // subject/address
-      "@bk2/address/data-access": ["libs/subject/address/data-access/src/index.ts"],
-      "@bk2/address/feature": ["libs/subject/address/feature/src/index.ts"],
-      "@bk2/address/util": ["libs/subject/address/util/src/index.ts"],
-      // subject/group
+
       "@bk2/group/data-access": ["libs/subject/group/data-access/src/index.ts"],
       "@bk2/group/feature": ["libs/subject/group/feature/src/index.ts"],
       "@bk2/group/ui": ["libs/subject/group/ui/src/index.ts"],
       "@bk2/group/util": ["libs/subject/group/util/src/index.ts"],
-      // subject/org
+
+      "@bk2/location/data-access": ["libs/location/data-access/src/index.ts"],
+      "@bk2/location/feature": ["libs/location/feature/src/index.ts"],
+      "@bk2/location/ui": ["libs/location/ui/src/index.ts"],
+      "@bk2/location/util": ["libs/location/util/src/index.ts"],
+
+      "@bk2/membership/data-access": ["libs/relationship/membership/data-access/src/index.ts"],
+      "@bk2/membership/feature": ["libs/relationship/membership/feature/src/index.ts"],
+      "@bk2/membership/ui": ["libs/relationship/membership/ui/src/index.ts"],
+      "@bk2/membership/util": ["libs/relationship/membership/util/src/index.ts"],
+
       "@bk2/org/data-access": ["libs/subject/org/data-access/src/index.ts"],
       "@bk2/org/feature": ["libs/subject/org/feature/src/index.ts"],
       "@bk2/org/ui": ["libs/subject/org/ui/src/index.ts"],
       "@bk2/org/util": ["libs/subject/org/util/src/index.ts"],
-      // subject/person
+
+      "@bk2/ownership/data-access": ["libs/relationship/ownership/data-access/src/index.ts"],
+      "@bk2/ownership/feature": ["libs/relationship/ownership/feature/src/index.ts"],
+      "@bk2/ownership/ui": ["libs/relationship/ownership/ui/src/index.ts"],
+      "@bk2/ownership/util": ["libs/relationship/ownership/util/src/index.ts"],
+
       "@bk2/person/data-access": ["libs/subject/person/data-access/src/index.ts"],
       "@bk2/person/feature": ["libs/subject/person/feature/src/index.ts"],
       "@bk2/person/ui": ["libs/subject/person/ui/src/index.ts"],
       "@bk2/person/util": ["libs/subject/person/util/src/index.ts"],
-      // subject/swisscities
+
+      "@bk2/personal-rel/data-access": ["libs/relationship/personal-rel/data-access/src/index.ts"],
+      "@bk2/personal-rel/feature": ["libs/relationship/personal-rel/feature/src/index.ts"],
+      "@bk2/personal-rel/ui": ["libs/relationship/personal-rel/ui/src/index.ts"],
+      "@bk2/personal-rel/util": ["libs/relationship/personal-rel/util/src/index.ts"],
+
+      "@bk2/profile/data-access": ["libs/profile/data-access/src/index.ts"],
+      "@bk2/profile/feature": ["libs/profile/feature/src/index.ts"],
+      "@bk2/profile/ui": ["libs/profile/ui/src/index.ts"],
+      "@bk2/profile/util": ["libs/profile/util/src/index.ts"],
+
+      "@bk2/quiz/feature": ["libs/quiz/feature/src/index.ts"],
+
+      "@bk2/reservation/data-access": ["libs/relationship/reservation/data-access/src/index.ts"],
+      "@bk2/reservation/feature": ["libs/relationship/reservation/feature/src/index.ts"],
+      "@bk2/reservation/ui": ["libs/relationship/reservation/ui/src/index.ts"],
+      "@bk2/reservation/util": ["libs/relationship/reservation/util/src/index.ts"],
+
+      "@bk2/resource/data-access": ["libs/resource/data-access/src/index.ts"],
+      "@bk2/resource/feature": ["libs/resource/feature/src/index.ts"],
+      "@bk2/resource/ui": ["libs/resource/ui/src/index.ts"],
+      "@bk2/resource/util": ["libs/resource/util/src/index.ts"],
+
+      "@bk2/social-feed/data-access": ["libs/social-feed/data-access/src/index.ts"],
+      "@bk2/social-feed/feature": ["libs/social-feed/feature/src/index.ts"],
+      "@bk2/social-feed/model": ["libs/social-feed/model/src/index.ts"],
+      "@bk2/social-feed/ui": ["libs/social-feed/ui/src/index.ts"],
+
       "@bk2/swisscities/ui": ["libs/subject/swisscities/ui/src/index.ts"],
-      // task
+
       "@bk2/task/data-access": ["libs/task/data-access/src/index.ts"],
       "@bk2/task/feature": ["libs/task/feature/src/index.ts"],
       "@bk2/task/ui": ["libs/task/ui/src/index.ts"],
       "@bk2/task/util": ["libs/task/util/src/index.ts"],
-      // trip
-      // user
+
+      "@bk2/transfer/data-access": ["libs/relationship/transfer/data-access/src/index.ts"],
+      "@bk2/transfer/feature": ["libs/relationship/transfer/feature/src/index.ts"],
+      "@bk2/transfer/ui": ["libs/relationship/transfer/ui/src/index.ts"],
+      "@bk2/transfer/util": ["libs/relationship/transfer/util/src/index.ts"],
+
       "@bk2/user/data-access": ["libs/user/data-access/src/index.ts"],
       "@bk2/user/feature": ["libs/user/feature/src/index.ts"],
       "@bk2/user/ui": ["libs/user/ui/src/index.ts"],
       "@bk2/user/util": ["libs/user/util/src/index.ts"],
+
+      "@bk2/working-rel/data-access": ["libs/relationship/working-rel/data-access/src/index.ts"],
+      "@bk2/working-rel/feature": ["libs/relationship/working-rel/feature/src/index.ts"],
+      "@bk2/working-rel/ui": ["libs/relationship/working-rel/ui/src/index.ts"],
+      "@bk2/working-rel/util": ["libs/relationship/working-rel/util/src/index.ts"],
     }
   },
   "exclude": ["node_modules", "tmp"]

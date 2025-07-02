@@ -5,9 +5,9 @@ import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarPipe, CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { RoleName } from '@bk2/shared/config';
-import { error, getYearList, hasRole } from '@bk2/shared/util';
-import { OwnershipModel } from '@bk2/shared/models';
+import { getYearList, hasRole } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
+import { OwnershipModel, RoleName } from '@bk2/shared/models';
 import { addAllCategory, GenderTypes, ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';

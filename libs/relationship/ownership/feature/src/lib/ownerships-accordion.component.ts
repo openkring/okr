@@ -4,9 +4,8 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarPipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { RoleName } from '@bk2/shared/config';
-import { getAvatarKey, hasRole } from '@bk2/shared/util';
-import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared/models';
+import { getAvatarKey, hasRole } from '@bk2/shared/util-core';
+import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared/models';
 import { ResourceTypes } from '@bk2/shared/categories';
 import { OwnershipAccordionStore } from './ownerships-accordion.store';
 import { EmptyListComponent } from '@bk2/shared/ui';

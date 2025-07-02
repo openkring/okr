@@ -2,8 +2,8 @@ import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 
 import { ibanValidations } from './iban.validations';
 import { AddressFormModel } from './address-form.model';
-import { booleanValidations, categoryValidations, stringValidations, urlValidations } from '@bk2/shared/util';
-import { CITY_LENGTH, COUNTRY_LENGTH, SHORT_NAME_LENGTH, STREET_LENGTH, ZIP_LENGTH } from '@bk2/shared/config';
+import { booleanValidations, categoryValidations, stringValidations, urlValidations } from '@bk2/shared/util-core';
+import { CITY_LENGTH, COUNTRY_LENGTH, SHORT_NAME_LENGTH, STREET_LENGTH, ZIP_LENGTH } from '@bk2/shared/constants';
 import { AddressChannel, AddressUsage } from '@bk2/shared/models';
 
 export const addressFormValidations = staticSuite((model: AddressFormModel, field?: string) => {

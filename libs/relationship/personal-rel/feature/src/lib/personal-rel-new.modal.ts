@@ -4,9 +4,8 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
-import { ModelType, PersonModel, UserModel} from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
+import { ModelType, PersonModel, UserModel, RoleName} from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
 import { PersonalRelNewFormComponent } from '@bk2/personal-rel/ui';

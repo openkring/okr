@@ -5,10 +5,10 @@ import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { AllCategories, ModelType, PersonModel } from '@bk2/shared/models';
+import { AllCategories, ModelType, PersonModel, RoleName } from '@bk2/shared/models';
 import { addAllCategory, GenderTypes } from '@bk2/shared/categories';
-import { RoleName } from '@bk2/shared/config';
-import { error, hasRole } from '@bk2/shared/util';
+import { hasRole } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

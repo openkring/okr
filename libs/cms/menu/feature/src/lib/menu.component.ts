@@ -4,12 +4,12 @@ import { Router } from '@angular/router';
 import { IonAccordion, IonAccordionGroup, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 
-import { AppNavigationService, die, hasRole, isInSplitPane, navigateByUrl, warn } from '@bk2/shared/util';
+import { die, hasRole, isInSplitPane, warn } from '@bk2/shared/util-core';
+import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { MenuAction, MenuItemModel } from '@bk2/shared/models';
+import { MenuAction, MenuItemModel, RoleName } from '@bk2/shared/models';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { SpinnerComponent } from '@bk2/shared/ui';
-import { RoleName } from '@bk2/shared/config';
 import { AppStore } from '@bk2/shared/feature';
 
 import { getTarget } from '@bk2/cms/menu/util';

@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { LOGO_HEIGHT, LOGO_WIDTH } from '@bk2/shared/config';
-import { getThumbnailUrl } from '@bk2/shared/util';
+import { LOGO_HEIGHT, LOGO_WIDTH } from '@bk2/shared/constants';
+import { getThumbnailUrl } from '@bk2/shared/util-core';
 
 @Pipe({
   name: 'logo',

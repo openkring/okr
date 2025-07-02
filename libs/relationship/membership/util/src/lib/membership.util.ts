@@ -1,7 +1,7 @@
 import { CategoryItemModel, GenderType, MembershipModel, ModelType, OrgModel, OrgType, Periodicity, PersonModel, UserModel } from '@bk2/shared/models';
 import { MembershipFormModel } from './membership-form.model';
-import { addIndexElement, DateFormat, die, getFullPersonName, getTodayStr } from '@bk2/shared/util';
-import { END_FUTURE_DATE_STR } from '@bk2/shared/config';
+import { addIndexElement, DateFormat, die, getFullPersonName, getTodayStr } from '@bk2/shared/util-core';
+import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
 import { CategoryChangeFormModel } from './category-change-form.model';
 import { MembershipNewFormModel } from './membership-new-form.model';
 

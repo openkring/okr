@@ -5,7 +5,8 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { catchError, finalize, of } from 'rxjs';
 import { Router } from '@angular/router';
 
-import { AppNavigationService, chipMatches, copyToClipboardWithConfirmation, getSystemQuery, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
+import { chipMatches, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
+import { AppNavigationService, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared/util-angular';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AddressModel, AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
@@ -173,7 +174,7 @@ export const OrgListStore = signalStore(
     },
     async delete(org?: OrgModel): Promise<void> {
       if (!org) return;
-      await store.orgService.delete(org);
+      await store.orgService.delete(org, store.currentUser());
       this.reset();
     },
     async copyEmailAddresses(): Promise<void> {

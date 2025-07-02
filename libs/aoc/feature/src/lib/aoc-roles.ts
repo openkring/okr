@@ -1,13 +1,14 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, inject } from "@angular/core";
+import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonLabel, IonRow } from "@ionic/angular/standalone";
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow } from "@ionic/angular/standalone";
 
 import { TranslatePipe } from "@bk2/shared/i18n";
 import { AvatarDisplayComponent, HeaderComponent, ResultLogComponent } from "@bk2/shared/ui";
 import { AocRolesStore } from "./aoc-roles.store";
 import { ModelType } from "@bk2/shared/models";
 import { SvgIconPipe } from "@bk2/shared/pipes";
+import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
 
 
 @Component({
@@ -17,7 +18,8 @@ import { SvgIconPipe } from "@bk2/shared/pipes";
     FormsModule, 
     HeaderComponent, AvatarDisplayComponent, ResultLogComponent,
     IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, 
-    IonGrid, IonRow, IonCol, IonLabel, IonButton, IonIcon
+    IonGrid, IonRow, IonCol, IonLabel, IonButton, IonIcon,
+    IonNote, IonInput, IonInputPasswordToggle, IonItem
   ],
   providers: [AocRolesStore],
   template: `
@@ -92,7 +94,26 @@ import { SvgIconPipe } from "@bk2/shared/pipes";
               <ion-col>{{ '@aoc.roles.account.content' | translate | async  }}</ion-col>
             </ion-row>
             <ion-row>
-              <ion-col size="6"></ion-col>
+              <ion-col size="6">
+                <ion-input (ionInput)="onPasswordChange($event)"
+                  type="password"
+                  name="passwordAoc" 
+                  [ngModel]="value()"
+                  labelPlacement="floating"
+                  label="{{'@input.passwordAoc.label' | translate | async }}"
+                  placeholder="{{'@input.passwordAoc.placeholder' | translate | async }}"
+                  inputMode="text"
+                  [maxlength]="maxLength"
+                  [clearInput]="true"
+                  (ionClear)="clearInput()"
+                  [counter]="true"
+                  >
+                  <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+                </ion-input>
+                <ion-item lines="none" class="helper">
+                  <ion-note>{{'@input.passwordAoc.helper' | translate | async}}</ion-note>
+                </ion-item>
+              </ion-col>
               <ion-col size="6">
                 <ion-button (click)="createAccountAndUser()" [disabled]="!selectedPerson()">
                   <ion-icon src="{{'create_edit' | svgIcon}}" slot="start" />
@@ -100,6 +121,7 @@ import { SvgIconPipe } from "@bk2/shared/pipes";
                 </ion-button>
               </ion-col>
             </ion-row>
+            <!--
             <ion-row>
               <ion-col size="6"></ion-col>
               <ion-col size="6">
@@ -109,6 +131,7 @@ import { SvgIconPipe } from "@bk2/shared/pipes";
                 </ion-button>
               </ion-col>
             </ion-row>
+              -->
             <ion-row>
               <ion-col size="6"></ion-col>
               <ion-col size="6">
@@ -121,16 +144,40 @@ import { SvgIconPipe } from "@bk2/shared/pipes";
           </ion-grid>
         </ion-card-content>
       </ion-card>
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ '@aoc.roles.chat.title' | translate | async }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col>{{ '@aoc.roles.chat.content' | translate | async }}</ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="6"></ion-col>
+              <ion-col size="6">
+                <ion-button (click)="checkChatUser()" [disabled]="!selectedPerson()">
+                  <ion-icon src="{{'chatbox-ellipses' | svgIcon}}" slot="start" />
+                  {{ '@aoc.roles.chat.check' | translate | async  }}
+                </ion-button>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
       <bk-result-log [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
     `
 })
 export class AocRolesComponent {
   protected readonly aocRolesStore = inject(AocRolesStore);
+  protected value = signal<string>('');
 
   protected readonly logTitle = computed(() => this.aocRolesStore.logTitle());
   protected readonly logInfo = computed(() => this.aocRolesStore.log());
   protected readonly isLoading = computed(() => this.aocRolesStore.isLoading());
+
+  protected maxLength = PASSWORD_MAX_LENGTH;
 
   protected selectedPerson = computed(() => this.aocRolesStore.selectedPerson());
   protected avatar = computed(() => {
@@ -160,7 +207,7 @@ export class AocRolesComponent {
    * Create a new user account for the same user to link the Firebase account with the subject.
    */
   public async createAccountAndUser(): Promise<void> {
-    await this.aocRolesStore.createAccountAndUser();
+    await this.aocRolesStore.createAccountAndUser(this.value());
   }
 
   /**
@@ -178,5 +225,17 @@ export class AocRolesComponent {
 
   public async checkAuthorisation(): Promise<void> {
     await this.aocRolesStore.checkAuthorisation();
+  }
+
+  public checkChatUser(): void {
+    this.aocRolesStore.checkChatUser();
+  }
+
+  protected onPasswordChange(event: CustomEvent): void {
+    this.value.set(event.detail.value);
+  }
+
+  protected clearInput(): void {
+    this.value.set('');
   }
 }

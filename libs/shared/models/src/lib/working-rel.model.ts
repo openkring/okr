@@ -1,4 +1,3 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from "./base.model";
 import { GenderType } from "./enums/gender-type.enum";
 import { ModelType } from "./enums/model-type.enum";
@@ -48,7 +47,7 @@ export class WorkingRelModel implements BkModel, NamedModel, SearchableModel, Ta
     public type = WorkingRelType.Employee; // e.g. employee, freelancer, contractor, internship, volunteer
     public label = ''; // e.g. job title, description of activity
     public validFrom = ''; // e.g. start date of the working relationship
-    public validTo = END_FUTURE_DATE_STR; 
+    public validTo = ''; 
     public price = 0;    // e.g. monthly salary or hourly rate
     public currency = 'CHF';
     public periodicity = Periodicity.Hourly; // e.g. monthly, hourly, daily

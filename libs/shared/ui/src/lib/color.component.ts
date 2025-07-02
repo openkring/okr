@@ -5,7 +5,7 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ColorSelectModalComponent } from './color-select.modal';
-import { error } from '@bk2/shared/util';
+import { error } from '@bk2/shared/util-angular';
 
 /**
  * Color is in hex format e.g. #FF0000 for red.

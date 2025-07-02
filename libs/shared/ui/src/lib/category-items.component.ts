@@ -8,7 +8,7 @@ import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { LowercaseWordMask, MaskPredicate } from '@bk2/shared/config';
 import { CategoryItemModel } from '@bk2/shared/models';
-import { die } from '@bk2/shared/util';
+import { die } from '@bk2/shared/util-core';
 
 @Component({
   selector: 'bk-category-items',

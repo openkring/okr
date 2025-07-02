@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@bk2/shared/util';
+import { extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@bk2/shared/util-core';
 
 /**
  * returns a part of a given label [key]@[label]

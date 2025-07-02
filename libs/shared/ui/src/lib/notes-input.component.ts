@@ -4,10 +4,10 @@ import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, 
 import { FormsModule } from '@angular/forms';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { DESCRIPTION_LENGTH } from '@bk2/shared/config';
+import { DESCRIPTION_LENGTH } from '@bk2/shared/constants';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe, bkTranslate } from '@bk2/shared/i18n';
-import { decrypt, encrypt } from '@bk2/shared/util';
+import { decrypt, encrypt } from '@bk2/shared/util-core';
 import { ButtonCopyComponent } from './button-copy.component';
 
 /**

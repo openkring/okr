@@ -4,7 +4,7 @@ import { Browser } from "@capacitor/browser";
 import { Image, ImageAction } from "@bk2/shared/models";
 import { ImageViewModalComponent } from "./image-view.modal";
 import { DateSelectModalComponent } from "./date-select.modal";
-import { DateFormat, getTodayStr, warn } from "@bk2/shared/util";
+import { DateFormat, getTodayStr, warn } from "@bk2/shared/util-core";
 
 export interface ValidationInfo {
   type: string,

@@ -5,7 +5,8 @@ import { register } from 'swiper/element/bundle';
 import { Image, SectionModel } from '@bk2/shared/models';
 import { LabelComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { die, downloadToBrowser, getSizedImgixParamsByExtension } from '@bk2/shared/util';
+import { die, getSizedImgixParamsByExtension } from '@bk2/shared/util-core';
+import { downloadToBrowser } from '@bk2/shared/util-angular';
 import { AppStore } from '@bk2/shared/feature';
 
 register(); // globally register Swiper's custom elements.

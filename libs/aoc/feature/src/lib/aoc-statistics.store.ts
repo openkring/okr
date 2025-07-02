@@ -6,7 +6,7 @@ import { Observable, of } from 'rxjs';
 import { FIRESTORE } from '@bk2/shared/config';
 import { AppStore } from '@bk2/shared/feature';
 import { BkModel, LogInfo, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared/models';
-import { getSystemQuery, searchData } from '@bk2/shared/util';
+import { getSystemQuery, searchData } from '@bk2/shared/util-core';
 
 export type AocStatisticsState = {
   modelType: ModelType | undefined;

@@ -5,7 +5,8 @@ import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import { AppNavigationService, chipMatches, copyToClipboardWithConfirmation, createModel, debugListLoaded, hasRole, nameMatches, navigateByUrl } from '@bk2/shared/util';
+import { chipMatches, createModel, debugListLoaded, hasRole, nameMatches } from '@bk2/shared/util-core';
+import { AppNavigationService, confirmAction, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared/util-angular';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AddressModel, AllCategories, GenderType, MembershipCollection, ModelType, PersonModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
@@ -17,6 +18,7 @@ import { saveComment } from '@bk2/comment/util';
 import { PersonService } from '@bk2/person/data-access';
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/person/util';
 import { PersonNewModalComponent } from './person-new.modal';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 export type PersonListState = {
   orgId: string;
@@ -158,7 +160,6 @@ export const PersonListStore = signalStore(
             }
           }
         }
-        
         store.personsResource.reload();
       },
 
@@ -168,11 +169,19 @@ export const PersonListStore = signalStore(
        * @param vm  the form data for a new person
        * @param personKey the key of the newly created person
        */
-      async saveMembership(vm: PersonNewFormModel, personKey: string): Promise<void> {
+      async saveMembership(vm: PersonNewFormModel, personKey: string): Promise<string> {
         const _membership = convertNewPersonFormToMembership(vm, personKey, store.tenantId());
-        _membership.index = 'mn:' + _membership.memberName1 + ' ' + _membership.memberName2 + ' mk:' + _membership.memberKey + ' ok:' + _membership.orgKey;
-        const _key = await createModel(store.appStore.firestore, MembershipCollection, _membership, store.tenantId(), '@membership.operation.create', store.toastController);
-        await saveComment(store.appStore.firestore, store.tenantId(), store.currentUser(), MembershipCollection, _key, '@comment.operation.initial.conf');  
+        try {
+          _membership.index = 'mn:' + _membership.memberName1 + ' ' + _membership.memberName2 + ' mk:' + _membership.memberKey + ' ok:' + _membership.orgKey;
+          const _key = await createModel(store.appStore.firestore, MembershipCollection, _membership, store.tenantId());
+          await confirmAction(bkTranslate('@membership.operation.create.conf'), true, store.toastController);
+          await saveComment(store.appStore.firestore, store.tenantId(), store.currentUser(), MembershipCollection, _key, '@comment.operation.initial.conf');
+          return _key;    
+        }
+        catch (error) {
+          await confirmAction(bkTranslate('@membership.operation.create.error'), true, store.toastController);
+          throw error; // rethrow the error to be handled by the caller
+        }
       },
 
       saveAddress(address: AddressModel, avatarKey: string): void {
@@ -191,7 +200,7 @@ export const PersonListStore = signalStore(
       },
 
       async delete(person: PersonModel): Promise<void> {
-        await store.personService.delete(person);
+        await store.personService.delete(person, store.currentUser());
         this.reset();
       },
 

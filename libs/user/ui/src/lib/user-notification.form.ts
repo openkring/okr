@@ -6,13 +6,13 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 import { DeliveryTypes } from "@bk2/shared/categories";
 import { DeliveryType, UserModel } from "@bk2/shared/models";
 import { CategoryComponent } from "@bk2/shared/ui";
-import { debugFormErrors } from "@bk2/shared/util";
+import { debugFormErrors } from "@bk2/shared/util-core";
 import { TranslatePipe } from "@bk2/shared/i18n";
 
 import { UserNotificationFormModel, userNotificationFormModelShape, userNotificationFormValidations } from "@bk2/user/util";
 
 @Component({
-  selector: 'bk-user-notification',
+  selector: 'bk-user-notification-form',
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
@@ -72,7 +72,7 @@ export class UserNotificationFormComponent {
 
   protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
     this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('UserNotification', this.validationResult().errors, this.currentUser());
+    debugFormErrors('UserNotificationForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }

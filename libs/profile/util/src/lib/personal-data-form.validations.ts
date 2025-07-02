@@ -1,6 +1,6 @@
 import { only, staticSuite} from 'vest';
-import { categoryValidations, dateValidations, stringValidations } from '@bk2/shared/util';
-import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { categoryValidations, dateValidations, stringValidations } from '@bk2/shared/util-core';
+import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 import { GenderType } from '@bk2/shared/models';
 import { ssnValidations } from '@bk2/person/util';
 import { PersonalDataFormModel } from './personal-data-form.model';

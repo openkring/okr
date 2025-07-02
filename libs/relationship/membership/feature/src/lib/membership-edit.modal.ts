@@ -4,9 +4,9 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared/ui';
-import { ENV, RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
-import { MembershipCollection, MembershipModel, ModelType, UserModel } from '@bk2/shared/models';
+import { ENV } from '@bk2/shared/config';
+import { hasRole } from '@bk2/shared/util-core';
+import { MembershipCollection, MembershipModel, ModelType, UserModel, RoleName } from '@bk2/shared/models';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
 

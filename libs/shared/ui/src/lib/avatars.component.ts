@@ -4,9 +4,10 @@ import { AlertController, IonButton, IonCard, IonCardContent, IonCardHeader, Ion
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { NAME_LENGTH } from '@bk2/shared/config';
+import { NAME_LENGTH } from '@bk2/shared/constants';
 import { AvatarInfo } from '@bk2/shared/models';
-import { bkPrompt, copyToClipboardWithConfirmation, getFullPersonName, newAvatarInfo } from '@bk2/shared/util';
+import { getFullPersonName, newAvatarInfo } from '@bk2/shared/util-core';
+import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared/util-angular';
 
 import { AvatarDisplayComponent } from './avatar-display.component';
 

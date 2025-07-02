@@ -9,10 +9,10 @@ import { CategoryComponent, CheckboxComponent } from "@bk2/shared/ui";
 import { TranslatePipe } from "@bk2/shared/i18n";
 
 import { UserDisplayFormModel, userDisplayFormModelShape, userDisplayFormValidations } from "@bk2/user/util";
-import { debugFormErrors } from "@bk2/shared/util";
+import { debugFormErrors } from "@bk2/shared/util-core";
 
 @Component({
-  selector: 'bk-user-display',
+  selector: 'bk-user-display-form',
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
@@ -100,7 +100,7 @@ export class UserDisplayFormComponent {
 
   protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
     this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('UserDisplay', this.validationResult().errors, this.currentUser());
+    debugFormErrors('UserDisplayForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }}

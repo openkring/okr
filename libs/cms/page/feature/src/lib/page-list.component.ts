@@ -2,12 +2,12 @@ import { Component, computed, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar   } from '@ionic/angular/standalone';
 
-import { PageModel } from '@bk2/shared/models';
+import { PageModel, RoleName } from '@bk2/shared/models';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/config';
-import { error, hasRole } from '@bk2/shared/util';
+import { hasRole } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

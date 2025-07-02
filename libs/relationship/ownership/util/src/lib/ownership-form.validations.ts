@@ -1,6 +1,6 @@
-import { ABBREVIATION_LENGTH, CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { ABBREVIATION_LENGTH, CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 import { AccountType, GenderType, ModelType, OrgType, Periodicity, ResourceType, RowingBoatType } from '@bk2/shared/models';
-import { categoryValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared/util';
+import { categoryValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared/util-core';
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { OwnershipFormModel } from './ownership-form.model';
 

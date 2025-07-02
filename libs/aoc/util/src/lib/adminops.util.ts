@@ -1,4 +1,8 @@
-import { LogInfo } from '@bk2/shared/models';
+import { LogInfo, PersonModel, UserModel } from '@bk2/shared/models';
+import { die, generateRandomString, warn } from '@bk2/shared/util-core';
+import { showToast } from '@bk2/shared/util-angular';
+import { ToastController } from '@ionic/angular/standalone';
+import { Auth, AuthError, createUserWithEmailAndPassword, User } from 'firebase/auth';
 
 export function getLogInfo(key: string | undefined, name: string | undefined, message: string, isVerbose = true): LogInfo {
 if (isVerbose === true) console.log(`${key}/${name}: ${message}`);
@@ -9,6 +13,67 @@ return {
 };
 }
 
+/**
+ * Create a new Firebase account with the given email address.
+ * On successful creation of the user account, this new user is signed in. That's why we update the user to the former current user.
+ * @param the current firebase user
+ * @param loginEmail the login email address of the new user
+ * @returns the uid of the new Firebase account or undefined if there was an error.
+ */
+export async function createFirebaseAccount(auth: Auth, toastController: ToastController, fbUser: User, loginEmail: string, password?: string): Promise<string | undefined> {
+  let _password = password;
+  if (!_password || _password.length === 0) _password = generateRandomString(12);
+  try {
+    const _userCredential = await createUserWithEmailAndPassword(auth, loginEmail, _password);
+    await showToast(toastController, '@auth.operation.create.confirmation');
+    await updateUser(auth, fbUser); // reset the logged-in user
+    return _userCredential.user.uid;
+  } catch (_ex) {
+    const _error = _ex as AuthError;
+    switch (_error.code) {
+      case 'auth/email-already-in-use':
+        warn(`Email address ${loginEmail} already in use.`);
+        break;
+      case 'auth/invalid-email':
+        warn(`Email address ${loginEmail} is invalid.`);
+        break;
+      case 'auth/operation-not-allowed':
+        warn(`Error during sign up (not allowed).`);
+        break;
+      case 'auth/weak-password':
+        warn('Password is not strong enough. Add additional characters including special characters and numbers.');
+        break;
+      default:
+        warn(_error.message);
+        break;
+    }
+    await updateUser(auth, fbUser); // reset the logged-in user
+    return undefined;
+  }
+}
+
+export async function updateUser(auth: Auth, user: User | undefined | null): Promise<void> {
+  if (user) {
+    await auth.updateCurrentUser(user);
+  }
+}
+
+/**
+ * Create a user that corresponds to the given person. This is used when registering a new user.
+ * @param person the person that the user should be created for 
+ * @returns user model that corresponds to the given person
+ */
+export function createUserFromPerson(person: PersonModel, tenantId: string): UserModel {
+  if (!person.bkey) die('AdminOpsUtil.createUserFromPerson: person must have a bkey.')
+  const _user = new UserModel(tenantId);
+  _user.loginEmail = person.fav_email;
+  _user.personKey = person.bkey;
+  _user.firstName = person.firstName;
+  _user.lastName = person.lastName;
+  _user.gravatarEmail = person.fav_email;
+  _user.roles = { registered: true };
+  return _user;
+}
 
 /* 
   export const validateFunction = (sig: OpSignature): Promise<void> => {

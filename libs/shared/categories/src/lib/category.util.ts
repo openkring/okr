@@ -1,5 +1,5 @@
 import { AccountType, AllCategories, CategoryModel, GenderType, MembershipModel, ModelType, OrgType, OwnershipModel, ResourceType } from '@bk2/shared/models';
-import { die, getProperty } from '@bk2/shared/util';
+import { die, getProperty } from '@bk2/shared/util-core';
 
 /**
  * Return a Category based on its id.

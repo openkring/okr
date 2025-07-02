@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
 import { AllCategories, DocumentCollection, DocumentModel, ModelType } from '@bk2/shared/models';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AppStore } from '@bk2/shared/feature';

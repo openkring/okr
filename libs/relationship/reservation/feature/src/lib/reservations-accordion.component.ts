@@ -3,13 +3,12 @@ import { IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonItemOption, IonIt
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } from '@bk2/shared/models';
+import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel, RoleName } from '@bk2/shared/models';
 
 import { ReservationsAccordionStore } from './reservations-accordion.store';
 import { EmptyListComponent } from '@bk2/shared/ui';
 import { AvatarPipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared/util';
-import { RoleName } from '@bk2/shared/config';
+import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared/util-core';
 
 @Component({
   selector: 'bk-reservations-accordion',

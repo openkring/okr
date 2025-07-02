@@ -1,7 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 
-import { categoryValidations, dateValidations, isAfterDate, isFutureDate, stringValidations } from '@bk2/shared/util';
-import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared/config';
+import { categoryValidations, dateValidations, isAfterDate, isFutureDate, stringValidations } from '@bk2/shared/util-core';
+import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared/constants';
 import { GenderType } from '@bk2/shared/models';
 
 import { ssnValidations } from './ssn.validations';

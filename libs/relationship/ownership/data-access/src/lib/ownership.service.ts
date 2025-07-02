@@ -4,11 +4,13 @@ import { ToastController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { ModelType, OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared/models';
-import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
+import { confirmAction } from '@bk2/shared/util-angular';
 
 import { saveComment } from '@bk2/comment/util';
 
 import { getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from '@bk2/ownership/util';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
     providedIn: 'root'
@@ -27,10 +29,17 @@ export class OwnershipService {
    * @returns the document id of the stored ownership in the database
    */
   public async create(ownership: OwnershipModel, currentUser?: UserModel): Promise<string> {
-    ownership.index = this.getSearchIndex(ownership);
-    const _key = await createModel(this.firestore, OwnershipCollection, ownership, this.tenantId, '@ownership.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, OwnershipCollection, _key, '@comment.operation.initial.conf');  
-    return _key;    
+    try {
+      ownership.index = this.getSearchIndex(ownership);
+      const _key = await createModel(this.firestore, OwnershipCollection, ownership, this.tenantId);
+      await confirmAction(bkTranslate('@ownership.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, OwnershipCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@ownership.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }    
   }
 
   /**
@@ -47,14 +56,23 @@ export class OwnershipService {
    * @param ownership the ownership to update
    * @param i18nPrefix the prefix for the i18n key to use for the toast message (can be used for a delete confirmation)
    */
-  public async update(ownership: OwnershipModel, confirmMessage = '@ownership.operation.update'): Promise<void> {
-    ownership.index = this.getSearchIndex(ownership);
-    await updateModel(this.firestore, OwnershipCollection, ownership, confirmMessage, this.toastController);
+  public async update(ownership: OwnershipModel, currentUser?: UserModel, confirmMessage = '@ownership.operation.update'): Promise<string> {
+      try {
+      ownership.index = this.getSearchIndex(ownership);
+      const _key = await updateModel(this.firestore, OwnershipCollection, ownership);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, OwnershipCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
-  public async delete(ownership: OwnershipModel): Promise<void> {
+  public async delete(ownership: OwnershipModel, currentUser?: UserModel): Promise<void> {
     ownership.isArchived = true;
-    await this.update(ownership, `@ownership.operation.delete`);
+    await this.update(ownership, currentUser, `@ownership.operation.delete`);
   }
 
   /**
@@ -65,47 +83,9 @@ export class OwnershipService {
   public async endOwnershipByDate(ownership: OwnershipModel, validTo: string, currentUser?: UserModel): Promise<void> {
     if (ownership.validTo.startsWith('9999') && validTo && validTo.length === 8) {
       ownership.validTo = validTo;
-      await this.update(ownership);
+      await this.update(ownership, currentUser);
       await saveComment(this.firestore, this.tenantId, currentUser, OwnershipCollection, ownership.bkey, '@comment.message.ownership.deleted');  
     }
-  }
-
-/*   public async createNewOwnershipFromSubject(subjectKey: string): Promise<void> {
-    const _subject = await firstValueFrom(this.dataService.readModel(CollectionNames.Subject, subjectKey));
-    if (isSubject(_subject)) {
-      const _resource = await this.selectResource();
-      if (!_resource) return;
-
-      const _date = await selectDate(this.modalController);
-      if (!_date) return;
-
-      const _validFrom = convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate);
-
-      const _ownership = newResourceOwnership(_resource, _subject, _validFrom);
-      const _key = await this.saveNewOwnership(_ownership);
-      await this.saveComment(CollectionNames.Ownership, _key, '@comment.operation.initial.conf');   
-    } else {
-      warn('OwnershipService.createNewOwnershipFromSubject: no subject ${subjectKey} found.');
-    } 
-  }
- */
-/*   public async createNewOwnershipFromResource(resourceKey: string): Promise<void> {
-    const _resource = await firstValueFrom(this.dataService.readModel(CollectionNames.Resource, resourceKey));
-    if (isResource(_resource)) {
-      const _owner = await this.selectOwner();
-      if (!_owner) return;
-
-      const _date = await selectDate(this.modalController);    
-      if (!_date) return;
-      
-      const _validFrom = convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate);
-
-      const _ownership = newResourceOwnership(_resource, _owner, _validFrom);
-      const _key = await this.saveNewOwnership(_ownership);
-      await this.saveComment(CollectionNames.Ownership, _key, '@comment.operation.initial.conf');   
-    } else {
-      warn('OwnershipService.createNewOwnershipFromResource: no resource ${resourceKey} found.');
-    } 
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/
@@ -126,46 +106,6 @@ export class OwnershipService {
         return ownerships.filter((ownership: OwnershipModel) => ownership.ownerKey === ownerKey && ownership.ownerModelType === modelType);
       }));
   }
-
-  /**
-   * Select an owner from the list of subjects to be used in a new ownership. 
-   * Owner can be any subject (Person, Org, Group).
-   * @returns the subject that was selected or undefined if no subject was selected
-   */
-/*   public async selectOwner(): Promise<SubjectModel | undefined> {
-    const _modal = await this.modalController.create({
-      component: BkModelSelectComponent,
-      componentProps: {
-        bkListType: ListType.SubjectAll
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm') {
-      return isSubject(data) ? data : undefined;
-    }
-    return undefined;
-  }
- */
-  /**
-   * Select a resource from the list of all resources to be used in a new ownership. 
-   * @returns the resource that was selected or undefined if no resource was selected
-   */
-/*     public async selectResource(): Promise<ResourceModel | undefined> {
-      const _modal = await this.modalController.create({
-        component: BkModelSelectComponent,
-        componentProps: {
-          bkListType: ListType.ResourceAll
-        }
-      });
-      _modal.present();
-      const { data, role } = await _modal.onDidDismiss();
-      if (role === 'confirm') {
-        return isResource(data) ? data : undefined;
-      }
-      return undefined;
-    }
- */
 
   /*-------------------------- export --------------------------------*/
   public async export(): Promise<void> {

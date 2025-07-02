@@ -4,9 +4,9 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { MenuItemModel, ModelType, UserModel } from '@bk2/shared/models';
-import { ENV, RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
+import { MenuItemModel, ModelType, UserModel, RoleName } from '@bk2/shared/models';
+import { ENV } from '@bk2/shared/config';
+import { hasRole } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
 
 import { MenuItemFormComponent } from '@bk2/cms/menu/ui';

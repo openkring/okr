@@ -6,7 +6,9 @@ import { TaskCollection, TaskModel, UserModel } from '@bk2/shared/models';
 import { FIRESTORE, ENV } from '@bk2/shared/config';
 
 import { saveComment } from '@bk2/comment/util';
-import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
+import { confirmAction } from '@bk2/shared/util-angular';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
   providedIn: 'root'
@@ -26,10 +28,17 @@ export class TaskService {
    * @returns the document id of the newly created task
    */
   public async create(task: TaskModel, currentUser: UserModel | undefined): Promise<string> {
-    task.index = this.getSearchIndex(task);
-    const _key = await createModel(this.firestore, TaskCollection, task, this.tenantId, '@task.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, TaskCollection, _key, '@comment.operation.initial.conf');
-    return _key;    
+    try {
+      task.index = this.getSearchIndex(task);
+      const _key = await createModel(this.firestore, TaskCollection, task, this.tenantId);
+      await confirmAction(bkTranslate('@task.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, TaskCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@task.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }   
   }
 
   /**
@@ -46,9 +55,18 @@ export class TaskService {
    * @param task the TaskModel with the new values. Its key must be valid (in order to find it in the database)
    * @param confirmMessage the the toast message that is shown as a confirmation
    */
-  public async update(task: TaskModel, confirmMessage = '@task.operation.update'): Promise<void> {
-    task.index = this.getSearchIndex(task);
-    await updateModel(this.firestore, TaskCollection, task, confirmMessage, this.toastController);
+  public async update(task: TaskModel, currentUser?: UserModel, confirmMessage = '@task.operation.update'): Promise<string> {
+    try {
+      task.index = this.getSearchIndex(task);
+      const _key = await updateModel(this.firestore, TaskCollection, task);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, TaskCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -56,9 +74,9 @@ export class TaskService {
    * @param task the task to delete
    * @returns a promise that resolves when the task is deleted
    */
-  public async delete(task: TaskModel): Promise<void> {
+  public async delete(task: TaskModel, currentUser?: UserModel): Promise<void> {
     task.isArchived = true;
-    await this.update(task, '@task.operation.delete');
+    await this.update(task, currentUser, '@task.operation.delete');
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

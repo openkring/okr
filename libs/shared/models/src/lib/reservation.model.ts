@@ -1,4 +1,3 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from "./base.model";
 import { ModelType } from "./enums/model-type.enum";
 import { ResourceType } from "./enums/resource-type.enum";
@@ -51,7 +50,7 @@ export class ReservationModel implements BkModel, NamedModel, SearchableModel, T
 
   public startDate = '';
   public startTime = '';
-  public endDate = END_FUTURE_DATE_STR; 
+  public endDate = ''; 
   public endTime = '';
   public numberOfParticipants = '';
   public area = '';

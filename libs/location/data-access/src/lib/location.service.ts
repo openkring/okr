@@ -4,9 +4,11 @@ import { ToastController } from "@ionic/angular/standalone";
 
 import { ENV, FIRESTORE } from "@bk2/shared/config";
 import { LocationCollection, LocationModel, UserModel } from "@bk2/shared/models";
-import { createModel, findByKey, getSystemQuery, searchData, updateModel } from "@bk2/shared/util";
+import { createModel, findByKey, getSystemQuery, searchData, updateModel } from "@bk2/shared/util-core";
+import { confirmAction } from "@bk2/shared/util-angular";
 
 import { saveComment } from "@bk2/comment/util";
+import { bkTranslate } from "@bk2/shared/i18n";
 
 @Injectable({
     providedIn: 'root'
@@ -25,10 +27,17 @@ export class LocationService {
    * @returns the document id of the newly created location
    */
   public async create(location: LocationModel, currentUser?: UserModel): Promise<string> {
-    location.index = this.getSearchIndex(location);
-    const _key = await createModel(this.firestore, LocationCollection, location, this.tenantId, '@location.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, LocationCollection, _key, '@comment.operation.initial.conf');
-    return _key;
+      try {
+      location.index = this.getSearchIndex(location);
+      const _key = await createModel(this.firestore, LocationCollection, location, this.tenantId);
+      await confirmAction(bkTranslate('@location.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, LocationCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@location.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -44,9 +53,18 @@ export class LocationService {
    * Update a location in the database with new values.
    * @param location the LocationModel with the new values. Its key must be valid (in order to find it in the database)
    */
-  public async update(location: LocationModel, confirmMessage = '@location.operation.update'): Promise<void> {
-    location.index = this.getSearchIndex(location);
-    await updateModel(this.firestore, LocationCollection, location, confirmMessage, this.toastController);  
+  public async update(location: LocationModel, currentUser?: UserModel, confirmMessage = '@location.operation.update'): Promise<string> {
+    try {
+      location.index = this.getSearchIndex(location);
+      const _key = await updateModel(this.firestore, LocationCollection, location);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, LocationCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }  
   }
 
   /**
@@ -54,9 +72,9 @@ export class LocationService {
    * We are not actually deleting a location. We are just archiving it.
    * @param key 
    */
-  public async delete(location: LocationModel) {
+  public async delete(location: LocationModel, currentUser?: UserModel) {
     location.isArchived = true;
-    await this.update(location, '@location.operation.delete');
+    await this.update(location, currentUser, '@location.operation.delete');
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

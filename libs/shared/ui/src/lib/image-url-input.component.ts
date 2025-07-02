@@ -2,7 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { Component, input, model, output } from '@angular/core';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 
-import { URL_LENGTH } from '@bk2/shared/config';
+import { URL_LENGTH } from '@bk2/shared/constants';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ButtonCopyComponent } from './button-copy.component';
 import { FormsModule } from '@angular/forms';

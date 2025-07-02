@@ -11,6 +11,7 @@ import { EmptyListComponent } from "@bk2/shared/ui";
 import { AddressService } from "@bk2/address/data-access";
 import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/address/util";
 import { AddressModalsService } from "./address-modals.service";
+import { AppStore } from "@bk2/shared/feature";
 
 @Component({
   selector: 'bk-addresses-accordion',
@@ -82,6 +83,7 @@ export class AddressesAccordionComponent {
   protected readonly modalController = inject(ModalController);
   public readonly addressService = inject(AddressService);
   private readonly addressModalsService = inject(AddressModalsService);
+  private readonly appStore = inject(AppStore);
 
   public addresses = model.required<AddressModel[]>(); // the addresses shown in the accordion
   public parentKey = input.required<string>(); // the parent key of the addresses
@@ -97,7 +99,7 @@ export class AddressesAccordionComponent {
 
   public async toggleFavorite(address: AddressModel): Promise<void> {
     if (this.readOnly() === false) {
-      await this.addressService.toggleFavorite(address);
+      await this.addressService.toggleFavorite(address, this.appStore.currentUser());
     }
   }
 
@@ -115,7 +117,7 @@ export class AddressesAccordionComponent {
 
   public async delete(slidingItem?: IonItemSliding, address?: AddressModel): Promise<void> {
     if (slidingItem) slidingItem.close();
-    if (address) await this.addressService.delete(address);
+    if (address) await this.addressService.delete(address, this.appStore.currentUser());
     this.addressesChanged.emit();
   }
 
@@ -146,7 +148,7 @@ export class AddressesAccordionComponent {
       const _url = await this.addressModalsService.uploadEzs(address);
       if (_url) {
         address.url = _url;
-        await this.addressService.update(address);
+        await this.addressService.update(address, this.appStore.currentUser());
       }
     }
   }

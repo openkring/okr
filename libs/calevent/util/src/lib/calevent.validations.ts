@@ -1,6 +1,6 @@
-import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 import { CalEventModel, CalEventType, Periodicity } from '@bk2/shared/models';
-import { baseValidations, categoryValidations, dateValidations, isAfterDate, isAfterOrEqualDate, stringValidations } from '@bk2/shared/util';
+import { baseValidations, categoryValidations, dateValidations, isAfterDate, isAfterOrEqualDate, stringValidations } from '@bk2/shared/util-core';
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 
 export const calEventValidations = staticSuite((model: CalEventModel, field?: string) => {

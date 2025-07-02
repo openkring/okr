@@ -1,6 +1,4 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
 import { GenderType, OrgType, Periodicity, WorkingRelState, WorkingRelType } from "@bk2/shared/models";
-import { getTodayStr } from "@bk2/shared/util";
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
 // tbd: in a first phase, we only support persons as subjects; support for org subjects will be added later
@@ -45,8 +43,8 @@ export const workingRelFormModelShape: DeepRequired<WorkingRelFormModel> = {
 
   type: WorkingRelType.Employee,
   label: '',
-  validFrom: getTodayStr(),
-  validTo: END_FUTURE_DATE_STR,
+  validFrom: '',
+  validTo: '',
   price: 6000,
   currency: 'CHF',
   periodicity: Periodicity.Monthly,

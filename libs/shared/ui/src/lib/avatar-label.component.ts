@@ -5,7 +5,8 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ColorsIonic } from '@bk2/shared/categories';
 import { CategoryPlainNamePipe, getAvatarImgixUrl } from '@bk2/shared/pipes';
 import { ColorIonic } from '@bk2/shared/models';
-import { ENV, FIRESTORE, THUMBNAIL_SIZE } from '@bk2/shared/config';
+import { ENV, FIRESTORE} from '@bk2/shared/config';
+import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
 
 @Component({
   selector: 'bk-avatar-label',

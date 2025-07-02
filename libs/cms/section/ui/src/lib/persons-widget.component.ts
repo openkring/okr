@@ -4,7 +4,8 @@ import { Router } from '@angular/router';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { AvatarInfo, ColorIonic, ModelType, NameDisplay, SectionModel } from '@bk2/shared/models';
-import { getFullPersonName, navigateByUrl } from '@bk2/shared/util';
+import { getFullPersonName } from '@bk2/shared/util-core';
+import { navigateByUrl } from '@bk2/shared/util-angular';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarLabelComponent } from '@bk2/shared/ui';
 

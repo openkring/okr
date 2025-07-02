@@ -13,5 +13,5 @@
     "jest.config.ts",
     "src/**/*.test.ts"
   ],
-  "include": ["src/**/*.ts", "../models/src/lib/year-config.model.ts", "../models/src/lib/enums/category-type.enum.ts", "../models/src/lib/category.model.ts", "../models/src/lib/enums/gallery-layout-type.enum.ts", "../models/src/lib/enums/filter-type.enum.ts", "../models/src/lib/enums/file-type-icon.enum.ts", "../models/src/lib/enums/action-type.ts"]
+  "include": ["src/**/*.ts"]
 }

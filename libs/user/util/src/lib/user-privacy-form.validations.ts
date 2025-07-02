@@ -1,6 +1,6 @@
 import { only, staticSuite} from 'vest';
 import { UserPrivacyFormModel } from './user-privacy-form.model';
-import { categoryValidations } from '@bk2/shared/util';
+import { categoryValidations } from '@bk2/shared/util-core';
 import { PrivacyUsage } from '@bk2/shared/models';
 
 export const userPrivacyFormValidations = staticSuite((model: UserPrivacyFormModel, field?: string) => {

@@ -1,8 +1,8 @@
 
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
-import { booleanValidations, categoryValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@bk2/shared/util';
+import { booleanValidations, categoryValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@bk2/shared/util-core';
 import { MenuAction, MenuItemModel } from '@bk2/shared/models';
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 
 export const menuItemValidation = staticSuite((model: MenuItemModel, field?: string) => {
   if (field) only(field);

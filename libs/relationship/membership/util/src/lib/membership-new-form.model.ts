@@ -1,5 +1,5 @@
 import { GenderType, ModelType, OrgType } from '@bk2/shared/models';
-import { getTodayStr } from '@bk2/shared/util';
+import { getTodayStr } from '@bk2/shared/util-core';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
 export type MembershipNewFormModel = DeepPartial<{

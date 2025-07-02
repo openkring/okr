@@ -2,14 +2,13 @@ import { Component, computed, inject } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { AllCategories, SectionModel, SectionType } from '@bk2/shared/models';
+import { AllCategories, SectionModel, SectionType, RoleName } from '@bk2/shared/models';
 import { CategoryComponent, EmptyListComponent, SearchbarComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { addAllCategory, SectionTypes } from '@bk2/shared/categories';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore } from '@bk2/shared/feature';
-import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
+import { hasRole } from '@bk2/shared/util-core';
 
 import { SectionListStore } from './section-list.store';
 

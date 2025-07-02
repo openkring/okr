@@ -4,9 +4,11 @@ import { AlertController, ToastController } from "@ionic/angular/standalone";
 
 import { ENV, FIRESTORE } from "@bk2/shared/config";
 import { PageCollection, PageModel, UserModel } from "@bk2/shared/models";
-import { bkPrompt, createModel, getSystemQuery, searchData, updateModel } from "@bk2/shared/util";
+import { createModel, getSystemQuery, searchData, updateModel } from "@bk2/shared/util-core";
+import { bkPrompt, confirmAction } from "@bk2/shared/util-angular";
 
 import { saveComment } from "@bk2/comment/util";
+import { bkTranslate } from "@bk2/shared/i18n";
 
 @Injectable({
     providedIn: 'root'
@@ -26,9 +28,17 @@ export class PageService {
    * @returns the document id of the newly created page
    */
   public async create(page: PageModel, currentUser: UserModel | undefined): Promise<string> {
-    const _key = await createModel(this.firestore, PageCollection, page, this.tenantId, '@content.page.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, PageCollection, _key, '@comment.operation.initial.conf');
-    return _key;
+    try {
+      page.index = this.getSearchIndex(page);
+      const _key = await createModel(this.firestore, PageCollection, page, this.tenantId);
+      await confirmAction(bkTranslate('@content.page.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, PageCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@calEvent.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -48,9 +58,18 @@ export class PageService {
    * Update a page in the database with new values.
    * @param page the PageModel with the new values. Its key must be valid (in order to find it in the database)
    */
-  public async update(page: PageModel, confirmMessage = '@content.page.operation.update'): Promise<void> {
-    page.index = this.getSearchIndex(page);
-    await updateModel(this.firestore, PageCollection, page, confirmMessage, this.toastController);
+  public async update(page: PageModel, currentUser?: UserModel, confirmMessage = '@content.page.operation.update'): Promise<string> {
+    try {
+      page.index = this.getSearchIndex(page);
+      const _key = await updateModel(this.firestore, PageCollection, page);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, PageCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -58,9 +77,9 @@ export class PageService {
    * We are not actually deleting a page. We are just archiving it.
    * @param key 
    */
-  public async delete(page: PageModel): Promise<void> {
+  public async delete(page: PageModel, currentUser?: UserModel): Promise<void> {
     page.isArchived = true;
-    await this.update(page, '@content.page.operation.delete');
+    await this.update(page, currentUser, '@content.page.operation.delete');
   }
   
   /*-------------------------- LIST / QUERY  --------------------------------*/

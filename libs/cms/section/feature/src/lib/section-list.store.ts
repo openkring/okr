@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { AllCategories, SectionModel, SectionType } from '@bk2/shared/models';
 import { categoryMatches, SectionTypes } from '@bk2/shared/categories';
-import { nameMatches } from '@bk2/shared/util';
+import { nameMatches } from '@bk2/shared/util-core';
 import { CardSelectModalComponent } from '@bk2/shared/ui';
 import { AppStore } from '@bk2/shared/feature';
 
@@ -67,7 +67,7 @@ export const SectionListStore = signalStore(
       },
 
       async delete(section: SectionModel): Promise<void> {
-        await store.sectionService.delete(section);
+        await store.sectionService.delete(section, store.appStore.currentUser());
         this.reset();
       },
 
@@ -103,7 +103,7 @@ export const SectionListStore = signalStore(
             const { data, role } = await _modal.onWillDismiss();
             if (role === 'confirm') {
               if (isSection(data, store.appStore.tenantId())) {
-                store.sectionService.update(data);
+                store.sectionService.update(data, store.appStore.currentUser());
               }
             }
           }

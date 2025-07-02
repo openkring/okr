@@ -12,7 +12,7 @@ import { AsyncPipe } from '@angular/common';
 import { SectionFormModel } from '@bk2/cms/section/util';
 import { SectionModalsService } from './section-modals.service';
 import { DocumentModalsService } from '@bk2/document/feature';
-import { deleteFileFromStorage } from '@bk2/shared/util';
+import { deleteFileFromStorage } from '@bk2/shared/util-angular';
 
 /**
  * Pick one single image from the local file system or from the camera.

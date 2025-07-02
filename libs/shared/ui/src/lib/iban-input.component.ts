@@ -5,7 +5,8 @@ import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
 
-import { ChIbanMask, IBAN_LENGTH } from '@bk2/shared/config';
+import { ChIbanMask } from '@bk2/shared/config';
+import { IBAN_LENGTH } from '@bk2/shared/constants';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ButtonCopyComponent } from './button-copy.component';
 import { FormsModule } from '@angular/forms';

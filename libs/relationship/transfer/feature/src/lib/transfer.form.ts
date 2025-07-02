@@ -4,9 +4,9 @@ import { vestForms } from 'ngx-vest-forms';
 import { AsyncPipe } from '@angular/common';
 
 import { AvatarsComponent, CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, getTodayStr, hasRole, isPerson, isResource } from '@bk2/shared/util';
-import { AvatarInfo, DefaultResourceInfo, ModelType, Periodicity, ResourceInfo, TransferState, TransferType, UserModel } from '@bk2/shared/models';
-import { NAME_LENGTH, RoleName } from '@bk2/shared/config';
+import { debugFormErrors, getTodayStr, hasRole, isPerson, isResource } from '@bk2/shared/util-core';
+import { AvatarInfo, DefaultResourceInfo, ModelType, Periodicity, ResourceInfo, TransferState, TransferType, UserModel, RoleName } from '@bk2/shared/models';
+import { NAME_LENGTH } from '@bk2/shared/constants';
 import { PeriodicityTypes, TransferStates, TransferTypes } from '@bk2/shared/categories';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared/feature';

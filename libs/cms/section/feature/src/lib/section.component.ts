@@ -1,9 +1,8 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { RoleName } from '@bk2/shared/config';
-import { SectionType } from '@bk2/shared/models';
-import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared/util';
+import { SectionType, RoleName } from '@bk2/shared/models';
+import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared/util-core';
 
 import { ArticleSectionComponent } from './article-section.component';
 import { MissingSectionComponent } from './missing-section.component';

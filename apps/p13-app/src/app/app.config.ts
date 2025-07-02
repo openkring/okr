@@ -30,7 +30,7 @@ if (environment.production === false) {
 // site key and pass it to initializeAppCheck().
 initializeAppCheck(app, {
   provider: new ReCaptchaEnterpriseProvider(
-    environment.firebase.appcheckRecaptchaEnterpriseKey
+    environment.services.appcheckRecaptchaEnterpriseKey
   ),
   isTokenAutoRefreshEnabled: true, // Set to true to allow auto-refresh.
 });

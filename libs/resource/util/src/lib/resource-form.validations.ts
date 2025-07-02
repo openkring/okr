@@ -1,8 +1,8 @@
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { ResourceFormModel } from './resource-form.model';
-import { categoryValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@bk2/shared/util';
+import { categoryValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@bk2/shared/util-core';
 import { CarType, GenderType, ResourceType, RowingBoatType, RowingBoatUsage } from '@bk2/shared/models';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 
 export const resourceFormValidations = staticSuite((model: ResourceFormModel, field?: string) => {
   if (field) only(field);

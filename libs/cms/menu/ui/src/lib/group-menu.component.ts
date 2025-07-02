@@ -1,11 +1,9 @@
 import { Component, inject, input } from '@angular/core';
 import { IonIcon, IonItem, IonLabel, IonList, PopoverController } from '@ionic/angular/standalone';
 
-import { hasRole } from '@bk2/shared/util';
+import { hasRole } from '@bk2/shared/util-core';
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { RoleName } from '@bk2/shared/config';
-
-import { UserModel } from '@bk2/shared/models';
+import { UserModel, RoleName } from '@bk2/shared/models';
 
 /**
  * A group menu is static. It can not be configured.
@@ -43,41 +41,23 @@ import { UserModel } from '@bk2/shared/models';
                 <ion-label>Sektion ändern</ion-label>
               </ion-item>
             }
-            @case('chat') {
-              <ion-item button (click)="popoverController.dismiss('chat')">
-                <ion-icon slot="start" src="{{'chatbubbles' | svgIcon }}" color="primary" />
-                <ion-label>Chat</ion-label>
-              </ion-item>
-
-            }
+            <!-- chat has no menu items -->
             @case('calendar') {
               <ion-item button (click)="popoverController.dismiss('addEvent')">
                 <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" color="primary" />
                 <ion-label>Event hinzufügen</ion-label>
               </ion-item>
-
             }
             @case('tasks') {
               <ion-item button (click)="popoverController.dismiss('addTask')">
                 <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" color="primary" />
                 <ion-label>Todo hinzufügen</ion-label>
               </ion-item>
-
             }
-            @case('files') {
-              <ion-item button (click)="popoverController.dismiss('files')">
-                <ion-icon slot="start" src="{{'documents' | svgIcon }}" color="primary" />
-                <ion-label>Files</ion-label>
-              </ion-item>
 
-            }
-            @case('album') {
-              <ion-item button (click)="popoverController.dismiss('album')">
-                <ion-icon slot="start" src="{{'albums' | svgIcon }}" color="primary" />
-                <ion-label>Album</ion-label>
-              </ion-item>
+            <!-- files has no menu items -->
+            <!-- album has no menu items -->
 
-            }
             @case('members') {
               <ion-item button (click)="popoverController.dismiss('addMember')">
                 <ion-icon slot="start" src="{{'person-add' | svgIcon }}" color="primary" />

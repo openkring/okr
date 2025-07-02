@@ -3,9 +3,8 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTi
 import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { GenderType, ModelType, WorkingRelType, UserModel, WorkingRelState, Periodicity } from '@bk2/shared/models';
-import { RoleName } from '@bk2/shared/config';
-import { debugFormErrors, hasRole } from '@bk2/shared/util';
+import { GenderType, ModelType, WorkingRelType, UserModel, WorkingRelState, Periodicity, RoleName } from '@bk2/shared/models';
+import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared/categories';

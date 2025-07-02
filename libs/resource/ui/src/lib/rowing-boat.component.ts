@@ -4,9 +4,8 @@ import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { RowingBoatTypes, RowingBoatUsages } from '@bk2/shared/categories';
 import { CategoryComponent, ColorComponent, ErrorNoteComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { RowingBoatType, RowingBoatUsage, UserModel } from '@bk2/shared/models';
-import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
+import { RowingBoatType, RowingBoatUsage, UserModel, RoleName } from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
 import { ResourceFormModel, resourceFormValidations } from '@bk2/resource/util';
 
 @Component({

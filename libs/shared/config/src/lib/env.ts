@@ -1,7 +1,5 @@
 import { InjectionToken } from "@angular/core";
 
-export type RoleName = 'none' | 'anonymous' | 'registered' | 'privileged' | 'contentAdmin' | 'resourceAdmin' | 'memberAdmin' | 'eventAdmin' | 'treasurer' | 'admin'| 'public' | 'groupAdmin' ;
-
 export interface BkEnvironment {
   production: boolean;
   useEmulators: boolean;
@@ -16,6 +14,7 @@ export interface BkEnvironment {
     measurementId: string;
   },
   services: {
+    chatStreamApiKey: string;
     appcheckRecaptchaEnterpriseKey: string;
     gmapKey: string;
     nxCloudAccessToken: string;

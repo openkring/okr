@@ -1,6 +1,6 @@
 import { only, staticSuite} from 'vest';
-import { booleanValidations, categoryValidations, stringValidations } from '@bk2/shared/util';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared/config';
+import { booleanValidations, categoryValidations, stringValidations } from '@bk2/shared/util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared/constants';
 import { ModelType } from '@bk2/shared/models';
 import { GroupNewFormModel } from './group-new-form.model';
 

@@ -4,7 +4,8 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 
-import { AppNavigationService, chipMatches, getSystemQuery, isResource, nameMatches, navigateByUrl, searchData } from '@bk2/shared/util';
+import { chipMatches, getSystemQuery, isResource, nameMatches, searchData } from '@bk2/shared/util-core';
+import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AllCategories, GenderType, ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
@@ -142,7 +143,9 @@ export const ResourceListStore = signalStore(
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
           if (isResource(data, store.tenantId())) {
-            await (!data.bkey ? store.resourceService.create(data, store.currentUser()) : store.resourceService.update(data));
+            await (!data.bkey ? 
+              store.resourceService.create(data, store.currentUser()) : 
+              store.resourceService.update(data, store.currentUser()));
           }
         }
         store.resourceResource.reload();
@@ -155,7 +158,7 @@ export const ResourceListStore = signalStore(
       },
 
       async delete(resource: ResourceModel): Promise<void> {
-        await store.resourceService.delete(resource);
+        await store.resourceService.delete(resource, store.currentUser());
         store.resourceResource.reload();
       },
 

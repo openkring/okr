@@ -1,6 +1,6 @@
 
-import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
-import { dateValidations, stringValidations } from '@bk2/shared/util';
+import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
+import { dateValidations, stringValidations } from '@bk2/shared/util-core';
 import { only, staticSuite} from 'vest';
 import { CategoryChangeFormModel } from './category-change-form.model';
 

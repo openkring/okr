@@ -4,11 +4,10 @@ import { AsyncPipe } from '@angular/common';
 
 import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV, RoleName } from '@bk2/shared/config';
-import { GroupCollection, ModelType } from '@bk2/shared/models';
-import { AvatarToolbarComponent } from 'libs/avatar/feature/src';
+import { ENV } from '@bk2/shared/config';
+import { GroupCollection, ModelType, RoleName } from '@bk2/shared/models';
 import { Photo } from '@capacitor/camera';
-import { hasRole } from '@bk2/shared/util';
+import { hasRole } from '@bk2/shared/util-core';
 import { AvatarService } from '@bk2/avatar/data-access';
 import { getDocumentStoragePath } from '@bk2/document/util';
 
@@ -18,6 +17,7 @@ import { GroupEditStore } from './group-edit.store';
 import { convertGroupToForm } from '@bk2/group/util';
 import { GroupFormComponent } from '@bk2/group/ui';
 import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
+import { AvatarToolbarComponent } from '@bk2/avatar/feature';
 
 @Component({
   selector: 'bk-group-edit-page',

@@ -7,10 +7,10 @@ import { IonItemSliding } from '@ionic/angular';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { CategoryAbbreviationPipe, FileExtensionPipe, FileLogoPipe, FileNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { error, hasRole } from '@bk2/shared/util';
+import { hasRole } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
 import { addAllCategory, DocumentTypes } from '@bk2/shared/categories';
-import { DocumentModel } from '@bk2/shared/models';
-import { RoleName } from '@bk2/shared/config';
+import { DocumentModel, RoleName } from '@bk2/shared/models';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

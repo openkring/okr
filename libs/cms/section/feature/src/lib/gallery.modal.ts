@@ -5,7 +5,8 @@ import { register, SwiperContainer } from 'swiper/element/bundle';
 
 import { Image } from '@bk2/shared/models';
 import { HeaderComponent, LabelComponent } from '@bk2/shared/ui';
-import { die, downloadToBrowser, getSizedImgixParamsByExtension } from '@bk2/shared/util';
+import { die, getSizedImgixParamsByExtension } from '@bk2/shared/util-core';
+import { downloadToBrowser } from '@bk2/shared/util-angular';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore } from '@bk2/shared/feature';
 

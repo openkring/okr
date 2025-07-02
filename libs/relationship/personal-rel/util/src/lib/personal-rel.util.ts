@@ -1,5 +1,5 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
-import { addIndexElement, die, getTodayStr } from "@bk2/shared/util";
+import { END_FUTURE_DATE_STR } from "@bk2/shared/constants";
+import { addIndexElement, die, getTodayStr } from "@bk2/shared/util-core";
 import { PersonalRelFormModel } from "./personal-rel-form.model";
 import { GenderType, PersonalRelModel, PersonalRelType, PersonModel, UserModel } from "@bk2/shared/models";
 import { PersonalRelNewFormModel } from "./personal-rel-new-form.model";

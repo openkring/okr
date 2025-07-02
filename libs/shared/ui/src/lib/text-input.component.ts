@@ -6,7 +6,8 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { MaskitoDirective } from '@maskito/angular';
 
 import { TranslatePipe} from '@bk2/shared/i18n';
-import { AnyCharacterMask, AutoComplete, InputMode, MaskPredicate, SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { AnyCharacterMask, MaskPredicate } from '@bk2/shared/config';
+import { AutoComplete, InputMode, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 import { ButtonCopyComponent } from './button-copy.component';
 import { FormsModule } from '@angular/forms';
 

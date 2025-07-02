@@ -5,9 +5,8 @@ import { AsyncPipe } from '@angular/common';
 import { AppStore } from '@bk2/shared/feature';
 import { ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/config';
-import { ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util';
+import { ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType, RoleName } from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
 import { ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';

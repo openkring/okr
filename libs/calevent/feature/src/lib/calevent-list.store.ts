@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
 import { AllCategories, CalEventCollection, CalEventModel, CalEventType, ModelType } from '@bk2/shared/models';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AppStore } from '@bk2/shared/feature';
@@ -131,7 +131,7 @@ export const CalEventListStore = signalStore(
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
           if (isCalEvent(data, store.appStore.tenantId())) {
-            await store.calEventService.update(data);
+            await store.calEventService.update(data, store.currentUser());
           }
         }
       },
@@ -141,7 +141,7 @@ export const CalEventListStore = signalStore(
       },
 
       async delete(event: CalEventModel): Promise<void> {
-        await store.calEventService.delete(event);
+        await store.calEventService.delete(event, store.currentUser());
         this.reset();
       },
     }

@@ -5,7 +5,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { ErrorNoteComponent, TextInputComponent } from '@bk2/shared/ui';
 import { Image, UserModel } from '@bk2/shared/models';
 import { imageConfigFormModelShape, imageConfigValidations } from '@bk2/document/util';
-import { debugFormErrors } from '@bk2/shared/util';
+import { debugFormErrors } from '@bk2/shared/util-core';
 
 @Component({
   selector: 'bk-image-config-form',

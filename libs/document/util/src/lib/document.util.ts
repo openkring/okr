@@ -3,7 +3,7 @@ import { Platform } from '@ionic/angular/standalone';
 
 import { getModelSlug } from '@bk2/shared/categories';
 import { DOCUMENT_DIR, ModelType } from '@bk2/shared/models';
-import { checkUrlType, warn } from '@bk2/shared/util';
+import { checkUrlType, warn } from '@bk2/shared/util-core';
 import { readAsFile } from '@bk2/avatar/util';
 
 /* ---------------------- Camera -------------------------*/

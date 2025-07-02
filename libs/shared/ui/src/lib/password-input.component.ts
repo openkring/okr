@@ -7,7 +7,8 @@ import { MaskitoDirective } from '@maskito/angular';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { InputMode, PASSWORD_MAX_LENGTH, PasswordMask } from '@bk2/shared/config';
+import { InputMode, PASSWORD_MAX_LENGTH } from '@bk2/shared/constants';
+import { PasswordMask } from '@bk2/shared/config';
 import { ButtonCopyComponent } from './button-copy.component';
 import { FormsModule } from '@angular/forms';
 

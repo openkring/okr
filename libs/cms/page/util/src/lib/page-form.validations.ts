@@ -1,7 +1,7 @@
 import { enforce, only, staticSuite, test} from 'vest';
 
-import { categoryValidations, isArrayOfStrings, stringValidations } from '@bk2/shared/util';
-import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { categoryValidations, isArrayOfStrings, stringValidations } from '@bk2/shared/util-core';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 import { PageFormModel } from './page-form.model';
 import { ContentState, PageType } from '@bk2/shared/models';
 

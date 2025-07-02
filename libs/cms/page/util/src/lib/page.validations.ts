@@ -1,7 +1,7 @@
 import { enforce, only, staticSuite, test} from 'vest';
 import { ContentState, PageModel, PageType } from '@bk2/shared/models';
-import { baseValidations, categoryValidations, isArrayOfStrings, stringValidations } from '@bk2/shared/util';
-import { DESCRIPTION_LENGTH, NAME_LENGTH } from '@bk2/shared/config';
+import { baseValidations, categoryValidations, isArrayOfStrings, stringValidations } from '@bk2/shared/util-core';
+import { DESCRIPTION_LENGTH, NAME_LENGTH } from '@bk2/shared/constants';
 
 export const pageValidations = staticSuite((model: PageModel, field?: string) => {
   if (field) only(field);

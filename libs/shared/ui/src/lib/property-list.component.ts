@@ -5,7 +5,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIco
 import { MaskitoDirective } from '@maskito/angular';
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { getIndexOfKey } from '@bk2/shared/util';
+import { getIndexOfKey } from '@bk2/shared/util-core';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { LowercaseWordMask, MaskPredicate } from '@bk2/shared/config';
 import { BaseProperty } from '@bk2/shared/models';

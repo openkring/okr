@@ -2,10 +2,9 @@ import { Component, computed, input, model, output, signal} from '@angular/core'
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { RoleName } from '@bk2/shared/config';
-import { SwissCity, UserModel } from '@bk2/shared/models';
+import { SwissCity, UserModel, RoleName } from '@bk2/shared/models';
 import { CheckboxComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, hasRole } from '@bk2/shared/util';
+import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 
 import { GroupFormModel, GroupNewFormModel, groupNewFormModelShape, groupNewFormValidations } from '@bk2/group/util';
 

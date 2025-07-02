@@ -3,7 +3,7 @@ import { ModalController } from "@ionic/angular/standalone";
 
 import { AppStore, PersonSelectModalComponent } from "@bk2/shared/feature";
 import { PersonModel } from "@bk2/shared/models";
-import { isPerson } from "@bk2/shared/util";
+import { isPerson } from "@bk2/shared/util-core";
 
 @Injectable({
     providedIn: 'root'

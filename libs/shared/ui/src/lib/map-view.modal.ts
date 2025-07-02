@@ -5,7 +5,7 @@ import { GoogleMap, MapType } from '@capacitor/google-maps';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ENV} from '@bk2/shared/config';
-import { die } from '@bk2/shared/util';
+import { die } from '@bk2/shared/util-core';
 import { HeaderComponent } from './header.component';
 
 export interface GeoCoordinates {

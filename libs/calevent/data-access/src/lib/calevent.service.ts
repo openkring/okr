@@ -2,12 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 import { EventInput } from '@fullcalendar/core';
 import { ToastController } from '@ionic/angular/standalone';
+
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { CalEventCollection, CalEventModel, UserModel } from '@bk2/shared/models';
-import { saveComment } from '@bk2/comment/util';
 import { CalEventTypes, getCategoryAbbreviation } from '@bk2/shared/categories';
-import { addIndexElement, createModel, die, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+import { addIndexElement, createModel, die, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
+import { confirmAction } from '@bk2/shared/util-angular';
+import { bkTranslate } from '@bk2/shared/i18n';
 
+import { saveComment } from '@bk2/comment/util';
 
 @Injectable({
   providedIn: 'root'
@@ -26,10 +29,17 @@ export class CalEventService {
    * @returns the document id of the newly created CalEvent
    */
   public async create(calEvent: CalEventModel, currentUser?: UserModel): Promise<string> {
-    calEvent.index = this.getSearchIndex(calEvent);
-    const _key = await createModel(this.firestore, CalEventCollection, calEvent, this.tenantId, '@calEvent.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, CalEventCollection, _key, '@comment.operation.initial.conf');
-    return _key;    
+    try {
+      calEvent.index = this.getSearchIndex(calEvent);
+      const _key = await createModel(this.firestore, CalEventCollection, calEvent, this.tenantId);
+      await confirmAction(bkTranslate('@calEvent.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, CalEventCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@calEvent.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -49,18 +59,27 @@ export class CalEventService {
    * Update a CalEvent in the database with new values.
    * @param calEvent the CalEventModel with the new values. Its key must be valid (in order to find it in the database)
    */
-  public async update(calEvent: CalEventModel, confirmMessage = '@calEvent.operation.update'): Promise<void> {
-    calEvent.index = this.getSearchIndex(calEvent);
-    await updateModel(this.firestore, CalEventCollection, calEvent, confirmMessage, this.toastController);
+  public async update(calEvent: CalEventModel, currentUser?: UserModel, confirmMessage = '@calEvent.operation.update'): Promise<string> {
+    try {
+      calEvent.index = this.getSearchIndex(calEvent);
+      const _key = await updateModel(this.firestore, CalEventCollection, calEvent);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, CalEventCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
    * We are not actually deleting a CalEvent. We are just archiving it.
    * @param calEvent 
    */
-  public async delete(calEvent: CalEventModel): Promise<void> {
+  public async delete(calEvent: CalEventModel, currentUser?: UserModel): Promise<void> {
     calEvent.isArchived = true;
-    await this.update(calEvent, '@calEvent.operation.delete');
+    await this.update(calEvent, currentUser, '@calEvent.operation.delete');
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

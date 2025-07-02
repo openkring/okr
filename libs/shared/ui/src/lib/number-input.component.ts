@@ -4,7 +4,7 @@ import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { AutoComplete, InputMode, INT_LENGTH } from '@bk2/shared/config';
+import { AutoComplete, InputMode, INT_LENGTH } from '@bk2/shared/constants';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ButtonCopyComponent } from './button-copy.component';
 

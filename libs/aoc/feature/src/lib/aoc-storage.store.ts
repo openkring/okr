@@ -5,7 +5,8 @@ import { ToastController } from '@ionic/angular/standalone';
 import { FIRESTORE } from '@bk2/shared/config';
 import { AppStore } from '@bk2/shared/feature';
 import { LogInfo } from '@bk2/shared/models';
-import { copyToClipboard, showToast, warn } from '@bk2/shared/util';
+import { warn } from '@bk2/shared/util-core';
+import { copyToClipboard, showToast } from '@bk2/shared/util-angular';
 
 export type AocStorageState = {
   filePath: string;

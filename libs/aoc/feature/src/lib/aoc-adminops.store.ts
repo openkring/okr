@@ -7,7 +7,7 @@ import { AppStore } from '@bk2/shared/feature';
 import { BkModel, LogInfo, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared/models';
 
 import { Observable, of } from 'rxjs';
-import { compareDate, getAge, getEndOfYear, getFullPersonName, getSystemQuery, getYear, isMembership, searchData } from '@bk2/shared/util';
+import { compareDate, getAge, getEndOfYear, getFullPersonName, getSystemQuery, getYear, isMembership, searchData } from '@bk2/shared/util-core';
 
 export type AocAdminOpsState = {
   modelType: ModelType | undefined;

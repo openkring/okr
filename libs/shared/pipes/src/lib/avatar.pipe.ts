@@ -3,9 +3,10 @@ import { Firestore } from 'firebase/firestore';
 import { map, Observable } from 'rxjs';
 
 import { getCategoryIcon, ModelTypes, ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
-import { ENV, FIRESTORE, THUMBNAIL_SIZE } from "@bk2/shared/config";
+import { ENV, FIRESTORE } from "@bk2/shared/config";
+import { THUMBNAIL_SIZE } from "@bk2/shared/constants";
 import { AvatarCollection, AvatarModel, ModelType, ResourceType } from '@bk2/shared/models';
-import { addImgixParams, getModelAndKey, readModel } from '@bk2/shared/util';
+import { addImgixParams, getModelAndKey, readModel } from '@bk2/shared/util-core';
 
 @Pipe({
   name: 'avatar',

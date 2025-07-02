@@ -2,7 +2,7 @@ import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
 import { OrgModel, PersonModel, WorkingRelModel } from "@bk2/shared/models";
-import { convertDateFormatToString, DateFormat, isOrg, isPerson } from "@bk2/shared/util";
+import { convertDateFormatToString, DateFormat, isOrg, isPerson } from "@bk2/shared/util-core";
 import { AppStore, PersonSelectModalComponent, OrgSelectModalComponent } from '@bk2/shared/feature';
 import { selectDate } from "@bk2/shared/ui";
 

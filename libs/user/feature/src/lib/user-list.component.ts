@@ -5,9 +5,9 @@ import { TranslatePipe } from '@bk2/shared/i18n';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { UserListStore } from './user-list.store';
-import { UserModel } from '@bk2/shared/models';
-import { error, hasRole } from '@bk2/shared/util';
-import { RoleName } from '@bk2/shared/config';
+import { RoleName, UserModel } from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

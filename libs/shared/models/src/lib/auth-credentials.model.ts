@@ -1,11 +1,9 @@
-import { DeepRequired } from "ngx-vest-forms";
-
-export type AuthCredentials = Partial<{
+export type AuthCredentials = {
   loginEmail: string;
   loginPassword: string;
-}>;
+};
 
-export const authCredentialsShape: DeepRequired<AuthCredentials> = {
+export const authCredentialsShape: AuthCredentials = {
   loginEmail: '',
   loginPassword: ''
 };

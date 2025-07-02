@@ -7,9 +7,10 @@ import { Browser } from '@capacitor/browser';
 import { ColorsIonic } from '@bk2/shared/categories';
 import { ButtonAction, ColorIonic, ImageAction, newButton, newIcon, newImage, SectionModel } from '@bk2/shared/models';
 import { CategoryPlainNamePipe, FileTypeIconPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { downloadToBrowser, navigateByUrl } from '@bk2/shared/util';
+import { downloadToBrowser, navigateByUrl } from '@bk2/shared/util-angular';
 import { showZoomedImage } from '@bk2/shared/ui';
-import { BUTTON_HEIGHT, BUTTON_WIDTH, ENV, ICON_SIZE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
+import { BUTTON_HEIGHT, BUTTON_WIDTH, ICON_SIZE } from '@bk2/shared/constants';
 
 @Component({
   selector: 'bk-button-widget',

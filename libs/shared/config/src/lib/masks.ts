@@ -1,7 +1,7 @@
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 import { maskitoDateOptionsGenerator, maskitoNumberOptionsGenerator, maskitoTimeOptionsGenerator } from '@maskito/kit';
 
-export const MaskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => (el as HTMLIonInputElement).getInputElement();
+export const MaskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => (el as HTMLInputElement);
 
 // 1) Word masks
 export const LowercaseWordMask: MaskitoOptions = {

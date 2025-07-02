@@ -13,5 +13,5 @@
     "jest.config.ts",
     "src/**/*.test.ts"
   ],
-  "include": ["src/**/*.ts", "../models/src/lib/enums/collection-names.enum.ts"]
+  "include": ["src/**/*.ts"]
 }

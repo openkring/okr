@@ -1,5 +1,6 @@
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonModel, PersonSortCriteria, PrivacyUsage, UserModel } from '@bk2/shared/models';
-import { AhvFormat, die, formatAhv } from '@bk2/shared/util';
+import { die } from '@bk2/shared/util-core';
+import { AhvFormat, formatAhv } from '@bk2/shared/util-angular';
 import { PersonalDataFormModel } from './personal-data-form.model';
 import { SettingsFormModel } from './settings-form.model';
 import { PrivacyFormModel } from './privacy-form.model';

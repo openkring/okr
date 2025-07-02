@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from "vest";
-import { categoryValidations, isArrayOfBaseProperties, isArrayOfStrings, stringValidations } from "@bk2/shared/util";
-import { SHORT_NAME_LENGTH } from "@bk2/shared/config";
+import { categoryValidations, isArrayOfBaseProperties, isArrayOfStrings, stringValidations } from "@bk2/shared/util-core";
+import { SHORT_NAME_LENGTH } from "@bk2/shared/constants";
 import { MenuItemFormModel } from "./menu-item-form.model";
 import { MenuAction, RoleEnum } from "@bk2/shared/models";
 

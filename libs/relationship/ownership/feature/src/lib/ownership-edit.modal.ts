@@ -2,11 +2,10 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { ModelType, OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared/models';
+import { ModelType, OwnershipCollection, OwnershipModel, UserModel, RoleName } from '@bk2/shared/models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
+import { hasRole } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';

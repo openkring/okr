@@ -8,7 +8,7 @@ import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { LowercaseWordMask, MaskPredicate } from '@bk2/shared/config';
 import { MetaTag } from '@bk2/shared/models';
-import { getIndexOfMetaTag } from '@bk2/shared/util';
+import { getIndexOfMetaTag } from '@bk2/shared/util-core';
 
 @Component({
   selector: 'bk-meta-tag-list',

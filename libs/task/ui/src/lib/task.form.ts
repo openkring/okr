@@ -4,9 +4,9 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { CategoryComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from '@bk2/shared/ui';
 import { UserModel } from '@bk2/shared/models';
-import { debugFormErrors } from '@bk2/shared/util';
+import { debugFormErrors } from '@bk2/shared/util-core';
 import { Importances, Priorities, TaskStates } from '@bk2/shared/categories';
-import { LONG_NAME_LENGTH } from '@bk2/shared/config';
+import { LONG_NAME_LENGTH } from '@bk2/shared/constants';
 
 import { TaskFormModel, taskFormModelShape, taskFormValidations } from '@bk2/task/util';
 

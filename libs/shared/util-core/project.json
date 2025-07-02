@@ -1,0 +1,30 @@
+{
+  "name": "shared/util-core",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/util-core/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["type:util", "scope:shared", "platform:node", "platform:web", "platform:mobile"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/shared/util-core",
+        "main": "libs/shared/util-core/src/index.ts",
+        "tsConfig": "libs/shared/util-core/tsconfig.lib.json",
+        "assets": ["libs/shared/util-core/*.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/shared/util-core/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

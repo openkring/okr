@@ -5,10 +5,10 @@ import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarPipe, CategoryAbbreviationPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared/ui';
-import { TaskModel } from '@bk2/shared/models';
+import { RoleName, TaskModel } from '@bk2/shared/models';
 import { addAllCategory, Importances, Priorities, TaskStates } from '@bk2/shared/categories';
-import { RoleName } from '@bk2/shared/config';
-import { error, extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared/util';
+import { extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

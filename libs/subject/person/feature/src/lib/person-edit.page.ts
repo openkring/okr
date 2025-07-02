@@ -5,11 +5,10 @@ import { Photo } from '@capacitor/camera';
 
 import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV, RoleName } from '@bk2/shared/config';
-import { ModelType, PersonCollection } from '@bk2/shared/models';
-import { getFullPersonName, hasRole } from '@bk2/shared/util';
+import { ENV } from '@bk2/shared/config';
+import { ModelType, PersonCollection, RoleName } from '@bk2/shared/models';
+import { getFullPersonName, hasRole } from '@bk2/shared/util-core';
 
-import { AvatarToolbarComponent } from 'libs/avatar/feature/src';
 import { AvatarService } from '@bk2/avatar/data-access';
 
 import { AddressesAccordionComponent } from '@bk2/address/feature';
@@ -24,6 +23,7 @@ import { convertPersonToForm } from '@bk2/person/util';
 import { PersonFormComponent } from '@bk2/person/ui';
 import { PersonEditStore } from './person-edit.store';
 import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
+import { AvatarToolbarComponent } from '@bk2/avatar/feature';
 
 @Component({
   selector: 'bk-person-edit-page',

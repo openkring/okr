@@ -5,10 +5,10 @@ import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon,
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { AllCategories, ModelType, OrgModel } from '@bk2/shared/models';
+import { AllCategories, ModelType, OrgModel, RoleName } from '@bk2/shared/models';
 import { addAllCategory, OrgTypes } from '@bk2/shared/categories';
-import { RoleName } from '@bk2/shared/config';
-import { error, hasRole } from '@bk2/shared/util';
+import { hasRole } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

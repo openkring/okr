@@ -5,7 +5,9 @@ import { ToastController } from '@ionic/angular/standalone';
 import { CategoryCollection, CategoryListModel, UserModel } from '@bk2/shared/models';
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { saveComment } from '@bk2/comment/util';
-import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
+import { confirmAction } from '@bk2/shared/util-angular';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 
 @Injectable({
@@ -25,9 +27,16 @@ export class CategoryService {
    * @returns the document id of the newly created category
    */
   public async create(category: CategoryListModel, currentUser?: UserModel): Promise<string> {
-    const _key = await createModel(this.firestore, CategoryCollection, category, this.tenantId, '@category.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, CategoryCollection, _key, '@comment.operation.initial.conf');
-    return _key;    
+        try {
+      const _key = await createModel(this.firestore, CategoryCollection, category, this.tenantId);
+      await confirmAction(bkTranslate('@category.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, CategoryCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@category.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -44,21 +53,30 @@ export class CategoryService {
   }
 
   /**
-   * Update an category in the database with new values.
+   * Update a category in the database with new values.
    * @param category the CategoryListModel with the new values. Its key must be valid (in order to find it in the database)
    */
-  public async update(category: CategoryListModel, confirmMessage = '@category.operation.update'): Promise<void> {
-    category.index = this.getSearchIndex(category);
-    await updateModel(this.firestore, CategoryCollection, category, confirmMessage, this.toastController);
+  public async update(category: CategoryListModel, currentUser?: UserModel, confirmMessage = '@category.operation.update'): Promise<string> {
+    try {
+      category.index = this.getSearchIndex(category);
+      const _key = await updateModel(this.firestore, CategoryCollection, category);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, CategoryCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
    * We are actually deleting a category. 
    * @param category 
    */
-  public async delete(category: CategoryListModel): Promise<void> {
+  public async delete(category: CategoryListModel, currentUser?: UserModel): Promise<void> {
     category.isArchived = true;
-    await this.update(category, `@category.operation.delete`);
+    await this.update(category, currentUser, `@category.operation.delete`);
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

@@ -4,9 +4,8 @@ import { AsyncPipe } from '@angular/common';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/config';
-import { AvatarInfo } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util';
+import { AvatarInfo, RoleName } from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
 
 import { TaskFormComponent } from '@bk2/task/ui';
 import { convertFormToTask, newTaskFormModel } from '@bk2/task/util';

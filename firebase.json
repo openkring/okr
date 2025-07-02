@@ -27,6 +27,10 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "functions": {
+    "source": "dist/apps/functions",
+    "runtime": "nodejs20" 
+  },
   "emulators": {
     "apphosting": {
       "port": 5002,
@@ -47,7 +51,7 @@
     },
     "ui": {
       "enabled": true,
-      "port": 5000
+      "port": 5001
     },
     "singleProjectMode": true
   }

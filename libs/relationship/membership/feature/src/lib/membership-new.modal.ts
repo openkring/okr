@@ -4,9 +4,8 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
-import { ModelType, OrgModel, PersonModel, UserModel} from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
+import { ModelType, OrgModel, PersonModel, UserModel, RoleName} from '@bk2/shared/models';
 import { convertMemberAndOrgToNewForm } from '@bk2/membership/util';
 import { MembershipNewStore } from './membership-new.store';
 import { MembershipNewFormComponent } from './membership-new.form';

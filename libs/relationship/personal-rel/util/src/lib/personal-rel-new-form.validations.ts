@@ -1,5 +1,5 @@
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
-import { categoryValidations, dateValidations, isAfterOrEqualDate, stringValidations } from '@bk2/shared/util';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
+import { categoryValidations, dateValidations, isAfterOrEqualDate, stringValidations } from '@bk2/shared/util-core';
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { PersonalRelNewFormModel } from './personal-rel-new-form.model';
 import { GenderType, PersonalRelType } from '@bk2/shared/models';

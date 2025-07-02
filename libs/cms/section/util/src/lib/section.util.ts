@@ -1,8 +1,7 @@
 import { SectionTypes } from "@bk2/shared/categories";
-import { Avatar, SectionModel, TableConfig, Table, AlbumConfig, ColorIonic, SectionType, NameDisplay, AlbumStyle, GalleryEffect, ViewPosition, ContentConfig, newDefaultImageConfig, newImage, newButton, newIcon } from "@bk2/shared/models";
-import { RoleName } from "@bk2/shared/config";
+import { Avatar, SectionModel, TableConfig, Table, AlbumConfig, ColorIonic, SectionType, NameDisplay, AlbumStyle, GalleryEffect, ViewPosition, ContentConfig, newDefaultImageConfig, newImage, newButton, newIcon, ChatConfig, RoleName } from "@bk2/shared/models";
 import { bkTranslate } from "@bk2/shared/i18n";
-import { isType } from "@bk2/shared/util";
+import { isType } from "@bk2/shared/util-core";
 
 import { convertRoleEnumToName, convertRoleNameToEnum } from "@bk2/cms/menu/util";
 
@@ -104,6 +103,16 @@ export function newAlbumConfig(tenantId?: string, year?: string): AlbumConfig {
     showPdfs: true,
     galleryEffect: GalleryEffect.Slide
   }
+}
+
+export function newChatConfig(imgixBaseUrl: string): ChatConfig {
+  return {
+    channelId: 'chat',
+    channelName: 'Gruppenchat',
+    channelImageUrl: imgixBaseUrl + '/logo/icons/chatbox.svg',
+    channelDescription: '',
+    channelType: 'messaging',
+  };
 }
 
 export function newTableConfig(): TableConfig {

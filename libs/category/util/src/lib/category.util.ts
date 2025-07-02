@@ -1,5 +1,5 @@
 import { CategoryItemModel, CategoryListModel } from "@bk2/shared/models";
-import { isType } from "@bk2/shared/util";
+import { isType } from "@bk2/shared/util-core";
 import { CategoryItemFormModel, CategoryListFormModel } from "./category-form.model";
 
 export function convertCategoryListToForm(cat: CategoryListModel): CategoryListFormModel {
@@ -19,7 +19,7 @@ export function convertCategoryListToForm(cat: CategoryListModel): CategoryListF
 }
 
 export function convertFormToCategoryList(cat: CategoryListModel | undefined, vm: CategoryListFormModel, tenantId: string): CategoryListModel {
-  if (!cat) cat = new CategoryListModel(tenantId);
+  cat ??= new CategoryListModel(tenantId);
   cat.name = vm.name ?? '';
   cat.tags = vm.tags ?? '';
 
@@ -48,7 +48,7 @@ export function convertCategoryItemToForm(cat: CategoryItemModel): CategoryItemF
 }
 
 export function convertFormToCategoryItem(cat: CategoryItemModel | undefined, vm: CategoryItemFormModel): CategoryItemModel {
-  if (!cat) cat = new CategoryItemModel('', '', '');
+  cat ??= new CategoryItemModel('', '', '');
   cat.name = vm.name ?? '';
   cat.abbreviation = vm.abbreviation ?? '';
   cat.icon = vm.icon ?? '';

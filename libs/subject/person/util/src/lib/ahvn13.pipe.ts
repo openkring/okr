@@ -1,5 +1,5 @@
 import {Pipe, PipeTransform } from '@angular/core';
-import { ahvn2string } from '@bk2/shared/util';
+import { ahvn2string } from '@bk2/shared/util-angular';
 
 /**
  * Format a swiss social security number (AHVN13)

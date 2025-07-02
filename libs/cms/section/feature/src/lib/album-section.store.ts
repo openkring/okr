@@ -4,7 +4,7 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { STORAGE } from '@bk2/shared/config';
 import { AlbumConfig, AlbumStyle, Image, ImageType } from '@bk2/shared/models';
-import { debugMessage, die } from '@bk2/shared/util';
+import { debugMessage, die } from '@bk2/shared/util-core';
 import { GalleryEffects, getCategoryName } from '@bk2/shared/categories';
 import { AppStore } from '@bk2/shared/feature';
 

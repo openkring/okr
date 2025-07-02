@@ -1,5 +1,5 @@
 import { AlbumConfig, Image, ImageAction, ImageMetaData, ImageType } from "@bk2/shared/models";
-import { debugData, die, getImageType, getSizedImgixParamsByExtension } from "@bk2/shared/util";
+import { debugData, die, getImageType, getSizedImgixParamsByExtension } from "@bk2/shared/util-core";
 import { FirebaseStorage, listAll, ref, StorageReference } from "firebase/storage";
 import { getImgixJsonUrl } from '@bk2/shared/pipes';
 import { HttpClient } from "@angular/common/http";

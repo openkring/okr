@@ -8,7 +8,7 @@ import { Observable, of } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared/config';
 import { AddressCollection, AddressModel, AppConfig, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared/models';
-import { getSystemQuery, searchData } from '@bk2/shared/util';
+import { getSystemQuery, searchData } from '@bk2/shared/util-core';
 
 import { AppConfigService } from './app-config.service';
 

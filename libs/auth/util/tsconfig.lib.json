@@ -13,5 +13,5 @@
     "jest.config.ts",
     "src/**/*.test.ts"
   ],
-  "include": ["src/**/*.ts", "../feature/src/lib/isAdmin.guard.ts", "../feature/src/lib/isAuthenticated.guard.ts", "../feature/src/lib/isPrivileged.guard.ts"]
+  "include": ["src/**/*.ts"]
 }

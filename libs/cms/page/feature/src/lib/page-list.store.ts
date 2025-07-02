@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util';
+import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util-core';
 import { AllCategories, ModelType, PageModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 import { categoryMatches } from '@bk2/shared/categories';
@@ -83,7 +83,7 @@ export const PageListStore = signalStore(
       },
 
       async delete(page: PageModel): Promise<void> {
-        await store.pageService.delete(page);
+        await store.pageService.delete(page, store.currentUser());
         store.pageResource.reload();
       },
 
@@ -100,7 +100,7 @@ export const PageListStore = signalStore(
         const { data, role } = await _modal.onWillDismiss();
         if (role === 'confirm') {
           if (isPage(data, store.appStore.tenantId())) {
-            await store.pageService.update(data);
+            await store.pageService.update(data, store.currentUser());
             store.pageResource.reload();
           }
         }

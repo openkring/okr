@@ -1,7 +1,7 @@
 import { Injectable, inject } from "@angular/core";
 import { Observable, of } from "rxjs";
 
-import { createModel, DateFormat, die, getFullPersonName, getSystemQuery, getTodayStr, searchData } from "@bk2/shared/util";
+import { createModel, DateFormat, die, getFullPersonName, getSystemQuery, getTodayStr, searchData } from "@bk2/shared/util-core";
 import { CommentCollection, CommentModel, UserModel } from "@bk2/shared/models";
 import { ENV, FIRESTORE } from "@bk2/shared/config";
 import { createComment } from "@bk2/comment/util";
@@ -31,10 +31,10 @@ export class CommentService {
    */
   public async create(collectionName: string, parentKey: string, comment: string, currentUser?: UserModel): Promise<string> {
     const _user = currentUser ?? die('CommentService.createComment: inconsistent app state: there is no current user.');
-    const _commentModel = createComment(_user.personKey, getFullPersonName(_user.firstName, _user.lastName), comment, collectionName, parentKey, this.tenantId);
-    _commentModel.creationDate = getTodayStr(DateFormat.StoreDateTime);
-    _commentModel.index = `${collectionName}/${parentKey} ${_commentModel.creationDate}`;
-    return await createModel(this.firestore, `${collectionName}/${parentKey}/${CommentCollection}`, _commentModel, this.tenantId);
+    const _comment = createComment(_user.personKey, getFullPersonName(_user.firstName, _user.lastName), comment, collectionName, parentKey, this.tenantId);
+    _comment.creationDate = getTodayStr(DateFormat.StoreDateTime);
+    _comment.index = `${collectionName}/${parentKey} ${_comment.creationDate}`;
+    return await createModel(this.firestore, `${collectionName}/${parentKey}/${CommentCollection}`, _comment, this.tenantId);
   }
   
   /**

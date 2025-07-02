@@ -3,9 +3,10 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonMen
 import { Photo } from '@capacitor/camera';
 
 import { ChangeConfirmationComponent, UploadService } from '@bk2/shared/ui';
-import { ENV, RoleName } from '@bk2/shared/config';
-import { GroupCollection, ModelType } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util';
+import { ENV } from '@bk2/shared/config';
+import { GroupCollection, ModelType, RoleName } from '@bk2/shared/models';
+import { debugData, hasRole } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
 
 import { AvatarService } from '@bk2/avatar/data-access';
 import { getDocumentStoragePath } from '@bk2/document/util';
@@ -35,18 +36,20 @@ import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ name() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button [id]="id()">
-            <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
-          </ion-button>
-          <ion-popover [trigger]="id()" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+        @if(hasMenu(selectedSegment())) {
+          <ion-buttons slot="end">
+            <ion-button [id]="id()">
+              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+            </ion-button>
+            <ion-popover [trigger]="id()" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
                   <bk-group-menu segmentName="{{selectedSegment()}}" [currentUser]="currentUser()" />
                 </ion-content>
               </ng-template>
             </ion-popover>
-        </ion-buttons>
+          </ion-buttons>
+        }
       </ion-toolbar>
       <ion-toolbar>
       <ion-segment [scrollable]="true" color="secondary" (ionChange)="onSegmentChanged($event)" value="content">
@@ -196,16 +199,26 @@ export class GroupViewPageComponent {
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const _selectedMethod = $event.detail.data;
-    console.log(`GroupViewPageComponent.onPopoverDismiss: ${_selectedMethod}`);
-/*     switch(_selectedMethod) {
-      case 'add':  await this.calEventListStore.add(); break;
-      case 'exportRaw': await this.calEventListStore.export("raw"); break;
-      default: error(undefined, `YearlyEventListComponent.call: unknown method ${_selectedMethod}`);
-    } */
+    debugData(`GroupViewPageComponent.onPopoverDismiss: ${_selectedMethod}`, $event, this.groupEditStore.currentUser());
+     switch(_selectedMethod) {
+      case 'addSection': this.groupEditStore.addSection(); break;
+      case 'selectSection': this.groupEditStore.selectSection(); break;
+      case 'sortSections': this.groupEditStore.sortSections(); break;
+      case 'editSection': this.groupEditStore.editSection(); break;
+      case 'addEvent': this.groupEditStore.addEvent(); break;
+      case 'addTask': this.groupEditStore.addTask(); break;
+      case 'addMember': this.groupEditStore.addMember(); break;
+      default: error(undefined, `GroupViewPage: context menu ${this.selectedSegment()} has unknown action: ${_selectedMethod}`); break;
+    } 
   }
 
   onSegmentChanged($event: CustomEvent): void {
     const _selectedSegment = $event.detail.value;
     this.groupEditStore.setSelectedSegment(_selectedSegment);
+  }
+
+  protected hasMenu(segmentName?: string): boolean {
+    if (!segmentName) return false;
+    return (segmentName === 'content' || segmentName === 'calendar' || segmentName === 'tasks' || segmentName === 'members');
   }
 }

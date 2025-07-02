@@ -3,7 +3,8 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, confirm, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared/util';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared/util-core';
+import { confirm } from '@bk2/shared/util-angular';
 import { AllCategories, GenderType, ModelType, OrgType, OwnershipModel, OwnershipType, OwnerTypeSelect, ResourceType, RowingBoatType } from '@bk2/shared/models';
 import { categoryMatches, ownerTypeMatches } from '@bk2/shared/categories';
 import { AppStore } from '@bk2/shared/feature';

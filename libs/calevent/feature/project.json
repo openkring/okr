@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:feature", "scope:calevent", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/auth/feature",
+        "main": "libs/auth/feature/src/index.ts",
+        "tsConfig": "libs/auth/feature/tsconfig.lib.json",
+        "assets": ["libs/auth/feature/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

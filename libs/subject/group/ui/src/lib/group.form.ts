@@ -2,10 +2,11 @@ import { Component, computed, input, model, output, signal} from '@angular/core'
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { LowercaseWordMask, RoleName, WORD_LENGTH } from '@bk2/shared/config';
-import { UserModel } from '@bk2/shared/models';
+import { WORD_LENGTH } from '@bk2/shared/constants';
+import { LowercaseWordMask } from '@bk2/shared/config';
+import { UserModel, RoleName } from '@bk2/shared/models';
 import { CheckboxComponent, ChipsComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, hasRole } from '@bk2/shared/util';
+import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 import { GroupFormModel, groupFormModelShape, groupFormValidations } from '@bk2/group/util';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AsyncPipe } from '@angular/common';

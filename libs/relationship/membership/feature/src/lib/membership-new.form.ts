@@ -6,7 +6,7 @@ import { AsyncPipe } from '@angular/common';
 import { CategorySelectComponent, DateInputComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { CategoryListModel, ModelType, UserModel } from '@bk2/shared/models';
-import { debugFormErrors, getFullPersonName, getTodayStr, isOrg, isPerson } from '@bk2/shared/util';
+import { debugFormErrors, getFullPersonName, getTodayStr, isOrg, isPerson } from '@bk2/shared/util-core';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared/feature';
 import { AvatarPipe } from '@bk2/shared/pipes';
 

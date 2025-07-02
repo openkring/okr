@@ -3,7 +3,7 @@ import { ModalController } from "@ionic/angular/standalone";
 
 import { AppStore } from "@bk2/shared/feature";
 import { CategoryItemModel, CategoryListModel, MembershipModel, ModelType, OrgModel, PersonModel } from "@bk2/shared/models";
-import { convertDateFormatToString, DateFormat, isMembership } from "@bk2/shared/util";
+import { convertDateFormatToString, DateFormat, isMembership } from "@bk2/shared/util-core";
 import { selectDate } from "@bk2/shared/ui";
 
 import { MembershipService } from "@bk2/membership/data-access";
@@ -66,7 +66,9 @@ export class MembershipModalsService {
     const { data, role } = await _modal.onDidDismiss();
     if (role === 'confirm') {
       if (isMembership(data, this.tenantId)) {
-        await (!data.bkey ? this.membershipService.create(data, this.appStore.currentUser()) : this.membershipService.update(data));
+        await (!data.bkey ? 
+          this.membershipService.create(data, this.appStore.currentUser()) : 
+          this.membershipService.update(data, this.appStore.currentUser()));
       }
     }
   } 

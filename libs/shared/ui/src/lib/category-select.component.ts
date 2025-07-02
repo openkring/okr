@@ -5,7 +5,7 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared/models';
-import { getItemLabel } from '@bk2/shared/util';
+import { getItemLabel } from '@bk2/shared/util-core';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 
 // unique id to avoid duplicated IDs in reusable component

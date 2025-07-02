@@ -1,8 +1,8 @@
 import { CalEventModel, CalEventType, Periodicity } from "@bk2/shared/models";
-import { DateFormat, getIsoDateTime, getTodayStr, isType } from "@bk2/shared/util";
+import { DateFormat, getIsoDateTime, getTodayStr, isType } from "@bk2/shared/util-core";
 import { CalEventFormModel } from "./calevent-form.model";
 import { EventInput } from "@fullcalendar/core";
-import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
+import { END_FUTURE_DATE_STR } from "@bk2/shared/constants";
 
 export function convertCalEventToForm(calEvent: CalEventModel): CalEventFormModel {
   return {

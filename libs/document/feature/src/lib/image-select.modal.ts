@@ -3,7 +3,7 @@ import { Component, inject, input, signal } from '@angular/core';
 import { IonButton, IonContent, IonIcon, ModalController, Platform } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { getImgixUrlWithAutoParams } from '@bk2/shared/util';
+import { getImgixUrlWithAutoParams } from '@bk2/shared/util-core';
 import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { getDocumentStoragePath, pickPhoto } from '@bk2/document/util';

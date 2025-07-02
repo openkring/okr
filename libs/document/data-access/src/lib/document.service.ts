@@ -4,13 +4,15 @@ import { ref, getDownloadURL, getMetadata, listAll, FullMetadata } from "firebas
 import { ToastController } from '@ionic/angular';
 
 import { DocumentTypes, getCategoryAbbreviation } from '@bk2/shared/categories';
-import { DocumentCollection, DocumentModel, DocumentType, MenuItemCollection, ModelType, UserModel } from '@bk2/shared/models';
-import { DateFormat, addIndexElement, convertDateFormatToString, createModel, die, dirName, error, fileExtension, fileName, fileSizeUnit, generateRandomString, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util';
+import { DocumentCollection, DocumentModel, DocumentType, ModelType, UserModel } from '@bk2/shared/models';
+import { DateFormat, addIndexElement, convertDateFormatToString, createModel, die, dirName, fileExtension, fileName, fileSizeUnit, generateRandomString, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util-core';
+import { error, confirmAction } from '@bk2/shared/util-angular';
 import { ENV, FIRESTORE, STORAGE } from '@bk2/shared/config';
 
 import { saveComment } from '@bk2/comment/util';
 
 import { getDocumentStoragePath } from '@bk2/document/util';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
   providedIn: 'root'
@@ -30,10 +32,17 @@ export class DocumentService {
    * @returns the document id of the new DocumentModel in the database
    */
   public async create(document: DocumentModel, currentUser?: UserModel): Promise<string> {
-    document.index = this.getSearchIndex(document);
-    const _key = await createModel(this.firestore, DocumentCollection, document, this.tenantId, `@document.operation.create`, this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, MenuItemCollection, _key, '@comment.operation.initial.conf');
-    return _key;
+    try {
+      document.index = this.getSearchIndex(document);
+      const _key = await createModel(this.firestore, DocumentCollection, document, this.tenantId);
+      await confirmAction(bkTranslate('@document.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, DocumentCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@document.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -53,18 +62,27 @@ export class DocumentService {
    * Update an existing document with new values.
    * @param document the DocumentModel with the new values
    */
-  public async update(document: DocumentModel, confirmationMessage = '@document.operation.update'): Promise<void> {
-    document.index = this.getSearchIndex(document);
-    await updateModel(this.firestore, DocumentCollection, document, confirmationMessage, this.toastController);
+  public async update(document: DocumentModel, currentUser?: UserModel, confirmMessage = '@document.operation.update'): Promise<string> {
+    try {
+      document.index = this.getSearchIndex(document);
+      const _key = await updateModel(this.firestore, DocumentCollection, document);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, DocumentCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
    * Delete an existing document in the database by archiving it.
    * @param document the DocumentModel to be deleted.
    */
-  public async delete(document: DocumentModel): Promise<void> {
+  public async delete(document: DocumentModel, currentUser?: UserModel): Promise<void> {
     document.isArchived = true;
-    await this.update(document, '@document.operation.delete');
+    await this.update(document, currentUser, '@document.operation.delete');
   }
 
  /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

@@ -1,6 +1,6 @@
 import { only, staticSuite} from 'vest';
-import { booleanValidations, categoryValidations, stringValidations } from '@bk2/shared/util';
-import { SHORT_NAME_LENGTH } from '@bk2/shared/config';
+import { booleanValidations, categoryValidations, stringValidations } from '@bk2/shared/util-core';
+import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 import { AvatarUsage, DeliveryType, Language, NameDisplay, PersonSortCriteria } from '@bk2/shared/models';
 import { SettingsFormModel } from './settings-form.model';
 

@@ -6,9 +6,11 @@ import { map, Observable, of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { AddressCollection, AddressModel, GenderType, PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
+import { confirmAction } from '@bk2/shared/util-angular';
 
 import { saveComment } from '@bk2/comment/util';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
   providedIn: 'root'
@@ -22,10 +24,17 @@ export class PersonService {
 
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(person: PersonModel, currentUser?: UserModel): Promise<string> {
-    person.index = this.getSearchIndex(person);
-    const _key = await createModel(this.firestore, PersonCollection, person, this.tenantId, '@subject.person.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, PersonCollection, _key, '@comment.operation.initial.conf');
-    return _key;    
+    try {
+      person.index = this.getSearchIndex(person);
+      const _key = await createModel(this.firestore, PersonCollection, person, this.tenantId);
+      await confirmAction(bkTranslate('@subject.person.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, PersonCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@subject.person.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }   
   }
   
   /**
@@ -51,14 +60,23 @@ export class PersonService {
       }));
   }
 
-  public async update(person: PersonModel, confirmMessage = '@subject.person.operation.update'): Promise<void> {
-    person.index = this.getSearchIndex(person);
-    await updateModel(this.firestore, PersonCollection, person, confirmMessage, this.toastController);
+  public async update(person: PersonModel, currentUser?: UserModel, confirmMessage = '@subject.person.operation.update'): Promise<string> {
+    try {
+      person.index = this.getSearchIndex(person);
+      const _key = await updateModel(this.firestore, PersonCollection, person);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, PersonCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
-  public async delete(person: PersonModel): Promise<void> {
+  public async delete(person: PersonModel, currentUser?: UserModel): Promise<void> {
     person.isArchived = true;
-    await this.update(person, `@subject.person.operation.delete`);
+    await this.update(person, currentUser, `@subject.person.operation.delete`);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/

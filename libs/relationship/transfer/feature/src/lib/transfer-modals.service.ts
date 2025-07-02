@@ -44,7 +44,7 @@ export class TransferModalsService {
     const { data, role } = await _modal.onDidDismiss();
     if (role === 'confirm') {
       if (isTransfer(data, this.tenantId)) {
-        await this.transferService.create(data);
+        await this.transferService.create(data, this.appStore.currentUser());
       }
     }
   }
@@ -66,7 +66,9 @@ export class TransferModalsService {
     const { data, role } = await _modal.onDidDismiss();
     if (role === 'confirm') {
       if (isTransfer(data, this.tenantId)) {
-        await (!data.bkey ? this.transferService.create(data) : this.transferService.update(data));
+        await (!data.bkey ? 
+          this.transferService.create(data, this.appStore.currentUser()) : 
+          this.transferService.update(data, this.appStore.currentUser()));
       }
     }
   }

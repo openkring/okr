@@ -1,5 +1,5 @@
 import { only, staticSuite} from 'vest';
-import { booleanValidations, categoryValidations } from '@bk2/shared/util';
+import { booleanValidations, categoryValidations } from '@bk2/shared/util-core';
 import { AvatarUsage, Language, NameDisplay, PersonSortCriteria } from '@bk2/shared/models';
 import { UserDisplayFormModel } from './user-display-form.model';
 

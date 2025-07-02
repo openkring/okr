@@ -6,6 +6,15 @@
   "projectType": "library",
   "tags": ["type:util", "scope:shared", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "outputPath": "dist/libs/shared/pipes",
+        "main": "libs/shared/pipes/src/index.ts",
+        "tsConfig": "libs/shared/pipes/tsconfig.lib.json",
+        "assets": []
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

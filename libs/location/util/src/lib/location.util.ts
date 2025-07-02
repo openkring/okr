@@ -1,6 +1,6 @@
 import { LocationModel, LocationType } from "@bk2/shared/models";
 import { LocationFormModel } from "./location-form.model";
-import { isType } from '@bk2/shared/util';
+import { isType } from '@bk2/shared/util-core';
 
 export function getLocationTitle(locationKey: string | undefined): string {
   const _operation = !locationKey ? 'create' : 'update';

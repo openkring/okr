@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { fileSizeUnit } from '@bk2/shared/util';
+import { fileSizeUnit } from '@bk2/shared/util-core';
 
 /*
  * Convert bytes into largest possible unit.

@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ioni
 
 import { SectionModel } from '@bk2/shared/models';
 import { ButtonCopyComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { lookupAddress } from '@bk2/shared/util';
+import { lookupAddress } from '@bk2/shared/util-angular';
 import { TrackerSectionStore } from './tracker-section.store';
 
 /**

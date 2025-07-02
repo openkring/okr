@@ -1,6 +1,5 @@
 import { AddressModel, AddressUsage, OrgModel, OrgType } from "@bk2/shared/models";
 import { OrgFormModel } from "./org-form.model";
-import { isType } from "@bk2/shared/util";
 import { OrgNewFormModel } from "./org-new-form.model";
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from "@bk2/address/util";
 

@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { replaceSubstring } from '@bk2/shared/util';
+import { replaceSubstring } from '@bk2/shared/util-core';
 
 @Pipe({
   name: 'replace',

@@ -6,7 +6,8 @@ import { Observable, of } from 'rxjs';
 
 import { PersonalRelModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
-import { confirm, convertDateFormatToString, DateFormat, debugListLoaded, isPersonalRel, isValidAt } from '@bk2/shared/util';
+import { convertDateFormatToString, DateFormat, debugListLoaded, isPersonalRel, isValidAt } from '@bk2/shared/util-core';
+import { confirm } from '@bk2/shared/util-angular';
 import { selectDate } from '@bk2/shared/ui';
 
 import { AvatarService } from '@bk2/avatar/data-access';
@@ -124,7 +125,9 @@ export const PersonalRelAccordionStore = signalStore(
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
           if (isPersonalRel(data, store.appStore.tenantId())) {
-            await (!data.bkey ? store.personalRelService.create(data) : store.personalRelService.update(data));
+            await (!data.bkey ? 
+              store.personalRelService.create(data, store.appStore.currentUser()) : 
+              store.personalRelService.update(data, store.appStore.currentUser()));
           }
         }
         store.personalRelsResource.reload();
@@ -143,7 +146,7 @@ export const PersonalRelAccordionStore = signalStore(
         if (personalRel) {
           const _result = await confirm(store.alertController, '@personalRel.operation.delete.confirm', true);
           if (_result === true) {
-            await store.personalRelService.delete(personalRel);
+            await store.personalRelService.delete(personalRel, store.appStore.currentUser());
             store.personalRelsResource.reload();
           } 
         }

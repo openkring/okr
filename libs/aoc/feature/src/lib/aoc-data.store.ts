@@ -7,7 +7,7 @@ import { AppStore } from '@bk2/shared/feature';
 import { BkModel, LogInfo, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared/models';
 
 import { Observable, of } from 'rxjs';
-import { getSystemQuery, searchData } from '@bk2/shared/util';
+import { getSystemQuery, searchData } from '@bk2/shared/util-core';
 
 export type AocDataState = {
   modelType: ModelType | undefined;

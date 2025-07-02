@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DateFormat, convertDateFormatToString, warn } from '@bk2/shared/util';
+import { DateFormat, convertDateFormatToString, warn } from '@bk2/shared/util-core';
 
 @Pipe({
   name: 'yearFormat',

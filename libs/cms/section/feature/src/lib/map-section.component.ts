@@ -4,7 +4,7 @@ import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { GoogleMap, MapType } from '@capacitor/google-maps';
 
 import { SectionModel } from '@bk2/shared/models';
-import { die } from '@bk2/shared/util';
+import { die } from '@bk2/shared/util-core';
 import { OptionalCardHeaderComponent } from '@bk2/shared/ui';
 import { AppStore } from '@bk2/shared/feature';
 

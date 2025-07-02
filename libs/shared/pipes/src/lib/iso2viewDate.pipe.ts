@@ -1,5 +1,5 @@
 import {Pipe, PipeTransform } from '@angular/core';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared/util';
+import { convertDateFormatToString, DateFormat } from '@bk2/shared/util-core';
 
 /**
  * Convert a date in IsoFormat to View Date Format

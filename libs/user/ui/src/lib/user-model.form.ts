@@ -6,12 +6,12 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 import { UserModel } from "@bk2/shared/models";
 import { EmailInputComponent, TextInputComponent } from "@bk2/shared/ui";
 import { TranslatePipe } from "@bk2/shared/i18n";
-import { debugFormErrors } from "@bk2/shared/util";
+import { debugFormErrors } from "@bk2/shared/util-core";
 
 import { UserModelFormModel, userModelFormModelShape, userModelFormValidations } from "@bk2/user/util";
 
 @Component({
-  selector: 'bk-user-model',
+  selector: 'bk-user-model-form',
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
@@ -92,7 +92,7 @@ export class UserModelFormComponent {
 
   protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
     this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('UserModel', this.validationResult().errors, this.currentUser());
+    debugFormErrors('UserModelForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }

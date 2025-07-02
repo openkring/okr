@@ -1,8 +1,8 @@
 import { only, staticSuite} from 'vest';
 
-import { DESCRIPTION_LENGTH } from '@bk2/shared/config';
+import { DESCRIPTION_LENGTH } from '@bk2/shared/constants';
 import { Importance, Priority, TaskModel, TaskState } from '@bk2/shared/models';
-import { avatarInfoValidations, baseValidations, categoryValidations, dateValidations, stringValidations } from '@bk2/shared/util';
+import { avatarInfoValidations, baseValidations, categoryValidations, dateValidations, stringValidations } from '@bk2/shared/util-core';
 
 export const taskValidations = staticSuite((model: TaskModel, field?: string) => {
   if (field) only(field);

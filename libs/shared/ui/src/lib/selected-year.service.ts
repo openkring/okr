@@ -1,7 +1,7 @@
 import {Injectable}      from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-import { DateFormat, getTodayStr } from '@bk2/shared/util';
+import { DateFormat, getTodayStr } from '@bk2/shared/util-core';
 
 @Injectable({
   providedIn: 'root'

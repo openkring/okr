@@ -1,6 +1,6 @@
 import { ContentState, PageModel, PageType } from '@bk2/shared/models';
 import { PageFormModel } from './page-form.model';
-import { isType } from '@bk2/shared/util';
+import { isType } from '@bk2/shared/util-core';
 
 export function convertPageToForm(page: PageModel): PageFormModel {
   return {

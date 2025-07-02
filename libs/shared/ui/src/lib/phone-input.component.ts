@@ -5,7 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { MaskitoDirective } from '@maskito/angular';
 
-import { ChPhoneMask, MaskPredicate, PHONE_LENGTH } from '@bk2/shared/config';
+import { ChPhoneMask, MaskPredicate } from '@bk2/shared/config';
+import { PHONE_LENGTH } from '@bk2/shared/constants';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ButtonCopyComponent } from './button-copy.component';
 

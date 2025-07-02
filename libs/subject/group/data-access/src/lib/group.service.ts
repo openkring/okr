@@ -4,9 +4,11 @@ import { map, Observable, of } from 'rxjs';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { GroupCollection, GroupModel, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util';
+import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
+import { confirmAction } from '@bk2/shared/util-angular';
 
 import { saveComment } from '@bk2/comment/util';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
   providedIn: 'root'
@@ -20,10 +22,17 @@ export class GroupService  {
 
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(group: GroupModel, currentUser?: UserModel): Promise<string> {
-    group.index = this.getSearchIndex(group);
-    const _key = await createModel(this.firestore, GroupCollection, group, this.tenantId, '@subject.group.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, GroupCollection, _key, '@comment.operation.initial.conf');
-    return _key;
+      try {
+      group.index = this.getSearchIndex(group);
+      const _key = await createModel(this.firestore, GroupCollection, group, this.tenantId);
+      await confirmAction(bkTranslate('@subject.group.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, GroupCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@subject.group.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
   
   /**
@@ -39,14 +48,23 @@ export class GroupService  {
       }));
   }
 
-  public async update(group: GroupModel, confirmMessage = '@subject.group.operation.update'): Promise<void> {
-    group.index = this.getSearchIndex(group);
-    await updateModel(this.firestore, GroupCollection, group, confirmMessage, this.toastController);    
+  public async update(group: GroupModel, currentUser?: UserModel, confirmMessage = '@subject.group.operation.update'): Promise<string> {
+    try {
+      group.index = this.getSearchIndex(group);
+      const _key = await updateModel(this.firestore, GroupCollection, group);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, GroupCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
-  public async delete(group: GroupModel): Promise<void> {
+  public async delete(group: GroupModel, currentUser?: UserModel): Promise<void> {
     group.isArchived = true;
-    await this.update(group, `@subject.group.operation.delete`);
+    await this.update(group, currentUser, `@subject.group.operation.delete`);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/

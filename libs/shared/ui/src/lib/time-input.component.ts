@@ -5,10 +5,11 @@ import { AsyncPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaskitoDirective } from '@maskito/angular';
 
-import { ChTimeMask, InputMode, MaskPredicate, TIME_LENGTH } from '@bk2/shared/config';
+import { ChTimeMask, MaskPredicate } from '@bk2/shared/config';
+import { InputMode, TIME_LENGTH } from '@bk2/shared/constants';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { getCurrentTime } from '@bk2/shared/util';
+import { getCurrentTime } from '@bk2/shared/util-core';
 import { TimeSelectModalComponent } from './time-select.modal';
 
 @Component({

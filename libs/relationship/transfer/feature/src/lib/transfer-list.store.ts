@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, getSystemQuery, getYear, nameMatches, searchData } from '@bk2/shared/util';
+import { chipMatches, getSystemQuery, getYear, nameMatches, searchData } from '@bk2/shared/util-core';
 import { categoryMatches, yearMatches } from '@bk2/shared/categories';
 import { AllCategories, ModelType, TransferCollection, TransferModel, TransferType } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
@@ -111,7 +111,7 @@ export const TransferListStore = signalStore(
 
       async delete(transfer?: TransferModel): Promise<void> {
         if (transfer) {
-          await store.transferService.delete(transfer);
+          await store.transferService.delete(transfer, store.currentUser());
           store.transfersResource.reload();
         }
       },

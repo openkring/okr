@@ -39,6 +39,14 @@ export interface AlbumConfig {
   galleryEffect?: GalleryEffect // the effect used in the gallery, default is GalleryEffect.Slide
 }
 
+export interface ChatConfig {
+  channelId?: string, // the id of the chat channel, default is 'chat'
+  channelName?: string, // the name of the chat channel, default is 'Chat'
+  channelImageUrl?: string, // the image of the chat channel, default is ''
+  channelDescription?: string, // the description of the chat channel, default is ''
+  channelType?: string, // the type of the chat channel, default is 'messaging'
+}
+
 // the configuration of an avatar
 export interface Avatar {
   cols?: number, // number of columns, 0 - 4, default is 2
@@ -198,6 +206,7 @@ export interface VideoConfig {
 export interface SectionProperties {
   accordion?: Accordion,
   album?: AlbumConfig,
+  chat?: ChatConfig,
   calendarOptions?: CalendarOptions,
   content?: ContentConfig,                  // used for Article, Button, PeopleList (using editor)
   avatar?: Avatar,

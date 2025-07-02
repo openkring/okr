@@ -4,12 +4,14 @@ import { ToastController } from "@ionic/angular/standalone";
 
 import { ENV, FIRESTORE } from "@bk2/shared/config";
 import { AddressChannel, AddressModel, DefaultLanguage, UserModel } from "@bk2/shared/models";
-import { createModel, die, getSystemQuery, readModel, searchData, updateModel } from "@bk2/shared/util";
+import { createModel, die, getSystemQuery, readModel, searchData, updateModel } from "@bk2/shared/util-core";
+import { confirmAction } from "@bk2/shared/util-angular";
 import { Languages } from "@bk2/shared/categories";
 
 import { saveComment } from "@bk2/comment/util";
 
 import { copyAddress, getAddressCollection } from "@bk2/address/util";
+import { bkTranslate } from "@bk2/shared/i18n";
 
 @Injectable({
     providedIn: 'root'
@@ -30,11 +32,18 @@ export class AddressService {
    * @returns an Observable of the new or existing address.
    */
   public async create(address: AddressModel, currentUser?: UserModel): Promise<string> {
-    address.index = this.getSearchIndex(address);
-    const _collection = getAddressCollection(address.parentKey);
-    const _key = await createModel(this.firestore, _collection, address, this.tenantId, '@subject.address.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, _collection, _key, '@comment.operation.initial.conf');
-    return _key;    
+      try {
+      address.index = this.getSearchIndex(address);
+      const _collection = getAddressCollection(address.parentKey);
+      const _key = await createModel(this.firestore, _collection, address, this.tenantId);
+      await confirmAction(bkTranslate('@subject.address.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, _collection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@subject.address.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }  
 }
 
  /**
@@ -52,10 +61,19 @@ export class AddressService {
    * @param address the address with new values
    * @returns the key of the updated address
    */
-  public async update(address: AddressModel, confirmMessage = '@subject.address.operation.update'): Promise<string> {
-    address.index = this.getSearchIndex(address);
+  public async update(address: AddressModel, currentUser?: UserModel, confirmMessage = '@subject.address.operation.update'): Promise<string> {
     const _collection = getAddressCollection(address.parentKey);
-    return await updateModel(this.firestore, _collection, address, confirmMessage, this.toastController);  
+    try {
+      address.index = this.getSearchIndex(address);
+      const _key = await updateModel(this.firestore, _collection, address);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, _collection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -64,9 +82,9 @@ export class AddressService {
    * Admin user may finally delete objects directly in the database.
    * @param address the object to delete
    */
-  public async delete(address: AddressModel): Promise<void> {
+  public async delete(address: AddressModel, currentUser?: UserModel): Promise<void> {
     address.isArchived = true;
-    this.update(address, '@subject.address.operation.delete');
+    this.update(address, currentUser, '@subject.address.operation.delete');
   }
 
   /**
@@ -84,9 +102,9 @@ export class AddressService {
    * Toggle the favorite attribute.
    * @param address the object to delete
    */
-  public async toggleFavorite(address: AddressModel): Promise<void> {
+  public async toggleFavorite(address: AddressModel, currentUser?: UserModel): Promise<void> {
     address.isFavorite = !address.isFavorite; // toggle
-    await this.update(address, `@subject.address.operation.favorite.${address.isFavorite ? 'enable' : 'disable'}`);
+    await this.update(address, currentUser, `@subject.address.operation.favorite.${address.isFavorite ? 'enable' : 'disable'}`);
   }
 
   /***************************  favorite address  *************************** */

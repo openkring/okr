@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { debugItemLoaded, debugMessage } from '@bk2/shared/util';
+import { debugItemLoaded, debugMessage } from '@bk2/shared/util-core';
 import { SectionModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 

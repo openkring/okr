@@ -5,9 +5,9 @@ import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { GroupModel, ModelType } from '@bk2/shared/models';
-import { RoleName } from '@bk2/shared/config';
-import { error, hasRole } from '@bk2/shared/util';
+import { GroupModel, ModelType, RoleName } from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 import { GroupListStore } from './group-list.store';
@@ -126,6 +126,7 @@ export class GroupListComponent  {
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    console.log('GroupListComponent.onPopoverDismiss', $event);
      const _selectedMethod = $event.detail.data;
      switch(_selectedMethod) {
        case 'add':  await this.groupListStore.add(); break;

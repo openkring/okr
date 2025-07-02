@@ -3,7 +3,7 @@ import { AsyncPipe } from '@angular/common';
 import { IonButton, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
-import { string2stringArray } from '@bk2/shared/util';
+import { string2stringArray } from '@bk2/shared/util-core';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChipSelectModalComponent } from './chip-select.modal';
 

@@ -63,7 +63,9 @@ export class ReservationModalsService {
     const { data, role } = await _modal.onDidDismiss();
     if (role === 'confirm') {
       if (isReservation(data, this.tenantId)) {
-        await (!data.bkey ? this.reservationService.create(data, this.appStore.currentUser()) : this.reservationService.update(data));
+        await (!data.bkey ? 
+          this.reservationService.create(data, this.appStore.currentUser()) : 
+          this.reservationService.update(data, this.appStore.currentUser()));
       }
     }
   }

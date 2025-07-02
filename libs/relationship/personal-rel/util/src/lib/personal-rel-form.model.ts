@@ -1,6 +1,6 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
+import { END_FUTURE_DATE_STR } from "@bk2/shared/constants";
 import { GenderType, PersonalRelType } from "@bk2/shared/models";
-import { getTodayStr } from "@bk2/shared/util";
+import { getTodayStr } from "@bk2/shared/util-core";
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
 export type PersonalRelFormModel = DeepPartial<{

@@ -4,11 +4,13 @@ import { ToastController } from '@ionic/angular/standalone';
 
 import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { PersonalRelCollection, PersonalRelModel, UserModel } from '@bk2/shared/models';
-import { createModel, getSystemQuery, removeDuplicatesFromArray, searchData, updateModel } from '@bk2/shared/util';
+import { createModel, getSystemQuery, removeDuplicatesFromArray, searchData, updateModel } from '@bk2/shared/util-core';
+import { confirmAction } from '@bk2/shared/util-angular';
 
 import { saveComment } from '@bk2/comment/util';
 
 import { getPersonalRelSearchIndex, getPersonalRelSearchIndexInfo } from '@bk2/personal-rel/util';
+import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
     providedIn: 'root'
@@ -27,10 +29,17 @@ export class PersonalRelService {
    * @returns the document id of the stored personalRel in the database
    */
   public async create(personalRel: PersonalRelModel, currentUser?: UserModel): Promise<string> {
-    personalRel.index = this.getSearchIndex(personalRel);
-    const _key = await createModel(this.firestore, PersonalRelCollection, personalRel, this.tenantId, '@personalRel.operation.create', this.toastController);
-    await saveComment(this.firestore, this.tenantId, currentUser, PersonalRelCollection, _key, '@comment.operation.initial.conf');  
-    return _key;
+      try {
+      personalRel.index = this.getSearchIndex(personalRel);
+      const _key = await createModel(this.firestore, PersonalRelCollection, personalRel, this.tenantId);
+      await confirmAction(bkTranslate('@personalRel.operation.create.conf'), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, PersonalRelCollection, _key, '@comment.operation.initial.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate('@personalRel.operation.create.error'), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
   /**
@@ -51,14 +60,23 @@ export class PersonalRelService {
    * @param personalRel the personalRel to update
    * @param i18nPrefix the prefix for the i18n key to use for the toast message (can be used for a delete confirmation)
    */
-  public async update(personalRel: PersonalRelModel, confirmMessage = '@personalRel.operation.update'): Promise<void> {
-    personalRel.index = this.getSearchIndex(personalRel);
-    await updateModel(this.firestore, PersonalRelCollection, personalRel, confirmMessage, this.toastController);
+  public async update(personalRel: PersonalRelModel, currentUser?: UserModel, confirmMessage = '@personalRel.operation.update'): Promise<string> {
+    try {
+      personalRel.index = this.getSearchIndex(personalRel);
+      const _key = await updateModel(this.firestore, PersonalRelCollection, personalRel);
+      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
+      await saveComment(this.firestore, this.tenantId, currentUser, PersonalRelCollection, _key, '@comment.operation.update.conf');
+      return _key;    
+    }
+    catch (error) {
+      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
+      throw error; // rethrow the error to be handled by the caller
+    }
   }
 
-  public async delete(personalRel: PersonalRelModel): Promise<void> {
+  public async delete(personalRel: PersonalRelModel, currentUser?: UserModel): Promise<void> {
     personalRel.isArchived = true;
-    await this.update(personalRel, `@personalRel.operation.delete`);
+    await this.update(personalRel, currentUser, `@personalRel.operation.delete`);
   }
 
   /**
@@ -69,7 +87,7 @@ export class PersonalRelService {
   public async endPersonalRelByDate(personalRel: PersonalRelModel, validTo: string, currentUser?: UserModel): Promise<void> {
     if (personalRel.validTo.startsWith('9999') && validTo && validTo.length === 8) {
       personalRel.validTo = validTo;
-      await this.update(personalRel);
+      await this.update(personalRel, currentUser);
       await saveComment(this.firestore, this.tenantId, currentUser, PersonalRelCollection, personalRel.bkey, '@comment.message.personalRel.deleted');  
     }
   }

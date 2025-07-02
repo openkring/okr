@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, OrgCollection, OrgModel } from '@bk2/shared/models';
-import { debugItemLoaded, readModel } from '@bk2/shared/util';
+import { debugItemLoaded, readModel } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
 
 import { MembershipService } from '@bk2/membership/data-access';

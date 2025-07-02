@@ -62,7 +62,9 @@ export class OwnershipModalsService {
     const { data, role } = await _modal.onDidDismiss();
     if (role === 'confirm') {
       if (isOwnership(data, this.tenantId)) {
-        await (!data.bkey ? this.ownershipService.create(data, this.appStore.currentUser()) : this.ownershipService.update(data));
+        await (!data.bkey ? 
+          this.ownershipService.create(data, this.appStore.currentUser()) : 
+          this.ownershipService.update(data, this.appStore.currentUser()));
       }
     }  }
 }

@@ -1,5 +1,5 @@
 import { only, staticSuite} from 'vest';
-import { categoryValidations } from '@bk2/shared/util';
+import { categoryValidations } from '@bk2/shared/util-core';
 import { PrivacyUsage } from '@bk2/shared/models';
 import { PrivacyFormModel } from './privacy-form.model';
 

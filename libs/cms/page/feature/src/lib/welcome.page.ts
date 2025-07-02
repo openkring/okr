@@ -5,7 +5,8 @@ import { IonButton, IonGrid, IonCol, IonContent, IonIcon, IonImg, IonLabel, IonR
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { HeaderComponent } from '@bk2/shared/ui';
-import { getImgixUrlWithAutoParams, navigateByUrl } from '@bk2/shared/util';
+import { getImgixUrlWithAutoParams } from '@bk2/shared/util-core';
+import { navigateByUrl } from '@bk2/shared/util-angular';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore } from '@bk2/shared/feature';
 

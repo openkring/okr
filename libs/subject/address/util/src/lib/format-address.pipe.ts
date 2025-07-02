@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { AddressChannel } from '@bk2/shared/models';
-import { formatIban, IbanFormat } from '@bk2/shared/util';
+import { formatIban, IbanFormat } from '@bk2/shared/util-angular';
 
 @Pipe({
   name: 'formatAddress',

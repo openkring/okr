@@ -5,7 +5,8 @@ import { ModalController } from '@ionic/angular/standalone';
 import { Observable, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared/feature';
-import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
+import { debugItemLoaded } from '@bk2/shared/util-core';
+import { AppNavigationService } from '@bk2/shared/util-angular';
 import { ModelType, ResourceModel} from '@bk2/shared/models';
 
 import { ResourceService } from '@bk2/resource/data-access';
@@ -72,7 +73,9 @@ export const ResourceEditStore = signalStore(
 
       async save(vm: ResourceFormModel): Promise<void> {
         const _resource = convertFormToResource(store.resource(), vm, store.appStore.tenantId());
-        await (!_resource.bkey ? store.resourceService.create(_resource) : store.resourceService.update(_resource));
+        await (!_resource.bkey ? 
+          store.resourceService.create(_resource, store.currentUser()) : 
+          store.resourceService.update(_resource, store.currentUser()));
         store.appNavigationService.back();
       }
     }

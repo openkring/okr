@@ -1,6 +1,6 @@
 import { enforce, only, staticSuite, test } from "vest";
-import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@bk2/shared/config";
-import { stringValidations } from "@bk2/shared/util";
+import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@bk2/shared/constants";
+import { stringValidations } from "@bk2/shared/util-core";
 import { AuthCredentials } from "@bk2/shared/models";
 
 export const authCredentialsValidations = staticSuite((model: AuthCredentials, field?: string) => {

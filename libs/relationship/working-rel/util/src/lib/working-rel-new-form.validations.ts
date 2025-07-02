@@ -1,5 +1,5 @@
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/config';
-import { categoryValidations, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@bk2/shared/util';
+import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
+import { categoryValidations, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@bk2/shared/util-core';
 import { enforce, omitWhen, only, staticSuite, test} from 'vest';
 import { WorkingRelNewFormModel } from './working-rel-new-form.model';
 import { GenderType, Periodicity, WorkingRelState, WorkingRelType } from '@bk2/shared/models';

@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, isPersonalRel, nameMatches } from '@bk2/shared/util';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, isPersonalRel, nameMatches } from '@bk2/shared/util-core';
 import { AllCategories, ModelType, PersonalRelModel, PersonalRelType } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 import { categoryMatches } from '@bk2/shared/categories';
@@ -127,7 +127,9 @@ export const PersonalRelListStore = signalStore(
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
           if (isPersonalRel(data, store.appStore.tenantId())) {
-            await (!data.bkey ? store.personalRelService.create(data) : store.personalRelService.update(data));
+            await (!data.bkey ? 
+              store.personalRelService.create(data, store.appStore.currentUser()) : 
+              store.personalRelService.update(data, store.appStore.currentUser()));
           }
         }
         store.personalRelsResource.reload();      },
@@ -143,7 +145,7 @@ export const PersonalRelListStore = signalStore(
 
       async delete(personalRel?: PersonalRelModel): Promise<void> {
         if (personalRel) {
-          await store.personalRelService.delete(personalRel);
+          await store.personalRelService.delete(personalRel, store.appStore.currentUser());
           store.personalRelsResource.reload();  
         }
       },

@@ -4,9 +4,8 @@ import { AsyncPipe } from '@angular/common';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/config';
-import { ModelType, OrgModel, PersonModel, ResourceModel } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util';
+import { ModelType, OrgModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
 
 import { convertFormToTransfer, newTransferFormModel } from '@bk2/transfer/util';

@@ -4,9 +4,8 @@ import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { RoleName } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util';
-import { AccountModel, ModelType, OrgModel, PersonModel, ResourceModel, UserModel} from '@bk2/shared/models';
+import { hasRole } from '@bk2/shared/util-core';
+import { AccountModel, ModelType, OrgModel, PersonModel, ResourceModel, UserModel, RoleName} from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
 import { newOwnership } from '@bk2/ownership/util';

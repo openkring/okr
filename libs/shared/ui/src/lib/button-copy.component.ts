@@ -4,7 +4,7 @@ import { IonButton, IonIcon, ToastController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { copyToClipboard, showToast } from '@bk2/shared/util';
+import { copyToClipboard, showToast } from '@bk2/shared/util-angular';
 
 @Component({
   selector: 'bk-button-copy',

@@ -8,7 +8,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 
 import { SectionModel } from '@bk2/shared/models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { debugData, debugMessage, die } from '@bk2/shared/util';
+import { debugData, debugMessage, die } from '@bk2/shared/util-core';
 import { CalendarStore } from './calendar-section.store';
 import { EventInput } from '@fullcalendar/core';
 

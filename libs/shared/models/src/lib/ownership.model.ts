@@ -1,4 +1,3 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/config";
 import { BkModel, SearchableModel, TaggedModel } from "./base.model";
 import { OrgType } from "./enums/org-type.enum";
 import { GenderType } from "./enums/gender-type.enum";
@@ -46,7 +45,7 @@ export class OwnershipModel implements BkModel, SearchableModel, TaggedModel {
 
   // ownership
   public validFrom = ''; // membership: entryDate
-  public validTo = END_FUTURE_DATE_STR;   // membership: exitDate
+  public validTo = '';   // membership: exitDate
   public ownershipCategory = 'use';
   public ownershipState = 'active';
 

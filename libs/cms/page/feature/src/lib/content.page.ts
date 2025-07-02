@@ -4,10 +4,11 @@ import { Router } from '@angular/router';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { Meta, Title } from '@angular/platform-browser';
 
-import { AppNavigationService, debugMessage, error, hasRole, navigateByUrl, replaceSubstring } from '@bk2/shared/util';
+import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared/util-core';
+import { AppNavigationService, error, navigateByUrl } from '@bk2/shared/util-angular';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/config';
+import { RoleName } from '@bk2/shared/models';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 

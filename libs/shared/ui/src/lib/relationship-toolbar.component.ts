@@ -6,7 +6,7 @@ import { ColorsIonic } from '@bk2/shared/categories';
 import { ColorIonic, ModelType } from '@bk2/shared/models';
 import { HashMap } from '@jsverse/transloco';
 import { Router } from '@angular/router';
-import { AppNavigationService, navigateByUrl } from '@bk2/shared/util';
+import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AsyncPipe } from '@angular/common';
 

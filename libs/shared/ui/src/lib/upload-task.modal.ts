@@ -5,7 +5,8 @@ import { UploadTask, UploadTaskSnapshot, getDownloadURL } from 'firebase/storage
 
 import { TranslatePipe} from '@bk2/shared/i18n';
 import { uploadToFirebaseStorage } from '@bk2/shared/config';
-import { die, error } from '@bk2/shared/util';
+import { die } from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
 import { HeaderComponent } from './header.component';
 
 @Component({

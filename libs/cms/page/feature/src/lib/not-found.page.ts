@@ -3,7 +3,8 @@ import { AsyncPipe } from '@angular/common';
 import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 
-import { getImgixUrlWithAutoParams, navigateByUrl } from '@bk2/shared/util';
+import { getImgixUrlWithAutoParams } from '@bk2/shared/util-core';
+import { navigateByUrl } from '@bk2/shared/util-angular';
 import { HeaderComponent } from '@bk2/shared/ui';
 import { SvgIconPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';

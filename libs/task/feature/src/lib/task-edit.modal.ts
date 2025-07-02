@@ -4,9 +4,9 @@ import { AsyncPipe } from '@angular/common';
 
 import { AvatarSelectComponent, ChangeConfirmationComponent, ChipsComponent, HeaderComponent, StringsComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { TaskCollection, TaskModel } from '@bk2/shared/models';
-import { LowercaseWordMask, RoleName } from '@bk2/shared/config';
-import { debugFormModel, hasRole } from '@bk2/shared/util';
+import { RoleName, TaskCollection, TaskModel } from '@bk2/shared/models';
+import { LowercaseWordMask } from '@bk2/shared/config';
+import { debugFormModel, hasRole } from '@bk2/shared/util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
 

@@ -3,7 +3,7 @@ import { Photo } from "@capacitor/camera";
 import { Filesystem } from "@capacitor/filesystem";
 
 import { getModelSlug } from "@bk2/shared/categories";
-import { blobToFile, die, getPartsOfTupel } from "@bk2/shared/util";
+import { blobToFile, die, getPartsOfTupel } from "@bk2/shared/util-core";
 import { AvatarDirectory, AvatarModel, ModelType } from "@bk2/shared/models";
 
 export function newAvatarModel(tenantIds: string[], modelType: ModelType, key: string, fileName: string): AvatarModel {

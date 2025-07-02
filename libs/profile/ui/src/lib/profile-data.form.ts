@@ -9,7 +9,7 @@ import { CategoryComponent, DateInputComponent, ErrorNoteComponent, TextInputCom
 import { ChSsnMask } from "@bk2/shared/config";
 import { GenderTypes } from "@bk2/shared/categories";
 import { PersonalDataFormModel, personalDataFormModelShape, personalDataFormValidations } from "@bk2/profile/util";
-import { debugFormErrors } from "@bk2/shared/util";
+import { debugFormErrors } from "@bk2/shared/util-core";
 
 @Component({
   selector: 'bk-profile-data-accordion',

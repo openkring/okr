@@ -1,8 +1,9 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
 
-import { ENV, THUMBNAIL_SIZE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
+import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
 import { Image } from '@bk2/shared/models';
-import { die, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@bk2/shared/util';
+import { die, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@bk2/shared/util-core';
 
 @Pipe({
   name: 'imgixUrl',

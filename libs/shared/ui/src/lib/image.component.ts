@@ -7,7 +7,7 @@ import { ImgixUrlPipe } from '@bk2/shared/pipes';
 import { BkEnvironment, ENV } from '@bk2/shared/config';
 
 import { showZoomedImage } from './ui.util';
-import { die } from '@bk2/shared/util';
+import { die } from '@bk2/shared/util-core';
 
 /**
  * This image loading implementation is based on Angular's NgOptimizedImage together with Imgix CDN to provide optimized images.

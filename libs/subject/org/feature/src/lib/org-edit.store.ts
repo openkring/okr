@@ -7,7 +7,8 @@ import { Observable, of } from 'rxjs';
 import { ENV } from '@bk2/shared/config';
 import { AddressModel, ModelType, OrgModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
-import { AppNavigationService, debugItemLoaded } from '@bk2/shared/util';
+import { debugItemLoaded } from '@bk2/shared/util-core';
+import { AppNavigationService } from '@bk2/shared/util-angular';
 
 import { OrgService } from '@bk2/org/data-access';
 import { convertFormToOrg, OrgFormModel } from '@bk2/org/util';
@@ -101,7 +102,9 @@ export const OrgEditStore = signalStore(
 
       async save(vm: OrgFormModel): Promise<void> {
         const _org = convertFormToOrg(store.org(), vm, store.env.tenantId);
-        await (!_org.bkey ? store.orgService.create(_org, store.currentUser()) : store.orgService.update(_org));
+        await (!_org.bkey ? 
+          store.orgService.create(_org, store.currentUser()) : 
+          store.orgService.update(_org, store.currentUser()));
         store.appNavigationService.back();
       }
     }

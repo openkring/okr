@@ -8,7 +8,8 @@ import { PersonService } from '@bk2/person/data-access';
 import { Observable, of } from 'rxjs';
 import { AppStore } from '@bk2/shared/feature';
 import { convertFormToPerson, PersonFormModel } from '@bk2/person/util';
-import { AppNavigationService, debugItemLoaded, debugListLoaded } from '@bk2/shared/util';
+import { debugItemLoaded, debugListLoaded } from '@bk2/shared/util-core';
+import { AppNavigationService } from '@bk2/shared/util-angular';
 
 /**
  * the personEditPage is setting the personKey.
@@ -99,7 +100,9 @@ export const PersonEditStore = signalStore(
 
       async save(vm: PersonFormModel): Promise<void> {
         const _person = convertFormToPerson(store.person(), vm, store.appStore.env.tenantId);
-        await (!_person.bkey ? store.personService.create(_person) : store.personService.update(_person));
+        await (!_person.bkey ? 
+          store.personService.create(_person, store.currentUser()) : 
+          store.personService.update(_person, store.currentUser()));
         store.appNavigationService.back();
       }
     }

@@ -4,8 +4,18 @@
   "sourceRoot": "libs/shared/config/src",
   "prefix": "bk",
   "projectType": "library",
-  "tags": ["type:config", "scope:shared", "platform:mobile", "platform:web"],
+  "tags": ["type:config", "scope:shared", "platform:web", "platform:mobile"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/shared/config",
+        "main": "libs/shared/config/src/index.ts",
+        "tsConfig": "libs/shared/config/tsconfig.lib.json",
+        "assets": ["libs/shared/config/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
