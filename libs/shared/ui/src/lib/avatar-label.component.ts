@@ -33,10 +33,10 @@ export class AvatarLabelComponent {
   public key = input.required<string>();    // modelType.modelKey, e.g. 15.1123123asdf
 
   private readonly urlRef = rxResource({
-    request: () => ({
+    params: () => ({
       key: this.key()
     }),
-    loader: ({request}) => getAvatarImgixUrl(this.firestore, request.key, THUMBNAIL_SIZE, this.env.services.imgixBaseUrl)
+    stream: ({params}) => getAvatarImgixUrl(this.firestore, params.key, THUMBNAIL_SIZE, this.env.services.imgixBaseUrl)
   });
   public url = computed(() => this.urlRef.value() ?? '');
 
