@@ -157,12 +157,12 @@ export const AppStore = signalStore(
 
   withProps((store) => ({
     addressesResource: rxResource({
-      request: () => ({
+      params: () => ({
         person: store.currentPerson()
       }),
-      loader: ({request}) => {
-        if (!request.person) return of([]);
-        const _ref = query(collection(store.firestore, `${PersonCollection}/${request.person.bkey}/${AddressCollection}`));
+      stream: ({params}) => {
+        if (!params.person) return of([]);
+        const _ref = query(collection(store.firestore, `${PersonCollection}/${params.person.bkey}/${AddressCollection}`));
         return collectionData(_ref, { idField: 'bkey' }) as Observable<AddressModel[]>;
       }
     })
