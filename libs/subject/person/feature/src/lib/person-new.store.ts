@@ -25,13 +25,13 @@ export const PersonNewStore = signalStore(
 
   withProps((store) => ({
     orgResource: rxResource({
-      request: () => ({
+      params: () => ({
         orgId: store.orgId(),
         currentUser: store.appStore.currentUser()
       }),  
-      loader: ({request}) => {
+      stream: ({params}) => {
         const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, request.orgId);
-        debugItemLoaded<OrgModel>(`org ${request.orgId}`, org$, request.currentUser);
+        debugItemLoaded<OrgModel>(`org ${params.orgId}`, org$, params.currentUser);
         return org$;
       }
     })
@@ -48,12 +48,12 @@ export const PersonNewStore = signalStore(
   }),
   withProps((store) => ({
     mcatResource: rxResource({
-      request: () => ({
+      params: () => ({
         mcatId: store.membershipCategoryKey()
       }),  
-      loader: ({request}) => {
+      stream: ({params}) => {
         const mcat$ = readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, request.mcatId);
-        debugItemLoaded<CategoryListModel>(`mcat ${request.mcatId}`, mcat$, store.appStore.currentUser());           
+        debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, mcat$, store.appStore.currentUser());           
         return mcat$;
       }
     })

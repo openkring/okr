@@ -31,7 +31,7 @@ export const DocumentListStore = signalStore(
   })),
   withProps((store) => ({
     documentsResource: rxResource({
-      loader: () => {
+      stream: () => {
         const documents$ = searchData<DocumentModel>(store.appStore.firestore, DocumentCollection, getSystemQuery(store.appStore.tenantId()), 'fullPath', 'asc');
         debugListLoaded<DocumentModel>('DocumentListStore.tasks', documents$, store.appStore.currentUser());
         return documents$;

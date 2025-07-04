@@ -36,11 +36,11 @@ export const SectionDetailStore = signalStore(
 
   withProps((store) => ({
     sectionResource: rxResource({
-      request: () => ({
+      params: () => ({
         sectionId: store.sectionId()
       }),
-      loader: ({ request }) => {
-        const _section$ = store.sectionService.read(request.sectionId);
+      stream: ({ params }) => {
+        const _section$ = store.sectionService.read(params.sectionId);
         debugItemLoaded<SectionModel>(`SectionDetailStore.sectionResource`, _section$ , store.currentUser());
         return _section$;
       }

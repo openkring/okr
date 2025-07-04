@@ -35,12 +35,12 @@ export const PersonEditStore = signalStore(
 
   withProps((store) => ({
     personResource: rxResource({
-      request: () => ({
+      params: () => ({
         personKey: store.personKey()
       }),
-      loader: ({request}) => {
-        if (!request.personKey) return of(undefined);
-        const _person$ = store.personService.read(request.personKey);
+      stream: ({params}) => {
+        if (!params.personKey) return of(undefined);
+        const _person$ = store.personService.read(params.personKey);
         debugItemLoaded('PersonEditStore.person', _person$, store.appStore.currentUser());
         return _person$;
       }
@@ -59,13 +59,13 @@ export const PersonEditStore = signalStore(
 
   withProps((store) => ({
     addressesResource: rxResource({
-      request: () => ({
+      params: () => ({
         person: store.person()
       }),
-      loader: ({request}) => {
+      stream: ({params}) => {
         let addresses$: Observable<AddressModel[]> = of([]);
-        if (request.person) {
-          addresses$ = store.personService.listAddresses(request.person);
+        if (params.person) {
+          addresses$ = store.personService.listAddresses(params.person);
           debugListLoaded('PersonEditStore.addresses', addresses$, store.appStore.currentUser());
         }
         return addresses$;

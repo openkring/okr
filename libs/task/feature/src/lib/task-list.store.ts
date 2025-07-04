@@ -34,7 +34,7 @@ export const TaskListStore = signalStore(
   })),
   withProps((store) => ({
     tasksResource: rxResource({
-      loader: () => {
+      stream: () => {
         const tasks$ = searchData<TaskModel>(store.appStore.firestore, TaskCollection, getSystemQuery(store.appStore.tenantId()), 'dueDate', 'asc');
         debugListLoaded<TaskModel>('TaskListStore.tasks', tasks$, store.appStore.currentUser());
         return tasks$;

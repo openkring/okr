@@ -28,10 +28,10 @@ export class ErrorNoteComponent {
 
   protected hasErrors = computed(() => this.errors().length > 0);
   private readonly errorRef = rxResource({
-    request: () => ({
+    params: () => ({
       errors: this.errors()
     }),
-    loader: ({request}) => this.translate(request.errors) });
+    stream: ({params}) => this.translate(params.errors) });
   protected error = computed (() => this.errorRef.value() as string);
   
   protected colorsIonic = ColorsIonic;

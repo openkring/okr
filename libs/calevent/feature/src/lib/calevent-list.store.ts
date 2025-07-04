@@ -35,7 +35,7 @@ export const CalEventListStore = signalStore(
   })),
   withProps((store) => ({
     calEventResource: rxResource({
-      loader: () => {
+      stream: () => {
         const calEvents$ = searchData<CalEventModel>(store.appStore.firestore, CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
         debugListLoaded<CalEventModel>('CalEventListStore.calEvents', calEvents$, store.appStore.currentUser());
         return calEvents$;

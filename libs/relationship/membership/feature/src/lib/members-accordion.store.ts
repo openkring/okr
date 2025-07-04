@@ -40,24 +40,24 @@ export const MembersAccordionStore = signalStore(
   withProps((store) => ({
       // load all the memberships of the given org = its members
      membersResource: rxResource({
-      request: () => ({
+      params: () => ({
         orgKey: store.orgKey()
       }),
-      loader: ({request}) => {
-        if (!request.orgKey) return of([]);
-        const members$ = store.membershipService.listMembersOfOrg(request.orgKey);
+      stream: ({params}) => {
+        if (!params.orgKey) return of([]);
+        const members$ = store.membershipService.listMembersOfOrg(params.orgKey);
         debugListLoaded('MembersAccordionStore.members', members$, store.appStore.currentUser());
         return members$;
       }
     }),
     // load the current org
     orgResource: rxResource({
-      request: () => ({
+      params: () => ({
         orgKey: store.orgKey()
       }),  
-      loader: ({request}) => {
-        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, request.orgKey);
-        debugItemLoaded<OrgModel>(`org ${request.orgKey}`, org$, store.appStore.currentUser());
+      stream: ({params}) => {
+        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, params.orgKey);
+        debugItemLoaded<OrgModel>(`org ${params.orgKey}`, org$, store.appStore.currentUser());
         return org$;
       }
     })

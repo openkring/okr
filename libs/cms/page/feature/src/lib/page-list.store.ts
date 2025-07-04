@@ -33,7 +33,7 @@ export const PageListStore = signalStore(
   })),
   withProps((store) => ({
     pageResource: rxResource({
-      loader: () => {
+      stream: () => {
         const pages$ = store.pageService.list();
         debugListLoaded<PageModel>('PageListStore.pages', pages$, store.appStore.currentUser());
         return pages$;

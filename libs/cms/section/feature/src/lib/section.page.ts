@@ -65,8 +65,8 @@ export class SectionPageComponent {
   public id = input.required<string>();
 
   private readonly sectionRef = rxResource({
-    request: () => this.id(),
-    loader: () => this.sectionService.read(this.id())
+    params: () => this.id(),
+    stream: () => this.sectionService.read(this.id())
   });
   public section = computed(() => this.sectionRef.value());
   public vm = linkedSignal(() => convertSectionToForm(this.section() ?? new SectionModel(this.appStore.tenantId())));

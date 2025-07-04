@@ -26,13 +26,13 @@ export const CommentListStore = signalStore(
   })),
   withProps((store) => ({
     commentsResource: rxResource({
-      request: () => ({
+      params: () => ({
         collectionName: store.collectionName(),
         parentKey: store.parentKey(),
       }),  
-      loader: ({request}) => {
-        if (!request.collectionName || request.collectionName.length === 0 || !request.parentKey || request.parentKey.length === 0) return of([]);
-        const _comments$ = store.commentService.list(request.collectionName, request.parentKey);
+      stream: ({params}) => {
+        if (!params.collectionName || params.collectionName.length === 0 || !params.parentKey || params.parentKey.length === 0) return of([]);
+        const _comments$ = store.commentService.list(params.collectionName, params.parentKey);
         debugListLoaded('CommentListStore.comment$', _comments$, store.appStore.currentUser());   
         return _comments$;
       }

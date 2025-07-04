@@ -33,13 +33,13 @@ export const OrgEditStore = signalStore(
 
   withProps((store) => ({
     orgResource: rxResource({
-      request: () => ({
+      params: () => ({
         orgKey: store.orgKey()
       }),
-      loader: ({request}) => {
+      stream: ({params}) => {
         let org$: Observable<OrgModel | undefined> = of(undefined);
-        if (request.orgKey) {
-          org$ = store.orgService.read(request.orgKey);
+        if (params.orgKey) {
+          org$ = store.orgService.read(params.orgKey);
           debugItemLoaded('OrgEditStore.org', org$, store.appStore.currentUser());
         }
         return org$;
@@ -58,13 +58,13 @@ export const OrgEditStore = signalStore(
 
   withProps((store) => ({
     addressesResource: rxResource({
-      request: () => ({
+      params: () => ({
         org: store.org()
       }),
-      loader: ({request}) => {
+      stream: ({params}) => {
         let addresses$: Observable<AddressModel[]> = of([]);
-        if (request.org) {
-          addresses$ = store.orgService.listAddresses(request.org);
+        if (params.org) {
+          addresses$ = store.orgService.listAddresses(params.org);
         }
         return addresses$;
       }

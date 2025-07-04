@@ -33,7 +33,7 @@ export const SectionListStore = signalStore(
   })),
   withProps((store) => ({
     sectionsResource: rxResource({
-      loader: () => {
+      stream: () => {
         return store.sectionService.list();
       }
     })

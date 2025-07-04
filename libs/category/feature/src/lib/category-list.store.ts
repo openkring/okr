@@ -31,7 +31,7 @@ export const CategoryListStore = signalStore(
   })),
   withProps((store) => ({
     categoriesResource: rxResource({
-      loader: () => {
+      stream: () => {
         const categories$ = store.categoryService.list();
         debugListLoaded<CategoryListModel>('CategoryListStore.category', categories$, store.appStore.currentUser());
         return categories$;

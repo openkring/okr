@@ -27,12 +27,12 @@ export const PersonSelectStore = signalStore(
   })),
   withProps((store) => ({
     personsResource: rxResource({
-      request: () => ({
+      params: () => ({
         currentUser: store.currentUser()
       }),
-      loader: ({request}) => {
+      stream: ({params}) => {
         const persons$ = searchData<PersonModel>(store.appStore.firestore, PersonCollection, getSystemQuery(store.appStore.tenantId()), 'lastName', 'asc');
-        debugListLoaded('persons (to select)', persons$, request.currentUser);
+        debugListLoaded('persons (to select)', persons$, params.currentUser);
         return persons$;
       }
     })

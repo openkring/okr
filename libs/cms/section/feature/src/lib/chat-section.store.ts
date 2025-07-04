@@ -48,11 +48,11 @@ export const ChatSectionStore = signalStore(
 
   withProps((store) => ({
     imageUrlResource: rxResource({
-      request: () => ({
+      params: () => ({
         currentUser: store.currentUser()
       }),
-      loader: ({ request }): Observable<string | undefined> => {
-        if (!request.currentUser) return of(undefined);
+      stream: ({params}): Observable<string | undefined> => {
+        if (!params.currentUser) return of(undefined);
         const _url$ = getAvatarImgixUrl(store.appStore.firestore, ModelType.Person + '.' + request.currentUser.personKey, THUMBNAIL_SIZE, store.imgixBaseUrl())
         debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${request.currentUser.personKey}`, _url$, store.currentUser());
         return _url$;
@@ -70,12 +70,12 @@ export const ChatSectionStore = signalStore(
      * We are using the Firebase SDK to call the onCall function `ext-auth-chat-getStreamUserToken` to get the token.
      */
     userTokenResource: rxResource({
-      request: () => ({
+      params: () => ({
         currentUser: store.currentUser()
       }),
-      loader: ({ request }): Observable<string | undefined> => {
+      stream: ({params}): Observable<string | undefined> => {
         // Guard that the user is actually logged in.
-        if (!request.currentUser) {
+        if (!params.currentUser) {
           debugMessage(`ChatSectionStore.userTokenResource: No user, can't call function.`);
           return of(undefined);
         }

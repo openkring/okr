@@ -27,7 +27,7 @@ export const SectionSelectStore = signalStore(
   })),
   withProps((store) => ({
     sectionsResource: rxResource({
-      loader: () => {
+      stream: () => {
         return store.sectionService.list();
       }
     })

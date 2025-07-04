@@ -42,26 +42,26 @@ export const WorkingRelAccordionStore = signalStore(
   })),
   withProps((store) => ({
      workingRelsResource: rxResource({
-      request: () => ({
+      params: () => ({
         personKey: store.personKey(),
       }),
-      loader: ({request}) => {
+      stream: ({params}) => {
         let _workingRels$: Observable<WorkingRelModel[]> = of([]);
-        if (request.personKey) {
-          _workingRels$ = store.workingRelService.listWorkingRelsOfPerson(request.personKey);
+        if (params.personKey) {
+          _workingRels$ = store.workingRelService.listWorkingRelsOfPerson(params.personKey);
         }
         debugListLoaded('WorkingRelAccordionStore.workingRels of person', _workingRels$, store.appStore.currentUser());
         return _workingRels$;
       }
     }),
     workersResource: rxResource({
-      request: () => ({
+      params: () => ({
         orgKey: store.orgKey(),
       }),
-      loader: ({request}) => {
+      stream: ({params}) => {
         let _workers$: Observable<WorkingRelModel[]> = of([]);
-        if (request.orgKey) {
-          _workers$ = store.workingRelService.listWorkersOfOrg(request.orgKey);
+        if (params.orgKey) {
+          _workers$ = store.workingRelService.listWorkersOfOrg(params.orgKey);
         }
         debugListLoaded('WorkingRelAccordionStore.workers of org', _workers$, store.appStore.currentUser());
         return _workers$;

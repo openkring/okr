@@ -21,13 +21,13 @@ export const MenuStore = signalStore(
   })),
   withProps((store) => ({
     menuResource: rxResource({
-      request: () => ({
+      params: () => ({
         name: store.name(),
         user: store.appStore.currentUser()
       }),
-      loader: ({request}) => {
-        debugMessage(`MenuStore: loading menu with name:${request.name}`, request.user);
-        return store.menuService.read(request.name);
+      stream: ({params}) => {
+        debugMessage(`MenuStore: loading menu with name:${params.name}`, params.user);
+        return store.menuService.read(params.name);
       }
     })
   })),

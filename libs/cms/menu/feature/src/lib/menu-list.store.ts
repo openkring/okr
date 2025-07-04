@@ -33,7 +33,7 @@ export const MenuItemListStore = signalStore(
   })),
   withProps((store) => ({
     menuItemsResource: rxResource({
-      loader: () => {
+      stream: () => {
         const menuItems$ = store.menuItemService.list();
         debugListLoaded<MenuItemModel>('menuItem', menuItems$, store.appStore.currentUser());
         return menuItems$;

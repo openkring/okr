@@ -45,7 +45,7 @@ export const MembershipListStore = signalStore(
   })),
   withProps((store) => ({
     membershipsResource: rxResource({
-      loader: () => {
+      stream: () => {
         const memberships$ = searchData<MembershipModel>(store.appStore.firestore, MembershipCollection, getSystemQuery(store.appStore.tenantId()), 'memberName2', 'asc');
         debugListLoaded('memberships', memberships$, store.appStore.currentUser());
         return memberships$;
@@ -53,11 +53,11 @@ export const MembershipListStore = signalStore(
     }),
     // load the default organization (which is the same id as the tenant)
     defaultOrgResource: rxResource({
-      request: () => ({
+      params: () => ({
         orgId: store.orgId()
       }),  
-      loader: ({request}) => {
-        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, request.orgId);    
+      stream: ({params}) => {
+        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, params.orgId);    
         debugItemLoaded('defaultOrg', org$, store.appStore.currentUser());
         return org$;
       }
@@ -131,20 +131,20 @@ export const MembershipListStore = signalStore(
   }),
   withProps((store) => ({
     mcatResource: rxResource({
-      request: () => ({
+      params: () => ({
         mcatId: store.membershipCategoryKey()
       }),  
-      loader: ({request}) => {
-        return readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, request.mcatId);            
+      stream: ({params}) => {
+        return readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, params.mcatId);            
       }
     }),
     currentPersonResource: rxResource({
-      request: () => ({
+      params: () => ({
         currentUser: store.currentUser()
       }),  
-      loader: ({request}) => {
-        if (request.currentUser) {
-          return readModel<PersonModel>(store.appStore.firestore, PersonCollection, request.currentUser.personKey);            
+      stream: ({params}) => {
+        if (params.currentUser) {
+          return readModel<PersonModel>(store.appStore.firestore, PersonCollection, params.currentUser.personKey);            
         }
         return of(undefined);
       }

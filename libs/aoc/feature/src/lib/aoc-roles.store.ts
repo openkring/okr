@@ -48,14 +48,14 @@ export const AocRolesStore = signalStore(
   })),
   withProps((store) => ({
     personsResource: rxResource({
-      loader: () => {
+      stream: () => {
         const persons$ = searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
         debugListLoaded<PersonModel>('RolesStore.persons', persons$, store.appStore.currentUser());
         return persons$;
       }
     }),
     usersResource: rxResource({
-      loader: () => {
+      stream: () => {
         const users$ = searchData<UserModel>(store.firestore, UserCollection, getSystemQuery(store.appStore.env.tenantId), 'loginEmail', 'asc');
         debugListLoaded<UserModel>('RolesStore.users', users$, store.appStore.currentUser());
         return users$;
@@ -74,12 +74,12 @@ export const AocRolesStore = signalStore(
 
   withProps((store) => ({
     userResource: rxResource({
-      request: () => ({
+      params: () => ({
         person: store.selectedPerson()
       }),
-      loader: ({request}) => {
+      stream: ({params}) => {
         const _users = store.users();
-        const _person = request.person;
+        const _person = params.person;
         if (!_person || !_users) return of(undefined);
         return of(findUserByPersonKey(_users, _person.bkey));
       }

@@ -27,11 +27,11 @@ export const CalendarStore = signalStore(
   })),
   withProps((store) => ({
     calEventsResource: rxResource({
-      request: () => ({
+      params: () => ({
         calendarName: store.calendarName()
       }),
-      loader: ({request}) => {
-        const _calName = request.calendarName;
+      stream: ({params}) => {
+        const _calName = params.calendarName;
         if (!_calName || _calName.length === 0) {
           return of([]);
         } else {

@@ -37,7 +37,7 @@ export const TransferListStore = signalStore(
   })),
   withProps((store) => ({
     transfersResource: rxResource({
-      loader: () => {
+      stream: () => {
         return searchData<TransferModel>(store.appStore.firestore, TransferCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
       }
     })

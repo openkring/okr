@@ -34,13 +34,13 @@ export const ResourceEditStore = signalStore(
 
   withProps((store) => ({
     resResource: rxResource({
-      request: () => ({
+      params: () => ({
         resourceKey: store.resourceKey()
       }),
-      loader: ({request}) => {
+      stream: ({params}) => {
         let resource$: Observable<ResourceModel | undefined> = of(undefined);
-        if (request.resourceKey) {
-          resource$ = store.resourceService.read(request.resourceKey);
+        if (params.resourceKey) {
+          resource$ = store.resourceService.read(params.resourceKey);
           debugItemLoaded('ResourceEditStore.resource', resource$, store.appStore.currentUser());
         }
         return resource$;

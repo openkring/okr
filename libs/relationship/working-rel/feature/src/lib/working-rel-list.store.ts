@@ -38,7 +38,7 @@ export const WorkingRelListStore = signalStore(
   })),
   withProps((store) => ({
     workingRelsResource: rxResource({
-      loader: () => {        
+      stream: () => {        
         const workingRels$ = store.workingRelService.list();
         debugListLoaded('WorkingRelListStore.workingRels', workingRels$, store.appStore.currentUser());
         return workingRels$;

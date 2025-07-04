@@ -42,28 +42,8 @@ export const OrgListStore = signalStore(
   })),
   withProps((store) => ({
     orgsResource: rxResource({
-      loader: () => {
-        console.log('OrgListStore: loading orgs');
+      stream: () => {
         return searchData<OrgModel>(store.appStore.firestore, OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc')
-        .pipe(
-          finalize(() => {
-            console.log('OrgListStore: orgs loaded');
-          }),
-          catchError((error) => {
-            // see description of known bug below
-            console.log('OrgListStore: orgs loading error:', error);
-            if (error.name === 'AbortError') {
-              // This might now be caught if rxResource propagates the error *before* the interop layer fails
-              console.warn('rxResource loader caught AbortError, returning []');
-              return of([]); // Return empty array to the resource signal
-            }
-            // Handle other potential errors from searchData
-            console.error('rxResource loader caught error:', error);
-            // Decide how rxResource should handle other errors, e.g., return empty array or re-throw
-            return of([]); // return empty array for any error
-            // return throwError(() => err); // or re-throw          
-          })
-        );
       }
     }),
   })),

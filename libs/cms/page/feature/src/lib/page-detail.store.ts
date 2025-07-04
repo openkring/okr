@@ -43,11 +43,11 @@ export const PageDetailStore = signalStore(
 
   withProps((store) => ({
     pageResource: rxResource({
-      request: () => ({
+      params: () => ({
         pageId: store.pageId()
       }),
-      loader: ({ request }) => {
-        const _page$ = store.pageService.read(request.pageId);
+      stream: ({ params }) => {
+        const _page$ = store.pageService.read(params.pageId);
         debugItemLoaded<PageModel>(`PageDetailStore.pageResource`, _page$, store.currentUser());
         return _page$;
       }

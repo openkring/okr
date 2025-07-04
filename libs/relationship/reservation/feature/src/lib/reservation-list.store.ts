@@ -40,19 +40,19 @@ export const ReservationListStore = signalStore(
   })),
   withProps((store) => ({
     reservationsResource: rxResource({
-      loader: () => {
+      stream: () => {
         const reservations$ = store.reservationService.list();
         debugListLoaded('ReservationListStore.reservations', reservations$, store.appStore.currentUser());
         return reservations$;
       }
     }),
     resResource: rxResource({
-      request: () => ({
+      params: () => ({
         resourceId: store.resourceId()
       }),  
-      loader: ({request}) => {
+      stream: ({params}) => {
         const allResources$ = searchData<ResourceModel>(store.appStore.firestore, ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
-        const currentResource$ = findByKey<ResourceModel>(allResources$, request.resourceId); 
+        const currentResource$ = findByKey<ResourceModel>(allResources$, params.resourceId); 
         debugItemLoaded('ReservationListStore.resource', currentResource$, store.appStore.currentUser()); 
         return currentResource$;
       }

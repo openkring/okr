@@ -27,12 +27,12 @@ export const UserEditStore = signalStore(
 
   withProps((store) => ({
     userResource: rxResource({
-      request: () => ({
+      params: () => ({
         userKey: store.userKey()
       }),
-      loader: ({request}) => {
-        if (!request.userKey) return of(undefined);
-        const _user$ = store.userService.read(request.userKey);
+      stream: ({params}) => {
+        if (!params.userKey) return of(undefined);
+        const _user$ = store.userService.read(params.userKey);
         debugItemLoaded('UserEditStore.user', _user$, store.appStore.currentUser());
         return _user$;
       }

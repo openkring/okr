@@ -29,7 +29,7 @@ export const UserListStore = signalStore(
   })),
   withProps((store) => ({
     userResource: rxResource({
-      loader: () => {
+      stream: () => {
         return searchData<UserModel>(store.appStore.firestore, UserCollection, getSystemQuery(store.appStore.tenantId()), 'loginEmail', 'asc');
       }
     })

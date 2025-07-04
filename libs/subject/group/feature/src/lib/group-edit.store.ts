@@ -38,12 +38,12 @@ export const GroupEditStore = signalStore(
 
   withProps((store) => ({
     groupResource: rxResource({
-      request: () => ({
+      params: () => ({
         groupKey: store.groupKey()
       }),
-      loader: ({request}) => {
-        if (!request.groupKey) return of(undefined);
-        const group$ = store.groupService.read(request.groupKey);
+      stream: ({params}) => {
+        if (!params.groupKey) return of(undefined);
+        const group$ = store.groupService.read(params.groupKey);
         debugItemLoaded('GroupEditStore.group', group$, store.appStore.currentUser());
         return group$;
       }

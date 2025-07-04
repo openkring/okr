@@ -29,11 +29,11 @@ export const AocContentStore = signalStore(
   })),
   withProps((store) => ({
     dataResource: rxResource({
-      request: () => ({
+      params: () => ({
         modelType: store.modelType()
       }),
-      loader: ({request}): Observable<BkModel[] | undefined> => {
-        switch(request.modelType) {
+      stream: ({params}): Observable<BkModel[] | undefined> => {
+        switch(params.modelType) {
           case ModelType.Person:
             return searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
           case ModelType.Org:

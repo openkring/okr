@@ -27,7 +27,7 @@ export const OrgSelectStore = signalStore(
   })),
   withProps((store) => ({
     orgsResource: rxResource({
-      loader: () => {
+      stream: () => {
         const orgs$ = searchData<OrgModel>(store.appStore.firestore, OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
         debugListLoaded('orgs (to select)', orgs$, store.currentUser());
         return orgs$;

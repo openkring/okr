@@ -36,28 +36,8 @@ export const GroupListStore = signalStore(
   })),
   withProps((store) => ({
     groupsResource: rxResource({
-      loader: () => {
-        console.log('GroupListStore: loading groups');
+      stream: () => {
         return searchData<GroupModel>(store.appStore.firestore, GroupCollection, getSystemQuery(store.appStore.tenantId()), 'id', 'asc')
-        .pipe(
-          finalize(() => {
-            console.log('GroupListStore: groups loaded');
-          }),
-          catchError((error) => {
-            // see description of known bug below
-            console.log('GroupListStore: groups loading error:', error);
-            if (error.name === 'AbortError') {
-              // This might now be caught if rxResource propagates the error *before* the interop layer fails
-              console.warn('rxResource loader caught AbortError, returning []');
-              return of([]); // Return empty array to the resource signal
-            }
-            // Handle other potential errors from searchData
-            console.error('rxResource loader caught error:', error);
-            // Decide how rxResource should handle other errors, e.g., return empty array or re-throw
-            return of([]); // return empty array for any error
-            // return throwError(() => err); // or re-throw          
-          })
-        );
       }
     }),
   })),

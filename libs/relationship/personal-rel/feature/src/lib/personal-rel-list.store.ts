@@ -37,7 +37,7 @@ export const PersonalRelListStore = signalStore(
   })),
   withProps((store) => ({
     personalRelsResource: rxResource({
-      loader: () => {
+      stream: () => {
         const personalRels$ = store.personalRelService.list();        
         debugListLoaded('PersonalRelListStore.personalRels', personalRels$, store.appStore.currentUser());
         return personalRels$;

@@ -33,7 +33,7 @@ export const LocationListStore = signalStore(
   })),
   withProps((store) => ({
     locationsResource: rxResource({
-      loader: () => {
+      stream: () => {
         return store.locationService.list();
       }
     })

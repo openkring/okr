@@ -68,38 +68,38 @@ export const AppStore = signalStore(
   withProps((store) => ({
     usersResource: rxResource({
       // the resource will reload whenever the fbUser changes (login/logout).
-      request: () => store.fbUser(),
-      loader: () => {
+      params: () => store.fbUser(),
+      stream: () => {
         return searchData<UserModel>(store.firestore, UserCollection, getSystemQuery(store.tenantId()), 'loginEmail', 'asc');
       }
     }),
     personsResource: rxResource({
-      loader: () => {
+      stream: () => {
         return searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.tenantId()), 'lastName', 'asc');
       }
     }),
     orgsResource: rxResource({
-      loader: () => {
+      stream: () => {
         return searchData<OrgModel>(store.firestore, OrgCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
       }
     }),
     resourcesResource: rxResource({
-      loader: () => {
+      stream: () => {
         return searchData<ResourceModel>(store.firestore, ResourceCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
       }
     }),
     tagsResource: rxResource({
-      loader: () => {
+      stream: () => {
         return searchData<TagModel>(store.firestore, TagCollection, getSystemQuery(store.tenantId()), 'tagModel', 'asc');
       }
     }),
     appConfigResource: rxResource({
-      request: () => ({ 
+      params: () => ({ 
         tenantId: store.tenantId()
       }),
-      loader: ({request}) => {
-        if (!request.tenantId) return of(undefined);
-        return store.appConfigService.read(request.tenantId);
+      stream: ({params}) => {
+        if (!params.tenantId) return of(undefined);
+        return store.appConfigService.read(params.tenantId);
       }
     })
   })),

@@ -26,13 +26,13 @@ export const MembershipEditStore = signalStore(
   })),
   withProps((store) => ({
     orgResource: rxResource({
-      request: () => ({
+      params: () => ({
         orgId: store.membership()?.orgKey,
         currentUser: store.appStore.currentUser()
       }),  
-      loader: ({request}) => {
-        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, request.orgId);
-        debugItemLoaded<OrgModel>(`org ${request.orgId}`, org$, request.currentUser);
+      stream: ({params}) => {
+        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, params.orgId);
+        debugItemLoaded<OrgModel>(`org ${params.orgId}`, org$, params.currentUser);
         return org$;
       }
     })
@@ -47,12 +47,12 @@ export const MembershipEditStore = signalStore(
   }),
   withProps((store) => ({
     mcatResource: rxResource({
-      request: () => ({
+      params: () => ({
         mcatId: store.membershipCategoryKey()
       }),  
-      loader: ({request}) => {
-        const mcat$ = readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, request.mcatId);
-        debugItemLoaded<CategoryListModel>(`mcat ${request.mcatId}`, mcat$, store.appStore.currentUser());           
+      stream: ({params}) => {
+        const mcat$ = readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, params.mcatId);
+        debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, mcat$, store.appStore.currentUser());           
         return mcat$;
       }
     })

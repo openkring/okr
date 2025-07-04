@@ -43,13 +43,13 @@ export const MembershipAccordionStore = signalStore(
 
       // load all the memberships of the given member (person)
      membershipsResource: rxResource({
-      request: () => ({
+      params: () => ({
         member: store.member(),
         modelType: store.modelType()
       }),
-      loader: ({request}) => {
-        if (!request.member) return of([]);
-        const memberships$ = store.membershipService.listMembershipsOfMember(request.member.bkey, request.modelType);
+      stream: ({params}) => {
+        if (!params.member) return of([]);
+        const memberships$ = store.membershipService.listMembershipsOfMember(params.member.bkey, params.modelType);
         debugListLoaded('MembershipAccordionStore.memberships', memberships$, store.appStore.currentUser());
         return memberships$;
       }

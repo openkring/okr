@@ -31,10 +31,10 @@ export const AocStorageStore = signalStore(
   })),
 /*   withProps((store) => ({
     dataResource: rxResource({
-      request: () => ({
+      params: () => ({
         filePath: store.filePath()
       }),
-      loader: ({request}): Observable<BkModel[] | undefined> => {
+      stream: ({params}): Observable<BkModel[] | undefined> => {
       }
     })
   })), */

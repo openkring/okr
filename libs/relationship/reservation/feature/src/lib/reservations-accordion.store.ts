@@ -41,12 +41,12 @@ export const ReservationsAccordionStore = signalStore(
   withProps((store) => ({
       // load all the reservations of the given reserver (person or org)
      reservationsResource: rxResource({
-      request: () => ({
+      params: () => ({
         reserver: store.reserver()
       }),
-      loader: ({request}) => {
-        if (!request.reserver) return of([]);
-        const reservations$ = store.reservationService.listReservationsOfReserver(request.reserver.bkey, store.reserverModelType());
+      stream: ({params}) => {
+        if (!params.reserver) return of([]);
+        const reservations$ = store.reservationService.listReservationsOfReserver(params.reserver.bkey, store.reserverModelType());
         debugListLoaded('ReservationAccordionStore.reservations', reservations$, store.appStore.currentUser());
         return reservations$;
       }

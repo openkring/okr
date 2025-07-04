@@ -40,7 +40,7 @@ export const ResourceListStore = signalStore(
   })),
   withProps((store) => ({
     resourceResource: rxResource({
-      loader: () => {
+      stream: () => {
         return searchData<ResourceModel>(store.appStore.firestore, ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
       }
     })

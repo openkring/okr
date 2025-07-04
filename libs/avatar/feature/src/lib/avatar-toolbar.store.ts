@@ -25,11 +25,11 @@ export const AvatarToolbarStore = signalStore(
   })),
   withProps((store) => ({
     urlResource: rxResource({
-      request: () => ({
+      params: () => ({
         key: store.key(),
         currentUser: store.appStore.currentUser()
       }),
-      loader: ({request}) => getAvatarImgixUrl(store.appStore.firestore, request.key, THUMBNAIL_SIZE, store.appStore.env.services.imgixBaseUrl, false)      
+      stream: ({params}) => getAvatarImgixUrl(store.appStore.firestore, params.key, THUMBNAIL_SIZE, store.appStore.env.services.imgixBaseUrl, false)      
     })
   })),
 

@@ -48,7 +48,7 @@ export const PersonListStore = signalStore(
   })),
   withProps((store) => ({
     personsResource: rxResource({
-      loader: () => {
+      stream: () => {
         const persons$ = store.personService.list();
         debugListLoaded('PersonListStore.persons$', persons$, store.appStore.currentUser());   
         return persons$;
@@ -69,12 +69,12 @@ export const PersonListStore = signalStore(
 
   withProps((store) => ({
     mcatResource: rxResource({
-      request: () => ({
+      params: () => ({
         mcatId: store.membershipCategoryKey()
       }),  
-      loader: ({request}) => {
-        if (!request.mcatId || request.mcatId.length === 0) return of(undefined);
-        return store.categoryService.read(request.mcatId);
+      stream: ({params}) => {
+        if (!params.mcatId || params.mcatId.length === 0) return of(undefined);
+        return store.categoryService.read(params.mcatId);
       }
     }),
   })),

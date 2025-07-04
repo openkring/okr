@@ -38,7 +38,7 @@ export default class SocialFeedFeatureComponent {
 
   private readonly socialFeeds$ = this.socialFeedService.getFeed();
   private readonly postsResource = rxResource({
-    loader: () =>
+    stream: () =>
       this.socialFeeds$.pipe(tap(() => this.IonInfiniteScroll().complete())),
   });
 

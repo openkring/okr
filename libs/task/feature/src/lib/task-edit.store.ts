@@ -27,40 +27,40 @@ export const TaskEditStore = signalStore(
   })),
   withProps((store) => ({
     authorResource: rxResource({
-      request: () => ({
+      params: () => ({
         author: store.author(),
         currentUser: store.appStore.currentUser()
       }),  
-      loader: ({request}) => {
-        const _key = request.author?.key + '.' + request.author?.modelType;
+      stream: ({params}) => {
+        const _key = params.author?.key + '.' + params.author?.modelType;
         const author$ = getAvatarImgixUrl(store.appStore.firestore, _key, THUMBNAIL_SIZE, store.appStore.services.imgixBaseUrl());
-        debugItemLoaded<string>(`authorUrl `, author$, request.currentUser);
+        debugItemLoaded<string>(`authorUrl `, author$, params.currentUser);
         return author$;
       }
     }),
 
     assigneeResource: rxResource({
-      request: () => ({
+      params: () => ({
         assignee: store.assignee(),
         currentUser: store.appStore.currentUser()
       }),  
-      loader: ({request}) => {
-        const _key = request.assignee?.key + '.' + request.assignee?.modelType;
+      stream: ({params}) => {
+        const _key = params.assignee?.key + '.' + params.assignee?.modelType;
         const assignee$ = getAvatarImgixUrl(store.appStore.firestore, _key, THUMBNAIL_SIZE, store.appStore.services.imgixBaseUrl());
-        debugItemLoaded<string>(`assigneeUrl `, assignee$, request.currentUser);
+        debugItemLoaded<string>(`assigneeUrl `, assignee$, params.currentUser);
         return assignee$;
       }
     }),
 
     scopeResource: rxResource({
-      request: () => ({
+      params: () => ({
         scope: store.scope(),
         currentUser: store.appStore.currentUser()
       }),  
-      loader: ({request}) => {
-        const _key = request.scope?.key + '.' + request.scope?.modelType;
+      stream: ({params}) => {
+        const _key = params.scope?.key + '.' + params.scope?.modelType;
         const scope$ = getAvatarImgixUrl(store.appStore.firestore, _key, THUMBNAIL_SIZE, store.appStore.services.imgixBaseUrl());
-        debugItemLoaded<string>(`scopeUrl `, scope$, request.currentUser);
+        debugItemLoaded<string>(`scopeUrl `, scope$, params.currentUser);
         return scope$;
       }
     })
