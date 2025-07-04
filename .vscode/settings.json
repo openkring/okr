@@ -2,5 +2,13 @@
   "nxConsole.generateAiAgentRules": true,
   "nxConsole.nxWorkspacePath": "",
   "IDX.aI.enableInlineCompletion": true,
-  "IDX.aI.enableCodebaseIndexing": true
+  "IDX.aI.enableCodebaseIndexing": true,
+  "chat.mcp.serverSampling": {
+    "bk2/.vscode/mcp.json: nx-mcp": {
+      "allowedModels": [
+        "github.copilot-chat/gpt-4.1",
+        "github.copilot-chat/gemini-2.5-pro"
+      ]
+    }
+  }
 }
