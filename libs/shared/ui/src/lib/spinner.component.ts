@@ -13,6 +13,7 @@ export type BkSpinnerName = 'dots' | 'bubbles' | 'circles' | 'crescent' | 'circu
     CategoryPlainNamePipe,
     IonGrid, IonRow, IonSpinner, IonBackdrop
   ],
+  standalone: true,
   template: `
   <ion-backdrop />
   <ion-grid style="height: 100%">

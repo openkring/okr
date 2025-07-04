@@ -10,7 +10,6 @@ import { AocAdminOpsStore } from "./aoc-adminops.store";
 
 @Component({
   selector: 'bk-aoc-adminops',
-  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     HeaderComponent, ButtonComponent, ResultLogComponent,

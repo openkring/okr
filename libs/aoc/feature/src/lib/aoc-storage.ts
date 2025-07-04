@@ -10,7 +10,6 @@ import { AocStorageStore } from "./aoc-storage.store";
 
 @Component({
     selector: 'bk-aoc-storage',
-    standalone: true,
     styles: [`
       input { width: 100%;}
     `],

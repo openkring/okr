@@ -7,6 +7,7 @@ import { CategoryModel, ColorIonic } from '@bk2/shared/models';
  */
 @Pipe({
   name: 'categoryPlainName',
+  standalone: true 
 })
 export class CategoryPlainNamePipe implements PipeTransform {
   transform(categoryId: number | undefined, categories: CategoryModel[]): string {
