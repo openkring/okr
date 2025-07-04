@@ -1,4 +1,4 @@
-import { EChartsCoreOption } from 'echarts';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 import { ViewPosition } from './enums/view-position.enum';
 import { ColorIonic } from './enums/color-ionic.enum';
@@ -7,7 +7,6 @@ import { AlbumStyle } from './enums/album-style.enum';
 import { GalleryEffect } from './enums/gallery-effect.enum';
 import { HorizontalPosition } from './enums/horizontal-position.enum';
 import { ButtonAction } from './enums/button-action.enum';
-import { CalendarOptions } from '@fullcalendar/core';
 import { AvatarInfo } from './avatar-info';
 import { ImageAction } from './enums/image-action.enum';
 import { ImageType } from './enums/image-type.enum';
@@ -207,12 +206,12 @@ export interface SectionProperties {
   accordion?: Accordion,
   album?: AlbumConfig,
   chat?: ChatConfig,
-  calendarOptions?: CalendarOptions,
+  calendarOptions?: any, // CalendarOptions, but we don't want to have this dependency here
   content?: ContentConfig,                  // used for Article, Button, PeopleList (using editor)
   avatar?: Avatar,
   button?: Button,
   defaultImageConfig?: DefaultImageConfig,  // configures the layout and style of the images
-  echarts?: EChartsCoreOption
+  echarts?: any,                            // EChartsCoreOption, but we don't want to have this dependency here
   icon?: Icon,
   iframe?: Iframe,
   image?: Image,      // single image, e.g. Hero
