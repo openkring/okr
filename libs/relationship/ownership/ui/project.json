@@ -6,11 +6,21 @@
   "projectType": "library",
   "tags": ["type:ui", "scope:ownership", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/ownership/ui",
+        "main": "libs/relationship/ownership/ui/src/index.ts",
+        "tsConfig": "libs/relationship/ownership/ui/tsconfig.lib.json",
+        "assets": ["libs/relationship/ownership/ui/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/ownership/ui/jest.config.ts"
+        "jestConfig": "libs/relationship/ownership/ui/jest.config.ts"
       }
     },
     "lint": {

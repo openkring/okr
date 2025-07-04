@@ -10,10 +10,10 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/auth/feature",
-        "main": "libs/auth/feature/src/index.ts",
-        "tsConfig": "libs/auth/feature/tsconfig.lib.json",
-        "assets": ["libs/auth/feature/*.md"]
+        "outputPath": "dist/libs/calevent/feature",
+        "main": "libs/calevent/feature/src/index.ts",
+        "tsConfig": "libs/calevent/feature/tsconfig.lib.json",
+        "assets": ["libs/calevent/feature/*.md"]
       }
     },
     "test": {

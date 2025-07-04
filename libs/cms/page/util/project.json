@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:util", "scope:page", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/cms/page/util",
+        "main": "libs/cms/page/util/src/index.ts",
+        "tsConfig": "libs/cms/page/util/tsconfig.lib.json",
+        "assets": ["libs/cms/page/util/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

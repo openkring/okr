@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:data-access", "scope:calevent", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/calevent/data-access",
+        "main": "libs/calevent/data-access/src/index.ts",
+        "tsConfig": "libs/calevent/data-access/tsconfig.lib.json",
+        "assets": ["libs/calevent/data-access/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:feature", "scope:menu", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/cms/menu/feature",
+        "main": "libs/cms/menu/feature/src/index.ts",
+        "tsConfig": "libs/cms/menu/feature/tsconfig.lib.json",
+        "assets": ["libs/cms/menu/feature/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

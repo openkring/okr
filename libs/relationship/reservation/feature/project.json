@@ -6,11 +6,21 @@
   "projectType": "library",
   "tags": ["type:feature", "scope:reservation", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/reservation/feature",
+        "main": "libs/relationship/reservation/feature/src/index.ts",
+        "tsConfig": "libs/relationship/reservation/feature/tsconfig.lib.json",
+        "assets": ["libs/relationship/reservation/feature/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/reservation/feature/jest.config.ts"
+        "jestConfig": "libs/relationship/reservation/feature/jest.config.ts"
       }
     },
     "lint": {

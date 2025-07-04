@@ -1,8 +1,8 @@
 import { enforce, only, staticSuite, test} from 'vest';
 
-import { CommentModel, ModelType } from '@bk2/shared/models';
+import { CommentModel } from '@bk2/shared/models';
 import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { baseValidations, dateValidations, numberValidations, stringValidations } from '@bk2/shared/util-core';
+import { baseValidations, dateValidations, stringValidations } from '@bk2/shared/util-core';
 
 export const commentValidations = staticSuite((model: CommentModel, field?: string) => {
   if (field) only(field);
@@ -12,13 +12,9 @@ export const commentValidations = staticSuite((model: CommentModel, field?: stri
   dateValidations('creationDate', model.creationDate);
   stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH, 5, true);
   stringValidations('parentCollection', model.parentCollection, SHORT_NAME_LENGTH, 5, true);
-  numberValidations('category', model.category, true, -1, -1);
   
   // check the parentCollection to be a supported collection: subject, resource, membership, ownership
   
-  test('modelType', '@commentModelType', () => {
-    enforce(model.modelType).equals(ModelType.Comment);
-  });
   test('description', '@commentNotEmpty', () => {
     enforce(model.description).isNotEmpty();
   });

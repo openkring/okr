@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:data-access", "scope:comment", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/comment/data-access",
+        "main": "libs/comment/data-access/src/index.ts",
+        "tsConfig": "libs/comment/data-access/tsconfig.lib.json",
+        "assets": ["libs/comment/data-access/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

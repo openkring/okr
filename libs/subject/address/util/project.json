@@ -1,16 +1,26 @@
 {
   "name": "address/util",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/address/util/src",
+  "sourceRoot": "libs/subject/address/util/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:util", "scope:address", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/subject/address/util",
+        "main": "libs/subject/address/util/src/index.ts",
+        "tsConfig": "libs/subject/address/util/tsconfig.lib.json",
+        "assets": ["libs/subject/address/util/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/address/util/jest.config.ts"
+        "jestConfig": "libs/subject/address/util/jest.config.ts"
       }
     },
     "lint": {

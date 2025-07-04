@@ -6,11 +6,21 @@
   "projectType": "library",
   "tags": ["type:data-access", "scope:org", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/subject/org/data-access",
+        "main": "libs/subject/org/data-access/src/index.ts",
+        "tsConfig": "libs/subject/org/data-access/tsconfig.lib.json",
+        "assets": ["libs/subject/org/data-access/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/org/data-access/jest.config.ts"
+        "jestConfig": "libs/subject/org/data-access/jest.config.ts"
       }
     },
     "lint": {

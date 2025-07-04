@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:util", "scope:aoc", "platform:mobile", "platform:web"],
   "targets": {
+      "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/aoc/util",
+        "main": "libs/aoc/util/src/index.ts",
+        "tsConfig": "libs/aoc/util/tsconfig.lib.json",
+        "assets": ["libs/aoc/util/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

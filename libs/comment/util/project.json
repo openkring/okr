@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:util", "scope:comment", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/comment/util",
+        "main": "libs/comment/util/src/index.ts",
+        "tsConfig": "libs/comment/util/tsconfig.lib.json",
+        "assets": ["libs/comment/util/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

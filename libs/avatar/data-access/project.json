@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:data-access", "scope:avatar", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/avatar/data-access",
+        "main": "libs/avatar/data-access/src/index.ts",
+        "tsConfig": "libs/avatar/data-access/tsconfig.lib.json",
+        "assets": ["libs/avatar/data-access/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:util", "scope:calevent", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/calevent/util",
+        "main": "libs/calevent/util/src/index.ts",
+        "tsConfig": "libs/calevent/util/tsconfig.lib.json",
+        "assets": ["libs/calevent/util/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

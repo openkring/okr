@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:data-access", "scope:user", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/user/data-access",
+        "main": "libs/user/data-access/src/index.ts",
+        "tsConfig": "libs/user/data-access/tsconfig.lib.json",
+        "assets": ["libs/user/data-access/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

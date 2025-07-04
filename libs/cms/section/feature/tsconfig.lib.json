@@ -2,6 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../../dist/out-tsc",
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSources": true,
     "types": []
   },
   "exclude": [
@@ -10,5 +13,5 @@
     "jest.config.ts",
     "src/**/*.test.ts"
   ],
-  "include": ["src/**/*.ts", "src/lib/section.form.ts", "src/lib/image-list.component.ts", "src/lib/single-image.component.ts"]
+  "include": ["src/**/*.ts"]
 }

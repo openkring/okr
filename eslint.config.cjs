@@ -69,6 +69,9 @@ module.exports = [
                 'type:feature',
                 'type:data-access',
                 'type:ui',
+                'type:util',
+                'type:config',
+                'type:constants',
                 'type:model',
                 'platform:mobile',
                 'platform:web',
@@ -163,7 +166,7 @@ module.exports = [
               allowedExternalImports: [
                 '*angular*',
                 'firebase*',
-                'maskito*',
+                '@maskito*',
               ]
             },
             { // buildable
@@ -172,10 +175,11 @@ module.exports = [
               // No external imports allowed for constants
             },
 // SCOPES
-            {
-              sourceTag: 'scope:shared',
-              onlyDependOnLibsWithTags: [ 'scope:shared']
-            },
+// gemini recommends to remove this rule, because it leads to problems with dependency checks
+//            {
+//              sourceTag: 'scope:shared',
+//              onlyDependOnLibsWithTags: [ 'scope:shared']
+//            },
 // PLATFORMS
             {
               sourceTag: 'platform:node',

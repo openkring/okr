@@ -55,7 +55,6 @@ export * from './lib/enums/rowing-boat-usage.enum';
 export * from './lib/enums/button-action.enum';
 export * from './lib/enums/car-type.enum';
 export * from './lib/enums/color-ionic.enum';
-export * from './lib/enums/collection-names.enum';
 export * from './lib/enums/competition-level.enum';
 export * from './lib/enums/content-state.enum';
 export * from './lib/enums/content-type.enum';

@@ -13,5 +13,5 @@
     "jest.config.ts",
     "src/**/*.test.ts"
   ],
-  "include": ["src/**/*.ts", "../ui/src/lib/person-new-form.ts"]
+  "include": ["src/**/*.ts"]
 }

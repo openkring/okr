@@ -5,6 +5,7 @@ import { I18nService } from "./i18n.service";
 
 @Pipe({
   name: 'translate',
+  standalone: true 
 })
 export class TranslatePipe implements PipeTransform {
   private readonly i18nService = inject(I18nService);

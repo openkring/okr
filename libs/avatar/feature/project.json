@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:feature", "scope:avatar", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/avatar/feature",
+        "main": "libs/avatar/feature/src/index.ts",
+        "tsConfig": "libs/avatar/feature/tsconfig.lib.json",
+        "assets": ["libs/avatar/feature/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

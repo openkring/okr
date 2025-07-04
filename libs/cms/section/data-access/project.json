@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:data-access", "scope:section", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/cms/section/data-access",
+        "main": "libs/cms/section/data-access/src/index.ts",
+        "tsConfig": "libs/cms/section/data-access/tsconfig.lib.json",
+        "assets": ["libs/cms/section/data-access/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

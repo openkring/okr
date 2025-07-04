@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:data-access", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/social-feed/data-access",
+        "main": "libs/social-feed/data-access/src/index.ts",
+        "tsConfig": "libs/social-feed/data-access/tsconfig.lib.json",
+        "assets": ["libs/social-feed/data-access/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

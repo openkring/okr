@@ -6,11 +6,21 @@
   "projectType": "library",
   "tags": ["type:feature", "scope:address", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/subject/address/feature",
+        "main": "libs/subject/address/feature/src/index.ts",
+        "tsConfig": "libs/subject/address/feature/tsconfig.lib.json",
+        "assets": ["libs/subject/address/feature/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/address/feature/jest.config.ts"
+        "jestConfig": "libs/subject/address/feature/jest.config.ts"
       }
     },
     "lint": {

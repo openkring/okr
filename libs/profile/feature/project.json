@@ -6,6 +6,16 @@
   "projectType": "library",
   "tags": ["type:feature", "scope:profile", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/profile/feature",
+        "main": "libs/profile/feature/src/index.ts",
+        "tsConfig": "libs/profile/feature/tsconfig.lib.json",
+        "assets": ["libs/profile/feature/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

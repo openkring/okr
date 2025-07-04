@@ -6,11 +6,21 @@
   "projectType": "library",
   "tags": ["type:ui", "scope:working-rel", "platform:mobile", "platform:web"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/working-rel/ui",
+        "main": "libs/relationship/working-rel/ui/src/index.ts",
+        "tsConfig": "libs/relationship/working-rel/ui/tsconfig.lib.json",
+        "assets": ["libs/relationship/working-rel/ui/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/working-rel/ui/jest.config.ts"
+        "jestConfig": "libs/relationship/working-rel/ui/jest.config.ts"
       }
     },
     "lint": {
