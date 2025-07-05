@@ -4,7 +4,7 @@
   "sourceRoot": "libs/cms/menu/data-access/src",
   "prefix": "bk",
   "projectType": "library",
-  "tags": ["type:data-access", "scope:menu", "platform:mobile", "platform:web"],
+  "tags": ["type:data-access", "platform:mobile", "platform:web"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
