@@ -47,12 +47,21 @@ const allowedBackendExternalImports = [
 ];
 
 module.exports = [
-  ...nx.configs['flat/base'],
+    {
+    // We are redefining the ignores from scratch to override the default
+    // which ignores the `dist` directory (nx.configs['flat/base'] imports this ignore rule as default).
+    // The linter needs access to `dist` to validate buildable lib dependencies.
+    ignores: [
+      'node_modules',
+      'tmp',
+      '**/android',
+      '**/ios',
+      '**/web',
+      // IMPORTANT: We DO NOT ignore 'dist' here anymore.
+    ],
+  },
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
-  {
-    ignores: ['**/android', '**/ios', '**/web'],
-  },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     rules: {
