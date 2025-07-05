@@ -46,6 +46,13 @@ const allowedBackendExternalImports = [
   '@fullcalendar*',
 ];
 
+const baseTags = [
+  'type:util',
+  'type:model',
+  'type:config',
+  'type:constants',
+];
+
 module.exports = [
     {
     // We are redefining the ignores from scratch to override the default
@@ -64,6 +71,7 @@ module.exports = [
   ...nx.configs['flat/javascript'],
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    plugins: { '@nx': nx },
     rules: {
       '@nx/enforce-module-boundaries': [
         'error',
@@ -71,20 +79,9 @@ module.exports = [
           enforceBuildableLibDependency: true,
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?js$'],
           depConstraints: [
-// TYPES
             {
               sourceTag: 'type:app',
-              onlyDependOnLibsWithTags: [
-                'type:feature',
-                'type:data-access',
-                'type:ui',
-                'type:util',
-                'type:config',
-                'type:constants',
-                'type:model',
-                'platform:mobile',
-                'platform:web',
-              ],
+              onlyDependOnLibsWithTags: ['type:feature','type:data-access','type:ui', ...baseTags, 'platform:mobile','platform:web'],
               allowedExternalImports: allowedFrontendExternalImports,
             },
             {
@@ -94,48 +91,22 @@ module.exports = [
             },
             {
               sourceTag: 'type:feature',
-              onlyDependOnLibsWithTags: [
-                'type:feature',
-                'type:ui',
-                'type:data-access',
-                'type:util',
-                'type:model',
-                'type:config',
-                'type:constants',
-              ],
+              onlyDependOnLibsWithTags: ['type:feature','type:ui','type:data-access', ...baseTags],
               allowedExternalImports: allowedFrontendExternalImports,
             },
             {
               sourceTag: 'type:ui',
-              onlyDependOnLibsWithTags: [
-                'type:ui',
-                'type:data-access',
-                'type:util',
-                'type:model',
-                'type:config',
-                'type:constants',
-              ],
+              onlyDependOnLibsWithTags: ['type:ui','type:data-access', ...baseTags],
               allowedExternalImports: allowedFrontendExternalImports,
             },
             {
               sourceTag: 'type:data-access',
-              onlyDependOnLibsWithTags: [
-                'type:data-access',
-                'type:util',
-                'type:model',
-                'type:config',
-                'type:constants',
-              ],
+              onlyDependOnLibsWithTags: ['type:data-access', ...baseTags],
               allowedExternalImports: allowedFrontendExternalImports,
             },
             {
               sourceTag: 'type:util',
-              onlyDependOnLibsWithTags: [
-                'type:util',
-                'type:model',
-                'type:config',
-                'type:constants',
-              ],
+              onlyDependOnLibsWithTags: [...baseTags],
               allowedExternalImports: [
                 'echarts',
                 '@capacitor/*',
@@ -181,7 +152,6 @@ module.exports = [
             { // buildable
               sourceTag: 'type:constants',
               onlyDependOnLibsWithTags: []
-              // No external imports allowed for constants
             },
 // SCOPES
 // gemini recommends to remove this rule, because it leads to problems with dependency checks
