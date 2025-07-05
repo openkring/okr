@@ -2,7 +2,7 @@ import { Component, input } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from "@bk2/shared/pipes";
-import { SocialPostModel } from "@bk2/social-feed/model";
+import { SocialPostModel } from "@bk2/shared/models";
 
 @Component({
   selector: 'bk-social-post',

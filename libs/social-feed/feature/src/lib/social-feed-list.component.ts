@@ -4,7 +4,7 @@ import { tap } from 'rxjs';
 import { IonContent, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonList } from '@ionic/angular/standalone';
 
 import { SocialPostComponent } from '@bk2/social-feed/ui';
-import { SocialPostModel } from '@bk2/social-feed/model';
+import { SocialPostModel } from '@bk2/shared/models';
 import { SocialFeedService } from '@bk2/social-feed/data-access';
 
 

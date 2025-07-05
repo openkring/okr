@@ -154,7 +154,6 @@
 
       "@bk2/social-feed/data-access": ["dist/libs/social-feed/data-access"],
       "@bk2/social-feed/feature": ["dist/libs/social-feed/feature"],
-      "@bk2/social-feed/model": ["dist/libs/social-feed/model"],
       "@bk2/social-feed/ui": ["dist/libs/social-feed/ui"],
     }
   },
