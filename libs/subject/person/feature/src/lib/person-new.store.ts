@@ -30,7 +30,7 @@ export const PersonNewStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),  
       stream: ({params}) => {
-        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, request.orgId);
+        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, params.orgId);
         debugItemLoaded<OrgModel>(`org ${params.orgId}`, org$, params.currentUser);
         return org$;
       }
@@ -52,7 +52,7 @@ export const PersonNewStore = signalStore(
         mcatId: store.membershipCategoryKey()
       }),  
       stream: ({params}) => {
-        const mcat$ = readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, request.mcatId);
+        const mcat$ = readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, params.mcatId);
         debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, mcat$, store.appStore.currentUser());           
         return mcat$;
       }

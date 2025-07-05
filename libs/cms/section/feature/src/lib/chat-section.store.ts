@@ -53,8 +53,8 @@ export const ChatSectionStore = signalStore(
       }),
       stream: ({params}): Observable<string | undefined> => {
         if (!params.currentUser) return of(undefined);
-        const _url$ = getAvatarImgixUrl(store.appStore.firestore, ModelType.Person + '.' + request.currentUser.personKey, THUMBNAIL_SIZE, store.imgixBaseUrl())
-        debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${request.currentUser.personKey}`, _url$, store.currentUser());
+        const _url$ = getAvatarImgixUrl(store.appStore.firestore, ModelType.Person + '.' + params.currentUser.personKey, THUMBNAIL_SIZE, store.imgixBaseUrl())
+        debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${params.currentUser.personKey}`, _url$, store.currentUser());
         return _url$;
       }
     }),
@@ -96,7 +96,7 @@ export const ChatSectionStore = signalStore(
           // Convert the promise to an Observable for rxResource.
           const token$ = from(tokenPromise);
 
-          debugItemLoaded(`ChatSectionStore.userTokenResource: user token for ${request.currentUser.bkey}`, token$, request.currentUser);
+          debugItemLoaded(`ChatSectionStore.userTokenResource: user token for ${params.currentUser.bkey}`, token$, params.currentUser);
           return token$;
 
         } catch (error) {
