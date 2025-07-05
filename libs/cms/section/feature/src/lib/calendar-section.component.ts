@@ -1,16 +1,15 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
-
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { CalendarOptions, EventInput } from '@fullcalendar/core';
 
 import { SectionModel } from '@bk2/shared/models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { debugData, debugMessage, die } from '@bk2/shared/util-core';
 import { CalendarStore } from './calendar-section.store';
-import { EventInput } from '@fullcalendar/core';
 
 @Component({
   selector: 'bk-calendar-section',
@@ -52,7 +51,7 @@ export class CalendarSectionComponent implements OnInit {
   protected readonly subTitle = computed(() => this.section()?.subTitle);
   protected readonly calendarName = computed(() => this.section()?.name);
   protected readonly calendarOptions = computed(() => {
-    const _options = this.section()?.properties.calendarOptions ?? die('CalendarSectionComponent.calendarOptions: missing calendarOptions');
+    const _options = this.section()?.properties.calendarOptions as CalendarOptions?? die('CalendarSectionComponent.calendarOptions: missing calendarOptions');
     _options.plugins = [ dayGridPlugin, interactionPlugin, timeGridPlugin ];
     _options.dateClick = (arg) => { this.onDateClick(arg); }
     _options.eventClick = (arg) => { this.onEventClick(arg); }
