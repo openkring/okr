@@ -33,6 +33,7 @@ export * from './lib/reservation.model';
 export * from './lib/resource.model';
 export * from './lib/roles';
 export * from './lib/section.model';
+export * from './lib/social-post.model';
 export * from './lib/swisscities.model';
 export * from './lib/tag.model';
 export * from './lib/task.model';
