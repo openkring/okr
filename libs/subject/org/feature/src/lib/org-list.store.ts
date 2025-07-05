@@ -2,7 +2,6 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
-import { catchError, finalize, of } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { chipMatches, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
