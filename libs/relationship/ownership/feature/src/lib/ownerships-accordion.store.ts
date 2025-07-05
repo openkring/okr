@@ -36,12 +36,12 @@ export const OwnershipAccordionStore = signalStore(
   })),
   withProps((store) => ({
     ownershipsResource: rxResource({
-      request: () => ({
+      params: () => ({
         owner: store.owner()
       }),
-      loader: ({request}) => {
-        if (!request.owner) return of([]);
-        const ownerships$ = store.ownershipService.listOwnershipsOfOwner(request.owner.bkey, store.ownerModelType());        
+      stream: ({params}) => {
+        if (!params.owner) return of([]);
+        const ownerships$ = store.ownershipService.listOwnershipsOfOwner(params.owner.bkey, store.ownerModelType());        
         debugListLoaded('OwnershipAccordionStore.ownerships (Person)', ownerships$, store.appStore.currentUser());        
         return ownerships$;
       }

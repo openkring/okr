@@ -53,7 +53,7 @@ export const OwnershipListStore = signalStore(
 
   withProps((store) => ({
     ownershipsResource: rxResource({
-      loader: () => {
+      stream: () => {
         const ownerships$ = store.ownershipService.list();
         debugListLoaded('OwnershipListStore.ownerships', ownerships$, store.appStore.currentUser());
         return ownerships$;

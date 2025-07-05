@@ -50,20 +50,20 @@ export const AlbumStore = signalStore(
 
   withProps((store) => ({
     filesResource: resource({
-      request: () => store.currentDirectory(),
-      loader: async ({ request }) => { // currentDirectory
-        if (!request || request.length === 0) return [];
-        const _files =  await listAllFilesFromDirectory(store.storage, store.config(), store.imgixBaseUrl(), request);
-        debugMessage(`AlbumStore.filesResource: loaded ${_files.length} files from ${request}`, store.currentUser());
+      params: () => store.currentDirectory(),
+      loader: async ({ params }) => { // currentDirectory
+        if (!params || params.length === 0) return [];
+        const _files =  await listAllFilesFromDirectory(store.storage, store.config(), store.imgixBaseUrl(), params);
+        debugMessage(`AlbumStore.filesResource: loaded ${_files.length} files from ${params}`, store.currentUser());
         return _files;
       }
     }),
 
     metaDataResource: resource({
-      request: () => store.currentImage(),
-      loader: async ({ request }) => { // currentImage
-        const _meta = await getImageMetaData(store.httpClient, store.imgixBaseUrl(), request);
-        debugMessage(`AlbumStore.metaDataResource: loaded metadata for ${request?.url}`, store.currentUser());
+      params: () => store.currentImage(),
+      loader: async ({ params }) => { // currentImage
+        const _meta = await getImageMetaData(store.httpClient, store.imgixBaseUrl(), params);
+        debugMessage(`AlbumStore.metaDataResource: loaded metadata for ${params?.url}`, store.currentUser());
         return _meta;
       }
     })

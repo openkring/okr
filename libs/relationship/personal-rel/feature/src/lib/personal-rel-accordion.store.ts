@@ -43,13 +43,13 @@ export const PersonalRelAccordionStore = signalStore(
   })),
   withProps((store) => ({
      personalRelsResource: rxResource({
-      request: () => ({
+      params: () => ({
         personKey: store.personKey(),
       }),
-      loader: ({request}) => {
+      stream: ({params}) => {
         let _personalRels$: Observable<PersonalRelModel[]> = of([]);
-        if (request.personKey) {
-          _personalRels$ = store.personalRelService.listPersonalRelsOfPerson(request.personKey);
+        if (params.personKey) {
+          _personalRels$ = store.personalRelService.listPersonalRelsOfPerson(params.personKey);
         }
         debugListLoaded('PersonalRelAccordionStore.personalRels (subject)', _personalRels$, store.appStore.currentUser());
         return _personalRels$;
