@@ -6,7 +6,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
 import { debugItemLoaded, readModel } from '@bk2/shared/util-core';
 
-import { MembershipService } from '@bk2/membership/data-access';
+import { MembershipService } from '@bk2/relationship/membership/data-access';
 import { AppStore } from '@bk2/shared/feature';
 
 export type MembershipEditState = {

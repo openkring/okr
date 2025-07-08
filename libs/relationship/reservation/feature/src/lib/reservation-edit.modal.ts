@@ -9,8 +9,8 @@ import { ModelType, ReservationCollection, ReservationModel, UserModel, RoleName
 import { AppStore } from '@bk2/shared/feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { ReservationFormComponent } from '@bk2/reservation/ui';
-import { convertFormToReservation, convertReservationToForm, getReserverName } from '@bk2/reservation/util';
+import { ReservationFormComponent } from '@bk2/relationship/reservation/ui';
+import { convertFormToReservation, convertReservationToForm, getReserverName } from '@bk2/relationship/reservation/util';
 
 @Component({
   selector: 'bk-reservation-edit-modal',

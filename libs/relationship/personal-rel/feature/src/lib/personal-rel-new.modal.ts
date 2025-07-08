@@ -8,8 +8,8 @@ import { hasRole } from '@bk2/shared/util-core';
 import { ModelType, PersonModel, UserModel, RoleName} from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
-import { PersonalRelNewFormComponent } from '@bk2/personal-rel/ui';
-import { convertPersonsToNewForm } from '@bk2/personal-rel/util';
+import { PersonalRelNewFormComponent } from '@bk2/relationship/personal-rel/ui';
+import { convertPersonsToNewForm } from '@bk2/relationship/personal-rel/util';
 import { PersonalRelModalsService } from './personal-rel-modals.service';
 
 @Component({

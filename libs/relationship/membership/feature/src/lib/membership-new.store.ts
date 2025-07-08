@@ -7,7 +7,7 @@ import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, Or
 import { debugItemLoaded, readModel } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
 
-import { MembershipService } from '@bk2/membership/data-access';
+import { MembershipService } from '@bk2/relationship/membership/data-access';
 
 export type MembershipNewState = {
   orgId: string | undefined;

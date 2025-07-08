@@ -8,7 +8,7 @@ import { saveComment } from '@bk2/comment/util';
 import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
 import { confirmAction } from '@bk2/shared/util-angular';
 
-import { getReservationSearchIndex, getReservationSearchIndexInfo } from '@bk2/reservation/util';
+import { getReservationSearchIndex, getReservationSearchIndexInfo } from '@bk2/relationship/reservation/util';
 import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({

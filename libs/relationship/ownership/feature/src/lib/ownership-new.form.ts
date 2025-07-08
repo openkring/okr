@@ -10,7 +10,7 @@ import { debugFormErrors, getAvatarKey, getFullPersonName, getTodayStr, isOrg, i
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared/feature';
 import { AvatarPipe } from '@bk2/shared/pipes';
 
-import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, ownershipNewFormValidations } from '@bk2/ownership/util';
+import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, ownershipNewFormValidations } from '@bk2/relationship/ownership/util';
 
 
 @Component({

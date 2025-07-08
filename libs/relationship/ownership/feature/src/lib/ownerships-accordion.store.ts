@@ -10,7 +10,7 @@ import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } fro
 import { confirm } from '@bk2/shared/util-angular';
 import { selectDate } from '@bk2/shared/ui';
 
-import { OwnershipService } from '@bk2/ownership/data-access';
+import { OwnershipService } from '@bk2/relationship/ownership/data-access';
 import { OwnershipModalsService } from './ownership-modals.service';
 
 export type OwnershipAccordionState = {

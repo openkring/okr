@@ -9,7 +9,7 @@ import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
 import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 import { PeriodicityTypes, ReservationReasons, ReservationStates } from '@bk2/shared/categories';
 
-import { ReservationFormModel, reservationFormModelShape, reservationFormValidations } from '@bk2/reservation/util';
+import { ReservationFormModel, reservationFormModelShape, reservationFormValidations } from '@bk2/relationship/reservation/util';
 
 @Component({
   selector: 'bk-reservation-form',

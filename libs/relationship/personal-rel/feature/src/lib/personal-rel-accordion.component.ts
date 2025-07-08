@@ -9,7 +9,7 @@ import { hasRole, isOngoing } from '@bk2/shared/util-core';
 import { EmptyListComponent } from '@bk2/shared/ui';
 import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
 import { PersonalRelTypes } from '@bk2/shared/categories';
-import { PersonalRelNamePipe } from '@bk2/personal-rel/util';
+import { PersonalRelNamePipe } from '@bk2/relationship/personal-rel/util';
 
 
 

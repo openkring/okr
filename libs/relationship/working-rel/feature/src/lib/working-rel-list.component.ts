@@ -13,7 +13,7 @@ import { addAllCategory, WorkingRelStates, WorkingRelTypes } from '@bk2/shared/c
 import { MenuComponent } from '@bk2/cms/menu/feature';
 
 import { WorkingRelListStore } from './working-rel-list.store';
-import { WorkingRelNamePipe } from '@bk2/working-rel/util';
+import { WorkingRelNamePipe } from '@bk2/relationship/working-rel/util';
 
 @Component({
     selector: 'bk-working-rel-list',

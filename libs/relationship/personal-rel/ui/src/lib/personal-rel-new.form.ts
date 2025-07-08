@@ -11,7 +11,7 @@ import { PersonalRelTypes } from '@bk2/shared/categories';
 
 import { AsyncPipe } from '@angular/common';
 
-import { PersonalRelFormModel, personalRelFormModelShape, PersonalRelNewFormModel, personalRelNewFormValidations } from '@bk2/personal-rel/util';
+import { PersonalRelFormModel, personalRelFormModelShape, PersonalRelNewFormModel, personalRelNewFormValidations } from '@bk2/relationship/personal-rel/util';
 
 @Component({
   selector: 'bk-personal-rel-new-form',

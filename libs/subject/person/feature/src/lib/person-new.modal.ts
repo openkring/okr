@@ -5,7 +5,7 @@ import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { OrgModel} from '@bk2/shared/models';
-import { createNewPersonFormModel } from '@bk2/person/util';
+import { createNewPersonFormModel } from '@bk2/subject/person/util';
 import { PersonNewStore } from './person-new.store';
 import { PersonNewFormComponent } from './person-new.form';
 

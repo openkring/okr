@@ -6,7 +6,7 @@ import { SwissCity, UserModel, RoleName } from '@bk2/shared/models';
 import { CheckboxComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 
-import { GroupFormModel, GroupNewFormModel, groupNewFormModelShape, groupNewFormValidations } from '@bk2/group/util';
+import { GroupFormModel, GroupNewFormModel, groupNewFormModelShape, groupNewFormValidations } from '@bk2/subject/group/util';
 
 @Component({
   selector: 'bk-group-new-form',

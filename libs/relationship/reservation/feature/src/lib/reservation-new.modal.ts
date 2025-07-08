@@ -8,7 +8,7 @@ import { hasRole } from '@bk2/shared/util-core';
 import { ModelType, OrgModel, PersonModel, ResourceModel, UserModel, RoleName} from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
-import { convertReserverAndResourceToNewForm } from '@bk2/reservation/util';
+import { convertReserverAndResourceToNewForm } from '@bk2/relationship/reservation/util';
 import { ReservationNewFormComponent } from './reservation-new.form';
 
 @Component({

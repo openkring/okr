@@ -11,7 +11,7 @@ import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { PersonalRelTypes } from '@bk2/shared/categories';
 
-import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidations } from '@bk2/personal-rel/util';
+import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidations } from '@bk2/relationship/personal-rel/util';
 
 @Component({
   selector: 'bk-personal-rel-form',

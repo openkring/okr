@@ -11,7 +11,7 @@ import { PeriodicityTypes, TransferStates, TransferTypes } from '@bk2/shared/cat
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared/feature';
 
-import { TransferFormModel, transferFormModelShape, transferFormValidations } from '@bk2/transfer/util';
+import { TransferFormModel, transferFormModelShape, transferFormValidations } from '@bk2/relationship/transfer/util';
 
 @Component({
   selector: 'bk-transfer-form',

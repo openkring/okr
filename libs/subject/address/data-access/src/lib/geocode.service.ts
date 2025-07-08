@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { ToastController } from '@ionic/angular';
 import { ENV } from '@bk2/shared/config';
 import { AddressChannel, AddressModel } from '@bk2/shared/models';
-import { stringifyAddress } from '@bk2/address/util';
+import { stringifyAddress } from '@bk2/subject/address/util';
 import { error } from '@bk2/shared/util-angular';
 
 export interface GeoCoordinates {

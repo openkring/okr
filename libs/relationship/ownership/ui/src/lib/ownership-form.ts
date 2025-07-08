@@ -4,7 +4,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { ModelType, UserModel, RoleName } from '@bk2/shared/models';
-import { OwnershipFormModel, ownershipFormModelShape, ownershipFormValidations } from '@bk2/ownership/util';
+import { OwnershipFormModel, ownershipFormModelShape, ownershipFormValidations } from '@bk2/relationship/ownership/util';
 import { hasRole } from '@bk2/shared/util-core';
 
 @Component({

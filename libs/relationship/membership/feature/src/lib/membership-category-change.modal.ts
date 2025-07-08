@@ -5,8 +5,8 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared/ui';
 import { CategoryListModel, MembershipModel, ModelType } from '@bk2/shared/models';
-import { CategoryChangeFormComponent } from '@bk2/membership/ui';
-import { convertMembershipToCategoryChangeForm, getMembershipName } from '@bk2/membership/util';
+import { CategoryChangeFormComponent } from '@bk2/relationship/membership/ui';
+import { convertMembershipToCategoryChangeForm, getMembershipName } from '@bk2/relationship/membership/util';
 
 @Component({
   selector: 'bk-category-change-modal',

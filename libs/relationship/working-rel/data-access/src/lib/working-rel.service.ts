@@ -9,7 +9,7 @@ import { confirmAction } from '@bk2/shared/util-angular';
 
 import { saveComment } from '@bk2/comment/util';
 
-import { getWorkingRelSearchIndex, getWorkingRelSearchIndexInfo } from '@bk2/working-rel/util';
+import { getWorkingRelSearchIndex, getWorkingRelSearchIndexInfo } from '@bk2/relationship/working-rel/util';
 import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({

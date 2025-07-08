@@ -7,8 +7,8 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { ModelType, UserModel} from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
-import { createNewOrgFormModel } from '@bk2/org/util';
-import { OrgNewFormComponent } from '@bk2/org/ui';
+import { createNewOrgFormModel } from '@bk2/subject/org/util';
+import { OrgNewFormComponent } from '@bk2/subject/org/ui';
 
 @Component({
   selector: 'bk-org-new-modal',

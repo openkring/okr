@@ -4,8 +4,8 @@ import { ModalController } from "@ionic/angular/standalone";
 import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } from "@bk2/shared/models";
 import { AppStore } from "@bk2/shared/feature";
 
-import { convertFormToNewReservation, isReservation, ReservationNewFormModel } from "@bk2/reservation/util";
-import { ReservationService } from "@bk2/reservation/data-access";
+import { convertFormToNewReservation, isReservation, ReservationNewFormModel } from "@bk2/relationship/reservation/util";
+import { ReservationService } from "@bk2/relationship/reservation/data-access";
 import { ReservationNewModalComponent } from "./reservation-new.modal";
 import { ReservationEditModalComponent } from "./reservation-edit.modal";
 

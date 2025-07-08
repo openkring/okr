@@ -8,8 +8,8 @@ import { AddressChannel, AddressModel, AddressUsage, ModelType } from "@bk2/shar
 import { SvgIconPipe } from "@bk2/shared/pipes";
 import { EmptyListComponent } from "@bk2/shared/ui";
 
-import { AddressService } from "@bk2/address/data-access";
-import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/address/util";
+import { AddressService } from "@bk2/subject/address/data-access";
+import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/subject/address/util";
 import { AddressModalsService } from "./address-modals.service";
 import { AppStore } from "@bk2/shared/feature";
 

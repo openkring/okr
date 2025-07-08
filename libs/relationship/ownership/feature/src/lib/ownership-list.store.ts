@@ -10,7 +10,7 @@ import { categoryMatches, ownerTypeMatches } from '@bk2/shared/categories';
 import { AppStore } from '@bk2/shared/feature';
 import { selectDate } from '@bk2/shared/ui';
 
-import { OwnershipService } from '@bk2/ownership/data-access';
+import { OwnershipService } from '@bk2/relationship/ownership/data-access';
 import { OwnershipModalsService } from './ownership-modals.service';
 
 export type OwnershipListState = {

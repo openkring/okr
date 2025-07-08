@@ -11,9 +11,9 @@ import { debugData, debugItemLoaded, getTodayStr, isPerson } from '@bk2/shared/u
 import { AppNavigationService } from '@bk2/shared/util-angular';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared/feature';
 
-import { convertFormToGroup, GroupFormModel } from '@bk2/group/util';
-import { GroupService } from '@bk2/group/data-access';
-import { MembershipService } from '@bk2/membership/data-access';
+import { convertFormToGroup, GroupFormModel } from '@bk2/subject/group/util';
+import { GroupService } from '@bk2/subject/group/data-access';
+import { MembershipService } from '@bk2/relationship/membership/data-access';
 
 export type GroupEditState = {
   groupKey: string | undefined;

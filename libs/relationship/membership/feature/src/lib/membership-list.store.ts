@@ -10,7 +10,7 @@ import { AllCategories, CategoryCollection, CategoryListModel, GenderType, Membe
 import { AppStore } from '@bk2/shared/feature';
 import { selectDate } from '@bk2/shared/ui';
 
-import { MembershipService } from '@bk2/membership/data-access';
+import { MembershipService } from '@bk2/relationship/membership/data-access';
 import { MembershipModalsService } from './membership-modals.service';
 
 export type MembershipListState = {

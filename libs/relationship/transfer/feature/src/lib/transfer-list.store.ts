@@ -8,7 +8,7 @@ import { categoryMatches, yearMatches } from '@bk2/shared/categories';
 import { AllCategories, ModelType, TransferCollection, TransferModel, TransferType } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
-import { TransferService } from '@bk2/transfer/data-access';
+import { TransferService } from '@bk2/relationship/transfer/data-access';
 import { TransferModalsService } from './transfer-modals.service';
 
 export type TransferListState = {

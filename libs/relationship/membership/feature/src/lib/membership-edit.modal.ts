@@ -10,8 +10,8 @@ import { MembershipCollection, MembershipModel, ModelType, UserModel, RoleName }
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
 
-import { MembershipFormComponent } from '@bk2/membership/ui';
-import { convertFormToMembership, convertMembershipToForm, getMembershipName } from '@bk2/membership/util';
+import { MembershipFormComponent } from '@bk2/relationship/membership/ui';
+import { convertFormToMembership, convertMembershipToForm, getMembershipName } from '@bk2/relationship/membership/util';
 import { MembershipEditStore } from './membership-edit.store';
 
 @Component({

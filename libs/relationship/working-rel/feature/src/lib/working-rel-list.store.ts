@@ -8,10 +8,10 @@ import { AllCategories, ModelType, WorkingRelModel, WorkingRelType } from '@bk2/
 import { categoryMatches } from '@bk2/shared/categories';
 import { AppStore } from '@bk2/shared/feature';
 
-import { WorkingRelService } from '@bk2/working-rel/data-access';
+import { WorkingRelService } from '@bk2/relationship/working-rel/data-access';
 import { WorkingRelModalsService } from './working-rel-modals.service';
 import { WorkingRelNewModalComponent } from './working-rel-new.modal';
-import { convertFormToNewWorkingRel, isWorkingRel, WorkingRelNewFormModel } from '@bk2/working-rel/util';
+import { convertFormToNewWorkingRel, isWorkingRel, WorkingRelNewFormModel } from '@bk2/relationship/working-rel/util';
 import { WorkingRelEditModalComponent } from './working-rel-edit.modal';
 
 export type WorkingRelListState = {

@@ -2,7 +2,7 @@ import { Component, computed, input, model, output, signal} from '@angular/core'
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/org/util';
+import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subject/org/util';
 import { OrgTypes } from '@bk2/shared/categories';
 import { BexioIdMask, ChVatMask } from '@bk2/shared/config';
 import { OrgType, UserModel, RoleName } from '@bk2/shared/models';

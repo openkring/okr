@@ -12,7 +12,7 @@ import { addAllCategory, PersonalRelTypes } from '@bk2/shared/categories';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 
-import { PersonalRelNamePipe } from '@bk2/personal-rel/util';
+import { PersonalRelNamePipe } from '@bk2/relationship/personal-rel/util';
 import { PersonalRelListStore } from './personal-rel-list.store';
 
 @Component({

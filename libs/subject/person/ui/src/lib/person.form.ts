@@ -8,7 +8,7 @@ import { BexioIdMask, ChSsnMask } from '@bk2/shared/config';
 import { GenderType, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared/models';
 import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { debugFormErrors, hasRole, isVisibleToUser } from '@bk2/shared/util-core';
-import { PersonFormModel, personFormModelShape, personFormValidations } from '@bk2/person/util';
+import { PersonFormModel, personFormModelShape, personFormValidations } from '@bk2/subject/person/util';
 
 @Component({
   selector: 'bk-person-form',

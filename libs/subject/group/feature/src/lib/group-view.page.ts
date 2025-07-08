@@ -12,9 +12,9 @@ import { AvatarService } from '@bk2/avatar/data-access';
 import { getDocumentStoragePath } from '@bk2/document/util';
 
 import { GroupEditStore } from './group-edit.store';
-import { convertGroupToForm } from '@bk2/group/util';
+import { convertGroupToForm } from '@bk2/subject/group/util';
 import { ContentComponent } from '@bk2/cms/page/feature';
-import { MembersComponent } from '@bk2/membership/feature';
+import { MembersComponent } from '@bk2/relationship/membership/feature';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AsyncPipe } from '@angular/common';
 import { SvgIconPipe } from '@bk2/shared/pipes';

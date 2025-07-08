@@ -3,7 +3,7 @@ import { PersonFormModel } from "./person-form.model";
 import { die, getTodayStr } from "@bk2/shared/util-core";
 import { AhvFormat, formatAhv } from "@bk2/shared/util-angular";
 import { PersonNewFormModel } from "./person-new-form.model";
-import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from "@bk2/address/util";
+import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from "@bk2/subject/address/util";
 import { END_FUTURE_DATE_STR } from "@bk2/shared/constants";
 
 export function convertPersonToForm(person?: PersonModel): PersonFormModel {

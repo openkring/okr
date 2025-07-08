@@ -9,8 +9,8 @@ import { ModelType, PersonalRelCollection, PersonalRelModel, UserModel, RoleName
 import { AppStore } from '@bk2/shared/feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { PersonalRelFormComponent } from '@bk2/personal-rel/ui';
-import { convertFormToPersonalRel, convertPersonalRelToForm } from '@bk2/personal-rel/util';
+import { PersonalRelFormComponent } from '@bk2/relationship/personal-rel/ui';
+import { convertFormToPersonalRel, convertPersonalRelToForm } from '@bk2/relationship/personal-rel/util';
 import { PersonalRelModalsService } from './personal-rel-modals.service';
 
 @Component({

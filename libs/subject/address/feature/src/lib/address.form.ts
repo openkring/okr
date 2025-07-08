@@ -7,9 +7,9 @@ import { AddressChannel, AddressUsage, SwissCity, UserModel, RoleName } from '@b
 import { CategoryComponent, CheckboxComponent, EmailInputComponent, ErrorNoteComponent, IbanComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 
-import { SwissCitySearchComponent } from '@bk2/swisscities/ui';
+import { SwissCitySearchComponent } from '@bk2/subject/swisscities/ui';
 
-import { AddressFormModel, addressFormModelShape, addressFormValidations } from '@bk2/address/util';
+import { AddressFormModel, addressFormModelShape, addressFormValidations } from '@bk2/subject/address/util';
 
 @Component({
   selector: 'bk-address-form',

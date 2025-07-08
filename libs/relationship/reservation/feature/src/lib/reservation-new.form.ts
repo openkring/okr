@@ -13,7 +13,7 @@ import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore } from '@bk2/shared/feature';
 
-import { ReservationNewFormModel, reservationNewFormModelShape, reservationNewFormValidations } from '@bk2/reservation/util';
+import { ReservationNewFormModel, reservationNewFormModelShape, reservationNewFormValidations } from '@bk2/relationship/reservation/util';
 import { ReservationSelectorsService } from './reservation-selectors.service';
 
 @Component({

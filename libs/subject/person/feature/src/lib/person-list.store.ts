@@ -12,11 +12,11 @@ import { AddressModel, AllCategories, GenderType, MembershipCollection, ModelTyp
 import { AppStore } from '@bk2/shared/feature';
 
 import { CategoryService } from '@bk2/category/data-access';
-import { AddressService } from '@bk2/address/data-access';
+import { AddressService } from '@bk2/subject/address/data-access';
 import { saveComment } from '@bk2/comment/util';
 
-import { PersonService } from '@bk2/person/data-access';
-import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/person/util';
+import { PersonService } from '@bk2/subject/person/data-access';
+import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/subject/person/util';
 import { PersonNewModalComponent } from './person-new.modal';
 import { bkTranslate } from '@bk2/shared/i18n';
 

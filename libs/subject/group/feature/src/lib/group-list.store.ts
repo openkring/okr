@@ -10,8 +10,8 @@ import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
 import { GroupCollection, GroupModel, ModelType } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
-import { GroupService } from '@bk2/group/data-access';
-import { convertFormToNewGroup, GroupNewFormModel } from '@bk2/group/util';
+import { GroupService } from '@bk2/subject/group/data-access';
+import { convertFormToNewGroup, GroupNewFormModel } from '@bk2/subject/group/util';
 import { GroupNewModalComponent } from './group-new.modal';
 
 export type GroupListState = {

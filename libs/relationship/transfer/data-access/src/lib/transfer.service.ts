@@ -6,7 +6,7 @@ import { ENV, FIRESTORE } from '@bk2/shared/config';
 import { TransferCollection, TransferModel, UserModel } from '@bk2/shared/models';
 
 import { saveComment } from '@bk2/comment/util';
-import { getTransferSearchIndex, getTransferSearchIndexInfo } from '@bk2/transfer/util';
+import { getTransferSearchIndex, getTransferSearchIndexInfo } from '@bk2/relationship/transfer/util';
 import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
 import { confirmAction } from '@bk2/shared/util-angular';
 import { bkTranslate } from '@bk2/shared/i18n';

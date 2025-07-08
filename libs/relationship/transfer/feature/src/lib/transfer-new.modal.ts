@@ -8,7 +8,7 @@ import { ModelType, OrgModel, PersonModel, ResourceModel, RoleName } from '@bk2/
 import { hasRole } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
 
-import { convertFormToTransfer, newTransferFormModel } from '@bk2/transfer/util';
+import { convertFormToTransfer, newTransferFormModel } from '@bk2/relationship/transfer/util';
 import { TransferFormComponent } from './transfer.form';
 
 @Component({

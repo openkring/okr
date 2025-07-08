@@ -10,8 +10,8 @@ import { getModelAndKey, warn } from "@bk2/shared/util-core";
 
 import { readAsFile } from "@bk2/avatar/util";
 
-import { AddressService, GeocodingService } from "@bk2/address/data-access";
-import { browseUrl, getStringifiedPostalAddress, isAddress } from "@bk2/address/util";
+import { AddressService, GeocodingService } from "@bk2/subject/address/data-access";
+import { browseUrl, getStringifiedPostalAddress, isAddress } from "@bk2/subject/address/util";
 import { AddressEditModalComponent } from "./address-edit.modal";
 
 @Injectable({

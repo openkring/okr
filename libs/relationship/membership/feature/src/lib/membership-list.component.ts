@@ -11,7 +11,7 @@ import { error } from '@bk2/shared/util-angular';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 
-import { CategoryLogPipe, getMembershipName } from '@bk2/membership/util';
+import { CategoryLogPipe, getMembershipName } from '@bk2/relationship/membership/util';
 import { MembershipListStore } from './membership-list.store';
 import { addAllCategory, GenderTypes, OrgTypes } from '@bk2/shared/categories';
 

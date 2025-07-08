@@ -11,7 +11,7 @@ import { confirmAction, copyToClipboardWithConfirmation } from '@bk2/shared/util
 import { saveComment } from '@bk2/comment/util';
 import { getCategoryAttribute } from '@bk2/category/util';
 
-import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipSearchIndex, getMembershipSearchIndexInfo, getRelLogEntry } from '@bk2/membership/util';
+import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipSearchIndex, getMembershipSearchIndexInfo, getRelLogEntry } from '@bk2/relationship/membership/util';
 import { bkTranslate } from '@bk2/shared/i18n';
   
 

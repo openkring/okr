@@ -7,7 +7,7 @@ import { LowercaseWordMask } from '@bk2/shared/config';
 import { UserModel, RoleName } from '@bk2/shared/models';
 import { CheckboxComponent, ChipsComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
-import { GroupFormModel, groupFormModelShape, groupFormValidations } from '@bk2/group/util';
+import { GroupFormModel, groupFormModelShape, groupFormValidations } from '@bk2/subject/group/util';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AsyncPipe } from '@angular/common';
 

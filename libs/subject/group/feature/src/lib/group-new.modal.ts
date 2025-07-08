@@ -7,8 +7,8 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
 import { ModelType, UserModel} from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
-import { GroupNewFormComponent } from '@bk2/group/ui';
-import { createNewGroupFormModel } from '@bk2/group/util';
+import { GroupNewFormComponent } from '@bk2/subject/group/ui';
+import { createNewGroupFormModel } from '@bk2/subject/group/util';
 
 @Component({
   selector: 'bk-group-new-modal',

@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonContent, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { CategoryLogPipe } from '@bk2/membership/util';
+import { CategoryLogPipe } from '@bk2/relationship/membership/util';
 
 import { AvatarPipe, DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { MembershipModel, ModelType, RoleName } from '@bk2/shared/models';

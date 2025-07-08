@@ -12,11 +12,11 @@ import { selectDate } from '@bk2/shared/ui';
 
 import { AvatarService } from '@bk2/avatar/data-access';
 
-import { PersonalRelService } from '@bk2/personal-rel/data-access';
+import { PersonalRelService } from '@bk2/relationship/personal-rel/data-access';
 import { PersonalRelModalsService } from './personal-rel-modals.service';
 import { PersonalRelEditModalComponent } from './personal-rel-edit.modal';
 import { PersonalRelNewModalComponent } from './personal-rel-new.modal';
-import { convertFormToNewPersonalRel, PersonalRelNewFormModel } from '@bk2/personal-rel/util';
+import { convertFormToNewPersonalRel, PersonalRelNewFormModel } from '@bk2/relationship/personal-rel/util';
 
 export type PersonalRelAccordionState = {
   personKey: string | undefined;

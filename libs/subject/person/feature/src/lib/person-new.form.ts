@@ -13,9 +13,9 @@ import { AvatarPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { OrgSelectModalComponent, AppStore } from '@bk2/shared/feature';
 
-import { SwissCitySearchComponent } from '@bk2/swisscities/ui';
+import { SwissCitySearchComponent } from '@bk2/subject/swisscities/ui';
 
-import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations } from '@bk2/person/util';
+import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations } from '@bk2/subject/person/util';
 
 @Component({
   selector: 'bk-person-new-form',

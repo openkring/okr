@@ -12,7 +12,7 @@ import { addAllCategory, ReservationStates, ResourceTypes } from '@bk2/shared/ca
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 
-import { getReserverName } from '@bk2/reservation/util';
+import { getReserverName } from '@bk2/relationship/reservation/util';
 import { ReservationListStore } from './reservation-list.store';
 
 @Component({

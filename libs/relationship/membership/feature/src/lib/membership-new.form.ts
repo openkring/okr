@@ -10,7 +10,7 @@ import { debugFormErrors, getFullPersonName, getTodayStr, isOrg, isPerson } from
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared/feature';
 import { AvatarPipe } from '@bk2/shared/pipes';
 
-import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShape, membershipNewFormValidations } from '@bk2/membership/util';
+import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShape, membershipNewFormValidations } from '@bk2/relationship/membership/util';
 
 
 @Component({

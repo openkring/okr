@@ -4,8 +4,8 @@ import { ModalController } from "@ionic/angular/standalone";
 import { AppStore } from "@bk2/shared/feature";
 import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel } from "@bk2/shared/models";
 
-import { OwnershipService } from "@bk2/ownership/data-access";
-import { convertFormToOwnership, isOwnership, OwnershipNewFormModel } from "@bk2/ownership/util";
+import { OwnershipService } from "@bk2/relationship/ownership/data-access";
+import { convertFormToOwnership, isOwnership, OwnershipNewFormModel } from "@bk2/relationship/ownership/util";
 import { OwnershipNewModalComponent } from "./ownership-new.modal";
 import { OwnershipEditModalComponent } from "./ownership-edit.modal";
 

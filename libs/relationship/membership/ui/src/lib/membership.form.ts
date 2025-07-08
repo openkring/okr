@@ -2,7 +2,7 @@ import { Component, computed, input, model, output, signal } from '@angular/core
 import { IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { MembershipFormModel, membershipFormModelShape, membershipFormValidations } from '@bk2/membership/util';
+import { MembershipFormModel, membershipFormModelShape, membershipFormValidations } from '@bk2/relationship/membership/util';
 import { CategoryListModel, GenderType, ModelType, OrgType, Periodicity, UserModel, RoleName } from '@bk2/shared/models';
 import { BexioIdMask } from '@bk2/shared/config';
 import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';

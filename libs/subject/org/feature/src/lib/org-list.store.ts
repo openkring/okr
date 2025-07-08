@@ -10,10 +10,10 @@ import { categoryMatches } from '@bk2/shared/categories';
 import { AddressModel, AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
-import { AddressService } from '@bk2/address/data-access';
+import { AddressService } from '@bk2/subject/address/data-access';
 
-import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel } from '@bk2/org/util';
-import { OrgService } from '@bk2/org/data-access';
+import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel } from '@bk2/subject/org/util';
+import { OrgService } from '@bk2/subject/org/data-access';
 import { OrgNewModalComponent } from './org-new.modal';
 
 export type OrgListState = {

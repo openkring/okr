@@ -9,8 +9,8 @@ import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt, read
 import { confirm } from '@bk2/shared/util-angular';
 import { AvatarService } from '@bk2/avatar/data-access';
 import { getAvatarImgixUrl } from '@bk2/shared/pipes';
-import { OrgService } from '@bk2/org/data-access';
-import { MembershipService } from '@bk2/membership/data-access';
+import { OrgService } from '@bk2/subject/org/data-access';
+import { MembershipService } from '@bk2/relationship/membership/data-access';
 import { MembershipModalsService } from './membership-modals.service';
 import { selectDate } from '@bk2/shared/ui';
 import { AppStore } from '@bk2/shared/feature';

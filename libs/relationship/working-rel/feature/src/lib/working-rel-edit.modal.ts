@@ -9,8 +9,8 @@ import { AppStore } from '@bk2/shared/feature';
 import { ModelType, RoleName, UserModel, WorkingRelCollection, WorkingRelModel } from '@bk2/shared/models';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { convertFormToWorkingRel, convertWorkingRelToForm } from '@bk2/working-rel/util';
-import { WorkingRelFormComponent } from '@bk2/working-rel/ui';
+import { convertFormToWorkingRel, convertWorkingRelToForm } from '@bk2/relationship/working-rel/util';
+import { WorkingRelFormComponent } from '@bk2/relationship/working-rel/ui';
 import { WorkingRelModalsService } from './working-rel-modals.service';
 
 @Component({

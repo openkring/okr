@@ -6,8 +6,8 @@ import { CategoryItemModel, CategoryListModel, MembershipModel, ModelType, OrgMo
 import { convertDateFormatToString, DateFormat, isMembership } from "@bk2/shared/util-core";
 import { selectDate } from "@bk2/shared/ui";
 
-import { MembershipService } from "@bk2/membership/data-access";
-import { convertFormToNewMembership, MembershipNewFormModel, newMembershipForPerson } from "@bk2/membership/util";
+import { MembershipService } from "@bk2/relationship/membership/data-access";
+import { convertFormToNewMembership, MembershipNewFormModel, newMembershipForPerson } from "@bk2/relationship/membership/util";
 import { MembershipNewModalComponent } from "./membership-new.modal";
 import { MembershipEditModalComponent } from "./membership-edit.modal";
 import { CategoryChangeModalComponent } from "./membership-category-change.modal";

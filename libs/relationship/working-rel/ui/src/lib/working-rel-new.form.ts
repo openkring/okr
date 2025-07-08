@@ -11,7 +11,7 @@ import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared
 
 import { AsyncPipe } from '@angular/common';
 
-import { WorkingRelFormModel, workingRelFormModelShape, WorkingRelNewFormModel, workingRelNewFormValidations } from '@bk2/working-rel/util';
+import { WorkingRelFormModel, workingRelFormModelShape, WorkingRelNewFormModel, workingRelNewFormValidations } from '@bk2/relationship/working-rel/util';
 
 @Component({
   selector: 'bk-working-rel-new-form',

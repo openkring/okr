@@ -12,7 +12,7 @@ import { addAllCategory, GenderTypes, ResourceTypes, RowingBoatTypes } from '@bk
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
 
-import { getOwnerName } from '@bk2/ownership/util';
+import { getOwnerName } from '@bk2/relationship/ownership/util';
 import { OwnershipListStore } from './ownership-list.store';
 
 @Component({

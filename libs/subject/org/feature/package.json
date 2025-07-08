@@ -1,5 +1,5 @@
 {
-  "name": "@bk2/org-feature",
+  "name": "@bk2/subject-org-feature",
   "version": "0.0.1",
   "dependencies": {
     "tslib": "^2.3.0"

@@ -4,10 +4,10 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { AddressModel, ModelType, PersonModel, ResourceModel } from '@bk2/shared/models';
-import { PersonService } from '@bk2/person/data-access';
+import { PersonService } from '@bk2/subject/person/data-access';
 import { Observable, of } from 'rxjs';
 import { AppStore } from '@bk2/shared/feature';
-import { convertFormToPerson, PersonFormModel } from '@bk2/person/util';
+import { convertFormToPerson, PersonFormModel } from '@bk2/subject/person/util';
 import { debugItemLoaded, debugListLoaded } from '@bk2/shared/util-core';
 import { AppNavigationService } from '@bk2/shared/util-angular';
 

@@ -8,7 +8,7 @@ import { hasRole } from '@bk2/shared/util-core';
 import { AccountModel, ModelType, OrgModel, PersonModel, ResourceModel, UserModel, RoleName} from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
-import { newOwnership } from '@bk2/ownership/util';
+import { newOwnership } from '@bk2/relationship/ownership/util';
 import { OwnershipNewFormComponent } from './ownership-new.form';
 
 @Component({

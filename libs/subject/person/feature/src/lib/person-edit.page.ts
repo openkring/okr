@@ -11,16 +11,16 @@ import { getFullPersonName, hasRole } from '@bk2/shared/util-core';
 
 import { AvatarService } from '@bk2/avatar/data-access';
 
-import { AddressesAccordionComponent } from '@bk2/address/feature';
+import { AddressesAccordionComponent } from '@bk2/subject/address/feature';
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { MembershipAccordionComponent } from '@bk2/membership/feature';
-import { OwnershipAccordionComponent } from '@bk2/ownership/feature';
-import { ReservationsAccordionComponent } from '@bk2/reservation/feature';
-import { PersonalRelAccordionComponent } from '@bk2/personal-rel/feature';
-import { WorkingRelAccordionComponent } from '@bk2/working-rel/feature';
+import { MembershipAccordionComponent } from '@bk2/relationship/membership/feature';
+import { OwnershipAccordionComponent } from '@bk2/relationship/ownership/feature';
+import { ReservationsAccordionComponent } from '@bk2/relationship/reservation/feature';
+import { PersonalRelAccordionComponent } from '@bk2/relationship/personal-rel/feature';
+import { WorkingRelAccordionComponent } from '@bk2/relationship/working-rel/feature';
 
-import { convertPersonToForm } from '@bk2/person/util';
-import { PersonFormComponent } from '@bk2/person/ui';
+import { convertPersonToForm } from '@bk2/subject/person/util';
+import { PersonFormComponent } from '@bk2/subject/person/ui';
 import { PersonEditStore } from './person-edit.store';
 import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
 import { AvatarToolbarComponent } from '@bk2/avatar/feature';

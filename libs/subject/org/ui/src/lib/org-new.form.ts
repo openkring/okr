@@ -8,9 +8,9 @@ import { OrgType, SwissCity, UserModel, RoleName } from '@bk2/shared/models';
 import { CategoryComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 
-import { SwissCitySearchComponent } from '@bk2/swisscities/ui';
+import { SwissCitySearchComponent } from '@bk2/subject/swisscities/ui';
 
-import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidations } from '@bk2/org/util';
+import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidations } from '@bk2/subject/org/util';
 
 @Component({
   selector: 'bk-org-new-form',

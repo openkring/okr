@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, output } from '@angular/cor
 import { IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { CategoryLogPipe } from '@bk2/membership/util';
+import { CategoryLogPipe } from '@bk2/relationship/membership/util';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AvatarPipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';

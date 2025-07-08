@@ -8,8 +8,8 @@ import { hasRole } from '@bk2/shared/util-core';
 import { ModelType, OrgModel, PersonModel, UserModel, RoleName} from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
-import { convertPersonAndOrgToNewForm } from '@bk2/working-rel/util';
-import { WorkingRelNewFormComponent } from '@bk2/working-rel/ui';
+import { convertPersonAndOrgToNewForm } from '@bk2/relationship/working-rel/util';
+import { WorkingRelNewFormComponent } from '@bk2/relationship/working-rel/ui';
 import { WorkingRelModalsService } from './working-rel-modals.service';
 
 @Component({

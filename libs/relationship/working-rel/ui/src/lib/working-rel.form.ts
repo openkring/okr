@@ -9,7 +9,7 @@ import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
 import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { WorkingRelFormModel, workingRelFormModelShape, workingRelFormValidations } from '@bk2/working-rel/util';
+import { WorkingRelFormModel, workingRelFormModelShape, workingRelFormValidations } from '@bk2/relationship/working-rel/util';
 import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared/categories';
 
 @Component({

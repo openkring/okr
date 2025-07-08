@@ -10,10 +10,10 @@ import { debugListLoaded, isValidAt } from '@bk2/shared/util-core';
 import { confirm } from '@bk2/shared/util-angular';
 
 import { AvatarService } from '@bk2/avatar/data-access';
-import { WorkingRelService } from '@bk2/working-rel/data-access';
+import { WorkingRelService } from '@bk2/relationship/working-rel/data-access';
 import { WorkingRelModalsService } from './working-rel-modals.service';
 import { WorkingRelEditModalComponent } from './working-rel-edit.modal';
-import { isWorkingRel } from '@bk2/working-rel/util';
+import { isWorkingRel } from '@bk2/relationship/working-rel/util';
 
 export type WorkingRelAccordionState = {
   personKey: string | undefined;

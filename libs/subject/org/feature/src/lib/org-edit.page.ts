@@ -11,13 +11,13 @@ import { hasRole } from '@bk2/shared/util-core';
 import { AvatarService } from '@bk2/avatar/data-access';
 import { getDocumentStoragePath } from '@bk2/document/util';
 
-import { AddressesAccordionComponent } from '@bk2/address/feature';
+import { AddressesAccordionComponent } from '@bk2/subject/address/feature';
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { OwnershipAccordionComponent } from '@bk2/ownership/feature';
+import { OwnershipAccordionComponent } from '@bk2/relationship/ownership/feature';
 import { OrgEditStore } from './org-edit.store';
-import { OrgFormComponent } from '@bk2/org/ui';
-import { MembersAccordionComponent, MembershipAccordionComponent } from '@bk2/membership/feature';
-import { convertOrgToForm } from '@bk2/org/util';
+import { OrgFormComponent } from '@bk2/subject/org/ui';
+import { MembersAccordionComponent, MembershipAccordionComponent } from '@bk2/relationship/membership/feature';
+import { convertOrgToForm } from '@bk2/subject/org/util';
 import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
 import { AvatarToolbarComponent } from '@bk2/avatar/feature';
 

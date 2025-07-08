@@ -13,7 +13,7 @@ import { selectDate } from '@bk2/shared/ui';
 
 import { AvatarService } from '@bk2/avatar/data-access';
 
-import { MembershipService } from '@bk2/membership/data-access';
+import { MembershipService } from '@bk2/relationship/membership/data-access';
 import { MembershipModalsService } from './membership-modals.service';
 import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
 

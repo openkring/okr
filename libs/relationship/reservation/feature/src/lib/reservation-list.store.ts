@@ -9,7 +9,7 @@ import { categoryMatches, yearMatches } from '@bk2/shared/categories';
 import { selectDate } from '@bk2/shared/ui';
 import { AppStore } from '@bk2/shared/feature';
 
-import { ReservationService } from '@bk2/reservation/data-access';
+import { ReservationService } from '@bk2/relationship/reservation/data-access';
 import { ReservationModalsService } from './reservation-modals.service';
 
 export type ReservationListState = {

@@ -10,7 +10,7 @@ import { Languages } from "@bk2/shared/categories";
 
 import { saveComment } from "@bk2/comment/util";
 
-import { copyAddress, getAddressCollection } from "@bk2/address/util";
+import { copyAddress, getAddressCollection } from "@bk2/subject/address/util";
 import { bkTranslate } from "@bk2/shared/i18n";
 
 @Injectable({

@@ -10,7 +10,7 @@ import { confirm } from '@bk2/shared/util-angular';
 import { AppStore } from '@bk2/shared/feature';
 import { selectDate } from '@bk2/shared/ui';
 
-import { ReservationService } from '@bk2/reservation/data-access';
+import { ReservationService } from '@bk2/relationship/reservation/data-access';
 import { ReservationModalsService } from './reservation-modals.service';
 
 export type ReservationsAccordionState = {

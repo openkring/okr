@@ -9,8 +9,8 @@ import { hasRole } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { convertFormToOwnership, convertOwnershipToForm, getOwnerName } from '@bk2/ownership/util';
-import { OwnershipFormComponent } from '@bk2/ownership/ui';
+import { convertFormToOwnership, convertOwnershipToForm, getOwnerName } from '@bk2/relationship/ownership/util';
+import { OwnershipFormComponent } from '@bk2/relationship/ownership/ui';
 
 @Component({
   selector: 'bk-ownership-edit-modal',

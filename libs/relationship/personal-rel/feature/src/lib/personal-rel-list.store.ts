@@ -9,11 +9,11 @@ import { AppStore } from '@bk2/shared/feature';
 import { categoryMatches } from '@bk2/shared/categories';
 import { selectDate } from '@bk2/shared/ui';
 
-import { PersonalRelService } from '@bk2/personal-rel/data-access';
+import { PersonalRelService } from '@bk2/relationship/personal-rel/data-access';
 import { PersonalRelModalsService } from './personal-rel-modals.service';
 import { PersonalRelEditModalComponent } from './personal-rel-edit.modal';
 import { PersonalRelNewModalComponent } from './personal-rel-new.modal';
-import { convertFormToNewPersonalRel, PersonalRelNewFormModel } from '@bk2/personal-rel/util';
+import { convertFormToNewPersonalRel, PersonalRelNewFormModel } from '@bk2/relationship/personal-rel/util';
 
 export type PersonalRelListState = {
   searchTerm: string;

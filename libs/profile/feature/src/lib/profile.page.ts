@@ -10,7 +10,7 @@ import { I18nService, TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore } from '@bk2/shared/feature';
 import { debugFormModel } from '@bk2/shared/util-core';
 
-import { AddressesAccordionComponent } from '@bk2/address/feature';
+import { AddressesAccordionComponent } from '@bk2/subject/address/feature';
 
 import { AvatarService } from '@bk2/avatar/data-access';
 import { AvatarToolbarComponent } from '@bk2/avatar/feature';

@@ -12,10 +12,10 @@ import { AvatarService } from '@bk2/avatar/data-access';
 import { getDocumentStoragePath } from '@bk2/document/util';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { MembersAccordionComponent } from '@bk2/membership/feature';
+import { MembersAccordionComponent } from '@bk2/relationship/membership/feature';
 import { GroupEditStore } from './group-edit.store';
-import { convertGroupToForm } from '@bk2/group/util';
-import { GroupFormComponent } from '@bk2/group/ui';
+import { convertGroupToForm } from '@bk2/subject/group/util';
+import { GroupFormComponent } from '@bk2/subject/group/ui';
 import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
 import { AvatarToolbarComponent } from '@bk2/avatar/feature';
 

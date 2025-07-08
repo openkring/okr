@@ -9,7 +9,7 @@ import { confirmAction } from '@bk2/shared/util-angular';
 
 import { saveComment } from '@bk2/comment/util';
 
-import { getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from '@bk2/ownership/util';
+import { getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from '@bk2/relationship/ownership/util';
 import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({

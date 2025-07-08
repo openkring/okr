@@ -6,7 +6,7 @@ import { TranslatePipe } from "@bk2/shared/i18n";
 import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared/ui";
 import { ENV } from "@bk2/shared/config";
 import { AddressModel, UserModel } from "@bk2/shared/models";
-import { convertAddressToForm, convertFormToAddress, getAddressModalTitle } from "@bk2/address/util";
+import { convertAddressToForm, convertFormToAddress, getAddressModalTitle } from "@bk2/subject/address/util";
 import { AddressFormComponent } from "./address.form";
 
 @Component({

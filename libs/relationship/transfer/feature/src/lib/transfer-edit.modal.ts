@@ -10,7 +10,7 @@ import { AppStore } from '@bk2/shared/feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment/feature';
 
-import { convertFormToTransfer, convertTransferToForm } from '@bk2/transfer/util';
+import { convertFormToTransfer, convertTransferToForm } from '@bk2/relationship/transfer/util';
 import { TransferFormComponent } from './transfer.form';
 
 @Component({

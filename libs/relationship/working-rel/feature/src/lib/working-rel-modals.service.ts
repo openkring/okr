@@ -6,7 +6,7 @@ import { convertDateFormatToString, DateFormat, isOrg, isPerson } from "@bk2/sha
 import { AppStore, PersonSelectModalComponent, OrgSelectModalComponent } from '@bk2/shared/feature';
 import { selectDate } from "@bk2/shared/ui";
 
-import { WorkingRelService } from "@bk2/working-rel/data-access";
+import { WorkingRelService } from "@bk2/relationship/working-rel/data-access";
 
 @Injectable({
     providedIn: 'root'
