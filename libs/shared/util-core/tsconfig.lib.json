@@ -1,17 +1,18 @@
+// this config is for the IDE and should use the source artefacts
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
     "declaration": true,
     "declarationMap": true,
     "inlineSources": true,
-    "types": []
+    "types": ["node"]
   },
+  "include": ["src/**/*.ts"],
   "exclude": [
     "src/**/*.spec.ts",
     "src/test-setup.ts",
     "jest.config.ts",
     "src/**/*.test.ts"
-  ],
-  "include": ["src/**/*.ts"]
+  ]
 }

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, forwardRef, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonAccordion, IonAccordionGroup, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
@@ -18,11 +18,11 @@ import { AuthService } from '@bk2/auth/data-access';
 
 @Component({
   selector: 'bk-menu',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    MenuComponent, SpinnerComponent,
-    IonList, IonItem, IonIcon, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider,
-    SpinnerComponent
+    forwardRef(() => MenuComponent), SpinnerComponent,
+    IonList, IonItem, IonIcon, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider
 ],
   providers: [MenuStore],
   template: `

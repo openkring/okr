@@ -2,7 +2,7 @@
   "name": "shared/util-core",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/util-core/src",
-  "prefix": "lib",
+  "prefix": "bk",
   "projectType": "library",
   "tags": ["type:util", "scope:shared", "platform:node", "platform:web", "platform:mobile"],
   "targets": {
@@ -12,8 +12,9 @@
       "options": {
         "outputPath": "dist/libs/shared/util-core",
         "main": "libs/shared/util-core/src/index.ts",
-        "tsConfig": "libs/shared/util-core/tsconfig.lib.json",
-        "assets": ["libs/shared/util-core/*.md"]
+        "tsConfig": "libs/shared/util-core/tsconfig.lib.build.json",
+        "assets": ["libs/shared/util-core/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "test": {

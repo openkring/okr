@@ -2,6 +2,7 @@
   "name": "shared/util-functions",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/util-functions/src",
+  "prefix": "bk",
   "projectType": "library",
   "tags": ["type:util", "scope:shared", "platform:node"],
   "targets": {
@@ -11,8 +12,9 @@
       "options": {
         "outputPath": "dist/libs/shared/util-functions",
         "main": "libs/shared/util-functions/src/index.ts",
-        "tsConfig": "libs/shared/util-functions/tsconfig.lib.json",
-        "assets": ["libs/shared/util-functions/*.md"]
+        "tsConfig": "libs/shared/util-functions/tsconfig.lib.build.json",
+        "assets": ["libs/shared/util-functions/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "test": {
@@ -21,6 +23,9 @@
       "options": {
         "jestConfig": "libs/shared/util-functions/jest.config.ts"
       }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
     }
   }
 }

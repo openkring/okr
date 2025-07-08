@@ -1,0 +1,26 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2021",
+    "module": "esnext",
+    "lib": ["es2021", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@bk2/*": ["dist/libs/*"],
+      "@bk2/shared/constants": ["dist/libs/shared/constants"],
+      "@bk2/shared/models": ["dist/libs/shared/models"],
+      "@bk2/shared/util-core": ["dist/libs/shared/util-core"],
+      "@bk2/shared/util-functions": ["dist/libs/shared/util-functions"],
+      "@bk2/functions-util": ["dist/libs/functions-util"]
+    }
+  },
+  "exclude": ["node_modules", "tmp", "dist"]
+}
