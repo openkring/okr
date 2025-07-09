@@ -18,8 +18,7 @@
       "@bk2/shared/constants": ["dist/libs/shared/constants"],
       "@bk2/shared/models": ["dist/libs/shared/models"],
       "@bk2/shared/util-core": ["dist/libs/shared/util-core"],
-      "@bk2/shared/util-functions": ["dist/libs/shared/util-functions"],
-      "@bk2/functions-util": ["dist/libs/functions-util"]
+      "@bk2/shared/util-functions": ["dist/libs/shared/util-functions"]
     }
   },
   "exclude": ["node_modules", "tmp", "dist"]

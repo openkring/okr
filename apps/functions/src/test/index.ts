@@ -1,9 +1,9 @@
 import { onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import axios from 'axios';
-import { defineString } from 'firebase-functions/params';
+import { defineSecret } from 'firebase-functions/params';
 
-const ipinfoToken = defineString('IPINFO_TOKEN');   // load the google cloud secret
+const ipinfoToken = defineSecret('IPINFO_TOKEN');   // load the google cloud secret
 
 /**
   * A trivial function to test the cloud function

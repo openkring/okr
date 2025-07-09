@@ -1,5 +1,5 @@
 {
-  "name": "shared/util-functions",
+  "name": "shared-util-functions",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/util-functions/src",
   "prefix": "bk",

@@ -1,5 +1,5 @@
 {
-  "name": "shared/util-core",
+  "name": "shared-util-core",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/util-core/src",
   "prefix": "bk",

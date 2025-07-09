@@ -15,15 +15,9 @@
         "tsConfig": "apps/functions/tsconfig.app.json",
         "assets": ["apps/functions/src/assets"],
         "generatePackageJson": true,
+        "createLockFile": false,
         "format": ["cjs"],
-        "platform": "node",
-        "external": [
-          "@bk2/shared/constants",
-          "@bk2/shared/models",
-          "@bk2/shared/util-core",
-          "@bk2/shared/util-functions",
-          "@bk2/functions-util"
-        ]
+        "platform": "node"
       },
       "configurations": {
         "development": {},

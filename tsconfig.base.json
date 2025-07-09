@@ -52,7 +52,6 @@
       "@bk2/document/feature": ["libs/document/feature/src/index.ts"],
       "@bk2/document/ui": ["libs/document/ui/src/index.ts"],
       "@bk2/document/util": ["libs/document/util/src/index.ts"],
-      "@bk2/functions-util": ["libs/functions-util/src/index.ts"],
       "@bk2/location/data-access": ["libs/location/data-access/src/index.ts"],
       "@bk2/location/feature": ["libs/location/feature/src/index.ts"],
       "@bk2/location/ui": ["libs/location/ui/src/index.ts"],

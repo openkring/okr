@@ -29,6 +29,13 @@
   },
   "functions": {
     "source": "dist/apps/functions",
+    "codebase": "default",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log"
+    ],
     "runtime": "nodejs20" 
   },
   "emulators": {

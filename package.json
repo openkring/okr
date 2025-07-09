@@ -1,13 +1,13 @@
 {
   "name": "bk2monorepo",
   "version": "1.0.0",
-  "packageManager": "pnpm@10.12.4",
+  "packageManager": "pnpm@10.13.1+sha512.37ebf1a5c7a30d5fabe0c5df44ee8da4c965ca0c5af3dbab28c3a1681b70a256218d05c81c9c0dcf767ef6b8551eb5b960042b9ed4300c59242336377e01cfad",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "echo 'ROOT build script triggered - CWD: $(pwd)' && echo 'Node version: $(node --version)' && echo 'Current NODE_ENV before pnpm install in build script: [$NODE_ENV]' && echo 'Ensuring corepack is enabled...' && corepack enable && echo 'Verifying pnpm version (Corepack should use packageManager field): $(pnpm --version)' && echo 'Running pnpm install --omit=dev (frozen lockfile, debug loglevel) from monorepo root...' && pnpm install --omit=dev --frozen-lockfile --loglevel debug && echo 'Listing /workspace/node_modules/.bin AFTER pnpm install...' && ls -la /workspace/node_modules/.bin && echo 'Current NODE_ENV before nx build: [$NODE_ENV]' && echo 'Running nx build for test-app...' && pnpm nx build test-app --configuration=production && echo 'ROOT build script finished.'",
-    "build:libs:backend": "nx run-many --target=build --projects=shared/constants,shared/models,shared/util-core,shared/util-functions",
-    "build:functions": "pnpm run build:libs:backend && nx build functions",
+    "build:functions": "nx build functions",
+    "deploy:functions": "pnpm run build:functions && firebase deploy --only functions",
     "start": "npx --no pnpm nx serve test-app --host 0.0.0.0 --port ${PORT:-4200}",
     "test": "pnpm nx test test-app",
     "lint": "pnpm nx lint",
@@ -74,7 +74,7 @@
     "file-saver": "^2.0.5",
     "firebase": "^11.10.0",
     "firebase-admin": "^13.4.0",
-    "firebase-functions": "^6.3.2",
+    "firebase-functions": "latest",
     "firebase-tools": "^14.9.0",
     "i18n-iso-countries": "^7.14.0",
     "ibantools": "^4.5.1",
@@ -156,11 +156,14 @@
       "@parcel/watcher",
       "@swc/core",
       "core-js-pure",
+      "cypress",
       "esbuild",
       "lmdb",
+      "msgpackr-extract",
       "ngx-float-ui",
       "nx",
-      "protobufjs"
+      "protobufjs",
+      "re2"
     ]
   },
   "nx": {}

@@ -40,7 +40,6 @@
       "@bk2/document/feature": ["dist/libs/document/feature"],
       "@bk2/document/ui": ["dist/libs/document/ui"],
       "@bk2/document/util": ["dist/libs/document/util"],
-      "@bk2/functions-util": ["dist/libs/functions-util"],
       "@bk2/location/data-access": ["dist/libs/location/data-access"],
       "@bk2/location/feature": ["dist/libs/location/feature"],
       "@bk2/location/ui": ["dist/libs/location/ui"],

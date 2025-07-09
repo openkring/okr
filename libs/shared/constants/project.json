@@ -1,5 +1,5 @@
 {
-  "name": "shared/constants",
+  "name": "shared-constants",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/constants/src",
   "prefix": "bk",

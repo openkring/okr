@@ -1,8 +1,6 @@
-import * as admin from 'firebase-admin';
+import './init'; // Import the initialization logic to ensure Firebase Admin SDK is initialized
 import express from 'express';
 import * as functions from 'firebase-functions'; // needed for logger
-
-admin.initializeApp();
 
 import * as Test from './test';
 import * as Replication from './replication';

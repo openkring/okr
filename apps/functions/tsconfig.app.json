@@ -5,5 +5,16 @@
     "module": "commonjs",
     "types": ["node"]
   },
-  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
+  "exclude": [
+    "jest.config.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts"
+  ],
+  "include": [
+    "src/**/*.ts",
+    "../../libs/shared/constants/src/index.ts",
+    "../../libs/shared/models/src/index.ts",
+    "../../libs/shared/util-core/src/index.ts",
+    "../../libs/shared/util-functions/src/index.ts"
+]
 }
