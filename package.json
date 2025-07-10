@@ -7,7 +7,7 @@
   "scripts": {
     "build": "echo 'ROOT build script triggered - CWD: $(pwd)' && echo 'Node version: $(node --version)' && echo 'Current NODE_ENV before pnpm install in build script: [$NODE_ENV]' && echo 'Ensuring corepack is enabled...' && corepack enable && echo 'Verifying pnpm version (Corepack should use packageManager field): $(pnpm --version)' && echo 'Running pnpm install --omit=dev (frozen lockfile, debug loglevel) from monorepo root...' && pnpm install --omit=dev --frozen-lockfile --loglevel debug && echo 'Listing /workspace/node_modules/.bin AFTER pnpm install...' && ls -la /workspace/node_modules/.bin && echo 'Current NODE_ENV before nx build: [$NODE_ENV]' && echo 'Running nx build for test-app...' && pnpm nx build test-app --configuration=production && echo 'ROOT build script finished.'",
     "build:functions": "nx build functions",
-    "deploy:functions": "pnpm run build:functions && firebase deploy --only functions",
+    "deploy:functions": "pnpm run build:functions && (cd dist/apps/functions && pnpm install --prod) && firebase deploy --only functions",
     "start": "npx --no pnpm nx serve test-app --host 0.0.0.0 --port ${PORT:-4200}",
     "test": "pnpm nx test test-app",
     "lint": "pnpm nx lint",
@@ -53,6 +53,7 @@
     "@fullcalendar/daygrid": "^6.1.18",
     "@fullcalendar/interaction": "^6.1.18",
     "@fullcalendar/timegrid": "^6.1.18",
+    "@google-cloud/functions-framework": "4.0.0",
     "@ionic/angular": "^8.6.3",
     "@iplab/ngx-color-picker": "^19.0.3",
     "@jsverse/transloco": "^7.6.1",

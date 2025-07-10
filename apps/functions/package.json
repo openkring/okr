@@ -1,14 +1,24 @@
 {
   "name": "functions",
   "version": "0.0.1",
+  "main": "./main.cjs",
+  "type": "commonjs",
   "dependencies": {
-    "@bk2/shared-constants": "workspace:*",
-    "@bk2/shared-models": "workspace:*",
-    "@bk2/shared-util-core": "workspace:*",
-    "@bk2/shared-util-functions": "workspace:*",
+    "@google-cloud/functions-framework": "^3.4.0",
+    "axios": "1.10.0",
+    "countries-list": "3.1.1",
+    "crypto-js": "4.2.0",
+    "date-fns": "4.1.0",
     "express": "^4.21.2",
     "firebase-admin": "^13.4.0",
     "firebase-functions": "^6.3.2",
-    "tslib": "^2.8.1"
+    "i18n-iso-countries": "7.14.0",
+    "libphonenumber-js": "1.12.9",
+    "mime": "4.0.7",
+    "rxfire": "6.1.0",
+    "rxjs": "7.8.2",
+    "stream-chat": "8.60.0",
+    "tslib": "^2.8.1",
+    "vest": "5.4.6"
   }
 }

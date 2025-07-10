@@ -13,11 +13,15 @@
         "outputPath": "dist/apps/functions",
         "main": "apps/functions/src/main.ts",
         "tsConfig": "apps/functions/tsconfig.app.json",
-        "assets": ["apps/functions/src/assets"],
-        "generatePackageJson": true,
+        "assets": [
+          "apps/functions/src/assets",
+          "apps/functions/package.json"
+        ],
+        "generatePackageJson": false,
         "createLockFile": false,
         "format": ["cjs"],
-        "platform": "node"
+        "platform": "node",
+        "external": []
       },
       "configurations": {
         "development": {},

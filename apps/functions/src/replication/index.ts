@@ -9,7 +9,7 @@ import {
   getAllPersonalRelsOfObject, getAllPersonalRelsOfSubject,
   getAllWorkingRelsOfObject, getAllWorkingRelsOfSubject,
   getAllReservationsOfReserver, getAllReservationsOfResource, 
-  getFavoriteAddressInfo
+  updateFavoriteAddressInfo
 } from "@bk2/shared/util-functions";
 
 const firestore = admin.firestore(); 
@@ -25,26 +25,7 @@ export const onPersonAddressChange = onDocumentWritten(
     region: 'europe-west6'
   }, 
   async (event) => {
-    const personId = event.params.personId;
-    logger.info(`Address change for person ${personId}`);
-    const personRef = admin.firestore().doc(`${PersonCollection}/${personId}`);
-
-    try {
-      const favoriteAddressInfo = await getFavoriteAddressInfo(firestore, personId, PersonCollection);
-      logger.info(`Updating favorite address info for person ${personId}`, favoriteAddressInfo);
-      await personRef.update({
-        fav_email: favoriteAddressInfo.fav_email,
-        fav_phone: favoriteAddressInfo.fav_phone,
-        fav_street: favoriteAddressInfo.fav_street,
-        fav_zip: favoriteAddressInfo.fav_zip,
-        fav_city: favoriteAddressInfo.fav_city,
-        fav_country: favoriteAddressInfo.fav_country,
-      });
-      logger.info(`Successfully updated favorite address info for person ${personId}`);
-
-    } catch (error) {
-      logger.error(`Error updating person ${personId}:`, error);
-    }
+    await updateFavoriteAddressInfo(firestore, event.params.personId, PersonCollection, 'person');
   }
 );
 
@@ -59,26 +40,7 @@ export const onOrgAddressChange = onDocumentWritten(
     region: 'europe-west6'
   }, 
   async (event) => {
-    const orgId = event.params.orgId;
-    logger.info(`Address change for org ${orgId}`);
-    const orgRef = admin.firestore().doc(`${OrgCollection}/${orgId}`);
-
-    try {
-      const favoriteAddressInfo = await getFavoriteAddressInfo(firestore, orgId, OrgCollection);
-      logger.info(`Updating favorite address info for org ${orgId}`, favoriteAddressInfo);
-      await orgRef.update({
-        fav_email: favoriteAddressInfo.fav_email,
-        fav_phone: favoriteAddressInfo.fav_phone,
-        fav_street: favoriteAddressInfo.fav_street,
-        fav_zip: favoriteAddressInfo.fav_zip,
-        fav_city: favoriteAddressInfo.fav_city,
-        fav_country: favoriteAddressInfo.fav_country,
-      });
-      logger.info(`Successfully updated favorite address info for org ${orgId}`);
-
-    } catch (error) {
-      logger.error(`Error updating org ${orgId}:`, error);
-    }
+    await updateFavoriteAddressInfo(firestore, event.params.orgId, OrgCollection, 'org');
   }
 );
 
