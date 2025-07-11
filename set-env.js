@@ -59,12 +59,11 @@ if (process.env.FIREBASE_WEBAPP_CONFIG) {
 
 if (process.env.NODE_ENV === 'production') {
   console.log('NODE_ENV=production, assuming deployed environment. Skipping .env load, trying to read injected FIREBASE_WEBAPP_CONFIG.');
-  servicesConfig.chatStreamApiKey = process.env['auth-chat-STREAM_API_KEY'] || '';
 } else {
   console.log('NODE_ENV!=production (' + process.env.NODE_ENV + '), assuming local or CI. Loading .env.');
   dotenv.config(); // load environment variables from .env file
-  servicesConfig.chatStreamApiKey = process.env.AUTH_CHAT_STREAM_API_KEY || '';
 }
+servicesConfig.chatStreamApiKey = process.env.STREAM_API_KEY || '';
 
 // load service configuration from separate environment variables
 servicesConfig.appcheckRecaptchaEnterpriseKey = process.env.NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY || '';
@@ -93,7 +92,7 @@ function checkRequiredSettings() {
   if (!firebaseConfig.messagingSenderId) errors.push('messagingSenderId (from parsed FIREBASE_WEBAPP_CONFIG)');
   if (!firebaseConfig.appId) errors.push('appId (from parsed FIREBASE_WEBAPP_CONFIG)');
   if (!tenantId) errors.push('tenantId (derived from NX_TASK_TARGET_PROJECT)');
-  if (!servicesConfig.chatStreamApiKey) errors.push('chatStreamApiKey (from AUTH_CHAT_STREAM_API_KEY or auth-chat-STREAM_API_KEY)');
+  if (!servicesConfig.chatStreamApiKey) errors.push('chatStreamApiKey (from STREAM_API_KEY)');
   if (!servicesConfig.appcheckRecaptchaEnterpriseKey) errors.push('appcheckRecaptchaEnterpriseKey (from NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY)');
   if (!servicesConfig.gmapKey) errors.push('gmapKey (from NEXT_PUBLIC_SVC_GMAP_KEY)');
   if (!servicesConfig.nxCloudAccessToken) errors.push('nxCloudAccessToken (from NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN)');
