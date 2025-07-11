@@ -59,7 +59,7 @@ if (process.env.FIREBASE_WEBAPP_CONFIG) {
 
 if (process.env.NODE_ENV === 'production') {
   console.log('NODE_ENV=production, assuming deployed environment. Skipping .env load, trying to read injected FIREBASE_WEBAPP_CONFIG.');
-  servicesConfig.chatStreamApiKey = process.env.auth-chat-STREAM_API_KEY || '';
+  servicesConfig.chatStreamApiKey = process.env['auth-chat-STREAM_API_KEY'] || '';
 } else {
   console.log('NODE_ENV!=production (' + process.env.NODE_ENV + '), assuming local or CI. Loading .env.');
   dotenv.config(); // load environment variables from .env file
