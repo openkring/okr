@@ -14,21 +14,59 @@ bk2 is your <a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferr
 To run the dev server for your app, use:
 
 ```sh
-pnpm nx serve [APP_NAME]
-e.g. pnpm nx serve test-app
+pnpm run serve [APP_ID]
+e.g. pnpm run serve test-app
 ```
 
-To create a production bundle:
+To create a production bundle (with SSR and incremental hydration). This is what is called by AppHosting (see apphosting.yaml) as well. The AppHosting CI/CD pipeline is triggered by a commit into the public github repo. In this case, the APP_NAME is taken from the environment variable APP_ID:
 
 ```sh
-pnpm nx build [APP_NAME]
-e.g. pnpm nx build test-app
+pnpm run build  [APP_ID]
+e.g. pnpm run build test-app
 ```
 
-To see all available targets to run for a project, run:
+To see all available targets to run for a project (can also be used for showing the graph), run:
 
 ```sh
-pnpm nx show project bk2
+pnpm nx show project [APP_ID]
+```
+
+To build the cloud functions, run:
+
+```sh
+pnpm run build:functions
+```
+
+To build and deploy the cloud functions to Firebase, run:
+
+```sh
+pnpm run deploy:functions
+```
+
+To execute the unit tests for your app, use:
+
+```sh
+pnpm run test [APP_ID]
+e.g. pnpm run test test-app
+```
+
+To lint the whole project in the monorepo, use:
+
+```sh
+pnpm run lint
+```
+
+To execute end to end tests for your app, use:
+
+```sh
+pnpm run e2e [APP_ID]
+e.g. pnpm run e2e test-app
+```
+
+To generate the dependency graph (visible in the browser), use:
+
+```sh
+pnpm nx graph
 ```
 
 These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
