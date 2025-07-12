@@ -30,7 +30,7 @@ if (process.env.FIREBASE_WEBAPP_CONFIG) {
     // It looks for an opening brace or a comma, followed by optional whitespace,
     // then an unquoted key (starts with a letter or underscore, followed by alphanumeric or underscore),
     // followed by optional whitespace and a colon.
-    _correctedConfig = _rawConfig.replace(/({\s*|,\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
+    _correctedConfig = _rawConfig.replace(/({\s*|,\s*)([a-zA-Z_]\w*)\s*:/g, '$1"$2":');
     const _fbWebConfig = JSON.parse(_correctedConfig);
     
     if (_fbWebConfig.apiKey && _fbWebConfig.projectId && _fbWebConfig.appId) { // Basic validation
@@ -57,11 +57,14 @@ if (process.env.FIREBASE_WEBAPP_CONFIG) {
   process.exit(1);
 }
 
+// Always load .env for pnpm workspace module resolution, even in production.
+// The environment variables set by the hosting provider will still take precedence.
+dotenv.config(); 
+
 if (process.env.NODE_ENV === 'production') {
-  console.log('NODE_ENV=production, assuming deployed environment. Skipping .env load, trying to read injected FIREBASE_WEBAPP_CONFIG.');
+  console.log('NODE_ENV=production, assuming deployed environment. Skipping .env load for variables, but used for module resolution. Trying to read injected FIREBASE_WEBAPP_CONFIG.');
 } else {
-  console.log('NODE_ENV!=production (' + process.env.NODE_ENV + '), assuming local or CI. Loading .env.');
-  dotenv.config(); // load environment variables from .env file
+  console.log('NODE_ENV!=production (' + process.env.NODE_ENV + '), assuming local or CI. Loading .env for variables.');
 }
 servicesConfig.chatStreamApiKey = process.env.STREAM_API_KEY || '';
 
