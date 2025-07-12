@@ -100,5 +100,8 @@
     "@nx/angular:component": {
       "style": "css"
     }
+  },
+  "release": {
+    "projects": ["*"]
   }
 }
