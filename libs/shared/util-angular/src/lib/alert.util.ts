@@ -37,7 +37,7 @@ export async function showToast(toastController: ToastController, message: strin
 }
 
 /**
-* Show a confirmation dialog with just an OK button.
+* Show a confirmation dialog with an OK and an optional cancel button.
 * @param alertController the ionic alert controller
 * @param message is a message to be shown in the alert or the i18n key to be translated (starting with @)
 * @param isCancellable if true the alert shows a cancel button additionally to the ok button

@@ -79,6 +79,19 @@ export class PersonService {
     await this.update(person, currentUser, `@subject.person.operation.delete`);
   }
 
+  public checkIfExists(persons?: PersonModel[], firstName?: string, lastName?: string): boolean {
+    if (!persons || persons.length === 0) {
+      return false;
+    }
+    const searchFirstName = !firstName ? '' : firstName.trim().toLowerCase();
+    const searchLastName = !lastName ? '' : lastName.trim().toLowerCase();
+
+    return persons.some(person =>
+      person.firstName?.trim().toLowerCase() === searchFirstName &&
+      person.lastName?.trim().toLowerCase() === searchLastName
+    );
+  }
+
   /*-------------------------- LIST / QUERY  --------------------------------*/
   public list(orderBy = 'lastName', sortOrder = 'asc'): Observable<PersonModel[]> {
     return searchData<PersonModel>(this.firestore, PersonCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);

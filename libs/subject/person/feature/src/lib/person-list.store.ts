@@ -1,12 +1,12 @@
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { chipMatches, createModel, debugListLoaded, hasRole, nameMatches } from '@bk2/shared/util-core';
-import { AppNavigationService, confirmAction, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared/util-angular';
+import { AppNavigationService, bkPrompt, confirmAction, confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared/util-angular';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AddressModel, AllCategories, GenderType, MembershipCollection, ModelType, PersonModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
@@ -44,6 +44,7 @@ export const PersonListStore = signalStore(
     router: inject(Router),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
+    alertController: inject(AlertController),
     toastController: inject(ToastController) 
   })),
   withProps((store) => ({
@@ -140,6 +141,11 @@ export const PersonListStore = signalStore(
         const { data, role } = await _modal.onWillDismiss();
         if (role === 'confirm') {
           const _vm = data as PersonNewFormModel;
+
+          if (store.personService.checkIfExists(store.persons(), _vm.firstName, _vm.lastName)) {
+            if (!confirm(store.alertController, '@subject.person.operation.create.exists.error', true)) return;           
+          }
+
           const _personKey = await store.personService.create(convertFormToNewPerson(_vm, store.tenantId()), store.currentUser());
           const _avatarKey = ModelType.Person + '.' + _personKey;
           if ((_vm.email ?? '').length > 0) {
