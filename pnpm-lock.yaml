@@ -381,6 +381,9 @@ importers:
       react-refresh:
         specifier: ^0.10.0
         version: 0.10.0
+      sass:
+        specifier: 1.89.2
+        version: 1.89.2
       serve:
         specifier: ^14.2.4
         version: 14.2.4
