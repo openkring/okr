@@ -9,10 +9,10 @@
     "build:affected": "nx affected -t build",
     "build:functions": "nx build functions",
     "deploy:functions": "pnpm run build:functions && (cd dist/apps/functions && pnpm install --prod) && firebase deploy --only functions",
-    "serve": "sh -c 'nx serve \"$@\"'",
-    "test": "sh -c 'nx test \"$@\"'",
+    "serve": "nx serve",
+    "test": "nx test",
     "lint": "nx lint",
-    "e2e": "sh -c 'nx e2e \"$@\"'"
+    "e2e": "nx e2e"
   },
   "private": true,
   "dependencies": {
