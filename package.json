@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "sh -c 'export APP_ID=${APP_ID:-test-app} && export NODE_OPTIONS=\"--require ./apps/$APP_ID/ssr-polyfills.js\" && nx build $APP_ID --configuration=production'",
+    "build": "sh -c 'export APP_ID=${APP_ID:-test-app} && export NODE_OPTIONS=\"--require ./apps/$APP_ID/ssr-polyfills.js\" && nx run $APP_ID:prerender --configuration=production'",
     "build:affected": "nx affected -t build",
     "build:functions": "nx build functions",
     "deploy:functions": "pnpm run build:functions && (cd dist/apps/functions && pnpm install --prod) && firebase deploy --only functions",
