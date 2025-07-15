@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "./scripts/build-app.sh",
+    "build": "nx run test-app:build:production",
     "build:affected": "nx affected -t build",
     "build:functions": "nx build functions",
     "deploy:functions": "pnpm run build:functions && (cd dist/apps/functions && pnpm install --prod) && firebase deploy --only functions",
