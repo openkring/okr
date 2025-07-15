@@ -17,6 +17,7 @@
       "functions"
     ],
     "environmentVariables": {
+      "NODE_OPTIONS": "--require ./apps/test-app/ssr-polyfills.js",
       "GOOGLE_NODE_RUN_SCRIPTS": "",
       "NODE_VERSION": "20",
       "NODE_ENV": "production",
