@@ -1,0 +1,47 @@
+# Settings for Backend (on Cloud Run).
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  command: ["node", "server/main.js"]
+  entryPoint: "dist/apps/test-app"
+  env:
+    - variable: NODE_OPTIONS
+      value: --require ./ssr-polyfills.js
+
+env:
+  - variable: APP_ID
+    value: test-app
+  - variable: NODE_ENV
+    value: production
+  - variable: STREAM_API_KEY
+    secret: STREAM_API_KEY
+  - variable: NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY
+    secret: NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY
+  - variable: NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN
+    secret: NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN
+  - variable: NEXT_PUBLIC_SVC_GMAP_KEY
+    secret: NEXT_PUBLIC_SVC_GMAP_KEY
+  - variable: NEXT_PUBLIC_IMGIX_BASE_URL
+    secret: NEXT_PUBLIC_IMGIX_BASE_URL
+  - variable: IPINFO_TOKEN
+    secret: IPINFO_TOKEN
+
+buildConfig:
+  environmentVariables:
+    NODE_OPTIONS: --require ./apps/test-app/ssr-polyfills.js
+  buildCommand: >
+    set -e &&
+    echo "--- [BUILD SCRIPT] Using apphosting.yaml to build test-app ---" &&
+    echo "NODE_OPTIONS is set to: $NODE_OPTIONS" &&
+    echo "Current working directory:" &&
+    pwd &&
+    echo "--- Checking for ssr-polyfills.js at the repository root ---" &&
+    ls -l ssr-polyfills.js &&
+    echo "Checking Node Version:" &&
+    node --version &&
+    echo "--- ssr-polyfills.js content ---" &&
+    cat ssr-polyfills.js &&
+    echo "--- Clearing Nx cache ---" &&
+    npx nx reset &&
+    echo "-------------------------------------" &&
+    npx nx run test-app:build:production --verbose

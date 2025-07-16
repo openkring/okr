@@ -9,18 +9,15 @@
     "rootDir": "apps/test-app",
     "ignore": [
       "node_modules",
-      ".pnpm-store",
-      ".pnpm_home_local",
       ".git",
       "firebase-debug.log",
       "firebase-debug.*.log",
       "functions"
     ],
     "environmentVariables": {
+      "NODE_OPTIONS": "--require ./apps/test-app/ssr-polyfills.js",
       "NODE_VERSION": "20",
-      "NODE_ENV": "production",
-      "NPM_CONFIG_USERCONFIG": "/dev/null",
-      "NPM_CONFIG_GLOBALCONFIG": "/dev/null"
+      "NODE_ENV": "production"
     }
   },
   "storage": {
