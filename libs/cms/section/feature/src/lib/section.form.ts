@@ -14,7 +14,6 @@ import { PersonSelectModalComponent, AppStore } from '@bk2/shared/feature';
 
 import { newTable, SectionFormModel, sectionFormValidations } from '@bk2/cms/section/util';
 import { AlbumSectionConfigComponent, ArticleSectionConfigComponent, ButtonSectionConfigComponent, IframeSectionFormComponent, ImageConfigFormComponent, MapSectionFormComponent, PeopleListFormComponent, TableSectionFormComponent, VideoSectionFormComponent } from '@bk2/cms/section/ui';
-import { DocumentModalsService } from '@bk2/document/feature';
 import { SingleImageComponent } from './single-image.component';
 import { ImageListComponent } from './image-list.component';
 
@@ -131,7 +130,6 @@ import { ImageListComponent } from './image-list.component';
 export class SectionFormComponent {
   protected modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
-  private readonly documentModalsService = inject(DocumentModalsService);
 
   public readonly vm = model.required<SectionFormModel>();
   public currentUser = input<UserModel | undefined>();
