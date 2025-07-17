@@ -49,6 +49,7 @@
     "@fullcalendar/timegrid": "^6.1.18",
     "@google-cloud/functions-framework": "4.0.0",
     "@ionic/angular": "^8.6.3",
+    "@ionic/angular-server": "^8.6.5",
     "@iplab/ngx-color-picker": "^19.0.3",
     "@jsverse/transloco": "^7.6.1",
     "@maskito/angular": "^3.10.0",
