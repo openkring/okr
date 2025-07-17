@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  sass: npm:sass-embedded@^1.89.2
+  sass: npm:sass-embedded@1.89.2
 
 importers:
 
