@@ -15,7 +15,6 @@
       "functions"
     ],
     "environmentVariables": {
-      "NODE_OPTIONS": "--require ./apps/test-app/ssr-polyfills.js",
       "NODE_VERSION": "20",
       "NODE_ENV": "production"
     }
