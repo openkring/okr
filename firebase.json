@@ -47,6 +47,12 @@
     "firestore": {
       "port": 8080
     },
+    "functions": {
+      "port": 5001,
+      "timeoutSeconds": 60,
+      "memory": "256MB",
+      "nodeVersion": "20"
+    },
     "storage": {
       "port": 9199
     },

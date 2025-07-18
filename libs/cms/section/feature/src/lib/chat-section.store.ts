@@ -1,6 +1,6 @@
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { HttpClient } from '@angular/common/http';
 import { from, Observable, of } from 'rxjs';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -82,6 +82,9 @@ export const ChatSectionStore = signalStore(
         try {
           // Get a reference to the Firebase Functions service.
           const functions = getFunctions(getApp(), 'europe-west6'); // Use the correct region for your functions. 
+          if (store.appStore.env.useEmulators) {
+            connectFunctionsEmulator(functions, 'localhost', 5001);
+          }
           
           // Create a callable reference to your specific function.
           const getStreamUserToken = httpsCallable(functions, 'ext-auth-chat-getStreamUserToken');
