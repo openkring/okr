@@ -12,7 +12,8 @@
     "serve": "nx serve $1",
     "test": "nx test $1",
     "lint": "nx lint $1",
-    "e2e": "nx e2e $1"
+    "e2e": "nx e2e $1",
+    "dev": "nx serve test-app"
   },
   "private": true,
   "dependencies": {
