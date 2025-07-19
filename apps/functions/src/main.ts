@@ -1,5 +1,6 @@
 import './init'; // Import the initialization logic to ensure Firebase Admin SDK is initialized
 import express from 'express';
+import cors from 'cors';
 import * as functions from 'firebase-functions'; // needed for logger
 
 import * as Test from './test';
@@ -15,6 +16,9 @@ import * as Stream from './stream';
 
 // in AppHosting, we start an Express server
 const app = express();
+
+// Enable CORS for requests from your local development server
+app.use(cors({ origin: 'http://localhost:4200' }));
 
 // bind the onRequest functions to express routes
 app.use('/echo', Test.echoHandler);
@@ -37,4 +41,3 @@ export const onOrgChange = Replication.onOrgChange;
 export const onGroupChange = Replication.onGroupChange;
 export const createStreamUser = Stream.createStreamUser;
 export const deleteStreamUser = Stream.deleteStreamUser;
-

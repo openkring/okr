@@ -42,7 +42,7 @@ export const deleteStreamUser = functions.region('europe-west6').auth.user().onD
 });
 
 // Get Stream user token.
-export const getStreamUserToken = onCall({ region: 'europe-west6' }, (request) => {
+export const getStreamUserToken = onCall({ region: 'europe-west6', cors: true }, (request) => {
   // Checking that the user is authenticated.
   if (!request.auth) {
     // Throwing an HttpsError so that the client gets the error details.
@@ -66,7 +66,7 @@ export const getStreamUserToken = onCall({ region: 'europe-west6' }, (request) =
 });
 
 // Revoke the authenticated user's Stream chat token.
-export const revokeStreamUserToken = onCall({ region: 'europe-west6' }, async (request) => {
+export const revokeStreamUserToken = onCall({ region: 'europe-west6', cors: true }, async (request) => {
   // Checking that the user is authenticated.
   if (!request.auth) {
     // Throwing an HttpsError so that the client gets the error details.
