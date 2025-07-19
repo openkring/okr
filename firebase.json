@@ -35,11 +35,7 @@
   },
   "emulators": {
     "apphosting": {
-      "port": 5002,
-      "rootDirectory": ".",
-      "environmentVariables": {
-        "NODE_VERSION": "20"
-      }
+      "port": 8717
     },
     "auth": {
       "port": 9099
@@ -48,17 +44,14 @@
       "port": 8080
     },
     "functions": {
-      "port": 5001,
-      "timeoutSeconds": 60,
-      "memory": "256MB",
-      "nodeVersion": "20"
+      "port": 8713
     },
     "storage": {
       "port": 9199
     },
     "ui": {
       "enabled": true,
-      "port": 5001
+      "port": 8715
     },
     "singleProjectMode": true
   }
