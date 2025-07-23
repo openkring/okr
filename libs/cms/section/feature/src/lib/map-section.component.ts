@@ -1,7 +1,8 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, computed, inject, input } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, computed, inject, input, PLATFORM_ID } from '@angular/core';
 import { Geolocation } from '@capacitor/geolocation';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { GoogleMap, MapType } from '@capacitor/google-maps';
+import { isPlatformBrowser } from '@angular/common';
 
 import { SectionModel } from '@bk2/shared/models';
 import { die } from '@bk2/shared/util-core';
@@ -37,6 +38,7 @@ import { AppStore } from '@bk2/shared/feature';
 })
 export class MapSectionComponent implements OnInit, OnDestroy {
   private readonly appStore = inject(AppStore);
+  private readonly platformId = inject(PLATFORM_ID);
 
   public section = input.required<SectionModel>();
 
@@ -51,7 +53,9 @@ export class MapSectionComponent implements OnInit, OnDestroy {
   private map: GoogleMap | undefined;
 
   ngOnInit(): void {
-    this.loadMap();
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadMap();
+    }
   }
 
   ngOnDestroy(): void {

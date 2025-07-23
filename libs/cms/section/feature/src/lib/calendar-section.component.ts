@@ -1,10 +1,11 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, computed, effect, inject, input } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, computed, effect, inject, input, PLATFORM_ID } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { CalendarOptions, EventInput } from '@fullcalendar/core';
+import { isPlatformBrowser } from '@angular/common';
 
 import { SectionModel } from '@bk2/shared/models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
@@ -45,6 +46,7 @@ import { CalendarStore } from './calendar-section.store';
 })
 export class CalendarSectionComponent implements OnInit {
   protected calendarStore = inject(CalendarStore);
+  private readonly platformId = inject(PLATFORM_ID);
   public section = input<SectionModel>();
 
   protected readonly title = computed(() => this.section()?.title);
@@ -72,12 +74,14 @@ export class CalendarSectionComponent implements OnInit {
   }
 
   async ngOnInit() {
-    // angular component calls render() from ngAfterViewInit() which is too early for fullcalendar in Ionic (should be in ionViewDidLoad())
-    // the calendar renders correctly if render() is called after the page is loaded, e.g. by resizing the window.
-    // that's what this hack is doing: trigger resize window after 1ms
-    setTimeout( function() {
-      window.dispatchEvent(new Event('resize'))
-    }, 1);
+    if (isPlatformBrowser(this.platformId)) {
+      // angular component calls render() from ngAfterViewInit() which is too early for fullcalendar in Ionic (should be in ionViewDidLoad())
+      // the calendar renders correctly if render() is called after the page is loaded, e.g. by resizing the window.
+      // that's what this hack is doing: trigger resize window after 1ms
+      setTimeout( function() {
+        window.dispatchEvent(new Event('resize'))
+      }, 1);
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

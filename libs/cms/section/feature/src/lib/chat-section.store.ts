@@ -2,7 +2,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { HttpClient } from '@angular/common/http';
-import { from, Observable, of } from 'rxjs';
+import { catchError, from, map, Observable, of } from 'rxjs';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ChannelService, ChatClientService, StreamI18nService } from 'stream-chat-angular';
 import { getApp } from 'firebase/app';
@@ -52,7 +52,10 @@ export const ChatSectionStore = signalStore(
         currentUser: store.currentUser()
       }),
       stream: ({params}): Observable<string | undefined> => {
-        if (!params.currentUser) return of(undefined);
+        if (!params.currentUser) {
+          debugMessage(`ChatSectionStore.imageUrlResource: No user, can't load image.`);
+          return of(undefined);
+        }
         const _url$ = getAvatarImgixUrl(store.appStore.firestore, ModelType.Person + '.' + params.currentUser.personKey, THUMBNAIL_SIZE, store.imgixBaseUrl())
         debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${params.currentUser.personKey}`, _url$, store.currentUser());
         return _url$;
@@ -67,7 +70,7 @@ export const ChatSectionStore = signalStore(
      * For testing purposes, hardcoded tokens can be used.
      * They are generated per user here (given the userId and the appSecret): 
      * https://getstream.io/chat/docs/react/token_generator?_gl=1*aesoge*_up*MQ..*_ga*MTgwMDMxNjMzMi4xNzQ3OTk4MzUw*_ga_FX552ZCLHK*czE3NDc5OTgzNDkkbzEkZzAkdDE3NDc5OTgzNDkkajAkbDAkaDEzNTg3NzUyNDQkZDVJUG10dHUxWHJGYUpxRmpJOGFySklsbjRxeDNsVy1xRXc.
-     * We are using the Firebase SDK to call the onCall function `ext-auth-chat-getStreamUserToken` to get the token.
+     * We are using the Firebase SDK to call the onCall function getStreamUserToken to get the token.
      */
     userTokenResource: rxResource({
       params: () => ({
@@ -87,23 +90,21 @@ export const ChatSectionStore = signalStore(
           }
           
           // Create a callable reference to your specific function.
-          const getStreamUserToken = httpsCallable(functions, 'ext-auth-chat-getStreamUserToken');
+          const getStreamUserToken = httpsCallable(functions, 'getStreamUserToken');
 
           // Call the function. You don't need to pass any data, as the
           // function gets the user ID from the authentication context.
-          const tokenPromise = getStreamUserToken().then(result => {
-            // The actual token is in the `data` property of the result.
-            return result.data as string;
-          });
-
-          // Convert the promise to an Observable for rxResource.
-          const token$ = from(tokenPromise);
-
+          const token$ = from(getStreamUserToken()).pipe(
+            map(result => result.data as string),
+            catchError(err => {
+              console.error('ChatSectionStore.userTokenResource: Token fetch error:', err);
+              return of(undefined);
+            })
+          ); 
           debugItemLoaded(`ChatSectionStore.userTokenResource: user token for ${params.currentUser.bkey}`, token$, params.currentUser);
           return token$;
-
         } catch (error) {
-          console.error('Error preparing to call getStreamUserToken function:', error);
+          console.error('ChatSectionStore.userTokenResource: Error preparing to call getStreamUserToken function:', error);
           return of(undefined);
         }
       }

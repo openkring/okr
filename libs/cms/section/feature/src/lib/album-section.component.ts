@@ -1,5 +1,5 @@
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject, input, linkedSignal, viewChild } from '@angular/core';
-import { AsyncPipe, NgStyle } from '@angular/common';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject, input, linkedSignal, viewChild, PLATFORM_ID } from '@angular/core';
+import { AsyncPipe, NgStyle, isPlatformBrowser } from '@angular/common';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -206,6 +206,7 @@ import { AlbumStore } from './album-section.store';
 export class AlbumSectionComponent {
   private readonly modalController = inject(ModalController);
   protected albumStore = inject(AlbumStore);
+  private readonly platformId = inject(PLATFORM_ID);
 
   public section = input<SectionModel>();
 
@@ -277,11 +278,13 @@ export class AlbumSectionComponent {
    * @returns 
    */
   private getValue(key: 'width' | 'height', defaultValue: number): number {
-    const _el = this.imageContainer();
-    if (_el) {
-      const _value = (_el.nativeElement[key] ?? defaultValue) as number;
-      debugMessage(`AlbumSectionComponent.getValue -> imgix-image.${key} -> ${_value}`);
-      return _value;
+    if (isPlatformBrowser(this.platformId)) {
+      const _el = this.imageContainer();
+      if (_el) {
+        const _value = (_el.nativeElement[key] ?? defaultValue) as number;
+        debugMessage(`AlbumSectionComponent.getValue -> imgix-image.${key} -> ${_value}`);
+        return _value;
+      }
     }
     return defaultValue;
   }

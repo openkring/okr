@@ -2,7 +2,6 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
 
-import { FIRESTORE } from '@bk2/shared/config';
 import { AppStore } from '@bk2/shared/feature';
 import { LogInfo } from '@bk2/shared/models';
 import { warn } from '@bk2/shared/util-core';
@@ -26,7 +25,6 @@ export const AocStorageStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
-    firestore: inject(FIRESTORE),
     toastController: inject(ToastController)
   })),
 /*   withProps((store) => ({

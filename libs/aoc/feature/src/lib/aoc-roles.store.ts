@@ -4,6 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 import { Capacitor } from '@capacitor/core';
+import { isPlatformBrowser } from '@angular/common';
 
 import { AUTH, FIRESTORE } from '@bk2/shared/config';
 import { debugListLoaded, die, findUserByPersonKey, getSystemQuery, isPerson, searchData, warn } from '@bk2/shared/util-core';
@@ -14,7 +15,6 @@ import { PersonSelectModalComponent, AppStore } from '@bk2/shared/feature';
 import { AuthService } from '@bk2/auth/data-access';
 import { createFirebaseAccount, createUserFromPerson } from '@bk2/aoc/util';
 import { UserService } from '@bk2/user/data-access';
-import { isPlatformBrowser } from '@angular/common';
 
 export type AocRolesState = {
   calendarName: string;
@@ -262,11 +262,11 @@ export const AocRolesStore = signalStore(
         } else {
           patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> exists`) });
         }
-        const _platform = Capacitor.getPlatform();
         if (!isPlatformBrowser(store.platformId)) {
-          patchState(store, { log: logMessage(_log, `wrong platform <${_platform}>, should be web`)});
+          patchState(store, { log: logMessage(_log, `wrong platform, should be web`)});
           return;
         } else {
+          const _platform = Capacitor.getPlatform();
           patchState(store, { log: logMessage(_log, `platform is <${_platform}> (should be web)`)});
         }
         if (!store.chatUser()) {
