@@ -1,6 +1,8 @@
+import { inject, PLATFORM_ID } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 import { Firestore, OrderByDirection, QueryConstraint, WhereFilterOp, collection, orderBy, query, where } from 'firebase/firestore';
 import { collectionData } from 'rxfire/firestore';
+import { isPlatformBrowser } from '@angular/common';
 
 import { AllCategories, BkModel, DbQuery, TagCollection, TagModel, UserModel } from '@bk2/shared/models';
 import { getRangeQuery, getSystemQuery } from './query.util';
@@ -17,12 +19,15 @@ import { die, warn } from './log.util';
  * @param sortOrderParam the sort order (asc or desc)
  * @returns an Observable of the search result (array of T)
  */
-export function searchData<T>(firestore: Firestore, collectionName: string, dbQuery: DbQuery[], orderByParam = 'name', sortOrderParam = 'asc'): Observable<T[]> {
-  const _queries = getQuery(dbQuery, orderByParam, sortOrderParam);
-  const _collectionRef = collection(firestore, collectionName);
-  const _queryRef = query(_collectionRef, ..._queries);
+export function searchData<T>(firestore: Firestore, collectionName: string, dbQuery: DbQuery[], orderByParam = 'name', sortOrderParam = 'asc', platformId: Object = inject(PLATFORM_ID)): Observable<T[]> {
+  if (isPlatformBrowser(platformId)) {
+    const _queries = getQuery(dbQuery, orderByParam, sortOrderParam);
+    const _collectionRef = collection(firestore, collectionName);
+    const _queryRef = query(_collectionRef, ..._queries);
 
-  return collectionData(_queryRef, { idField: 'bkey' }) as Observable<T[]>;
+    return collectionData(_queryRef, { idField: 'bkey' }) as Observable<T[]>;
+  }
+  return of([]);
 }
 
 export function getTags(firestore: Firestore, tagModel: number): Observable<string> {
