@@ -5,9 +5,8 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom, Observable, of } from 'rxjs';
 
 import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
-import { convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, isValidAt, readModel } from '@bk2/shared/util-core';
+import { convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, isValidAt } from '@bk2/shared/util-core';
 import { confirm } from '@bk2/shared/util-angular';
-import { getAvatarImgixUrl } from '@bk2/shared/pipes';
 import { AppStore } from '@bk2/shared/feature';
 import { selectDate } from '@bk2/shared/ui';
 
@@ -15,7 +14,7 @@ import { AvatarService } from '@bk2/avatar/data-access';
 
 import { MembershipService } from '@bk2/relationship/membership/data-access';
 import { MembershipModalsService } from './membership-modals.service';
-import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type MembersAccordionState = {
   orgKey: string | undefined;
@@ -34,6 +33,7 @@ export const MembersAccordionStore = signalStore(
     membershipModalsService: inject(MembershipModalsService),
     avatarService: inject(AvatarService),
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
     alertController: inject(AlertController),
     modalController: inject(ModalController)
   })),
@@ -56,7 +56,7 @@ export const MembersAccordionStore = signalStore(
         orgKey: store.orgKey()
       }),  
       stream: ({params}) => {
-        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, params.orgKey);
+        const org$ = store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgKey);
         debugItemLoaded<OrgModel>(`org ${params.orgKey}`, org$, store.appStore.currentUser());
         return org$;
       }
@@ -110,7 +110,7 @@ export const MembersAccordionStore = signalStore(
 
       async changeMembershipCategory(membership?: MembershipModel): Promise<void> {
         if(membership) {
-          const _mcat = await firstValueFrom(readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, 'mcat_' + membership.orgKey));            
+          const _mcat = await firstValueFrom(store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_' + membership.orgKey));            
           if (_mcat) {
             await store.membershipModalsService.changeMembershipCategory(membership, _mcat);
             store.membersResource.reload();
@@ -132,7 +132,7 @@ export const MembersAccordionStore = signalStore(
 
       /******************************** helpers ******************************************* */
       getAvatarImgixUrl(membership: MembershipModel): Observable<string> {
-          return getAvatarImgixUrl(store.appStore.firestore, `${ModelType.Org}.${membership.orgKey}`, THUMBNAIL_SIZE, store.appStore.services.imgixBaseUrl());        
+        return store.avatarService.getAvatarImgixUrl(`${ModelType.Org}.${membership.orgKey}`);        
       }
     }
   })

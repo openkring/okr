@@ -7,13 +7,12 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ChannelService, ChatClientService, StreamI18nService } from 'stream-chat-angular';
 import { getApp } from 'firebase/app';
 
-import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
 import { ChatConfig, ModelType } from '@bk2/shared/models';
 import { debugData, debugItemLoaded, debugMessage, die } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
-import { getAvatarImgixUrl } from '@bk2/shared/pipes';
 
 import { newChatConfig } from '@bk2/cms/section/util';
+import { AvatarService } from '@bk2/avatar/data-access';
 
 export interface ChatUser {
   id: string;
@@ -33,6 +32,7 @@ export const ChatSectionStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
+    avatarService: inject(AvatarService),
     http: inject(HttpClient),
     chatService: inject(ChatClientService),
     channelService: inject(ChannelService),
@@ -56,7 +56,7 @@ export const ChatSectionStore = signalStore(
           debugMessage(`ChatSectionStore.imageUrlResource: No user, can't load image.`);
           return of(undefined);
         }
-        const _url$ = getAvatarImgixUrl(store.appStore.firestore, ModelType.Person + '.' + params.currentUser.personKey, THUMBNAIL_SIZE, store.imgixBaseUrl())
+        const _url$ = store.avatarService.getAvatarImgixUrl(ModelType.Person + '.' + params.currentUser.personKey)
         debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${params.currentUser.personKey}`, _url$, store.currentUser());
         return _url$;
       }

@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 
-import { chipMatches, getSystemQuery, isResource, nameMatches, searchData } from '@bk2/shared/util-core';
+import { chipMatches, getSystemQuery, isResource, nameMatches } from '@bk2/shared/util-core';
 import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AllCategories, GenderType, ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
@@ -12,6 +12,7 @@ import { AppStore } from '@bk2/shared/feature';
 
 import { ResourceService } from '@bk2/resource/data-access';
 import { ResourceEditModalComponent } from './resource-edit.modal';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type ResourceListState = {
   searchTerm: string;
@@ -36,12 +37,13 @@ export const ResourceListStore = signalStore(
     appNavigationService: inject(AppNavigationService),
     router: inject(Router),
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     resourceResource: rxResource({
       stream: () => {
-        return searchData<ResourceModel>(store.appStore.firestore, ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
+        return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
       }
     })
   })),

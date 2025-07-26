@@ -1,36 +1,12 @@
-import { inject, PLATFORM_ID } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
-import { Firestore, OrderByDirection, QueryConstraint, WhereFilterOp, collection, orderBy, query, where } from 'firebase/firestore';
-import { collectionData } from 'rxfire/firestore';
-import { isPlatformBrowser } from '@angular/common';
+import { OrderByDirection, QueryConstraint, WhereFilterOp, orderBy, where } from 'firebase/firestore';
 
-import { AllCategories, BkModel, DbQuery, TagCollection, TagModel, UserModel } from '@bk2/shared/models';
-import { getRangeQuery, getSystemQuery } from './query.util';
-import { die, warn } from './log.util';
+import { BkModel, DbQuery, UserModel } from '@bk2/shared/models';
+import { warn } from './log.util';
 
 /*----------------------- SEARCH ----------------------------------------------*/
-/**
- * Search data based on the given query.
- * This function should not be used directly but via dataService.searchData().
- * @param firestore   a handle to the Firestore database
- * @param collectionName the name of the Firestore collection to search in
- * @param dbQuery the query to search for (an array of DbQuery objects: key, operator, value)
- * @param orderByParam the name of the field to order by
- * @param sortOrderParam the sort order (asc or desc)
- * @returns an Observable of the search result (array of T)
- */
-export function searchData<T>(firestore: Firestore, collectionName: string, dbQuery: DbQuery[], orderByParam = 'name', sortOrderParam = 'asc', platformId: Object = inject(PLATFORM_ID)): Observable<T[]> {
-  if (isPlatformBrowser(platformId)) {
-    const _queries = getQuery(dbQuery, orderByParam, sortOrderParam);
-    const _collectionRef = collection(firestore, collectionName);
-    const _queryRef = query(_collectionRef, ..._queries);
 
-    return collectionData(_queryRef, { idField: 'bkey' }) as Observable<T[]>;
-  }
-  return of([]);
-}
-
-export function getTags(firestore: Firestore, tagModel: number): Observable<string> {
+/* export function getTags(firestore: Firestore, tagModel: number): Observable<string> {
   const _collectionRef = collection(firestore, TagCollection);
   const _queryRef = query(_collectionRef, orderBy('tagModel', 'asc'));
   const _allTags$ = collectionData(_queryRef, { idField: 'bkey' }) as Observable<TagModel[]>;
@@ -43,7 +19,7 @@ export function getTags(firestore: Firestore, tagModel: number): Observable<stri
   return _tagModel$.pipe(
     map((tag: TagModel) => tag.tags)
   );
-}
+} */
 
 export function getQuery(dbQuery: DbQuery[], orderByParam = 'name', sortOrderParam = 'asc'): QueryConstraint[] {
   const _queries: QueryConstraint[] = [];
@@ -71,37 +47,37 @@ export function getQuery(dbQuery: DbQuery[], orderByParam = 'name', sortOrderPar
  * @param startDate the start of the range, e.g. 20100101
  * @param endDate the end of the range, e.g. 99991231
  */
-export function searchDateRange<T>(firestore: Firestore, collectionName: string, key: string,
+/* export function searchDateRange<T>(firestore: Firestore, collectionName: string, key: string,
   startDate = '00000000', endDate = '99999999', isArchived = false, orderBy = 'name', sortOrder = 'asc'): Observable<T[]> {
   return searchData<T>(firestore, collectionName, getRangeQuery(key, startDate, endDate, isArchived), orderBy, sortOrder);
-}
+} */
 
-export function searchByYear<T>(firestore: Firestore, collectionName: string, key: string, year: string,
+/* export function searchByYear<T>(firestore: Firestore, collectionName: string, key: string, year: string,
   isArchived = false, orderBy = 'name', sortOrder = 'asc'): Observable<T[]> {
   if (year.length !== 4 || typeof year !== 'number') die(`BaseModelUtil.searchByYear: invalid year format <${year}> (should be nnnn)`);
 
   const _startDate = year + '0000';
   const _endDate = year + '1232';
   return searchDateRange<T>(firestore, collectionName, key, _startDate, _endDate, isArchived, orderBy, sortOrder);
-}
+} */
 
 
-export function searchByTag<T>(firestore: Firestore, tenantId: string, collectionName: string, tagName: string, orderBy = 'name', sortOrder = 'asc'): Observable<T[]> {
+/* export function searchByTag<T>(firestore: Firestore, tenantId: string, collectionName: string, tagName: string, orderBy = 'name', sortOrder = 'asc'): Observable<T[]> {
   const _dbQuery = getSystemQuery(tenantId);
   _dbQuery.push({ key: 'tags', operator: 'array-contains', value: tagName });
   return searchData<T>(firestore, collectionName, _dbQuery, orderBy, sortOrder);
-}
+} */
 
 /**
  * Find all model objects that are part of the given category.
  * @param categoryId the category id to search for
  */
-export function searchByCategory<T>(firestore: Firestore, collectionName: string, tenantId: string, categoryId: number, categoryKey = 'category', orderBy = 'name', sortOrder = 'asc' as OrderByDirection): Observable<T[]> {
+/* export function searchByCategory<T>(firestore: Firestore, collectionName: string, tenantId: string, categoryId: number, categoryKey = 'category', orderBy = 'name', sortOrder = 'asc' as OrderByDirection): Observable<T[]> {
   const _dbQuery = getSystemQuery(tenantId);
   if (categoryId !== AllCategories) 
     _dbQuery.push({ key: categoryKey, operator: '==', value: categoryId });
   return searchData<T>(firestore, collectionName, _dbQuery, orderBy, sortOrder);
-}
+} */
 
 /** 
  * Retrieve the first item in a list of items that has the given key.

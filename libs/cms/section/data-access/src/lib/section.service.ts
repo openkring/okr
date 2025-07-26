@@ -1,25 +1,18 @@
 import { Injectable, inject } from "@angular/core";
 import { Observable, first, forkJoin, map, of } from "rxjs";
-import { ToastController } from "@ionic/angular/standalone";
 
 import { DbQuery, SectionCollection, SectionModel, UserModel } from "@bk2/shared/models";
 import { SectionTypes, getCategoryName } from "@bk2/shared/categories";
-import { ENV, FIRESTORE } from "@bk2/shared/config";
-import { addSystemQueries, createModel, getSystemQuery, searchData, updateModel } from "@bk2/shared/util-core";
-import { confirmAction } from "@bk2/shared/util-angular";
-
-import { saveComment } from "@bk2/comment/util";
-import { bkTranslate } from "@bk2/shared/i18n";
+import { ENV } from "@bk2/shared/config";
+import { addSystemQueries, findByKey, getSystemQuery } from "@bk2/shared/util-core";
+import { FirestoreService } from "@bk2/shared/data-access";
 
 @Injectable({
     providedIn: 'root'
 })
 export class SectionService {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
-
-  private readonly tenantId = this.env.tenantId;
+  private readonly firestoreService = inject(FirestoreService);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -27,32 +20,17 @@ export class SectionService {
    * @param section the new SectionModel
    * @returns the key of the newly created SectionModel
    */
-  public async create(section: SectionModel, currentUser?: UserModel): Promise<string> {
-    try {
-      section.index = this.getSearchIndex(section);
-      const _key = await createModel(this.firestore, SectionCollection, section, this.tenantId);
-      await confirmAction(bkTranslate('@content.section.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, SectionCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@calEvent.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async create(section: SectionModel, currentUser?: UserModel): Promise<string | undefined> {
+    section.index = this.getSearchIndex(section);
+    return await this.firestoreService.createModel<SectionModel>(SectionCollection, section, '@content.section.operation.create', currentUser);
   }
 
   /**
-   * Return an Observable of a section by uid.
-   * @param afs a handle on the Firestore database
-   * @param uid the key of the model document
+   * Return an Observable of a section by key.
+   * @param key the key of the model document
    */
   public read(key: string): Observable<SectionModel | undefined> {
-    console.log(`SectionService.read(${key})`);
-    if (!key || key.length === 0) return of(undefined);
-    return this.list().pipe(
-      map((sections: SectionModel[]) => {
-        return sections.find((section: SectionModel) => section.bkey === key);
-      }));
+    return findByKey<SectionModel>(this.list(), key);
   }
 
   /**
@@ -60,18 +38,9 @@ export class SectionService {
    * @param section the SectionModel with the new values
    * @param toastController 
    */
-  public async update(section: SectionModel, currentUser?: UserModel, confirmMessage = '@content.section.operation.update'): Promise<string> {
-    try {
-      section.index = this.getSearchIndex(section);
-      const _key = await updateModel(this.firestore, SectionCollection, section);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, SectionCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async update(section: SectionModel, currentUser?: UserModel, confirmMessage = '@content.section.operation.update'): Promise<string | undefined> {
+    section.index = this.getSearchIndex(section);
+    return await this.firestoreService.updateModel<SectionModel>(SectionCollection, section, false, confirmMessage, currentUser);
   }
 
   /**
@@ -80,18 +49,23 @@ export class SectionService {
    * @param section the section to be deleted
    */
   public async delete(section: SectionModel, currentUser?: UserModel): Promise<void> {
-    section.isArchived = true;
-    await this.update(section, currentUser, '@content.section.operation.delete');
+    await this.firestoreService.deleteModel<SectionModel>(SectionCollection, section, '@content.section.operation.delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<SectionModel[]> {
-    return searchData<SectionModel>(this.firestore, SectionCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<SectionModel>(SectionCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
-
+  /**
+   * Query the database for sections based on a DbQuery array.
+   * @param dbQuery the DbQuery array to filter the sections
+   * @param orderBy the field to order the results by
+   * @param sortOrder the sort order (asc or desc)
+   * @returns an Observable of SectionModel[]
+   */
   public query(dbQuery: DbQuery[], orderBy = 'name', sortOrder = 'asc'): Observable<SectionModel[]> {
-    const _dbQuery = addSystemQueries(dbQuery, this.tenantId);
-    return searchData<SectionModel>(this.firestore, SectionCollection, _dbQuery, orderBy, sortOrder);
+    const _dbQuery = addSystemQueries(dbQuery, this.env.tenantId);
+    return this.firestoreService.searchData<SectionModel>(SectionCollection, _dbQuery, orderBy, sortOrder);
   }
 
   /*-------------------------- SEARCH --------------------------------*/

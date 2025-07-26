@@ -1,38 +1,28 @@
 import { inject, Injectable } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
-import { map, Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
 import { GroupCollection, GroupModel, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
-import { confirmAction } from '@bk2/shared/util-angular';
-
-import { saveComment } from '@bk2/comment/util';
-import { bkTranslate } from '@bk2/shared/i18n';
+import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GroupService  {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
-
-  private readonly tenantId = this.env.tenantId;
+  private readonly firestoreService = inject(FirestoreService);
 
   /*-------------------------- CRUD operations --------------------------------*/
-  public async create(group: GroupModel, currentUser?: UserModel): Promise<string> {
-      try {
-      group.index = this.getSearchIndex(group);
-      const _key = await createModel(this.firestore, GroupCollection, group, this.tenantId);
-      await confirmAction(bkTranslate('@subject.group.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, GroupCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@subject.group.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  /**
+   * Create a new Group in the database.
+   * @param group the GroupModel to store in the database
+   * @param currentUser the current user who performs the operation
+   * @returns the document id of the newly created Group or undefined if the operation failed
+   */ 
+  public async create(group: GroupModel, currentUser?: UserModel): Promise<string | undefined> {
+    group.index = this.getSearchIndex(group);
+    return await this.firestoreService.createModel<GroupModel>(GroupCollection, group, '@subject.group.operation.create', currentUser);
   }
   
   /**
@@ -41,35 +31,40 @@ export class GroupService  {
    * @returns an Observable of the group or undefined if not found
    */
   public read(key: string): Observable<GroupModel | undefined> {
-    if (!key || key.length === 0) return of(undefined);
-    return this.list().pipe(
-      map((groups: GroupModel[]) => {
-        return groups.find((group: GroupModel) => group.bkey === key);
-      }));
+    return findByKey<GroupModel>(this.list(), key);
   }
 
-  public async update(group: GroupModel, currentUser?: UserModel, confirmMessage = '@subject.group.operation.update'): Promise<string> {
-    try {
-      group.index = this.getSearchIndex(group);
-      const _key = await updateModel(this.firestore, GroupCollection, group);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, GroupCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  /**
+   * Update an existing group.
+   * @param group the GroupModel with the new values. Its key must be valid (in order to find it in the database)
+   * @param currentUser the current user who performs the operation
+   * @param confirmMessage an optional confirmation message to show in the UI
+   * @returns the key of the updated group or undefined if the operation failed
+   */
+  public async update(group: GroupModel, currentUser?: UserModel, confirmMessage = '@subject.group.operation.update'): Promise<string | undefined > {
+    group.index = this.getSearchIndex(group);
+    return await this.firestoreService.updateModel<GroupModel>(GroupCollection, group, false, confirmMessage, currentUser);
   }
 
+  /**
+   * Delete an existing group.
+   * @param group the GroupModel to delete
+   * @param currentUser the current user who performs the operation
+   * @returns a Promise that resolves when the operation is complete
+   */
   public async delete(group: GroupModel, currentUser?: UserModel): Promise<void> {
-    group.isArchived = true;
-    await this.update(group, currentUser, `@subject.group.operation.delete`);
+    await this.firestoreService.deleteModel<GroupModel>(GroupCollection, group, '@subject.group.operation.delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/
+  /**
+   * Returns a list of groups, optionally ordered by a specific field.
+   * @param orderBy the name of the field to order by
+   * @param sortOrder the order direction (asc or desc)
+   * @returns an Observable of the list of groups
+   */
   public list(orderBy = 'id', sortOrder = 'asc'): Observable<GroupModel[]> {
-    return searchData<GroupModel>(this.firestore, GroupCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
   /*-------------------------- search index --------------------------------*/

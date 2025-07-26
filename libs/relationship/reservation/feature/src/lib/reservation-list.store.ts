@@ -11,6 +11,7 @@ import { AppStore } from '@bk2/shared/feature';
 
 import { ReservationService } from '@bk2/relationship/reservation/data-access';
 import { ReservationModalsService } from './reservation-modals.service';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type ReservationListState = {
   resourceId: string;
@@ -34,6 +35,7 @@ export const ReservationListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     reservationService: inject(ReservationService),
     reservationModalsService: inject(ReservationModalsService),
@@ -51,7 +53,7 @@ export const ReservationListStore = signalStore(
         resourceId: store.resourceId()
       }),  
       stream: ({params}) => {
-        const allResources$ = searchData<ResourceModel>(store.appStore.firestore, ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
+        const allResources$ = store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
         const currentResource$ = findByKey<ResourceModel>(allResources$, params.resourceId); 
         debugItemLoaded('ReservationListStore.resource', currentResource$, store.appStore.currentUser()); 
         return currentResource$;

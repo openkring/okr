@@ -1,26 +1,22 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 import { ref, getDownloadURL, getMetadata, listAll, FullMetadata } from "firebase/storage";
-import { ToastController } from '@ionic/angular';
 
 import { DocumentTypes, getCategoryAbbreviation } from '@bk2/shared/categories';
 import { DocumentCollection, DocumentModel, DocumentType, ModelType, UserModel } from '@bk2/shared/models';
-import { DateFormat, addIndexElement, convertDateFormatToString, createModel, die, dirName, fileExtension, fileName, fileSizeUnit, generateRandomString, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util-core';
-import { error, confirmAction } from '@bk2/shared/util-angular';
-import { ENV, FIRESTORE, STORAGE } from '@bk2/shared/config';
-
-import { saveComment } from '@bk2/comment/util';
+import { DateFormat, addIndexElement, convertDateFormatToString, die, dirName, fileExtension, fileName, fileSizeUnit, findByKey, generateRandomString, getSystemQuery, getTodayStr} from '@bk2/shared/util-core';
+import { error } from '@bk2/shared/util-angular';
+import { ENV, STORAGE } from '@bk2/shared/config';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 import { getDocumentStoragePath } from '@bk2/document/util';
-import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DocumentService {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
+  private readonly firestoreService = inject(FirestoreService);
   private readonly storage = inject(STORAGE);
 
   private readonly tenantId = this.env.tenantId;
@@ -29,51 +25,29 @@ export class DocumentService {
   /**
    * Save a new document into the database.
    * @param document the new document to be saved
+   * @param currentUser the current user (used as the author of the initial comment)
    * @returns the document id of the new DocumentModel in the database
    */
-  public async create(document: DocumentModel, currentUser?: UserModel): Promise<string> {
-    try {
-      document.index = this.getSearchIndex(document);
-      const _key = await createModel(this.firestore, DocumentCollection, document, this.tenantId);
-      await confirmAction(bkTranslate('@document.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, DocumentCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@document.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
-  }
+  public async create(document: DocumentModel, currentUser?: UserModel): Promise<string | undefined> {
+    document.index = this.getSearchIndex(document);
+    return await this.firestoreService.createModel<DocumentModel>(DocumentCollection, document, '@document.operation.create', currentUser);
+  } 
 
   /**
-   * Read a document from the database by returning an Observable of a DocumentModel by uid.
-   * @param firestore a handle to the Firestore database
-   * @param uid the key of the model document
+   * Read a document from the database by returning an Observable of a DocumentModel by key.
+   * @param key the key of the model document
    */
   public read(key: string): Observable<DocumentModel | undefined> {
-    if (!key || key.length === 0) return of(undefined);
-    return this.list().pipe(
-      map((documents: DocumentModel[]) => {
-        return documents.find((document: DocumentModel) => document.bkey === key);
-      }));
+    return findByKey<DocumentModel>(this.list(), key);    
   }
 
   /**
    * Update an existing document with new values.
    * @param document the DocumentModel with the new values
    */
-  public async update(document: DocumentModel, currentUser?: UserModel, confirmMessage = '@document.operation.update'): Promise<string> {
-    try {
-      document.index = this.getSearchIndex(document);
-      const _key = await updateModel(this.firestore, DocumentCollection, document);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, DocumentCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async update(document: DocumentModel, currentUser?: UserModel, confirmMessage = '@document.operation.update'): Promise<string | undefined> {
+    document.index = this.getSearchIndex(document);
+    return await this.firestoreService.updateModel<DocumentModel>(DocumentCollection, document, false, confirmMessage, currentUser);
   }
 
   /**
@@ -81,8 +55,7 @@ export class DocumentService {
    * @param document the DocumentModel to be deleted.
    */
   public async delete(document: DocumentModel, currentUser?: UserModel): Promise<void> {
-    document.isArchived = true;
-    await this.update(document, currentUser, '@document.operation.delete');
+    await this.firestoreService.deleteModel<DocumentModel>(DocumentCollection, document, '@document.operation.delete', currentUser);
   }
 
  /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
@@ -93,7 +66,7 @@ export class DocumentService {
    * @returns 
    */
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<DocumentModel[]> {
-    return searchData<DocumentModel>(this.firestore, DocumentCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<DocumentModel>(DocumentCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
   }
 
   public listDocumentsByStorageDirectory(modelType: ModelType, key: string): Observable<DocumentModel[]> {
@@ -104,7 +77,7 @@ export class DocumentService {
   public listDocumentsByDirectory(dir: string, orderBy = 'name', sortOrder = 'asc'): Observable<DocumentModel[]> {
     const _dbQuery = getSystemQuery(this.tenantId);
     _dbQuery.push({ key: 'dir', operator: '==', value: dir });
-    return searchData<DocumentModel>(this.firestore, DocumentCollection, _dbQuery, orderBy, sortOrder);
+    return this.firestoreService.searchData<DocumentModel>(DocumentCollection, _dbQuery, orderBy, sortOrder);
   }
 
   public async listDocumentsFromStorageDirectory(modelType: ModelType, key: string): Promise<DocumentModel[]> {

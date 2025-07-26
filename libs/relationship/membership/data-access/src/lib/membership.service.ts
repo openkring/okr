@@ -2,17 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { combineLatest, firstValueFrom, map, Observable, of } from 'rxjs';
 import { ToastController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
 import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
 import { CategoryListModel, MembershipCollection, MembershipModel, ModelType, PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
-import { addDuration, createModel, getSystemQuery, getTodayStr, searchData, updateModel } from '@bk2/shared/util-core';
-import { confirmAction, copyToClipboardWithConfirmation } from '@bk2/shared/util-angular';
+import { addDuration, findByKey, getSystemQuery, getTodayStr } from '@bk2/shared/util-core';
+import { copyToClipboardWithConfirmation, error } from '@bk2/shared/util-angular';
 
-import { saveComment } from '@bk2/comment/util';
+import { createComment } from '@bk2/comment/util';
 import { getCategoryAttribute } from '@bk2/category/util';
 
 import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipSearchIndex, getMembershipSearchIndexInfo, getRelLogEntry } from '@bk2/relationship/membership/util';
-import { bkTranslate } from '@bk2/shared/i18n';
+import { FirestoreService } from '@bk2/shared/data-access';
   
 
   @Injectable({
@@ -20,7 +20,7 @@ import { bkTranslate } from '@bk2/shared/i18n';
   })
   export class MembershipService {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
+  private readonly firestoreService = inject(FirestoreService);
   private readonly toastController = inject(ToastController);
 
   private readonly tenantId = this.env.tenantId;
@@ -29,65 +29,44 @@ import { bkTranslate } from '@bk2/shared/i18n';
     /**
    * Create a new membership and save it to the database.
    * @param membership the new membership to save
-   * @returns the document id of the stored membership in the database
+   * @param currentUser the UserModel of the currently logged in user, used for logging and confirmation messages.
+   * @returns the document id of the stored membership in the database or undefined if the operation failed
    */
-  public async create(membership: MembershipModel, currentUser?: UserModel): Promise<string> {
-      try {
-      membership.index = this.getSearchIndex(membership);
-      const _key = await createModel(this.firestore, MembershipCollection, membership, this.tenantId);
-      await confirmAction(bkTranslate('@membership.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@membership.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async create(membership: MembershipModel, currentUser?: UserModel): Promise<string | undefined> {
+        membership.index = this.getSearchIndex(membership);
+        return await this.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', currentUser);
   }
 
   /**
    * Retrieve an existing membership from the database.
    * @param key the key of the membership to retrieve
-   * @returns the membership as an Observable
+   * @returns the membership as an Observable or undefined if not found
    */
   public read(key: string): Observable<MembershipModel | undefined> {
-    if (!key || key.length === 0) return of(undefined);
-    return this.list().pipe(
-      map((memberships: MembershipModel[]) => {
-        return memberships.find((membership: MembershipModel) => membership.bkey === key);
-      }));
+        return findByKey<MembershipModel>(this.list(), key);
   }
 
-  public async update(membership: MembershipModel, currentUser?: UserModel, confirmMessage = '@membership.operation.update'): Promise<string> {
-      try {
-      membership.index = this.getSearchIndex(membership);
-      const _key = await updateModel(this.firestore, MembershipCollection, membership);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async update(membership: MembershipModel, currentUser?: UserModel, confirmMessage = '@membership.operation.update'): Promise<string | undefined> {
+        membership.index = this.getSearchIndex(membership);
+        return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, confirmMessage, currentUser);
   }
 
   public async delete(membership: MembershipModel, currentUser?: UserModel): Promise<void> {
-    membership.isArchived = true;
-    await this.update(membership, currentUser, `@membership.operation.delete`);
+    await this.firestoreService.deleteModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.delete', currentUser);
   }
 
   /**
    * End an existing membership by setting its validTo date.
    * @param membership the membership to end
    * @param dateOfExit the end date of the membership
+   * @param currentUser the UserModel of the currently logged in user, used for logging and confirmation messages.
+   * @returns the document id of the updated membership in the database or undefined if the operation failed
    */
-  public async endMembershipByDate(membership: MembershipModel, dateOfExit: string, currentUser?: UserModel): Promise<void> {
+  public async endMembershipByDate(membership: MembershipModel, dateOfExit: string, currentUser?: UserModel): Promise<string | undefined> {
     if (membership.dateOfExit.startsWith('9999') && dateOfExit && dateOfExit.length === 8) {
       membership.dateOfExit = dateOfExit;
       membership.relIsLast = true;
-      await this.update(membership, currentUser);
-      await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, membership.bkey, '@comment.message.membership.deleted');  
+      return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, '@comment.message.membership.deleted', currentUser);
     }
   }
 
@@ -97,23 +76,38 @@ import { bkTranslate } from '@bk2/shared/i18n';
    * The new membership starts on the given newValidFrom.
    * @param oldMembership the existing membership that will be ended
    * @param membershipChange the view model from the modal with the new membership category and the date of the category change
+   * @param membershipCategory the list of membership categories to use for the new membership
+   * @param currentUser the UserModel of the currently logged in user, used for logging and confirmation messages.
+   * @return the document id of the newly created membership in the database or undefined if the operation failed
    */
-  public async saveMembershipCategoryChange(oldMembership: MembershipModel, membershipChange: CategoryChangeFormModel, membershipCategory: CategoryListModel, currentUser?: UserModel): Promise<void> {
+  public async saveMembershipCategoryChange(
+    oldMembership: MembershipModel, 
+    membershipChange: CategoryChangeFormModel, 
+    membershipCategory: CategoryListModel, 
+    currentUser?: UserModel): Promise<string | undefined> 
+  {
+    if (!currentUser) {
+      return error(undefined, 'FirestoreService.saveMembershipCategoryChange: currentUser is mandatory.', true);
+    }
     oldMembership.relIsLast = false;
     oldMembership.dateOfExit = addDuration(membershipChange.dateOfChange ?? getTodayStr(), { days: -1});
     await this.update(oldMembership, currentUser);
 
     // add a comment about the category change to the current membership
-    const _comment = getMembershipCategoryChangeComment(membershipChange.membershipCategoryOld ?? 'undefined', membershipChange.membershipCategoryNew ?? 'undefined');
-    await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, oldMembership.bkey, _comment);  
+    const _message = getMembershipCategoryChangeComment(oldMembership.membershipCategory, membershipChange.membershipCategoryNew);;
+    const _comment = createComment(currentUser.bkey, currentUser.firstName + ' ' + currentUser.lastName, _message, MembershipCollection, oldMembership.bkey, this.tenantId);
+    await this.firestoreService.saveComment(MembershipCollection, oldMembership.bkey, _comment);
 
     // create a new membership with the new type and the start date
     const _newMembership = this.copyMembershipWithNewType(oldMembership, membershipChange, membershipCategory);
-    const _key = await this.create(_newMembership);
+    const _key = await this.create(_newMembership, currentUser);
 
-    // add a comment about the category change to the new membership
-    await saveComment(this.firestore, this.tenantId, currentUser, MembershipCollection, _key, _comment);  
- 
+    if (_key) {
+      // add a comment about the category change to the new membership
+      await this.firestoreService.saveComment(MembershipCollection, _key, _comment);
+      return _key;
+    }
+    return undefined;
   }
 
   /**
@@ -140,7 +134,7 @@ import { bkTranslate } from '@bk2/shared/i18n';
 
   /*-------------------------- LIST / QUERY  --------------------------------*/
   public list(orderBy = 'memberName2', sortOrder = 'asc'): Observable<MembershipModel[]> {
-    return searchData<MembershipModel>(this.firestore, MembershipCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
   }
 
   /**
@@ -172,17 +166,18 @@ import { bkTranslate } from '@bk2/shared/i18n';
   
   /*------------------------------ copy email addresses ------------------------------*/
   public getAllEmailAddresses(memberships$: Observable<MembershipModel[]>): Observable<string[]> {
-    const _persons$ =  searchData<PersonModel>(this.firestore, PersonCollection, getSystemQuery(this.tenantId), 'lastName', 'asc');
+    const _persons$ = this.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(this.tenantId), 'lastName', 'asc');
 
     // join the two streams to retrieve the email addresses of the selected memberships
-      const _emails$ = combineLatest([memberships$, _persons$]).pipe(
-        map(([_memberships,_persons]) =>_memberships.map(_membership=> {
-          if (_membership.memberModelType !== ModelType.Person) return '';
-          const _person = _persons.find(a => a.bkey === _membership.memberKey);
-          return _person?.fav_email ?? '';
-        })));
-      return _emails$.pipe(map(_emails => _emails.filter(_email => _email !== '')));
-    }
+    const _emails$ = combineLatest([memberships$, _persons$]).pipe(
+      map(([_memberships,_persons]) =>_memberships.map(_membership=> {
+        if (_membership.memberModelType !== ModelType.Person) return '';
+        const _person = _persons.find(a => a.bkey === _membership.memberKey);
+        return _person?.fav_email ?? '';
+      }))
+    );
+    return _emails$.pipe(map(_emails => _emails.filter(_email => _email !== '')));
+  }
 
   // tbd: should we show a modal with all email addresses as deletable ion-chips ?
   public async copyAllEmailAddresses(memberships$: Observable<MembershipModel[]>): Promise<void> {

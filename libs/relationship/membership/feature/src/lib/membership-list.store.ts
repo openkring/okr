@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches, readModel, searchData } from '@bk2/shared/util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared/util-core';
 import { memberTypeMatches } from '@bk2/shared/categories';
 import { AllCategories, CategoryCollection, CategoryListModel, GenderType, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, OrgType, PersonCollection, PersonModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
@@ -12,6 +12,7 @@ import { selectDate } from '@bk2/shared/ui';
 
 import { MembershipService } from '@bk2/relationship/membership/data-access';
 import { MembershipModalsService } from './membership-modals.service';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type MembershipListState = {
   orgId: string;
@@ -41,12 +42,13 @@ export const MembershipListStore = signalStore(
     membershipService: inject(MembershipService),
     membershipModalsService: inject(MembershipModalsService),
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     membershipsResource: rxResource({
       stream: () => {
-        const memberships$ = searchData<MembershipModel>(store.appStore.firestore, MembershipCollection, getSystemQuery(store.appStore.tenantId()), 'memberName2', 'asc');
+        const memberships$ = store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.tenantId()), 'memberName2', 'asc');
         debugListLoaded('memberships', memberships$, store.appStore.currentUser());
         return memberships$;
       }
@@ -57,7 +59,7 @@ export const MembershipListStore = signalStore(
         orgId: store.orgId()
       }),  
       stream: ({params}) => {
-        const org$ = readModel<OrgModel>(store.appStore.firestore, OrgCollection, params.orgId);    
+        const org$ = store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgId);
         debugItemLoaded('defaultOrg', org$, store.appStore.currentUser());
         return org$;
       }
@@ -135,7 +137,7 @@ export const MembershipListStore = signalStore(
         mcatId: store.membershipCategoryKey()
       }),  
       stream: ({params}) => {
-        return readModel<CategoryListModel>(store.appStore.firestore, CategoryCollection, params.mcatId);            
+        return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId);            
       }
     }),
     currentPersonResource: rxResource({
@@ -144,7 +146,7 @@ export const MembershipListStore = signalStore(
       }),  
       stream: ({params}) => {
         if (params.currentUser) {
-          return readModel<PersonModel>(store.appStore.firestore, PersonCollection, params.currentUser.personKey);            
+          return store.firestoreService.readModel<PersonModel>(PersonCollection, params.currentUser.personKey);
         }
         return of(undefined);
       }

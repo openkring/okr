@@ -2,7 +2,6 @@ import { ToastController, AlertController, AlertOptions } from '@ionic/angular';
 
 import { bkTranslate } from '@bk2/shared/i18n';
 import { TOAST_LENGTH } from '@bk2/shared/constants';
-import { warn } from '@bk2/shared/util-core';
 
 /**
 * In debug mode, write an error message to the console.
@@ -11,13 +10,14 @@ import { warn } from '@bk2/shared/util-core';
 * @param message the message to log and show
 * @param isDebugMode debug modus
 */
-export function error(toastController: ToastController | undefined, message: string, isDebugMode = false): void {
-    if (isDebugMode === true) {
-        console.error(bkTranslate(message));
-    }
-    if (toastController) {
-        showToast(toastController, message);
-    }
+export function error(toastController: ToastController | undefined, message: string, isDebugMode = false): undefined {
+  if (isDebugMode === true) {
+      console.error(bkTranslate(message));
+  }
+  if (toastController) {
+      showToast(toastController, message);
+  }
+  return undefined;
 }
 
 /**
@@ -29,11 +29,11 @@ export function error(toastController: ToastController | undefined, message: str
  * @param message the message to be shown or the i18n key to be translated.
  */
 export async function showToast(toastController: ToastController, message: string): Promise<void> {
-    const _toast = await toastController.create({
-        message: bkTranslate(message),
-        duration: TOAST_LENGTH
-    });
-    _toast.present();
+  const _toast = await toastController.create({
+      message: bkTranslate(message),
+      duration: TOAST_LENGTH
+  });
+  _toast.present();
 }
 
 /**
@@ -44,41 +44,41 @@ export async function showToast(toastController: ToastController, message: strin
 * @param cssClass optional styling attributes
 */
 export async function confirm(
-    alertController: AlertController,
-    message: string,
-    isCancellable = false,
-    cssClass?: string
+  alertController: AlertController,
+  message: string,
+  isCancellable = false,
+  cssClass?: string
 ): Promise<boolean> {
-    const _alertConfig: AlertOptions = isCancellable === false ? {
-        message: bkTranslate(message),
-        buttons: [bkTranslate('@general.operation.change.ok')]
-    } : {
-        message: bkTranslate(message),
-        buttons: [{
-            text: bkTranslate('@general.operation.change.cancel'),
-            role: 'cancel'
-        }, {
-            text: bkTranslate('@general.operation.change.ok'),
-            role: 'confirm'
-        }]
-    };
-    if (cssClass) {
-        // tslint:disable-next-line: no-string-literal
-        _alertConfig['cssClass'] = cssClass;
-    }
-    const _alert = await alertController.create(_alertConfig);
-    await _alert.present();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { data, role } = await _alert.onWillDismiss();
-    return role === 'confirm';
+  const _alertConfig: AlertOptions = isCancellable === false ? {
+    message: bkTranslate(message),
+    buttons: [bkTranslate('@general.operation.change.ok')]
+  } : {
+    message: bkTranslate(message),
+    buttons: [{
+        text: bkTranslate('@general.operation.change.cancel'),
+        role: 'cancel'
+    }, {
+        text: bkTranslate('@general.operation.change.ok'),
+        role: 'confirm'
+    }]
+  };
+  if (cssClass) {
+    // tslint:disable-next-line: no-string-literal
+    _alertConfig['cssClass'] = cssClass;
   }
-
-export async function confirmAction(message: string, writeWarning = true, toastController?: ToastController): Promise<void> {
-    if (toastController !== undefined) {
-        await showToast(toastController, message);
-    }
-    if (writeWarning === true) warn(bkTranslate(message));
+  const _alert = await alertController.create(_alertConfig);
+  await _alert.present();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { role } = await _alert.onWillDismiss();
+  return role === 'confirm';
 }
+
+/* export async function confirmAction(message: string, writeWarning = true, toastController?: ToastController): Promise<void> {
+  if (toastController !== undefined) {
+      await showToast(toastController, message);
+  }
+  if (writeWarning === true) warn(bkTranslate(message));
+} */
 
 export type PromptInputType = 'text' | 'number' | 'password';
 

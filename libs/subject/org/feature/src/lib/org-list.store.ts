@@ -4,7 +4,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 
-import { chipMatches, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
+import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
 import { AppNavigationService, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared/util-angular';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AddressModel, AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared/models';
@@ -15,6 +15,7 @@ import { AddressService } from '@bk2/subject/address/data-access';
 import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel } from '@bk2/subject/org/util';
 import { OrgService } from '@bk2/subject/org/data-access';
 import { OrgNewModalComponent } from './org-new.modal';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type OrgListState = {
   searchTerm: string;
@@ -35,6 +36,7 @@ export const OrgListStore = signalStore(
     appNavigationService: inject(AppNavigationService),
     router: inject(Router),
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
@@ -42,7 +44,7 @@ export const OrgListStore = signalStore(
   withProps((store) => ({
     orgsResource: rxResource({
       stream: () => {
-        return searchData<OrgModel>(store.appStore.firestore, OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc')
+        return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc')
       }
     }),
   })),

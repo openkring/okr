@@ -3,9 +3,10 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
 import { PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
 import { AppStore } from './app.store';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type PersonSelectState = {
   searchTerm: string;
@@ -23,6 +24,7 @@ export const PersonSelectStore = signalStore(
   withState(personInitialState),
   withProps(() => ({
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
@@ -31,7 +33,7 @@ export const PersonSelectStore = signalStore(
         currentUser: store.currentUser()
       }),
       stream: ({params}) => {
-        const persons$ = searchData<PersonModel>(store.appStore.firestore, PersonCollection, getSystemQuery(store.appStore.tenantId()), 'lastName', 'asc');
+        const persons$ = store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.tenantId()), 'lastName', 'asc');
         debugListLoaded('persons (to select)', persons$, params.currentUser);
         return persons$;
       }

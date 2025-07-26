@@ -3,10 +3,11 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
 import { AllCategories, CalEventCollection, CalEventModel, CalEventType, ModelType } from '@bk2/shared/models';
 import { categoryMatches } from '@bk2/shared/categories';
 import { AppStore } from '@bk2/shared/feature';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 import { isCalEvent } from '@bk2/calevent/util';
 import { CalEventEditModalComponent } from './calevent-edit.modal';
@@ -31,12 +32,13 @@ export const CalEventListStore = signalStore(
   withProps(() => ({
     calEventService: inject(CalEventService),
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     calEventResource: rxResource({
       stream: () => {
-        const calEvents$ = searchData<CalEventModel>(store.appStore.firestore, CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
+        const calEvents$ = store.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
         debugListLoaded<CalEventModel>('CalEventListStore.calEvents', calEvents$, store.appStore.currentUser());
         return calEvents$;
       }

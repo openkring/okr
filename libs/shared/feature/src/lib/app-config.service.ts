@@ -1,41 +1,24 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { collection, query } from 'firebase/firestore';
-import { collectionData } from 'rxfire/firestore';
-import { ToastController } from '@ionic/angular/standalone';
 
-import { FIRESTORE } from '@bk2/shared/config';
 import { AppConfig, AppConfigCollection } from '@bk2/shared/models';
-import { createObject, readObject, updateObject } from '@bk2/shared/util-core';
-import { confirmAction } from '@bk2/shared/util-angular';
-import { bkTranslate } from '@bk2/shared/i18n';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AppConfigService {
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
+  private readonly firestoreService = inject(FirestoreService);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
    * Create a new AppConfig in the database.
    * @param appConfig the application configuration to store in the database
-   * @returns the document id of the newly created AppConfig
+   * @param key the document id of the AppConfig, if undefined a new random document id will be generated
+   * @returns the document id of the newly created AppConfig or undefined if the operation failed
    */
-  public async create(appConfig: AppConfig): Promise<string> {
-    try {
-      // By spreading appConfig into a new object, we create a plain object that satisfies 
-      // the generic constraint of updateObject, resolving the type conflict between
-      // the frontend and backend Firestore SDKs.
-      const _key = createObject(this.firestore, AppConfigCollection, { ...appConfig }, appConfig.tenantId);
-      await confirmAction(bkTranslate('@appConfig.operation.create.conf'), true, this.toastController);
-      return _key;
-    }
-    catch(error) {
-      await confirmAction(bkTranslate('@appConfig.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    } 
+  public async create(appConfig: AppConfig, key: string | undefined): Promise<string | undefined> {
+    return this.firestoreService.createObject<AppConfig>(AppConfigCollection, key, appConfig, '@appConfig.operation.create');
   }
 
   /**
@@ -44,42 +27,32 @@ export class AppConfigService {
    * @returns an Observable of the AppConfig
    */
   public read(key: string | undefined): Observable<AppConfig | undefined> {
-    return readObject<AppConfig>(this.firestore, AppConfigCollection, key);
+    return this.firestoreService.readObject<AppConfig>(AppConfigCollection, key);
   }
 
   /**
    * Update an AppConfig in the database with new values.
-   * @param appConfig the AppConfig with the new values. Its key must be valid (in order to find it in the database)
+   * @param appConfig the AppConfig with the new values.
+   * @param key the document id of the AppConfig, must be valid (in order to find it in the database)
+   * @param message the confirmation message to show in a toast after successful update
+   * @returns the document id of the updated AppConfig or undefined if the operation failed
    */
-  public async update(appConfig: AppConfig, message = '@appConfig.operation.update'): Promise<string> {
-    try {
-      // By spreading appConfig into a new object, we create a plain object that satisfies 
-      // the generic constraint of updateObject, resolving the type conflict between
-      // the frontend and backend Firestore SDKs.
-      const _key = updateObject(this.firestore, AppConfigCollection, appConfig.tenantId, { ...appConfig });
-      await confirmAction(bkTranslate(`${message}.conf`), true, this.toastController);
-      return _key;
-    }
-    catch(error) {
-      await confirmAction(bkTranslate(`${message}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    } 
+  public async update(appConfig: AppConfig, key: string, message = '@appConfig.operation.update'): Promise<string | undefined> {
+    return await this.firestoreService.updateObject<AppConfig>(AppConfigCollection, key, appConfig, message);
   }
 
   /**
    * We are not actually deleting an AppConfig. We are just archiving it.
-   * @param appConfig 
+   * @param key the document id of the AppConfig
+   * @returns a Promise that resolves when the operation is complete 
    */
-  public async delete(appConfig: AppConfig): Promise<void> {
-    appConfig.isArchived = true;
-    await this.update(appConfig, '@appConfig.operation.delete');
+  public async delete(key: string): Promise<void> {
+    await this.firestoreService.deleteObject(AppConfigCollection, key, '@appConfig.operation.delete');
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
   
   public list(): Observable<AppConfig[]> {
-      const _collectionRef = collection(this.firestore, AppConfigCollection);
-      const _queryRef = query(_collectionRef);
-      return collectionData(_queryRef) as Observable<AppConfig[]>;
+    return this.firestoreService.listAllObjects<AppConfig>(AppConfigCollection);
   }
 }

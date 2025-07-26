@@ -1,98 +1,87 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
-import { ToastController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
 import { WorkingRelCollection, WorkingRelModel, UserModel } from '@bk2/shared/models';
-import { createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
-import { confirmAction } from '@bk2/shared/util-angular';
-
-import { saveComment } from '@bk2/comment/util';
+import { findByKey, getSystemQuery } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 import { getWorkingRelSearchIndex, getWorkingRelSearchIndexInfo } from '@bk2/relationship/working-rel/util';
-import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
     providedIn: 'root'
 })
 export class WorkingRelService {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
+  private readonly firestoreService = inject(FirestoreService);
 
   /*-------------------------- CRUD operations on workingRel --------------------------------*/
   /**
    * Create a new workingRel and save it to the database.
    * @param workingRel the new workingRel to save
-   * @returns the document id of the stored workingRel in the database
+   * @param currentUser the user who is creating the workingRel
+   * @returns the document id of the stored workingRel in the database or undefined if the operation failed
    */
-  public async create(workingRel: WorkingRelModel, tenantId: string, currentUser?: UserModel): Promise<string> {
-    try {
-      workingRel.index = this.getSearchIndex(workingRel);
-      const _key = await createModel(this.firestore, WorkingRelCollection, workingRel, this.env.tenantId);
-      await confirmAction(bkTranslate('@calEvent.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.env.tenantId, currentUser, WorkingRelCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@calEvent.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async create(workingRel: WorkingRelModel, currentUser?: UserModel): Promise<string | undefined> {
+    workingRel.index = this.getSearchIndex(workingRel);
+    return await this.firestoreService.createModel<WorkingRelModel>(WorkingRelCollection, workingRel, '@workingRel.operation.create', currentUser);
   }
 
   /**
    * Retrieve an existing workingRel from the cached list of all workingRels.
    * @param key the key of the workingRel to retrieve
-   * @returns the workingRel as an Observable
+   * @returns the workingRel as an Observable or undefined if not found
    */
   public read(key: string): Observable<WorkingRelModel | undefined> {
-    if (!key || key.length === 0) return of(undefined);
-    return this.list().pipe(
-      map((workingRels: WorkingRelModel[]) => {
-        return workingRels.find((workingRel: WorkingRelModel) => workingRel.bkey === key);
-      }));
+    return findByKey<WorkingRelModel>(this.list(), key);
   }
     
   /**
    * Update an existing workingRel with new values.
    * @param workingRel the workingRel to update
-   * @param i18nPrefix the prefix for the i18n key to use for the toast message (can be used for a delete confirmation)
+   * @param currentUser the user who is updating the workingRel
+   * @param confirmMessage the i18n key for the confirmation message to show in a toast
+   * @returns the document id of the updated workingRel or undefined if the operation failed  
    */
-  public async update(workingRel: WorkingRelModel, currentUser?: UserModel, confirmMessage = '@workingRel.operation.update'): Promise<string> {
-    try {
-      workingRel.index = this.getSearchIndex(workingRel);
-      const _key = await updateModel(this.firestore, WorkingRelCollection, workingRel);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.env.tenantId, currentUser, WorkingRelCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async update(workingRel: WorkingRelModel, currentUser?: UserModel, confirmMessage = '@workingRel.operation.update'): Promise<string | undefined> {
+    workingRel.index = this.getSearchIndex(workingRel);
+    return await this.firestoreService.updateModel<WorkingRelModel>(WorkingRelCollection, workingRel, false, confirmMessage, currentUser);
   }
 
+  /**
+   * Delete an existing workingRel.
+   * @param workingRel the workingRel to delete
+   * @param currentUser the user who is deleting the workingRel
+   * @returns a promise that resolves when the deletion is complete
+   */
   public async delete(workingRel: WorkingRelModel, currentUser?: UserModel): Promise<void> {
-    workingRel.isArchived = true;
-    await this.update(workingRel, currentUser, `@workingRel.operation.delete`);
+    await this.firestoreService.deleteModel<WorkingRelModel>(WorkingRelCollection, workingRel, '@workingRel.operation.delete', currentUser);
   }
 
   /**
    * End an existing workingRel relationship by setting its validTo date.
    * @param workingRel the workingRel to end
    * @param validTo the end date of the workingRel
+   * @param currentUser the user who is ending the workingRel
+   * @returns a Promise that resolves to the document id of the updated workingRel or undefined if the operation failed
    */
-  public async endWorkingRelByDate(workingRel: WorkingRelModel, validTo: string, tenantId: string, currentUser?: UserModel): Promise<void> {
+  public async endWorkingRelByDate(workingRel: WorkingRelModel, validTo: string, currentUser?: UserModel): Promise<string | undefined> {
     if (workingRel.validTo.startsWith('9999') && validTo && validTo.length === 8) {
       workingRel.validTo = validTo;
-      await this.update(workingRel, currentUser);
-      await saveComment(this.firestore, tenantId, currentUser, WorkingRelCollection, workingRel.bkey, '@comment.message.workingRel.deleted');  
+      return await this.firestoreService.updateModel<WorkingRelModel>(WorkingRelCollection, workingRel, false, '@workingRel.operation.end', currentUser);
     }
+    return undefined;
   }
 
   /*-------------------------- list --------------------------------*/
+  /**
+   * List all working relationships.
+   * @param orderBy the field to order the list by, default is 'name'
+   * @param sortOrder the order to sort the list, default is 'asc'
+   * @returns an Observable array of all working relationships
+   */
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<WorkingRelModel[]> {
-    return searchData<WorkingRelModel>(this.firestore, WorkingRelCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<WorkingRelModel>(WorkingRelCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
   /**

@@ -2,12 +2,12 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 
-import { FIRESTORE } from '@bk2/shared/config';
 import { AppStore } from '@bk2/shared/feature';
 import { BkModel, LogInfo, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared/models';
 
 import { Observable, of } from 'rxjs';
-import { compareDate, getAge, getEndOfYear, getFullPersonName, getSystemQuery, getYear, isMembership, searchData } from '@bk2/shared/util-core';
+import { compareDate, getAge, getEndOfYear, getFullPersonName, getSystemQuery, getYear, isMembership } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type AocAdminOpsState = {
   modelType: ModelType | undefined;
@@ -25,7 +25,7 @@ export const AocAdminOpsStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
-    firestore: inject(FIRESTORE),
+    firestoreService: inject(FirestoreService)
   })),
   withProps((store) => ({
     dataResource: rxResource({
@@ -35,11 +35,11 @@ export const AocAdminOpsStore = signalStore(
       stream: ({params}): Observable<BkModel[] | undefined> => {
         switch(params.modelType) {
           case ModelType.Person:
-            return searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
+            return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
           case ModelType.Org:
-            return searchData<OrgModel>(store.firestore, OrgCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc');
+            return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc');
           case ModelType.Membership:
-            return searchData<MembershipModel>(store.firestore, MembershipCollection, getSystemQuery(store.appStore.env.tenantId), 'memberName2', 'asc');
+            return store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.env.tenantId), 'memberName2', 'asc');
           default:
             return of(undefined);
         }

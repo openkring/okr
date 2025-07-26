@@ -1,41 +1,29 @@
 import { inject, Injectable } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
-import { collection, query } from 'firebase/firestore';
-import { collectionData } from 'rxfire/firestore';
 import { map, Observable, of } from 'rxjs';
 
 import { getCategoryAbbreviation, OrgTypes } from '@bk2/shared/categories';
-import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
 import { AddressCollection, AddressModel, OrgCollection, OrgModel, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
-import { confirmAction } from '@bk2/shared/util-angular';
-
-import { saveComment } from '@bk2/comment/util';
-import { bkTranslate } from '@bk2/shared/i18n';
+import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrgService  {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
-
-  private readonly tenantId = this.env.tenantId;
+  private readonly firestoreService = inject(FirestoreService);
 
   /*-------------------------- CRUD operations --------------------------------*/
-  public async create(org: OrgModel, currentUser?: UserModel): Promise<string> {
-     try {
-      org.index = this.getSearchIndex(org);
-      const _key = await createModel(this.firestore, OrgCollection, org, this.tenantId);
-      await confirmAction(bkTranslate('@subject.org.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, OrgCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@subject.org.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  /**
+   * Create a new organization in the database.
+   * @param org the OrgModel to store in the database. It must contain a valid bkey.
+   * @param currentUser the current user who performs the operation
+   * @returns the unique key of the created organization or undefined if the operation failed
+   */
+  public async create(org: OrgModel, currentUser?: UserModel): Promise<string | undefined> {
+    org.index = this.getSearchIndex(org);
+    return await this.firestoreService.createModel<OrgModel>(OrgCollection, org, '@subject.org.operation.create', currentUser);
   }
   
   /**
@@ -44,11 +32,7 @@ export class OrgService  {
    * @returns an Observable of the org or undefined if not found
    */
   public read(key: string): Observable<OrgModel | undefined> {
-    if (!key || key.length === 0) return of(undefined);
-    return this.list().pipe(
-      map((orgs: OrgModel[]) => {
-        return orgs.find((org: OrgModel) => org.bkey === key);
-      }));
+    return findByKey<OrgModel>(this.list(), key);
   }
 
  /**
@@ -65,33 +49,48 @@ export class OrgService  {
       }));
   }
 
-  public async update(org: OrgModel, currentUser?: UserModel, confirmMessage = '@subject.org.operation.update'): Promise<string> {
-    try {
-      org.index = this.getSearchIndex(org);
-      const _key = await updateModel(this.firestore, OrgCollection, org);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, OrgCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  /**
+   * Updates an existing organization in the database.
+   * @param org the OrgModel to update
+   * @param currentUser the current user who performs the operation
+   * @param confirmMessage the message to display in the confirmation dialog
+   * @returns the unique key of the updated organization or undefined if the operation failed
+   */
+  public async update(org: OrgModel, currentUser?: UserModel, confirmMessage = '@subject.org.operation.update'): Promise<string | undefined> {
+    org.index = this.getSearchIndex(org);
+    return await this.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, confirmMessage, currentUser);
   }
 
+  /**
+   * Deletes an organization from the database.
+   * @param org the OrgModel to delete
+   * @param currentUser the current user who performs the operation
+   * @returns a Promise that resolves when the operation is complete
+   */
   public async delete(org: OrgModel, currentUser?: UserModel): Promise<void> {
-    org.isArchived = true;
-    await this.update(org, currentUser, `@subject.org.operation.delete`);
+    await this.firestoreService.deleteModel<OrgModel>(OrgCollection, org, '@subject.org.operation.delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/
+  /**
+   * Lists all organizations in the database.
+   * @param orderBy the name of the field to order by
+   * @param sortOrder the order direction (asc or desc)
+   * @returns an Observable of the list of organizations
+   */
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<OrgModel[]> {
-    return searchData<OrgModel>(this.firestore, OrgCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
+  /**
+   * This function retrieves all addresses associated with a given organization.
+   * The addresses are returned as an Observable array of AddressModel.
+   * @param org the organization for which to list addresses
+   * @returns an Observable array of AddressModel
+   */
   public listAddresses(org: OrgModel): Observable<AddressModel[]> {
-    const _ref = query(collection(this.firestore, `${OrgCollection}/${org.bkey}/${AddressCollection}`));
-    return collectionData(_ref, { idField: 'bkey' }) as Observable<AddressModel[]>;
+    const _collection = `${OrgCollection}/${org.bkey}/${AddressCollection}`;
+    return this.firestoreService.searchData<AddressModel>(_collection, getSystemQuery(this.env.tenantId));
   }
 
   /*-------------------------- search index --------------------------------*/

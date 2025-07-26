@@ -1,91 +1,72 @@
 import { Injectable, inject } from '@angular/core';
-import { map, Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { EventInput } from '@fullcalendar/core';
-import { ToastController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
 import { CalEventCollection, CalEventModel, UserModel } from '@bk2/shared/models';
 import { CalEventTypes, getCategoryAbbreviation } from '@bk2/shared/categories';
-import { addIndexElement, createModel, die, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
-import { confirmAction } from '@bk2/shared/util-angular';
-import { bkTranslate } from '@bk2/shared/i18n';
-
-import { saveComment } from '@bk2/comment/util';
+import { addIndexElement, die, findByKey, getSystemQuery } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CalEventService {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
-  private readonly tenantId = this.env.tenantId;
+  private readonly firestoreService = inject(FirestoreService);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
    * Create a new CalEvent in the database.
    * @param calEvent the CalEventModel to store in the database
-   * @param currentUser the current user (used as the author of the initial comment)
-   * @returns the document id of the newly created CalEvent
+   * @param currentUser the current user who performs the operation
+   * @returns the document id of the newly created CalEvent or undefined if the operation failed
    */
-  public async create(calEvent: CalEventModel, currentUser?: UserModel): Promise<string> {
-    try {
-      calEvent.index = this.getSearchIndex(calEvent);
-      const _key = await createModel(this.firestore, CalEventCollection, calEvent, this.tenantId);
-      await confirmAction(bkTranslate('@calEvent.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, CalEventCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@calEvent.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async create(calEvent: CalEventModel, currentUser: UserModel): Promise<string | undefined> {
+    calEvent.index = this.getSearchIndex(calEvent);
+    return await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, '@calEvent.operation.create', currentUser);
   }
 
   /**
    * Lookup a CalEvent in the cached list by its document id and return it as an Observable.
    * @param key the document id of the CalEvent
-   * @returns an Observable of the CalEventModel
+   * @returns an Observable of the CalEventModel or undefined if not found
    */
   public read(key: string | undefined): Observable<CalEventModel | undefined> {
-    if (!key || key.length === 0) return of(undefined);
-    return this.list().pipe(
-      map((calEvents: CalEventModel[]) => {
-        return calEvents.find((calEvent: CalEventModel) => calEvent.bkey === key);
-      }));
+    return findByKey<CalEventModel>(this.list(), key);
   }
 
   /**
    * Update a CalEvent in the database with new values.
    * @param calEvent the CalEventModel with the new values. Its key must be valid (in order to find it in the database)
+   * @param currentUser the current user who performs the operation
+   * @param confirmMessage an optional confirmation message to show in the UI
+   * @returns the key of the updated CalEvent or undefined if the operation failed
    */
-  public async update(calEvent: CalEventModel, currentUser?: UserModel, confirmMessage = '@calEvent.operation.update'): Promise<string> {
-    try {
-      calEvent.index = this.getSearchIndex(calEvent);
-      const _key = await updateModel(this.firestore, CalEventCollection, calEvent);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, CalEventCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async update(calEvent: CalEventModel, currentUser?: UserModel, confirmMessage = '@calEvent.operation.update'): Promise<string | undefined> {
+    calEvent.index = this.getSearchIndex(calEvent);
+    return await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, confirmMessage, currentUser);
   }
 
   /**
    * We are not actually deleting a CalEvent. We are just archiving it.
-   * @param calEvent 
+   * @param calEvent the CalEventModel to archive
+   * @param currentUser the current user who performs the operation
+   * @returns a Promise that resolves when the operation is complete
    */
   public async delete(calEvent: CalEventModel, currentUser?: UserModel): Promise<void> {
-    calEvent.isArchived = true;
-    await this.update(calEvent, currentUser, '@calEvent.operation.delete');
+    await this.firestoreService.deleteModel<CalEventModel>(CalEventCollection, calEvent, '@calEvent.operation.delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
-  
+  /**
+   * Lists all calendar events in the database.
+   * @param orderBy the name of the field to order by
+   * @param sortOrder the order direction (asc or desc)
+   * @returns an Observable of the list of calendar events
+   */
   public list(orderBy = 'startDate', sortOrder = 'asc'): Observable<CalEventModel[]> {
-    return searchData<CalEventModel>(this.firestore, CalEventCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
   /*-------------------------- search index --------------------------------*/

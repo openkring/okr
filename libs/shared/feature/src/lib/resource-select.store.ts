@@ -3,9 +3,10 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
 import { ResourceCollection, ResourceModel, UserModel } from '@bk2/shared/models';
 import { AppStore } from './app.store';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type ResourceSelectState = {
   searchTerm: string;
@@ -23,12 +24,13 @@ export const ResourceSelectStore = signalStore(
   withState(resourceInitialState),
   withProps(() => ({
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),    
   })),
   withProps((store) => ({
     resourcesResource: rxResource({
       stream: () => {
-        const resources$ = searchData<ResourceModel>(store.appStore.firestore, ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
+        const resources$ = store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
         debugListLoaded('resources (to select)', resources$, store.currentUser());
         return resources$;
       }

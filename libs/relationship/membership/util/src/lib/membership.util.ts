@@ -315,8 +315,10 @@ export function getRelLogEntry(priority: number, priorRelLog: string, dateOfEntr
  * @param newMembershipType the new membership type
  * @returns a short description of the membership change
  */
-export function getMembershipCategoryChangeComment(oldMembershipCategory: string, newMembershipCategory: string): string {
-  return `${oldMembershipCategory} -> ${newMembershipCategory}`;
+export function getMembershipCategoryChangeComment(oldMembershipCategory?: string, newMembershipCategory?: string): string {
+  const _oldMembershipCategory = oldMembershipCategory ?? 'undefined';
+  const _newMembershipCategory = newMembershipCategory ?? 'undefined';
+  return `${_oldMembershipCategory} -> ${_newMembershipCategory}`;
 }
 
 export function getMembershipSearchIndex(membership: MembershipModel): string {

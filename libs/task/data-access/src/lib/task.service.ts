@@ -1,50 +1,35 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ToastController } from '@ionic/angular/standalone';
 
 import { TaskCollection, TaskModel, UserModel } from '@bk2/shared/models';
-import { FIRESTORE, ENV } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
 
-import { saveComment } from '@bk2/comment/util';
-import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
-import { confirmAction } from '@bk2/shared/util-angular';
-import { bkTranslate } from '@bk2/shared/i18n';
+import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TaskService {
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
+  private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
-
-  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
    * Create a new task in the database.
    * @param task the TaskModel to store in the database
    * @param currentUser the current user (used as the author of the initial comment)
-   * @returns the document id of the newly created task
+   * @returns the document id of the newly created task or undefined if the operation failed
    */
-  public async create(task: TaskModel, currentUser: UserModel | undefined): Promise<string> {
-    try {
-      task.index = this.getSearchIndex(task);
-      const _key = await createModel(this.firestore, TaskCollection, task, this.tenantId);
-      await confirmAction(bkTranslate('@task.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, TaskCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@task.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }   
+  public async create(task: TaskModel, currentUser: UserModel | undefined): Promise<string | undefined> {
+    task.index = this.getSearchIndex(task);
+    return await this.firestoreService.createModel<TaskModel>(TaskCollection, task, '@task.operation.create', currentUser);
   }
 
   /**
    * Lookup a task in the database by its document id and return it as an Observable.
    * @param key the document id of the task
-   * @returns an Observable of the TaskModel
+   * @returns an Observable of the TaskModel or undefined if not found
    */
   public read(key: string | undefined): Observable<TaskModel | undefined> {
     return findByKey<TaskModel>(this.list(), key);    
@@ -53,39 +38,40 @@ export class TaskService {
   /**
    * Update a task in the database with new values.
    * @param task the TaskModel with the new values. Its key must be valid (in order to find it in the database)
-   * @param confirmMessage the the toast message that is shown as a confirmation
+   * @param currentUser the current user who performs the operation
+   * @param confirmMessage an optional confirmation message to show in the UI
+   * @returns the key of the updated task or undefined if the operation failed
    */
-  public async update(task: TaskModel, currentUser?: UserModel, confirmMessage = '@task.operation.update'): Promise<string> {
-    try {
-      task.index = this.getSearchIndex(task);
-      const _key = await updateModel(this.firestore, TaskCollection, task);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, TaskCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async update(task: TaskModel, currentUser?: UserModel, confirmMessage = '@task.operation.update'): Promise<string | undefined> {
+    task.index = this.getSearchIndex(task);
+    return await this.firestoreService.updateModel<TaskModel>(TaskCollection, task, false, confirmMessage, currentUser);
   }
 
   /**
    * Delete an existing task.
    * @param task the task to delete
+   * @param currentUser the current user who performs the operation
    * @returns a promise that resolves when the task is deleted
    */
   public async delete(task: TaskModel, currentUser?: UserModel): Promise<void> {
-    task.isArchived = true;
-    await this.update(task, currentUser, '@task.operation.delete');
+    await this.firestoreService.deleteModel<TaskModel>(TaskCollection, task, '@task.operation.delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
-  
+  /**
+   * List all tasks with optional sorting.
+   * @param orderBy the field to order the tasks by, e.g., 'dueDate'
+   * @param sortOrder the order to sort the tasks, either 'asc' or 'desc'
+   * @returns an Observable of the list of tasks
+   */
   public list(orderBy = 'dueDate', sortOrder = 'asc'): Observable<TaskModel[]> {
-    return searchData(this.firestore, TaskCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData(TaskCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
   /*-------------------------- export --------------------------------*/
+  /**
+   * Export task data to a local file.
+   */
   public export(): void {
     console.log('TaskService.export: not yet implemented.');
   }

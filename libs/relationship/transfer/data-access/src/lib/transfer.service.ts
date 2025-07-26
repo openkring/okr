@@ -1,43 +1,36 @@
 import { inject, Injectable } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
 import { Observable } from 'rxjs';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
 import { TransferCollection, TransferModel, UserModel } from '@bk2/shared/models';
+import { findByKey, getSystemQuery } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared/data-access';
 
-import { saveComment } from '@bk2/comment/util';
 import { getTransferSearchIndex, getTransferSearchIndexInfo } from '@bk2/relationship/transfer/util';
-import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
-import { confirmAction } from '@bk2/shared/util-angular';
-import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TransferService  {
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
+  private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
-
-  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
     /**
    * Create a new transfer relationship and save it to the database.
    * @param transfer the new transfer to save
-   * @returns the document id of the stored transfer in the database
+   * @param currentUser the user who is creating the transfer
+   * @returns the document id of the stored transfer in the database or undefined if the operation failed
    */
-  public async create(transfer: TransferModel, currentUser?: UserModel): Promise<string> {
+  public async create(transfer: TransferModel, currentUser?: UserModel): Promise<string | undefined> {
     transfer.index = this.getSearchIndex(transfer);
-    const _key = await createModel(this.firestore, TransferCollection, transfer, this.tenantId);
-    await saveComment(this.firestore, this.tenantId, currentUser, TransferCollection, _key, '@comment.operation.initial.conf');
-    return _key;
+    return await this.firestoreService.createModel<TransferModel>(TransferCollection, transfer, '@transfer.operation.create', currentUser);
   }
   
   /**
    * Retrieve an existing transfer relationship from the cached list of all transfers.
    * @param key the key of the transfer to retrieve
-   * @returns the transfer as an Observable
+   * @returns the transfer as an Observable or undefined if not found
    */
   public read(key: string): Observable<TransferModel | undefined> {
     return findByKey<TransferModel>(this.list(), key);    
@@ -46,35 +39,28 @@ export class TransferService  {
   /**
    * Update an existing transfer relationship with new values.
    * @param transfer the transfer to update
-   * @param confirmMessage the the toast message that is shown as a confirmation
+   * @param currentUser the user who is updating the transfer
+   * @param confirmMessage the i18n key for the confirmation message to show in a toast
+   * @returns the document id of the updated transfer or undefined if the operation failed
    */
-  public async update(transfer: TransferModel, currentUser?: UserModel, confirmMessage = '@transfer.operation.update'): Promise<string> {
-    try {
-      transfer.index = this.getSearchIndex(transfer);
-      const _key = await updateModel(this.firestore, TransferCollection, transfer);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, TransferCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async update(transfer: TransferModel, currentUser?: UserModel, confirmMessage = '@transfer.operation.update'): Promise<string | undefined> {
+    transfer.index = this.getSearchIndex(transfer);
+    return await this.firestoreService.updateModel<TransferModel>(TransferCollection, transfer, false, confirmMessage, currentUser);
   }
 
   /**
    * Delete an existing transfer relationship.
    * @param transfer the transfer to delete
+   * @param currentUser the user who is deleting the transfer
    * @returns a promise that resolves when the transfer is deleted
    */
   public async delete(transfer: TransferModel, currentUser?: UserModel): Promise<void> {
-    transfer.isArchived = true;
-    await this.update(transfer, currentUser, `@transfer.operation.delete`);
+    await this.firestoreService.deleteModel<TransferModel>(TransferCollection, transfer, '@transfer.operation.delete', currentUser);
   }
 
   /*-------------------------- LIST  --------------------------------*/
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<TransferModel[]> {
-    return searchData<TransferModel>(this.firestore, TransferCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<TransferModel>(TransferCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
   /*-------------------------- export --------------------------------*/

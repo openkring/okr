@@ -1,48 +1,37 @@
-import { ToastController } from '@ionic/angular';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { UserCollection, UserModel } from '@bk2/shared/models';
-import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
 
-import { saveComment } from '@bk2/comment/util';
-import { createModel, findAllByField, findByField, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
-import { confirmAction } from '@bk2/shared/util-angular';
-import { bkTranslate } from '@bk2/shared/i18n';
+import { findAllByField, findByField, findByKey, getSystemQuery } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 @Injectable({
     providedIn: 'root'
 })
 export class UserService  {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
-  private readonly tenantId = this.env.tenantId;
+  private readonly firestoreService = inject(FirestoreService);
 
   /* ---------------------- Standard CRUD operations -------------------------------*/
   /**
    * Save a new document into the database and return its uid.
-   * The document ID is assigned manually to the value of the firebase user id (for both bkey and document id).
+   * The document ID should be assigned to the value of the firebase user id (for both bkey and document id).
    * @param user the new document to save
+   * @param currentUser the current user who performs the operation
+   * @returns a Promise of the key of the newly stored model or undefined if the operation
    */
-  public async create(user: UserModel, currentUser?: UserModel): Promise<string | null> {
-      try {
-      user.index = this.getSearchIndex(user);
-      const _key = await createModel(this.firestore, UserCollection, user, this.tenantId);
-      await confirmAction(bkTranslate('@user.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, UserCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@user.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async create(user: UserModel, currentUser?: UserModel): Promise<string | undefined> {
+    user.index = this.getSearchIndex(user);
+    return await this.firestoreService.createModel<UserModel>(UserCollection, user, '@user.operation.create', currentUser);
   }
 
   /**
    * Lookup an object by its primary key in the database and return an Observable of the document.
    * The document id of the user collection is the same as the firebase user id.
    * @param key the document id of the object in the database
+   * @return an Observable of the UserModel or undefined if not found
    */
   public read(key: string | undefined | null): Observable<UserModel | undefined> {
     return findByKey<UserModel>(this.list(), key);
@@ -73,35 +62,30 @@ export class UserService  {
    * within the database with the new value specified as the parameter.s
    * Dest
    * @param user the new user values
+   * @param currentUser the current user who performs the operation
+   * @param confirmMessage an optional confirmation message to show in the UI
+   * @returns a Promise of the key of the updated model or undefined if the operation failed
    */
-  public async update(user: UserModel, currentUser?: UserModel, confirmMessage = '@user.operation.update'): Promise<string> {
-  try {
-      user.index = this.getSearchIndex(user);
-      const _key = await updateModel(this.firestore, UserCollection, user);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, UserCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async update(user: UserModel, currentUser?: UserModel, confirmMessage = '@user.operation.update'): Promise<string | undefined> {
+    user.index = this.getSearchIndex(user);
+    return await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, confirmMessage, currentUser);  
   }
 
   /**
    * Delete the user. We are not actually deleting the user. We are just archiving it.
    * @param user: the user to delete
+   * @param currentUser the current user who performs the operation
+   * @returns a Promise that resolves when the operation is complete
    */
   public async delete(user: UserModel, currentUser?: UserModel): Promise<void> {
-    user.isArchived = true;
-    await this.update(user, currentUser, '@user.operation.delete');
+    await this.firestoreService.deleteModel<UserModel>(UserCollection, user, '@user.operation.delete', currentUser);
   }
 
   /**
    * Return all documents in the collection as an Observable.
    */
   public list(orderBy = 'loginEmail', sortOrder = 'asc'): Observable<UserModel[]> {
-    return searchData<UserModel>(this.firestore, UserCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
   /*-------------------------- SEARCH --------------------------------*/

@@ -5,8 +5,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AvatarInfo, ModelType } from '@bk2/shared/models';
 import { createFullName, debugItemLoaded } from '@bk2/shared/util-core';
 import { AppStore } from '@bk2/shared/feature';
-import { getAvatarImgixUrl } from '@bk2/shared/pipes';
-import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
+import { AvatarService } from '@bk2/avatar/data-access';
 
 export type TaskEditState = {
   author: AvatarInfo | undefined;
@@ -24,6 +23,7 @@ export const TaskEditStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
+    avatarService: inject(AvatarService)
   })),
   withProps((store) => ({
     authorResource: rxResource({
@@ -33,7 +33,7 @@ export const TaskEditStore = signalStore(
       }),  
       stream: ({params}) => {
         const _key = params.author?.key + '.' + params.author?.modelType;
-        const author$ = getAvatarImgixUrl(store.appStore.firestore, _key, THUMBNAIL_SIZE, store.appStore.services.imgixBaseUrl());
+        const author$ = store.avatarService.getAvatarImgixUrl(_key);
         debugItemLoaded<string>(`authorUrl `, author$, params.currentUser);
         return author$;
       }
@@ -46,7 +46,7 @@ export const TaskEditStore = signalStore(
       }),  
       stream: ({params}) => {
         const _key = params.assignee?.key + '.' + params.assignee?.modelType;
-        const assignee$ = getAvatarImgixUrl(store.appStore.firestore, _key, THUMBNAIL_SIZE, store.appStore.services.imgixBaseUrl());
+        const assignee$ = store.avatarService.getAvatarImgixUrl(_key);
         debugItemLoaded<string>(`assigneeUrl `, assignee$, params.currentUser);
         return assignee$;
       }
@@ -59,7 +59,7 @@ export const TaskEditStore = signalStore(
       }),  
       stream: ({params}) => {
         const _key = params.scope?.key + '.' + params.scope?.modelType;
-        const scope$ = getAvatarImgixUrl(store.appStore.firestore, _key, THUMBNAIL_SIZE, store.appStore.services.imgixBaseUrl());
+        const scope$ = store.avatarService.getAvatarImgixUrl(_key);
         debugItemLoaded<string>(`scopeUrl `, scope$, params.currentUser);
         return scope$;
       }

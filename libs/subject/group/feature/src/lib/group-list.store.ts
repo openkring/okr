@@ -2,10 +2,9 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
-import { catchError, finalize, of } from 'rxjs';
 import { Router } from '@angular/router';
 
-import { chipMatches, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
+import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
 import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
 import { GroupCollection, GroupModel, ModelType } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
@@ -13,6 +12,7 @@ import { AppStore } from '@bk2/shared/feature';
 import { GroupService } from '@bk2/subject/group/data-access';
 import { convertFormToNewGroup, GroupNewFormModel } from '@bk2/subject/group/util';
 import { GroupNewModalComponent } from './group-new.modal';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type GroupListState = {
   searchTerm: string;
@@ -30,6 +30,7 @@ export const GroupListStore = signalStore(
     appNavigationService: inject(AppNavigationService),
     router: inject(Router),
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
@@ -37,7 +38,7 @@ export const GroupListStore = signalStore(
   withProps((store) => ({
     groupsResource: rxResource({
       stream: () => {
-        return searchData<GroupModel>(store.appStore.firestore, GroupCollection, getSystemQuery(store.appStore.tenantId()), 'id', 'asc')
+        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.appStore.tenantId()), 'id', 'asc')
       }
     }),
   })),

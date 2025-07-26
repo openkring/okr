@@ -2,12 +2,13 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 
-import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQuery, getTodayStr, nameMatches, searchData } from '@bk2/shared/util-core';
+import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared/util-core';
 import { AllCategories, ModelType, Priority, TaskCollection, TaskModel, TaskState } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
 import { TaskService } from '@bk2/task/data-access';
 import { TaskModalsService } from './task-modals.service';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type TaskListState = {
   calendarName: string;
@@ -31,11 +32,12 @@ export const TaskListStore = signalStore(
     taskService: inject(TaskService),
     taskModalsService: inject(TaskModalsService),
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService)
   })),
   withProps((store) => ({
     tasksResource: rxResource({
       stream: () => {
-        const tasks$ = searchData<TaskModel>(store.appStore.firestore, TaskCollection, getSystemQuery(store.appStore.tenantId()), 'dueDate', 'asc');
+        const tasks$ = store.firestoreService.searchData<TaskModel>(TaskCollection, getSystemQuery(store.appStore.tenantId()), 'dueDate', 'asc');
         debugListLoaded<TaskModel>('TaskListStore.tasks', tasks$, store.appStore.currentUser());
         return tasks$;
       }

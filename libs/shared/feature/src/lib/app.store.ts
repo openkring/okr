@@ -8,9 +8,10 @@ import { Observable, of } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared/config';
 import { AddressCollection, AddressModel, AppConfig, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared/models';
-import { getSystemQuery, searchData } from '@bk2/shared/util-core';
+import { getSystemQuery } from '@bk2/shared/util-core';
 
 import { AppConfigService } from './app-config.service';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type AppState = {
   tenantId: string;
@@ -59,6 +60,7 @@ export const AppStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appConfigService: inject(AppConfigService),
+    firestoreService: inject(FirestoreService),
     firestore: inject(FIRESTORE),
     auth: inject(AUTH),
     env: inject(ENV),
@@ -70,27 +72,27 @@ export const AppStore = signalStore(
       // the resource will reload whenever the fbUser changes (login/logout).
       params: () => store.fbUser(),
       stream: () => {
-        return searchData<UserModel>(store.firestore, UserCollection, getSystemQuery(store.tenantId()), 'loginEmail', 'asc');
+        return store.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(store.tenantId()), 'loginEmail', 'asc');
       }
     }),
     personsResource: rxResource({
       stream: () => {
-        return searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.tenantId()), 'lastName', 'asc');
+        return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.tenantId()), 'lastName', 'asc');
       }
     }),
     orgsResource: rxResource({
       stream: () => {
-        return searchData<OrgModel>(store.firestore, OrgCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
+        return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
       }
     }),
     resourcesResource: rxResource({
       stream: () => {
-        return searchData<ResourceModel>(store.firestore, ResourceCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
+        return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
       }
     }),
     tagsResource: rxResource({
       stream: () => {
-        return searchData<TagModel>(store.firestore, TagCollection, getSystemQuery(store.tenantId()), 'tagModel', 'asc');
+        return store.firestoreService.searchData<TagModel>(TagCollection, getSystemQuery(store.tenantId()), 'tagModel', 'asc');
       }
     }),
     appConfigResource: rxResource({

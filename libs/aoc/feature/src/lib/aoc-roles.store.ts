@@ -6,11 +6,12 @@ import { of } from 'rxjs';
 import { Capacitor } from '@capacitor/core';
 import { isPlatformBrowser } from '@angular/common';
 
-import { AUTH, FIRESTORE } from '@bk2/shared/config';
-import { debugListLoaded, die, findUserByPersonKey, getSystemQuery, isPerson, searchData, warn } from '@bk2/shared/util-core';
+import { AUTH } from '@bk2/shared/config';
+import { debugListLoaded, die, findUserByPersonKey, getSystemQuery, isPerson, warn } from '@bk2/shared/util-core';
 import { error } from '@bk2/shared/util-angular';
 import { LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared/models';
 import { PersonSelectModalComponent, AppStore } from '@bk2/shared/feature';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 import { AuthService } from '@bk2/auth/data-access';
 import { createFirebaseAccount, createUserFromPerson } from '@bk2/aoc/util';
@@ -38,7 +39,7 @@ export const AocRolesStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
-    firestore: inject(FIRESTORE),
+    firestoreService: inject(FirestoreService),
     auth: inject(AUTH),
     authService: inject(AuthService),
     userService: inject(UserService),
@@ -49,14 +50,14 @@ export const AocRolesStore = signalStore(
   withProps((store) => ({
     personsResource: rxResource({
       stream: () => {
-        const persons$ = searchData<PersonModel>(store.firestore, PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
+        const persons$ = store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
         debugListLoaded<PersonModel>('RolesStore.persons', persons$, store.appStore.currentUser());
         return persons$;
       }
     }),
     usersResource: rxResource({
       stream: () => {
-        const users$ = searchData<UserModel>(store.firestore, UserCollection, getSystemQuery(store.appStore.env.tenantId), 'loginEmail', 'asc');
+        const users$ = store.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(store.appStore.env.tenantId), 'loginEmail', 'asc');
         debugListLoaded<UserModel>('RolesStore.users', users$, store.appStore.currentUser());
         return users$;
       }

@@ -1,44 +1,30 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
-import { ToastController } from '@ionic/angular/standalone';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
 import { ModelType, ReservationCollection, ReservationModel, UserModel } from '@bk2/shared/models';
-import { saveComment } from '@bk2/comment/util';
-import { createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
-import { confirmAction } from '@bk2/shared/util-angular';
+import { findByKey, getSystemQuery } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 import { getReservationSearchIndex, getReservationSearchIndexInfo } from '@bk2/relationship/reservation/util';
-import { bkTranslate } from '@bk2/shared/i18n';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ReservationService {
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
+  private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
-
-  private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations on reservation --------------------------------*/
   /**
    * Create a new reservation and save it to the database.
    * @param reservation the new reservation to save
+   * @param currentUser the user who is creating the reservation
    * @returns the document id of the stored reservation in the database
    */
-  public async create(reservation: ReservationModel, currentUser?: UserModel): Promise<string> {
-    try {
-      reservation.index = this.getSearchIndex(reservation);
-      const _key = await createModel(this.firestore, ReservationCollection, reservation, this.tenantId);
-      await confirmAction(bkTranslate('@reservation.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, ReservationCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@reservation.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async create(reservation: ReservationModel, currentUser?: UserModel): Promise<string | undefined> {
+    reservation.index = this.getSearchIndex(reservation);
+    return await this.firestoreService.createModel<ReservationModel>(ReservationCollection, reservation, '@reservation.operation.create', currentUser);
   }
 
   /**
@@ -53,47 +39,43 @@ export class ReservationService {
   /**
    * Update an existing reservation with new values.
    * @param reservation the reservation to update
-   * @param i18nPrefix the prefix for the i18n key to use for the toast message (can be used for a delete confirmation)
+   * @param currentUser the user who is updating the reservation
+   * @param confirmMessage the i18n key for the confirmation message to show in a toast
+   * @returns the document id of the updated reservation or undefined if the operation failed
    */
-  public async update(reservation: ReservationModel, currentUser?: UserModel, confirmMessage = '@reservation.operation.update'): Promise<string> {
-    try {
-      reservation.index = this.getSearchIndex(reservation);
-      const _key = await updateModel(this.firestore, ReservationCollection, reservation);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, ReservationCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  public async update(reservation: ReservationModel, currentUser?: UserModel, confirmMessage = '@reservation.operation.update'): Promise<string | undefined> {
+    reservation.index = this.getSearchIndex(reservation);
+    return await this.firestoreService.updateModel<ReservationModel>(ReservationCollection, reservation, false, confirmMessage, currentUser);
   }
 
   /**
    * Delete an existing reservation.
-   * @param reservation the reservation to delete, its bkey needs to be valid so that we can find it in the database. 
+   * @param reservation the reservation to delete, its bkey needs to be valid so that we can find it in the database.
+   * @param currentUser the user who is deleting the reservation
+   * @returns a Promise that resolves when the deletion is complete 
    */
   public async delete(reservation: ReservationModel, currentUser?: UserModel): Promise<void> {
-    reservation.isArchived = true;
-    await this.update(reservation, currentUser, `@reservation.operation.delete`);
+    await this.firestoreService.deleteModel<ReservationModel>(ReservationCollection, reservation, '@reservation.operation.delete', currentUser);
   }
 
   /**
    * End an existing reservation by setting its validTo date.
    * @param reservation the reservation to end
-   * @param dateOfExit the end date of the reservation
+   * @param endDate the date to set as the end date of the reservation, it should be in the format YYYYMMDD
+   * @param currentUser the user who is ending the reservation
+   * @returns a Promise that resolves to the document id of the updated reservation or undefined if the operation failed
    */
-  public async endReservationByDate(reservation: ReservationModel, endDate: string, currentUser?: UserModel): Promise<void> {
+  public async endReservationByDate(reservation: ReservationModel, endDate: string, currentUser?: UserModel): Promise<string | undefined> {
     if (reservation.endDate.startsWith('9999') && endDate && endDate.length === 8) {
       reservation.endDate = endDate;
-      await this.update(reservation, currentUser);
-      await saveComment(this.firestore, this.tenantId, currentUser, ReservationCollection, reservation.bkey, '@comment.message.reservation.deleted');  
+      return await this.firestoreService.updateModel<ReservationModel>(ReservationCollection, reservation, false, '@reservation.operation.end', currentUser);
     }
+    return undefined;
   }
 
   /*-------------------------- list --------------------------------*/
   public list(orderBy = 'reserverName2', sortOrder = 'asc'): Observable<ReservationModel[]> {
-    return searchData<ReservationModel>(this.firestore, ReservationCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<ReservationModel>(ReservationCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
   /**

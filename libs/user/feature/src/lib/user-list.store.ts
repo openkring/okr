@@ -2,12 +2,13 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 
-import { chipMatches, getSystemQuery, nameMatches, searchData } from '@bk2/shared/util-core';
+import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
 import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
 import { UserService } from '@bk2/user/data-access';
 import { ModelType, UserCollection, UserModel } from '@bk2/shared/models';
 import { Router } from '@angular/router';
 import { AppStore } from '@bk2/shared/feature';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 export type UserListState = {
   searchTerm: string;
@@ -26,11 +27,12 @@ export const UserListStore = signalStore(
     appNavigationService: inject(AppNavigationService),
     router: inject(Router),
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService)
   })),
   withProps((store) => ({
     userResource: rxResource({
       stream: () => {
-        return searchData<UserModel>(store.appStore.firestore, UserCollection, getSystemQuery(store.appStore.tenantId()), 'loginEmail', 'asc');
+        return store.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(store.appStore.tenantId()), 'loginEmail', 'asc');
       }
     })
   })),

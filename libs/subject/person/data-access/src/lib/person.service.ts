@@ -1,40 +1,28 @@
 import { inject, Injectable } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
-import { collection, query } from 'firebase/firestore';
-import { collectionData } from 'rxfire/firestore';
 import { map, Observable, of } from 'rxjs';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared/config';
 import { AddressCollection, AddressModel, GenderType, PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
-import { addIndexElement, createModel, findByKey, getSystemQuery, searchData, updateModel } from '@bk2/shared/util-core';
-import { confirmAction } from '@bk2/shared/util-angular';
-
-import { saveComment } from '@bk2/comment/util';
-import { bkTranslate } from '@bk2/shared/i18n';
+import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared/data-access';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PersonService {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
-  private readonly toastController = inject(ToastController);
-
-  private readonly tenantId = this.env.tenantId;
+  private readonly firestoreService = inject(FirestoreService);
 
   /*-------------------------- CRUD operations --------------------------------*/
-  public async create(person: PersonModel, currentUser?: UserModel): Promise<string> {
-    try {
-      person.index = this.getSearchIndex(person);
-      const _key = await createModel(this.firestore, PersonCollection, person, this.tenantId);
-      await confirmAction(bkTranslate('@subject.person.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, PersonCollection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@subject.person.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }   
+  /**
+   * Creates a new person.
+   * @param person the person to create
+   * @param currentUser the current user
+   * @returns the unique key of the created person or undefined if creation failed
+   */
+  public async create(person: PersonModel, currentUser?: UserModel): Promise<string | undefined> {
+    person.index = this.getSearchIndex(person);
+    return await this.firestoreService.createModel<PersonModel>(PersonCollection, person, '@subject.person.operation.create', currentUser);
   }
   
   /**
@@ -60,25 +48,35 @@ export class PersonService {
       }));
   }
 
-  public async update(person: PersonModel, currentUser?: UserModel, confirmMessage = '@subject.person.operation.update'): Promise<string> {
-    try {
-      person.index = this.getSearchIndex(person);
-      const _key = await updateModel(this.firestore, PersonCollection, person);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, PersonCollection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+  /**
+   * Updates an existing person.
+   * @param person the person to update
+   * @param currentUser the current user
+   * @param confirmMessage the confirmation message
+   * @returns the unique key of the updated person or undefined if update failed
+   */
+  public async update(person: PersonModel, currentUser?: UserModel, confirmMessage = '@subject.person.operation.update'): Promise<string | undefined> {
+    person.index = this.getSearchIndex(person);
+    return await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, confirmMessage, currentUser);
   }
 
+  /**
+   * Archives a person by setting its isArchived property to true.
+   * @param person the person to archive
+   * @param currentUser the current user
+   * @returns a Promise that resolves when the operation is complete
+   */
   public async delete(person: PersonModel, currentUser?: UserModel): Promise<void> {
-    person.isArchived = true;
-    await this.update(person, currentUser, `@subject.person.operation.delete`);
+    await this.firestoreService.deleteModel<PersonModel>(PersonCollection, person, '@subject.person.operation.delete', currentUser);
   }
 
+  /**
+   * Checks if a person with the given first and last name already exists.
+   * @param persons the list of persons to check
+   * @param firstName the first name to check
+   * @param lastName the last name to check
+   * @returns true if the person exists, false otherwise
+   */
   public checkIfExists(persons?: PersonModel[], firstName?: string, lastName?: string): boolean {
     if (!persons || persons.length === 0) {
       return false;
@@ -93,21 +91,32 @@ export class PersonService {
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/
+  /**
+   * Lists all persons in the database.
+   * @param orderBy the name of the field to order by
+   * @param sortOrder the order direction (asc or desc)
+   * @returns an Observable of the list of persons
+   */
   public list(orderBy = 'lastName', sortOrder = 'asc'): Observable<PersonModel[]> {
-    return searchData<PersonModel>(this.firestore, PersonCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
   /*-------------------------- addresses  --------------------------------*/
+  /**
+   * Lists all addresses for a given person.
+   * @param person the person whose addresses to list
+   * @returns an Observable of the list of addresses
+   */
   public listAddresses(person: PersonModel): Observable<AddressModel[]> {
-    const _ref = query(collection(this.firestore, `${PersonCollection}/${person.bkey}/${AddressCollection}`));
-    return collectionData(_ref, { idField: 'bkey' }) as Observable<AddressModel[]>;
+    const _collection = `${PersonCollection}/${person.bkey}/${AddressCollection}`;
+    return this.firestoreService.searchData<AddressModel>(_collection, getSystemQuery(this.env.tenantId));    
   }
 
   /*-------------------------- search index --------------------------------*/
 
   /**
    * Create an index entry for a given person based on its values.
-   * @param person 
+   * @param person the person for which to create the index
    * @returns the index string
    */
   public getSearchIndex(person: PersonModel): string {

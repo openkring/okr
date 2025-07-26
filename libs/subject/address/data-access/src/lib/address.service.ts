@@ -2,26 +2,21 @@ import { Injectable, inject } from "@angular/core";
 import { Observable, map, of } from "rxjs";
 import { ToastController } from "@ionic/angular/standalone";
 
-import { ENV, FIRESTORE } from "@bk2/shared/config";
+import { ENV } from "@bk2/shared/config";
 import { AddressChannel, AddressModel, DefaultLanguage, UserModel } from "@bk2/shared/models";
-import { createModel, die, getSystemQuery, readModel, searchData, updateModel } from "@bk2/shared/util-core";
-import { confirmAction } from "@bk2/shared/util-angular";
+import { die, getSystemQuery } from "@bk2/shared/util-core";
 import { Languages } from "@bk2/shared/categories";
-
-import { saveComment } from "@bk2/comment/util";
+import { FirestoreService } from "@bk2/shared/data-access";
 
 import { copyAddress, getAddressCollection } from "@bk2/subject/address/util";
-import { bkTranslate } from "@bk2/shared/i18n";
 
 @Injectable({
     providedIn: 'root'
 })
 export class AddressService {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
+  private readonly firestoreService = inject(FirestoreService);
   private readonly toastController = inject(ToastController);
-
-  private readonly tenantId = this.env.tenantId;
 
   public groupedItems$ = of([]);
 
@@ -29,51 +24,37 @@ export class AddressService {
   /**
    * Create a new address 
    * @param address the address to store in the database. It must contain a parentKey with modelType.key.
-   * @returns an Observable of the new or existing address.
+   * @param currentUser the current user who performs the operation
+   * @returns an Observable of the new or existing address or undefined if the operation failed
    */
-  public async create(address: AddressModel, currentUser?: UserModel): Promise<string> {
-      try {
-      address.index = this.getSearchIndex(address);
-      const _collection = getAddressCollection(address.parentKey);
-      const _key = await createModel(this.firestore, _collection, address, this.tenantId);
-      await confirmAction(bkTranslate('@subject.address.operation.create.conf'), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, _collection, _key, '@comment.operation.initial.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate('@subject.address.operation.create.error'), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }  
+  public async create(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
+    address.index = this.getSearchIndex(address);
+    const _collection = getAddressCollection(address.parentKey);
+    return this.firestoreService.createModel<AddressModel>(_collection, address, '@subject.address.operation.create', currentUser);
 }
 
  /**
    * Return an Observable of an Address by uid from the database.
    * @param parentKey  the key of the parent model; format:  modelType.key
    * @param addressKey the key of the address document
+   * @return an Observable of the AddressModel or undefined if not found
    */
   public read(parentKey: string, addressKey: string): Observable<AddressModel | undefined> {
     const _collection = getAddressCollection(parentKey);
-    return readModel(this.firestore, _collection, addressKey) as Observable<AddressModel>;
+    return this.firestoreService.readModel<AddressModel>(_collection, addressKey);
   }
 
   /**
    * Update an existing address.
    * @param address the address with new values
-   * @returns the key of the updated address
+   * @param currentUser the current user who performs the operation
+   * @param confirmMessage an optional confirmation message to show in the UI
+   * @returns the key of the updated address or undefined if the operation failed
    */
-  public async update(address: AddressModel, currentUser?: UserModel, confirmMessage = '@subject.address.operation.update'): Promise<string> {
+  public async update(address: AddressModel, currentUser?: UserModel, confirmMessage = '@subject.address.operation.update'): Promise<string | undefined> {
+    address.index = this.getSearchIndex(address);
     const _collection = getAddressCollection(address.parentKey);
-    try {
-      address.index = this.getSearchIndex(address);
-      const _key = await updateModel(this.firestore, _collection, address);
-      await confirmAction(bkTranslate(`${confirmMessage}.conf`), true, this.toastController);
-      await saveComment(this.firestore, this.tenantId, currentUser, _collection, _key, '@comment.operation.update.conf');
-      return _key;    
-    }
-    catch (error) {
-      await confirmAction(bkTranslate(`${confirmMessage}.error`), true, this.toastController);
-      throw error; // rethrow the error to be handled by the caller
-    }
+    return await this.firestoreService.updateModel<AddressModel>(_collection, address, false, confirmMessage, currentUser);
   }
 
   /**
@@ -81,10 +62,11 @@ export class AddressService {
    * We don't delete addresses finally. Instead we deactivate/archive the objects.
    * Admin user may finally delete objects directly in the database.
    * @param address the object to delete
+   * @param currentUser the current user who performs the operation
+   * @returns a Promise that resolves when the operation is complete
    */
   public async delete(address: AddressModel, currentUser?: UserModel): Promise<void> {
-    address.isArchived = true;
-    this.update(address, currentUser, '@subject.address.operation.delete');
+    await this.firestoreService.deleteModel<AddressModel>(getAddressCollection(address.parentKey), address, '@subject.address.operation.delete', currentUser);
   }
 
   /**
@@ -93,9 +75,9 @@ export class AddressService {
    */
     public list(parentKey: string, byChannel?: AddressChannel, orderBy = 'bkey', sortOrder = 'asc'): Observable<AddressModel[]> {
     const _collection = getAddressCollection(parentKey);
-    const _query = getSystemQuery(this.tenantId);
+    const _query = getSystemQuery(this.env.tenantId);
     if (byChannel) _query.push({ key: 'channelType', operator: '==', value: byChannel });
-    return searchData<AddressModel>(this.firestore, _collection, _query, orderBy, sortOrder);
+    return this.firestoreService.searchData<AddressModel>(_collection, _query, orderBy, sortOrder);
   }
 
   /**
@@ -116,10 +98,10 @@ export class AddressService {
    */
   public getFavoriteAddressByChannel(parentKey: string, channel: AddressChannel): Observable<AddressModel | null> {
     const _collection = getAddressCollection(parentKey);
-    const _query = getSystemQuery(this.tenantId);
+    const _query = getSystemQuery(this.env.tenantId);
     _query.push({ key: 'channelType', operator: '==', value: channel });
     _query.push({ key: 'isFavorite', operator: '==', value: true });
-    return searchData<AddressModel>(this.firestore, _collection, _query).pipe(map(_addresses => {
+    return this.firestoreService.searchData<AddressModel>(_collection, _query).pipe(map(_addresses => {
       if (_addresses.length > 1) die(`AddressUtil.getFavoriteAddressByChannel -> ERROR: only one favorite adress can exist per channel type (${_collection})`);
       if (_addresses.length === 1) return _addresses[0];
       return null;
