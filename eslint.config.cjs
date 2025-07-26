@@ -1,11 +1,5 @@
 const nx = require('@nx/eslint-plugin');
-const { FlatCompat } = require('@eslint/eslintrc');
 const js = require('@eslint/js');
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended, // <-- DIESE ZEILE BEHEBT DEN FEHLER
-});
 
 module.exports = [
   {
@@ -13,13 +7,23 @@ module.exports = [
       '@nx': nx,
     },
   },
-  ...compat.config({
-    extends: ['plugin:@nx/typescript', 'plugin:@nx/angular'],
-  }).map((config) => ({
-    ...config,
+  // TS/TSX files (replaces compat for @nx/typescript and @nx/angular)
+  ...nx.configs['flat/base'],
+  ...nx.configs['flat/typescript'],
+  ...nx.configs['flat/angular'],
+  {
     files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parserOptions: {
+        project: [
+          'apps/*/tsconfig.app.json',
+          'libs/*/tsconfig.lib.json',
+          'apps/*/tsconfig.spec.json',
+          'libs/*/tsconfig.spec.json',
+        ],
+      },
+    },
     rules: {
-      ...config.rules,
       '@nx/enforce-module-boundaries': [
         'error',
         {
@@ -27,10 +31,10 @@ module.exports = [
           allow: [],
           depConstraints: [
             { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['type:feature', 'type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
-            { sourceTag: 'type:feature', onlyDependOnLibsWithTags: ['type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
-            { sourceTag: 'type:ui', onlyDependOnLibsWithTags: ['type:util', 'type:model', 'type:constants', 'type:config'] },
-            { sourceTag: 'type:data-access', onlyDependOnLibsWithTags: ['type:util', 'type:model', 'type:constants', 'type:config'] },
-            { sourceTag: 'type:util', onlyDependOnLibsWithTags: ['type:model', 'type:constants', 'type:config'] },
+            { sourceTag: 'type:feature', onlyDependOnLibsWithTags: ['type:feature','type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
+            { sourceTag: 'type:ui', onlyDependOnLibsWithTags: ['type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
+            { sourceTag: 'type:data-access', onlyDependOnLibsWithTags: ['type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
+            { sourceTag: 'type:util', onlyDependOnLibsWithTags: ['type:util', 'type:model', 'type:constants', 'type:config'] },
             { sourceTag: 'type:model', onlyDependOnLibsWithTags: [] },
             { sourceTag: 'type:constants', onlyDependOnLibsWithTags: [] },
             { sourceTag: 'type:config', onlyDependOnLibsWithTags: [] },
@@ -39,17 +43,24 @@ module.exports = [
         },
       ],
     },
-  })),
-  ...compat.config({
-    extends: ['plugin:@nx/javascript'],
-  }).map((config) => ({
-    ...config,
+  },
+  // JS/JSX files (replaces compat for @nx/javascript)
+  ...nx.configs['flat/javascript'],
+  {
     files: ['**/*.js', '**/*.jsx'],
     rules: {
-      ...config.rules,
+      // Add any custom JS rules here if needed
     },
-  })),
+  },
   {
-    ignores: ['node_modules', 'tmp', '**/android', '**/ios', '**/web'],
+    ignores: [
+      'node_modules', 
+      'tmp', 
+      '**/android', 
+      '**/ios', 
+      '**/web',
+      '**/jest.config.ts',
+      '**/test-setup.ts'
+    ],
   }
 ];
