@@ -6,11 +6,13 @@ import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputCompon
 import { GenderType, ModelType, WorkingRelType, UserModel, OrgType, WorkingRelState, Periodicity, RoleName } from '@bk2/shared/models';
 import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 
-import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
+import { FullNamePipe } from '@bk2/shared/pipes';
 import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { WorkingRelFormModel, workingRelFormModelShape, workingRelFormValidations } from '@bk2/relationship/working-rel/util';
 import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared/categories';
+
+import { AvatarPipe } from '@bk2/avatar/ui';
 
 @Component({
   selector: 'bk-working-rel-form',
@@ -20,7 +22,7 @@ import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared
     DateInputComponent, ChipsComponent, NotesInputComponent, CategoryComponent, NumberInputComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
     TextInputComponent
-],
+  ],
   template: `
   <form scVestForm
     [formShape]="shape"
@@ -144,12 +146,12 @@ export class WorkingRelFormComponent {
 
   public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   protected subjectKey = computed(() => this.vm().subjectKey ?? '');
-  protected subjectName1 = computed(() => this.vm().subjectName1 ?? ''); 
-  protected subjectName2 = computed(() => this.vm().subjectName2 ?? ''); 
+  protected subjectName1 = computed(() => this.vm().subjectName1 ?? '');
+  protected subjectName2 = computed(() => this.vm().subjectName2 ?? '');
   protected subjectType = computed(() => this.vm().subjectType ?? GenderType.Male);
 
   protected objectKey = computed(() => this.vm().objectKey ?? '');
-  protected objectName = computed(() => this.vm().objectName ?? ''); 
+  protected objectName = computed(() => this.vm().objectName ?? '');
   protected objectType = computed(() => this.vm().objectType ?? OrgType.LegalEntity);
 
   protected type = computed(() => this.vm().type ?? WorkingRelType.Employee);
@@ -166,11 +168,11 @@ export class WorkingRelFormComponent {
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
-  
+
   protected readonly suite = workingRelFormValidations;
   protected readonly shape = workingRelFormModelShape;
   private readonly validationResult = computed(() => workingRelFormValidations(this.vm()));
-  
+
   protected readonly modelType = ModelType;
   protected readonly workingRelTypes = WorkingRelTypes;
   protected readonly workingRelType = WorkingRelType;
@@ -178,7 +180,7 @@ export class WorkingRelFormComponent {
   protected readonly periodicities = PeriodicityTypes;
 
   protected onValueChange(value: WorkingRelFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((_vm) => ({ ..._vm, ...value }));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 

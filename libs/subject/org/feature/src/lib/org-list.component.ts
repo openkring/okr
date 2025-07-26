@@ -3,13 +3,14 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList, IonPopover } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { AllCategories, ModelType, OrgModel, RoleName } from '@bk2/shared/models';
 import { addAllCategory, OrgTypes } from '@bk2/shared/categories';
 import { hasRole } from '@bk2/shared/util-core';
 import { error } from '@bk2/shared/util-angular';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { MenuComponent } from '@bk2/cms/menu/feature';
 
 import { OrgListStore } from './org-list.store';
@@ -147,7 +148,7 @@ export class OrgListComponent {
   protected selectedOrgsCount = computed(() => this.filteredOrgs().length);
   protected isLoading = computed(() => this.orgListStore.isLoading());
   protected orgTags = computed(() => this.orgListStore.getOrgTags());
-  
+
   protected selectedCategory = AllCategories;
   protected orgTypes = addAllCategory(OrgTypes);
   protected modelType = ModelType;
@@ -168,8 +169,8 @@ export class OrgListComponent {
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
-      case 'add':  await this.orgListStore.add(); break;
+    switch (_selectedMethod) {
+      case 'add': await this.orgListStore.add(); break;
       case 'exportAddresses': await this.orgListStore.export("addresses"); break;
       case 'exportRaw': await this.orgListStore.export("raw_orgs"); break;
       case 'copyEmailAddresses': await this.orgListStore.copyEmailAddresses(); break;
@@ -180,7 +181,7 @@ export class OrgListComponent {
   public async edit(slidingItem?: IonItemSliding, org?: OrgModel): Promise<void> {
     if (slidingItem) slidingItem.close();
     org ??= new OrgModel(this.orgListStore.tenantId());
-    await this.orgListStore.edit(org);    
+    await this.orgListStore.edit(org);
   }
 
   public async delete(slidingItem?: IonItemSliding, org?: OrgModel): Promise<void> {

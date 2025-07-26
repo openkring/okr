@@ -22,7 +22,7 @@ export class CalEventService {
    * @param currentUser the current user who performs the operation
    * @returns the document id of the newly created CalEvent or undefined if the operation failed
    */
-  public async create(calEvent: CalEventModel, currentUser: UserModel): Promise<string | undefined> {
+  public async create(calEvent: CalEventModel, currentUser?: UserModel): Promise<string | undefined> {
     calEvent.index = this.getSearchIndex(calEvent);
     return await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, '@calEvent.operation.create', currentUser);
   }
@@ -146,7 +146,7 @@ export class CalEventService {
   private getDefaultEndTime(startTime: string): string {
     const _startTime = parseInt(startTime);
     let _endTime = _startTime + 100;
-    if (_endTime >= 2400) _endTime = _endTime - 2400; 
+    if (_endTime >= 2400) _endTime = _endTime - 2400;
     return _endTime + '';
   }
 }

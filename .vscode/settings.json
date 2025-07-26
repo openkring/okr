@@ -6,9 +6,22 @@
   "chat.mcp.serverSampling": {
     "bk2/.vscode/mcp.json: nx-mcp": {
       "allowedModels": [
-        "github.copilot-chat/gpt-4.1",
-        "github.copilot-chat/gemini-2.5-pro"
+        "github.copilot-chat/gemini-2.5-pro",
+        "github.copilot-chat/gpt-4.1"
       ]
     }
-  }
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.nx/cache": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true
+  },
+  "editor.formatOnSave": true,
+  "eslint.workingDirectories": ["."]  // Ensure ESLint uses root config
 }

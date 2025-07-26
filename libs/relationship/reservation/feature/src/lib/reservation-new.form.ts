@@ -9,10 +9,11 @@ import { ChTimeMask } from '@bk2/shared/config';
 import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
 import { debugFormErrors, die, hasRole } from '@bk2/shared/util-core';
 import { PeriodicityTypes, ReservationReasons, ReservationStates } from '@bk2/shared/categories';
-import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
+import { FullNamePipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { AppStore } from '@bk2/shared/feature';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { ReservationNewFormModel, reservationNewFormModelShape, reservationNewFormValidations } from '@bk2/relationship/reservation/util';
 import { ReservationSelectorsService } from './reservation-selectors.service';
 
@@ -172,10 +173,10 @@ export class ReservationNewFormComponent {
   public vm = model.required<ReservationNewFormModel>();
   public currentUser = input<UserModel | undefined>();
 
-  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser())); 
+  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected reserverKey = computed(() => this.vm().reserverKey ?? '');
-  protected reserverName = computed(() => this.vm().reserverName ?? ''); 
-  protected reserverName2 = computed(() => this.vm().reserverName2 ?? ''); 
+  protected reserverName = computed(() => this.vm().reserverName ?? '');
+  protected reserverName2 = computed(() => this.vm().reserverName2 ?? '');
   protected reserverModelType = computed(() => this.vm().reserverModelType ?? ModelType.Person);
   protected reserverGender = computed(() => this.vm().reserverType as GenderType ?? GenderType.Male);
   protected reserverOrgType = computed(() => this.vm().reserverType as OrgType ?? OrgType.Association);
@@ -202,7 +203,7 @@ export class ReservationNewFormComponent {
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
-  
+
   protected readonly suite = reservationNewFormValidations;
   protected readonly shape = reservationNewFormModelShape;
   private readonly validationResult = computed(() => reservationNewFormValidations(this.vm()));
@@ -216,7 +217,7 @@ export class ReservationNewFormComponent {
   protected endFutureDate = END_FUTURE_DATE_STR;
 
   protected onValueChange(value: ReservationNewFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((_vm) => ({ ..._vm, ...value }));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 
@@ -236,8 +237,8 @@ export class ReservationNewFormComponent {
       const _person = await this.reservationSelectorsService.selectPerson();
       if (_person) {
         this.vm.update((_vm) => ({
-          ..._vm, 
-          reserverKey: _person.bkey, 
+          ..._vm,
+          reserverKey: _person.bkey,
           reserverName: _person.firstName,
           reserverName2: _person.lastName,
           reserverModelType: ModelType.Person,
@@ -256,8 +257,8 @@ export class ReservationNewFormComponent {
     const _resource = await this.reservationSelectorsService.selectResource();
     if (_resource) {
       this.vm.update((_vm) => ({
-        ..._vm, 
-        resourceKey: _resource.bkey, 
+        ..._vm,
+        resourceKey: _resource.bkey,
         resourceName: _resource.name,
         resourceModelType: ModelType.Resource,
         resourceType: _resource.type,

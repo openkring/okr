@@ -3,15 +3,15 @@ import { IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, I
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { ModelType, PersonalRelModel, RoleName } from '@bk2/shared/models';
 import { hasRole, isOngoing } from '@bk2/shared/util-core';
 import { EmptyListComponent } from '@bk2/shared/ui';
-import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
 import { PersonalRelTypes } from '@bk2/shared/categories';
+
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { PersonalRelNamePipe } from '@bk2/relationship/personal-rel/util';
-
-
+import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
 
 @Component({
   selector: 'bk-personal-rel-accordion',
@@ -95,7 +95,7 @@ import { PersonalRelNamePipe } from '@bk2/relationship/personal-rel/util';
 })
 export class PersonalRelAccordionComponent {
   protected readonly personalRelStore = inject(PersonalRelAccordionStore);
-  
+
   public personKey = input.required<string>();
   public color = input('light');
   public title = input('@personalRel.plural');
@@ -134,8 +134,8 @@ export class PersonalRelAccordionComponent {
     if (slidingItem) slidingItem.close();
     if (personalRel) await this.personalRelStore.end(personalRel);
   }
-    
-/******************************* helpers *************************************** */
+
+  /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.personalRelStore.currentUser());
   }

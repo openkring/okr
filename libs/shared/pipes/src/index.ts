@@ -13,6 +13,7 @@ export * from './lib/file-size.pipe';
 export * from './lib/file-extension.pipe';
 export * from './lib/file-type-icon.pipe';
 export * from './lib/full-name.pipe';
+export * from './lib/imgix-url.pipe';
 export * from './lib/is-sorted.pipe';
 export * from './lib/iso2viewDate.pipe';
 export * from './lib/label.pipe';

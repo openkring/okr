@@ -3,10 +3,10 @@ import { IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone'
 import { rxResource } from '@angular/core/rxjs-interop';
 
 import { ColorsIonic } from '@bk2/shared/categories';
-import { CategoryPlainNamePipe, getAvatarImgixUrl } from '@bk2/shared/pipes';
+import { CategoryPlainNamePipe } from '@bk2/shared/pipes';
 import { ColorIonic } from '@bk2/shared/models';
-import { ENV, FIRESTORE} from '@bk2/shared/config';
-import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
+
+import { AvatarService } from '@bk2/avatar/data-access';
 
 @Component({
   selector: 'bk-avatar-label',
@@ -24,8 +24,7 @@ import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
   `,
 })
 export class AvatarLabelComponent {
-  private readonly firestore = inject(FIRESTORE);
-  private readonly env = inject(ENV);
+  private readonly avatarService = inject(AvatarService);
 
   public label = input('');
   public color = input<ColorIonic>(ColorIonic.White);
@@ -36,7 +35,7 @@ export class AvatarLabelComponent {
     params: () => ({
       key: this.key()
     }),
-    stream: ({params}) => getAvatarImgixUrl(this.firestore, params.key, THUMBNAIL_SIZE, this.env.services.imgixBaseUrl)
+    stream: ({ params }) => this.avatarService.getAvatarImgixUrl(params.key)
   });
   public url = computed(() => this.urlRef.value() ?? '');
 

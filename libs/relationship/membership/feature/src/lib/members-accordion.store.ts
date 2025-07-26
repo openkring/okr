@@ -2,15 +2,13 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
-import { firstValueFrom, Observable, of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
 import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
 import { convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, isValidAt } from '@bk2/shared/util-core';
 import { confirm } from '@bk2/shared/util-angular';
 import { AppStore } from '@bk2/shared/feature';
 import { selectDate } from '@bk2/shared/ui';
-
-import { AvatarService } from '@bk2/avatar/data-access';
 
 import { MembershipService } from '@bk2/relationship/membership/data-access';
 import { MembershipModalsService } from './membership-modals.service';
@@ -31,19 +29,18 @@ export const MembersAccordionStore = signalStore(
   withProps(() => ({
     membershipService: inject(MembershipService),
     membershipModalsService: inject(MembershipModalsService),
-    avatarService: inject(AvatarService),
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     alertController: inject(AlertController),
     modalController: inject(ModalController)
   })),
   withProps((store) => ({
-      // load all the memberships of the given org = its members
-     membersResource: rxResource({
+    // load all the memberships of the given org = its members
+    membersResource: rxResource({
       params: () => ({
         orgKey: store.orgKey()
       }),
-      stream: ({params}) => {
+      stream: ({ params }) => {
         if (!params.orgKey) return of([]);
         const members$ = store.membershipService.listMembersOfOrg(params.orgKey);
         debugListLoaded('MembersAccordionStore.members', members$, store.appStore.currentUser());
@@ -54,8 +51,8 @@ export const MembersAccordionStore = signalStore(
     orgResource: rxResource({
       params: () => ({
         orgKey: store.orgKey()
-      }),  
-      stream: ({params}) => {
+      }),
+      stream: ({ params }) => {
         const org$ = store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgKey);
         debugItemLoaded<OrgModel>(`org ${params.orgKey}`, org$, store.appStore.currentUser());
         return org$;
@@ -67,7 +64,7 @@ export const MembersAccordionStore = signalStore(
     return {
       allMembers: computed(() => state.membersResource.value() ?? []),
       currentMemberships: computed(() => state.membersResource.value()?.filter(m => isValidAt(m.dateOfEntry, m.dateOfExit)) ?? []),
-      members: computed(() => state.showOnlyCurrent() ? state.membersResource.value() ?? [] : state.membersResource.value()?.filter(m => isValidAt(m.dateOfEntry, m.dateOfExit)) ?? []),  
+      members: computed(() => state.showOnlyCurrent() ? state.membersResource.value() ?? [] : state.membersResource.value()?.filter(m => isValidAt(m.dateOfEntry, m.dateOfExit)) ?? []),
       currentUser: computed(() => state.appStore.currentUser()),
       currentPerson: computed(() => state.appStore.currentPerson()),
       currentOrg: computed(() => state.orgResource.value()),
@@ -103,14 +100,14 @@ export const MembersAccordionStore = signalStore(
         if (membership) {
           const _date = await selectDate(store.modalController);
           if (!_date) return;
-          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
-          store.membersResource.reload();  
+          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());
+          store.membersResource.reload();
         }
       },
 
       async changeMembershipCategory(membership?: MembershipModel): Promise<void> {
-        if(membership) {
-          const _mcat = await firstValueFrom(store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_' + membership.orgKey));            
+        if (membership) {
+          const _mcat = await firstValueFrom(store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_' + membership.orgKey));
           if (_mcat) {
             await store.membershipModalsService.changeMembershipCategory(membership, _mcat);
             store.membersResource.reload();
@@ -124,15 +121,8 @@ export const MembersAccordionStore = signalStore(
           if (_result === true) {
             await store.membershipService.delete(membership);
             store.membersResource.reload();
-          } 
+          }
         }
-      },
-
-
-
-      /******************************** helpers ******************************************* */
-      getAvatarImgixUrl(membership: MembershipModel): Observable<string> {
-        return store.avatarService.getAvatarImgixUrl(`${ModelType.Org}.${membership.orgKey}`);        
       }
     }
   })

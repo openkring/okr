@@ -8,7 +8,7 @@ import { TranslatePipe } from '@bk2/shared/i18n';
 import { CategoryListModel, ModelType, UserModel } from '@bk2/shared/models';
 import { debugFormErrors, getFullPersonName, getTodayStr, isOrg, isPerson } from '@bk2/shared/util-core';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared/feature';
-import { AvatarPipe } from '@bk2/shared/pipes';
+import { AvatarPipe } from '@bk2/avatar/ui';
 
 import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShape, membershipNewFormValidations } from '@bk2/relationship/membership/util';
 
@@ -98,7 +98,7 @@ export class MembershipNewFormComponent {
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(true);
-  
+
   protected readonly suite = membershipNewFormValidations;
   protected readonly shape = membershipNewFormModelShape;
   private readonly validationResult = computed(() => membershipNewFormValidations(this.vm()));
@@ -106,7 +106,7 @@ export class MembershipNewFormComponent {
   protected modelType = ModelType;
 
   protected onValueChange(value: MembershipFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((_vm) => ({ ..._vm, ...value }));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 
@@ -119,11 +119,11 @@ export class MembershipNewFormComponent {
 
   protected onCatChanged(membershipCategory: string): void {
     const membershipCategoryAbbreviation = this.membershipCategories().items.find(item => item.name === membershipCategory)?.abbreviation ?? 'A';
-    this.vm.update((_vm) => ({..._vm, membershipCategory, membershipCategoryAbbreviation}));  
+    this.vm.update((_vm) => ({ ..._vm, membershipCategory, membershipCategoryAbbreviation }));
     debugFormErrors('MembershipNewForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
-  } 
+  }
 
   protected async selectMember(): Promise<void> {
     if (this.memberModelType() === ModelType.Person) {
@@ -147,8 +147,8 @@ export class MembershipNewFormComponent {
     if (role === 'confirm') {
       if (isPerson(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
-          ..._vm, 
-          memberKey: data.bkey, 
+          ..._vm,
+          memberKey: data.bkey,
           memberName1: data.firstName,
           memberName2: data.lastName,
           memberName: getFullPersonName(data.firstName, data.lastName),
@@ -161,7 +161,7 @@ export class MembershipNewFormComponent {
         }));
         debugFormErrors('MembershipNewForm (Person)', this.validationResult().errors, this.currentUser());
         this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());    
+        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
       }
     }
   }
@@ -180,14 +180,14 @@ export class MembershipNewFormComponent {
     if (role === 'confirm') {
       if (isOrg(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
-          ..._vm, 
-          orgKey: data.bkey, 
+          ..._vm,
+          orgKey: data.bkey,
           orgName: data.name,
         }));
         debugFormErrors('MembershipNewForm (Org)', this.validationResult().errors, this.currentUser());
         this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());    
+        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
       }
-    }  
+    }
   }
 }

@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, nameMatches, searchData } from '@bk2/shared/util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared/util-core';
 import { AllCategories, ModelType, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared/models';
 import { categoryMatches, yearMatches } from '@bk2/shared/categories';
 import { selectDate } from '@bk2/shared/ui';
@@ -51,11 +51,11 @@ export const ReservationListStore = signalStore(
     resResource: rxResource({
       params: () => ({
         resourceId: store.resourceId()
-      }),  
-      stream: ({params}) => {
+      }),
+      stream: ({ params }) => {
         const allResources$ = store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
-        const currentResource$ = findByKey<ResourceModel>(allResources$, params.resourceId); 
-        debugItemLoaded('ReservationListStore.resource', currentResource$, store.appStore.currentUser()); 
+        const currentResource$ = findByKey<ResourceModel>(allResources$, params.resourceId);
+        debugItemLoaded('ReservationListStore.resource', currentResource$, store.appStore.currentUser());
         return currentResource$;
       }
     }),
@@ -67,11 +67,11 @@ export const ReservationListStore = signalStore(
       currentUser: computed(() => state.appStore.currentUser()),
       currentPerson: computed(() => state.appStore.currentPerson()),
       selectedResource: computed(() => state.resResource.value()),
-      defaultResource : computed(() => state.appStore.defaultResource()),
+      defaultResource: computed(() => state.appStore.defaultResource()),
       isLoading: computed(() => state.reservationsResource.isLoading() || state.resResource.isLoading()),
 
       filteredReservations: computed(() => {
-        return state.reservationsResource.value()?.filter((reservation: ReservationModel) => 
+        return state.reservationsResource.value()?.filter((reservation: ReservationModel) =>
           nameMatches(reservation.index, state.searchTerm()) &&
           yearMatches(reservation.startDate, state.selectedYear() + '') &&
           categoryMatches(reservation.resourceType, state.selectedType()) &&
@@ -95,7 +95,7 @@ export const ReservationListStore = signalStore(
 
       setSelectedTag(selectedTag: string) {
         patchState(store, { selectedTag });
-      },      
+      },
 
       setSelectedType(selectedType: number) {
         patchState(store, { selectedType });
@@ -133,15 +133,16 @@ export const ReservationListStore = signalStore(
         if (reservation) {
           const _date = await selectDate(store.modalController);
           if (!_date) return;
-          await store.reservationService.endReservationByDate(reservation, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false));    
-          store.reservationsResource.reload();  
+          const _endDate = convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false);
+          await store.reservationService.endReservationByDate(reservation, _endDate, store.appStore.currentUser());
+          store.reservationsResource.reload();
         }
       },
 
       async delete(reservation?: ReservationModel): Promise<void> {
         if (reservation) {
-          await store.reservationService.delete(reservation);
-          store.reservationsResource.reload();  
+          await store.reservationService.delete(reservation, store.appStore.currentUser());
+          store.reservationsResource.reload();
         }
       },
 

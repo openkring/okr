@@ -5,9 +5,8 @@ import { rxResource } from '@angular/core/rxjs-interop';
 
 import { ImageAction, newImage } from '@bk2/shared/models';
 import { UploadService } from '@bk2/shared/ui';
-import { getAvatarImgixUrl } from '@bk2/shared/pipes';
 import { AppStore } from '@bk2/shared/feature';
-import { THUMBNAIL_SIZE } from '@bk2/shared/constants';
+import { AvatarService } from '@bk2/avatar/data-access';
 
 export interface AvatarToolbarState {
   key: string;              // = ModelType.ModelKey e.g. 1.lasdfölj
@@ -21,6 +20,7 @@ export const AvatarToolbarStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
+    avatarService: inject(AvatarService),
     uploadService: inject(UploadService),
   })),
   withProps((store) => ({
@@ -29,7 +29,7 @@ export const AvatarToolbarStore = signalStore(
         key: store.key(),
         currentUser: store.appStore.currentUser()
       }),
-      stream: ({params}) => getAvatarImgixUrl(store.appStore.firestore, params.key, THUMBNAIL_SIZE, store.appStore.env.services.imgixBaseUrl, false)      
+      stream: ({params}) => store.avatarService.getAvatarImgixUrl(params.key, undefined, undefined, true)      
     })
   })),
 

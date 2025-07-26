@@ -3,29 +3,30 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabe
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { hasRole, isOngoing } from '@bk2/shared/util-core';
 import { error } from '@bk2/shared/util-angular';
 import { ModelType, WorkingRelModel, RoleName } from '@bk2/shared/models';
 import { addAllCategory, WorkingRelStates, WorkingRelTypes } from '@bk2/shared/categories';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { MenuComponent } from '@bk2/cms/menu/feature';
 
 import { WorkingRelListStore } from './working-rel-list.store';
 import { WorkingRelNamePipe } from '@bk2/relationship/working-rel/util';
 
 @Component({
-    selector: 'bk-working-rel-list',
-    imports: [
-      TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, WorkingRelNamePipe,
-      ListFilterComponent, EmptyListComponent, SpinnerComponent, MenuComponent,
-      IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-      IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, IonImg, IonList,
-      IonGrid, IonRow, IonCol, IonAvatar, IonPopover
-    ],
-    providers: [WorkingRelListStore],
-    template: `
+  selector: 'bk-working-rel-list',
+  imports: [
+    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, WorkingRelNamePipe,
+    ListFilterComponent, EmptyListComponent, SpinnerComponent, MenuComponent,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
+    IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, IonImg, IonList,
+    IonGrid, IonRow, IonCol, IonAvatar, IonPopover
+  ],
+  providers: [WorkingRelListStore],
+  template: `
     <ion-header>
       <!-- title and actions -->
       <ion-toolbar color="secondary">
@@ -132,7 +133,7 @@ import { WorkingRelNamePipe } from '@bk2/relationship/working-rel/util';
 })
 export class WorkingRelListComponent {
   protected workingRelListStore = inject(WorkingRelListStore);
-  
+
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
@@ -150,8 +151,8 @@ export class WorkingRelListComponent {
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
-      case 'add':  await this.workingRelListStore.add(); break;
+    switch (_selectedMethod) {
+      case 'add': await this.workingRelListStore.add(); break;
       case 'exportRaw': await this.workingRelListStore.export('raw'); break;
       default: error(undefined, `WorkingRelListComponent.call: unknown method ${_selectedMethod}`);
     }
@@ -196,5 +197,5 @@ export class WorkingRelListComponent {
 
   protected isOngoing(workingRel: WorkingRelModel): boolean {
     return isOngoing(workingRel.validTo);
-  }  
+  }
 }

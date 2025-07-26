@@ -92,8 +92,11 @@ export const GroupListStore = signalStore(
       console.log(`GroupListStore.export(${type}) is not yet implemented.`);
     },
 
+    /**
+     * Fetches the avatar URL for the author, assignee, and scope of the group.
+     * @returns an object containing the URLs and names of the author, assignee, and
+     */
     async add(): Promise<void> {
-      console.log('GroupListStore.add: opening modal to create a new group');
       const _modal = await store.modalController.create({
         component: GroupNewModalComponent,
         componentProps: {
@@ -111,7 +114,12 @@ export const GroupListStore = signalStore(
       store.groupsResource.reload();
     },
 
-    async saveGroup(groupFormModel: GroupNewFormModel): Promise<string> {
+    /**
+     * Saves a new group.
+     * @param groupFormModel the form model containing the new group data
+     * @returns the key of the newly created group or undefined if the creation failed
+     */
+    async saveGroup(groupFormModel: GroupNewFormModel): Promise<string | undefined> {
       return await store.groupService.create(convertFormToNewGroup(groupFormModel, store.tenantId()), store.currentUser());
     },
 

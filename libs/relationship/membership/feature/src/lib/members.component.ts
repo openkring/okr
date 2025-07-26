@@ -2,13 +2,13 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonContent, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { CategoryLogPipe } from '@bk2/relationship/membership/util';
-
-import { AvatarPipe, DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { MembershipModel, ModelType, RoleName } from '@bk2/shared/models';
 import { hasRole, isOngoing } from '@bk2/shared/util-core';
 import { EmptyListComponent } from '@bk2/shared/ui';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
+import { CategoryLogPipe } from '@bk2/relationship/membership/util';
 import { MembersAccordionStore } from './members-accordion.store';
 
 @Component({
@@ -64,7 +64,7 @@ import { MembersAccordionStore } from './members-accordion.store';
 })
 export class MembersComponent {
   protected readonly membersStore = inject(MembersAccordionStore);
-  
+
   public orgKey = input.required<string>();
 
   protected members = computed(() => this.membersStore.members());
@@ -95,8 +95,8 @@ export class MembersComponent {
     if (slidingItem) slidingItem.close();
     if (membership) await this.membersStore.end(membership);
   }
-    
-/******************************* helpers *************************************** */
+
+  /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.membersStore.currentUser());
   }

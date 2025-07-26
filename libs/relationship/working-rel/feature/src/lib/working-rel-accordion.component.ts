@@ -3,12 +3,14 @@ import { IonAccordion, IonAvatar, IonCol, IonGrid, IonIcon, IonImg, IonItem, Ion
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, CategoryNamePipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { CategoryNamePipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { ModelType, WorkingRelModel, RoleName } from '@bk2/shared/models';
 import { hasRole, isOngoing } from '@bk2/shared/util-core';
 import { EmptyListComponent } from '@bk2/shared/ui';
 import { WorkingRelAccordionStore } from './working-rel-accordion.store';
 import { WorkingRelTypes } from '@bk2/shared/categories';
+
+import { AvatarPipe } from '@bk2/avatar/ui';
 
 @Component({
   selector: 'bk-working-rel-accordion',
@@ -87,7 +89,7 @@ import { WorkingRelTypes } from '@bk2/shared/categories';
 })
 export class WorkingRelAccordionComponent {
   protected readonly workingRelStore = inject(WorkingRelAccordionStore);
-  
+
   public personKey = input<string>();
   public color = input('light');
   public title = input('@workingRel.plural');
@@ -121,8 +123,8 @@ export class WorkingRelAccordionComponent {
     if (slidingItem) slidingItem.close();
     if (workingRel) await this.workingRelStore.end(workingRel);
   }
-    
-/******************************* helpers *************************************** */
+
+  /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.workingRelStore.currentUser());
   }

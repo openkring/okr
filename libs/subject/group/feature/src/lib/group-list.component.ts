@@ -3,28 +3,28 @@ import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon,
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { GroupModel, ModelType, RoleName } from '@bk2/shared/models';
 import { hasRole } from '@bk2/shared/util-core';
 import { error } from '@bk2/shared/util-angular';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { MenuComponent } from '@bk2/cms/menu/feature';
 import { GroupListStore } from './group-list.store';
 
-
 @Component({
-    selector: 'bk-group-list',
-    imports: [
-      TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe,
-      SpinnerComponent, EmptyListComponent,
-      MenuComponent, ListFilterComponent,
-      IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-      IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover,
-      IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList
-    ],
-    providers: [GroupListStore],
-    template: `
+  selector: 'bk-group-list',
+  imports: [
+    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe,
+    SpinnerComponent, EmptyListComponent,
+    MenuComponent, ListFilterComponent,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
+    IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover,
+    IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList
+  ],
+  providers: [GroupListStore],
+  template: `
     <ion-header>
       <!-- title and actions -->
       <ion-toolbar color="secondary">
@@ -101,18 +101,18 @@ import { GroupListStore } from './group-list.store';
   </ion-content>
     `
 })
-export class GroupListComponent  {
+export class GroupListComponent {
   protected readonly groupListStore = inject(GroupListStore);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
-  
+
   protected filteredGroups = computed(() => this.groupListStore.filteredGroups() ?? []);
   protected groupsCount = computed(() => this.groupListStore.groups()?.length ?? 0);
   protected selectedGroupsCount = computed(() => this.filteredGroups().length);
   protected isLoading = computed(() => this.groupListStore.isLoading());
   protected groupTags = computed(() => this.groupListStore.getTags());
-  
+
   protected modelType = ModelType;
 
   /******************************** setters (filter) ******************************************* */
@@ -127,13 +127,13 @@ export class GroupListComponent  {
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     console.log('GroupListComponent.onPopoverDismiss', $event);
-     const _selectedMethod = $event.detail.data;
-     switch(_selectedMethod) {
-       case 'add':  await this.groupListStore.add(); break;
-       case 'exportRaw': await this.groupListStore.export("raw_groups"); break;
-       default: error(undefined, `GroupListComponent.call: unknown method ${_selectedMethod}`);
-     }
-   } 
+    const _selectedMethod = $event.detail.data;
+    switch (_selectedMethod) {
+      case 'add': await this.groupListStore.add(); break;
+      case 'exportRaw': await this.groupListStore.export("raw_groups"); break;
+      default: error(undefined, `GroupListComponent.call: unknown method ${_selectedMethod}`);
+    }
+  }
 
   public async edit(slidingItem?: IonItemSliding, group?: GroupModel): Promise<void> {
     if (slidingItem) slidingItem.close();

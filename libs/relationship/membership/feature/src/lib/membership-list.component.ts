@@ -3,12 +3,13 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabe
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { MembershipModel, ModelType, RoleName } from '@bk2/shared/models';
 import { getYearList, hasRole, isOngoing } from '@bk2/shared/util-core';
 import { error } from '@bk2/shared/util-angular';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { MenuComponent } from '@bk2/cms/menu/feature';
 
 import { CategoryLogPipe, getMembershipName } from '@bk2/relationship/membership/util';
@@ -16,15 +17,15 @@ import { MembershipListStore } from './membership-list.store';
 import { addAllCategory, GenderTypes, OrgTypes } from '@bk2/shared/categories';
 
 @Component({
-    selector: 'bk-membership-list',
-    imports: [
+  selector: 'bk-membership-list',
+  imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryLogPipe, AvatarPipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
     IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList, IonPopover
-],
-    providers: [MembershipListStore],
-    template: `
+  ],
+  providers: [MembershipListStore],
+  template: `
     <ion-header>
       <!-- title and context menu -->
       <ion-toolbar color="secondary">
@@ -119,7 +120,7 @@ import { addAllCategory, GenderTypes, OrgTypes } from '@bk2/shared/categories';
 })
 export class MembershipListComponent {
   protected membershipListStore = inject(MembershipListStore);
-  
+
   public listId = input.required<string>();
   public orgId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -142,33 +143,33 @@ export class MembershipListComponent {
   protected filteredMemberships = computed(() => {
     switch (this.listId()) {
       case 'memberships': return this.membershipListStore.filteredMemberships() ?? [];
-      case 'persons':    return this.membershipListStore.filteredPersons() ?? [];
-      case 'orgs':       return this.membershipListStore.filteredOrgs() ?? [];
-      case 'active':    return this.membershipListStore.filteredActive();
-      case 'applied':   return this.membershipListStore.filteredApplied();
-      case 'passive':   return this.membershipListStore.filteredPassive();
+      case 'persons': return this.membershipListStore.filteredPersons() ?? [];
+      case 'orgs': return this.membershipListStore.filteredOrgs() ?? [];
+      case 'active': return this.membershipListStore.filteredActive();
+      case 'applied': return this.membershipListStore.filteredApplied();
+      case 'passive': return this.membershipListStore.filteredPassive();
       case 'cancelled': return this.membershipListStore.filteredCancelled();
-      case 'deceased':  return this.membershipListStore.filteredDeceased();
-      case 'entries':   return this.membershipListStore.filteredEntries();
-      case 'exits':     return this.membershipListStore.filteredExits();
-      case 'all':       
-      default:          return this.membershipListStore.filteredMemberships() ?? [];
+      case 'deceased': return this.membershipListStore.filteredDeceased();
+      case 'entries': return this.membershipListStore.filteredEntries();
+      case 'exits': return this.membershipListStore.filteredExits();
+      case 'all':
+      default: return this.membershipListStore.filteredMemberships() ?? [];
     }
   });
   protected membershipsCount = computed(() => {
     switch (this.listId()) {
       case 'memberships': return this.membershipListStore.membershipsCount();
-      case 'persons':    return this.membershipListStore.personsCount();
-      case 'orgs':       return this.membershipListStore.orgsCount();
-      case 'active':    return this.membershipListStore.activeCount();
-      case 'applied':   return this.membershipListStore.appliedCount();
-      case 'passive':   return this.membershipListStore.passiveCount();
+      case 'persons': return this.membershipListStore.personsCount();
+      case 'orgs': return this.membershipListStore.orgsCount();
+      case 'active': return this.membershipListStore.activeCount();
+      case 'applied': return this.membershipListStore.appliedCount();
+      case 'passive': return this.membershipListStore.passiveCount();
       case 'cancelled': return this.membershipListStore.cancelledCount();
-      case 'deceased':  return this.membershipListStore.deceasedCount();
-      case 'entries':   return this.membershipListStore.entriesCount();
-      case 'exits':     return this.membershipListStore.exitsCount();
-      case 'all':       
-      default:          return this.membershipListStore.membershipsCount() ?? [];
+      case 'deceased': return this.membershipListStore.deceasedCount();
+      case 'entries': return this.membershipListStore.entriesCount();
+      case 'exits': return this.membershipListStore.exitsCount();
+      case 'all':
+      default: return this.membershipListStore.membershipsCount() ?? [];
     }
   });
   protected title = computed(() => {
@@ -177,8 +178,8 @@ export class MembershipListComponent {
   protected yearLabel = computed(() => {
     switch (this.listId()) {
       case 'entries': return '@membership.list.entries.yearLabel';
-      case 'exits':   return '@membership.list.exits.yearLabel';
-      default:        return '';
+      case 'exits': return '@membership.list.exits.yearLabel';
+      default: return '';
     }
   });
   protected selectedMembershipsCount = computed(() => this.filteredMemberships().length);
@@ -193,8 +194,8 @@ export class MembershipListComponent {
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
-      case 'add':  await this.membershipListStore.add(); break;
+    switch (_selectedMethod) {
+      case 'add': await this.membershipListStore.add(); break;
       case 'exportRaw': await this.membershipListStore.export("raw"); break;
       case 'copyEmailAddresses': await this.membershipListStore.copyEmailAddresses(); break;
       default: error(undefined, `MembershipListComponent.onPopoverDismiss: unknown method ${_selectedMethod}`);
@@ -257,5 +258,5 @@ export class MembershipListComponent {
 
   protected getMembershipName(membership: MembershipModel): string {
     return getMembershipName(membership);
-  }  
+  }
 }

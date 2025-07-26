@@ -3,29 +3,30 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabe
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared/ui';
 import { getYearList, hasRole, isOngoing } from '@bk2/shared/util-core';
 import { error } from '@bk2/shared/util-angular';
 import { ModelType, ReservationModel, RoleName } from '@bk2/shared/models';
 import { addAllCategory, ReservationStates, ResourceTypes } from '@bk2/shared/categories';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { MenuComponent } from '@bk2/cms/menu/feature';
 
 import { getReserverName } from '@bk2/relationship/reservation/util';
 import { ReservationListStore } from './reservation-list.store';
 
 @Component({
-    selector: 'bk-reservation-list',
-    imports: [
+  selector: 'bk-reservation-list',
+  imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe, CategoryNamePipe,
     ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
     IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList,
     IonPopover
-],
-    providers: [ReservationListStore],
-    template: `
+  ],
+  providers: [ReservationListStore],
+  template: `
     <ion-header>
       <!-- title and actions -->
       <ion-toolbar color="secondary">
@@ -113,7 +114,7 @@ import { ReservationListStore } from './reservation-list.store';
 })
 export class ReservationListComponent {
   protected reservationListStore = inject(ReservationListStore);
-  
+
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
@@ -134,8 +135,8 @@ export class ReservationListComponent {
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
-      case 'add':  await this.reservationListStore.add(); break;
+    switch (_selectedMethod) {
+      case 'add': await this.reservationListStore.add(); break;
       case 'exportRaw': await this.reservationListStore.export("raw"); break;
       default: error(undefined, `ReservationListComponent.call: unknown method ${_selectedMethod}`);
     }
@@ -184,9 +185,9 @@ export class ReservationListComponent {
 
   protected isOngoing(reservation: ReservationModel): boolean {
     return isOngoing(reservation.endDate);
-  } 
+  }
 
   protected getReserverName(reservation: ReservationModel): string {
     return getReserverName(reservation);
-  }  
+  }
 }

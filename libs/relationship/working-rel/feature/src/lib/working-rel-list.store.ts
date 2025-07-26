@@ -34,11 +34,11 @@ export const WorkingRelListStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     workingRelService: inject(WorkingRelService),
-    workingRelModalsService: inject(WorkingRelModalsService),  
+    workingRelModalsService: inject(WorkingRelModalsService),
   })),
   withProps((store) => ({
     workingRelsResource: rxResource({
-      stream: () => {        
+      stream: () => {
         const workingRels$ = store.workingRelService.list();
         debugListLoaded('WorkingRelListStore.workingRels', workingRels$, store.appStore.currentUser());
         return workingRels$;
@@ -54,7 +54,7 @@ export const WorkingRelListStore = signalStore(
       currentOrg: computed(() => state.appStore.defaultOrg() ?? die('WorkingRelListStore: default org not found')),
 
       filteredWorkingRels: computed(() => {
-        return state.workingRelsResource.value()?.filter((workingRel: WorkingRelModel) => 
+        return state.workingRelsResource.value()?.filter((workingRel: WorkingRelModel) =>
           nameMatches(workingRel.index, state.searchTerm()) &&
           categoryMatches(workingRel.state, state.selectedState()) &&
           categoryMatches(workingRel.type, state.selectedType()) &&
@@ -75,7 +75,7 @@ export const WorkingRelListStore = signalStore(
 
       setSelectedTag(selectedTag: string) {
         patchState(store, { selectedTag });
-      },      
+      },
 
       setSelectedType(selectedType: number) {
         patchState(store, { selectedType });
@@ -113,7 +113,7 @@ export const WorkingRelListStore = signalStore(
           const { data, role } = await _modal.onDidDismiss();
           if (role === 'confirm') {
             const _workingRel = convertFormToNewWorkingRel(data as WorkingRelNewFormModel, store.appStore.tenantId());
-            await store.workingRelService.create(_workingRel, store.appStore.tenantId(), store.appStore.currentUser());
+            await store.workingRelService.create(_workingRel, store.appStore.currentUser());
             store.workingRelsResource.reload();
           }
         }
@@ -130,7 +130,7 @@ export const WorkingRelListStore = signalStore(
       async edit(workingRel?: WorkingRelModel): Promise<void> {
         let _workingRel = workingRel;
         _workingRel ??= new WorkingRelModel(store.appStore.tenantId());
-        
+
         const _modal = await store.modalController.create({
           component: WorkingRelEditModalComponent,
           componentProps: {
@@ -143,25 +143,25 @@ export const WorkingRelListStore = signalStore(
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
           if (isWorkingRel(data, store.appStore.tenantId())) {
-            await (!data.bkey ? 
-              store.workingRelService.create(data, store.appStore.tenantId(), store.appStore.currentUser()) : 
+            await (!data.bkey ?
+              store.workingRelService.create(data, store.appStore.currentUser()) :
               store.workingRelService.update(data, store.appStore.currentUser()));
             store.workingRelsResource.reload();
           }
-        }  
+        }
       },
 
       async end(workingRel?: WorkingRelModel): Promise<void> {
         if (workingRel) {
           await store.workingRelModalsService.end(workingRel);
-          store.workingRelsResource.reload();  
+          store.workingRelsResource.reload();
         }
       },
 
       async delete(workingRel?: WorkingRelModel): Promise<void> {
         if (workingRel) {
           await store.workingRelService.delete(workingRel, store.appStore.currentUser());
-          store.workingRelsResource.reload();  
+          store.workingRelsResource.reload();
         }
       },
     }

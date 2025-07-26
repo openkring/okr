@@ -13,28 +13,26 @@ import { getCategoryAttribute } from '@bk2/category/util';
 
 import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipSearchIndex, getMembershipSearchIndexInfo, getRelLogEntry } from '@bk2/relationship/membership/util';
 import { FirestoreService } from '@bk2/shared/data-access';
-  
 
-  @Injectable({
-    providedIn: 'root'
-  })
-  export class MembershipService {
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MembershipService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly toastController = inject(ToastController);
 
-  private readonly tenantId = this.env.tenantId;
-
   /*-------------------------- CRUD operations --------------------------------*/
-    /**
-   * Create a new membership and save it to the database.
-   * @param membership the new membership to save
-   * @param currentUser the UserModel of the currently logged in user, used for logging and confirmation messages.
-   * @returns the document id of the stored membership in the database or undefined if the operation failed
-   */
+  /**
+ * Create a new membership and save it to the database.
+ * @param membership the new membership to save
+ * @param currentUser the UserModel of the currently logged in user, used for logging and confirmation messages.
+ * @returns the document id of the stored membership in the database or undefined if the operation failed
+ */
   public async create(membership: MembershipModel, currentUser?: UserModel): Promise<string | undefined> {
-        membership.index = this.getSearchIndex(membership);
-        return await this.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', currentUser);
+    membership.index = this.getSearchIndex(membership);
+    return await this.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', currentUser);
   }
 
   /**
@@ -43,12 +41,12 @@ import { FirestoreService } from '@bk2/shared/data-access';
    * @returns the membership as an Observable or undefined if not found
    */
   public read(key: string): Observable<MembershipModel | undefined> {
-        return findByKey<MembershipModel>(this.list(), key);
+    return findByKey<MembershipModel>(this.list(), key);
   }
 
   public async update(membership: MembershipModel, currentUser?: UserModel, confirmMessage = '@membership.operation.update'): Promise<string | undefined> {
-        membership.index = this.getSearchIndex(membership);
-        return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, confirmMessage, currentUser);
+    membership.index = this.getSearchIndex(membership);
+    return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, confirmMessage, currentUser);
   }
 
   public async delete(membership: MembershipModel, currentUser?: UserModel): Promise<void> {
@@ -68,6 +66,7 @@ import { FirestoreService } from '@bk2/shared/data-access';
       membership.relIsLast = true;
       return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, '@comment.message.membership.deleted', currentUser);
     }
+    return undefined;
   }
 
   /**
@@ -81,21 +80,20 @@ import { FirestoreService } from '@bk2/shared/data-access';
    * @return the document id of the newly created membership in the database or undefined if the operation failed
    */
   public async saveMembershipCategoryChange(
-    oldMembership: MembershipModel, 
-    membershipChange: CategoryChangeFormModel, 
-    membershipCategory: CategoryListModel, 
-    currentUser?: UserModel): Promise<string | undefined> 
-  {
+    oldMembership: MembershipModel,
+    membershipChange: CategoryChangeFormModel,
+    membershipCategory: CategoryListModel,
+    currentUser?: UserModel): Promise<string | undefined> {
     if (!currentUser) {
       return error(undefined, 'FirestoreService.saveMembershipCategoryChange: currentUser is mandatory.', true);
     }
     oldMembership.relIsLast = false;
-    oldMembership.dateOfExit = addDuration(membershipChange.dateOfChange ?? getTodayStr(), { days: -1});
+    oldMembership.dateOfExit = addDuration(membershipChange.dateOfChange ?? getTodayStr(), { days: -1 });
     await this.update(oldMembership, currentUser);
 
     // add a comment about the category change to the current membership
     const _message = getMembershipCategoryChangeComment(oldMembership.membershipCategory, membershipChange.membershipCategoryNew);;
-    const _comment = createComment(currentUser.bkey, currentUser.firstName + ' ' + currentUser.lastName, _message, MembershipCollection, oldMembership.bkey, this.tenantId);
+    const _comment = createComment(currentUser.bkey, currentUser.firstName + ' ' + currentUser.lastName, _message, MembershipCollection, oldMembership.bkey, this.env.tenantId);
     await this.firestoreService.saveComment(MembershipCollection, oldMembership.bkey, _comment);
 
     // create a new membership with the new type and the start date
@@ -124,7 +122,7 @@ import { FirestoreService } from '@bk2/shared/data-access';
     _newMembership.membershipState = getCategoryAttribute(membershipCategory, _newMembership.membershipCategory, 'state') as string;
     _newMembership.dateOfEntry = membershipChange.dateOfChange ?? getTodayStr();
     _newMembership.dateOfExit = END_FUTURE_DATE_STR;
-    _newMembership.priority =  (oldMembership.priority ?? 0) + 1;
+    _newMembership.priority = (oldMembership.priority ?? 0) + 1;
     _newMembership.relIsLast = true;
     const _cat = getCategoryAttribute(membershipCategory, _newMembership.membershipCategory, 'abbreviation') + '';
     _newMembership.relLog = getRelLogEntry(_newMembership.priority, oldMembership.relLog, _newMembership.dateOfEntry, _cat);
@@ -134,7 +132,7 @@ import { FirestoreService } from '@bk2/shared/data-access';
 
   /*-------------------------- LIST / QUERY  --------------------------------*/
   public list(orderBy = 'memberName2', sortOrder = 'asc'): Observable<MembershipModel[]> {
-    return this.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
   /**
@@ -151,26 +149,26 @@ import { FirestoreService } from '@bk2/shared/data-access';
       }));
   }
 
-    /**
-   * List the members of a given organization or group.
-   * @param orgKey the given organization or group to list its members for.
-   * @returns a list of the memberships as an Observable
-   */
-    public listMembersOfOrg(orgKey: string): Observable<MembershipModel[]> {
-      if (!orgKey || orgKey.length === 0) return of([]);
-      return this.list().pipe(
-        map((memberships: MembershipModel[]) => {
-          return memberships.filter((membership: MembershipModel) => membership.orgKey === orgKey);
-        }));
-    }
-  
+  /**
+ * List the members of a given organization or group.
+ * @param orgKey the given organization or group to list its members for.
+ * @returns a list of the memberships as an Observable
+ */
+  public listMembersOfOrg(orgKey: string): Observable<MembershipModel[]> {
+    if (!orgKey || orgKey.length === 0) return of([]);
+    return this.list().pipe(
+      map((memberships: MembershipModel[]) => {
+        return memberships.filter((membership: MembershipModel) => membership.orgKey === orgKey);
+      }));
+  }
+
   /*------------------------------ copy email addresses ------------------------------*/
   public getAllEmailAddresses(memberships$: Observable<MembershipModel[]>): Observable<string[]> {
-    const _persons$ = this.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(this.tenantId), 'lastName', 'asc');
+    const _persons$ = this.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(this.env.tenantId), 'lastName', 'asc');
 
     // join the two streams to retrieve the email addresses of the selected memberships
     const _emails$ = combineLatest([memberships$, _persons$]).pipe(
-      map(([_memberships,_persons]) =>_memberships.map(_membership=> {
+      map(([_memberships, _persons]) => _memberships.map(_membership => {
         if (_membership.memberModelType !== ModelType.Person) return '';
         const _person = _persons.find(a => a.bkey === _membership.memberKey);
         return _person?.fav_email ?? '';
@@ -201,176 +199,176 @@ import { FirestoreService } from '@bk2/shared/data-access';
     if (_index === 2) await this.exportAddressList('address');
   } */
 
-/*   private async selectExportType(): Promise<number | undefined> {
-    const _modal = await this.modalController.create({
-      component: BkLabelSelectModalComponent,
-      componentProps: {
-        labels: [
-          '@membership.operation.select.default', 
-          '@membership.operation.select.srv', 
-          '@membership.operation.select.address'
-        ],
-        icons: ['list-circle-outline', 'menu-outline', 'list-outline'],
-        title: '@membership.operation.select.title'
+  /*   private async selectExportType(): Promise<number | undefined> {
+      const _modal = await this.modalController.create({
+        component: BkLabelSelectModalComponent,
+        componentProps: {
+          labels: [
+            '@membership.operation.select.default', 
+            '@membership.operation.select.srv', 
+            '@membership.operation.select.address'
+          ],
+          icons: ['list-circle-outline', 'menu-outline', 'list-outline'],
+          title: '@membership.operation.select.title'
+        }
+      });
+      _modal.present();
+      const { data, role } = await _modal.onDidDismiss();
+      if (role === 'confirm') {
+        if (data !== undefined) {
+          return parseInt(data);
+        }
       }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm') {
-      if (data !== undefined) {
-        return parseInt(data);
+      return undefined;
+    } */
+
+  /*  // we start with SCS members list. For each SCS member, we read its SRV member and subject, and merge to the needed information.
+   public async exportSrvList(tableName: string): Promise<void> {
+     const _table: string[][] = [];
+     _table.push(getSrvHeaderRow());
+     for (const _member of this.filteredItems()) {
+       this.addSrvRowToTable(_table, _member);
+     }
+     // add all Austritte from last year with SRV info to this list
+     const _exits = await firstValueFrom(this.getAllExitsFromLastYear());
+     for (const _exit of _exits) {
+       this.addExitedMembershipsToTable(_table, _exit);
+     }
+     exportXlsx(_table, getExportFileName('scsSrv', EXPORT_FORMATS[ExportFormat.XLSX].abbreviation), tableName);
+   } */
+
+  /*   private async addSrvRowToTable(table: string[][], member: BaseModel): Promise<void> {
+      if (isMembership(member)) {
+        const _row = await (member.objectKey === OrgKey.SCS ? this.getSrvRowFromScsMember(member) : this.getSrvRowFromSrvMember(member));
+        if (_row) table.push(_row);       
       }
-    }
-    return undefined;
-  } */
+    } */
 
- /*  // we start with SCS members list. For each SCS member, we read its SRV member and subject, and merge to the needed information.
-  public async exportSrvList(tableName: string): Promise<void> {
-    const _table: string[][] = [];
-    _table.push(getSrvHeaderRow());
-    for (const _member of this.filteredItems()) {
-      this.addSrvRowToTable(_table, _member);
-    }
-    // add all Austritte from last year with SRV info to this list
-    const _exits = await firstValueFrom(this.getAllExitsFromLastYear());
-    for (const _exit of _exits) {
-      this.addExitedMembershipsToTable(_table, _exit);
-    }
-    exportXlsx(_table, getExportFileName('scsSrv', EXPORT_FORMATS[ExportFormat.XLSX].abbreviation), tableName);
-  } */
-  
-/*   private async addSrvRowToTable(table: string[][], member: BaseModel): Promise<void> {
-    if (isMembership(member)) {
-      const _row = await (member.objectKey === OrgKey.SCS ? this.getSrvRowFromScsMember(member) : this.getSrvRowFromSrvMember(member));
-      if (_row) table.push(_row);       
-    }
-  } */
-
-/*   private async addExitedMembershipsToTable(table: string[][], member: BaseModel): Promise<void> {
-    if (isMembership(member)) {
-      const _mcat = await this.getMembershipByDate(member.subjectKey);
-      if (_mcat) {
-        console.log(`${member.subjectName2} ${member.subjectName} is still member of SCS with category ${getCategoryAbbreviation(ScsMemberTypes, _mcat)} and validTo ${member.validTo}`);
-      } else {  // exited
-        const _row = await this.getSrvRowFromScsMember(member);
-        if (_row) table.push(_row);         
+  /*   private async addExitedMembershipsToTable(table: string[][], member: BaseModel): Promise<void> {
+      if (isMembership(member)) {
+        const _mcat = await this.getMembershipByDate(member.subjectKey);
+        if (_mcat) {
+          console.log(`${member.subjectName2} ${member.subjectName} is still member of SCS with category ${getCategoryAbbreviation(ScsMemberTypes, _mcat)} and validTo ${member.validTo}`);
+        } else {  // exited
+          const _row = await this.getSrvRowFromScsMember(member);
+          if (_row) table.push(_row);         
+        }
       }
+    } */
+
+  /*   private getAllExitsFromLastYear(): Observable<BaseModel[]> {
+      return this.dataService.searchData(CollectionNames.Membership, [
+        { key: 'objectKey', operator: '==', value: OrgKey.SCS },
+        { key: 'state', operator: '==', value: MembershipState.Active },
+        { key: 'validTo', operator: '>=', value: getStartOfYear(-1)+'' },
+        { key: 'validTo', operator: '<=', value: getEndOfYear(-1)+'' }
+      ], 'validTo', 'desc');
+    } */
+
+  /*   private async getSrvRowFromScsMember(scsMember: RelationshipModel): Promise<string[] | undefined> {
+      const _srvMember$ = this.dataService.searchData(CollectionNames.Membership, [
+        { key: 'objectKey', operator: '==', value: OrgKey.SRV },
+        { key: 'subjectKey', operator: '==', value: scsMember.subjectKey },
+      ], 'validFrom', 'desc');     // the sorting is to select the last membership
+      
+      //this.dataService.readModel(CollectionNames.Membership, _scsMember.bkey);
+      const _person$ = this.dataService.readModel(CollectionNames.Subject, scsMember.subjectKey);
+      return await firstValueFrom(combineLatest([_srvMember$, _person$]).pipe(map(([_srvMembers, _person]) => {
+        if (_srvMembers.length > 0) {
+          return (isMembership(_srvMembers[0]) && isSubject(_person)) ? convertToSrvDataRow(_person, scsMember, _srvMembers[0]) : undefined;
+        } else {
+          return (isSubject(_person)) ? convertToSrvDataRow(_person, scsMember, undefined) : undefined;
+        }
+      }))); 
     }
-  } */
+   */
+  /*   private async getSrvRowFromSrvMember(srvMember: RelationshipModel): Promise<string[] | undefined> {
+      const _scsMember$ = this.dataService.searchData(CollectionNames.Membership, [
+        { key: 'objectKey', operator: '==', value: OrgKey.SCS },
+        { key: 'subjectKey', operator: '==', value: srvMember.subjectKey },
+      ], 'validFrom', 'desc');   // the sorting is to select the last membership
+      
+      //this.dataService.readModel(CollectionNames.Membership, _scsMember.bkey);
+      const _person$ = this.dataService.readModel(CollectionNames.Subject, srvMember.subjectKey);
+      return await firstValueFrom(combineLatest([_scsMember$, _person$]).pipe(map(([_scsMembers, _person]) => {
+        if (isMembership(_scsMembers[0]) && isSubject(_person)) {
+          return convertToSrvDataRow(_person, _scsMembers[0], srvMember);
+        } else {
+          return undefined;
+        }
+      }))); 
+    } */
 
-/*   private getAllExitsFromLastYear(): Observable<BaseModel[]> {
-    return this.dataService.searchData(CollectionNames.Membership, [
-      { key: 'objectKey', operator: '==', value: OrgKey.SCS },
-      { key: 'state', operator: '==', value: MembershipState.Active },
-      { key: 'validTo', operator: '>=', value: getStartOfYear(-1)+'' },
-      { key: 'validTo', operator: '<=', value: getEndOfYear(-1)+'' }
-    ], 'validTo', 'desc');
-  } */
 
-/*   private async getSrvRowFromScsMember(scsMember: RelationshipModel): Promise<string[] | undefined> {
-    const _srvMember$ = this.dataService.searchData(CollectionNames.Membership, [
-      { key: 'objectKey', operator: '==', value: OrgKey.SRV },
-      { key: 'subjectKey', operator: '==', value: scsMember.subjectKey },
-    ], 'validFrom', 'desc');     // the sorting is to select the last membership
-    
-    //this.dataService.readModel(CollectionNames.Membership, _scsMember.bkey);
-    const _person$ = this.dataService.readModel(CollectionNames.Subject, scsMember.subjectKey);
-    return await firstValueFrom(combineLatest([_srvMember$, _person$]).pipe(map(([_srvMembers, _person]) => {
-      if (_srvMembers.length > 0) {
-        return (isMembership(_srvMembers[0]) && isSubject(_person)) ? convertToSrvDataRow(_person, scsMember, _srvMembers[0]) : undefined;
-      } else {
-        return (isSubject(_person)) ? convertToSrvDataRow(_person, scsMember, undefined) : undefined;
+  /*   public async exportAddressList(tableName: string): Promise<void> {
+      const _table: string[][] = [];
+      const _fn = generateRandomString(10) + '.' + EXPORT_FORMATS[ExportFormat.XLSX].abbreviation;
+      _table.push(['SubjectKey', 'MembershipKey', 'Vorname', 'Name', 'Strasse', 'PLZ', 'Ort', 'Telefon', 'Email', 'Geburtsdatum', 'Eintrittsdatum', 'MKat']);
+      for (const _item of this.filteredItems()) {
+        const _member = _item as RelationshipModel;
+        const _person = await firstValueFrom(this.dataService.readModel(CollectionNames.Subject, _member.subjectKey)) as SubjectModel;
+        if (_person) {
+          _table.push([
+            _person.bkey!,
+            _member.bkey!,
+            _person.firstName,
+            _person.name,
+            _person.fav_street,
+            _person.fav_zip,
+            _person.fav_city,
+            _person.fav_phone,
+            _person.fav_email,
+            _person.dateOfBirth,
+            _member.relLog.substring(0, 4),
+            getCategoryAbbreviation(ScsMemberTypes, _member.subType)
+          ]);
+        }
       }
-    }))); 
-  }
- */
-/*   private async getSrvRowFromSrvMember(srvMember: RelationshipModel): Promise<string[] | undefined> {
-    const _scsMember$ = this.dataService.searchData(CollectionNames.Membership, [
-      { key: 'objectKey', operator: '==', value: OrgKey.SCS },
-      { key: 'subjectKey', operator: '==', value: srvMember.subjectKey },
-    ], 'validFrom', 'desc');   // the sorting is to select the last membership
-    
-    //this.dataService.readModel(CollectionNames.Membership, _scsMember.bkey);
-    const _person$ = this.dataService.readModel(CollectionNames.Subject, srvMember.subjectKey);
-    return await firstValueFrom(combineLatest([_scsMember$, _person$]).pipe(map(([_scsMembers, _person]) => {
-      if (isMembership(_scsMembers[0]) && isSubject(_person)) {
-        return convertToSrvDataRow(_person, _scsMembers[0], srvMember);
-      } else {
+      exportXlsx(_table, _fn, tableName);
+    } */
+
+  /*  public async exportAddressesFromJoinedList(tableName: string): Promise<void> {
+     const _table: string[][] = [];
+     const _fn = generateRandomString(10) + '.' + EXPORT_FORMATS[ExportFormat.XLSX].abbreviation;
+     _table.push(['SubjectKey', 'MembershipKey', 'Vorname', 'Name', 'Strasse', 'PLZ', 'Ort', 'Telefon', 'Email', 'Geburtsdatum', 'Eintrittsdatum', 'MKat']);
+     for (const _item of this.filteredItems()) {
+       const _member = _item as MembershipSubjectModel;
+       _table.push([
+         _member.subjectKey,
+         _member.bkey!,
+         _member.subjectName2, 
+         _member.subjectName, 
+         _member.subjectStreet, 
+         _member.subjectZipCode, 
+         _member.subjectCity, 
+         _member.subjectPhone, 
+         _member.subjectEmail, 
+         _member.subjectDateOfBirth,
+         _member.relLog.substring(0, 4),
+         getCategoryAbbreviation(ScsMemberTypes, _member.subType)
+       ]);
+     }
+     exportXlsx(_table, _fn, tableName);
+   } */
+
+  /*   public async getMembershipByDate(subjectKey: string, evalDate = getTodayStr(DateFormat.StoreDate), orgKey = OrgKey.SCS): Promise<number | undefined> {
+      const _memberships = await firstValueFrom(this.dataService.searchData(CollectionNames.Membership, [
+        { key: 'objectKey', operator: '==', value: orgKey },
+        { key: 'subjectKey', operator: '==', value: subjectKey },
+        { key: 'validFrom', operator: '<=', value: evalDate },
+      ], 'validFrom', 'desc'));        // keep open membership (empty string) at the beginning of the list
+      if (_memberships.length === 0) return undefined;      // the given subjectKey does not have any memberships
+      if (_memberships.length > 1) {
+        warn(`MembershipService.getMembershipByDate: there are ${_memberships.length} memberships for ${subjectKey} on ${evalDate} (overlapping memberships should not exist).`);
         return undefined;
       }
-    }))); 
-  } */
-
-      
-/*   public async exportAddressList(tableName: string): Promise<void> {
-    const _table: string[][] = [];
-    const _fn = generateRandomString(10) + '.' + EXPORT_FORMATS[ExportFormat.XLSX].abbreviation;
-    _table.push(['SubjectKey', 'MembershipKey', 'Vorname', 'Name', 'Strasse', 'PLZ', 'Ort', 'Telefon', 'Email', 'Geburtsdatum', 'Eintrittsdatum', 'MKat']);
-    for (const _item of this.filteredItems()) {
-      const _member = _item as RelationshipModel;
-      const _person = await firstValueFrom(this.dataService.readModel(CollectionNames.Subject, _member.subjectKey)) as SubjectModel;
-      if (_person) {
-        _table.push([
-          _person.bkey!,
-          _member.bkey!,
-          _person.firstName,
-          _person.name,
-          _person.fav_street,
-          _person.fav_zip,
-          _person.fav_city,
-          _person.fav_phone,
-          _person.fav_email,
-          _person.dateOfBirth,
-          _member.relLog.substring(0, 4),
-          getCategoryAbbreviation(ScsMemberTypes, _member.subType)
-        ]);
+      const _membership = _memberships[0] as RelationshipModel;
+      if (isMembership(_membership)) {
+        if (_membership.validTo >= evalDate) return _membership.subType;   // there is a current membership (either ScsMemberType or MemberType)
       }
-    }
-    exportXlsx(_table, _fn, tableName);
-  } */
+      return undefined;   // member exited before evalDate
+    } */
 
- /*  public async exportAddressesFromJoinedList(tableName: string): Promise<void> {
-    const _table: string[][] = [];
-    const _fn = generateRandomString(10) + '.' + EXPORT_FORMATS[ExportFormat.XLSX].abbreviation;
-    _table.push(['SubjectKey', 'MembershipKey', 'Vorname', 'Name', 'Strasse', 'PLZ', 'Ort', 'Telefon', 'Email', 'Geburtsdatum', 'Eintrittsdatum', 'MKat']);
-    for (const _item of this.filteredItems()) {
-      const _member = _item as MembershipSubjectModel;
-      _table.push([
-        _member.subjectKey,
-        _member.bkey!,
-        _member.subjectName2, 
-        _member.subjectName, 
-        _member.subjectStreet, 
-        _member.subjectZipCode, 
-        _member.subjectCity, 
-        _member.subjectPhone, 
-        _member.subjectEmail, 
-        _member.subjectDateOfBirth,
-        _member.relLog.substring(0, 4),
-        getCategoryAbbreviation(ScsMemberTypes, _member.subType)
-      ]);
-    }
-    exportXlsx(_table, _fn, tableName);
-  } */
-
-/*   public async getMembershipByDate(subjectKey: string, evalDate = getTodayStr(DateFormat.StoreDate), orgKey = OrgKey.SCS): Promise<number | undefined> {
-    const _memberships = await firstValueFrom(this.dataService.searchData(CollectionNames.Membership, [
-      { key: 'objectKey', operator: '==', value: orgKey },
-      { key: 'subjectKey', operator: '==', value: subjectKey },
-      { key: 'validFrom', operator: '<=', value: evalDate },
-    ], 'validFrom', 'desc'));        // keep open membership (empty string) at the beginning of the list
-    if (_memberships.length === 0) return undefined;      // the given subjectKey does not have any memberships
-    if (_memberships.length > 1) {
-      warn(`MembershipService.getMembershipByDate: there are ${_memberships.length} memberships for ${subjectKey} on ${evalDate} (overlapping memberships should not exist).`);
-      return undefined;
-    }
-    const _membership = _memberships[0] as RelationshipModel;
-    if (isMembership(_membership)) {
-      if (_membership.validTo >= evalDate) return _membership.subType;   // there is a current membership (either ScsMemberType or MemberType)
-    }
-    return undefined;   // member exited before evalDate
-  } */
-  
 
   /*-------------------------- search index --------------------------------*/
   public getSearchIndex(membership: MembershipModel): string {

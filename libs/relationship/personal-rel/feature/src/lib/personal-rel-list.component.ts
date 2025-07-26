@@ -3,30 +3,31 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabe
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { hasRole, isOngoing } from '@bk2/shared/util-core';
 import { error } from '@bk2/shared/util-angular';
 import { ModelType, PersonalRelModel, RoleName } from '@bk2/shared/models';
 import { addAllCategory, PersonalRelTypes } from '@bk2/shared/categories';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { MenuComponent } from '@bk2/cms/menu/feature';
 
 import { PersonalRelNamePipe } from '@bk2/relationship/personal-rel/util';
 import { PersonalRelListStore } from './personal-rel-list.store';
 
 @Component({
-    selector: 'bk-personal-rel-list',
-    imports: [
-      TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
-      ListFilterComponent, EmptyListComponent, SpinnerComponent,
-      MenuComponent,
-      IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-      IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, IonImg, IonList,
-      IonGrid, IonRow, IonCol, IonAvatar, IonPopover
-    ],
-    providers: [PersonalRelListStore],
-    template: `
+  selector: 'bk-personal-rel-list',
+  imports: [
+    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
+    ListFilterComponent, EmptyListComponent, SpinnerComponent,
+    MenuComponent,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
+    IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, IonImg, IonList,
+    IonGrid, IonRow, IonCol, IonAvatar, IonPopover
+  ],
+  providers: [PersonalRelListStore],
+  template: `
     <ion-header>
       <!-- title and actions -->
       <ion-toolbar color="secondary">
@@ -131,7 +132,7 @@ import { PersonalRelListStore } from './personal-rel-list.store';
 })
 export class PersonalRelListComponent {
   protected personalRelListStore = inject(PersonalRelListStore);
-  
+
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
@@ -148,8 +149,8 @@ export class PersonalRelListComponent {
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
-      case 'add':  await this.personalRelListStore.add(); break;
+    switch (_selectedMethod) {
+      case 'add': await this.personalRelListStore.add(); break;
       case 'exportRaw': await this.personalRelListStore.export("raw"); break;
       default: error(undefined, `PersonalRelListComponent.call: unknown method ${_selectedMethod}`);
     }
@@ -190,5 +191,5 @@ export class PersonalRelListComponent {
 
   protected isOngoing(personalRel: PersonalRelModel): boolean {
     return isOngoing(personalRel.validTo);
-  }  
+  }
 }

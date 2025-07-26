@@ -5,9 +5,9 @@ import { AsyncPipe } from '@angular/common';
 import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ModelType, ResourceModel, UserModel } from '@bk2/shared/models';
-import { AvatarPipe } from '@bk2/shared/pipes';
 import { getAvatarKey } from '@bk2/shared/util-core';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { ResourceSelectStore } from './resource-select.store';
 
 @Component({
@@ -81,6 +81,6 @@ export class ResourceSelectModalComponent {
 
   // 20.0:key for a rowing boat, 20.4:key for a locker
   protected getAvatarKey(resource: ResourceModel): string {
-    return getAvatarKey(ModelType.Resource, resource.bkey, resource.type, resource.subType);    
+    return getAvatarKey(ModelType.Resource, resource.bkey, resource.type, resource.subType);
   }
 }

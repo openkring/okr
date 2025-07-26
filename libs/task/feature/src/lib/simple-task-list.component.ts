@@ -3,13 +3,14 @@ import { IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonItemSliding, IonL
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, CategoryAbbreviationPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { CategoryAbbreviationPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared/ui';
 import { RoleName, TaskModel } from '@bk2/shared/models';
 import { addAllCategory, Importances, Priorities, TaskStates } from '@bk2/shared/categories';
 import { extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared/util-core';
 import { error } from '@bk2/shared/util-angular';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { TaskListStore } from './task-list.store';
 
 /**
@@ -27,20 +28,20 @@ import { TaskListStore } from './task-list.store';
  * The actions are provided be the static group menu.
  */
 @Component({
-    selector: 'bk-simple-task-list',
-    imports: [
-      TranslatePipe, AsyncPipe, SvgIconPipe, CategoryAbbreviationPipe, PrettyDatePipe, AvatarPipe,
-      EmptyListComponent, ListFilterComponent,
-      IonHeader, IonIcon, IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg, IonTextarea, IonChip
-    ],
-    providers: [TaskListStore],
-    styles: [`
+  selector: 'bk-simple-task-list',
+  imports: [
+    TranslatePipe, AsyncPipe, SvgIconPipe, CategoryAbbreviationPipe, PrettyDatePipe, AvatarPipe,
+    EmptyListComponent, ListFilterComponent,
+    IonHeader, IonIcon, IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg, IonTextarea, IonChip
+  ],
+  providers: [TaskListStore],
+  styles: [`
       ion-avatar { width: 30px; height: 30px; border: 2px solid white; transition: transform 0.2s ease; }
       ion-textarea { margin-top: 10px;}
       .name { min-width: 70% !important;}
       .tags { padding-right: 10px; }
     `],
-    template: `
+  template: `
     <ion-header>
 
       <!-- quick entry -->
@@ -111,7 +112,7 @@ import { TaskListStore } from './task-list.store';
 })
 export class SimpleTaskListComponent {
   protected taskListStore = inject(TaskListStore);
-  
+
   public listId = input.required<string>();
 
   protected filteredTasks = computed(() => this.taskListStore.filteredTasks() ?? []);
@@ -126,7 +127,7 @@ export class SimpleTaskListComponent {
   protected importances = Importances;
 
   constructor() {
-    effect(() => {  
+    effect(() => {
       this.taskListStore.setCalendarName(this.listId());
     });
   }
@@ -150,8 +151,8 @@ export class SimpleTaskListComponent {
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
-      case 'add':  await this.taskListStore.add(); break;
+    switch (_selectedMethod) {
+      case 'add': await this.taskListStore.add(); break;
       case 'export': await this.taskListStore.export(); break;
       default: error(undefined, `TaskListComponent.call: unknown method ${_selectedMethod}`);
     }

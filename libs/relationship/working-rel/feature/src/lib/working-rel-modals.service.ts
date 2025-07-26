@@ -9,7 +9,7 @@ import { selectDate } from "@bk2/shared/ui";
 import { WorkingRelService } from "@bk2/relationship/working-rel/data-access";
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class WorkingRelModalsService {
   private readonly appStore = inject(AppStore);
@@ -18,7 +18,7 @@ export class WorkingRelModalsService {
 
   private readonly tenantId = this.appStore.tenantId();
 
- public async selectPerson(): Promise<PersonModel | undefined> {
+  public async selectPerson(): Promise<PersonModel | undefined> {
     const _modal = await this.modalController.create({
       component: PersonSelectModalComponent,
       cssClass: 'list-modal',
@@ -63,7 +63,8 @@ export class WorkingRelModalsService {
   public async end(workingRel: WorkingRelModel): Promise<void> {
     const _date = await selectDate(this.modalController);
     if (!_date) return;
-    await this.workingRelService.endWorkingRelByDate(workingRel, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), this.tenantId, this.appStore.currentUser());    
+    const _endDate = convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false);
+    await this.workingRelService.endWorkingRelByDate(workingRel, _endDate, this.appStore.currentUser());
   }
 
 }

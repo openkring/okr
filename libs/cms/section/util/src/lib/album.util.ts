@@ -1,23 +1,22 @@
 import { AlbumConfig, Image, ImageAction, ImageMetaData, ImageType } from "@bk2/shared/models";
 import { debugData, die, getImageType, getSizedImgixParamsByExtension } from "@bk2/shared/util-core";
 import { FirebaseStorage, listAll, ref, StorageReference } from "firebase/storage";
-import { getImgixJsonUrl } from '@bk2/shared/pipes';
+import { getImgixJsonUrl } from '@bk2/shared/util-core';
 import { HttpClient } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
 
 export async function listAllFilesFromDirectory(
-  storage: FirebaseStorage, 
-  config: AlbumConfig, 
-  imgixBaseUrl: string, 
-  directory: string): Promise<Image[]> 
-{
+  storage: FirebaseStorage,
+  config: AlbumConfig,
+  imgixBaseUrl: string,
+  directory: string): Promise<Image[]> {
   const _images: Image[] = [];
   try {
     const _listRef = ref(storage, directory);
 
     // listAll returns prefixes (= subdirectories) and items (= files)
     const _result = await listAll(_listRef);
-    
+
     // list all subdirectories in the directory
     _result.prefixes.forEach((_dir) => {
       _images.push(getImage(imgixBaseUrl, directory, _dir, ImageType.Dir));
@@ -26,7 +25,7 @@ export async function listAllFilesFromDirectory(
     // list all files in the directory
     _result.items.forEach((_file) => {
       const _imageType = getImageType(_file.name);
-      switch(_imageType) {
+      switch (_imageType) {
         case ImageType.Image:
           _images.push(getImage(imgixBaseUrl, directory, _file, _imageType));
           break;
@@ -40,7 +39,7 @@ export async function listAllFilesFromDirectory(
             _images.push(getImage(imgixBaseUrl, directory, _file, _imageType));
           }
           break;
-        case ImageType.Pdf: 
+        case ImageType.Pdf:
           if (config.showPdfs) {
             _images.push(getImage(imgixBaseUrl, directory, _file, _imageType));
           }
@@ -51,15 +50,15 @@ export async function listAllFilesFromDirectory(
           }
           break;
         case ImageType.Audio:
-        default: 
+        default:
           break;
       }
     });
   }
-  catch(_ex) {
+  catch (_ex) {
     console.error('AlbumlistAllFilesFromCurrentDirectory -> error: ', _ex);
   }
-  return _images;  
+  return _images;
 }
 
 /**
@@ -96,7 +95,7 @@ export function getImage(imgixBaseUrl: string, directory: string, ref: StorageRe
 }
 
 export function getUrl(imgixBaseUrl: string, directory: string, imageType: ImageType, fileName: string): string {
-  switch(imageType) {
+  switch (imageType) {
     case ImageType.Image: return `${directory}/${fileName}`;
     case ImageType.Video: return 'logo/filetypes/video.svg';
     case ImageType.StreamingVideo: return `${imgixBaseUrl}/${directory}/${fileName}`;
@@ -110,8 +109,8 @@ export function getUrl(imgixBaseUrl: string, directory: string, imageType: Image
 
 export function getActionUrl(imgixBaseUrl: string, directory: string, imageType: ImageType, fileName: string): string {
   const _downloadUrl = `${imgixBaseUrl}/${directory}/${fileName}`;
-  switch(imageType) {
-    case ImageType.Video: 
+  switch (imageType) {
+    case ImageType.Video:
     case ImageType.Audio:
     case ImageType.Doc:
     case ImageType.Pdf: return _downloadUrl;
@@ -121,7 +120,7 @@ export function getActionUrl(imgixBaseUrl: string, directory: string, imageType:
 }
 
 export function getImageAction(imageType: ImageType): ImageAction {
-  switch(imageType) {
+  switch (imageType) {
     case ImageType.Image: return ImageAction.OpenSlider;
     case ImageType.Pdf:
     case ImageType.Audio:
@@ -142,12 +141,12 @@ export function convertThumbnailToFullImage(image: Image, width: number, height:
   return _image;
 }
 
-export function getBackgroundStyle(imgixBaseUrl: string, image: Image): { [key: string]: string }  {
+export function getBackgroundStyle(imgixBaseUrl: string, image: Image): { [key: string]: string } {
   if (!image.width || !image.height) die('album.util: image width and height must be set');
   const _params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
   const _url = `${imgixBaseUrl}/${image.url}?${_params}`;
-  return { 
-    'background-image': `url(${_url})`, 
+  return {
+    'background-image': `url(${_url})`,
     'min-height': '200px',
     'background-size': 'cover',
     'background-position': 'center',
@@ -164,7 +163,7 @@ interface ImageMetaDataResponse {
   Exif?: { FocalLength?: number; FocalLengthIn35mmFilm?: number; FNumber?: number; ExposureTime?: number; ISOSpeedRatings?: number; LensModel?: string; };
 }
 
-export async function  getImageMetaData(httpClient: HttpClient, imgixBaseUrl: string, image?: Image): Promise<ImageMetaData | undefined> {
+export async function getImageMetaData(httpClient: HttpClient, imgixBaseUrl: string, image?: Image): Promise<ImageMetaData | undefined> {
   if (!image) die('album.util.getMetaData -> image is mandatory')
   if (!image.url) die('album.util.getMetaData -> image url is not set');
   const _url = getImgixJsonUrl(image.url, imgixBaseUrl);
@@ -190,5 +189,5 @@ export async function  getImageMetaData(httpClient: HttpClient, imgixBaseUrl: st
     lensModel: _data.Exif?.LensModel
   };
   debugData('album.util.getMetaData -> metaData: ', _metaData);
-  return _metaData; 
-  }
+  return _metaData;
+}

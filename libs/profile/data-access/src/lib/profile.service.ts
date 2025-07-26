@@ -1,18 +1,17 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { collection, query } from 'firebase/firestore';
-import { collectionData } from 'rxfire/firestore';
 
 import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared/models';
-import { FIRESTORE } from '@bk2/shared/config';
 import { FirestoreService } from '@bk2/shared/data-access';
+import { getSystemQuery } from '@bk2/shared/util-core';
+import { ENV } from '@bk2/shared/config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProfileService {
   private readonly firestoreService = inject(FirestoreService);
-  private readonly firestore = inject(FIRESTORE);
+  private readonly env = inject(ENV);
 
   /** a profile can not be created nor deleted. */
 
@@ -32,13 +31,13 @@ export class ProfileService {
     // tbd: update person index
     await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, currentUser);
     // tbd: update user index
-    await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, '@profile.operation.update.conf', currentUser); 
+    return await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, '@profile.operation.update.conf', currentUser);
   }
 
   /** Profile can not be deleted. */
 
   public listAddresses(person: PersonModel): Observable<AddressModel[]> {
-    const _ref = query(collection(this.firestore, `${PersonCollection}/${person.bkey}/${AddressCollection}`));
-    return collectionData(_ref, { idField: 'bkey' }) as Observable<AddressModel[]>;
+    const _collection = `${PersonCollection}/${person.bkey}/${AddressCollection}`;
+    return this.firestoreService.searchData<AddressModel>(_collection, getSystemQuery(this.env.tenantId), 'name', 'asc');
   }
 }

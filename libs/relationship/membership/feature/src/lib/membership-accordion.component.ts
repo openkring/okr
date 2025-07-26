@@ -5,7 +5,8 @@ import { AsyncPipe } from '@angular/common';
 import { CategoryLogPipe } from '@bk2/relationship/membership/util';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { MembershipModel, ModelType, OrgModel, PersonModel, RoleName } from '@bk2/shared/models';
 import { hasRole, isOngoing } from '@bk2/shared/util-core';
 import { EmptyListComponent } from '@bk2/shared/ui';
@@ -76,12 +77,12 @@ import { MembershipAccordionStore } from './membership-accordion.store';
 })
 export class MembershipAccordionComponent {
   protected readonly membershipStore = inject(MembershipAccordionStore);
-  
+
   public member = input.required<PersonModel | OrgModel>();
   public modelType = input<ModelType>(ModelType.Person);
   public color = input('light');
   public title = input('@membership.plural');
-  public membershipsChanged = output(); 
+  public membershipsChanged = output();
 
   protected memberships = computed(() => this.membershipStore.memberships());
 
@@ -116,8 +117,8 @@ export class MembershipAccordionComponent {
     if (slidingItem) slidingItem.close();
     if (membership) await this.membershipStore.changeMembershipCategory(membership);
   }
-    
-/******************************* helpers *************************************** */
+
+  /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.membershipStore.currentUser());
   }

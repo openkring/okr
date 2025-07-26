@@ -3,11 +3,11 @@ import { Component, computed, ElementRef, inject, input, viewChild } from '@angu
 import { IonThumbnail, ModalController } from '@ionic/angular/standalone';
 
 import { Image } from '@bk2/shared/models';
-import { ImgixUrlPipe } from '@bk2/shared/pipes';
 import { BkEnvironment, ENV } from '@bk2/shared/config';
+import { die } from '@bk2/shared/util-core';
+import { ImgixUrlPipe } from '@bk2/shared/pipes';
 
 import { showZoomedImage } from './ui.util';
-import { die } from '@bk2/shared/util-core';
 
 /**
  * This image loading implementation is based on Angular's NgOptimizedImage together with Imgix CDN to provide optimized images.
@@ -58,46 +58,46 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
  */
 
 @Component({
-    selector: 'bk-img',
-    imports: [
-      NgOptimizedImage, NgStyle,
-      ImgixUrlPipe, 
-      IonThumbnail
-    ],
-    providers: [
-      {
-        provide: IMAGE_LOADER,
-        // factory function for the IMAGE_LOADER provider with ENV as a dependency
-        useFactory: (env: BkEnvironment) => {
-          const baseUrl = env.services.imgixBaseUrl;
+  selector: 'bk-img',
+  imports: [
+    NgOptimizedImage, NgStyle,
+    ImgixUrlPipe,
+    IonThumbnail
+  ],
+  providers: [
+    {
+      provide: IMAGE_LOADER,
+      // factory function for the IMAGE_LOADER provider with ENV as a dependency
+      useFactory: (env: BkEnvironment) => {
+        const baseUrl = env.services.imgixBaseUrl;
 
-          if (!baseUrl) {
-            die('Imgix base URL is not defined in environment variables (env.services.imgixBaseUrl). Using fallback or error image.');
+        if (!baseUrl) {
+          die('Imgix base URL is not defined in environment variables (env.services.imgixBaseUrl). Using fallback or error image.');
+        }
+
+        return (config: ImageLoaderConfig) => {
+          let url = `${baseUrl}/${config.src}`;
+          const params = new URLSearchParams('');
+          if (config.width) {
+            params.set('w', config.width.toString());
           }
-
-          return (config: ImageLoaderConfig) => {
-            let url = `${baseUrl}/${config.src}`;
-            const params = new URLSearchParams('');
-            if (config.width) {
-              params.set('w', config.width.toString());
-            }
-            // add more imigx parameters here as needed
-            // e.g. params.set('auto', 'format,compress');
-            const paramsString = params.toString();
-            if (paramsString) {
-              url += `?${paramsString}`;
-            }
-            return url;
-          };
-        },
-        deps: [ENV] // declares ENV as a dependency for the factory function
-      }
-    ],
-    styles: [`
+          // add more imigx parameters here as needed
+          // e.g. params.set('auto', 'format,compress');
+          const paramsString = params.toString();
+          if (paramsString) {
+            url += `?${paramsString}`;
+          }
+          return url;
+        };
+      },
+      deps: [ENV] // declares ENV as a dependency for the factory function
+    }
+  ],
+  styles: [`
       ion-thumbnail { margin: auto; height: 100px; width: 100px; padding: 10px; text-align: right; position: relative;}
       .image-container { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; height: auto; }
     `],
-    template: `
+  template: `
       @if(image(); as image) {
         @if(isThumbnail() === true) {
           <ion-thumbnail [slot]="slot()" [ngStyle]="style()" (click)="onImageClicked()">
@@ -117,47 +117,47 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
         }
       }
     `
-  })
-  export class ImageComponent {
-    private readonly modalController = inject(ModalController);
+})
+export class ImageComponent {
+  private readonly modalController = inject(ModalController);
 
-    public image = input.required<Image>();
+  public image = input.required<Image>();
 
-    protected imageContainer = viewChild('.image-container', { read: ElementRef });
-    // we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
+  protected imageContainer = viewChild('.image-container', { read: ElementRef });
+  // we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
 
-    // by default, image is 100% of screen width on devices under 768px wide, and 50% on bigger screens
-    // alternatively when excluding the menu: calc(100vw - 128px)
-    protected sizes = computed(() => this.image().sizes ?? '(max-width: 768px) 100vw, 50vw');
-    protected isThumbnail = computed(() => this.image().isThumbnail ?? false);
-    protected style = computed(() => {
-      return {
-        '--size': this.image()?.width ?? '150px',
-        '--rounded': this.image()?.borderRadius ?? '5px'
-      };
-    });
-    protected slot = computed(() => this.image()?.slot ?? 'start');
-    protected width = computed(() => {
-      const _width = this.image()?.width;
-      return _width ?? this.getValue('width', 'auto');
-    });
-    protected height = computed(() => {
-      const _height = this.image()?.height;
-      return _height ?? this.getValue('height', 'auto');
-    });
+  // by default, image is 100% of screen width on devices under 768px wide, and 50% on bigger screens
+  // alternatively when excluding the menu: calc(100vw - 128px)
+  protected sizes = computed(() => this.image().sizes ?? '(max-width: 768px) 100vw, 50vw');
+  protected isThumbnail = computed(() => this.image().isThumbnail ?? false);
+  protected style = computed(() => {
+    return {
+      '--size': this.image()?.width ?? '150px',
+      '--rounded': this.image()?.borderRadius ?? '5px'
+    };
+  });
+  protected slot = computed(() => this.image()?.slot ?? 'start');
+  protected width = computed(() => {
+    const _width = this.image()?.width;
+    return _width ?? this.getValue('width', 'auto');
+  });
+  protected height = computed(() => {
+    const _height = this.image()?.height;
+    return _height ?? this.getValue('height', 'auto');
+  });
 
-    protected async onImageClicked(): Promise<void> {
-      await showZoomedImage(this.modalController, '@content.type.article.zoomedImage', this.image(), 'full-modal');
-    }
-
-    private getValue(key: string, defaultValue: string): string {
-      const _el = this.imageContainer();
-      if (_el) {
-        const _value = _el.nativeElement[key] ?? defaultValue;
-        console.log(`ImageComponent.getValue -> element found: ${key} -> value: ${_value}`);
-        return _value;
-      }
-      console.log(`ImageComponent.getValue -> element not found: ${key} -> using default value: ${defaultValue}`);
-      return defaultValue;
-    }
+  protected async onImageClicked(): Promise<void> {
+    await showZoomedImage(this.modalController, '@content.type.article.zoomedImage', this.image(), 'full-modal');
   }
+
+  private getValue(key: string, defaultValue: string): string {
+    const _el = this.imageContainer();
+    if (_el) {
+      const _value = _el.nativeElement[key] ?? defaultValue;
+      console.log(`ImageComponent.getValue -> element found: ${key} -> value: ${_value}`);
+      return _value;
+    }
+    console.log(`ImageComponent.getValue -> element not found: ${key} -> using default value: ${defaultValue}`);
+    return defaultValue;
+  }
+}

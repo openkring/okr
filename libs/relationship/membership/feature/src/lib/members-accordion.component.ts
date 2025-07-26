@@ -5,7 +5,8 @@ import { AsyncPipe } from '@angular/common';
 import { CategoryLogPipe } from '@bk2/relationship/membership/util';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { MembershipModel, ModelType, RoleName } from '@bk2/shared/models';
 import { hasRole, isOngoing } from '@bk2/shared/util-core';
 import { EmptyListComponent } from '@bk2/shared/ui';
@@ -78,7 +79,7 @@ import { MembersAccordionStore } from './members-accordion.store';
 })
 export class MembersAccordionComponent {
   protected readonly membersStore = inject(MembersAccordionStore);
-  
+
   public orgKey = input.required<string>();
   public color = input('light');
   public title = input('@members.plural');
@@ -116,8 +117,8 @@ export class MembersAccordionComponent {
     if (slidingItem) slidingItem.close();
     if (membership) await this.membersStore.changeMembershipCategory(membership);
   }
-    
-/******************************* helpers *************************************** */
+
+  /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.membersStore.currentUser());
   }

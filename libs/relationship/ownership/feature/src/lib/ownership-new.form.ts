@@ -8,7 +8,7 @@ import { TranslatePipe } from '@bk2/shared/i18n';
 import { ModelType, UserModel } from '@bk2/shared/models';
 import { debugFormErrors, getAvatarKey, getFullPersonName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared/util-core';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared/feature';
-import { AvatarPipe } from '@bk2/shared/pipes';
+import { AvatarPipe } from '@bk2/avatar/ui';
 
 import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, ownershipNewFormValidations } from '@bk2/relationship/ownership/util';
 
@@ -99,7 +99,7 @@ export class OwnershipNewFormComponent {
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(true);
-  
+
   protected readonly suite = ownershipNewFormValidations;
   protected readonly shape = ownershipNewFormModelShape;
   private readonly validationResult = computed(() => ownershipNewFormValidations(this.vm()));
@@ -107,7 +107,7 @@ export class OwnershipNewFormComponent {
   protected modelType = ModelType;
 
   protected onValueChange(value: OwnershipFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((_vm) => ({ ..._vm, ...value }));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 
@@ -140,8 +140,8 @@ export class OwnershipNewFormComponent {
     if (role === 'confirm') {
       if (isPerson(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
-          ..._vm, 
-          ownerKey: data.bkey, 
+          ..._vm,
+          ownerKey: data.bkey,
           ownerName1: data.firstName,
           ownerName2: data.lastName,
           ownerModelType: ModelType.Person,
@@ -149,7 +149,7 @@ export class OwnershipNewFormComponent {
         }));
         debugFormErrors('OwnershipNewForm (Person)', this.validationResult().errors, this.currentUser());
         this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());    
+        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
       }
     }
   }
@@ -168,7 +168,7 @@ export class OwnershipNewFormComponent {
     if (role === 'confirm') {
       if (isOrg(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
-          ..._vm, 
+          ..._vm,
           ownerKey: data.bkey,
           ownerName1: '',
           ownerName2: data.name,
@@ -177,9 +177,9 @@ export class OwnershipNewFormComponent {
         }));
         debugFormErrors('OwnershipNewForm (Org)', this.validationResult().errors, this.currentUser());
         this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());    
+        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
       }
-    }  
+    }
   }
 
   protected async selectResource(): Promise<void> {
@@ -196,8 +196,8 @@ export class OwnershipNewFormComponent {
     if (role === 'confirm') {
       if (isResource(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
-          ..._vm, 
-          resourceKey: data.bkey, 
+          ..._vm,
+          resourceKey: data.bkey,
           resourceModelType: ModelType.Resource,
           resourceType: data.type,
           resourceSubType: data.subType,
@@ -205,9 +205,9 @@ export class OwnershipNewFormComponent {
         }));
         debugFormErrors('OwnershipNewForm (Resource)', this.validationResult().errors, this.currentUser());
         this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());    
+        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
       }
-    }  
+    }
   }
 
   /******************************* getters *************************************** */

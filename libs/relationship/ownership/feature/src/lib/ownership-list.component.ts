@@ -3,7 +3,7 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabe
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { getYearList, hasRole } from '@bk2/shared/util-core';
 import { error } from '@bk2/shared/util-angular';
@@ -11,21 +11,22 @@ import { OwnershipModel, RoleName } from '@bk2/shared/models';
 import { addAllCategory, GenderTypes, ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
 
 import { MenuComponent } from '@bk2/cms/menu/feature';
+import { AvatarPipe } from '@bk2/avatar/ui';
 
 import { getOwnerName } from '@bk2/relationship/ownership/util';
 import { OwnershipListStore } from './ownership-list.store';
 
 @Component({
-    selector: 'bk-ownership-list',
-    imports: [
+  selector: 'bk-ownership-list',
+  imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryNamePipe, AvatarPipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-    IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, 
+    IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption,
     IonBackdrop, IonAvatar, IonImg, IonList, IonPopover
-],
-    providers: [OwnershipListStore],
-    template: `
+  ],
+  providers: [OwnershipListStore],
+  template: `
     <ion-header>
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
@@ -128,30 +129,30 @@ import { OwnershipListStore } from './ownership-list.store';
 })
 export class OwnershipListComponent {
   protected ownershipListStore = inject(OwnershipListStore);
-  
+
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
   protected filteredOwnerships = computed(() => {
     switch (this.listId()) {
       case 'ownerships': return this.ownershipListStore.filteredOwnerships() ?? [];
-      case 'lockers':    return this.ownershipListStore.filteredLockers() ?? [];
-      case 'keys':       return this.ownershipListStore.filteredKeys() ?? [];
-      case 'privateBoats':    return this.ownershipListStore.filteredPrivateBoats();
-      case 'scsBoats':   return this.ownershipListStore.filteredScsBoats();
-      case 'all':       
-      default:          return this.ownershipListStore.filteredAllOwnerships() ?? [];
+      case 'lockers': return this.ownershipListStore.filteredLockers() ?? [];
+      case 'keys': return this.ownershipListStore.filteredKeys() ?? [];
+      case 'privateBoats': return this.ownershipListStore.filteredPrivateBoats();
+      case 'scsBoats': return this.ownershipListStore.filteredScsBoats();
+      case 'all':
+      default: return this.ownershipListStore.filteredAllOwnerships() ?? [];
     }
   });
   protected ownershipsCount = computed(() => {
     switch (this.listId()) {
       case 'ownerships': return this.ownershipListStore.ownershipsCount();
-      case 'lockers':    return this.ownershipListStore.lockersCount();
-      case 'keys':       return this.ownershipListStore.keysCount();
-      case 'privateBoats':    return this.ownershipListStore.privateBoatsCount();
-      case 'scsBoats':   return this.ownershipListStore.scsBoatsCount();
-      case 'all':       
-      default:          return this.ownershipListStore.allOwnershipsCount() ?? [];
+      case 'lockers': return this.ownershipListStore.lockersCount();
+      case 'keys': return this.ownershipListStore.keysCount();
+      case 'privateBoats': return this.ownershipListStore.privateBoatsCount();
+      case 'scsBoats': return this.ownershipListStore.scsBoatsCount();
+      case 'all':
+      default: return this.ownershipListStore.allOwnershipsCount() ?? [];
     }
   });
   protected title = computed(() => {
@@ -161,21 +162,21 @@ export class OwnershipListComponent {
   protected types = computed(() => {
     switch (this.listId()) {
       case 'privateBoats':
-      case 'lockers':  return addAllCategory(GenderTypes);
-      case 'keys':     return undefined;
+      case 'lockers': return addAllCategory(GenderTypes);
+      case 'keys': return undefined;
       case 'scsBoats': return addAllCategory(RowingBoatTypes);
-      case 'all':     
-      default:         return addAllCategory(ResourceTypes);
+      case 'all':
+      default: return addAllCategory(ResourceTypes);
     }
   });
   protected typeName = computed(() => {
     switch (this.listId()) {
       case 'privateBoats':
-      case 'lockers':  return 'gender';
-      case 'keys':     return undefined;
+      case 'lockers': return 'gender';
+      case 'keys': return undefined;
       case 'scsBoats': return 'rowingBoatType';
-      case 'all':     
-      default:         return 'resourceType';
+      case 'all':
+      default: return 'resourceType';
     }
   });
   protected readonly years = getYearList();
@@ -190,8 +191,8 @@ export class OwnershipListComponent {
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
-      case 'add':  await this.ownershipListStore.add(); break;
+    switch (_selectedMethod) {
+      case 'add': await this.ownershipListStore.add(); break;
       case 'exportRaw': await this.ownershipListStore.export("raw"); break;
       default: error(undefined, `OwnershipListComponent.call: unknown method ${_selectedMethod}`);
     }
@@ -224,10 +225,10 @@ export class OwnershipListComponent {
   protected onTypeSelected(type: number): void {
     switch (this.listId()) {
       case 'privateBoats':
-      case 'lockers':  
+      case 'lockers':
         this.ownershipListStore.setSelectedGender(type);
         break;
-      case 'scsBoats': 
+      case 'scsBoats':
         this.ownershipListStore.setSelectedRowingBoatType(type);
         break;
       case 'all':
@@ -236,7 +237,7 @@ export class OwnershipListComponent {
         break;
       default:
         break;
-    }  
+    }
   }
 
   /******************************* helpers *************************************** */
@@ -246,7 +247,7 @@ export class OwnershipListComponent {
 
   protected getOwnerName(ownership: OwnershipModel): string {
     return getOwnerName(ownership);
-  }  
+  }
 
   protected getIcon(ownership: OwnershipModel): string {
     return this.boatTypes[ownership.resourceSubType ?? 0].icon;

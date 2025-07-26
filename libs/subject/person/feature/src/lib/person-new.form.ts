@@ -9,10 +9,10 @@ import { BexioIdMask, ChSsnMask } from '@bk2/shared/config';
 import { CategoryListModel, GenderType, ModelType, RoleName, PrivacyAccessor, PrivacySettings, SwissCity, UserModel } from '@bk2/shared/models';
 import { CategoryComponent, CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { debugFormErrors, debugFormModel, getTodayStr, hasRole, isOrg, isVisibleToUser } from '@bk2/shared/util-core';
-import { AvatarPipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { OrgSelectModalComponent, AppStore } from '@bk2/shared/feature';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { SwissCitySearchComponent } from '@bk2/subject/swisscities/ui';
 
 import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations } from '@bk2/subject/person/util';
@@ -27,7 +27,7 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
     ErrorNoteComponent, PhoneInputComponent, EmailInputComponent, CategorySelectComponent, CheckboxComponent,
     SwissCitySearchComponent,
     IonGrid, IonRow, IonCol, IonItem, IonAvatar, IonImg, IonButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent
-  ],  
+  ],
   template: `
     <form scVestForm
     [formShape]="shape"
@@ -208,10 +208,10 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
   </form>
   `
 })
-export class PersonNewFormComponent {  
+export class PersonNewFormComponent {
   private readonly modalController = inject(ModalController)
   protected readonly appStore = inject(AppStore);
-  
+
   public vm = model.required<PersonNewFormModel>();
   public currentUser = input<UserModel | undefined>();
   public membershipCategories = input.required<CategoryListModel>();
@@ -278,31 +278,31 @@ export class PersonNewFormComponent {
     if (role === 'confirm') {
       if (isOrg(data, this.appStore.tenantId())) {
         this.vm.update((_vm) => ({
-          ..._vm, 
-          orgKey: data.bkey, 
+          ..._vm,
+          orgKey: data.bkey,
           orgName: data.name,
         }));
         debugFormErrors('MembershipNewForm (Org)', this.validationResult().errors, this.currentUser());
         this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());    
+        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
       }
-    }  
+    }
   }
 
   protected onCitySelected(city: SwissCity): void {
     this.vm.update((_vm) => ({ ..._vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
   }
-  
+
   protected onCatChanged(membershipCategory: string): void {
     const membershipCategoryAbbreviation = this.membershipCategories().items.find(item => item.name === membershipCategory)?.abbreviation ?? 'A';
-    this.vm.update((_vm) => ({..._vm, membershipCategory, membershipCategoryAbbreviation}));  
+    this.vm.update((_vm) => ({ ..._vm, membershipCategory, membershipCategoryAbbreviation }));
     debugFormErrors('PersonNewForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
-  } 
+  }
 
   protected onValueChange(value: PersonNewFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((_vm) => ({ ..._vm, ...value }));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 

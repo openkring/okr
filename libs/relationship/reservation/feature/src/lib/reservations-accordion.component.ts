@@ -7,8 +7,10 @@ import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel, Role
 
 import { ReservationsAccordionStore } from './reservations-accordion.store';
 import { EmptyListComponent } from '@bk2/shared/ui';
-import { AvatarPipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared/util-core';
+
+import { AvatarPipe } from '@bk2/avatar/ui';
 
 @Component({
   selector: 'bk-reservations-accordion',
@@ -72,9 +74,9 @@ import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared/util-core';
   `,
 })
 export class ReservationsAccordionComponent {
-private readonly reservationsStore = inject(ReservationsAccordionStore);
-public color = input('light');
-public title = input('@reservation.plural');
+  private readonly reservationsStore = inject(ReservationsAccordionStore);
+  public color = input('light');
+  public title = input('@reservation.plural');
 
   public reserver = input.required<PersonModel | OrgModel>();
   public reserverModelType = input<ModelType>(ModelType.Person);
@@ -90,7 +92,7 @@ public title = input('@reservation.plural');
   /******************************* getters *************************************** */
   // 20.0:key for a rowing boat, 20.4:key for a locker
   protected getAvatarKey(reservation: ReservationModel): string {
-    return getAvatarKey(reservation.resourceModelType, reservation.resourceKey, reservation.resourceType, reservation.resourceSubType);    
+    return getAvatarKey(reservation.resourceModelType, reservation.resourceKey, reservation.resourceType, reservation.resourceSubType);
   }
 
   /******************************* actions *************************************** */
@@ -115,8 +117,8 @@ public title = input('@reservation.plural');
     if (slidingItem) slidingItem.close();
     if (reservation) await this.reservationsStore.end(reservation);
   }
-    
-/******************************* helpers *************************************** */
+
+  /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.reservationsStore.currentUser());
   }

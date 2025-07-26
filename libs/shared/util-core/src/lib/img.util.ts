@@ -4,16 +4,17 @@
    one single image in high resolution is uploaded to firebase storage.
    Firebase storage is linked as a source to imgix CDN and the images can be served from there.
 */
-import { ImageType } from "@bk2/shared/models";
+import { Image, ImageType } from "@bk2/shared/models";
 import { fileExtension, fileLogo, isAudio, isDocument, isImage, isPdf, isStreamingVideo, isVideo } from './file.util';
 import { die, warn } from './log.util';
+import { THUMBNAIL_SIZE } from "@bk2/shared/constants";
 
 
 export function getImageType(fileName: string): ImageType {
   if (isImage(fileName)) return ImageType.Image;
   // we ignore the streaming video files *.ts as they are listed with the m3u8 file (as StreamingVideo)
   if (isVideo(fileName) && !fileName.endsWith('.ts')) return ImageType.Video;
-  if (isStreamingVideo(fileName)) return ImageType.StreamingVideo; 
+  if (isStreamingVideo(fileName)) return ImageType.StreamingVideo;
   if (isAudio(fileName)) return ImageType.Audio;
   if (isPdf(fileName)) return ImageType.Pdf;
   if (isDocument(fileName)) return ImageType.Doc;
@@ -38,7 +39,7 @@ export function getImgixUrl(path: string | undefined, params = 'auto=compress,en
   switch (_urlType) {
     case 'imgix':
     case 'assets':
-    case 'https': return _path;   
+    case 'https': return _path;
     case 'storage': return _path + '?' + params;
     default: die('img.util.getImgixUrl -> invalid url type: ' + _urlType);
   }
@@ -168,4 +169,33 @@ export function addImgixParams(path: string, size: number, withFaceReco = true):
     }
   }
   return getImgixUrl(path, _params);
+}
+
+export const IMGIX_PDF_PARAMS = 'page=1';
+export const IMGIX_JPG_PARAMS = 'fm=jpg&auto=format,compress,enhance&fit=crop';
+export const IMGIX_THUMBNAIL_PARAMS = `fm=jpg&width=${THUMBNAIL_SIZE}&height=${THUMBNAIL_SIZE}&auto=format,compress,enhance&fit=crop`;
+export const IMGIX_JSON_PARAMS = 'fm=json';
+
+
+export function getImgixUrlFromImage(image: Image): string {
+  if (!image.width || !image.height) die('img.util.getImgixUrlFromImage -> image width and height must be set');
+  const _params = getSizedImgixParamsByExtension(image.url ?? '', image.width, image.height);
+  return getImgixUrl(image.url, _params);
+}
+
+
+export function getImgixJpgUrl(url: string, imgixBaseUrl: string): string {
+  return `${imgixBaseUrl}/${url}?${IMGIX_JPG_PARAMS}`;
+}
+
+export function getImgixPdfUrl(url: string, imgixBaseUrl: string): string {
+  return `${imgixBaseUrl}/${url}?${IMGIX_PDF_PARAMS}`;
+}
+
+export function getImgixThumbnailUrl(url: string, imgixBaseUrl: string): string {
+  return `${imgixBaseUrl}/${url}?${IMGIX_THUMBNAIL_PARAMS}`;
+}
+
+export function getImgixJsonUrl(url: string, imgixBaseUrl: string): string {
+  return `${imgixBaseUrl}/${url}?${IMGIX_JSON_PARAMS}`;
 }

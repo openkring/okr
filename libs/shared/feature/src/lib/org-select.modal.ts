@@ -5,8 +5,8 @@ import { AsyncPipe } from '@angular/common';
 import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { ModelType, OrgModel, UserModel } from '@bk2/shared/models';
-import { AvatarPipe } from '@bk2/shared/pipes';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { OrgSelectStore } from './org-select.store';
 
 @Component({

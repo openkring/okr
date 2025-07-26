@@ -3,25 +3,27 @@ import { IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonItemOption, IonIt
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarPipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
+import { DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
 import { getAvatarKey, hasRole } from '@bk2/shared/util-core';
 import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared/models';
 import { ResourceTypes } from '@bk2/shared/categories';
 import { OwnershipAccordionStore } from './ownerships-accordion.store';
 import { EmptyListComponent } from '@bk2/shared/ui';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
+
 @Component({
-    selector: 'bk-ownerships-accordion',
-    imports: [
-      TranslatePipe, AvatarPipe, AsyncPipe, DurationPipe, SvgIconPipe, EmptyListComponent,
-      IonAccordion, IonItem, IonLabel, IonList, IonButton, IonIcon,
-      IonThumbnail, IonImg, IonItemSliding, IonItemOptions, IonItemOption
-    ],
-    providers: [OwnershipAccordionStore],
-    styles: [`
+  selector: 'bk-ownerships-accordion',
+  imports: [
+    TranslatePipe, AvatarPipe, AsyncPipe, DurationPipe, SvgIconPipe, EmptyListComponent,
+    IonAccordion, IonItem, IonLabel, IonList, IonButton, IonIcon,
+    IonThumbnail, IonImg, IonItemSliding, IonItemOptions, IonItemOption
+  ],
+  providers: [OwnershipAccordionStore],
+  styles: [`
       ion-thumbnail { width: 30px; height: 30px; }
     `],
-    template: `
+  template: `
     <ion-accordion toggle-icon-slot="start" value="ownerships">
       <ion-item slot="header" [color]="color()">
         <ion-label>{{ title() | translate | async }}</ion-label>
@@ -68,13 +70,13 @@ import { EmptyListComponent } from '@bk2/shared/ui';
 })
 export class OwnershipAccordionComponent {
   private readonly ownershipStore = inject(OwnershipAccordionStore);
-  
+
   public owner = input.required<PersonModel | OrgModel>();
   public ownerModelType = input<ModelType>(ModelType.Person);
   public defaultResource = input<ResourceModel>();
   public color = input('light');
   public title = input('@ownership.plural');
-  
+
   protected ownerships = computed(() => this.ownershipStore.ownerships());
 
   protected modelType = ModelType;

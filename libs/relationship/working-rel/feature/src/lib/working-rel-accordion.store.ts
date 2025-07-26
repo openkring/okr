@@ -41,11 +41,11 @@ export const WorkingRelAccordionStore = signalStore(
     alertController: inject(AlertController)
   })),
   withProps((store) => ({
-     workingRelsResource: rxResource({
+    workingRelsResource: rxResource({
       params: () => ({
         personKey: store.personKey(),
       }),
-      stream: ({params}) => {
+      stream: ({ params }) => {
         let _workingRels$: Observable<WorkingRelModel[]> = of([]);
         if (params.personKey) {
           _workingRels$ = store.workingRelService.listWorkingRelsOfPerson(params.personKey);
@@ -58,7 +58,7 @@ export const WorkingRelAccordionStore = signalStore(
       params: () => ({
         orgKey: store.orgKey(),
       }),
-      stream: ({params}) => {
+      stream: ({ params }) => {
         let _workers$: Observable<WorkingRelModel[]> = of([]);
         if (params.orgKey) {
           _workers$ = store.workingRelService.listWorkersOfOrg(params.orgKey);
@@ -73,11 +73,11 @@ export const WorkingRelAccordionStore = signalStore(
     return {
       allWorkingRels: computed(() => state.workingRelsResource.value() ?? []),
       currentWorkingRels: computed(() => state.workingRelsResource.value()?.filter(p => isValidAt(p.validFrom, p.validTo)) ?? []),
-      workingRels: computed(() => state.showOnlyCurrent() ? state.workingRelsResource.value() ?? [] : state.workingRelsResource.value()?.filter(m => isValidAt(m.validFrom, m.validTo)) ?? []),  
+      workingRels: computed(() => state.showOnlyCurrent() ? state.workingRelsResource.value() ?? [] : state.workingRelsResource.value()?.filter(m => isValidAt(m.validFrom, m.validTo)) ?? []),
       currentUser: computed(() => state.appStore.currentUser()),
       allWorkers: computed(() => state.workersResource.value() ?? []),
       currentWorkers: computed(() => state.workersResource.value()?.filter(p => isValidAt(p.validFrom, p.validTo)) ?? []),
-      workers: computed(() => state.showOnlyCurrent() ? state.workersResource.value() ?? [] : state.workersResource.value()?.filter(m => isValidAt(m.validFrom, m.validTo)) ?? []),  
+      workers: computed(() => state.showOnlyCurrent() ? state.workersResource.value() ?? [] : state.workersResource.value()?.filter(m => isValidAt(m.validFrom, m.validTo)) ?? []),
       isLoading: computed(() => state.workingRelsResource.isLoading() || state.workersResource.isLoading()),
     }
   }),
@@ -108,7 +108,7 @@ export const WorkingRelAccordionStore = signalStore(
       async edit(workingRel?: WorkingRelModel): Promise<void> {
         let _workingRel = workingRel;
         _workingRel ??= new WorkingRelModel(store.appStore.tenantId());
-        
+
         const _modal = await store.modalController.create({
           component: WorkingRelEditModalComponent,
           componentProps: {
@@ -121,18 +121,18 @@ export const WorkingRelAccordionStore = signalStore(
         const { data, role } = await _modal.onDidDismiss();
         if (role === 'confirm') {
           if (isWorkingRel(data, store.appStore.tenantId())) {
-            await (!data.bkey ? 
-              store.workingRelService.create(data, store.appStore.tenantId(), store.appStore.currentUser()) : 
+            await (!data.bkey ?
+              store.workingRelService.create(data, store.appStore.currentUser()) :
               store.workingRelService.update(data, store.appStore.currentUser()));
             store.workingRelsResource.reload();
           }
-        }  
+        }
       },
 
       async end(workingRel?: WorkingRelModel): Promise<void> {
         if (workingRel) {
           await store.workingRelModalsService.end(workingRel);
-          store.workingRelsResource.reload();  
+          store.workingRelsResource.reload();
         }
       },
 
@@ -142,7 +142,7 @@ export const WorkingRelAccordionStore = signalStore(
           if (_result === true) {
             await store.workingRelService.delete(workingRel, store.appStore.currentUser());
             store.workingRelsResource.reload();
-          } 
+          }
         }
       }
     }

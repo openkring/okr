@@ -7,10 +7,11 @@ import { Router } from '@angular/router';
 import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
 import { GenderType, ModelType, PersonalRelType, UserModel, RoleName } from '@bk2/shared/models';
 import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
-import { AvatarPipe, FullNamePipe } from '@bk2/shared/pipes';
+import { FullNamePipe } from '@bk2/shared/pipes';
 import { TranslatePipe } from '@bk2/shared/i18n';
 import { PersonalRelTypes } from '@bk2/shared/categories';
 
+import { AvatarPipe } from '@bk2/avatar/ui';
 import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidations } from '@bk2/relationship/personal-rel/util';
 
 @Component({
@@ -21,7 +22,7 @@ import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidat
     DateInputComponent, ChipsComponent, NotesInputComponent, CategoryComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
     TextInputComponent
-],
+  ],
   template: `
   <form scVestForm
     [formShape]="shape"
@@ -120,13 +121,13 @@ export class PersonalRelFormComponent {
 
   public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   protected subjectKey = computed(() => this.vm().subjectKey ?? '');
-  protected subjectFirstName = computed(() => this.vm().subjectFirstName ?? ''); 
-  protected subjectLastName = computed(() => this.vm().subjectLastName ?? ''); 
+  protected subjectFirstName = computed(() => this.vm().subjectFirstName ?? '');
+  protected subjectLastName = computed(() => this.vm().subjectLastName ?? '');
   protected subjectGender = computed(() => this.vm().subjectGender ?? GenderType.Male);
 
   protected objectKey = computed(() => this.vm().objectKey ?? '');
-  protected objectFirstName = computed(() => this.vm().objectFirstName ?? ''); 
-  protected objectLastName = computed(() => this.vm().objectLastName ?? ''); 
+  protected objectFirstName = computed(() => this.vm().objectFirstName ?? '');
+  protected objectLastName = computed(() => this.vm().objectLastName ?? '');
   protected objectGender = computed(() => this.vm().objectGender ?? GenderType.Male);
 
   protected type = computed(() => this.vm().type ?? PersonalRelType.Partner);
@@ -138,17 +139,17 @@ export class PersonalRelFormComponent {
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
-  
+
   protected readonly suite = personalRelFormValidations;
   protected readonly shape = personalRelFormModelShape;
   private readonly validationResult = computed(() => personalRelFormValidations(this.vm()));
-  
+
   protected readonly modelType = ModelType;
   protected readonly personalRelTypes = PersonalRelTypes;
   protected readonly personalRelType = PersonalRelType;
 
   protected onValueChange(value: PersonalRelFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((_vm) => ({ ..._vm, ...value }));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 
