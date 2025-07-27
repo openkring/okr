@@ -48,10 +48,9 @@ export class AvatarService {
    * @param expandImgixBaseUrl whether to expand the imgix base URL with parameters, defaults to true
    * @returns an Observable of the imgix (absolute) URL for the avatar or the default icon if no avatar is found
    */
-  public getAvatarImgixUrl(key: string, size = THUMBNAIL_SIZE, imgixBaseUrl = this.env.services.imgixBaseUrl, expandImgixBaseUrl=true): Observable<string> {
+  public getAvatarImgixUrl(key: string, size = THUMBNAIL_SIZE, imgixBaseUrl = this.env.services.imgixBaseUrl, expandImgixBaseUrl = true): Observable<string> {
     const [_modelType, _key] = getModelAndKey(key);
-    const _path = AvatarCollection + '/' + _key;
-    return this.firestoreService.readModel<AvatarModel>(_path, _key).pipe(
+    return this.firestoreService.readModel<AvatarModel>(AvatarCollection, key).pipe(
       map((_avatar) => {
         return this.getImgixUrl(_modelType, _key, imgixBaseUrl, size, _avatar as AvatarModel, expandImgixBaseUrl);
       })
@@ -68,12 +67,12 @@ export class AvatarService {
    * @param expandImgixBaseUrl
    * @returns
    */
-  public getImgixUrl(modelType: ModelType, key: string, imgixBaseUrl: string, size: number, avatar?: AvatarModel, expandImgixBaseUrl=true): string {
+  public getImgixUrl(modelType: ModelType, key: string, imgixBaseUrl: string, size: number, avatar?: AvatarModel, expandImgixBaseUrl = true): string {
     if (!avatar) {
       const _iconName = this.getDefaultIcon(modelType, key);
       return `${imgixBaseUrl}/logo/icons/${_iconName}.svg`;
     } else {
-      return expandImgixBaseUrl ? 
+      return expandImgixBaseUrl ?
         `${imgixBaseUrl}/${addImgixParams(avatar.storagePath, size)}` :
         addImgixParams(avatar.storagePath, size);
     }
