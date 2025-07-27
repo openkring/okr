@@ -16,6 +16,9 @@ import { FirestoreService } from '@bk2/shared/data-access';
 import { AuthService } from '@bk2/auth/data-access';
 import { createFirebaseAccount, createUserFromPerson } from '@bk2/aoc/util';
 import { UserService } from '@bk2/user/data-access';
+import { impersonateUser } from '../../../../../apps/functions/src/auth';
+import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
+import { getApp } from 'firebase/app';
 
 export type AocRolesState = {
   calendarName: string;
@@ -45,7 +48,7 @@ export const AocRolesStore = signalStore(
     userService: inject(UserService),
     modalController: inject(ModalController),
     toastController: inject(ToastController),
-    platformId: inject(PLATFORM_ID) 
+    platformId: inject(PLATFORM_ID)
   })),
   withProps((store) => ({
     personsResource: rxResource({
@@ -78,7 +81,7 @@ export const AocRolesStore = signalStore(
       params: () => ({
         person: store.selectedPerson()
       }),
-      stream: ({params}) => {
+      stream: ({ params }) => {
         const _users = store.users();
         const _person = params.person;
         if (!_person || !_users) return of(undefined);
@@ -126,7 +129,7 @@ export const AocRolesStore = signalStore(
           if (isPerson(data, store.appStore.env.tenantId)) {
             console.log('RolesStore: selected person: ', data);
             this.setSelectedPerson(data);
-          } 
+          }
         }
       },
 
@@ -142,7 +145,7 @@ export const AocRolesStore = signalStore(
        */
       async createAccountAndUser(password?: string): Promise<void> {
         const _person = store.selectedPerson();
-        if (!_person) { 
+        if (!_person) {
           warn('RolesStore.createAccountAndUser: please select a person first.');
         } else {
           try {
@@ -152,22 +155,22 @@ export const AocRolesStore = signalStore(
             if (!_user.loginEmail || _user.loginEmail.length === 0) die('RolesStore.createAccountAndUser: loginEmail is missing - can not register this user');
             const _uid = await createFirebaseAccount(store.auth, store.toastController, _currentFbUser, _user.loginEmail, password);
             if (_uid) {      // the Firebase account exists, now create the user
-                _user.bkey = _uid;
-                _user.index = store.userService.getSearchIndex(_user);
-                await store.userService.create(_user);
-                store.usersResource.reload();
-                store.userResource.reload();
-            } 
+              _user.bkey = _uid;
+              _user.index = store.userService.getSearchIndex(_user);
+              await store.userService.create(_user);
+              store.usersResource.reload();
+              store.userResource.reload();
+            }
           }
-          catch(_ex) {
-              error(store.toastController, 'RolesStore.createAccountAndUser -> error: ' + JSON.stringify(_ex));
+          catch (_ex) {
+            error(store.toastController, 'RolesStore.createAccountAndUser -> error: ' + JSON.stringify(_ex));
           }
         }
       },
 
       async resetPassword(): Promise<void> {
         const _user = store.selectedUser();
-        if (!_user) { 
+        if (!_user) {
           if (store.selectedPerson()) {
             patchState(store, { log: [], logTitle: 'user is missing; please create a user and account first for this person' });
             warn('RolesStore.resetPassword: user is missing; please create a user and account first for this person.');
@@ -179,10 +182,10 @@ export const AocRolesStore = signalStore(
             const _email = _user.loginEmail;
             console.log('RolesPageComponent.resetPassword: sending reset password email to  ' + _email);
             // tbd: ask for confirmation
-          //  store.authService.resetPassword(_email);
+            //  store.authService.resetPassword(_email);
           }
-          catch(_ex) {
-              console.error(_ex);
+          catch (_ex) {
+            console.error(_ex);
           }
         }
       },
@@ -194,7 +197,7 @@ export const AocRolesStore = signalStore(
        */
       async setPassword(): Promise<void> {
         const _user = store.selectedUser();
-        if (!_user) { 
+        if (!_user) {
           if (store.selectedPerson()) {
             patchState(store, { log: [], logTitle: 'user is missing; please create a user and account first for this person' });
             warn('RolesStore.setPassword: user is missing; please create a user and account first for this person.');
@@ -238,7 +241,7 @@ export const AocRolesStore = signalStore(
         }
 
         const _user = store.selectedUser();
-        if (!_user) { 
+        if (!_user) {
           patchState(store, { log: logMessage(_log, 'user is missing; please create a user and Firebase account for this person') });
         } else {
           patchState(store, { log: logMessage(_log, 'Corresponding user: ' + _user.bkey) });
@@ -253,32 +256,116 @@ export const AocRolesStore = signalStore(
         }
       },
 
-      checkChatUser(): void {
+      impersonateUser(uid: string): void {
+        const _log: LogInfo[] = [];
+        const _user = store.selectedUser();
+        patchState(store, { log: [], logTitle: `impersonating user ${_user?.loginEmail}}` });
+        if (!_user) {
+          patchState(store, { log: logMessage(_log, 'no user, please select a person first') });
+          return;
+        } else {
+          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> exists`) });
+        }
+        try {
+          // Get a reference to the Firebase Functions service.
+          const functions = getFunctions(getApp(), 'europe-west6'); // Use the correct region for your functions. 
+          if (store.appStore.env.useEmulators) {
+            connectFunctionsEmulator(functions, 'localhost', 5001);
+          }
+          const impersonateUserFunction = httpsCallable(functions, 'impersonateUser');
+          impersonateUserFunction({ uid: uid });
+        }
+        catch (_ex) {
+          console.error('AocRolesStore.impersonateUser: Error calling impersonateUser function:', _ex);
+        }
+      },
+
+      async checkChatUser(): Promise<void> {
         const _log: LogInfo[] = [];
         const _user = store.selectedUser();
         patchState(store, { log: [], logTitle: `checking authorisation for user ${_user?.loginEmail}}` });
-        if (!_user) { 
+        if (!_user) {
           patchState(store, { log: logMessage(_log, 'no user, please select a person first') });
           return;
         } else {
           patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> exists`) });
         }
         if (!isPlatformBrowser(store.platformId)) {
-          patchState(store, { log: logMessage(_log, `wrong platform, should be web`)});
+          patchState(store, { log: logMessage(_log, `wrong platform, should be web`) });
           return;
         } else {
           const _platform = Capacitor.getPlatform();
-          patchState(store, { log: logMessage(_log, `platform is <${_platform}> (should be web)`)});
+          patchState(store, { log: logMessage(_log, `platform is <${_platform}> (should be web)`) });
         }
         if (!store.chatUser()) {
-          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> is not yet created`)});
+          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> is not yet created`) });
         } else {
-          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> is already created`)});
+          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> is already created`) });
         }
-        // the default cloud function getStreamUserToken from firebase stream chat extension
-        // is not able to be called with a impersonated user. It always checks the current user.
-        // that's why we dont try to get the token for the selected user here
-        patchState(store, { log: logMessage(_log, 'it is not possible to get the token because the cloud function of the Firebase stream chat extension does not support impersonification.')});
+        try {
+          // Get a reference to the Firebase Functions service.
+          const functions = getFunctions(getApp(), 'europe-west6'); // Use the correct region for your functions. 
+          if (store.appStore.env.useEmulators) {
+            connectFunctionsEmulator(functions, 'localhost', 5001);
+          }
+          const getOtherStreamUserToken = httpsCallable(functions, 'getOtherStreamUserToken');
+          const _result = await getOtherStreamUserToken({ uid: _user.bkey });
+          const _token = _result.data as string;
+          patchState(store, { log: logMessage(_log, `stream token <${_token}`) });
+
+        }
+        catch (_ex) {
+          console.error('AocRolesStore.checkChatUser: Error checking chat user:', _ex);
+        }
+      },
+
+      async revokeStreamUserToken(): Promise<void> {
+        const _log: LogInfo[] = [];
+        const _user = store.selectedUser();
+        patchState(store, { log: [], logTitle: `revoking stream user token for user ${_user?.loginEmail}}` });
+        if (!_user) {
+          patchState(store, { log: logMessage(_log, 'no user, please select a person first') });
+          return;
+        } else {
+          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> exists`) });
+        }
+        try {
+          const functions = getFunctions(getApp(), 'europe-west6'); // Use the correct region for your functions. 
+          if (store.appStore.env.useEmulators) {
+            connectFunctionsEmulator(functions, 'localhost', 5001);
+          }
+          const revokeOtherStreamUserToken = httpsCallable(functions, 'revokeOtherStreamUserToken');
+          await revokeOtherStreamUserToken({ uid: _user.bkey });
+          patchState(store, { log: logMessage(_log, `stream token revoked for user <${_user.bkey}/${_user.loginEmail}>`) });
+        }
+        catch (_ex) {
+          console.error('AocRolesStore.revokeStreamUserToken: Error revoking stream user token:', _ex);
+        }
+      },
+
+      async createStreamUser(): Promise<void> {
+        const _log: LogInfo[] = [];
+        const _user = store.selectedUser();
+        patchState(store, { log: [], logTitle: `creating stream user for user ${_user?.bkey}/${_user?.loginEmail}}` });
+        if (!_user) {
+          patchState(store, { log: logMessage(_log, 'no user, please select a person first') });
+          return;
+        } else {
+          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> exists`) });
+        }
+        try {
+          const functions = getFunctions(getApp(), 'europe-west6'); // Use the correct region for your functions. 
+          if (store.appStore.env.useEmulators) {
+            connectFunctionsEmulator(functions, 'localhost', 5001);
+          }
+          const createOtherStreamUser = httpsCallable(functions, 'createOtherStreamUser');
+          await createOtherStreamUser({ uid: _user.bkey, name: _user.firstName + ' ' + _user.lastName, email: _user.loginEmail, image: '' });
+          patchState(store, { log: logMessage(_log, `stream user created for user <${_user.bkey}/${_user.loginEmail}>`) });
+        }
+        catch (_ex) {
+          console.error('AocRolesStore.createStreamUser: Error creating stream user:', _ex);
+        }
+
       }
     }
   })

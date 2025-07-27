@@ -15,9 +15,9 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
   selector: 'bk-aoc-roles',
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    FormsModule, 
+    FormsModule,
     HeaderComponent, AvatarDisplayComponent, ResultLogComponent,
-    IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, 
+    IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle,
     IonGrid, IonRow, IonCol, IonLabel, IonButton, IonIcon,
     IonNote, IonInput, IonInputPasswordToggle, IonItem
   ],
@@ -162,6 +162,24 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
                 </ion-button>
               </ion-col>
             </ion-row>
+            <ion-row>
+              <ion-col size="6"></ion-col>
+              <ion-col size="6">
+                <ion-button (click)="createStreamUser()" [disabled]="!selectedPerson()">
+                  <ion-icon src="{{'chatbox-ellipses' | svgIcon}}" slot="start" />
+                  {{ '@aoc.roles.chat.add' | translate | async  }}
+                </ion-button>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="6"></ion-col>
+              <ion-col size="6">
+                <ion-button (click)="revokeStreamUserToken()" [disabled]="!selectedPerson()">
+                  <ion-icon src="{{'chatbox-ellipses' | svgIcon}}" slot="start" />
+                  {{ '@aoc.roles.chat.revoke' | translate | async  }}
+                </ion-button>
+              </ion-col>
+            </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
@@ -229,6 +247,18 @@ export class AocRolesComponent {
 
   public checkChatUser(): void {
     this.aocRolesStore.checkChatUser();
+  }
+
+  public revokeStreamUserToken(): void {
+    this.aocRolesStore.revokeStreamUserToken();
+  }
+
+  public createStreamUser(): void {
+    this.aocRolesStore.createStreamUser();
+  }
+
+  public impersonateUser(uid: string): void {
+    this.aocRolesStore.impersonateUser(uid);
   }
 
   protected onPasswordChange(event: CustomEvent): void {

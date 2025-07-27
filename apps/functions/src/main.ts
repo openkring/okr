@@ -6,6 +6,7 @@ import * as functions from 'firebase-functions'; // needed for logger
 import * as Test from './test';
 import * as Replication from './replication';
 import * as Stream from './stream';
+import * as Auth from './auth';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -24,20 +25,22 @@ app.use(cors({ origin: 'http://localhost:4200' }));
 app.use('/echo', Test.echoHandler);
 app.use('/getIpInfo', Test.getIpInfoHandler);
 
-export { app};
+export { app };
 
 functions.logger.info('[Emulator/Direct] functions are exported directly.');
 
-// onCall functions
-export const getStreamUserToken = Stream.getStreamUserToken;
-export const revokeStreamUserToken = Stream.revokeStreamUserToken;
-
-// background trigger functions
 export const onPersonAddressChange = Replication.onPersonAddressChange;
 export const onOrgAddressChange = Replication.onOrgAddressChange;
 export const onResourceChange = Replication.onResourceChange;
 export const onPersonChange = Replication.onPersonChange;
 export const onOrgChange = Replication.onOrgChange;
 export const onGroupChange = Replication.onGroupChange;
-export const createStreamUser = Stream.createStreamUser;
-export const deleteStreamUser = Stream.deleteStreamUser;
+
+export const getStreamUserToken = Stream.getStreamUserToken;
+export const getOtherStreamUserToken = Stream.getOtherStreamUserToken; // uid
+export const revokeOtherStreamUserToken = Stream.revokeOtherStreamUserToken; // uid 
+
+export const onUserCreated = Stream.onUserCreated;
+export const onUserDeleted = Stream.onUserDeleted;
+export const createOtherStreamUser = Stream.createOtherStreamUser; // uid, name, email, image
+export const impersonateUser = Auth.impersonateUser; // uid

@@ -19,72 +19,156 @@ const getStreamClient = () => {
 };
 
 // When a user is created in Firebase an associated Stream account is also created.
-export const createStreamUser = functions.region('europe-west6').auth.user().onCreate(async (user) => {
-  logger.log("Firebase user created", user);
-  const _client = getStreamClient();
-  const response = await _client.upsertUser({
-    id: user.uid,
-    name: user.displayName,
-    email: user.email,
-    image: user.photoURL,
-  });
-  logger.log("Stream user created", response);
-  return response;
+export const onUserCreated = functions.region('europe-west6').auth.user().onCreate(async (user) => {
+  logger.log("onUserCreated: creating stream user for firebase user ", user);
+  try {
+    const _client = getStreamClient();
+    const response = await _client.upsertUser({
+      id: user.uid,
+      name: user.displayName,
+      email: user.email,
+      image: user.photoURL,
+    });
+    logger.log("onUserCreated: stream user created", response);
+    return response;
+  } catch (error) {
+    logger.error("onUserCreated: error creating stream user", error);
+    throw new HttpsError("aborted", "Could not create stream user");
+  }
 });
 
 // When a user is deleted from Firebase their associated Stream account is also deleted.
-export const deleteStreamUser = functions.region('europe-west6').auth.user().onDelete(async (user) => {
-  logger.log("Firebase user deleted", user);
-  const _client = getStreamClient();
-  const response = await _client.deleteUser(user.uid);
-  logger.log("Stream user deleted", response);
-  return response;
+export const onUserDeleted = functions.region('europe-west6').auth.user().onDelete(async (user) => {
+  logger.log("onUserDeleted: deleting stream user for firebase user ", user);
+  try {
+    const _client = getStreamClient();
+    const response = await _client.deleteUser(user.uid);
+    logger.log("onUserDeleted: stream user deleted", response);
+    return response;
+  } catch (error) {
+    logger.error("onUserDeleted: error deleting stream user", error);
+    throw new HttpsError("aborted", "Could not delete stream user");
+  }
 });
 
-// Get Stream user token.
+// Get Stream user token for the currently authenticated user.
 export const getStreamUserToken = onCall({ region: 'europe-west6', cors: true }, (request) => {
+  logger.log("getStreamUserToken: getting stream user token for user", request.auth?.uid);
   // Checking that the user is authenticated.
   if (!request.auth) {
-    // Throwing an HttpsError so that the client gets the error details.
-    throw new HttpsError(
-      "failed-precondition",
-      "The function must be called while authenticated.",
-    );
+    logger.error("getStreamUserToken: user is not authenticated");
+    throw new HttpsError("failed-precondition", "getStreamUserToken must be called while authenticated.");
   }
   try {
     const _client = getStreamClient();
-    return _client.createToken(
+    const _token = _client.createToken(
       request.auth.uid,
       undefined,
       Math.floor(new Date().getTime() / 1000),
     );
-  } catch (err) {
-    console.error(`Unable to get user token with ID ${request.auth.uid} on Stream. Error ${err}`);
-    // Throwing an HttpsError so that the client gets the error details.
-    throw new HttpsError("aborted", "Could not get Stream user");
+    logger.log("getStreamUserToken: stream user token: ", _token);
+    return _token;
+  } catch (error) {
+    console.error(`getStreamUserToken: unable to get stream user token with ID ${request.auth.uid}`, error);
+    throw new HttpsError("aborted", "Could not get stream user token");
   }
 });
 
-// Revoke the authenticated user's Stream chat token.
-export const revokeStreamUserToken = onCall({ region: 'europe-west6', cors: true }, async (request) => {
+// Get Stream user token for another user (not the currently authenticated user). Requires admin rights.
+export const getOtherStreamUserToken = onCall({ region: 'europe-west6', cors: true }, (request) => {
+  logger.log("getOtherStreamUserToken: getting stream user token for user ", request.data?.uid);
   // Checking that the user is authenticated.
   if (!request.auth) {
-    // Throwing an HttpsError so that the client gets the error details.
-    throw new HttpsError(
-      "failed-precondition",
-      "The function must be called while authenticated.",
-    );
+    logger.error("getOtherStreamUserToken: user is not authenticated");
+    throw new HttpsError("failed-precondition", "getOtherStreamUserToken must be called while authenticated.");
+  }
+  // Checking that the user has admin rights.
+  if (!request.auth.token.admin) {
+    logger.error("getOtherStreamUserToken: user is not an admin");
+    throw new HttpsError("permission-denied", "getOtherStreamUserToken can only be used by admin users.");
+  }
+  // check if the uid of the other user is provided
+  if (!request.data?.uid) {
+    logger.error("getOtherStreamUserToken: must be called with an uid of the user to get the stream token for");
+    throw new HttpsError("invalid-argument", "getOtherStreamUserToken must be called with an uid to get the stream token for.");
   }
   try {
     const _client = getStreamClient();
-    return await _client.revokeUserToken(request.auth.uid);
-  } catch (err) {
-    console.error(
-      `Unable to revoke user token with ID ${request.auth.uid} on Stream. Error ${err}`,
+    const _token = _client.createToken(
+      request.data.uid,
+      undefined,
+      Math.floor(new Date().getTime() / 1000),
     );
-    // Throwing an HttpsError so that the client gets the error details.
-    throw new HttpsError("aborted", "Could not get Stream user");
+    logger.log("getOtherStreamUserToken: stream user token: ", _token);
+    return _token;
+  } catch (error) {
+    console.error(`getOtherStreamUserToken: unable to get stream user token for ID ${request.data.uid}`, error);
+    throw new HttpsError("aborted", "Could not get stream user token");
   }
 });
 
+// Revoke the stream user token for another user (not the currently authenticated user). Requires admin rights.
+export const revokeOtherStreamUserToken = onCall({ region: 'europe-west6', cors: true }, async (request) => {
+  logger.log("revokeOtherStreamUserToken: revoking stream user token for user ", request.data?.uid);
+  // Checking that the user is authenticated.
+  if (!request.auth) {
+    logger.error("revokeOtherStreamUserToken: user is not authenticated");
+    throw new HttpsError("failed-precondition", "revokeOtherStreamUserToken must be called while authenticated.");
+  }
+  // Checking that the user has admin rights.
+  if (!request.auth.token.admin) {
+    logger.error("revokeOtherStreamUserToken: user is not an admin");
+    throw new HttpsError("permission-denied", "revokeOtherStreamUserToken can only be used by admin users.");
+  }
+  // check if the uid of the other user is provided
+  if (!request.data?.uid) {
+    logger.error("revokeOtherStreamUserToken: must be called with an uid of the user to get the stream token for");
+    throw new HttpsError("invalid-argument", "revokeOtherStreamUserToken must be called with an uid to get the stream token for.");
+  }
 
+  try {
+    const _client = getStreamClient();
+    const _result = await _client.revokeUserToken(request.data.uid);
+    logger.log("revokeOtherStreamUserToken: stream user token revoked", _result);
+    return _result;
+  } catch (error) {
+    console.error(`revokeOtherStreamUserToken: unable to revoke stream user token with ID ${request.data.uid}`, error);
+    throw new HttpsError("aborted", "Could not revoke Stream user token");
+  }
+});
+
+// Create a stream user for another user (not the currently authenticated user). Requires admin rights.
+// same as createStreamUser, but callable. This can be used e.g. for pre-existing users.
+export const createOtherStreamUser = onCall({ region: 'europe-west6', cors: true }, async (request) => {
+  logger.log("createOtherStreamUser: creating stream user ", request.data?.uid);
+  // Checking that the user is authenticated.
+  if (!request.auth) {
+    logger.error("createOtherStreamUser: user is not authenticated");
+    throw new HttpsError("failed-precondition", "createOtherStreamUser must be called while authenticated.");
+  }
+  // Checking that the user has admin rights.
+  if (!request.auth.token.admin) {
+    logger.error("createOtherStreamUser: user is not an admin");
+    throw new HttpsError("permission-denied", "createOtherStreamUser can only be used by admin users.");
+  }
+  // check if the uid of the other user is provided
+  if (!request.data?.uid) {
+    logger.error("createOtherStreamUser: must be called with an uid of the user to create the stream user for");
+    throw new HttpsError("invalid-argument", "createOtherStreamUser must be called with an uid to create the stream user for.");
+  }
+
+  try {
+    const _client = getStreamClient();
+    const response = await _client.upsertUser({
+      id: request.data.uid,
+      name: request.data.name,
+      email: request.data.email,
+      image: request.data.image,
+    });
+    logger.log("createOtherStreamUser: stream user created", response);
+    return response;
+  } catch (error) {
+    console.error(`createOtherStreamUser: unable to create stream user with ID ${request.data.uid}`, error);
+    throw new HttpsError("aborted", "Could not create stream user");
+  }
+});
