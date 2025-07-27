@@ -4,6 +4,7 @@ import { MenuService } from '@bk2/cms/menu/data-access';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AppStore } from '@bk2/shared/feature';
 import { debugMessage } from '@bk2/shared/util-core';
+import { of } from 'rxjs';
 
 export type MenuState = {
   name: string;
@@ -25,7 +26,10 @@ export const MenuStore = signalStore(
         name: store.name(),
         user: store.appStore.currentUser()
       }),
-      stream: ({params}) => {
+      stream: ({ params }) => {
+        if (!params.name || params.name.length === 0) {
+          return of(undefined);
+        }
         debugMessage(`MenuStore: loading menu with name:${params.name}`, params.user);
         return store.menuService.read(params.name);
       }
@@ -34,7 +38,7 @@ export const MenuStore = signalStore(
 
   withComputed((state) => {
     return {
-      menu: computed(() => state.menuResource.value()),
+      menu: computed(() => state.menuResource.value() ?? undefined),
       isLoading: computed(() => state.menuResource.isLoading()),
     }
   }),

@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { PageService } from '@bk2/cms/page/data-access';
 import { ModalController } from '@ionic/angular/standalone';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
 import { debugItemLoaded, debugMessage, die } from '@bk2/shared/util-core';
 import { PageModel, SectionModel } from '@bk2/shared/models';
@@ -47,6 +47,9 @@ export const PageDetailStore = signalStore(
         pageId: store.pageId()
       }),
       stream: ({ params }) => {
+        if (!params.pageId || params.pageId.length === 0) {
+          return of(undefined);
+        }
         const _page$ = store.pageService.read(params.pageId);
         debugItemLoaded<PageModel>(`PageDetailStore.pageResource`, _page$, store.currentUser());
         return _page$;
@@ -56,7 +59,7 @@ export const PageDetailStore = signalStore(
 
   withComputed((state) => {
     return {
-      page: computed(() => state.pageResource.value()),
+      page: computed(() => state.pageResource.value() ?? undefined),
       meta: computed(() => state.pageResource.value()?.meta),
       sections: computed(() => state.pageResource.value()?.sections ?? []),
       isEmptyPage: computed(() => state.pageResource.value()?.sections === undefined || state.pageResource.value()?.sections.length === 0),
@@ -89,7 +92,7 @@ export const PageDetailStore = signalStore(
       /**
        * Sort the sections of the page.
        * @returns 
-       */ 
+       */
       async sortSections() {
         if (store.sections().length === 0) return;
         // convert the list of sectionKeys to a list of SectionModels
@@ -97,7 +100,7 @@ export const PageDetailStore = signalStore(
         const _modal = await store.modalController.create({
           component: PageSortModalComponent,
           componentProps: {
-            sections: _sections    
+            sections: _sections
           }
         });
         _modal.present();
@@ -121,7 +124,7 @@ export const PageDetailStore = signalStore(
           componentProps: {
             categories: SectionTypes,
             slug: 'section'
-            }
+          }
         });
         _modal.present();
         const { data, role } = await _modal.onWillDismiss();
@@ -132,7 +135,7 @@ export const PageDetailStore = signalStore(
             _page.sections.push(_sectionKey);
             store.pageService.update(_page, store.currentUser());
             store.pageResource.reload();
-          } 
+          }
         }
       },
       /**

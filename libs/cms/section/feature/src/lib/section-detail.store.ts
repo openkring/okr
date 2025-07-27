@@ -8,6 +8,7 @@ import { SectionModel } from '@bk2/shared/models';
 import { AppStore } from '@bk2/shared/feature';
 
 import { SectionService } from '@bk2/cms/section/data-access';
+import { of } from 'rxjs';
 
 export type SectionDetailState = {
   sectionId: string;
@@ -40,8 +41,11 @@ export const SectionDetailStore = signalStore(
         sectionId: store.sectionId()
       }),
       stream: ({ params }) => {
+        if (!params.sectionId || params.sectionId.length === 0) {
+          return of(undefined);
+        }
         const _section$ = store.sectionService.read(params.sectionId);
-        debugItemLoaded<SectionModel>(`SectionDetailStore.sectionResource`, _section$ , store.currentUser());
+        debugItemLoaded<SectionModel>(`SectionDetailStore.sectionResource`, _section$, store.currentUser());
         return _section$;
       }
     })
@@ -49,7 +53,7 @@ export const SectionDetailStore = signalStore(
 
   withComputed((state) => {
     return {
-      section: computed(() => state.sectionResource.value()),
+      section: computed(() => state.sectionResource.value() ?? undefined),
       isLoading: computed(() => state.sectionResource.isLoading()),
     };
   }),
