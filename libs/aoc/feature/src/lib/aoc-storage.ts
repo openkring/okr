@@ -9,19 +9,19 @@ import { SvgIconPipe } from "@bk2/shared/pipes";
 import { AocStorageStore } from "./aoc-storage.store";
 
 @Component({
-    selector: 'bk-aoc-storage',
-    styles: [`
+  selector: 'bk-aoc-storage',
+  styles: [`
       input { width: 100%;}
     `],
-    imports: [
-      TranslatePipe, AsyncPipe, SvgIconPipe,
-      FormsModule, 
-      ButtonComponent, HeaderComponent, ResultLogComponent,
-      IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, 
-      IonGrid, IonRow, IonCol, IonIcon, IonCheckbox, IonButtons, IonButton, IonItem
-    ],
-    providers: [AocStorageStore],
-    template: `
+  imports: [
+    TranslatePipe, AsyncPipe, SvgIconPipe,
+    FormsModule,
+    ButtonComponent, HeaderComponent, ResultLogComponent,
+    IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle,
+    IonGrid, IonRow, IonCol, IonIcon, IonCheckbox, IonButtons, IonButton, IonItem
+  ],
+  providers: [AocStorageStore],
+  template: `
     <bk-header title="{{ '@aoc.storage.title' | translate | async }}" />
     <ion-content>
       <ion-card>
@@ -52,7 +52,7 @@ import { AocStorageStore } from "./aoc-storage.store";
               <ion-col size="6" >
                 <bk-button [disabled]="isFilePathButtonDisabled()"
                 label="{{ '@aoc.storage.info.buttonLabel' | translate | async  }}"
-                iconName="checkmark-circle-outline" (click)="getRefInfo()" />
+                iconName="checkbox-circle" (click)="getRefInfo()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -90,7 +90,7 @@ import { AocStorageStore } from "./aoc-storage.store";
               <ion-col size="6">
                 <bk-button  [disabled]="isDirPathButtonDisabled()"
                 label="{{ '@aoc.storage.sizes.buttonLabel' | translate | async  }}"
-                iconName="checkmark-circle-outline" (click)="calculateStorageConsumption()" />
+                iconName="checkbox-circle" (click)="calculateStorageConsumption()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -106,7 +106,7 @@ export class AocStorageComponent {
 
   protected readonly logTitle = computed(() => this.aocStorageStore.logTitle());
   protected readonly logInfo = computed(() => this.aocStorageStore.log());
-//  protected readonly isLoading = computed(() => this.aocStorageStore.isLoading());
+  //  protected readonly isLoading = computed(() => this.aocStorageStore.isLoading());
   protected readonly filePath = computed(() => this.aocStorageStore.filePath());
   protected readonly dirPath = computed(() => this.aocStorageStore.dirPath());
   protected readonly isFilePathButtonDisabled = computed(() => this.filePath.length === 0);
@@ -122,10 +122,10 @@ export class AocStorageComponent {
   }
 
   protected setDirPath(event: Event) {
-        console.log('setDirPath', event);
+    console.log('setDirPath', event);
 
-   // const _dirPath = event.value;
-   // this.aocStorageStore.setDirPath(_dirPath);
+    // const _dirPath = event.value;
+    // this.aocStorageStore.setDirPath(_dirPath);
   }
   /************************************** actions ****************************************** */
 

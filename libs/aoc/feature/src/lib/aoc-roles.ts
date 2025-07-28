@@ -42,7 +42,7 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
                   </ion-label>
                 } @else {
                   <ion-button (click)="selectPerson()">
-                    <ion-icon src="{{'person-search' | svgIcon}}" slot="start" />
+                    <ion-icon src="{{'personSearch' | svgIcon}}" slot="start" />
                     {{ '@aoc.roles.account.select' | translate | async  }}
                   </ion-button>
                 }
@@ -157,7 +157,7 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="checkChatUser()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{'chatbox-ellipses' | svgIcon}}" slot="start" />
+                  <ion-icon src="{{'chatbox' | svgIcon}}" slot="start" />
                   {{ '@aoc.roles.chat.check' | translate | async  }}
                 </ion-button>
               </ion-col>
@@ -166,7 +166,7 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="createStreamUser()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{'chatbox-ellipses' | svgIcon}}" slot="start" />
+                  <ion-icon src="{{'chatbox' | svgIcon}}" slot="start" />
                   {{ '@aoc.roles.chat.add' | translate | async  }}
                 </ion-button>
               </ion-col>
@@ -175,7 +175,7 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="revokeStreamUserToken()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{'chatbox-ellipses' | svgIcon}}" slot="start" />
+                  <ion-icon src="{{'chatbox' | svgIcon}}" slot="start" />
                   {{ '@aoc.roles.chat.revoke' | translate | async  }}
                 </ion-button>
               </ion-col>

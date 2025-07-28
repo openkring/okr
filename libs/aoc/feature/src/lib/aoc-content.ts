@@ -11,7 +11,7 @@ import { AocContentStore } from "./aoc-content.store";
   selector: 'bk-aoc-content',
   imports: [
     TranslatePipe, AsyncPipe,
-    FormsModule, 
+    FormsModule,
     HeaderComponent, ButtonComponent, ResultLogComponent,
     IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
     IonGrid, IonRow, IonCol
@@ -39,7 +39,7 @@ import { AocContentStore } from "./aoc-content.store";
             <ion-row>
               <ion-col size="6">{{ '@aoc.content.orphanedSections.content' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.content.orphanedSections.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="findOrphanedSections()" />
+                <bk-button label=" {{ '@aoc.content.orphanedSections.button' | translate | async  }}" iconName="checkbox-circle" (click)="findOrphanedSections()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -55,7 +55,7 @@ import { AocContentStore } from "./aoc-content.store";
             <ion-row>
               <ion-col size="6">{{ '@aoc.content.missingSections.content' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.content.missingSections.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="findMissingSections()" />
+                <bk-button label=" {{ '@aoc.content.missingSections.button' | translate | async  }}" iconName="checkbox-circle" (click)="findMissingSections()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -71,7 +71,7 @@ import { AocContentStore } from "./aoc-content.store";
             <ion-row>
               <ion-col size="6">{{ '@aoc.content.orphanedMenus.content' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.content.orphanedMenus.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="findOrphanedMenus()" />
+                <bk-button label=" {{ '@aoc.content.orphanedMenus.button' | translate | async  }}" iconName="checkbox-circle" (click)="findOrphanedMenus()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -87,7 +87,7 @@ import { AocContentStore } from "./aoc-content.store";
             <ion-row>
               <ion-col size="6">{{ '@aoc.content.missingMenus.content' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.content.missingMenus.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="findMissingMenus()" />
+                <bk-button label=" {{ '@aoc.content.missingMenus.button' | translate | async  }}" iconName="checkbox-circle" (click)="findMissingMenus()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -103,7 +103,7 @@ import { AocContentStore } from "./aoc-content.store";
             <ion-row>
               <ion-col size="6">{{ '@aoc.content.checkLinks.content' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.content.checkLinks.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="checkLinks()" />
+                <bk-button label=" {{ '@aoc.content.checkLinks.button' | translate | async  }}" iconName="checkbox-circle" (click)="checkLinks()" />
               </ion-col>
             </ion-row>
           </ion-grid>

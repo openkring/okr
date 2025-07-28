@@ -31,28 +31,28 @@ import { AocAdminOpsStore } from "./aoc-adminops.store";
             <ion-row>
               <ion-col size="6">{{ '@aoc.adminops.iban.label' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.iban.button' | translate | async }}" iconName="checkmark-circle-outline" (click)="listIban()" />
+                <bk-button label=" {{ '@aoc.adminops.iban.button' | translate | async }}" iconName="checkbox-circle" (click)="listIban()" />
               </ion-col>
             </ion-row>
             <!-- Old Juniors -->
             <ion-row>
               <ion-col size="6">{{ '@aoc.adminops.oldJuniors.label' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.oldJuniors.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="listOldJuniors()" />
+                <bk-button label=" {{ '@aoc.adminops.oldJuniors.button' | translate | async  }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
               </ion-col>
             </ion-row>
             <!-- Membership Prices -->
             <ion-row>
               <ion-col size="6">{{ '@aoc.adminops.membershipPrices.label' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.membershipPrices.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="updateMembershipPrices()" />
+                <bk-button label=" {{ '@aoc.adminops.membershipPrices.button' | translate | async  }}" iconName="checkbox-circle" (click)="updateMembershipPrices()" />
               </ion-col>
             </ion-row>
             <!-- Membership Attributes -->
             <ion-row>
               <ion-col size="6">{{ '@aoc.adminops.membershipAttributes.label' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.membershipAttributes.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="updateMembershipAttributes()" />
+                <bk-button label=" {{ '@aoc.adminops.membershipAttributes.button' | translate | async  }}" iconName="checkbox-circle" (click)="updateMembershipAttributes()" />
               </ion-col>
             </ion-row>
             <!-- Check entry date for juniors -->
@@ -62,7 +62,7 @@ import { AocAdminOpsStore } from "./aoc-adminops.store";
             <ion-row>
               <ion-col size="6">{{ '@aoc.adminops.checkJuniorEntry.description' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.checkJuniorEntry.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="checkJuniorEntry()" />
+                <bk-button label=" {{ '@aoc.adminops.checkJuniorEntry.button' | translate | async  }}" iconName="checkbox-circle" (click)="checkJuniorEntry()" />
               </ion-col>
             </ion-row>
             <!-- Find orphaned sections -->

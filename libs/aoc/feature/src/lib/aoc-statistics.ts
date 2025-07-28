@@ -11,7 +11,7 @@ import { AocStatisticsStore } from "./aoc-statistics.store";
   selector: 'bk-aoc-statistics',
   imports: [
     TranslatePipe, AsyncPipe,
-    FormsModule, 
+    FormsModule,
     HeaderComponent, ResultLogComponent, ButtonComponent,
     IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
     IonGrid, IonRow, IonCol
@@ -39,35 +39,35 @@ import { AocStatisticsStore } from "./aoc-statistics.store";
             <ion-row>
               <ion-col size="6">{{ '@aoc.statistics.competitionLevels.label' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.statistics.competitionLevels.button' | translate | async  }}"  iconName="checkmark-circle-outline" (click)="updateCompetitionLevels()" />
+                <bk-button label=" {{ '@aoc.statistics.competitionLevels.button' | translate | async  }}"  iconName="checkbox-circle" (click)="updateCompetitionLevels()" />
               </ion-col>
             </ion-row>
             <!-- Update Competition Levels statistics -->
             <ion-row>
               <ion-col size="6">{{ '@aoc.statistics.clStats.label' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label="{{ '@aoc.statistics.clStats.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="updateCLStatistics()" />
+                <bk-button label="{{ '@aoc.statistics.clStats.button' | translate | async  }}" iconName="checkbox-circle" (click)="updateCLStatistics()" />
               </ion-col>
             </ion-row>
             <!-- Update Age by Gender -->
             <ion-row>
               <ion-col size="6">{{ '@aoc.statistics.ageByGender.label' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label="{{ '@aoc.statistics.ageByGender.button' | translate | async  }}" iconName="checkmark-circle-outline" (click)="updateAgeByGender()" />
+                <bk-button label="{{ '@aoc.statistics.ageByGender.button' | translate | async  }}" iconName="checkbox-circle" (click)="updateAgeByGender()" />
               </ion-col>
             </ion-row>
             <!-- Update Category by Gender -->
             <ion-row>
               <ion-col size="6">{{ '@aoc.statistics.categoryByGender.label' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label="{{ '@aoc.statistics.categoryByGender.button' | translate | async  }}"  iconName="checkmark-circle-outline" (click)="updateCategoryByGender()" />
+                <bk-button label="{{ '@aoc.statistics.categoryByGender.button' | translate | async  }}"  iconName="checkbox-circle" (click)="updateCategoryByGender()" />
               </ion-col>
             </ion-row>
             <!-- Update Member Location -->
             <ion-row>
               <ion-col size="6">{{ '@aoc.statistics.memberLocation.label' | translate | async  }}</ion-col>
               <ion-col size="6">
-                <bk-button label="{{ '@aoc.statistics.memberLocation.button' | translate | async  }}"  iconName="checkmark-circle-outline" (click)="updateMemberLocation()" />
+                <bk-button label="{{ '@aoc.statistics.memberLocation.button' | translate | async  }}"  iconName="checkbox-circle" (click)="updateMemberLocation()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -89,19 +89,19 @@ export class AocStatisticsComponent {
     this.aocContentStore.updateCompetitionLevels();
   }
 
-    public async updateCLStatistics(): Promise<void> {
+  public async updateCLStatistics(): Promise<void> {
     this.aocContentStore.updateCLStatistics();
   }
 
-    public async updateAgeByGender(): Promise<void> {
+  public async updateAgeByGender(): Promise<void> {
     this.aocContentStore.updateAgeByGender();
   }
 
-    public async updateCategoryByGender(): Promise<void> {
+  public async updateCategoryByGender(): Promise<void> {
     this.aocContentStore.updateCategoryByGender();
   }
 
-    public async updateMemberLocation(): Promise<void> {
+  public async updateMemberLocation(): Promise<void> {
     this.aocContentStore.updateMemberLocation();
   }
 }

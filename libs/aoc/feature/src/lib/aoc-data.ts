@@ -13,7 +13,7 @@ import { ModelType } from "@bk2/shared/models";
   selector: 'bk-aoc-data',
   imports: [
     TranslatePipe, AsyncPipe,
-    FormsModule, 
+    FormsModule,
     HeaderComponent, ResultLogComponent, ButtonComponent, CategoryComponent,
     IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
     IonGrid, IonRow, IonCol, IonItem
@@ -41,7 +41,7 @@ import { ModelType } from "@bk2/shared/models";
             <ion-row>
               <ion-col>{{ '@aoc.data.fix.content' | translate | async }}</ion-col>
               <ion-col>
-                <bk-button label=" {{ '@aoc.data.fix.operation.fix' | translate | async  }}" iconName="warning-outline" (click)="fixModels()" />
+                <bk-button label=" {{ '@aoc.data.fix.operation.fix' | translate | async  }}" iconName="warning" (click)="fixModels()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -64,7 +64,7 @@ import { ModelType } from "@bk2/shared/models";
                 </ion-item>        
               </ion-col>
               <ion-col>
-                <bk-button label=" {{ '@aoc.data.validate.operation.validate' | translate | async  }}" iconName="information-circle-outline" (click)="validateModels()" />
+                <bk-button label=" {{ '@aoc.data.validate.operation.validate' | translate | async  }}" iconName="info-circle" (click)="validateModels()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -89,9 +89,9 @@ export class AocDataComponent {
     this.aocDataStore.setModelType($event);
   }
 
- /**
-   * Fix models of a given type. THIS CHANGES MANY DATA IN THE DATABASE.
-   */
+  /**
+    * Fix models of a given type. THIS CHANGES MANY DATA IN THE DATABASE.
+    */
   public async fixModels(): Promise<void> {
     await this.aocDataStore.fixModels();
   }
