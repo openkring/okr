@@ -7,11 +7,10 @@ import { ModelType, OwnershipCollection, OwnershipModel, UserModel } from '@bk2/
 import { findByKey, getSystemQuery } from '@bk2/shared/util-core';
 
 import { getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from '@bk2/relationship/ownership/util';
-import { bkTranslate } from '@bk2/shared/i18n';
 import { FirestoreService } from '@bk2/shared/data-access';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class OwnershipService {
   private readonly env = inject(ENV);
@@ -29,7 +28,7 @@ export class OwnershipService {
    */
   public async create(ownership: OwnershipModel, currentUser?: UserModel): Promise<string | undefined> {
     ownership.index = this.getSearchIndex(ownership);
-    return await this.firestoreService.createModel<OwnershipModel>(OwnershipCollection, ownership, '@ownership.operation.create', currentUser);  
+    return await this.firestoreService.createModel<OwnershipModel>(OwnershipCollection, ownership, '@ownership.operation.create', currentUser);
   }
 
   /**
@@ -38,7 +37,7 @@ export class OwnershipService {
    * @returns the ownership as an Observable
    */
   public read(key: string): Observable<OwnershipModel | undefined> {
-    return findByKey<OwnershipModel>(this.list(), key);    
+    return findByKey<OwnershipModel>(this.list(), key);
   }
 
   /**
@@ -96,35 +95,35 @@ export class OwnershipService {
     //const _index = await this.selectExportType();
     //if (_index === undefined) return;
     //if (_index === 0) {
-      console.log('OwnershipService.export: export are not implemented yet.');
-      //await exportXlsx(this.filteredItems(), 'all', 'all');
+    console.log('OwnershipService.export: export are not implemented yet.');
+    //await exportXlsx(this.filteredItems(), 'all', 'all');
     //}
   }
 
- /*  private async selectExportType(): Promise<number | undefined> {
-    const _modal = await this.modalController.create({
-      component: BkLabelSelectModalComponent,
-      componentProps: {
-        labels: [
-          '@ownership.select.raw', 
-          '@ownership.select.lockers', 
-        ],
-        icons: ['list-circle-outline', 'list-outline'],
-        title: '@ownership.select.title'
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm') {
-      if (data !== undefined) {
-        console.log('OwnershipService.selectExportType: data: ' + data);
-        return parseInt(data);
-      }
-    }
-    return undefined;
-  } */
+  /*  private async selectExportType(): Promise<number | undefined> {
+     const _modal = await this.modalController.create({
+       component: BkLabelSelectModalComponent,
+       componentProps: {
+         labels: [
+           '@ownership.select.raw', 
+           '@ownership.select.lockers', 
+         ],
+         icons: ['list-circle', 'list'],
+         title: '@ownership.select.title'
+       }
+     });
+     _modal.present();
+     const { data, role } = await _modal.onDidDismiss();
+     if (role === 'confirm') {
+       if (data !== undefined) {
+         console.log('OwnershipService.selectExportType: data: ' + data);
+         return parseInt(data);
+       }
+     }
+     return undefined;
+   } */
 
-/* ---------------------- Index operations -------------------------*/
+  /* ---------------------- Index operations -------------------------*/
   public getSearchIndex(ownership: OwnershipModel): string {
     return getOwnershipSearchIndex(ownership);
   }

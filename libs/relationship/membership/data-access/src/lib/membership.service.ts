@@ -208,7 +208,7 @@ export class MembershipService {
             '@membership.operation.select.srv', 
             '@membership.operation.select.address'
           ],
-          icons: ['list-circle-outline', 'menu-outline', 'list-outline'],
+          icons: ['list-circle', 'menu', 'list'],
           title: '@membership.operation.select.title'
         }
       });

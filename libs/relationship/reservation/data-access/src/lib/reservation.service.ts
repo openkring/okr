@@ -9,7 +9,7 @@ import { FirestoreService } from '@bk2/shared/data-access';
 import { getReservationSearchIndex, getReservationSearchIndexInfo } from '@bk2/relationship/reservation/util';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class ReservationService {
   private readonly firestoreService = inject(FirestoreService);
@@ -33,7 +33,7 @@ export class ReservationService {
    * @returns the reservation as an Observable
    */
   public read(key: string): Observable<ReservationModel | undefined> {
-    return findByKey<ReservationModel>(this.list(), key);    
+    return findByKey<ReservationModel>(this.list(), key);
   }
 
   /**
@@ -117,29 +117,29 @@ export class ReservationService {
     console.log('ReservationService.export: not yet implemented.');
   }
 
- /*  private async selectExportType(): Promise<number | undefined> {
-    const _modal = await this.modalController.create({
-      component: BkLabelSelectModalComponent,
-      componentProps: {
-        labels: [
-          '@reservation.select.raw', 
-          '@reservation.select.lockers', 
-        ],
-        icons: ['list-circle-outline', 'list-outline'],
-        title: '@reservation.select.title'
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
-    if (role === 'confirm') {
-      if (data !== undefined) {
-        console.log('ReservationService.selectExportType: data: ' + data);
-        return parseInt(data);
-      }
-    }
-    return undefined;
-  } */
- 
+  /*  private async selectExportType(): Promise<number | undefined> {
+     const _modal = await this.modalController.create({
+       component: BkLabelSelectModalComponent,
+       componentProps: {
+         labels: [
+           '@reservation.select.raw', 
+           '@reservation.select.lockers', 
+         ],
+         icons: ['list-circle', 'list'],
+         title: '@reservation.select.title'
+       }
+     });
+     _modal.present();
+     const { data, role } = await _modal.onDidDismiss();
+     if (role === 'confirm') {
+       if (data !== undefined) {
+         console.log('ReservationService.selectExportType: data: ' + data);
+         return parseInt(data);
+       }
+     }
+     return undefined;
+   } */
+
   /*-------------------------- search index --------------------------------*/
   public getSearchIndex(reservation: ReservationModel): string {
     return getReservationSearchIndex(reservation);
