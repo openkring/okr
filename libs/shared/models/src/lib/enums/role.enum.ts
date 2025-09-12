@@ -10,7 +10,7 @@ export enum RoleEnum {
   Treasurer,
   Admin,
   Public,
-  GroupAdmin
+  GroupAdmin,
 }
 
 export const AllRoles = 'None, Anonymous, Registered, Privileged, ContentAdmin, ResourceAdmin, MemberAdmin, EventAdmin, Treasurer, Admin, Public, GroupAdmin';

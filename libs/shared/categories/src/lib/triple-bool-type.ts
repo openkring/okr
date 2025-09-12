@@ -1,4 +1,4 @@
-import { CategoryModel, TripleBoolType } from '@bk2/shared/models';
+import { CategoryModel, TripleBoolType } from '@bk2/shared-models';
 
 export type TripleBoolCategory = CategoryModel;
 

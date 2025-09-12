@@ -1,8 +1,8 @@
-import { only, staticSuite} from 'vest';
+import { only, staticSuite } from 'vest';
 
-import { categoryValidations, dateValidations, numberValidations, stringValidations } from '@bk2/shared/util-core';
-import { Periodicity, TransferType } from '@bk2/shared/models';
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
+import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { Periodicity, TransferType } from '@bk2/shared-models';
+import { categoryValidations, dateValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
 import { TransferFormModel } from './transfer-form.model';
 

@@ -1,5 +1,5 @@
 {
-  "name": "comment/data-access",
+  "name": "comment-data-access",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/comment/data-access/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/comment/data-access",
         "main": "libs/comment/data-access/src/index.ts",
         "tsConfig": "libs/comment/data-access/tsconfig.lib.json",
-        "assets": ["libs/comment/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/comment/data-access/jest.config.ts"
+        "assets": ["libs/comment/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

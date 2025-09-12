@@ -1,15 +1,16 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 
-import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util-core';
-import { CategoryListModel, ModelType } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { CategoryListModel, ModelType } from '@bk2/shared-models';
+import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared-util-core';
 
-import { isCategoryList } from '@bk2/category/util';
-import { CategoryService } from '@bk2/category/data-access';
+import { CategoryService } from '@bk2/category-data-access';
+import { isCategoryList } from '@bk2/category-util';
+
 import { CategoryEditModalComponent } from './category-edit.modal';
 
 export type CategoryListState = {

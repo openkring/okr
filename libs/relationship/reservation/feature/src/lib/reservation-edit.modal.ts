@@ -1,19 +1,20 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared/ui';
-import { hasRole } from '@bk2/shared/util-core';
-import { ModelType, ReservationCollection, ReservationModel, UserModel, RoleName } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, ReservationCollection, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { ReservationFormComponent } from '@bk2/relationship/reservation/ui';
-import { convertFormToReservation, convertReservationToForm, getReserverName } from '@bk2/relationship/reservation/util';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { ReservationFormComponent } from '@bk2/relationship-reservation-ui';
+import { convertFormToReservation, convertReservationToForm, getReserverName } from '@bk2/relationship-reservation-util';
 
 @Component({
   selector: 'bk-reservation-edit-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     CommentsAccordionComponent, RelationshipToolbarComponent, HeaderComponent,

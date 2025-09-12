@@ -1,21 +1,21 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
-import { AppNavigationService, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared/util-angular';
-import { categoryMatches } from '@bk2/shared/categories';
-import { AddressModel, AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { categoryMatches } from '@bk2/shared-categories';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { AddressModel, AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared-models';
+import { AppNavigationService, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
+import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
-import { AddressService } from '@bk2/subject/address/data-access';
+import { AddressService } from '@bk2/subject-address-data-access';
+import { OrgService } from '@bk2/subject-org-data-access';
+import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel } from '@bk2/subject-org-util';
 
-import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel } from '@bk2/subject/org/util';
-import { OrgService } from '@bk2/subject/org/data-access';
 import { OrgNewModalComponent } from './org-new.modal';
-import { FirestoreService } from '@bk2/shared/data-access';
 
 export type OrgListState = {
   searchTerm: string;

@@ -1,37 +1,36 @@
-import { AsyncPipe } from "@angular/common";
-import { Component, computed, inject } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from "@ionic/angular/standalone";
+import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular/standalone';
 
-import { ButtonComponent, HeaderComponent, ResultLogComponent } from "@bk2/shared/ui";
-import { TranslatePipe } from "@bk2/shared/i18n";
-import { SvgIconPipe } from "@bk2/shared/pipes";
-import { AocStorageStore } from "./aoc-storage.store";
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { ButtonComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
+import { AocStorageStore } from './aoc-storage.store';
 
 @Component({
   selector: 'bk-aoc-storage',
-  styles: [`
-      input { width: 100%;}
-    `],
-  imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
-    FormsModule,
-    ButtonComponent, HeaderComponent, ResultLogComponent,
-    IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle,
-    IonGrid, IonRow, IonCol, IonIcon, IonCheckbox, IonButtons, IonButton, IonItem
+  standalone: true,
+  styles: [
+    `
+      input {
+        width: 100%;
+      }
+    `,
   ],
+  imports: [TranslatePipe, AsyncPipe, SvgIconPipe, FormsModule, ButtonComponent, HeaderComponent, ResultLogComponent, IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonIcon, IonCheckbox, IonButtons, IonButton, IonItem],
   providers: [AocStorageStore],
   template: `
     <bk-header title="{{ '@aoc.storage.title' | translate | async }}" />
     <ion-content>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.storage.info.title' | translate | async  }}</ion-card-title>
+          <ion-card-title>{{ '@aoc.storage.info.title' | translate | async }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.storage.info.content' | translate | async  }}</ion-col>
+              <ion-col>{{ '@aoc.storage.info.content' | translate | async }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12">
@@ -49,10 +48,8 @@ import { AocStorageStore } from "./aoc-storage.store";
               </ion-col>
             </ion-row>
             <ion-row>
-              <ion-col size="6" >
-                <bk-button [disabled]="isFilePathButtonDisabled()"
-                label="{{ '@aoc.storage.info.buttonLabel' | translate | async  }}"
-                iconName="checkbox-circle" (click)="getRefInfo()" />
+              <ion-col size="6">
+                <bk-button [disabled]="isFilePathButtonDisabled()" label="{{ '@aoc.storage.info.buttonLabel' | translate | async }}" iconName="checkbox-circle" (click)="getRefInfo()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -61,12 +58,12 @@ import { AocStorageStore } from "./aoc-storage.store";
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.storage.sizes.title' | translate | async  }}</ion-card-title>
+          <ion-card-title>{{ '@aoc.storage.sizes.title' | translate | async }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.storage.sizes.content' | translate | async  }}</ion-col>
+              <ion-col>{{ '@aoc.storage.sizes.content' | translate | async }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col><ion-checkbox labelPlacement="end" [(ngModel)]="isRecursive">Rekursiv</ion-checkbox></ion-col>
@@ -88,9 +85,7 @@ import { AocStorageStore } from "./aoc-storage.store";
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <bk-button  [disabled]="isDirPathButtonDisabled()"
-                label="{{ '@aoc.storage.sizes.buttonLabel' | translate | async  }}"
-                iconName="checkbox-circle" (click)="calculateStorageConsumption()" />
+                <bk-button [disabled]="isDirPathButtonDisabled()" label="{{ '@aoc.storage.sizes.buttonLabel' | translate | async }}" iconName="checkbox-circle" (click)="calculateStorageConsumption()" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -99,7 +94,7 @@ import { AocStorageStore } from "./aoc-storage.store";
 
       <bk-result-log [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
-    `
+  `,
 })
 export class AocStorageComponent {
   private readonly aocStorageStore = inject(AocStorageStore);

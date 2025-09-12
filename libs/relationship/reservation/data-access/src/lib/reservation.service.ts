@@ -1,12 +1,12 @@
-import { Injectable, inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
-import { ModelType, ReservationCollection, ReservationModel, UserModel } from '@bk2/shared/models';
-import { findByKey, getSystemQuery } from '@bk2/shared/util-core';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { ENV } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { ModelType, ReservationCollection, ReservationModel, UserModel } from '@bk2/shared-models';
+import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
-import { getReservationSearchIndex, getReservationSearchIndexInfo } from '@bk2/relationship/reservation/util';
+import { getReservationSearchIndex, getReservationSearchIndexInfo } from '@bk2/relationship-reservation-util';
 
 @Injectable({
   providedIn: 'root'

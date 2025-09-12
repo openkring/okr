@@ -1,16 +1,17 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
+    "outDir": "../../../dist/out-tsc/libs/shared/categories",
+    "rootDir": "./src",
     "declaration": true,
-    "declarationMap": true,
-    "inlineSources": true,
+    "composite": true,
+    "module": "es2020",
+    "target": "es2020",
     "types": []
   },
-  "exclude": [
-    "src/**/*.spec.ts",
-    "src/test-setup.ts",
-    "jest.config.ts",
-    "src/**/*.test.ts"
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "vite.config.ts"],
+  "references": [
+    { "path": "../../shared/models/tsconfig.lib.json" }
   ]
 }

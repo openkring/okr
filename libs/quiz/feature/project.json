@@ -1,5 +1,5 @@
 {
-  "name": "quiz/feature",
+  "name": "quiz-feature",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/quiz/feature/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/quiz/feature",
         "main": "libs/quiz/feature/src/index.ts",
         "tsConfig": "libs/quiz/feature/tsconfig.lib.json",
-        "assets": ["libs/quiz/feature/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/quiz/feature/jest.config.ts"
+        "assets": ["libs/quiz/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

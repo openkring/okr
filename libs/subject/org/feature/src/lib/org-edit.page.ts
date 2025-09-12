@@ -1,28 +1,32 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
-
-import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
-import { ModelType, OrgCollection, OrgType, RoleName } from '@bk2/shared/models';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { hasRole } from '@bk2/shared/util-core';
-import { AvatarService } from '@bk2/avatar/data-access';
-import { getDocumentStoragePath } from '@bk2/document/util';
+import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalone';
 
-import { AddressesAccordionComponent } from '@bk2/subject/address/feature';
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { OwnershipAccordionComponent } from '@bk2/relationship/ownership/feature';
+import { ENV } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, OrgCollection, OrgType, RoleName } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
+
+import { AvatarService } from '@bk2/avatar-data-access';
+import { AvatarToolbarComponent } from '@bk2/avatar-feature';
+import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
+
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { getDocumentStoragePath } from '@bk2/document-util';
+import { MembersAccordionComponent, MembershipAccordionComponent } from '@bk2/relationship-membership-feature';
+import { OwnershipAccordionComponent } from '@bk2/relationship-ownership-feature';
+
+import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
+import { OrgFormComponent } from '@bk2/subject-org-ui';
+import { convertOrgToForm } from '@bk2/subject-org-util';
+
 import { OrgEditStore } from './org-edit.store';
-import { OrgFormComponent } from '@bk2/subject/org/ui';
-import { MembersAccordionComponent, MembershipAccordionComponent } from '@bk2/relationship/membership/feature';
-import { convertOrgToForm } from '@bk2/subject/org/util';
-import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
-import { AvatarToolbarComponent } from '@bk2/avatar/feature';
 
 @Component({
   selector: 'bk-org-edit-page',
+  standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
     AvatarToolbarComponent, AddressesAccordionComponent, CommentsAccordionComponent,

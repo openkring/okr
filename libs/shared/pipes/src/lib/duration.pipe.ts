@@ -1,8 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { getDuration } from '@bk2/shared/util-core';
+import { getDuration } from '@bk2/shared-util-core';
 
 @Pipe({
   name: 'duration',
+  standalone: true
 })
 export class DurationPipe implements PipeTransform {
 

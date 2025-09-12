@@ -1,18 +1,19 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
-import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
-import { GroupCollection, GroupModel, ModelType } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { GroupCollection, GroupModel, ModelType } from '@bk2/shared-models';
+import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
+import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
-import { GroupService } from '@bk2/subject/group/data-access';
-import { convertFormToNewGroup, GroupNewFormModel } from '@bk2/subject/group/util';
+import { GroupService } from '@bk2/subject-group-data-access';
+import { convertFormToNewGroup, GroupNewFormModel } from '@bk2/subject-group-util';
+
 import { GroupNewModalComponent } from './group-new.modal';
-import { FirestoreService } from '@bk2/shared/data-access';
 
 export type GroupListState = {
   searchTerm: string;

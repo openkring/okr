@@ -1,7 +1,7 @@
 {
-  "name": "working-rel/data-access",
+  "name": "relationship-working-rel-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/working-rel/data-access/src",
+  "sourceRoot": "libs/relationship/working-rel/data-access/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:data-access", "scope:working-rel", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/relationship/working-rel/data-access",
         "main": "libs/relationship/working-rel/data-access/src/index.ts",
         "tsConfig": "libs/relationship/working-rel/data-access/tsconfig.lib.json",
-        "assets": ["libs/relationship/working-rel/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/relationship/working-rel/data-access/jest.config.ts"
+        "assets": ["libs/relationship/working-rel/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

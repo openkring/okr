@@ -2,11 +2,12 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonChip, IonContent, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { HeaderComponent } from './header.component';
 
 @Component({
   selector: 'bk-chip-select-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
     HeaderComponent,

@@ -1,9 +1,10 @@
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { categoryValidations, dateValidations, isAfterOrEqualDate, stringValidations } from '@bk2/shared/util-core';
-import { enforce, omitWhen, only, staticSuite, test} from 'vest';
-import { PersonalRelNewFormModel } from './personal-rel-new-form.model';
-import { GenderType, PersonalRelType } from '@bk2/shared/models';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { GenderType, PersonalRelType } from '@bk2/shared-models';
+import { categoryValidations, dateValidations, isAfterOrEqualDate, stringValidations } from '@bk2/shared-util-core';
+
+import { PersonalRelNewFormModel } from './personal-rel-new-form.model';
 
 export const personalRelNewFormValidations = staticSuite((model: PersonalRelNewFormModel, field?: string) => {
   if (field) only(field);

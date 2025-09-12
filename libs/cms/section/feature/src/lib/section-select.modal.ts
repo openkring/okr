@@ -1,11 +1,12 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryNamePipe } from '@bk2/shared/pipes';
-import { HeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { SectionTypes } from '@bk2/shared/categories';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AsyncPipe } from '@angular/common';
+import { SectionTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryNamePipe } from '@bk2/shared-pipes';
+import { HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+
 import { SectionSelectStore } from './section-select.store';
 
 /**
@@ -13,6 +14,7 @@ import { SectionSelectStore } from './section-select.store';
  */
 @Component({
   selector: 'bk-section-select',
+  standalone: true,
   imports: [ 
     CategoryNamePipe, TranslatePipe, AsyncPipe,
     SpinnerComponent, HeaderComponent,

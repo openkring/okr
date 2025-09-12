@@ -1,8 +1,9 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/constants";
-import { addIndexElement, die, getTodayStr, isType } from "@bk2/shared/util-core";
-import { WorkingRelFormModel } from "./working-rel-form.model";
-import { GenderType, WorkingRelModel, WorkingRelType, PersonModel, UserModel, OrgModel, OrgType, WorkingRelState, Periodicity, ModelType, WorkingRelCollection } from "@bk2/shared/models";
-import { WorkingRelNewFormModel } from "./working-rel-new-form.model";
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { GenderType, ModelType, OrgModel, OrgType, Periodicity, PersonModel, UserModel, WorkingRelModel, WorkingRelState, WorkingRelType } from '@bk2/shared-models';
+import { addIndexElement, die, getTodayStr, isType } from '@bk2/shared-util-core';
+
+import { WorkingRelFormModel } from './working-rel-form.model';
+import { WorkingRelNewFormModel } from './working-rel-new-form.model';
 
 export function newWorkingRelFormModel(): WorkingRelFormModel {
   return {
@@ -28,8 +29,8 @@ export function newWorkingRelFormModel(): WorkingRelFormModel {
     currency: 'CHF',
     periodicity: Periodicity.Monthly,
     priority: 0,
-    state: WorkingRelState.Active
-  }
+    state: WorkingRelState.Active,
+  };
 }
 
 export function convertWorkingRelToForm(workingRel: WorkingRelModel | undefined): WorkingRelFormModel {
@@ -57,8 +58,8 @@ export function convertWorkingRelToForm(workingRel: WorkingRelModel | undefined)
     currency: workingRel.currency ?? 'CHF',
     periodicity: workingRel.periodicity ?? Periodicity.Monthly,
     priority: workingRel.priority ?? 0,
-    state: workingRel.state ?? WorkingRelState.Active
-  }
+    state: workingRel.state ?? WorkingRelState.Active,
+  };
 }
 
 /**
@@ -68,7 +69,7 @@ export function convertWorkingRelToForm(workingRel: WorkingRelModel | undefined)
  * @returns the updated membership.
  */
 export function convertFormToWorkingRel(workingRel: WorkingRelModel | undefined, vm: WorkingRelFormModel, tenantId: string): WorkingRelModel {
-  if (!workingRel) { 
+  if (!workingRel) {
     workingRel = new WorkingRelModel(tenantId);
     workingRel.bkey = vm.bkey ?? '';
   }
@@ -98,7 +99,7 @@ export function convertFormToWorkingRel(workingRel: WorkingRelModel | undefined,
   return workingRel;
 }
 
-export function convertPersonAndOrgToNewForm(subject: PersonModel, object: OrgModel, currentUser?: UserModel): WorkingRelNewFormModel {  
+export function convertPersonAndOrgToNewForm(subject: PersonModel, object: OrgModel, currentUser?: UserModel): WorkingRelNewFormModel {
   if (!currentUser) die('working-rel.util.convertPersonsToNewForm: currentUser is mandatory');
 
   return {
@@ -119,8 +120,8 @@ export function convertPersonAndOrgToNewForm(subject: PersonModel, object: OrgMo
     currency: 'CHF',
     periodicity: Periodicity.Monthly,
     priority: 0,
-    state: WorkingRelState.Active
-  }
+    state: WorkingRelState.Active,
+  };
 }
 
 export function convertFormToNewWorkingRel(vm: WorkingRelFormModel, tenantId: string): WorkingRelModel {
@@ -160,7 +161,7 @@ export function getWorkingRelSearchIndex(workingRel: WorkingRelModel): string {
   _index = addIndexElement(_index, 'sn', workingRel.subjectName1 + ' ' + workingRel.subjectName2);
   _index = addIndexElement(_index, 'ok', workingRel.objectKey);
   _index = addIndexElement(_index, 'on', workingRel.objectName);
-  return _index;  
+  return _index;
 }
 
 /**

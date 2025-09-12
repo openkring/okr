@@ -1,18 +1,19 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonContent, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { MembershipModel, ModelType, RoleName } from '@bk2/shared/models';
-import { hasRole, isOngoing } from '@bk2/shared/util-core';
-import { EmptyListComponent } from '@bk2/shared/ui';
+import { MembershipModel, ModelType, RoleName } from '@bk2/shared-models';
+import { DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent } from '@bk2/shared-ui';
+import { hasRole, isOngoing } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { CategoryLogPipe } from '@bk2/relationship/membership/util';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 import { MembersAccordionStore } from './members-accordion.store';
 
 @Component({
   selector: 'bk-members',
+  standalone: true,
   imports: [
     DurationPipe, AsyncPipe, SvgIconPipe, CategoryLogPipe, AvatarPipe, FullNamePipe,
     EmptyListComponent,

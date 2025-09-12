@@ -3,5 +3,5 @@ export enum SendType {
   Phone,
   Sms,
   Letter,
-  Invoice
+  Invoice,
 }

@@ -1,4 +1,4 @@
-import { CategoryListModel } from "@bk2/shared/models";
+import { CategoryListModel } from "@bk2/shared-models";
 
 export function getItemLabel(category: CategoryListModel, itemName?: string): string {
   if (!itemName) return '';

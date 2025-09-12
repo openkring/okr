@@ -3,15 +3,16 @@ import { Component, computed, input, model, output, signal } from "@angular/core
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
-import { TranslatePipe } from "@bk2/shared/i18n";
-import { AllRoles, UserModel } from "@bk2/shared/models";
-import { CheckboxComponent, ChipsComponent } from "@bk2/shared/ui";
+import { TranslatePipe } from "@bk2/shared-i18n";
+import { AllRoles, UserModel } from "@bk2/shared-models";
+import { CheckboxComponent, ChipsComponent } from "@bk2/shared-ui";
+import { debugFormErrors } from "@bk2/shared-util-core";
 
-import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormValidations } from "@bk2/user/util";
-import { debugFormErrors } from "@bk2/shared/util-core";
+import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-auth-form',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,

@@ -1,17 +1,17 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
-import { AllCategories, CalEventCollection, CalEventModel, CalEventType, ModelType } from '@bk2/shared/models';
-import { categoryMatches } from '@bk2/shared/categories';
-import { AppStore } from '@bk2/shared/feature';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { categoryMatches } from '@bk2/shared-categories';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, CalEventCollection, CalEventModel, CalEventType, ModelType } from '@bk2/shared-models';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
-import { isCalEvent } from '@bk2/calevent/util';
+import { CalEventService } from '@bk2/calevent-data-access';
+import { isCalEvent } from '@bk2/calevent-util';
 import { CalEventEditModalComponent } from './calevent-edit.modal';
-import { CalEventService } from '@bk2/calevent/data-access';
 
 export type CalEventListState = {
   calendarName: string;

@@ -1,4 +1,4 @@
-import { CategoryModel, CompetitionLevel } from "@bk2/shared/models";
+import { CategoryModel, CompetitionLevel } from '@bk2/shared-models';
 
 export type CompetitionLevelCategory = CategoryModel;
 

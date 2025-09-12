@@ -1,4 +1,3 @@
-
 /**
  * Here, we define defaults that are used for consistency reasons across the app.
  * Only define defaults that are independent of any app-specific configuration.
@@ -19,10 +18,9 @@ export const NAME_NUMBER_PATTERN = '[a-zA-Z0-9 öüäéâàèç-]*';
 export const ALL_CHARS_PATTERN = '[!-~]*';
 // keep the escapes, because we need it later within the regex)
 // eslint-disable-next-line no-useless-escape
-export const SPECIAL_CHARS_PATTERN = '[\p{P}\p{S}]'; // https://stackoverflow.com/questions/18057962/regex-pattern-including-all-special-characters
+export const SPECIAL_CHARS_PATTERN = '[p{P}p{S}]'; // https://stackoverflow.com/questions/18057962/regex-pattern-including-all-special-characters
 export const INTEGER_PATTERN = '[0-9]*';
-export const PHONE_PATTERN = '[- +()0-9]{6,}'
-
+export const PHONE_PATTERN = '[- +()0-9]{6,}';
 
 // local images
 export const AVATAR_URL = 'assets/img/logo_square.png';
@@ -38,9 +36,9 @@ export const ICON_SIZE = '40'; // in px
 //-----------------------------------------------
 // dates
 //-----------------------------------------------
-export const END_FUTURE_DATE = 99991231;    // used for searches
+export const END_FUTURE_DATE = 99991231;
 export const END_FUTURE_DATE_STR = '99991231';
-export const START_PAST_DATE = 19000101;    // used for searches
+export const START_PAST_DATE = 19000101;
 export const START_PAST_DATE_STR = '19000101';
 export const MIN_YEAR = 1900;
 export const MAX_YEAR = 2100;
@@ -76,7 +74,7 @@ export const COMMENT_LENGTH = 500;
 export const EMAIL_LENGTH = 50;
 export const PHONE_LENGTH = 30;
 export const IBAN_LENGTH = 26;
-export const BEXIO_ID_LENGTH = 6
+export const BEXIO_ID_LENGTH = 6;
 export const TAX_ID_LENGTH = 12;
 export const SSN_LENGTH = 13;
 export const DATE_LENGTH = 10;
@@ -109,7 +107,4 @@ export type InputType = 'date' | 'datetime-local' | 'email' | 'month' | 'number'
  * as well as guide the browser as to the type of information expected in a given field.
  *  * see: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete
 ---------------------------------------------------------------------------*/
-export type AutoComplete = 'name' | 'email' | 'tel' | 'url' | 'off' | 'given-name'
-| 'family-name' | 'new-password' | 'current-password' | 'organization' | 'street-address' | 'country'
-| 'country-name' | 'postal-code' | 'bday' | 'address-level2'; 
-
+export type AutoComplete = 'name' | 'email' | 'tel' | 'url' | 'off' | 'given-name' | 'family-name' | 'new-password' | 'current-password' | 'organization' | 'street-address' | 'country' | 'country-name' | 'postal-code' | 'bday' | 'address-level2';

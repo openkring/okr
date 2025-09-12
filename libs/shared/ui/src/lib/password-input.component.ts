@@ -1,19 +1,20 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, input, model } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { IonInput, IonInputPasswordToggle, IonItem, IonNote } from '@ionic/angular/standalone';
 
-import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 import { MaskitoDirective } from '@maskito/angular';
+import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { InputMode, PASSWORD_MAX_LENGTH } from '@bk2/shared/constants';
-import { PasswordMask } from '@bk2/shared/config';
+import { PasswordMask } from '@bk2/shared-config';
+import { InputMode, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { ButtonCopyComponent } from './button-copy.component';
-import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'bk-password-input',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     FormsModule,
@@ -66,7 +67,7 @@ export class PasswordInputComponent {
 
   // usefull masks: lowercaseWordMask, uppercaseWordMask, caseInsensitiveWordMask, passwordMask
   public mask = input<MaskitoOptions>(PasswordMask);
-  readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => ((el as unknown) as HTMLIonInputElement).getInputElement();
 
   protected onPasswordChange(event: CustomEvent): void {
     this.value.set(event.detail.value);

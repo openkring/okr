@@ -1,24 +1,26 @@
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { vestForms } from 'ngx-vest-forms';
+import { Component, computed, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { vestForms } from 'ngx-vest-forms';
 
-import { CategoryComponent, NotesInputComponent, TextInputComponent, ButtonCopyComponent, ChipsComponent, ErrorNoteComponent } from '@bk2/shared/ui';
-import { RoleEnums, SectionTypes, ViewPositions } from '@bk2/shared/categories';
-import { CategoryNamePipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ModelType, newButton, newIcon, RoleEnum, SectionType, Table, UserModel, RoleName } from '@bk2/shared/models';
-import { debugFormErrors, hasRole, isPerson } from '@bk2/shared/util-core';
-import { PersonSelectModalComponent, AppStore } from '@bk2/shared/feature';
+import { RoleEnums, SectionTypes, ViewPositions } from '@bk2/shared-categories';
+import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, newButton, newIcon, RoleEnum, RoleName, SectionType, Table, UserModel } from '@bk2/shared-models';
+import { CategoryNamePipe } from '@bk2/shared-pipes';
+import { ButtonCopyComponent, CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, hasRole, isPerson } from '@bk2/shared-util-core';
 
-import { newTable, SectionFormModel, sectionFormValidations } from '@bk2/cms/section/util';
-import { AlbumSectionConfigComponent, ArticleSectionConfigComponent, ButtonSectionConfigComponent, IframeSectionFormComponent, ImageConfigFormComponent, MapSectionFormComponent, PeopleListFormComponent, TableSectionFormComponent, VideoSectionFormComponent } from '@bk2/cms/section/ui';
-import { SingleImageComponent } from './single-image.component';
+import { AlbumSectionConfigComponent, ArticleSectionConfigComponent, ButtonSectionConfigComponent, IframeSectionFormComponent, ImageConfigFormComponent, MapSectionFormComponent, PeopleListFormComponent, TableSectionFormComponent, VideoSectionFormComponent } from '@bk2/cms-section-ui';
+import { newTable, SectionFormModel, sectionFormValidations } from '@bk2/cms-section-util';
+
 import { ImageListComponent } from './image-list.component';
+import { SingleImageComponent } from './single-image.component';
 
 @Component({
   selector: 'bk-section-form',
+  standalone: true,
   imports: [
     vestForms, FormsModule,
     TranslatePipe, AsyncPipe, CategoryNamePipe,

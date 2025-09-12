@@ -1,13 +1,14 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared/models';
-import { SpinnerComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AsyncPipe } from '@angular/common';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SectionModel } from '@bk2/shared-models';
+import { SpinnerComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-missing-section',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     SpinnerComponent,

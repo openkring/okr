@@ -1,10 +1,11 @@
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 
-import { die, getPropertyValue, isType, warn } from '@bk2/shared/util-core';
-import { navigateByUrl } from '@bk2/shared/util-angular';
-import { getCategoryAbbreviation, MenuActions, RoleEnums } from '@bk2/shared/categories';
-import { MenuAction, MenuItemModel, RoleEnum, RoleName } from '@bk2/shared/models';
+import { getCategoryAbbreviation, MenuActions, RoleEnums } from '@bk2/shared-categories';
+import { MenuAction, MenuItemModel, RoleEnum, RoleName } from '@bk2/shared-models';
+import { navigateByUrl } from '@bk2/shared-util-angular';
+import { die, getPropertyValue, isType, warn } from '@bk2/shared-util-core';
+
 import { MenuItemFormModel } from './menu-item-form.model';
 
 export async function menuActionNavigate(router: Router, menuItem: MenuItemModel): Promise<void> {
@@ -17,7 +18,7 @@ export function menuActionBrowse(url: string, target = '_blank'): Promise<void> 
 
 export function getMenuItemTitle(menuItemKey: string | undefined): string {
   const _operation = !menuItemKey ? 'create' : 'update';
-  return `@content.menuItem.operation.${_operation}.label`;  
+  return `@content.menuItem.operation.${_operation}.label`;
 }
 
 export function newMenuItemFormModel(): MenuItemFormModel {
@@ -35,8 +36,8 @@ export function newMenuItemFormModel(): MenuItemFormModel {
     tenants: [],
     description: '',
     tags: '',
-    isArchived: false
-  }
+    isArchived: false,
+  };
 }
 
 export function convertMenuItemToForm(menuItem: MenuItemModel | undefined): MenuItemFormModel {
@@ -55,14 +56,14 @@ export function convertMenuItemToForm(menuItem: MenuItemModel | undefined): Menu
     tenants: menuItem.tenants ?? [],
     description: menuItem.description ?? '',
     tags: menuItem.tags ?? '',
-    isArchived: menuItem.isArchived ?? false
-  }
+    isArchived: menuItem.isArchived ?? false,
+  };
 }
 
 export function convertFormToMenuItem(menuItem: MenuItemModel | undefined, vm: MenuItemFormModel, tenantId: string): MenuItemModel {
   menuItem ??= new MenuItemModel(tenantId);
   menuItem.name = vm.name ?? '';
-  menuItem.bkey = (!vm.bkey || vm.bkey.length === 0) ? vm.name ?? '' : vm.bkey; // we want to use the name as the key of the menu item in the database
+  menuItem.bkey = !vm.bkey || vm.bkey.length === 0 ? vm.name ?? '' : vm.bkey; // we want to use the name as the key of the menu item in the database
   menuItem.action = vm.action ?? MenuAction.Navigate;
   menuItem.url = vm.url ?? '';
   menuItem.label = vm.label ?? '';
@@ -82,22 +83,34 @@ export function convertFormToMenuItem(menuItem: MenuItemModel | undefined, vm: M
 export function convertRoleNameToEnum(roleName?: string): RoleEnum {
   if (!roleName) return RoleEnum.None;
   switch (roleName) {
-    case 'none': return RoleEnum.None;
-    case 'anonymous': return RoleEnum.Anonymous;
-    case 'registered': return RoleEnum.Registered;
-    case 'privileged': return RoleEnum.Privileged;
-    case 'contentAdmin': return RoleEnum.ContentAdmin;
-    case 'resourceAdmin': return RoleEnum.ResourceAdmin;
-    case 'memberAdmin': return RoleEnum.MemberAdmin;
-    case 'eventAdmin': return RoleEnum.EventAdmin;
-    case 'treasurer': return RoleEnum.Treasurer;
-    case 'admin': return RoleEnum.Admin;
-    default: die('MenuUtil.convertRoleNameToEnum: invalid roleName=' + roleName);
+    case 'none':
+      return RoleEnum.None;
+    case 'anonymous':
+      return RoleEnum.Anonymous;
+    case 'registered':
+      return RoleEnum.Registered;
+    case 'privileged':
+      return RoleEnum.Privileged;
+    case 'contentAdmin':
+      return RoleEnum.ContentAdmin;
+    case 'resourceAdmin':
+      return RoleEnum.ResourceAdmin;
+    case 'memberAdmin':
+      return RoleEnum.MemberAdmin;
+    case 'eventAdmin':
+      return RoleEnum.EventAdmin;
+    case 'treasurer':
+      return RoleEnum.Treasurer;
+    case 'admin':
+      return RoleEnum.Admin;
+    default:
+      die('MenuUtil.convertRoleNameToEnum: invalid roleName=' + roleName);
   }
 }
 
 export function convertRoleEnumToName(roleEnum?: RoleEnum): RoleName | undefined {
-  return roleEnum === undefined ? 'none' : RoleEnums[roleEnum].name as RoleName;
+  console.log('MenuUtil.convertRoleEnumToName: roleEnum=' + roleEnum);
+  return roleEnum === undefined ? 'none' : (RoleEnums[roleEnum].name as RoleName);
 }
 
 export function getTarget(menuItem: MenuItemModel): string {

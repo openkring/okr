@@ -1,5 +1,5 @@
 {
-  "name": "location/ui",
+  "name": "location-ui",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/location/ui/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/location/ui",
         "main": "libs/location/ui/src/index.ts",
         "tsConfig": "libs/location/ui/tsconfig.lib.json",
-        "assets": ["libs/location/ui/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/location/ui/jest.config.ts"
+        "assets": ["libs/location/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

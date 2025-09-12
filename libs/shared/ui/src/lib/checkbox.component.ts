@@ -1,17 +1,18 @@
-import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { IonCheckbox, IonItem, IonNote } from '@ionic/angular/standalone';
+import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { IonCheckbox, IonItem, IonNote } from '@ionic/angular/standalone';
 
-import { CategoryPlainNamePipe } from '@bk2/shared/pipes';
-import { ColorsIonic } from '@bk2/shared/categories';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ColorIonic } from '@bk2/shared/models';
+import { ColorsIonic } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ColorIonic } from '@bk2/shared-models';
+import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 export type CheckboxLabelPlacement = 'start' | 'end' | 'fixed';
 export type CheckboxJustification = 'start' | 'end' | 'space-between';
 
 @Component({
   selector: 'bk-checkbox',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, CategoryPlainNamePipe,
     FormsModule,

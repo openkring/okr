@@ -1,6 +1,7 @@
-import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
-import { AccountModel, AccountType, GenderType, ModelType, OrgModel, OwnershipModel, Periodicity, PersonModel, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
-import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from '@bk2/shared/util-core';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { AccountModel, AccountType, GenderType, ModelType, OrgModel, OwnershipModel, Periodicity, PersonModel, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared-models';
+import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from '@bk2/shared-util-core';
+
 import { OwnershipFormModel } from './ownership-form.model';
 
 export function newOwnershipFormModel(): OwnershipFormModel {
@@ -31,8 +32,8 @@ export function newOwnershipFormModel(): OwnershipFormModel {
 
     price: 0,
     currency: 'CHF',
-    periodicity: Periodicity.Yearly
-  }
+    periodicity: Periodicity.Yearly,
+  };
 }
 
 export function convertOwnershipToForm(ownership: OwnershipModel | undefined): OwnershipFormModel {
@@ -64,8 +65,8 @@ export function convertOwnershipToForm(ownership: OwnershipModel | undefined): O
 
     price: ownership.price ?? 0,
     currency: ownership.currency ?? 'CHF',
-    periodicity: ownership.periodicity ?? Periodicity.Yearly
-  }
+    periodicity: ownership.periodicity ?? Periodicity.Yearly,
+  };
 }
 
 /**
@@ -99,12 +100,12 @@ export function convertFormToOwnership(ownership?: OwnershipModel, vm?: Ownershi
 
 /**
  * Creates a new ownership between a person or org and a resource or account for the current tenant.
- * @param owner 
- * @param resource 
- * @param tenantId 
- * @param ownershipType 
- * @param validFrom 
- * @returns 
+ * @param owner
+ * @param resource
+ * @param tenantId
+ * @param ownershipType
+ * @param validFrom
+ * @returns
  */
 export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceModel | AccountModel, tenantId: string, validFrom = getTodayStr()): OwnershipModel {
   if (!owner.bkey) die('ownership.util.newOwnership(): owner.bkey is mandatory.');
@@ -114,7 +115,7 @@ export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceMo
   _ownership.validTo = END_FUTURE_DATE_STR;
 
   _ownership.ownerKey = owner.bkey;
-  if(isPerson(owner, tenantId)) {
+  if (isPerson(owner, tenantId)) {
     _ownership.ownerModelType = ModelType.Person;
     _ownership.ownerName1 = owner.firstName;
     _ownership.ownerName2 = owner.lastName;
@@ -128,7 +129,7 @@ export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceMo
 
   _ownership.resourceKey = resource.bkey;
   _ownership.resourceName = resource.name;
-  if(isResource(resource, tenantId)) {
+  if (isResource(resource, tenantId)) {
     _ownership.resourceModelType = ModelType.Resource;
     _ownership.resourceType = resource.type as ResourceType;
     _ownership.resourceSubType = resource.subType;
@@ -162,7 +163,7 @@ export function getOwnershipSearchIndex(ownership: OwnershipModel): string {
   let _index = '';
   _index = addIndexElement(_index, 'on', getOwnerName(ownership));
   _index = addIndexElement(_index, 'rn', ownership.resourceName);
-return _index;  
+  return _index;
 }
 
 /**

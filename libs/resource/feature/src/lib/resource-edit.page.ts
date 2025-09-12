@@ -1,20 +1,21 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { hasRole } from '@bk2/shared/util-core';
-import { ModelType, ResourceCollection, ResourceType, RowingBoatType, RoleName } from '@bk2/shared/models';
-import { ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
+import { ResourceTypes, RowingBoatTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, ResourceCollection, ResourceType, RoleName, RowingBoatType } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { convertResourceToForm, isReservable} from '@bk2/resource/util';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { ResourceFormComponent } from '@bk2/resource-ui';
+import { convertResourceToForm, isReservable } from '@bk2/resource-util';
 import { ResourceEditStore } from './resource-edit.store';
-import { ResourceFormComponent } from '@bk2/resource/ui';
 
 @Component({
   selector: 'bk-resource-edit-page',
+  standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
     CommentsAccordionComponent, IconToolbarComponent, ResourceFormComponent,

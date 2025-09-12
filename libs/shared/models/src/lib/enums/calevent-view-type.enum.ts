@@ -1,4 +1,4 @@
 export enum CalEventViewType {
   List,
-  Calendar
+  Calendar,
 }

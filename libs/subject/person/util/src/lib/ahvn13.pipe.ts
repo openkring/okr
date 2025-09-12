@@ -1,5 +1,6 @@
-import {Pipe, PipeTransform } from '@angular/core';
-import { ahvn2string } from '@bk2/shared/util-angular';
+import { Pipe, PipeTransform } from '@angular/core';
+
+import { ahvn2string } from '@bk2/shared-util-angular';
 
 /**
  * Format a swiss social security number (AHVN13)
@@ -10,6 +11,7 @@ import { ahvn2string } from '@bk2/shared/util-angular';
  */
 @Pipe({
   name: 'ahvn13',
+  standalone: true
 })
 export class Ahvn13Pipe implements PipeTransform {
 

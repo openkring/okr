@@ -5,5 +5,5 @@ export enum OwnershipState {
   Active,
   Passive,
   Terminated,
-  Cancelled
+  Cancelled,
 }

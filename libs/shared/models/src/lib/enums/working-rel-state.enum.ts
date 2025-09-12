@@ -4,5 +4,5 @@ export enum WorkingRelState {
   Active,
   Passive,
   Terminated,
-  Cancelled
+  Cancelled,
 }

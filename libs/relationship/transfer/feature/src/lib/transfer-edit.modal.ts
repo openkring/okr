@@ -1,41 +1,37 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ModelType, TransferCollection, TransferModel, RoleName } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util-core';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, RoleName, TransferCollection, TransferModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { convertFormToTransfer, convertTransferToForm } from '@bk2/relationship-transfer-util';
 
-import { convertFormToTransfer, convertTransferToForm } from '@bk2/relationship/transfer/util';
 import { TransferFormComponent } from './transfer.form';
 
 @Component({
   selector: 'bk-transfer-edit-modal',
-  imports: [
-    HeaderComponent, ChangeConfirmationComponent,
-    TransferFormComponent, CommentsAccordionComponent,
-    TranslatePipe, AsyncPipe,
-    IonContent, IonAccordionGroup
-  ],
+  standalone: true,
+  imports: [HeaderComponent, ChangeConfirmationComponent, TransferFormComponent, CommentsAccordionComponent, TranslatePipe, AsyncPipe, IonContent, IonAccordionGroup],
   template: `
     <bk-header title="{{ '@transfer.operation.update.label' | translate | async }}" [isModal]="true" />
     @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
       <bk-transfer-form [(vm)]="vm" [currentUser]="appStore.currentUser()" transferTags="test" (validChange)="formIsValid.set($event)" />
 
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
-        <ion-accordion-group value="comments">
-          <bk-comments-accordion [collectionName]="transferCollection" [parentKey]="transferKey()" />
-        </ion-accordion-group>
+      <ion-accordion-group value="comments">
+        <bk-comments-accordion [collectionName]="transferCollection" [parentKey]="transferKey()" />
+      </ion-accordion-group>
       }
     </ion-content>
-  `
+  `,
 })
 export class TransferEditModalComponent {
   private readonly modalController = inject(ModalController);

@@ -16,5 +16,5 @@ export enum AddressChannel {
   Threema,
   Telegram,
   Whatsapp,
-  BankAccount
+  BankAccount,
 }

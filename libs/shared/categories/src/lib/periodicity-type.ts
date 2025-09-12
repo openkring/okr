@@ -1,4 +1,4 @@
-import { CategoryModel, Periodicity } from '@bk2/shared/models';
+import { CategoryModel, Periodicity } from '@bk2/shared-models';
 
 export type PeriodicityTypeCategory = CategoryModel;
 

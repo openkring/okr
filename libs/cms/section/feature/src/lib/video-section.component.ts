@@ -1,9 +1,9 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { DomSanitizer } from '@angular/platform-browser';
+import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { SectionModel } from '@bk2/shared/models';
+import { SectionModel } from '@bk2/shared-models';
+import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 /**
  * A section that displays a video using Google's youtube player.
@@ -11,6 +11,7 @@ import { SectionModel } from '@bk2/shared/models';
  */
 @Component({
   selector: 'bk-video-section',
+  standalone: true,
   imports: [
     SpinnerComponent, OptionalCardHeaderComponent,
     IonCard, IonCardContent,

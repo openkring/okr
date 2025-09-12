@@ -1,13 +1,14 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { ModelType, NameDisplay, SectionModel, ViewPosition } from "@bk2/shared/models";
-import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from "@bk2/shared/ui";
+import { ModelType, NameDisplay, SectionModel, ViewPosition } from "@bk2/shared-models";
+import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from "@bk2/shared-ui";
 
-import { PersonsWidgetComponent } from '@bk2/cms/section/ui';
+import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
 
 @Component({
   selector: 'bk-people-list-section',
+  standalone: true,
   imports: [
     SpinnerComponent, PersonsWidgetComponent, EditorComponent, OptionalCardHeaderComponent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol

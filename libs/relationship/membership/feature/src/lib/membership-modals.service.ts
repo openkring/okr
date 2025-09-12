@@ -1,16 +1,17 @@
 import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { AppStore } from "@bk2/shared/feature";
-import { CategoryItemModel, CategoryListModel, MembershipModel, ModelType, OrgModel, PersonModel } from "@bk2/shared/models";
-import { convertDateFormatToString, DateFormat, isMembership } from "@bk2/shared/util-core";
-import { selectDate } from "@bk2/shared/ui";
+import { AppStore } from "@bk2/shared-feature";
+import { CategoryItemModel, CategoryListModel, MembershipModel, ModelType, OrgModel, PersonModel } from "@bk2/shared-models";
+import { selectDate } from "@bk2/shared-ui";
+import { convertDateFormatToString, DateFormat, isMembership } from "@bk2/shared-util-core";
 
-import { MembershipService } from "@bk2/relationship/membership/data-access";
-import { convertFormToNewMembership, MembershipNewFormModel, newMembershipForPerson } from "@bk2/relationship/membership/util";
-import { MembershipNewModalComponent } from "./membership-new.modal";
-import { MembershipEditModalComponent } from "./membership-edit.modal";
+import { MembershipService } from "@bk2/relationship-membership-data-access";
+import { convertFormToNewMembership, MembershipNewFormModel, newMembershipForPerson } from "@bk2/relationship-membership-util";
+
 import { CategoryChangeModalComponent } from "./membership-category-change.modal";
+import { MembershipEditModalComponent } from "./membership-edit.modal";
+import { MembershipNewModalComponent } from "./membership-new.modal";
 
 @Injectable({
     providedIn: 'root'

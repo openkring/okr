@@ -1,17 +1,18 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, OnInit, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { hasRole } from '@bk2/shared/util-core';
-import { ModelType, OrgModel, PersonModel, UserModel, RoleName} from '@bk2/shared/models';
-import { convertMemberAndOrgToNewForm } from '@bk2/relationship/membership/util';
-import { MembershipNewStore } from './membership-new.store';
+import { convertMemberAndOrgToNewForm } from '@bk2/relationship-membership-util';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, OrgModel, PersonModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 import { MembershipNewFormComponent } from './membership-new.form';
+import { MembershipNewStore } from './membership-new.store';
 
 @Component({
   selector: 'bk-membership-new-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     MembershipNewFormComponent, HeaderComponent,

@@ -3,16 +3,17 @@ import { Component, computed, input, model, output, signal } from "@angular/core
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
-import { TranslatePipe } from "@bk2/shared/i18n";
-import { GenderType, UserModel } from "@bk2/shared/models";
-import { CategoryComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared/ui";
-import { ChSsnMask } from "@bk2/shared/config";
-import { GenderTypes } from "@bk2/shared/categories";
-import { PersonalDataFormModel, personalDataFormModelShape, personalDataFormValidations } from "@bk2/profile/util";
-import { debugFormErrors } from "@bk2/shared/util-core";
+import { PersonalDataFormModel, personalDataFormModelShape, personalDataFormValidations } from "@bk2/profile-util";
+import { GenderTypes } from "@bk2/shared-categories";
+import { ChSsnMask } from "@bk2/shared-config";
+import { TranslatePipe } from "@bk2/shared-i18n";
+import { GenderType, UserModel } from "@bk2/shared-models";
+import { CategoryComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared-ui";
+import { debugFormErrors } from "@bk2/shared-util-core";
 
 @Component({
   selector: 'bk-profile-data-accordion',
+  standalone: true,
   imports: [ 
     TranslatePipe, AsyncPipe, 
     vestForms,

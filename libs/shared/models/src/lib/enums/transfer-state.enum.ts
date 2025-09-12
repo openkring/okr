@@ -3,5 +3,5 @@ export enum TransferState {
   Draft,
   InProgress,
   Completed,
-  Cancelled
+  Cancelled,
 }

@@ -1,18 +1,18 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { CheckboxComponent, TextInputComponent, NumberInputComponent, CategoryComponent, AvatarsComponent, EditorComponent } from '@bk2/shared/ui';
-import { NameDisplays, ViewPositions } from '@bk2/shared/categories';
-import { CaseInsensitiveWordMask } from '@bk2/shared/config';
-import { AvatarInfo, NameDisplay, ViewPosition } from '@bk2/shared/models';
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { NameDisplays, ViewPositions } from '@bk2/shared-categories';
+import { CaseInsensitiveWordMask } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AvatarInfo, NameDisplay, ViewPosition } from '@bk2/shared-models';
+import { AvatarsComponent, CategoryComponent, CheckboxComponent, EditorComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
 
-import { AsyncPipe } from '@angular/common';
-
-import { SectionFormModel } from '@bk2/cms/section/util';
+import { SectionFormModel } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-people-list-form',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid,

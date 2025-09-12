@@ -1,19 +1,20 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { ModelType, OwnershipCollection, OwnershipModel, UserModel, RoleName } from '@bk2/shared/models';
-import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { hasRole } from '@bk2/shared/util-core';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, OwnershipCollection, OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { convertFormToOwnership, convertOwnershipToForm, getOwnerName } from '@bk2/relationship/ownership/util';
-import { OwnershipFormComponent } from '@bk2/relationship/ownership/ui';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { OwnershipFormComponent } from '@bk2/relationship-ownership-ui';
+import { convertFormToOwnership, convertOwnershipToForm, getOwnerName } from '@bk2/relationship-ownership-util';
 
 @Component({
   selector: 'bk-ownership-edit-modal',
+  standalone: true,
   imports: [
     AsyncPipe, TranslatePipe,
     CommentsAccordionComponent, HeaderComponent,

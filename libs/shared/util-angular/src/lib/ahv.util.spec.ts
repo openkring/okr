@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { ahvn2string, computeAhvn13checkDigit } from './ahv.util';
 
 describe('ahv.util', () => {

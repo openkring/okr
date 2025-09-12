@@ -1,11 +1,11 @@
 import { Injectable, inject } from "@angular/core";
 import { Observable, first, forkJoin, map, of } from "rxjs";
 
-import { DbQuery, SectionCollection, SectionModel, UserModel } from "@bk2/shared/models";
-import { SectionTypes, getCategoryName } from "@bk2/shared/categories";
-import { ENV } from "@bk2/shared/config";
-import { addSystemQueries, findByKey, getSystemQuery } from "@bk2/shared/util-core";
-import { FirestoreService } from "@bk2/shared/data-access";
+import { SectionTypes, getCategoryName } from "@bk2/shared-categories";
+import { ENV } from "@bk2/shared-config";
+import { FirestoreService } from "@bk2/shared-data-access";
+import { DbQuery, SectionCollection, SectionModel, UserModel } from "@bk2/shared-models";
+import { addSystemQueries, findByKey, getSystemQuery } from "@bk2/shared-util-core";
 
 @Injectable({
     providedIn: 'root'

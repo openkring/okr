@@ -1,12 +1,12 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
 
-import { AppStore } from '@bk2/shared/feature';
-import { BkModel, LogInfo, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared/models';
-import { getSystemQuery } from '@bk2/shared/util-core';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { BkModel, LogInfo, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
+import { getSystemQuery } from '@bk2/shared-util-core';
 
 export type AocDataState = {
   modelType: ModelType | undefined;
@@ -17,7 +17,7 @@ export type AocDataState = {
 export const initialState: AocDataState = {
   modelType: undefined,
   log: [],
-  logTitle: ''
+  logTitle: '',
 };
 
 export const AocDataStore = signalStore(
@@ -26,13 +26,13 @@ export const AocDataStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
   })),
-  withProps((store) => ({
+  withProps(store => ({
     dataResource: rxResource({
       params: () => ({
-        modelType: store.modelType()
+        modelType: store.modelType(),
       }),
-      stream: ({params}): Observable<BkModel[] | undefined> => {
-        switch(params.modelType) {
+      stream: ({ params }): Observable<BkModel[] | undefined> => {
+        switch (params.modelType) {
           case ModelType.Person:
             return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
           case ModelType.Org:
@@ -42,21 +42,20 @@ export const AocDataStore = signalStore(
           default:
             return of(undefined);
         }
-      }
-    })
+      },
+    }),
   })),
 
-  withComputed((state) => {
+  withComputed(state => {
     return {
       currentUser: computed(() => state.appStore.currentUser()),
       isLoading: computed(() => state.dataResource.isLoading()),
       data: computed(() => state.dataResource.value() ?? []),
-    }
+    };
   }),
 
-  withMethods((store) => {
+  withMethods(store => {
     return {
-
       /******************************** setters (filter) ******************************************* */
       setModelType(modelType: ModelType | undefined): void {
         patchState(store, { modelType, log: [], logTitle: '' });
@@ -78,8 +77,7 @@ export const AocDataStore = signalStore(
        */
       async validateModels(): Promise<void> {
         console.log('AocDataStore.validateModels: not yet implemented');
-      }
-    }
+      },
+    };
   })
 );
- 

@@ -1,11 +1,42 @@
+import {
+  AccountCollection,
+  AddressCollection,
+  AvatarCollection,
+  BillCollection,
+  CalEventCollection,
+  CategoryCollection,
+  CategoryModel,
+  CommentCollection,
+  CompetitionLevelCollection,
+  DocumentCollection,
+  ExpenseCollection,
+  GroupCollection,
+  InvoiceCollection,
+  InvoicePositionCollection,
+  LocationCollection,
+  MembershipCollection,
+  MenuItemCollection,
+  ModelType,
+  OrgCollection,
+  OwnershipCollection,
+  PageCollection,
+  PersonalRelCollection,
+  PersonCollection,
+  ReservationCollection,
+  ResourceCollection,
+  SectionCollection,
+  TaskCollection,
+  TransferCollection,
+  TripCollection,
+  UserCollection,
+  WorkingRelCollection,
+} from '@bk2/shared-models';
 import { getCategoryStringField } from './category.util';
-import { AccountCollection, AddressCollection, AvatarCollection, BillCollection, CalEventCollection, CategoryCollection, CategoryModel, CommentCollection, CompetitionLevelCollection, DocumentCollection, ExpenseCollection, GroupCollection, InvoiceCollection, InvoicePositionCollection, LocationCollection, MembershipCollection, MenuItemCollection, ModelType, OrgCollection, OwnershipCollection, PageCollection, PersonalRelCollection, PersonCollection, ReservationCollection, ResourceCollection, SectionCollection, TaskCollection, TransferCollection, TripCollection, UserCollection, WorkingRelCollection } from '@bk2/shared/models';
 
 export interface ModelTypeCategory extends CategoryModel {
-    // use name instead of slug, i.e. for the detail route
-    collectionName: string; // name of the database collection
+  // use name instead of slug, i.e. for the detail route
+  collectionName: string; // name of the database collection
 }
-
 
 // the name of the model, it is also used as the route to the detail page
 export function getModelSlug(modelType: ModelType): string {
@@ -32,7 +63,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'address',
     i18nBase: 'categories.modelType.address',
     collectionName: AddressCollection,
-    icon: 'address'
+    icon: 'address',
   },
   {
     id: ModelType.Avatar,
@@ -40,7 +71,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'avatar',
     i18nBase: 'categories.modelType.avatar',
     collectionName: AvatarCollection,
-    icon: 'person-circle_avatar'
+    icon: 'person-circle_avatar',
   },
   {
     id: ModelType.Bill,
@@ -48,7 +79,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'bill',
     i18nBase: 'categories.modelType.bill',
     collectionName: BillCollection,
-    icon: 'finance_document_invoice_bill'
+    icon: 'finance_document_invoice_bill',
   },
   {
     id: ModelType.Comment,
@@ -56,7 +87,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'comment',
     i18nBase: 'categories.modelType.comment',
     collectionName: CommentCollection,
-    icon: 'chatbox'
+    icon: 'chatbox',
   },
   {
     id: ModelType.CompetitionLevel,
@@ -64,7 +95,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'competitionLevel',
     i18nBase: 'categories.modelType.competitionLevel',
     collectionName: CompetitionLevelCollection,
-    icon: 'podium'
+    icon: 'podium',
   },
   {
     id: ModelType.Document,
@@ -72,7 +103,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'document',
     i18nBase: 'categories.modelType.document',
     collectionName: DocumentCollection,
-    icon: 'document'
+    icon: 'document',
   },
   {
     id: ModelType.CalEvent,
@@ -80,7 +111,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'calevent',
     i18nBase: 'categories.modelType.calEvent',
     collectionName: CalEventCollection,
-    icon: 'calendar-number'
+    icon: 'calendar-number',
   },
   {
     id: ModelType.Expense,
@@ -88,7 +119,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'expense',
     i18nBase: 'categories.modelType.expense',
     collectionName: ExpenseCollection,
-    icon: 'finance_cash_note'
+    icon: 'finance_cash_note',
   },
   {
     id: ModelType.Invoice,
@@ -96,7 +127,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'invoice',
     i18nBase: 'categories.modelType.invoice',
     collectionName: InvoiceCollection,
-    icon: 'finance_document_invoice_bill'
+    icon: 'finance_document_invoice_bill',
   },
   {
     id: ModelType.InvoicePosition,
@@ -104,7 +135,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'invoicePosition',
     i18nBase: 'categories.modelType.invoicePosition',
     collectionName: InvoicePositionCollection,
-    icon: 'finance_invoice-position_check'
+    icon: 'finance_invoice-position_check',
   },
   {
     id: ModelType.Location,
@@ -112,7 +143,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'location',
     i18nBase: 'categories.modelType.location',
     collectionName: LocationCollection,
-    icon: 'location'
+    icon: 'location',
   },
   {
     id: ModelType.Membership,
@@ -120,7 +151,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'membership',
     i18nBase: 'categories.modelType.membership',
     collectionName: MembershipCollection,
-    icon: 'membership'
+    icon: 'membership',
   },
   {
     id: ModelType.MenuItem,
@@ -128,7 +159,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'menuitem',
     i18nBase: 'categories.modelType.menuItem',
     collectionName: MenuItemCollection,
-    icon: 'menu'
+    icon: 'menu',
   },
   {
     id: ModelType.Org,
@@ -136,7 +167,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'org',
     i18nBase: 'categories.modelType.org',
     collectionName: OrgCollection,
-    icon: 'org'
+    icon: 'org',
   },
   {
     id: ModelType.Ownership,
@@ -144,7 +175,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'ownership',
     i18nBase: 'categories.modelType.ownership',
     collectionName: OwnershipCollection,
-    icon: 'ownership'
+    icon: 'ownership',
   },
   {
     id: ModelType.Page,
@@ -152,7 +183,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'page',
     i18nBase: 'categories.modelType.page',
     collectionName: PageCollection,
-    icon: 'newspager_page'
+    icon: 'newspager_page',
   },
   {
     id: ModelType.Person,
@@ -184,7 +215,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'resource',
     i18nBase: 'categories.modelType.resource',
     collectionName: ResourceCollection,
-    icon: 'resource'
+    icon: 'resource',
   },
   {
     id: ModelType.Section,
@@ -192,7 +223,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'section',
     i18nBase: 'categories.modelType.section',
     collectionName: SectionCollection,
-    icon: 'section'
+    icon: 'section',
   },
   {
     id: ModelType.Task,
@@ -200,7 +231,7 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'task',
     i18nBase: 'categories.modelType.task',
     collectionName: TaskCollection,
-    icon: 'todo'
+    icon: 'todo',
   },
   {
     id: ModelType.Transfer,
@@ -208,15 +239,15 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'transfer',
     i18nBase: 'categories.modelType.transfer',
     collectionName: TransferCollection,
-    icon: 'finance_money-transfer'
+    icon: 'finance_money-transfer',
   },
   {
     id: ModelType.Trip,
     abbreviation: 'TRIP',
     name: 'trip',
     i18nBase: 'categories.modelType.trip',
-    collectionName:  TripCollection,
-    icon: 'airplane'
+    collectionName: TripCollection,
+    icon: 'airplane',
   },
   {
     id: ModelType.User,
@@ -224,33 +255,30 @@ export const ModelTypes: ModelTypeCategory[] = [
     name: 'user',
     i18nBase: 'categories.modelType.user',
     collectionName: UserCollection,
-    icon: 'person-circle_avatar'
+    icon: 'person-circle_avatar',
   },
   {
     id: ModelType.WorkingRel,
     abbreviation: 'WREL',
     name: 'workingrel',
     i18nBase: 'categories.modelType.workingRel',
-    collectionName:  WorkingRelCollection,
-    icon: 'working-rel'
+    collectionName: WorkingRelCollection,
+    icon: 'working-rel',
   },
   {
     id: ModelType.Category,
     abbreviation: 'CAT',
     name: 'category',
     i18nBase: 'categories.modelType.category',
-    collectionName:  CategoryCollection,
-    icon: 'grid'
+    collectionName: CategoryCollection,
+    icon: 'grid',
   },
   {
     id: ModelType.Group,
     abbreviation: 'GRP',
     name: 'group',
     i18nBase: 'categories.modelType.group',
-    collectionName:  GroupCollection,
-    icon: 'people'
-  }
+    collectionName: GroupCollection,
+    icon: 'people',
+  },
 ];
-
-
-

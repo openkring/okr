@@ -1,20 +1,21 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output, signal } from '@angular/core';
 import { IonAvatar, IonButton, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { AsyncPipe } from '@angular/common';
 
-import { CategorySelectComponent, DateInputComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryListModel, ModelType, UserModel } from '@bk2/shared/models';
-import { debugFormErrors, getFullPersonName, getTodayStr, isOrg, isPerson } from '@bk2/shared/util-core';
-import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared/feature';
-import { AvatarPipe } from '@bk2/avatar/ui';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryListModel, ModelType, UserModel } from '@bk2/shared-models';
+import { CategorySelectComponent, DateInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, getFullPersonName, getTodayStr, isOrg, isPerson } from '@bk2/shared-util-core';
 
-import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShape, membershipNewFormValidations } from '@bk2/relationship/membership/util';
+import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShape, membershipNewFormValidations } from '@bk2/relationship-membership-util';
 
 
 @Component({
   selector: 'bk-membership-new-form',
+  standalone: true,
   imports: [
     vestForms,
     TranslatePipe, AsyncPipe, AvatarPipe,

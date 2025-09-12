@@ -1,5 +1,6 @@
-import { AvatarInfo, Importance, Priority, TaskState } from '@bk2/shared/models';
 import { DeepRequired } from 'ngx-vest-forms';
+
+import { AvatarInfo, Importance, Priority, TaskState } from '@bk2/shared-models';
 
 export type TaskFormModel = {
   bkey: string,

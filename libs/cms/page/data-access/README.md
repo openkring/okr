@@ -1,7 +1,7 @@
-# cms/page/data-access
+# cms-page-data-access
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Running unit tests
 
-Run `nx test cms/page/data-access` to execute the unit tests.
+There are currently no unit tests for this library.

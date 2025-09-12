@@ -2,10 +2,10 @@ import { IMAGE_LOADER, ImageLoaderConfig, NgOptimizedImage, NgStyle } from '@ang
 import { Component, computed, ElementRef, inject, input, viewChild } from '@angular/core';
 import { IonThumbnail, ModalController } from '@ionic/angular/standalone';
 
-import { Image } from '@bk2/shared/models';
-import { BkEnvironment, ENV } from '@bk2/shared/config';
-import { die } from '@bk2/shared/util-core';
-import { ImgixUrlPipe } from '@bk2/shared/pipes';
+import { BkEnvironment, ENV } from '@bk2/shared-config';
+import { Image } from '@bk2/shared-models';
+import { ImgixUrlPipe } from '@bk2/shared-pipes';
+import { die } from '@bk2/shared-util-core';
 
 import { showZoomedImage } from './ui.util';
 
@@ -59,6 +59,7 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
 
 @Component({
   selector: 'bk-img',
+  standalone: true,
   imports: [
     NgOptimizedImage, NgStyle,
     ImgixUrlPipe,

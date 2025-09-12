@@ -1,6 +1,7 @@
-import { GroupModel, ModelType } from "@bk2/shared/models";
-import { GroupFormModel } from "./group-form.model";
-import { GroupNewFormModel } from "./group-new-form.model";
+import { GroupModel, ModelType } from '@bk2/shared-models';
+
+import { GroupFormModel } from './group-form.model';
+import { GroupNewFormModel } from './group-new-form.model';
 
 /*-------------------------- ORG --------------------------------*/
 export function newGroupFormModel(): GroupFormModel {
@@ -21,30 +22,30 @@ export function newGroupFormModel(): GroupFormModel {
 
     parentKey: '',
     parentName: '',
-    parentModelType: ModelType.Org
-  }
+    parentModelType: ModelType.Org,
+  };
 }
 
 export function convertGroupToForm(group?: GroupModel): GroupFormModel {
   if (!group) return {};
   return {
-      bkey: group.bkey ?? '',
-      name: group.name ?? '',
-      id: group.id ?? '',
-      tags: group.tags ?? '',
-      notes: group.notes ?? '',
+    bkey: group.bkey ?? '',
+    name: group.name ?? '',
+    id: group.id ?? '',
+    tags: group.tags ?? '',
+    notes: group.notes ?? '',
 
-      hasContent: group.hasContent ?? true,
-      hasChat: group.hasChat ?? true,
-      hasCalendar: group.hasCalendar ?? true,
-      hasTasks: group.hasTasks ?? true,
-      hasFiles: group.hasFiles ?? true,
-      hasAlbum: group.hasAlbum ?? true,
-      hasMembers: group.hasMembers ?? true,
+    hasContent: group.hasContent ?? true,
+    hasChat: group.hasChat ?? true,
+    hasCalendar: group.hasCalendar ?? true,
+    hasTasks: group.hasTasks ?? true,
+    hasFiles: group.hasFiles ?? true,
+    hasAlbum: group.hasAlbum ?? true,
+    hasMembers: group.hasMembers ?? true,
 
-      parentKey: group.parentKey ?? '',
-      parentName: group.parentName ?? '',
-      parentModelType: group.parentModelType ?? ModelType.Org
+    parentKey: group.parentKey ?? '',
+    parentName: group.parentName ?? '',
+    parentModelType: group.parentModelType ?? ModelType.Org,
   };
 }
 
@@ -88,7 +89,7 @@ export function createNewGroupFormModel(): GroupNewFormModel {
 
     parentKey: '',
     parentName: '',
-    parentModelType: ModelType.Org
+    parentModelType: ModelType.Org,
   };
 }
 
@@ -114,5 +115,3 @@ export function convertFormToNewGroup(vm: GroupNewFormModel, tenantId: string): 
 
   return _group;
 }
-
-

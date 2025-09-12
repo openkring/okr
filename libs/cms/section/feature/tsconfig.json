@@ -1,28 +1,36 @@
 {
-  "compilerOptions": {
-    "target": "es2022",
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "files": [],
-  "include": [],
-  "references": [
-    {
-      "path": "./tsconfig.lib.json"
-    },
-    {
-      "path": "./tsconfig.spec.json"
-    }
-  ],
   "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vitest"],
+    "declaration": true
+  },
   "angularCompilerOptions": {
-    "enableI18nLegacyMessageIdFormat": false,
+    "strictTemplates": true,
     "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true,
-    "strictTemplates": true
-  }
+    "fullTemplateTypeCheck": true,
+    "disableTypeScriptVersionCheck": true,
+    "compileNonExportedClasses": true,
+    "skipTemplateCodegen": false
+  },
+  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": ["dist/**/*"],
+  "references": [
+    {"path": "../../../shared/models/tsconfig.lib.json"},
+    {"path": "../../../shared/config/tsconfig.lib.json"},
+    {"path": "../../../shared/categories/tsconfig.lib.json"},
+    {"path": "../../../shared/i18n/tsconfig.lib.json"},
+    {"path": "../../../shared/ui/tsconfig.lib.json"},
+    {"path": "../../../shared/feature/tsconfig.lib.json"},
+    {"path": "../../../shared/pipes/tsconfig.lib.json"},
+    {"path": "../../../shared/util-angular/tsconfig.lib.json"},
+    {"path": "../../../shared/util-core/tsconfig.lib.json"},
+    {"path": "../../../cms/section/data-access/tsconfig.lib.json"},
+    {"path": "../../../cms/section/util/tsconfig.lib.json"},
+    {"path": "../../../cms/section/ui/tsconfig.lib.json"},
+    {"path": "../../../cms/section/data-access/tsconfig.lib.json"},
+    {"path": "../../../cms/section/util/tsconfig.lib.json"},
+    {"path": "../../../cms/section/ui/tsconfig.lib.json"},
+    {"path": "../../../cms/section/data-access/tsconfig.lib.json"},
+    {"path": "../../../document/feature/tsconfig.lib.json"}
+  ]
 }

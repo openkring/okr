@@ -1,4 +1,4 @@
-import { CategoryModel, ContentState } from "@bk2/shared/models";
+import { CategoryModel, ContentState } from '@bk2/shared-models';
 
 export type ContentStateCategory = CategoryModel;
 

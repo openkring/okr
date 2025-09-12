@@ -1,10 +1,11 @@
-import { enforce, omitWhen, only, staticSuite, test} from 'vest';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { ibanValidations } from './iban.validations';
+import { CITY_LENGTH, COUNTRY_LENGTH, SHORT_NAME_LENGTH, STREET_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
+import { AddressChannel, AddressUsage } from '@bk2/shared-models';
+import { booleanValidations, categoryValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
+
 import { AddressFormModel } from './address-form.model';
-import { booleanValidations, categoryValidations, stringValidations, urlValidations } from '@bk2/shared/util-core';
-import { CITY_LENGTH, COUNTRY_LENGTH, SHORT_NAME_LENGTH, STREET_LENGTH, ZIP_LENGTH } from '@bk2/shared/constants';
-import { AddressChannel, AddressUsage } from '@bk2/shared/models';
+import { ibanValidations } from './iban.validations';
 
 export const addressFormValidations = staticSuite((model: AddressFormModel, field?: string) => {
   if (field) only(field);

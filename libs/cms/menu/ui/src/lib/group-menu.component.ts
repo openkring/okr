@@ -1,9 +1,9 @@
 import { Component, inject, input } from '@angular/core';
 import { IonIcon, IonItem, IonLabel, IonList, PopoverController } from '@ionic/angular/standalone';
 
-import { hasRole } from '@bk2/shared/util-core';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { UserModel, RoleName } from '@bk2/shared/models';
+import { RoleName, UserModel } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { hasRole } from '@bk2/shared-util-core';
 
 /**
  * A group menu is static. It can not be configured.
@@ -15,6 +15,7 @@ import { UserModel, RoleName } from '@bk2/shared/models';
  */
 @Component({
   selector: 'bk-group-menu',
+  standalone: true,
   imports: [
     SvgIconPipe,
     IonList, IonItem, IonIcon, IonLabel,

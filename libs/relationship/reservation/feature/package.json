@@ -1,10 +1,28 @@
 {
-  "name": "@bk2/reservation-feature",
+  "name": "@bk2/relationship-reservation-feature",
   "version": "0.0.1",
-  "dependencies": {
-    "tslib": "^2.3.0"
-  },
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
-  "private": true
+  "sideEffects": false,
+  "private": true,
+  "dependencies": {
+    "tslib": "^2.8.1",
+    "@bk2/shared-models": "*",
+    "@bk2/shared-constants": "*",
+    "@bk2/shared-config": "*",
+    "@bk2/shared-categories": "*",
+    "@bk2/shared-data-access": "*",
+    "@bk2/shared-feature": "*",
+    "@bk2/shared-i18n": "*",
+    "@bk2/shared-pipes": "*",
+    "@bk2/shared-ui": "*",
+    "@bk2/shared-util-angular": "*",
+    "@bk2/shared-util-core": "*",
+    "@bk2/relationship-reservation-ui": "*",
+    "@bk2/relationship-reservation-util": "*",
+    "@bk2/relationship-reservation-data-access": "*",
+    "@bk2/comment-feature": "*",
+    "@bk2/avatar-ui": "*",
+    "@bk2/cms-menu-feature": "*"
+  }
 }

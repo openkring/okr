@@ -1,7 +1,7 @@
 {
-  "name": "personal-rel/data-access",
+  "name": "relationship-personal-rel-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/personal-rel/data-access/src",
+  "sourceRoot": "libs/relationship/personal-rel/data-access/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:data-access", "scope:personal-rel", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/relationship/personal-rel/data-access",
         "main": "libs/relationship/personal-rel/data-access/src/index.ts",
         "tsConfig": "libs/relationship/personal-rel/data-access/tsconfig.lib.json",
-        "assets": ["libs/relationship/personal-rel/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/relationship/personal-rel/data-access/jest.config.ts"
+        "assets": ["libs/relationship/personal-rel/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

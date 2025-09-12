@@ -1,11 +1,12 @@
 import { Component, linkedSignal, model } from '@angular/core';
 import { IonCol, IonRow } from '@ionic/angular/standalone';
 
-import { TextInputComponent } from '@bk2/shared/ui';
-import { SectionFormModel } from '@bk2/cms/section/util';
+import { SectionFormModel } from '@bk2/cms-section-util';
+import { TextInputComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-video-section-form',
+  standalone: true,
   imports: [
     IonRow, IonCol,
     TextInputComponent

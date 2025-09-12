@@ -1,5 +1,6 @@
-import { GenderType } from '@bk2/shared/models';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+
+import { GenderType } from '@bk2/shared-models';
 
 export type PersonFormModel = DeepPartial<{
   bkey: string,

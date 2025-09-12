@@ -1,17 +1,18 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ModelType, ResourceModel, UserModel } from '@bk2/shared/models';
-import { getAvatarKey } from '@bk2/shared/util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, ResourceModel, UserModel } from '@bk2/shared-models';
+import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { getAvatarKey } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
+import { AvatarPipe } from '@bk2/avatar-ui';
 import { ResourceSelectStore } from './resource-select.store';
 
 @Component({
   selector: 'bk-resource-select-modal',
+  standalone: true,
   imports: [
     HeaderComponent, SpinnerComponent,
     TranslatePipe, AsyncPipe, AvatarPipe, EmptyListComponent,

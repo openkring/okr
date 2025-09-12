@@ -3,6 +3,7 @@ import { IonSearchbar } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'bk-searchbar',
+  standalone: true,
   imports: [
     IonSearchbar
   ],

@@ -1,13 +1,14 @@
 import { Component, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { Button, ColorIonic } from '@bk2/shared/models';
-import { CategoryComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared/ui';
-import { ColorsIonic } from '@bk2/shared/categories';
-import { SizeMask } from '@bk2/shared/config';
+import { ColorsIonic } from '@bk2/shared-categories';
+import { SizeMask } from '@bk2/shared-config';
+import { Button, ColorIonic } from '@bk2/shared-models';
+import { CategoryComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-button-form',
+  standalone: true,
   imports: [
     IonGrid, IonRow, IonCol,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonCardSubtitle,

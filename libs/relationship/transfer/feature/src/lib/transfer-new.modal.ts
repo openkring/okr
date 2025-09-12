@@ -1,18 +1,20 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ModelType, OrgModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util-core';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, OrgModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { convertFormToTransfer, newTransferFormModel } from '@bk2/relationship/transfer/util';
+import { convertFormToTransfer, newTransferFormModel } from '@bk2/relationship-transfer-util';
+
 import { TransferFormComponent } from './transfer.form';
 
 @Component({
   selector: 'bk-transfer-new-modal',
+  standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent, TransferFormComponent,
     TranslatePipe, AsyncPipe,

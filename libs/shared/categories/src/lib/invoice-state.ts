@@ -1,4 +1,4 @@
-import { CategoryModel, InvoiceState } from "@bk2/shared/models";
+import { CategoryModel, InvoiceState } from '@bk2/shared-models';
 
 export type InvoiceStateCategory = CategoryModel;
 

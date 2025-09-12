@@ -2,9 +2,9 @@ import { AsyncPipe, NgStyle } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
 import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared/models';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SectionModel } from '@bk2/shared-models';
+import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 /**
  * Data grid based on open source (Generic UI Data Grid)[https://generic-ui.com/].
@@ -16,6 +16,7 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
  */
 @Component({
   selector: 'bk-table-section',
+  standalone: true,
   imports: [
     SpinnerComponent, OptionalCardHeaderComponent,
     NgStyle,

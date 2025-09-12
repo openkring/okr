@@ -1,4 +1,4 @@
-import { CategoryModel, GalleryEffect } from "@bk2/shared/models";
+import { CategoryModel, GalleryEffect } from '@bk2/shared-models';
 
 export type GalleryEffectCategory = CategoryModel;
 

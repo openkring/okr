@@ -1,35 +1,30 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { die } from '@bk2/shared/util-core';
+import { die } from '@bk2/shared-util-core';
 
 export enum AhvFormat {
-  Electronic,     // no special chars, only 13 digits: 7561234123412
-  Friendly,       // 756.1234.1234.12
+  Electronic, // no special chars, only 13 digits: 7561234123412
+  Friendly, // 756.1234.1234.12
 }
 
 export function ahvn2string(ahvn13value: number | string): string {
-    if (!ahvn13value) {
-        console.warn(`ahv.util.ahvn2string(${ahvn13value}) is not a valid ahv number (empty or null).`);
-        return '';
-    }
-    const _ahvstr = ahvn13value.toString();
+  if (!ahvn13value) {
+    console.warn(`ahv.util.ahvn2string(${ahvn13value}) is not a valid ahv number (empty or null).`);
+    return '';
+  }
+  const _ahvstr = ahvn13value.toString();
 
-    // Remove all non-digit characters from the string
-    const _digits = _ahvstr.replace(/\D/g, '');
-    if (_digits.length !== 13) {
-        console.warn(`ahv.util.ahvn2string(${_digits}) must contain 13 digits.`);
-        return '';
-    }
+  // Remove all non-digit characters from the string
+  const _digits = _ahvstr.replace(/\D/g, '');
+  if (_digits.length !== 13) {
+    console.warn(`ahv.util.ahvn2string(${_digits}) must contain 13 digits.`);
+    return '';
+  }
 
-    // Split the string into groups of 3, 4, 4, and 2 digits
-    const _parts = [
-        _digits.substring(0, 3),
-        _digits.substring(3, 7),
-        _digits.substring(7, 11),
-        _digits.substring(11)
-    ];
+  // Split the string into groups of 3, 4, 4, and 2 digits
+  const _parts = [_digits.substring(0, 3), _digits.substring(3, 7), _digits.substring(7, 11), _digits.substring(11)];
 
-    // Join the groups with dots and return the result
-    return _parts.join('.');
+  // Join the groups with dots and return the result
+  return _parts.join('.');
 }
 
 export function checkAhv(ahvn13value: number | string): boolean {
@@ -42,38 +37,40 @@ export function checkAhv(ahvn13value: number | string): boolean {
   const _ahvn13value = _ahvstr.replace(/\D/g, '');
 
   if (_ahvn13value.length !== 13) {
-      console.warn(`ahv.util.checkAhv(${_ahvn13value}) must contain 13 digits.`);
-      return false;
+    console.warn(`ahv.util.checkAhv(${_ahvn13value}) must contain 13 digits.`);
+    return false;
   }
   if (!_ahvn13value.startsWith('756')) {
     console.warn(`ahv.util.checkAhv(${_ahvn13value}) must start with Swiss country code 756.`);
     return false;
   }
   const _checksum = computeAhvn13checkDigit(_ahvn13value);
-  if(_checksum === parseInt(_ahvn13value.substring(12, 13))) {
+  if (_checksum === parseInt(_ahvn13value.substring(12, 13))) {
     return true;
   } else {
     console.warn(`ahv.util.checkAhv(${_ahvn13value}) has invalid checksum.`);
-    return false; 
+    return false;
   }
 }
 
 export function computeAhvn13checkDigit(ahvn13str: string): number {
-    // EAN13: remove non-digits, remove last character, reverse the order of the string
-    const _chars = ahvn13str.replace(/\D/g, '').split('').slice(0, 12).reverse();
+  // EAN13: remove non-digits, remove last character, reverse the order of the string
+  const _chars = ahvn13str.replace(/\D/g, '').split('').slice(0, 12).reverse();
 
-    // EAN13: first*3 + second + third*3 + fourth etc.
-    let _crosssum = 0;
-    for (let i = 0; i < _chars.length; i++) {
-        if (0 == i % 2) { // even
-            _crosssum += parseInt(_chars[i]) * 3;
-        } else { // odd
-            _crosssum += parseInt(_chars[i]);
-        }
+  // EAN13: first*3 + second + third*3 + fourth etc.
+  let _crosssum = 0;
+  for (let i = 0; i < _chars.length; i++) {
+    if (0 == i % 2) {
+      // even
+      _crosssum += parseInt(_chars[i]) * 3;
+    } else {
+      // odd
+      _crosssum += parseInt(_chars[i]);
     }
+  }
 
-    // EAN13: checkdigit is the difference of crosssum to the next multiple of 10
-    return (10 - (_crosssum % 10));
+  // EAN13: checkdigit is the difference of crosssum to the next multiple of 10
+  return 10 - (_crosssum % 10);
 }
 
 /**
@@ -94,16 +91,17 @@ export function formatAhv(sourceAhv: string, format = AhvFormat.Friendly): strin
 
   if (format === AhvFormat.Electronic) {
     return _src;
-  } else {    // Friendly
-    return `756.${_src.substring(3,7)}.${_src.substring(7, 11)}.${_src.substring(11,13)}`;
+  } else {
+    // Friendly
+    return `756.${_src.substring(3, 7)}.${_src.substring(7, 11)}.${_src.substring(11, 13)}`;
   }
 }
 
-@Pipe({ 
-    name: 'ahvMask',
-  })
-  export class AhvMaskPipe implements PipeTransform {
-    transform(value: string): string {
-      return formatAhv(value);
-    }
+@Pipe({
+  name: 'ahvMask',
+})
+export class AhvMaskPipe implements PipeTransform {
+  transform(value: string): string {
+    return formatAhv(value);
   }
+}

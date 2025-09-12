@@ -1,9 +1,9 @@
-import { Component, Injectable, OnInit, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, Injectable, OnInit, inject, input } from '@angular/core';
 import { IonButton, IonContent, IonHeader, IonItem, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
-import { ChromePickerComponent, IColorPickerConfig, COLOR_PICKER_CONFIG, ColorPickerControl, ColorType } from '@iplab/ngx-color-picker';
+import { COLOR_PICKER_CONFIG, ChromePickerComponent, ColorPickerControl, ColorType, IColorPickerConfig } from '@iplab/ngx-color-picker';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 const DEFAULT_COLOR = '#2196F3';
 
@@ -17,6 +17,7 @@ class ColorPickerConfiguration implements IColorPickerConfig {
 
 @Component({
   selector: 'bk-color-select-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     ChromePickerComponent,

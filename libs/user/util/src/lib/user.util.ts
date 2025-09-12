@@ -1,10 +1,11 @@
-import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, Roles, UserModel } from "@bk2/shared/models";
-import { die, isType } from "@bk2/shared/util-core";
-import { UserAuthFormModel } from "./user-auth-form.model";
-import { UserDisplayFormModel } from "./user-display-form.model";
-import { UserModelFormModel } from "./user-model-form.model";
-import { UserNotificationFormModel } from "./user-notification-form.model";
-import { UserPrivacyFormModel } from "./user-privacy-form.model";
+import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, Roles, UserModel } from '@bk2/shared-models';
+import { die, isType } from '@bk2/shared-util-core';
+
+import { UserAuthFormModel } from './user-auth-form.model';
+import { UserDisplayFormModel } from './user-display-form.model';
+import { UserModelFormModel } from './user-model-form.model';
+import { UserNotificationFormModel } from './user-notification-form.model';
+import { UserPrivacyFormModel } from './user-privacy-form.model';
 
 /**
  * Converts a Roles object to a string of comma-separated roles.
@@ -16,11 +17,11 @@ export function flattenRoles(roles: Roles): string {
   console.log('role keys (string[])=', _flattenedRoles);
   const _filteredRoles = _flattenedRoles.filter(_role => {
     console.log('role.' + _role + ' = ' + roles[_role as keyof Roles]);
-    return (roles[_role as keyof Roles] === true);
+    return roles[_role as keyof Roles] === true;
   });
   console.log('filtered roles (string[])=', _filteredRoles);
   console.log('joined roles (string)=', _filteredRoles.join(','));
-  return _filteredRoles.join(','); 
+  return _filteredRoles.join(',');
 }
 
 /**
@@ -42,7 +43,7 @@ export function convertUserToAuthForm(user: UserModel): UserAuthFormModel {
     useTouchId: user.useTouchId ?? false,
     useFaceId: user.useFaceId ?? false,
   };
-} 
+}
 
 export function convertUserToDisplayForm(user: UserModel): UserDisplayFormModel {
   return {
@@ -55,7 +56,7 @@ export function convertUserToDisplayForm(user: UserModel): UserDisplayFormModel 
     showDebugInfo: user.showDebugInfo ?? false,
     showHelpers: user.showHelpers ?? true,
   };
-} 
+}
 
 export function convertUserToModelForm(user: UserModel, firstName = '', lastName = ''): UserModelFormModel {
   return {
@@ -69,14 +70,14 @@ export function convertUserToModelForm(user: UserModel, firstName = '', lastName
     notes: user.notes ?? '',
     tags: user.tags,
   };
-} 
+}
 
 export function convertUserToNotificationForm(user: UserModel): UserNotificationFormModel {
   return {
     newsDelivery: user.newsDelivery ?? DeliveryType.EmailAttachment,
     invoiceDelivery: user.invoiceDelivery ?? DeliveryType.EmailAttachment,
   };
-} 
+}
 export function convertUserToPrivacyForm(user: UserModel): UserPrivacyFormModel {
   return {
     usage_images: user.usage_images ?? 0,
@@ -84,9 +85,9 @@ export function convertUserToPrivacyForm(user: UserModel): UserPrivacyFormModel 
     usage_postalAddress: user.usage_postalAddress ?? 1,
     usage_email: user.usage_email ?? 1,
     usage_phone: user.usage_phone ?? 1,
-    usage_name: user.usage_name ?? 1
+    usage_name: user.usage_name ?? 1,
   };
-} 
+}
 
 export function convertAuthFormToUser(vm: UserAuthFormModel, user?: UserModel): UserModel {
   if (!user) die('user.util.convertAuthFormToUser: User is mandatory.');
@@ -104,7 +105,7 @@ export function convertDisplayFormToUser(vm: UserDisplayFormModel, user?: UserMo
   user.useDisplayName = vm.useDisplayName ?? user.useDisplayName;
   user.showDebugInfo = vm.showDebugInfo ?? user.showDebugInfo;
   user.showArchivedData = vm.showArchivedData ?? user.showArchivedData;
-  user.showHelpers = vm.showHelpers ?? user.showHelpers
+  user.showHelpers = vm.showHelpers ?? user.showHelpers;
   return user;
 }
 export function convertModelFormToUser(vm: UserModelFormModel, user?: UserModel): UserModel {
@@ -113,7 +114,7 @@ export function convertModelFormToUser(vm: UserModelFormModel, user?: UserModel)
   user.personKey = vm.personKey ?? user.personKey;
   user.firstName = vm.firstName ?? user.firstName;
   user.lastName = vm.lastName ?? user.lastName;
-  user.loginEmail = vm.loginEmail ?? user.loginEmail;   // be careful: this should not be changed.
+  user.loginEmail = vm.loginEmail ?? user.loginEmail; // be careful: this should not be changed.
   user.gravatarEmail = vm.gravatarEmail ?? user.gravatarEmail;
   user.tags = vm.tags ?? user.tags;
   user.tenants = vm.tenants ?? user.tenants;
@@ -140,7 +141,6 @@ export function convertPrivacyFormToUser(vm: UserPrivacyFormModel, user?: UserMo
 export function isUser(user: unknown, tenantId: string): user is UserModel {
   return isType(user, new UserModel(tenantId));
 }
-
 
 /*------------------------------index ---------------------------*/
 export function getUserIndex(model: UserModel): string {

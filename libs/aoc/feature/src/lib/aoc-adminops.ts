@@ -1,22 +1,17 @@
-import { Component, computed, inject } from "@angular/core";
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonRow } from "@ionic/angular/standalone";
-import { AsyncPipe } from "@angular/common";
-import { FormsModule } from "@angular/forms";
+import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from "@bk2/shared/i18n";
-import { ButtonComponent, HeaderComponent, ResultLogComponent } from "@bk2/shared/ui";
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ButtonComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
 
-import { AocAdminOpsStore } from "./aoc-adminops.store";
+import { AocAdminOpsStore } from './aoc-adminops.store';
 
 @Component({
   selector: 'bk-aoc-adminops',
-  imports: [
-    TranslatePipe, AsyncPipe,
-    HeaderComponent, ButtonComponent, ResultLogComponent,
-    IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard,
-    IonGrid, IonRow, IonCol,
-    FormsModule
-  ],
+  standalone: true,
+  imports: [TranslatePipe, AsyncPipe, HeaderComponent, ButtonComponent, ResultLogComponent, IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, FormsModule],
   providers: [AocAdminOpsStore],
   template: `
     <bk-header title="{{ '@aoc.title' | translate | async }}" />
@@ -29,51 +24,50 @@ import { AocAdminOpsStore } from "./aoc-adminops.store";
           <ion-grid>
             <!-- IBAN -->
             <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.iban.label' | translate | async  }}</ion-col>
+              <ion-col size="6">{{ '@aoc.adminops.iban.label' | translate | async }}</ion-col>
               <ion-col size="6">
                 <bk-button label=" {{ '@aoc.adminops.iban.button' | translate | async }}" iconName="checkbox-circle" (click)="listIban()" />
               </ion-col>
             </ion-row>
             <!-- Old Juniors -->
             <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.oldJuniors.label' | translate | async  }}</ion-col>
+              <ion-col size="6">{{ '@aoc.adminops.oldJuniors.label' | translate | async }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.oldJuniors.button' | translate | async  }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
+                <bk-button label=" {{ '@aoc.adminops.oldJuniors.button' | translate | async }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
               </ion-col>
             </ion-row>
             <!-- Membership Prices -->
             <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.membershipPrices.label' | translate | async  }}</ion-col>
+              <ion-col size="6">{{ '@aoc.adminops.membershipPrices.label' | translate | async }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.membershipPrices.button' | translate | async  }}" iconName="checkbox-circle" (click)="updateMembershipPrices()" />
+                <bk-button label=" {{ '@aoc.adminops.membershipPrices.button' | translate | async }}" iconName="checkbox-circle" (click)="updateMembershipPrices()" />
               </ion-col>
             </ion-row>
             <!-- Membership Attributes -->
             <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.membershipAttributes.label' | translate | async  }}</ion-col>
+              <ion-col size="6">{{ '@aoc.adminops.membershipAttributes.label' | translate | async }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.membershipAttributes.button' | translate | async  }}" iconName="checkbox-circle" (click)="updateMembershipAttributes()" />
+                <bk-button label=" {{ '@aoc.adminops.membershipAttributes.button' | translate | async }}" iconName="checkbox-circle" (click)="updateMembershipAttributes()" />
               </ion-col>
             </ion-row>
             <!-- Check entry date for juniors -->
             <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.checkJuniorEntry.label' | translate | async  }}</ion-col>
+              <ion-col size="6">{{ '@aoc.adminops.checkJuniorEntry.label' | translate | async }}</ion-col>
             </ion-row>
             <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.checkJuniorEntry.description' | translate | async  }}</ion-col>
+              <ion-col size="6">{{ '@aoc.adminops.checkJuniorEntry.description' | translate | async }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.checkJuniorEntry.button' | translate | async  }}" iconName="checkbox-circle" (click)="checkJuniorEntry()" />
+                <bk-button label=" {{ '@aoc.adminops.checkJuniorEntry.button' | translate | async }}" iconName="checkbox-circle" (click)="checkJuniorEntry()" />
               </ion-col>
             </ion-row>
             <!-- Find orphaned sections -->
-
           </ion-grid>
         </ion-card-content>
       </ion-card>
 
       <bk-result-log [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
-  `
+  `,
 })
 export class AocAdminOpsComponent {
   private readonly aocAdminOpsStore = inject(AocAdminOpsStore);

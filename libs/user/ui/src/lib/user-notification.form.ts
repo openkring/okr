@@ -1,18 +1,19 @@
 import { AsyncPipe } from "@angular/common";
 import { Component, computed, input, model, output, signal } from "@angular/core";
-import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
+import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
-import { DeliveryTypes } from "@bk2/shared/categories";
-import { DeliveryType, UserModel } from "@bk2/shared/models";
-import { CategoryComponent } from "@bk2/shared/ui";
-import { debugFormErrors } from "@bk2/shared/util-core";
-import { TranslatePipe } from "@bk2/shared/i18n";
+import { DeliveryTypes } from "@bk2/shared-categories";
+import { TranslatePipe } from "@bk2/shared-i18n";
+import { DeliveryType, UserModel } from "@bk2/shared-models";
+import { CategoryComponent } from "@bk2/shared-ui";
+import { debugFormErrors } from "@bk2/shared-util-core";
 
-import { UserNotificationFormModel, userNotificationFormModelShape, userNotificationFormValidations } from "@bk2/user/util";
+import { UserNotificationFormModel, userNotificationFormModelShape, userNotificationFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-notification-form',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,

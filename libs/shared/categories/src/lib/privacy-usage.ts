@@ -1,4 +1,4 @@
-import { CategoryModel, PrivacyUsage } from "@bk2/shared/models";
+import { CategoryModel, PrivacyUsage } from '@bk2/shared-models';
 
 export type PrivacyUsageCategory = CategoryModel;
 

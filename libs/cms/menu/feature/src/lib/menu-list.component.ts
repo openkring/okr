@@ -1,18 +1,20 @@
-import { Component, computed, inject } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { AllCategories, MenuAction, MenuItemModel, RoleName } from '@bk2/shared/models';
-import { CategoryComponent, EmptyListComponent, SearchbarComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { addAllCategory, MenuActions } from '@bk2/shared/categories';
+import { addAllCategory, MenuActions } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AllCategories, MenuAction, MenuItemModel, RoleName } from '@bk2/shared-models';
+import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { CategoryComponent, EmptyListComponent, SearchbarComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
+
 import { MenuItemListStore } from './menu-list.store';
-import { hasRole } from '@bk2/shared/util-core';
 import { MenuStore } from './menu.component.store';
 
 @Component({
   selector: 'bk-menu-item-all-list',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, CategoryNamePipe,
     SearchbarComponent, CategoryComponent, SpinnerComponent, EmptyListComponent,

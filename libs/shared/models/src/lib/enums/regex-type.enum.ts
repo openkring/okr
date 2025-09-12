@@ -1,14 +1,14 @@
 export enum RegexType {
-    SimpleName,     
-    Phone,
-    UserName,
-    Password,
-    Iban,
-    AHVN13,
-    MacAddress,
-    PLZ,
-    CC_Visa_MC,
-    FilePath
+  SimpleName,
+  Phone,
+  UserName,
+  Password,
+  Iban,
+  AHVN13,
+  MacAddress,
+  PLZ,
+  CC_Visa_MC,
+  FilePath,
 }
 
 /*
@@ -47,14 +47,14 @@ export enum RegexType {
     same in strong notation needs backslash excaping: '^[bla]\\d{0.2}+'
 */
 export const REGEXES: string[] = [
-        /.*/.source,
-        /^\+(?:\d ?){6,14}\d$/.source,
-        /^(\(?\+?\d+\)?)?[0-9_\- ()]*$/.source,
-        /^[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$/.source,
-        /(?!^\d*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,15})$/.source,
-        /^[A-Z]{2}(?:[ ]?\d){18,20}$/.source,
-        /^756\.(\d{4})\.(\d{4})\.(\d{2})$/.source,
-        /^([0-9a-fA-F][0-9a-fA-F]:){5}([0-9a-fA-F][0-9a-fA-F])$/.source,
-        /^(\d{4})$/.source,
-        /^(?:4\d{12}(?:\d{3})?|5[1-5]\d{14})$/.source,
-    ];
+  /.*/.source,
+  /^\+(?:\d ?){6,14}\d$/.source,
+  /^(\(?\+?\d+\)?)?[0-9_\- ()]*$/.source,
+  /^[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$/.source,
+  /(?!^\d*$)(?!^[a-zA-Z]*$)^([a-zA-Z0-9]{6,15})$/.source,
+  /^[A-Z]{2}(?:[ ]?\d){18,20}$/.source,
+  /^756\.(\d{4})\.(\d{4})\.(\d{2})$/.source,
+  /^([0-9a-fA-F][0-9a-fA-F]:){5}([0-9a-fA-F][0-9a-fA-F])$/.source,
+  /^(\d{4})$/.source,
+  /^(?:4\d{12}(?:\d{3})?|5[1-5]\d{14})$/.source,
+];

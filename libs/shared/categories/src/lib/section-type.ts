@@ -1,4 +1,4 @@
-import { CategoryModel, SectionType } from '@bk2/shared/models';
+import { CategoryModel, SectionType } from '@bk2/shared-models';
 
 export type SectionTypeCategory = CategoryModel;
 

@@ -1,18 +1,20 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, OnInit, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { hasRole } from '@bk2/shared/util-core';
-import { ModelType, OrgModel, PersonModel, ResourceModel, UserModel, RoleName} from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, OrgModel, PersonModel, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { convertReserverAndResourceToNewForm } from '@bk2/relationship/reservation/util';
+import { convertReserverAndResourceToNewForm } from '@bk2/relationship-reservation-util';
+
 import { ReservationNewFormComponent } from './reservation-new.form';
 
 @Component({
   selector: 'bk-reservation-new-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     HeaderComponent, ReservationNewFormComponent,

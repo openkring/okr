@@ -1,27 +1,28 @@
-import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { IonAccordionGroup, IonContent, IonItem, IonLabel, Platform } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
+import { IonAccordionGroup, IonContent, IonItem, IonLabel, Platform } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
-import { ModelType } from '@bk2/shared/models';
-import { I18nService, TranslatePipe } from '@bk2/shared/i18n';
-import { AppStore } from '@bk2/shared/feature';
-import { debugFormModel } from '@bk2/shared/util-core';
+import { AppStore } from '@bk2/shared-feature';
+import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
+import { debugFormModel } from '@bk2/shared-util-core';
 
-import { AddressesAccordionComponent } from '@bk2/subject/address/feature';
+import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
 
-import { AvatarService } from '@bk2/avatar/data-access';
-import { AvatarToolbarComponent } from '@bk2/avatar/feature';
-import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
+import { AvatarService } from '@bk2/avatar-data-access';
+import { AvatarToolbarComponent } from '@bk2/avatar-feature';
+import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
 
-import { ProfileService } from '@bk2/profile/data-access';
-import { convertPersonalDataFormToPerson, convertPersonToDataForm, convertPrivacyFormToUser, convertSettingsFormToUser, convertUserToPrivacyForm, convertUserToSettingsForm, PersonalDataFormModel, PrivacyFormModel, SettingsFormModel } from '@bk2/profile/util';
-import { ProfileDataAccordionComponent, ProfilePrivacyAccordionComponent, ProfileSettingsAccordionComponent } from '@bk2/profile/ui';
+import { ProfileService } from '@bk2/profile-data-access';
+import { ProfileDataAccordionComponent, ProfilePrivacyAccordionComponent, ProfileSettingsAccordionComponent } from '@bk2/profile-ui';
+import { convertPersonalDataFormToPerson, convertPersonToDataForm, convertPrivacyFormToUser, convertSettingsFormToUser, convertUserToPrivacyForm, convertUserToSettingsForm, PersonalDataFormModel, PrivacyFormModel, SettingsFormModel } from '@bk2/profile-util';
 
 @Component({
   selector: 'bk-profile-page',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     AvatarToolbarComponent, HeaderComponent, AddressesAccordionComponent, ProfileDataAccordionComponent,

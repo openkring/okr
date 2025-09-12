@@ -8,12 +8,12 @@ import { PrivacyUsage } from './enums/privacy-usage.enum';
 import { Roles } from './roles';
 
 export class UserModel implements BkModel, TaggedModel, SearchableModel {
-  public bkey = ''; 
-  public loginEmail = '';           // Firebase Auth Login Email
-  public personKey = '';            // PersonModel.bkey
+  public bkey = '';
+  public loginEmail = ''; // Firebase Auth Login Email
+  public personKey = ''; // PersonModel.bkey
   public firstName = '';
   public lastName = '';
-  public tenants: string[] = [];        // user has always exactly one tenant
+  public tenants: string[] = []; // user has always exactly one tenant
   public isArchived = false;
   public notes = '';
   public index = '';
@@ -25,21 +25,21 @@ export class UserModel implements BkModel, TaggedModel, SearchableModel {
   // settings
   public useTouchId = false;
   public useFaceId = false;
-  public userLanguage = DefaultLanguage; 
-  public avatarUsage = AvatarUsage.PhotoFirst;           // PhotoFirst
+  public userLanguage = DefaultLanguage;
+  public avatarUsage = AvatarUsage.PhotoFirst; // PhotoFirst
   public gravatarEmail = '';
-  public nameDisplay = NameDisplay.FirstLast;           // FirstLast
+  public nameDisplay = NameDisplay.FirstLast; // FirstLast
   public useDisplayName = false;
-  public personSortCriteria = PersonSortCriteria.Lastname;    // Lastname
-  public newsDelivery = DeliveryType.EmailAttachment;          // EmailAttachment
-  public invoiceDelivery = DeliveryType.EmailAttachment;       // EmailAttachment  
+  public personSortCriteria = PersonSortCriteria.Lastname; // Lastname
+  public newsDelivery = DeliveryType.EmailAttachment; // EmailAttachment
+  public invoiceDelivery = DeliveryType.EmailAttachment; // EmailAttachment
   public showArchivedData = false;
   public showDebugInfo = false;
   public showHelpers = true;
 
   // privacy restrictions
   public usage_images = PrivacyUsage.Public;
-  public usage_dateOfBirth = PrivacyUsage.Restricted; 
+  public usage_dateOfBirth = PrivacyUsage.Restricted;
   public usage_postalAddress = PrivacyUsage.Restricted;
   public usage_email = PrivacyUsage.Restricted;
   public usage_phone = PrivacyUsage.Restricted;

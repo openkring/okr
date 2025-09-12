@@ -1,17 +1,18 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, input, model, output } from '@angular/core';
-import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
+import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
+import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { ChPhoneMask, MaskPredicate } from '@bk2/shared/config';
-import { PHONE_LENGTH } from '@bk2/shared/constants';
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { ChPhoneMask, MaskPredicate } from '@bk2/shared-config';
+import { PHONE_LENGTH } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { ButtonCopyComponent } from './button-copy.component';
 
 @Component({
   selector: 'bk-phone',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     MaskitoDirective, FormsModule, 

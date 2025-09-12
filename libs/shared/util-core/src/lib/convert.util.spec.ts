@@ -1,4 +1,5 @@
-import { safeConvertString, safeConvertNumber, safeConvertBoolean, string2boolean, string2numberArray, stringArray2ObjectArray, stripHtml } from './convert.util';
+import { describe, expect, it } from 'vitest';
+import { safeConvertBoolean, safeConvertNumber, safeConvertString, string2boolean, string2numberArray, stringArray2ObjectArray, stripHtml } from './convert.util';
 
 describe('convert.util', () => {
 

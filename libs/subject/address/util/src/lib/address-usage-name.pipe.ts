@@ -1,11 +1,13 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { AddressUsages } from '@bk2/shared/categories';
-import { bkTranslate } from '@bk2/shared/i18n';
-import { AddressUsage } from '@bk2/shared/models';
+
+import { AddressUsages } from '@bk2/shared-categories';
+import { bkTranslate } from '@bk2/shared-i18n';
+import { AddressUsage } from '@bk2/shared-models';
 
 // address.usage | addressUsageName:address.usageLabel
 @Pipe({
   name: 'addressUsageName',
+  standalone: true
 })
 export class AddressUsageNamePipe implements PipeTransform {
 

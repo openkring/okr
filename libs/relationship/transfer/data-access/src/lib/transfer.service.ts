@@ -1,12 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
-import { TransferCollection, TransferModel, UserModel } from '@bk2/shared/models';
-import { findByKey, getSystemQuery } from '@bk2/shared/util-core';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { ENV } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { TransferCollection, TransferModel, UserModel } from '@bk2/shared-models';
+import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
-import { getTransferSearchIndex, getTransferSearchIndexInfo } from '@bk2/relationship/transfer/util';
+import { getTransferSearchIndex, getTransferSearchIndexInfo } from '@bk2/relationship-transfer-util';
 
 @Injectable({
   providedIn: 'root'

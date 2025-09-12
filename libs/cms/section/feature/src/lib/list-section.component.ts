@@ -1,11 +1,12 @@
 import { Component, input } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared/models';
-import { SpinnerComponent } from '@bk2/shared/ui';
+import { SectionModel } from '@bk2/shared-models';
+import { SpinnerComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-list-section',
+  standalone: true,
   imports: [
     SpinnerComponent,
     IonCard, IonCardContent

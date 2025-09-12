@@ -1,5 +1,5 @@
 export enum ApplicationType {
-    Active,
-    Junior,
-    Candidate
+  Active,
+  Junior,
+  Candidate,
 }

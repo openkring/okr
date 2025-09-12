@@ -1,5 +1,5 @@
 
-import { CategoryModel, WorkingRelType } from '@bk2/shared/models';
+import { CategoryModel, WorkingRelType } from '@bk2/shared-models';
 
 export type WorkingRelTypeCategory = CategoryModel;
 

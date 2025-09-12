@@ -1,17 +1,17 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
-import { AddressModel, ModelType, OrgModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
-import { debugItemLoaded } from '@bk2/shared/util-core';
-import { AppNavigationService } from '@bk2/shared/util-angular';
+import { ENV } from '@bk2/shared-config';
+import { AppStore } from '@bk2/shared-feature';
+import { AddressModel, ModelType, OrgModel } from '@bk2/shared-models';
+import { AppNavigationService } from '@bk2/shared-util-angular';
+import { debugItemLoaded } from '@bk2/shared-util-core';
 
-import { OrgService } from '@bk2/subject/org/data-access';
-import { convertFormToOrg, OrgFormModel } from '@bk2/subject/org/util';
+import { OrgService } from '@bk2/subject-org-data-access';
+import { convertFormToOrg, OrgFormModel } from '@bk2/subject-org-util';
 
 export type OrgEditState = {
   orgKey: string | undefined;

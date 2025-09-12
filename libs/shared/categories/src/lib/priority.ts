@@ -1,4 +1,4 @@
-import { CategoryModel, Priority } from '@bk2/shared/models';
+import { CategoryModel, Priority } from '@bk2/shared-models';
 
 export type PriorityCategory = CategoryModel;
 

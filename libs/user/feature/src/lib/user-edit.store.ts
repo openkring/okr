@@ -1,13 +1,14 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
-import { AppStore } from '@bk2/shared/feature';
-import { debugItemLoaded } from '@bk2/shared/util-core';
-import { AppNavigationService } from '@bk2/shared/util-angular';
-import { UserService } from '@bk2/user/data-access';
-import { ModelType, UserModel } from '@bk2/shared/models';
+
+import { AppStore } from '@bk2/shared-feature';
+import { ModelType, UserModel } from '@bk2/shared-models';
+import { AppNavigationService } from '@bk2/shared-util-angular';
+import { debugItemLoaded } from '@bk2/shared-util-core';
+
+import { UserService } from '@bk2/user-data-access';
 
 export type UserEditState = {
   userKey: string | undefined;

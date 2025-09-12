@@ -1,9 +1,11 @@
 
-import { only, staticSuite} from 'vest';
+import { only, staticSuite } from 'vest';
+
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { LocationType } from '@bk2/shared-models';
+import { categoryValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
+
 import { LocationFormModel } from './location-form.model';
-import { categoryValidations, numberValidations, stringValidations } from '@bk2/shared/util-core';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { LocationType } from '@bk2/shared/models';
 
 export const locationFormValidations = staticSuite((model: LocationFormModel, field?: string) => {
   if (field) only(field);

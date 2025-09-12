@@ -2,12 +2,13 @@ import { AsyncPipe } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { IonButton, IonIcon, ToastController } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { copyToClipboard, showToast } from '@bk2/shared/util-angular';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-button-copy',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonIcon, IonButton

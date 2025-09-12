@@ -1,4 +1,4 @@
-import { CategoryModel, RelationshipState } from '@bk2/shared/models';
+import { CategoryModel, RelationshipState } from '@bk2/shared-models';
 
 export type RelationshipStateCategory = CategoryModel;
 

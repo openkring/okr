@@ -1,8 +1,10 @@
-import { only, staticSuite} from 'vest';
-import { booleanValidations, categoryValidations, stringValidations } from '@bk2/shared/util-core';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared/constants';
+import { only, staticSuite } from 'vest';
+
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { ModelType } from '@bk2/shared-models';
+import { booleanValidations, categoryValidations, stringValidations } from '@bk2/shared-util-core';
+
 import { GroupFormModel } from './group-form.model';
-import { ModelType } from '@bk2/shared/models';
 
 
 export const groupFormValidations = staticSuite((model: GroupFormModel, field?: string) => {

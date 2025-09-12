@@ -2,20 +2,21 @@ import { Component, computed, input, model, output, signal } from '@angular/core
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { GenderType, ModelType, WorkingRelType, UserModel, OrgType, WorkingRelState, Periodicity, RoleName } from '@bk2/shared/models';
-import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
+import { GenderType, ModelType, OrgType, Periodicity, RoleName, UserModel, WorkingRelState, WorkingRelType } from '@bk2/shared-models';
+import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
-import { FullNamePipe } from '@bk2/shared/pipes';
 import { AsyncPipe } from '@angular/common';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { WorkingRelFormModel, workingRelFormModelShape, workingRelFormValidations } from '@bk2/relationship/working-rel/util';
-import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared/categories';
+import { WorkingRelFormModel, workingRelFormModelShape, workingRelFormValidations } from '@bk2/relationship-working-rel-util';
+import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { FullNamePipe } from '@bk2/shared-pipes';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
+import { AvatarPipe } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-working-rel-form',
+  standalone: true,
   imports: [
     vestForms,
     AvatarPipe, AsyncPipe, FullNamePipe, TranslatePipe,

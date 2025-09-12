@@ -1,17 +1,18 @@
-import { Component, effect, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, effect, inject, input } from '@angular/core';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared/util-core';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/models';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { RoleName } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
-import { SectionComponent } from '@bk2/cms/section/feature';
+import { SectionComponent } from '@bk2/cms-section-feature';
 import { PageDetailStore } from './page-detail.store';
 
 @Component({
   selector: 'bk-content',
+  standalone: true,
   imports: [
     SectionComponent,
     TranslatePipe, AsyncPipe, SvgIconPipe,

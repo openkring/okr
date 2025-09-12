@@ -1,19 +1,20 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { hasRole } from '@bk2/shared/util-core';
-import { ModelType, OrgModel, PersonModel, UserModel, RoleName} from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, OrgModel, PersonModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { convertPersonAndOrgToNewForm } from '@bk2/relationship/working-rel/util';
-import { WorkingRelNewFormComponent } from '@bk2/relationship/working-rel/ui';
+import { WorkingRelNewFormComponent } from '@bk2/relationship-working-rel-ui';
+import { convertPersonAndOrgToNewForm } from '@bk2/relationship-working-rel-util';
 import { WorkingRelModalsService } from './working-rel-modals.service';
 
 @Component({
   selector: 'bk-working-rel-new-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     HeaderComponent, WorkingRelNewFormComponent,

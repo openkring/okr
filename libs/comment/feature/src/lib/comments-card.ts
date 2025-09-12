@@ -1,15 +1,18 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { Observable } from 'rxjs';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid } from '@ionic/angular/standalone';
+import { Observable } from 'rxjs';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CommentModel } from '@bk2/shared/models';
-import { CommentHeaderComponent, CommentInputComponent, CommentsListComponent } from '@bk2/comment/ui';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CommentModel } from '@bk2/shared-models';
+
+import { CommentHeaderComponent, CommentInputComponent, CommentsListComponent } from '@bk2/comment-ui';
+
 import { CommentListStore } from './comment-list.store';
 
 @Component({
   selector: 'bk-comments-card',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonGrid, IonCard, IonCardContent, IonCardHeader, IonCardTitle,

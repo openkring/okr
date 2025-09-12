@@ -5,7 +5,9 @@ export * from './lib/copy.util';
 export * from './lib/country-name.pipe';
 export * from './lib/download.util';
 export * from './lib/geo.util';
+export * from './lib/html.util';
 export * from './lib/iban.util';
 export * from './lib/item-color.pipe';
 export * from './lib/phone.util';
 export * from './lib/route.util';
+

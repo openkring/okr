@@ -1,5 +1,5 @@
 {
-  "name": "cms/menu/data-access",
+  "name": "cms-menu-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/cms/menu/data-access/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/cms/menu/data-access",
         "main": "libs/cms/menu/data-access/src/index.ts",
         "tsConfig": "libs/cms/menu/data-access/tsconfig.lib.json",
-        "assets": ["libs/cms/menu/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/cms/menu/data-access/jest.config.ts"
+        "assets": ["libs/cms/menu/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

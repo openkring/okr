@@ -1,4 +1,4 @@
-import { AddressUsage, CategoryModel } from '@bk2/shared/models';
+import { AddressUsage, CategoryModel } from '@bk2/shared-models';
 
 export type AddressUsageCategory = CategoryModel; 
 
@@ -28,6 +28,6 @@ export const AddressUsages: AddressUsageCategory[] = [{
   abbreviation: 'CSTM',
   name: 'custom',
   i18nBase: 'subject.address.usage.custom',
-  icon: 'eddit'
+  icon: 'edit'
 }
 ]

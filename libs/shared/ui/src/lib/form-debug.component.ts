@@ -1,11 +1,13 @@
 import { Component, input } from '@angular/core';
-import { BkFormModel } from '@bk2/shared/models';
-import { PrettyjsonPipe } from '@bk2/shared/pipes';
 import { IonButton, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { Suite } from 'vest';
 
+import { BkFormModel } from '@bk2/shared-models';
+import { PrettyjsonPipe } from '@bk2/shared-pipes';
+
 @Component({
   selector: 'bk-form-debug',
+  standalone: true,
   imports: [
     PrettyjsonPipe,
     IonRow, IonGrid, IonCol, IonButton

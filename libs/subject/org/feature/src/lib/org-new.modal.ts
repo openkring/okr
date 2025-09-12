@@ -1,17 +1,18 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { ModelType, UserModel} from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
-import { createNewOrgFormModel } from '@bk2/subject/org/util';
-import { OrgNewFormComponent } from '@bk2/subject/org/ui';
+import { OrgNewFormComponent } from '@bk2/subject-org-ui';
+import { createNewOrgFormModel } from '@bk2/subject-org-util';
 
 @Component({
   selector: 'bk-org-new-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     HeaderComponent, ChangeConfirmationComponent, OrgNewFormComponent,

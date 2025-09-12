@@ -1,10 +1,10 @@
-import { Component, computed, inject, input, model, output } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { getNonSelectedChips, string2stringArray } from '@bk2/shared/util-core';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { getNonSelectedChips, string2stringArray } from '@bk2/shared-util-core';
 import { ChipSelectModalComponent } from './chip-select.modal';
 
 /**
@@ -14,6 +14,7 @@ import { ChipSelectModalComponent } from './chip-select.modal';
  */
 @Component({
   selector: 'bk-chips',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonItem, IonLabel, IonIcon, IonChip, IonButton,

@@ -1,7 +1,9 @@
 
-import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { dateValidations, stringValidations } from '@bk2/shared/util-core';
-import { only, staticSuite} from 'vest';
+import { only, staticSuite } from 'vest';
+
+import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { dateValidations, stringValidations } from '@bk2/shared-util-core';
+
 import { MembershipNewFormModel } from './membership-new-form.model';
 
 export const membershipNewFormValidations = staticSuite((model: MembershipNewFormModel, field?: string) => {

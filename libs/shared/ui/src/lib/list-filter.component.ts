@@ -1,12 +1,14 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { IonCol, IonGrid, IonRow, IonToolbar } from '@ionic/angular/standalone';
-import { AllCategories, CategoryListModel, CategoryModel } from '@bk2/shared/models';
-import { SearchbarComponent } from './searchbar.component';
-import { SingleTagComponent } from './single-tag.component';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AsyncPipe } from '@angular/common';
+
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AllCategories, CategoryListModel, CategoryModel } from '@bk2/shared-models';
+
 import { CategorySelectComponent } from './category-select.component';
 import { CategoryComponent } from './category.component';
+import { SearchbarComponent } from './searchbar.component';
+import { SingleTagComponent } from './single-tag.component';
 import { YearSelectComponent } from './year-select.component';
 
 /**
@@ -23,6 +25,7 @@ import { YearSelectComponent } from './year-select.component';
  */
 @Component({
   selector: 'bk-list-filter',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     SearchbarComponent, SingleTagComponent, CategorySelectComponent, CategoryComponent, YearSelectComponent,

@@ -1,32 +1,29 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { ModelType, PageModel, UserModel, RoleName } from '@bk2/shared/models';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { hasRole } from '@bk2/shared/util-core';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, PageModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { convertFormToPage, convertPageToForm, PageFormModel } from '@bk2/cms/page/util';
-import { PageFormComponent } from '@bk2/cms/page/ui';
+import { PageFormComponent } from '@bk2/cms-page-ui';
+import { convertFormToPage, convertPageToForm } from '@bk2/cms-page-util';
 
 @Component({
   selector: 'bk-page-edit-modal',
-  imports: [
-    TranslatePipe, AsyncPipe,
-    HeaderComponent, ChangeConfirmationComponent, PageFormComponent,
-    IonContent
-  ],
+  standalone: true,
+  imports: [TranslatePipe, AsyncPipe, HeaderComponent, ChangeConfirmationComponent, PageFormComponent, IonContent],
   template: `
     <bk-header title="{{ '@content.page.operation.update.label' | translate | async }}" [isModal]="true" />
     @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
-    } 
+    <bk-change-confirmation (okClicked)="save()" />
+    }
     <ion-content>
       <bk-page-form [(vm)]="vm" [currentUser]="currentUser()" [pageTags]="pageTags()" (validChange)="formIsValid.set($event)" />
     </ion-content>
-  `
+  `,
 })
 export class PageEditModalComponent {
   private readonly modalController = inject(ModalController);
@@ -40,7 +37,7 @@ export class PageEditModalComponent {
   protected formIsValid = signal(false);
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToPage(this.page(), this.vm() as PageFormModel, this.appStore.tenantId()), 'confirm');
+    return this.modalController.dismiss(convertFormToPage(this.page(), this.vm(), this.appStore.tenantId()), 'confirm');
   }
 
   protected hasRole(role: RoleName): boolean {

@@ -1,32 +1,34 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
+import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalone';
 
-import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
-import { ModelType, PersonCollection, RoleName } from '@bk2/shared/models';
-import { getFullPersonName, hasRole } from '@bk2/shared/util-core';
+import { ENV } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, PersonCollection, RoleName } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
+import { getFullPersonName, hasRole } from '@bk2/shared-util-core';
 
-import { AvatarService } from '@bk2/avatar/data-access';
+import { AvatarService } from '@bk2/avatar-data-access';
 
-import { AddressesAccordionComponent } from '@bk2/subject/address/feature';
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { MembershipAccordionComponent } from '@bk2/relationship/membership/feature';
-import { OwnershipAccordionComponent } from '@bk2/relationship/ownership/feature';
-import { ReservationsAccordionComponent } from '@bk2/relationship/reservation/feature';
-import { PersonalRelAccordionComponent } from '@bk2/relationship/personal-rel/feature';
-import { WorkingRelAccordionComponent } from '@bk2/relationship/working-rel/feature';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { MembershipAccordionComponent } from '@bk2/relationship-membership-feature';
+import { OwnershipAccordionComponent } from '@bk2/relationship-ownership-feature';
+import { PersonalRelAccordionComponent } from '@bk2/relationship-personal-rel-feature';
+import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
+import { WorkingRelAccordionComponent } from '@bk2/relationship-working-rel-feature';
+import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
 
-import { convertPersonToForm } from '@bk2/subject/person/util';
-import { PersonFormComponent } from '@bk2/subject/person/ui';
+import { AvatarToolbarComponent } from '@bk2/avatar-feature';
+import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
+import { PersonFormComponent } from '@bk2/subject-person-ui';
+import { convertPersonToForm } from '@bk2/subject-person-util';
+
 import { PersonEditStore } from './person-edit.store';
-import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
-import { AvatarToolbarComponent } from '@bk2/avatar/feature';
 
 @Component({
   selector: 'bk-person-edit-page',
+  standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
     PersonFormComponent, AvatarToolbarComponent, AddressesAccordionComponent, CommentsAccordionComponent,

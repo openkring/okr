@@ -1,13 +1,14 @@
-import { Component, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, input } from '@angular/core';
 import { IonCol, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { PrettyDatePipe } from '@bk2/shared/pipes';
-import { CommentModel } from '@bk2/shared/models';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CommentModel } from '@bk2/shared-models';
+import { PrettyDatePipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-comments-list',
+  standalone: true,
   imports: [
     PrettyDatePipe, TranslatePipe, AsyncPipe,
     IonRow, IonCol,

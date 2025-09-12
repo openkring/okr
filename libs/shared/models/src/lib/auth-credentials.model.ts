@@ -5,5 +5,5 @@ export type AuthCredentials = {
 
 export const authCredentialsShape: AuthCredentials = {
   loginEmail: '',
-  loginPassword: ''
+  loginPassword: '',
 };

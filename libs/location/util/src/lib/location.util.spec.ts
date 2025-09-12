@@ -1,45 +1,85 @@
-import { getDirectionFromAzimuth, DirectionFormat } from './location.util';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { LocationModel } from '@bk2/shared-models';
+import * as coreUtils from '@bk2/shared-util-core';
+import { isLocation, convertLocationToForm, convertFormToLocation } from './location.util';
+import { LocationFormModel } from './location-form.model';
 
-describe('getDirectionFromAzimuth function', () => {
-  it('should return the correct direction abbreviation for different azimuth angles', () => {
-    expect(getDirectionFromAzimuth(0)).toBe('N');
-    expect(getDirectionFromAzimuth(22)).toBe('N');
-    expect(getDirectionFromAzimuth(23)).toBe('NE');
-    expect(getDirectionFromAzimuth(67)).toBe('NE');
-    expect(getDirectionFromAzimuth(68)).toBe('E');
-    expect(getDirectionFromAzimuth(112)).toBe('E');
-    expect(getDirectionFromAzimuth(113)).toBe('SE');
-    expect(getDirectionFromAzimuth(157)).toBe('SE');
-    expect(getDirectionFromAzimuth(158)).toBe('S');
-    expect(getDirectionFromAzimuth(202)).toBe('S');
-    expect(getDirectionFromAzimuth(203)).toBe('SW');
-    expect(getDirectionFromAzimuth(247)).toBe('SW');
-    expect(getDirectionFromAzimuth(248)).toBe('W');
-    expect(getDirectionFromAzimuth(292)).toBe('W');
-    expect(getDirectionFromAzimuth(293)).toBe('NW');
-    expect(getDirectionFromAzimuth(337)).toBe('NW');
-    expect(getDirectionFromAzimuth(338)).toBe('N');
-    expect(getDirectionFromAzimuth(360)).toBe('N');
+// Mock shared utility functions
+vi.mock('@bk2/shared-util-core', async importOriginal => {
+  const actual = await importOriginal<typeof coreUtils>();
+  return {
+    ...actual,
+    isType: vi.fn(),
+  };
+});
+
+describe('Location Utils', () => {
+  const mockIsType = vi.mocked(coreUtils.isType);
+  const tenantId = 'tenant-1';
+  let location: LocationModel;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    location = new LocationModel(tenantId);
+    location.bkey = 'loc-1';
+    location.name = 'Main Office';
+    location.address = '123 Main St';
+    location.latitude = 12345;
+    location.longitude = 67890;
+    location.what3words = 'bla.bla.bla';
+    location.notes = 'Some notes';
   });
 
-  it('should return the correct full direction name for different azimuth angles', () => {
-    expect(getDirectionFromAzimuth(0, DirectionFormat.Name)).toBe('Nord');
-    expect(getDirectionFromAzimuth(22, DirectionFormat.Name)).toBe('Nord');
-    expect(getDirectionFromAzimuth(23, DirectionFormat.Name)).toBe('Nordost');
-    expect(getDirectionFromAzimuth(67, DirectionFormat.Name)).toBe('Nordost');
-    expect(getDirectionFromAzimuth(68, DirectionFormat.Name)).toBe('Ost');
-    expect(getDirectionFromAzimuth(112, DirectionFormat.Name)).toBe('Ost');
-    expect(getDirectionFromAzimuth(113, DirectionFormat.Name)).toBe('Südost');
-    expect(getDirectionFromAzimuth(157, DirectionFormat.Name)).toBe('Südost');
-    expect(getDirectionFromAzimuth(158, DirectionFormat.Name)).toBe('Süd');
-    expect(getDirectionFromAzimuth(202, DirectionFormat.Name)).toBe('Süd');
-    expect(getDirectionFromAzimuth(203, DirectionFormat.Name)).toBe('Südwest');
-    expect(getDirectionFromAzimuth(247, DirectionFormat.Name)).toBe('Südwest');
-    expect(getDirectionFromAzimuth(248, DirectionFormat.Name)).toBe('West');
-    expect(getDirectionFromAzimuth(292, DirectionFormat.Name)).toBe('West');
-    expect(getDirectionFromAzimuth(293, DirectionFormat.Name)).toBe('Nordwest');
-    expect(getDirectionFromAzimuth(337, DirectionFormat.Name)).toBe('Nordwest');
-    expect(getDirectionFromAzimuth(338, DirectionFormat.Name)).toBe('Nord');
-    expect(getDirectionFromAzimuth(360, DirectionFormat.Name)).toBe('Nord');
+  describe('isLocation', () => {
+    it('should use the isType utility to check the object type', () => {
+      mockIsType.mockReturnValue(true);
+      expect(isLocation({}, tenantId)).toBe(true);
+      expect(mockIsType).toHaveBeenCalledWith({}, expect.any(LocationModel));
+
+      mockIsType.mockReturnValue(false);
+      expect(isLocation({}, tenantId)).toBe(false);
+    });
+  });
+
+  describe('convertLocationToForm', () => {
+    it('should convert a LocationModel to a LocationFormModel', () => {
+      const formModel = convertLocationToForm(location);
+      expect(formModel.bkey).toBe('loc-1');
+      expect(formModel.name).toBe('Main Office');
+      expect(formModel.address).toBe('123 Main St');
+    });
+  });
+
+  describe('convertFormToLocation', () => {
+    let formModel: LocationFormModel;
+
+    beforeEach(() => {
+      formModel = {
+        bkey: 'loc-1',
+        name: 'Updated Office',
+        address: '456 New Ave',
+        latitude: '99999',
+        longitude: '555555',
+        what3words: 'new.bla.bla',
+        notes: 'Updated notes',
+      };
+    });
+
+    it('should update an existing LocationModel from a form model', () => {
+      const updatedLocation = convertFormToLocation(location, formModel, tenantId);
+      expect(updatedLocation.name).toBe('Updated Office');
+      expect(updatedLocation.address).toBe('456 New Ave');
+      expect(updatedLocation.latitude).toBe(99999);
+      expect(updatedLocation.longitude).toBe(555555);
+      expect(updatedLocation.what3words).toBe('new.bla.bla');
+      expect(updatedLocation.notes).toBe('Updated notes');
+    });
+
+    it('should create a new LocationModel if one is not provided', () => {
+      const newLocation = convertFormToLocation(undefined, formModel, tenantId);
+      expect(newLocation).toBeInstanceOf(LocationModel);
+      expect(newLocation.name).toBe('Updated Office');
+      expect(newLocation.tenants[0]).toBe(tenantId);
+    });
   });
 });

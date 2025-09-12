@@ -1,17 +1,17 @@
-import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { computed, inject } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { collection, query } from 'firebase/firestore';
-import { collectionData } from 'rxfire/firestore';
 import { authState } from 'rxfire/auth';
+import { collectionData } from 'rxfire/firestore';
 import { Observable, of } from 'rxjs';
 
-import { AUTH, ENV, FIRESTORE } from '@bk2/shared/config';
-import { AddressCollection, AddressModel, AppConfig, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared/models';
-import { getSystemQuery } from '@bk2/shared/util-core';
+import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AddressCollection, AddressModel, AppConfig, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { getSystemQuery } from '@bk2/shared-util-core';
 
 import { AppConfigService } from './app-config.service';
-import { FirestoreService } from '@bk2/shared/data-access';
 
 export type AppState = {
   tenantId: string;

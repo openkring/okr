@@ -1,25 +1,27 @@
 {
-  "name": "shared/util-angular",
+  "name": "shared-util-angular",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/util-angular/src",
-  "prefix": "lib",
+  "prefix": "bk",
   "projectType": "library",
   "tags": ["type:util", "scope:shared", "platform:mobile", "platform:web"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/shared/util-angular",
         "main": "libs/shared/util-angular/src/index.ts",
         "tsConfig": "libs/shared/util-angular/tsconfig.lib.json",
-        "assets": []
+        "assets": ["libs/shared/util-angular/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "test": {
-      "executor": "@nx/jest:jest",
+      "executor": "@nx/vite:test",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/shared/util-angular/jest.config.ts"
+        "configFile": "libs/shared/util-angular/vite.config.ts"
       }
     },
     "lint": {

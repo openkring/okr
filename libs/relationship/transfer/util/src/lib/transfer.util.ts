@@ -1,7 +1,7 @@
-import { DefaultResourceInfo, ModelType, OrgModel, Periodicity, PersonModel, ResourceInfo, ResourceModel, TransferModel, TransferState, TransferType } from "@bk2/shared/models";
-import { addIndexElement, getAvatarInfoArray, getAvatarKeys, getAvatarNames, getTodayStr, isType } from "@bk2/shared/util-core";
+import { DefaultResourceInfo, ModelType, OrgModel, Periodicity, PersonModel, ResourceInfo, ResourceModel, TransferModel, TransferState, TransferType } from '@bk2/shared-models';
+import { addIndexElement, getAvatarInfoArray, getAvatarKeys, getAvatarNames, getTodayStr, isType } from '@bk2/shared-util-core';
 
-import { TransferFormModel } from "./transfer-form.model";
+import { TransferFormModel } from './transfer-form.model';
 
 export function newTransferFormModel(subject?: PersonModel | OrgModel, subjectModelType?: ModelType, object?: PersonModel | OrgModel, objectModelType?: ModelType, resource?: ResourceModel): TransferFormModel {
   return {
@@ -23,7 +23,7 @@ export function newTransferFormModel(subject?: PersonModel | OrgModel, subjectMo
     // price
     price: 0,
     currency: 'CHF',
-    periodicity: Periodicity.Once
+    periodicity: Periodicity.Once,
   };
 }
 
@@ -33,32 +33,32 @@ function getResourceInfo(resource?: ResourceModel): ResourceInfo {
     key: resource.bkey,
     name: resource.name,
     type: resource.type,
-    subType: resource.subType
+    subType: resource.subType,
   };
 }
 
 export function convertTransferToForm(transfer: TransferModel | undefined): TransferFormModel {
   if (!transfer) return newTransferFormModel();
   return {
-      bkey: transfer.bkey ?? '',
-      name: transfer.name ?? '',
-      tags: transfer.tags ?? '',
-      notes: transfer.notes ?? '',
+    bkey: transfer.bkey ?? '',
+    name: transfer.name ?? '',
+    tags: transfer.tags ?? '',
+    notes: transfer.notes ?? '',
 
-      subjects: transfer.subjects ?? [],
-      objects: transfer.objects ?? [],
-      resource: transfer.resource ?? DefaultResourceInfo,
+    subjects: transfer.subjects ?? [],
+    objects: transfer.objects ?? [],
+    resource: transfer.resource ?? DefaultResourceInfo,
 
-      // transfer
-      dateOfTransfer: transfer.dateOfTransfer ?? getTodayStr(),
-      type: transfer.type ?? TransferType.Purchase,
-      state: transfer.state ?? TransferState.Initial,
-      label: transfer.label ?? '',
+    // transfer
+    dateOfTransfer: transfer.dateOfTransfer ?? getTodayStr(),
+    type: transfer.type ?? TransferType.Purchase,
+    state: transfer.state ?? TransferState.Initial,
+    label: transfer.label ?? '',
 
-      // price
-      price: transfer.price ?? 0,
-      currency: transfer.currency ?? 'CHF', 
-      periodicity: transfer.periodicity ?? Periodicity.Once
+    // price
+    price: transfer.price ?? 0,
+    currency: transfer.currency ?? 'CHF',
+    periodicity: transfer.periodicity ?? Periodicity.Once,
   };
 }
 
@@ -112,7 +112,7 @@ export function getTransferSearchIndex(transfer: TransferModel): string {
   _index = addIndexElement(_index, 'ok', getAvatarKeys(transfer.objects));
   _index = addIndexElement(_index, 'rn', transfer.resource.name);
   _index = addIndexElement(_index, 'rk', transfer.resource.key);
-  return _index;  
+  return _index;
 }
 
 /**

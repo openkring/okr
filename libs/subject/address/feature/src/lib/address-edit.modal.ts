@@ -2,15 +2,18 @@ import { AsyncPipe } from "@angular/common";
 import { Component, computed, inject, input, linkedSignal, signal } from "@angular/core";
 import { IonContent, ModalController } from "@ionic/angular/standalone";
 
-import { TranslatePipe } from "@bk2/shared/i18n";
-import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared/ui";
-import { ENV } from "@bk2/shared/config";
-import { AddressModel, UserModel } from "@bk2/shared/models";
-import { convertAddressToForm, convertFormToAddress, getAddressModalTitle } from "@bk2/subject/address/util";
+import { ENV } from "@bk2/shared-config";
+import { TranslatePipe } from "@bk2/shared-i18n";
+import { AddressModel, UserModel } from "@bk2/shared-models";
+import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared-ui";
+
+import { convertAddressToForm, convertFormToAddress, getAddressModalTitle } from "@bk2/subject-address-util";
+
 import { AddressFormComponent } from "./address.form";
 
 @Component({
   selector: 'bk-address-edit-modal',
+  standalone: true,
   imports: [
     AddressFormComponent, HeaderComponent, ChangeConfirmationComponent,
     IonContent,

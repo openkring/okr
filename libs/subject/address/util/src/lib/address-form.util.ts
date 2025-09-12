@@ -1,7 +1,8 @@
-import { AddressChannel, AddressModel, AddressUsage } from "@bk2/shared/models";
+import { AddressChannel, AddressModel, AddressUsage } from "@bk2/shared-models";
+import { formatIban, IbanFormat } from "@bk2/shared-util-angular";
+import { die, isType, replaceEndingSlash, replaceSubstring } from "@bk2/shared-util-core";
+
 import { AddressFormModel } from "./address-form.model";
-import { die, isType, replaceEndingSlash, replaceSubstring } from "@bk2/shared/util-core";
-import { formatIban, IbanFormat } from "@bk2/shared/util-angular";
 
 export function newAddressFormModel(): AddressFormModel {
   return {

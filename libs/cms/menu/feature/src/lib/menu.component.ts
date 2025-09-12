@@ -1,20 +1,21 @@
-import { Component, computed, effect, forwardRef, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, effect, forwardRef, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonAccordion, IonAccordionGroup, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
+import { IonAccordion, IonAccordionGroup, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
 
-import { die, hasRole, isInSplitPane, warn } from '@bk2/shared/util-core';
-import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { MenuAction, MenuItemModel, RoleName } from '@bk2/shared/models';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { SpinnerComponent } from '@bk2/shared/ui';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { MenuAction, MenuItemModel, RoleName } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SpinnerComponent } from '@bk2/shared-ui';
+import { AppNavigationService, isInSplitPane, navigateByUrl } from '@bk2/shared-util-angular';
+import { die, hasRole, warn } from '@bk2/shared-util-core';
 
-import { getTarget } from '@bk2/cms/menu/util';
+import { AuthService } from '@bk2/auth-data-access';
+import { getTarget } from '@bk2/cms-menu-util';
+
 import { MenuStore } from './menu.component.store';
-import { AuthService } from '@bk2/auth/data-access';
 
 @Component({
   selector: 'bk-menu',

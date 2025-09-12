@@ -1,16 +1,17 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } from '@bk2/shared/models';
-import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util-core';
-import { confirm } from '@bk2/shared/util-angular';
-import { AppStore } from '@bk2/shared/feature';
-import { selectDate } from '@bk2/shared/ui';
+import { AppStore } from '@bk2/shared-feature';
+import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } from '@bk2/shared-models';
+import { selectDate } from '@bk2/shared-ui';
+import { confirm } from '@bk2/shared-util-angular';
+import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared-util-core';
 
-import { ReservationService } from '@bk2/relationship/reservation/data-access';
+import { ReservationService } from '@bk2/relationship-reservation-data-access';
+
 import { ReservationModalsService } from './reservation-modals.service';
 
 export type ReservationsAccordionState = {

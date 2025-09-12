@@ -1,19 +1,24 @@
 {
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "es2022",
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "types": ["node", "vitest"],
+    "declaration": true
   },
-  "files": [],
-  "include": [],
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "strictInjectionParameters": true,
+    "fullTemplateTypeCheck": true,
+    "disableTypeScriptVersionCheck": true,
+    "compileNonExportedClasses": true,
+    "skipTemplateCodegen": false
+  },
+  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": ["dist/**/*"],
   "references": [
-    {
-      "path": "./tsconfig.lib.json"
-    }
-  ],
-  "extends": "../../../tsconfig.base.json"
+    {"path": "../../shared/models/tsconfig.lib.json"},
+    {"path": "../../shared/config/tsconfig.lib.json"},
+    {"path": "../../shared/util-angular/tsconfig.lib.json"},
+    {"path": "../../shared/util-core/tsconfig.lib.json"},
+    {"path": "../../comment/util/tsconfig.lib.json"}
+  ]
 }

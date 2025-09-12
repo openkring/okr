@@ -5,6 +5,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  */
 @Pipe({
   name: 'round',
+  standalone: true
 })
 export class RoundFloatPipe implements PipeTransform {
   transform(floatNumber: number | string): number {

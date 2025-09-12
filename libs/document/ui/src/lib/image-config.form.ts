@@ -2,13 +2,15 @@ import { Component, computed, input, model, output, signal } from '@angular/core
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { ErrorNoteComponent, TextInputComponent } from '@bk2/shared/ui';
-import { Image, UserModel } from '@bk2/shared/models';
-import { imageConfigFormModelShape, imageConfigValidations } from '@bk2/document/util';
-import { debugFormErrors } from '@bk2/shared/util-core';
+import { Image, UserModel } from '@bk2/shared-models';
+import { ErrorNoteComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors } from '@bk2/shared-util-core';
+
+import { imageConfigFormModelShape, imageConfigValidations } from '@bk2/document-util';
 
 @Component({
   selector: 'bk-image-config-form',
+  standalone: true,
   imports: [
     vestForms,
     TextInputComponent, ErrorNoteComponent,

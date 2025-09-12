@@ -1,20 +1,21 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model, output, signal } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { AsyncPipe } from '@angular/common';
 
-import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { GenderType, ModelType, WorkingRelType, UserModel, WorkingRelState, Periodicity, RoleName } from '@bk2/shared/models';
-import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
-import { FullNamePipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared/categories';
+import { PeriodicityTypes, WorkingRelStates, WorkingRelTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { GenderType, ModelType, Periodicity, RoleName, UserModel, WorkingRelState, WorkingRelType } from '@bk2/shared-models';
+import { FullNamePipe } from '@bk2/shared-pipes';
+import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { WorkingRelFormModel, workingRelFormModelShape, WorkingRelNewFormModel, workingRelNewFormValidations } from '@bk2/relationship/working-rel/util';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { WorkingRelFormModel, workingRelFormModelShape, WorkingRelNewFormModel, workingRelNewFormValidations } from '@bk2/relationship-working-rel-util';
 
 @Component({
   selector: 'bk-working-rel-new-form',
+  standalone: true,
   imports: [
     vestForms,
     AvatarPipe, AsyncPipe, FullNamePipe, TranslatePipe,

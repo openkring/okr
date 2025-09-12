@@ -12,6 +12,7 @@ const DEFAULT_COUNTER = {
 
 @Component({
   selector: 'bk-counter',
+  standalone: true,
   imports: [
     IonGrid, IonRow, IonCol, IonButton, IonItem, IonLabel, IonInput
   ],

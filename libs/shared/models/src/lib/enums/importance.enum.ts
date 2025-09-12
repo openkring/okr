@@ -1,5 +1,5 @@
 export enum Importance {
   Low,
   Medium,
-  High
+  High,
 }

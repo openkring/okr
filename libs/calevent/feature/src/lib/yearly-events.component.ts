@@ -1,22 +1,23 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonList, IonPopover } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
+import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { LabelPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { AvatarDisplayComponent, EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { AllCategories, CalEventModel, RoleName } from '@bk2/shared/models';
-import { addAllCategory, CalEventTypes } from '@bk2/shared/categories';
-import { hasRole } from '@bk2/shared/util-core';
-import { error, navigateByUrl } from '@bk2/shared/util-angular';
+import { addAllCategory, CalEventTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AllCategories, CalEventModel, RoleName } from '@bk2/shared-models';
+import { LabelPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { AvatarDisplayComponent, EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { error, navigateByUrl } from '@bk2/shared-util-angular';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { MenuComponent } from '@bk2/cms/menu/feature';
+import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { CalEventListStore } from './calevent-list.store';
 
 @Component({
     selector: 'bk-yearly-events',
+    standalone: true,
     imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, LabelPipe,
     SpinnerComponent, EmptyListComponent,

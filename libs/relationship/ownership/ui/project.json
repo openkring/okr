@@ -1,7 +1,7 @@
 {
-  "name": "ownership/ui",
+  "name": "relationship-ownership-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/ownership/ui/src",
+  "sourceRoot": "libs/relationship/ownership/ui/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:ui", "scope:ownership", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/relationship/ownership/ui",
         "main": "libs/relationship/ownership/ui/src/index.ts",
         "tsConfig": "libs/relationship/ownership/ui/tsconfig.lib.json",
-        "assets": ["libs/relationship/ownership/ui/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/relationship/ownership/ui/jest.config.ts"
+        "assets": ["libs/relationship/ownership/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

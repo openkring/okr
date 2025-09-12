@@ -1,17 +1,18 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonButton, IonGrid, IonCol, IonContent, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { HeaderComponent } from '@bk2/shared/ui';
-import { getImgixUrlWithAutoParams } from '@bk2/shared/util-core';
-import { navigateByUrl } from '@bk2/shared/util-angular';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { HeaderComponent } from '@bk2/shared-ui';
+import { navigateByUrl } from '@bk2/shared-util-angular';
+import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-welcome-page',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonContent, IonButton, IonIcon, IonImg, IonLabel,

@@ -1,7 +1,0 @@
-{
-  "name": "social-feed-app",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "angular-standalone"
-}

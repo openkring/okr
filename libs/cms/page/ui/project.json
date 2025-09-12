@@ -1,5 +1,5 @@
 {
-  "name": "cms/page/ui",
+  "name": "cms-page-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/cms/page/ui/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/cms/page/ui",
         "main": "libs/cms/page/ui/src/index.ts",
         "tsConfig": "libs/cms/page/ui/tsconfig.lib.json",
-        "assets": ["libs/cms/page/ui/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/cms/page/ui/jest.config.ts"
+        "assets": ["libs/cms/page/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {
@@ -28,3 +22,4 @@
     }
   }
 }
+

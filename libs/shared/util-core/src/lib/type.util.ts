@@ -1,4 +1,4 @@
-import { BaseProperty, BaseType, BkModel, MembershipModel, MetaTag, ModelType, OrgModel, PersistedModel, PersonalRelModel, PersonModel, ResourceModel, RoleEnum } from '@bk2/shared/models';
+import { BaseProperty, BaseType, BkModel, MembershipModel, MetaTag, ModelType, OrgModel, PersistedModel, PersonalRelModel, PersonModel, ResourceModel, RoleEnum } from '@bk2/shared-models';
 import { die, warn } from './log.util';
 
 /************************************************* Tupel ********************************************************** */
@@ -219,27 +219,52 @@ export function getZipCodeNumber(searchTerm: number): number {
 }
 /************************************************* Model Type Checks ********************************************************** */
 export function isPerson(person: unknown, tenantId: string): person is PersonModel {
-  return isType(person, new PersonModel(tenantId));
+  if(isType<PersonModel>(person, new PersonModel(tenantId))) {
+    if (person.tenants) {
+      return person.tenants.includes(tenantId);
+    }
+  }
+  return false;
 }
 
 export function isOrg(org: unknown, tenantId: string): org is OrgModel {
-  return isType(org, new OrgModel(tenantId));
+  if(isType<OrgModel>(org, new OrgModel(tenantId))) {
+    if (org.tenants) {
+      return org.tenants.includes(tenantId);
+    }
+  }
+  return false;
 }
 
 export function isResource(resource: unknown, tenantId: string): resource is ResourceModel {
-  return isType(resource, new ResourceModel(tenantId));
+  if(isType<ResourceModel>(resource, new ResourceModel(tenantId))) {
+    if (resource.tenants) {
+      return resource.tenants.includes(tenantId);
+    }
+  }
+  return false;
 }
 
 export function isPersonalRel(personalRel: unknown, tenantId: string): personalRel is PersonalRelModel {
-  return isType(personalRel, new PersonalRelModel(tenantId));
+  if(isType<PersonalRelModel>(personalRel, new PersonalRelModel(tenantId))) {
+    if (personalRel.tenants) {
+      return personalRel.tenants.includes(tenantId);
+    }
+  }
+  return false;
 }
 
 export function isMembership(membership: unknown, tenantId: string): membership is MembershipModel {
-  return isType(membership, new MembershipModel(tenantId));
+  if(isType<MembershipModel>(membership, new MembershipModel(tenantId))) {
+    if (membership.tenants) {
+      return membership.tenants.includes(tenantId);
+    }
+  }
+  return false;
 }
 
 export function isRole(role: unknown): role is RoleEnum {
-  return isType(role, RoleEnum);
+  return (isType<typeof RoleEnum>(role, RoleEnum));
 }
 
 /************************************************* General Type Checks ********************************************************** */

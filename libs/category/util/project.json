@@ -1,5 +1,5 @@
 {
-  "name": "category/util",
+  "name": "category-util",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/category/util/src",
   "prefix": "bk",
@@ -13,14 +13,15 @@
         "outputPath": "dist/libs/category/util",
         "main": "libs/category/util/src/index.ts",
         "tsConfig": "libs/category/util/tsconfig.lib.json",
-        "assets": ["libs/category/util/*.md"]
+        "assets": ["libs/category/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "test": {
-      "executor": "@nx/jest:jest",
+      "executor": "@nx/vite:test",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/category/util/jest.config.ts"
+        "configFile": "libs/category/util/vite.config.ts"
       }
     },
     "lint": {

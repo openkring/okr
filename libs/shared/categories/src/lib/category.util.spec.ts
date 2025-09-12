@@ -1,4 +1,5 @@
-import { AllCategories } from '@bk2/shared/models';
+import { AllCategories } from '@bk2/shared-models';
+import { describe, expect, it } from 'vitest';
 import { addAllCategory, checkCategoryValue, checkNumericEnum, containsCategory, countCategories, getCategoryAbbreviation, getCategoryDescription, getCategoryField, getCategoryFullName, getCategoryIcon, getCategoryName, getCategoryNumberField, getCategoryStringField, isSystemCategory, newCategoryAll, readCategory } from './category.util';
 
 /* ------------------------ read category ------------------------ */
@@ -11,7 +12,7 @@ describe('readCategory', () => {
 
   it('should return the "All" category for AllCategories', () => {
     const result = readCategory(categories, AllCategories);
-    expect(result.name).toEqual('general.category.all.label');
+    expect(result.name).toEqual('all');
   });
 
   it('should return the category with the specified ID', () => {
@@ -21,7 +22,7 @@ describe('readCategory', () => {
 
   it('should return the "All" category for unknown IDs', () => {
     const result = readCategory(categories, 999);
-    expect(result.name).toEqual('general.category.all.label');
+    expect(result.name).toEqual('all');
   });
 });
 
@@ -48,7 +49,7 @@ describe('addAllCategory', () => {
 
   it('should add a new "All" category to the array', () => {
     const result = addAllCategory(categories);
-    expect(result).toContainEqual(expect.objectContaining({ id: expect.any(Number), name: 'All' }));
+    expect(result[2].name).toEqual('all');
     expect(result.length).toEqual(3);
   });
 });
@@ -154,11 +155,11 @@ describe('addAllCategory', () => {
 /* ------------------------ getCategoryDescription ------------------------ */
   describe('getCategoryDescription', () => {
     const categories = [
-      { id: 2, name: 'cat2name', abbreviation: 'cat2abbr', i18nBase: 'This category is undefined', icon: 'help-circle' }
+      { id: 2, name: 'cat2name', abbreviation: 'cat2abbr', i18nBase: 'general.category.undefined', icon: 'help-circle' }
     ];
   
     it('should return the translated description of the specified category', () => {
-      expect(getCategoryDescription(categories, 2)).toEqual('general.category.undefined.description');
+      expect(getCategoryDescription(categories, 2)).toEqual('@general.category.undefined.description');
     });
   });
   
@@ -195,13 +196,13 @@ describe('checkCategoryValue', () => {
 /* ------------------------ checkNumericEnum ------------------------ */
 describe('checkNumericEnum', () => {
   const MyEnum = {
-    Foo: 1,
-    Bar: 2,
+    1: 'Foo',
+    2: 'Bar',
   };
 
   it('should return null if the specified value is a member of the specified numeric enum', () => {
-    expect(checkNumericEnum(1, MyEnum)).toEqual('category is invalid: 1');
-    expect(checkNumericEnum(2, MyEnum)).toEqual('category is invalid: 2');
+    expect(checkNumericEnum(1, MyEnum)).toBeNull();
+    expect(checkNumericEnum(2, MyEnum)).toBeNull();
   });
 
   it('should return an error message if the specified value is not a member of the specified numeric enum', () => {

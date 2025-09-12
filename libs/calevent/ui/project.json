@@ -1,5 +1,5 @@
 {
-  "name": "calevent/ui",
+  "name": "calevent-ui",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/calevent/ui/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/calevent/ui",
         "main": "libs/calevent/ui/src/index.ts",
         "tsConfig": "libs/calevent/ui/tsconfig.lib.json",
-        "assets": ["libs/calevent/ui/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/calevent/ui/jest.config.ts"
+        "assets": ["libs/calevent/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

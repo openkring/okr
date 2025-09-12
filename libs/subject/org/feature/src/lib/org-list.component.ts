@@ -1,23 +1,24 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList, IonPopover } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { AllCategories, ModelType, OrgModel, RoleName } from '@bk2/shared/models';
-import { addAllCategory, OrgTypes } from '@bk2/shared/categories';
-import { hasRole } from '@bk2/shared/util-core';
-import { error } from '@bk2/shared/util-angular';
+import { addAllCategory, OrgTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AllCategories, ModelType, OrgModel, RoleName } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { error } from '@bk2/shared-util-angular';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { MenuComponent } from '@bk2/cms/menu/feature';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { OrgListStore } from './org-list.store';
 
 
 @Component({
   selector: 'bk-org-list',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, AvatarPipe, SvgIconPipe,
     SpinnerComponent, EmptyListComponent,

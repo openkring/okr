@@ -1,13 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { getCategoryAbbreviation, ResourceTypes } from '@bk2/shared/categories';
-import { ENV } from '@bk2/shared/config';
-import { ResourceCollection, ResourceModel, ResourceType, UserModel } from '@bk2/shared/models';
-import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared/util-core';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { getCategoryAbbreviation, ResourceTypes } from '@bk2/shared-categories';
+import { ENV } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { ResourceCollection, ResourceModel, ResourceType, UserModel } from '@bk2/shared-models';
+import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
-import { getResourceSlug } from '@bk2/resource/util';
+import { getResourceSlug } from '@bk2/resource-util';
 
 @Injectable({
     providedIn: 'root'

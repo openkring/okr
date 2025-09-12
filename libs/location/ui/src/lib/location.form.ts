@@ -1,15 +1,18 @@
 import { Component, computed, inject, input, model, output, signal } from '@angular/core';
-import { LocationFormModel, locationFormModelShape, locationFormValidations } from '@bk2/location/util';
-import { LocationTypes } from '@bk2/shared/categories';
-import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@bk2/shared/config';
-import { LocationType, UserModel, RoleName } from '@bk2/shared/models';
-import { CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
 import { IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
+import { LocationTypes } from '@bk2/shared-categories';
+import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@bk2/shared-config';
+import { LocationType, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
+
+import { LocationFormModel, locationFormModelShape, locationFormValidations } from '@bk2/location-util';
+
 @Component({
   selector: 'bk-location-form',
+  standalone: true,
   imports: [
     vestForms,
     CategoryComponent, TextInputComponent, NumberInputComponent, ChipsComponent, 

@@ -1,4 +1,4 @@
-import { CategoryModel, RegexType } from "@bk2/shared/models";
+import { CategoryModel, RegexType } from '@bk2/shared-models';
 
 export type RegexTypeCategory = CategoryModel;
 

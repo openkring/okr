@@ -1,19 +1,19 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { hasRole } from '@bk2/shared/util-core';
-import { ModelType, PersonModel, UserModel, RoleName} from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
-
-import { PersonalRelNewFormComponent } from '@bk2/relationship/personal-rel/ui';
-import { convertPersonsToNewForm } from '@bk2/relationship/personal-rel/util';
+import { PersonalRelNewFormComponent } from '@bk2/relationship-personal-rel-ui';
+import { convertPersonsToNewForm } from '@bk2/relationship-personal-rel-util';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, PersonModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 import { PersonalRelModalsService } from './personal-rel-modals.service';
 
 @Component({
   selector: 'bk-personal-rel-new-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     HeaderComponent, PersonalRelNewFormComponent,

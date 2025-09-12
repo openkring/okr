@@ -1,11 +1,13 @@
 import { Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { navigateByUrl } from '@bk2/shared/util-angular';
 import { IonButtons, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+
+import { navigateByUrl } from '@bk2/shared-util-angular';
 import { ButtonComponent } from './button.component';
 
 @Component({
   selector: 'bk-footer',
+  standalone: true,
   imports: [
     ButtonComponent,
     IonToolbar, IonButtons, IonTitle

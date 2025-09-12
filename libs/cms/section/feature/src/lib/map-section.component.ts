@@ -1,16 +1,17 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, computed, inject, input, PLATFORM_ID } from '@angular/core';
-import { Geolocation } from '@capacitor/geolocation';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
-import { GoogleMap, MapType } from '@capacitor/google-maps';
 import { isPlatformBrowser } from '@angular/common';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, PLATFORM_ID, computed, inject, input } from '@angular/core';
+import { Geolocation } from '@capacitor/geolocation';
+import { GoogleMap, MapType } from '@capacitor/google-maps';
+import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared/models';
-import { die } from '@bk2/shared/util-core';
-import { OptionalCardHeaderComponent } from '@bk2/shared/ui';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { SectionModel } from '@bk2/shared-models';
+import { OptionalCardHeaderComponent } from '@bk2/shared-ui';
+import { die } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-map-section',
+  standalone: true,
   styles: [`
   ion-card-content { padding: 0px; }
   ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}

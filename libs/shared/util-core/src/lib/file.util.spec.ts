@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { baseName, dirName, fileExtension, fileName, fileSizeUnit } from './file.util';
 
 describe('file.util', () => {
@@ -19,13 +20,13 @@ describe('file.util', () => {
         const _result = fileName('baseName.txt');
         expect(_result).toEqual('baseName.txt');
     });
-    it('baseName("baseName.ext") should be baseName.ext', () => {
+    it('baseName("baseName.ext") should be baseName', () => {
         const _result = baseName('baseName.ext');
-        expect(_result).toEqual('baseName.ext');
+        expect(_result).toEqual('baseName');
     });
-    it('baseName("/path/to/a/baseName.ext") should be baseName.ext.', () => {
+    it('baseName("/path/to/a/baseName.ext") should be baseName.', () => {
         const _result = baseName('/path/to/a/baseName.ext');
-        expect(_result).toEqual('baseName.ext');
+        expect(_result).toEqual('baseName');
     });
     it('baseName(".ext") should be empty.', () => {
       const _result = baseName('.ext');

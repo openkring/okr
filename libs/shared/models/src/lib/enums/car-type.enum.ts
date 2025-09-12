@@ -14,5 +14,5 @@ export enum CarType {
   Utility,
   Camper,
   Van,
-  Bus
+  Bus,
 }

@@ -2,14 +2,15 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonImg, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryModel } from '@bk2/shared/models';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryModel } from '@bk2/shared-models';
 
+import { ENV } from '@bk2/shared-config';
 import { HeaderComponent } from './header.component';
-import { ENV } from '@bk2/shared/config';
 
 @Component({
   selector: 'bk-card-select-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
     HeaderComponent,

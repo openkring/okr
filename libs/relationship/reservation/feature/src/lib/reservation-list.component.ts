@@ -1,23 +1,24 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList, IonPopover } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input } from '@angular/core';
+import { IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { EmptyListComponent, ListFilterComponent } from '@bk2/shared/ui';
-import { getYearList, hasRole, isOngoing } from '@bk2/shared/util-core';
-import { error } from '@bk2/shared/util-angular';
-import { ModelType, ReservationModel, RoleName } from '@bk2/shared/models';
-import { addAllCategory, ReservationStates, ResourceTypes } from '@bk2/shared/categories';
+import { addAllCategory, ReservationStates, ResourceTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, ReservationModel, RoleName } from '@bk2/shared-models';
+import { CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
+import { error } from '@bk2/shared-util-angular';
+import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { MenuComponent } from '@bk2/cms/menu/feature';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { MenuComponent } from '@bk2/cms-menu-feature';
+import { getReserverName } from '@bk2/relationship-reservation-util';
 
-import { getReserverName } from '@bk2/relationship/reservation/util';
 import { ReservationListStore } from './reservation-list.store';
 
 @Component({
   selector: 'bk-reservation-list',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe, CategoryNamePipe,
     ListFilterComponent, EmptyListComponent, MenuComponent,

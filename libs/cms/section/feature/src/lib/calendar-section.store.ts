@@ -1,14 +1,14 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map, of } from 'rxjs';
 
-import { CalEventModel } from '@bk2/shared/models';
-import { convertCalEventToFullCalendar } from '@bk2/calevent/util';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { CalEventModel } from '@bk2/shared-models';
 
-import { CalEventService } from '@bk2/calevent/data-access';
+import { CalEventService } from '@bk2/calevent-data-access';
+import { convertCalEventToFullCalendar } from '@bk2/calevent-util';
 
 export type CalendarState = {
   calendarName: string | undefined;

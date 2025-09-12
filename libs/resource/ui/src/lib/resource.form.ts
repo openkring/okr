@@ -2,21 +2,24 @@ import { Component, computed, input, model, output, signal } from '@angular/core
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { BaseProperty, ResourceType, RowingBoatUsage, UserModel, RoleName } from '@bk2/shared/models';
-import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
-import { CategoryComponent, ChipsComponent, NotesInputComponent, PropertyListComponent } from '@bk2/shared/ui';
-import { ResourceFormModel, resourceFormShape, resourceFormValidations } from '@bk2/resource/util';
-import { ResourceTypes } from '@bk2/shared/categories';
-import { RowingBoatComponent } from "./rowing-boat.component";
+import { ResourceTypes } from '@bk2/shared-categories';
+import { BaseProperty, ResourceType, RoleName, RowingBoatUsage, UserModel } from '@bk2/shared-models';
+import { CategoryComponent, ChipsComponent, NotesInputComponent, PropertyListComponent } from '@bk2/shared-ui';
+import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
+
+import { ResourceFormModel, resourceFormShape, resourceFormValidations } from '@bk2/resource-util';
+
 import { BoatComponent } from './boat.component';
 import { CarComponent } from './car.component';
-import { LockerComponent } from './locker.component';
 import { KeyComponent } from './key.component';
-import { RealEstateComponent } from './real-estate.component';
+import { LockerComponent } from './locker.component';
 import { OtherResourceComponent } from './other-resource.component';
+import { RealEstateComponent } from './real-estate.component';
+import { RowingBoatComponent } from "./rowing-boat.component";
 
 @Component({
   selector: 'bk-resource-form',
+  standalone: true,
   imports: [
     vestForms,
     CategoryComponent, ChipsComponent, NotesInputComponent,

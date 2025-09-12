@@ -1,12 +1,12 @@
 import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { OrgModel, PersonModel, WorkingRelModel } from "@bk2/shared/models";
-import { convertDateFormatToString, DateFormat, isOrg, isPerson } from "@bk2/shared/util-core";
-import { AppStore, PersonSelectModalComponent, OrgSelectModalComponent } from '@bk2/shared/feature';
-import { selectDate } from "@bk2/shared/ui";
+import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { OrgModel, PersonModel, WorkingRelModel } from "@bk2/shared-models";
+import { selectDate } from "@bk2/shared-ui";
+import { convertDateFormatToString, DateFormat, isOrg, isPerson } from "@bk2/shared-util-core";
 
-import { WorkingRelService } from "@bk2/relationship/working-rel/data-access";
+import { WorkingRelService } from "@bk2/relationship-working-rel-data-access";
 
 @Injectable({
   providedIn: 'root'

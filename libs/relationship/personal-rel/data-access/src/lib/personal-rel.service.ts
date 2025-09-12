@@ -1,12 +1,12 @@
-import { Injectable, inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
-import { PersonalRelCollection, PersonalRelModel, UserModel } from '@bk2/shared/models';
-import { findByKey, getSystemQuery, removeDuplicatesFromArray } from '@bk2/shared/util-core';
+import { ENV } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { PersonalRelCollection, PersonalRelModel, UserModel } from '@bk2/shared-models';
+import { findByKey, getSystemQuery, removeDuplicatesFromArray } from '@bk2/shared-util-core';
 
-import { getPersonalRelSearchIndex, getPersonalRelSearchIndexInfo } from '@bk2/relationship/personal-rel/util';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { getPersonalRelSearchIndex, getPersonalRelSearchIndexInfo } from '@bk2/relationship-personal-rel-util';
 
 @Injectable({
     providedIn: 'root'

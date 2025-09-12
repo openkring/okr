@@ -1,4 +1,4 @@
 export enum RelationshipState {
-    Applied,
-    Active
+  Applied,
+  Active,
 }

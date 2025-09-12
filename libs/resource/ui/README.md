@@ -1,7 +1,7 @@
-# resource/ui
+# resource-ui
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Running unit tests
 
-Run `nx test resource/ui` to execute the unit tests.
+There are currently no unit tests for this library.

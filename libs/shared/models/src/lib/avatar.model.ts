@@ -1,7 +1,7 @@
-import { BkModel } from "./base.model";
+import { BkModel } from './base.model';
 
 export class AvatarModel implements BkModel {
-  bkey = '';   // key of the avatar
+  bkey = ''; // key of the avatar
   tenants: string[] = [];
   storagePath = '';
   isArchived = false;

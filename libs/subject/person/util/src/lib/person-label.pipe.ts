@@ -7,6 +7,7 @@ import { Pipe, PipeTransform } from '@angular/core';
  */
 @Pipe({
   name: 'personLabel',
+  standalone: true
 })
 export class PersonLabelPipe implements PipeTransform {
   transform(name: string): string {

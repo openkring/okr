@@ -1,15 +1,17 @@
-import { Component, computed, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, input } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared/models';
-import { CategoryPlainNamePipe } from '@bk2/shared/pipes';
-import { ColorsIonic } from '@bk2/shared/categories';
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { ColorsIonic } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SectionModel } from '@bk2/shared-models';
+import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
+
 import { SectionComponent } from './section.component';
 
 @Component({
   selector: 'bk-accordion-section',
+  standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, CategoryPlainNamePipe, 
     IonLabel, IonAccordionGroup, IonAccordion, IonItem, IonLabel,

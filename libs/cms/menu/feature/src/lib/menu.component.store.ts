@@ -1,9 +1,10 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
-import { MenuService } from '@bk2/cms/menu/data-access';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AppStore } from '@bk2/shared/feature';
-import { debugMessage } from '@bk2/shared/util-core';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+
+import { MenuService } from '@bk2/cms-menu-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { debugMessage } from '@bk2/shared-util-core';
 import { of } from 'rxjs';
 
 export type MenuState = {

@@ -1,4 +1,4 @@
-import { CategoryModel, CarType } from "@bk2/shared/models";
+import { CarType, CategoryModel } from '@bk2/shared-models';
 
 
 export type CarTypeCategory = CategoryModel;

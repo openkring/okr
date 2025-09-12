@@ -1,8 +1,11 @@
-import { only, staticSuite} from 'vest';
-import { categoryValidations, dateValidations, stringValidations } from '@bk2/shared/util-core';
-import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { GenderType } from '@bk2/shared/models';
-import { ssnValidations } from '@bk2/subject/person/util';
+import { only, staticSuite } from 'vest';
+
+import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { GenderType } from '@bk2/shared-models';
+import { categoryValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
+
+import { ssnValidations } from '@bk2/subject-person-util';
+
 import { PersonalDataFormModel } from './personal-data-form.model';
 
 export const personalDataFormValidations = staticSuite((model: PersonalDataFormModel, field?: string) => {

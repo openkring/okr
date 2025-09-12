@@ -10,17 +10,17 @@ export class TaskModel implements BkModel, PersistedModel, NamedModel, Searchabl
   public isArchived = false;
   public name = '';
   public index = '';
-  public tags = '';                       // topics used to categorize the tasks (input with tag::name)
+  public tags = ''; // topics used to categorize the tasks (input with tag::name)
   public notes = '';
 
-  public author: AvatarInfo | undefined;                  // person.bkey: the person who created the task
-  public assignee: AvatarInfo | undefined;               // person.bkey: the person responsible for execution
+  public author: AvatarInfo | undefined; // person.bkey: the person who created the task
+  public assignee: AvatarInfo | undefined; // person.bkey: the person responsible for execution
 
   public state: TaskState = TaskState.Initial;
-  public dueDate = '';                    // date when the task should be completed
-  public completionDate = '';                    // date when the task should be completed
-  public priority = Priority.Medium;      // Priority: 0: low, 1: medium, 2: high
-  public importance = Importance.Medium;  // Importance: 0: low, 1: medium, 2: high
+  public dueDate = ''; // date when the task should be completed
+  public completionDate = ''; // date when the task should be completed
+  public priority = Priority.Medium; // Priority: 0: low, 1: medium, 2: high
+  public importance = Importance.Medium; // Importance: 0: low, 1: medium, 2: high
 
   // a task is visible to the author, the assignee, and privileged Users by default
   // the visibility can be extended to the groups it belongs to

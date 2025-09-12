@@ -1,4 +1,4 @@
-import { CategoryModel, OwnershipState } from '@bk2/shared/models';
+import { CategoryModel, OwnershipState } from '@bk2/shared-models';
 
 export type OwnershipStateCategory = CategoryModel;
 

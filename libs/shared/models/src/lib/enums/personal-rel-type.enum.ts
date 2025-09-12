@@ -7,5 +7,5 @@ export enum PersonalRelType {
   Related,
   ParentChild,
   Sibling,
-  Custom
+  Custom,
 }

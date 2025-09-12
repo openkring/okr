@@ -5,14 +5,15 @@ import { IonButton, IonIcon, IonItem } from '@ionic/angular/standalone';
 import { Editor, NgxEditorModule } from 'ngx-editor';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
-import { EditorToolbar } from './editor-toolbar.component';
 import { ButtonCopyComponent } from './button-copy.component';
+import { EditorToolbar } from './editor-toolbar.component';
 
 @Component({
   selector: 'bk-editor',
+  standalone: true,
   viewProviders: [vestFormsViewProviders],
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,

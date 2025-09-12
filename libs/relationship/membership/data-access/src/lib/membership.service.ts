@@ -1,18 +1,18 @@
-import { Injectable, inject } from '@angular/core';
-import { combineLatest, firstValueFrom, map, Observable, of } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
+import { combineLatest, firstValueFrom, map, Observable, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
-import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
-import { CategoryListModel, MembershipCollection, MembershipModel, ModelType, PersonCollection, PersonModel, UserModel } from '@bk2/shared/models';
-import { addDuration, findByKey, getSystemQuery, getTodayStr } from '@bk2/shared/util-core';
-import { copyToClipboardWithConfirmation, error } from '@bk2/shared/util-angular';
+import { ENV } from '@bk2/shared-config';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { CategoryListModel, MembershipCollection, MembershipModel, ModelType, PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
+import { copyToClipboardWithConfirmation, error } from '@bk2/shared-util-angular';
+import { addDuration, findByKey, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
-import { createComment } from '@bk2/comment/util';
-import { getCategoryAttribute } from '@bk2/category/util';
+import { getCategoryAttribute } from '@bk2/category-util';
+import { createComment } from '@bk2/comment-util';
 
-import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipSearchIndex, getMembershipSearchIndexInfo, getRelLogEntry } from '@bk2/relationship/membership/util';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipSearchIndex, getMembershipSearchIndexInfo, getRelLogEntry } from '@bk2/relationship-membership-util';
 
 
 @Injectable({

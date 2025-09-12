@@ -1,18 +1,21 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model, output, signal } from '@angular/core';
 import { IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { MembershipFormModel, membershipFormModelShape, membershipFormValidations } from '@bk2/relationship/membership/util';
-import { CategoryListModel, GenderType, ModelType, OrgType, Periodicity, UserModel, RoleName } from '@bk2/shared/models';
-import { BexioIdMask } from '@bk2/shared/config';
-import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
-import { debugFormErrors, getItemLabel, hasRole } from '@bk2/shared/util-core';
-import { OrgTypes } from '@bk2/shared/categories';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AsyncPipe } from '@angular/common';
+
+import { OrgTypes } from '@bk2/shared-categories';
+import { BexioIdMask } from '@bk2/shared-config';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryListModel, GenderType, ModelType, OrgType, Periodicity, RoleName, UserModel } from '@bk2/shared-models';
+import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, getItemLabel, hasRole } from '@bk2/shared-util-core';
+
+import { MembershipFormModel, membershipFormModelShape, membershipFormValidations } from '@bk2/relationship-membership-util';
 
 @Component({
   selector: 'bk-membership-form',
+  standalone: true,
   imports: [
     vestForms,
     TranslatePipe, AsyncPipe,

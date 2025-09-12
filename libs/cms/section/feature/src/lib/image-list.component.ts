@@ -1,16 +1,18 @@
-import { Component, computed, inject, model, output } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonIcon, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, IonRow, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
-import { Image, ImageAction, SectionProperties } from '@bk2/shared/models';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { ImageComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { arrayMove } from '@bk2/shared/util-core';
-import { deleteFileFromStorage } from '@bk2/shared/util-angular';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { SectionFormModel } from '@bk2/cms/section/util';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { Image, ImageAction, SectionProperties } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { ImageComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { deleteFileFromStorage } from '@bk2/shared-util-angular';
+import { arrayMove } from '@bk2/shared-util-core';
+
+import { SectionFormModel } from '@bk2/cms-section-util';
+import { DocumentModalsService } from '@bk2/document-feature';
+
 import { SectionModalsService } from './section-modals.service';
-import { DocumentModalsService } from '@bk2/document/feature';
 
 /**
  * Compose a list of images.
@@ -21,6 +23,7 @@ import { DocumentModalsService } from '@bk2/document/feature';
  */
 @Component({
   selector: 'bk-image-list',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonRow, IonCol, IonButton, IonIcon, IonList, IonItem, IonLabel,

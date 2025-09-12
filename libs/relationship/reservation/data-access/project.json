@@ -1,7 +1,7 @@
 {
-  "name": "reservation/data-access",
+  "name": "relationship-reservation-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/reservation/data-access/src",
+  "sourceRoot": "libs/relationship/reservation/data-access/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:data-access", "scope:reservation", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/relationship/reservation/data-access",
         "main": "libs/relationship/reservation/data-access/src/index.ts",
         "tsConfig": "libs/relationship/reservation/data-access/tsconfig.lib.json",
-        "assets": ["libs/relationship/reservation/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/relationship/reservation/data-access/jest.config.ts"
+        "assets": ["libs/relationship/reservation/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

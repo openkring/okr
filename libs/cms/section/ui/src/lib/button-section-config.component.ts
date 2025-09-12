@@ -2,18 +2,20 @@ import { Component, computed, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonNote, IonRow } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { CategoryComponent, EditorComponent } from '@bk2/shared/ui';
-import { HorizontalPositions } from '@bk2/shared/categories';
-import { LowercaseWordMask, SizeMask } from '@bk2/shared/config';
-import { HorizontalPosition, newButton, newIcon } from '@bk2/shared/models';
+import { HorizontalPositions } from '@bk2/shared-categories';
+import { LowercaseWordMask, SizeMask } from '@bk2/shared-config';
+import { HorizontalPosition, newButton, newIcon } from '@bk2/shared-models';
+import { CategoryComponent, EditorComponent } from '@bk2/shared-ui';
 
-import { SectionFormModel } from '@bk2/cms/section/util';
+import { SectionFormModel } from '@bk2/cms-section-util';
+
+import { ButtonActionConfigComponent } from './button-action-config.component';
 import { ButtonFormComponent } from './button.form';
 import { IconFormComponent } from './icon.form';
-import { ButtonActionConfigComponent } from './button-action-config.component';
 
 @Component({
   selector: 'bk-button-section-config',
+  standalone: true,
   viewProviders: [vestFormsViewProviders],
   imports: [
     IonRow, IonCol, IonNote, IonCard, IonCardHeader, IonCardContent, IonCardTitle,

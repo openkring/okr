@@ -1,14 +1,15 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-
-import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
-import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
-import { UserService } from '@bk2/user/data-access';
-import { ModelType, UserCollection, UserModel } from '@bk2/shared/models';
 import { Router } from '@angular/router';
-import { AppStore } from '@bk2/shared/feature';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { ModelType, UserCollection, UserModel } from '@bk2/shared-models';
+import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
+import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+
+import { UserService } from '@bk2/user-data-access';
 
 export type UserListState = {
   searchTerm: string;

@@ -1,12 +1,13 @@
 import { Component, computed, input } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { ImageAction, SectionModel } from '@bk2/shared/models';
-import { ImageComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { die } from '@bk2/shared/util-core';
+import { ImageAction, SectionModel } from '@bk2/shared-models';
+import { ImageComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { die } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-hero-section',
+  standalone: true,
   imports: [
     SpinnerComponent, ImageComponent,
     IonGrid, IonRow, IonCol

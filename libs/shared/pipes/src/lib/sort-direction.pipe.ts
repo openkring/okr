@@ -1,9 +1,10 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
-import { ENV } from '@bk2/shared/config';
-import { SortDirection } from '@bk2/shared/util-core';
+import { ENV } from '@bk2/shared-config';
+import { SortDirection } from '@bk2/shared-util-core';
 
 @Pipe({
   name: 'sortDirection',
+  standalone: true
 })
 export class SortDirectionPipe implements PipeTransform {
   private readonly env = inject(ENV);

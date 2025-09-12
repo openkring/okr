@@ -1,17 +1,18 @@
 
-import { Component, input, model, output } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
 
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { LowercaseWordMask, MaskPredicate } from '@bk2/shared/config';
-import { MetaTag } from '@bk2/shared/models';
-import { getIndexOfMetaTag } from '@bk2/shared/util-core';
+import { LowercaseWordMask, MaskPredicate } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { MetaTag } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { getIndexOfMetaTag } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-meta-tag-list',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     MaskitoDirective,

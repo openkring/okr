@@ -1,7 +1,9 @@
-import { AddressModel, AddressUsage, OrgModel, OrgType } from "@bk2/shared/models";
-import { OrgFormModel } from "./org-form.model";
-import { OrgNewFormModel } from "./org-new-form.model";
-import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from "@bk2/subject/address/util";
+import { AddressModel, AddressUsage, OrgModel, OrgType } from '@bk2/shared-models';
+
+import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
+
+import { OrgFormModel } from './org-form.model';
+import { OrgNewFormModel } from './org-new-form.model';
 
 /*-------------------------- ORG --------------------------------*/
 export function newOrgFormModel(): OrgFormModel {
@@ -16,22 +18,22 @@ export function newOrgFormModel(): OrgFormModel {
     bexioId: '',
     tags: '',
     notes: '',
-  }
+  };
 }
 
 export function convertOrgToForm(org?: OrgModel): OrgFormModel {
   if (!org) return {};
   return {
-      bkey: org.bkey ?? '',
-      orgName: org.name ?? '',
-      type: org.type ?? OrgType.Association,
-      dateOfFoundation: org.dateOfFoundation ?? '',
-      dateOfLiquidation: org.dateOfLiquidation ?? '',
-      membershipCategoryKey: org.membershipCategoryKey ?? 'mcat_default',
-      taxId: org.taxId ?? '',
-      bexioId: org.bexioId ?? '',
-      tags: org.tags ?? '',
-      notes: org.notes ?? ''
+    bkey: org.bkey ?? '',
+    orgName: org.name ?? '',
+    type: org.type ?? OrgType.Association,
+    dateOfFoundation: org.dateOfFoundation ?? '',
+    dateOfLiquidation: org.dateOfLiquidation ?? '',
+    membershipCategoryKey: org.membershipCategoryKey ?? 'mcat_default',
+    taxId: org.taxId ?? '',
+    bexioId: org.bexioId ?? '',
+    tags: org.tags ?? '',
+    notes: org.notes ?? '',
   };
 }
 
@@ -52,11 +54,15 @@ export function convertFormToOrg(org: OrgModel | undefined, vm: OrgFormModel, te
 
 export function getOrgNameByOrgType(orgType?: number): string {
   if (orgType === undefined) return '';
-  switch(orgType) {
-    case OrgType.Association: return 'orgName.association';
-    case OrgType.Authority: return 'orgName.authority';
-    case OrgType.LegalEntity: return 'orgName.company'; 
-    default: return 'orgName'; 
+  switch (orgType) {
+    case OrgType.Association:
+      return 'orgName.association';
+    case OrgType.Authority:
+      return 'orgName.authority';
+    case OrgType.LegalEntity:
+      return 'orgName.company';
+    default:
+      return 'orgName';
   }
 }
 
@@ -78,7 +84,7 @@ export function createNewOrgFormModel(): OrgNewFormModel {
     bexioId: '',
     membershipCategoryKey: 'mcat_default',
     tags: '',
-    notes: ''
+    notes: '',
   };
 }
 
@@ -104,18 +110,17 @@ export function convertFormToNewOrg(vm: OrgNewFormModel, tenantId: string): OrgM
 }
 
 export function convertNewOrgFormToEmailAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoriteEmailAddress(AddressUsage.Work,  vm.email ?? '', tenantId);
+  return createFavoriteEmailAddress(AddressUsage.Work, vm.email ?? '', tenantId);
 }
 
 export function convertNewOrgFormToPhoneAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoritePhoneAddress(AddressUsage.Work,  vm.phone ?? '', tenantId);
+  return createFavoritePhoneAddress(AddressUsage.Work, vm.phone ?? '', tenantId);
 }
 
 export function convertNewOrgFormToWebAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoriteWebAddress(AddressUsage.Work,  vm.web ?? '', tenantId);
+  return createFavoriteWebAddress(AddressUsage.Work, vm.web ?? '', tenantId);
 }
 
 export function convertNewOrgFormToPostalAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoritePostalAddress(AddressUsage.Work,  vm.street ?? '', vm.zipCode ?? '', vm.city ?? '', vm.countryCode ?? '', tenantId);
+  return createFavoritePostalAddress(AddressUsage.Work, vm.street ?? '', vm.zipCode ?? '', vm.city ?? '', vm.countryCode ?? '', tenantId);
 }
-

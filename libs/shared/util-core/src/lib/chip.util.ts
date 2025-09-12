@@ -9,13 +9,8 @@
  */
 
 export function getNonSelectedChips(availableChips: string[], selectedChips: string[]): string[] {
-  const _nonSelectedChips: string[] = [];
-  for (const _chip of availableChips) {
-    if (!selectedChips.includes(_chip)) {
-      _nonSelectedChips.push(_chip);
-    }
-  }
-  return _nonSelectedChips;
+  const selectedLower = selectedChips.map(chip => chip.toLowerCase());
+  return availableChips.filter(chip => !selectedLower.includes(chip.toLowerCase()));
 }
 
 /**

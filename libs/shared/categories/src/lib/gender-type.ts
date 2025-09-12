@@ -1,4 +1,4 @@
-import { CategoryModel, GenderType } from '@bk2/shared/models';
+import { CategoryModel, GenderType } from '@bk2/shared-models';
 import { getCategoryStringField } from './category.util';
 
 export type GenderTypeCategory = CategoryModel;

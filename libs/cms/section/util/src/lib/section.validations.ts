@@ -1,8 +1,8 @@
-import { enforce, omitWhen, only, staticSuite, test} from 'vest';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { ColorIonic, SectionModel, SectionType } from '@bk2/shared/models';
-import { baseValidations, categoryValidations, stringValidations } from '@bk2/shared/util-core';
+import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { ColorIonic, SectionModel, SectionType } from '@bk2/shared-models';
+import { baseValidations, categoryValidations, stringValidations } from '@bk2/shared-util-core';
 
 
 export const sectionValidations = staticSuite((model: SectionModel, field?: string) => {

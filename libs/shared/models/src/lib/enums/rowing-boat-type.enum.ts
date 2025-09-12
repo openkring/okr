@@ -8,5 +8,5 @@ export enum RowingBoatType {
   b4m,
   b4x,
   b5x,
-  b8p
+  b8p,
 }

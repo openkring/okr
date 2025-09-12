@@ -1,8 +1,9 @@
 
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { GenderType, OrgType, Periodicity, WorkingRelModel, WorkingRelState, WorkingRelType } from '@bk2/shared/models';
-import { categoryValidations, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@bk2/shared/util-core';
-import { enforce, omitWhen, only, staticSuite, test} from 'vest';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+
+import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { GenderType, OrgType, Periodicity, WorkingRelModel, WorkingRelState, WorkingRelType } from '@bk2/shared-models';
+import { categoryValidations, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
 export const workingRelValidations = staticSuite((model: WorkingRelModel, field?: string) => {
   if (field) only(field);

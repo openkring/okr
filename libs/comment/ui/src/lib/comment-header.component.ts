@@ -1,11 +1,12 @@
-import { Component } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component } from '@angular/core';
 import { IonCol, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-comment-header',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonRow, IonCol

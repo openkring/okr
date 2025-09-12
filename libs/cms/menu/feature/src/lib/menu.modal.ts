@@ -1,19 +1,20 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { MenuItemModel, ModelType, UserModel, RoleName } from '@bk2/shared/models';
-import { ENV } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util-core';
-import { AppStore } from '@bk2/shared/feature';
+import { ENV } from '@bk2/shared-config';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { MenuItemModel, ModelType, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { MenuItemFormComponent } from '@bk2/cms/menu/ui';
-import { convertFormToMenuItem, convertMenuItemToForm, getMenuItemTitle } from '@bk2/cms/menu/util';
+import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
+import { convertFormToMenuItem, convertMenuItemToForm, getMenuItemTitle } from '@bk2/cms-menu-util';
 
 @Component({
   selector: 'bk-menu-item-modal',
+  standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
     MenuItemFormComponent,

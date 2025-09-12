@@ -1,25 +1,22 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { getImgixUrlWithAutoParams } from '@bk2/shared/util-core';
-import { navigateByUrl } from '@bk2/shared/util-angular';
-import { HeaderComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AppStore } from '@bk2/shared/feature';
-import { AuthCredentials } from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AuthCredentials } from '@bk2/shared-models';
+import { HeaderComponent } from '@bk2/shared-ui';
+import { navigateByUrl } from '@bk2/shared-util-angular';
+import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 
-import { LoginFormComponent } from '@bk2/auth/ui';
-import { AuthService } from '@bk2/auth/data-access';
+import { AuthService } from '@bk2/auth-data-access';
+import { LoginFormComponent } from '@bk2/auth-ui';
 
 @Component({
   selector: 'bk-login-page',
-  imports: [
-    TranslatePipe, AsyncPipe, 
-    HeaderComponent, LoginFormComponent,
-    IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton
-  ],
+  standalone: true,
+  imports: [TranslatePipe, AsyncPipe, HeaderComponent, LoginFormComponent, IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton],
   styles: `
   .background-image { filter: blur(8px); -webkit-filter: blur(8px); position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; z-index: 1;}
   .title { text-align: center; font-size: 2rem; padding: 20px; }
@@ -40,27 +37,29 @@ import { AuthService } from '@bk2/auth/data-access';
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Background" />
         <div class="login-form">
-            <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
-            <ion-label class="title"><strong>{{ '@auth.operation.login.title' | translate | async}}</strong></ion-label>
-            <bk-login-form [(vm)]="currentCredentials" (validChange)="onValidChange($event)" />
-            <div class="button-container">
-              <ion-grid>
-                <ion-row>
-                  <ion-col>
-                    <ion-button #loginButton [disabled]="!formIsValid()" (click)="login()">{{ '@auth.operation.login.title' | translate | async}}</ion-button>
-                  </ion-col>
-                </ion-row>
-                <ion-row>
-                  <ion-col>
-                    <ion-button fill="outline" (click)="resetPassword()" size="small" >{{ '@auth.operation.pwdreset.title' | translate | async }}</ion-button>
-                  </ion-col>
-                </ion-row>
-              </ion-grid>
-            </div>
+          <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
+          <ion-label class="title"
+            ><strong>{{ '@auth.operation.login.title' | translate | async }}</strong></ion-label
+          >
+          <bk-login-form [(vm)]="currentCredentials" (validChange)="onValidChange($event)" />
+          <div class="button-container">
+            <ion-grid>
+              <ion-row>
+                <ion-col>
+                  <ion-button #loginButton [disabled]="!formIsValid()" (click)="login()">{{ '@auth.operation.login.title' | translate | async }}</ion-button>
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col>
+                  <ion-button fill="outline" (click)="resetPassword()" size="small">{{ '@auth.operation.pwdreset.title' | translate | async }}</ion-button>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </div>
         </div>
       </div>
     </ion-content>
-  `
+  `,
 })
 export class LoginPageComponent {
   private readonly router = inject(Router);
@@ -73,7 +72,7 @@ export class LoginPageComponent {
   protected formIsValid = signal(false);
   public currentCredentials = signal<AuthCredentials>({
     loginEmail: '',
-    loginPassword: ''
+    loginPassword: '',
   });
 
   public async resetPassword(): Promise<void> {
@@ -92,7 +91,6 @@ export class LoginPageComponent {
   }
 
   protected onValidChange(isValid: boolean): void {
-    this.formIsValid.set(isValid);  
+    this.formIsValid.set(isValid);
   }
 }
-

@@ -1,6 +1,6 @@
-import * as ibantools from 'ibantools';
 import { Pipe, PipeTransform } from '@angular/core';
-import { die } from '@bk2/shared/util-core';
+import { die } from '@bk2/shared-util-core';
+import * as ibantools from 'ibantools';
 
 /**
  * see: https://en.wikipedia.org/wiki/International_Bank_Account_Number

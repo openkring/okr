@@ -1,4 +1,4 @@
-import { CategoryModel, ShipmentType } from '@bk2/shared/models';
+import { CategoryModel, ShipmentType } from '@bk2/shared-models';
 
 export interface ShipmentTypeCategory extends CategoryModel {
     xsltTemplateUrl: string;

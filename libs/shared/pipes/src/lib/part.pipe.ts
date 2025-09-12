@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@bk2/shared/util-core';
+import { extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@bk2/shared-util-core';
 
 /**
  * returns a part of a given label [key]@[label]
@@ -14,6 +14,7 @@ import { extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } fro
  */
 @Pipe({
   name: 'part',
+  standalone: true
 })
 export class PartPipe implements PipeTransform {
   transform(label: string, returnFirstPart = false, separator = '@'): string {

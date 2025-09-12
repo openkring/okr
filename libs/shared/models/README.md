@@ -1,4 +1,4 @@
-# shared/models
+# shared-models
 
 This library was generated with [Nx](https://nx.dev).
 
@@ -8,4 +8,4 @@ Run `nx build shared/models` to build the library.
 
 ## Running unit tests
 
-Run `nx test shared/models` to execute the unit tests.
+Run `nx test shared-models` to execute the unit tests.

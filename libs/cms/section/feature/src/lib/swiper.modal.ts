@@ -1,11 +1,11 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, input } from '@angular/core';
-
-import { TranslatePipe } from '@bk2/shared/i18n';
 import { IonCard, IonCardContent, IonContent } from '@ionic/angular/standalone';
-import { Image } from '@bk2/shared/models';
-import { HeaderComponent, ImageComponent, SpinnerComponent } from '@bk2/shared/ui';
 import { register } from 'swiper/element/bundle';
+
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { Image } from '@bk2/shared-models';
+import { HeaderComponent, ImageComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 register(); // globally register Swiper's custom elements.
 
@@ -14,6 +14,7 @@ register(); // globally register Swiper's custom elements.
  */
 @Component({
   selector: 'bk-swiper-modal',
+  standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     TranslatePipe, AsyncPipe,

@@ -2,14 +2,15 @@ import { AsyncPipe, NgOptimizedImage, provideImgixLoader } from '@angular/common
 import { Component, computed, ElementRef, input, viewChild } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
 
-import { Image } from '@bk2/shared/models';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ImgixUrlPipe } from '@bk2/shared/pipes';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { Image } from '@bk2/shared-models';
+import { ImgixUrlPipe } from '@bk2/shared-pipes';
 
 import { HeaderComponent } from './header.component';
 
 @Component({
   selector: 'bk-image-view-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, ImgixUrlPipe,
     HeaderComponent,

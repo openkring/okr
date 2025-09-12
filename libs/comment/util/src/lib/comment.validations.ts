@@ -1,8 +1,8 @@
-import { enforce, only, staticSuite, test} from 'vest';
+import { enforce, only, staticSuite, test } from 'vest';
 
-import { CommentModel } from '@bk2/shared/models';
-import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { baseValidations, dateValidations, stringValidations } from '@bk2/shared/util-core';
+import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { CommentModel } from '@bk2/shared-models';
+import { baseValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
 
 export const commentValidations = staticSuite((model: CommentModel, field?: string) => {
   if (field) only(field);

@@ -2,13 +2,15 @@ import { Component, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { CategoryComponent, TextInputComponent } from '@bk2/shared/ui';
-import { ButtonActions } from '@bk2/shared/categories';
-import { SectionFormModel } from '@bk2/cms/section/util';
-import { ButtonAction } from '@bk2/shared/models';
+import { ButtonActions } from '@bk2/shared-categories';
+import { ButtonAction } from '@bk2/shared-models';
+import { CategoryComponent, TextInputComponent } from '@bk2/shared-ui';
+
+import { SectionFormModel } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-button-action-config',
+  standalone: true,
   viewProviders: [vestFormsViewProviders],
   imports: [
     IonGrid, IonRow, IonCol,

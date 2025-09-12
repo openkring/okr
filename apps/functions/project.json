@@ -5,6 +5,18 @@
   "projectType": "application",
   "tags": ["type:app", "scope:functions", "platform:node"],
   "targets": {
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write ."
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check ."
+      }
+    },
     "build": {
       "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
@@ -13,10 +25,7 @@
         "outputPath": "dist/apps/functions",
         "main": "apps/functions/src/main.ts",
         "tsConfig": "apps/functions/tsconfig.app.json",
-        "assets": [
-          "apps/functions/src/assets",
-          "apps/functions/package.json"
-        ],
+        "assets": ["apps/functions/src/assets", "apps/functions/package.json"],
         "generatePackageJson": false,
         "createLockFile": false,
         "format": ["cjs"],

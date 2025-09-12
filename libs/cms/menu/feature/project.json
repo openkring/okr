@@ -1,5 +1,5 @@
 {
-  "name": "cms/menu/feature",
+  "name": "cms-menu-feature",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/cms/menu/feature/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/cms/menu/feature",
         "main": "libs/cms/menu/feature/src/index.ts",
         "tsConfig": "libs/cms/menu/feature/tsconfig.lib.json",
-        "assets": ["libs/cms/menu/feature/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/cms/menu/feature/jest.config.ts"
+        "assets": ["libs/cms/menu/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

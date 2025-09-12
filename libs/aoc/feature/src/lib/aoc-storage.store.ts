@@ -1,11 +1,11 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore } from '@bk2/shared/feature';
-import { LogInfo } from '@bk2/shared/models';
-import { warn } from '@bk2/shared/util-core';
-import { copyToClipboard, showToast } from '@bk2/shared/util-angular';
+import { AppStore } from '@bk2/shared-feature';
+import { LogInfo } from '@bk2/shared-models';
+import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
+import { warn } from '@bk2/shared-util-core';
 
 export type AocStorageState = {
   filePath: string;
@@ -18,16 +18,16 @@ export const initialState: AocStorageState = {
   filePath: '',
   dirPath: '',
   log: [],
-  logTitle: ''
+  logTitle: '',
 };
 
 export const AocStorageStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
-    toastController: inject(ToastController)
+    toastController: inject(ToastController),
   })),
-/*   withProps((store) => ({
+  /*   withProps((store) => ({
     dataResource: rxResource({
       params: () => ({
         filePath: store.filePath()
@@ -37,17 +37,16 @@ export const AocStorageStore = signalStore(
     })
   })), */
 
-  withComputed((state) => {
+  withComputed(state => {
     return {
       currentUser: computed(() => state.appStore.currentUser()),
       //isLoading: computed(() => state.dataResource.isLoading()),
       //data: computed(() => state.dataResource.value() ?? []),
-    }
+    };
   }),
 
-  withMethods((store) => {
+  withMethods(store => {
     return {
-
       /******************************** setters (filter) ******************************************* */
       setFilePath(filePath: string): void {
         patchState(store, { filePath, log: [], logTitle: '' });
@@ -79,7 +78,7 @@ export const AocStorageStore = signalStore(
       async copyPath(isFilePath: boolean) {
         const _path = isFilePath ? store.filePath() : store.dirPath();
         copyToClipboard(_path);
-        showToast(store.toastController, '@general.operation.copy.conf');  
+        showToast(store.toastController, '@general.operation.copy.conf');
       },
 
       clearPath(isFilePath: boolean): void {
@@ -88,8 +87,7 @@ export const AocStorageStore = signalStore(
         } else {
           patchState(store, { dirPath: '', log: [], logTitle: '' });
         }
-      }
-    }
+      },
+    };
   })
 );
- 

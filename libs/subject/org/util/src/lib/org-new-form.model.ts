@@ -1,5 +1,6 @@
-import { OrgType } from '@bk2/shared/models';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+
+import { OrgType } from '@bk2/shared-models';
 
 export type OrgNewFormModel = DeepPartial<{
   orgName: string,

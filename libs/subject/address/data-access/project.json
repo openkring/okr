@@ -1,7 +1,7 @@
 {
-  "name": "address/data-access",
+  "name": "subject-address-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/address/data-access/src",
+  "sourceRoot": "libs/subject/address/data-access/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:data-access", "scope:address", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/subject/address/data-access",
         "main": "libs/subject/address/data-access/src/index.ts",
         "tsConfig": "libs/subject/address/data-access/tsconfig.lib.json",
-        "assets": ["libs/subject/address/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/subject/address/data-access/jest.config.ts"
+        "assets": ["libs/subject/address/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {
@@ -28,3 +22,4 @@
     }
   }
 }
+

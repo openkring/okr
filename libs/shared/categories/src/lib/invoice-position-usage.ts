@@ -1,4 +1,4 @@
-import { CategoryModel, InvoicePositionUsage } from "@bk2/shared/models";
+import { CategoryModel, InvoicePositionUsage } from '@bk2/shared-models';
 
 export type InvoicePositionUsageCategory = CategoryModel;
 

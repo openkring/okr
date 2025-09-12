@@ -1,10 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, input } from '@angular/core';
-import { TranslatePipe } from '@bk2/shared/i18n';
 import { IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular/standalone';
+
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-optional-card-header',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonCardHeader, IonCardTitle, IonCardSubtitle

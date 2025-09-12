@@ -1,5 +1,6 @@
-import { PrivacyUsage } from '@bk2/shared/models';
-import { DeepPartial, DeepRequired} from 'ngx-vest-forms';
+import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+
+import { PrivacyUsage } from '@bk2/shared-models';
 
 // privacy restriction attributes are from UserModel
 export type PrivacyFormModel = DeepPartial<{

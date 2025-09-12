@@ -1,15 +1,16 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
-
-import { AddressModel, ModelType, PersonModel, ResourceModel } from '@bk2/shared/models';
-import { PersonService } from '@bk2/subject/person/data-access';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
-import { AppStore } from '@bk2/shared/feature';
-import { convertFormToPerson, PersonFormModel } from '@bk2/subject/person/util';
-import { debugItemLoaded, debugListLoaded } from '@bk2/shared/util-core';
-import { AppNavigationService } from '@bk2/shared/util-angular';
+
+import { AppStore } from '@bk2/shared-feature';
+import { AddressModel, ModelType, PersonModel, ResourceModel } from '@bk2/shared-models';
+import { AppNavigationService } from '@bk2/shared-util-angular';
+import { debugItemLoaded, debugListLoaded } from '@bk2/shared-util-core';
+
+import { PersonService } from '@bk2/subject-person-data-access';
+import { convertFormToPerson, PersonFormModel } from '@bk2/subject-person-util';
 
 /**
  * the personEditPage is setting the personKey.

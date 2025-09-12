@@ -1,9 +1,10 @@
-import { ABBREVIATION_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { AccountType, GenderType, ModelType, OrgType, Periodicity, ResourceType, RowingBoatType } from '@bk2/shared/models';
-import { categoryValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared/util-core';
-import { enforce, omitWhen, only, staticSuite, test} from 'vest';
-import { OwnershipNewFormModel } from './ownership-new-form.model';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
+import { ABBREVIATION_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { AccountType, GenderType, ModelType, OrgType, Periodicity, ResourceType, RowingBoatType } from '@bk2/shared-models';
+import { categoryValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
+
+import { OwnershipNewFormModel } from './ownership-new-form.model';
 
 export const ownershipNewFormValidations = staticSuite((model: OwnershipNewFormModel, field?: string) => {
   if (field) only(field);

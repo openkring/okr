@@ -1,10 +1,10 @@
-import { enforce, only, staticSuite, test} from 'vest';
+import { enforce, only, staticSuite, test } from 'vest';
 
-import { categoryValidations, isArrayOfStrings, stringValidations } from '@bk2/shared/util-core';
-import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
+import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { ContentState, PageType } from '@bk2/shared-models';
+import { categoryValidations, isArrayOfStrings, stringValidations } from '@bk2/shared-util-core';
+
 import { PageFormModel } from './page-form.model';
-import { ContentState, PageType } from '@bk2/shared/models';
-
 
 export const pageFormValidations = staticSuite((model: PageFormModel, field?: string) => {
   if (field) only(field);

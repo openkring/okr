@@ -1,7 +1,7 @@
 {
-  "name": "person/data-access",
+  "name": "subject-person-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/person/data-access/src",
+  "sourceRoot": "libs/subject/person/data-access/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:data-access", "scope:person", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/subject/person/data-access",
         "main": "libs/subject/person/data-access/src/index.ts",
         "tsConfig": "libs/subject/person/data-access/tsconfig.lib.json",
-        "assets": ["libs/subject/person/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/subject/person/data-access/jest.config.ts"
+        "assets": ["libs/subject/person/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {
@@ -28,3 +22,4 @@
     }
   }
 }
+

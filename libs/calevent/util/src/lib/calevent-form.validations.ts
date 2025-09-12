@@ -1,9 +1,10 @@
-import { enforce, omitWhen, only, staticSuite, test} from 'vest';
-import { CalEventFormModel } from './calevent-form.model';
-import { categoryValidations, dateValidations, isAfterDate, isAfterOrEqualDate, stringValidations, urlValidations } from '@bk2/shared/util-core';
-import { SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { CalEventType, Periodicity } from '@bk2/shared/models';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
+import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { CalEventType, Periodicity } from '@bk2/shared-models';
+import { categoryValidations, dateValidations, isAfterDate, isAfterOrEqualDate, stringValidations, urlValidations } from '@bk2/shared-util-core';
+
+import { CalEventFormModel } from './calevent-form.model';
 
 export const calEventFormValidations = staticSuite((model: CalEventFormModel, field?: string) => {
   if (field) only(field);

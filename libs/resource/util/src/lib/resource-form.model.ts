@@ -1,5 +1,6 @@
-import { BaseProperty, CarType, GenderType, ResourceType, RowingBoatType, RowingBoatUsage } from '@bk2/shared/models';
 import { DeepRequired } from 'ngx-vest-forms';
+
+import { BaseProperty, CarType, GenderType, ResourceType, RowingBoatType, RowingBoatUsage } from '@bk2/shared-models';
 
 // can not use the DeepPartial from ngx-vest-forms because it is not compatible with BaseProperty[].
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

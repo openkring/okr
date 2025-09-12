@@ -1,18 +1,19 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { ModelType, SectionModel } from '@bk2/shared/models';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
-import { AppStore } from '@bk2/shared/feature';
+import { ENV } from '@bk2/shared-config';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, SectionModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
-import { convertFormToSection, convertSectionToForm } from '@bk2/cms/section/util';
+import { convertFormToSection, convertSectionToForm } from '@bk2/cms-section-util';
 import { SectionFormComponent } from './section.form';
 
 @Component({
     selector: 'bk-section-edit-modal',
+    standalone: true,
     imports: [
       TranslatePipe, AsyncPipe,
       ChangeConfirmationComponent, SectionFormComponent, HeaderComponent,

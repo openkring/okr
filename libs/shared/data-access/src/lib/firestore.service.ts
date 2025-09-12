@@ -21,18 +21,19 @@
  * - Error Handling: Add robust error handling to searchData to catch and log Firestore errors, aiding debugging (e.g., CORS or permission issues).
  * 
  */
-import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { ToastController } from '@ionic/angular/standalone';
 import { collection, deleteDoc, doc, query, setDoc, updateDoc } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
 import { Observable, of, shareReplay } from 'rxjs';
 
-import { ENV, FIRESTORE } from '@bk2/shared/config';
-import { BkModel, CommentCollection, CommentModel, DbQuery, UserModel } from "@bk2/shared/models";
-import { debugMessage, getFullPersonName, getQuery, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared/util-core';
-import { error, showToast } from '@bk2/shared/util-angular';
-import { ToastController } from '@ionic/angular/standalone';
-import { createComment } from '@bk2/comment/util';
+import { ENV, FIRESTORE } from '@bk2/shared-config';
+import { BkModel, CommentCollection, CommentModel, DbQuery, UserModel } from "@bk2/shared-models";
+import { error, showToast } from '@bk2/shared-util-angular';
+import { debugMessage, getFullPersonName, getQuery, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
+
+import { createComment } from '@bk2/comment-util';
 
 @Injectable({
   providedIn: 'root'

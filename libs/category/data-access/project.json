@@ -1,5 +1,5 @@
 {
-  "name": "category/data-access",
+  "name": "category-data-access",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/category/data-access/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/category/data-access",
         "main": "libs/category/data-access/src/index.ts",
         "tsConfig": "libs/category/data-access/tsconfig.lib.json",
-        "assets": ["libs/category/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/category/data-access/jest.config.ts"
+        "assets": ["libs/category/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

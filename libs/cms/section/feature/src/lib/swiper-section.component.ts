@@ -2,8 +2,8 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, input } from '@angular/cor
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { register } from 'swiper/element/bundle';
 
-import { SectionModel } from '@bk2/shared/models';
-import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
+import { SectionModel } from '@bk2/shared-models';
+import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 register(); // globally register Swiper's custom elements.
 
@@ -13,6 +13,7 @@ register(); // globally register Swiper's custom elements.
  */
 @Component({
   selector: 'bk-swiper-section',
+  standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     SpinnerComponent, ImageComponent, OptionalCardHeaderComponent,

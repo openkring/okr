@@ -1,5 +1,5 @@
-import { AddressableModel, BkModel, SearchableModel, TaggedModel } from "./base.model";
-import { GenderType } from "./enums/gender-type.enum";
+import { AddressableModel, BkModel, SearchableModel, TaggedModel } from './base.model';
+import { GenderType } from './enums/gender-type.enum';
 
 export class PersonModel implements BkModel, AddressableModel, SearchableModel, TaggedModel {
   public bkey = '';
@@ -11,7 +11,7 @@ export class PersonModel implements BkModel, AddressableModel, SearchableModel, 
   public firstName = '';
   public lastName = '';
   public gender = GenderType.Male;
-  public ssnId = '';                    // social security number, in Switzerland: AHV Number
+  public ssnId = ''; // social security number, in Switzerland: AHV Number
   public dateOfBirth = '';
   public dateOfDeath = '';
   public fav_email = '';

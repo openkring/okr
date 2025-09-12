@@ -1,12 +1,13 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { ENV } from '@bk2/shared/config';
-import { SectionService } from '@bk2/cms/section/data-access';
-import { SectionModel } from '@bk2/shared/models';
-import { warn } from '@bk2/shared/util-core';
-import { convertToKml, downloadZipFile, error } from '@bk2/shared/util-angular';
+import { ENV } from '@bk2/shared-config';
+import { SectionModel } from '@bk2/shared-models';
+import { convertToKml, downloadZipFile, error } from '@bk2/shared-util-angular';
+import { warn } from '@bk2/shared-util-core';
+
+import { SectionService } from '@bk2/cms-section-data-access';
 
 export type TrackerState = {
   section: SectionModel | undefined;

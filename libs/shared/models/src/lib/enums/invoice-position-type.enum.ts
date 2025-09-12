@@ -1,8 +1,8 @@
 export enum InvoicePositionType {
-    Fix,
-    Unit,
-    Hours,
-    Days,
-    Deduction,
-    Rebate
+  Fix,
+  Unit,
+  Hours,
+  Days,
+  Deduction,
+  Rebate,
 }

@@ -1,19 +1,20 @@
-import { Component, computed, inject, input, model, output, signal} from '@angular/core';
+import { Component, computed, inject, input, model, output, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { OrgTypes } from '@bk2/shared/categories';
-import { BexioIdMask, ChVatMask } from '@bk2/shared/config';
-import { OrgType, SwissCity, UserModel, RoleName } from '@bk2/shared/models';
-import { CategoryComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
+import { OrgTypes } from '@bk2/shared-categories';
+import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
+import { OrgType, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
+import { CategoryComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
-import { SwissCitySearchComponent } from '@bk2/subject/swisscities/ui';
+import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
 
-import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidations } from '@bk2/subject/org/util';
+import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidations } from '@bk2/subject-org-util';
 
 @Component({
   selector: 'bk-org-new-form',
+  standalone: true,
   imports: [
     vestForms,
     CategoryComponent, DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent, ErrorNoteComponent,

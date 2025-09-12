@@ -1,5 +1,5 @@
 export enum PrivacyUsage {
   Public,
   Restricted,
-  Protected
+  Protected,
 }

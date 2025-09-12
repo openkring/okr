@@ -1,4 +1,4 @@
-import { ButtonAction, CategoryModel } from "@bk2/shared/models";
+import { ButtonAction, CategoryModel } from '@bk2/shared-models';
 
 export type ButtonActionCategory = CategoryModel;
 

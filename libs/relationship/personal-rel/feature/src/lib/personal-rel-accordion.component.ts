@@ -1,20 +1,21 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { ModelType, PersonalRelModel, RoleName } from '@bk2/shared/models';
-import { hasRole, isOngoing } from '@bk2/shared/util-core';
-import { EmptyListComponent } from '@bk2/shared/ui';
-import { PersonalRelTypes } from '@bk2/shared/categories';
+import { PersonalRelTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, PersonalRelModel, RoleName } from '@bk2/shared-models';
+import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent } from '@bk2/shared-ui';
+import { hasRole, isOngoing } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { PersonalRelNamePipe } from '@bk2/relationship/personal-rel/util';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { PersonalRelNamePipe } from '@bk2/relationship-personal-rel-util';
 import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
 
 @Component({
   selector: 'bk-personal-rel-accordion',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
     EmptyListComponent,

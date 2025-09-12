@@ -1,4 +1,5 @@
-import { encrypt, decrypt } from './dencrypt.util'; 
+import { describe, expect, it } from 'vitest';
+import { decrypt, encrypt } from './dencrypt.util';
 
 describe('encrypt and decrypt functions', () => {
   const password = 'mySecretPassword';

@@ -9,5 +9,5 @@ export enum WorkingRelType {
   BoardMember,
   Cooperation,
   Competition,
-  Custom
+  Custom,
 }

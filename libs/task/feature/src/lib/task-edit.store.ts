@@ -1,11 +1,11 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AvatarInfo, ModelType } from '@bk2/shared/models';
-import { createFullName, debugItemLoaded } from '@bk2/shared/util-core';
-import { AppStore } from '@bk2/shared/feature';
-import { AvatarService } from '@bk2/avatar/data-access';
+import { AvatarService } from '@bk2/avatar-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { AvatarInfo, ModelType } from '@bk2/shared-models';
+import { createFullName, debugItemLoaded } from '@bk2/shared-util-core';
 
 export type TaskEditState = {
   author: AvatarInfo | undefined;

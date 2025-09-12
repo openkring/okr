@@ -1,19 +1,19 @@
 import { Component, input } from '@angular/core';
 import { IonBackdrop, IonGrid, IonRow, IonSpinner } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared/categories';
-import { CategoryPlainNamePipe } from '@bk2/shared/pipes';
-import { ColorIonic } from '@bk2/shared/models';
+import { ColorsIonic } from '@bk2/shared-categories';
+import { ColorIonic } from '@bk2/shared-models';
+import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 
 export type BkSpinnerName = 'dots' | 'bubbles' | 'circles' | 'crescent' | 'circular' | 'lines' | 'lines-small' | 'lines-sharp' | 'lines-small-sharp';
 
 @Component({
   selector: 'bk-spinner',
+  standalone: true,
   imports: [
     CategoryPlainNamePipe,
     IonGrid, IonRow, IonSpinner, IonBackdrop
   ],
-  standalone: true,
   template: `
   <ion-backdrop />
   <ion-grid style="height: 100%">

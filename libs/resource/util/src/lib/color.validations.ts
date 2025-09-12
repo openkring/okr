@@ -1,4 +1,4 @@
-import { stringValidations } from "@bk2/shared/util-core";
+import { stringValidations } from "@bk2/shared-util-core";
 
 export function colorValidations(fieldName: string, color: unknown) {
 

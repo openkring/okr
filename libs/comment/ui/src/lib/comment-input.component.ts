@@ -1,11 +1,12 @@
-import { Component, computed, input, output } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, input, output } from '@angular/core';
 import { IonCol, IonRow, IonTextarea } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-comment-input',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonRow, IonCol, IonTextarea

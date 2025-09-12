@@ -1,26 +1,29 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
-
-import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV } from '@bk2/shared/config';
-import { GroupCollection, ModelType, RoleName } from '@bk2/shared/models';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { hasRole } from '@bk2/shared/util-core';
-import { AvatarService } from '@bk2/avatar/data-access';
-import { getDocumentStoragePath } from '@bk2/document/util';
+import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalone';
 
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { MembersAccordionComponent } from '@bk2/relationship/membership/feature';
+import { ENV } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { GroupCollection, ModelType, RoleName } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
+
+import { AvatarService } from '@bk2/avatar-data-access';
+import { AvatarToolbarComponent } from '@bk2/avatar-feature';
+import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { getDocumentStoragePath } from '@bk2/document-util';
+import { MembersAccordionComponent } from '@bk2/relationship-membership-feature';
+
+import { GroupFormComponent } from '@bk2/subject-group-ui';
+import { convertGroupToForm } from '@bk2/subject-group-util';
+
 import { GroupEditStore } from './group-edit.store';
-import { convertGroupToForm } from '@bk2/subject/group/util';
-import { GroupFormComponent } from '@bk2/subject/group/ui';
-import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
-import { AvatarToolbarComponent } from '@bk2/avatar/feature';
 
 @Component({
   selector: 'bk-group-edit-page',
+  standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent, GroupFormComponent,
     AvatarToolbarComponent, CommentsAccordionComponent, MembersAccordionComponent,

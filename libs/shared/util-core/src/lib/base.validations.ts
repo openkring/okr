@@ -1,8 +1,8 @@
 
-import { only, staticSuite} from 'vest';
-import { AvatarInfo, BkModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, ModelType } from '@bk2/shared/models';
+import { LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { AvatarInfo, BkModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, ModelType } from '@bk2/shared-models';
+import { only, staticSuite } from 'vest';
 import { booleanValidations, categoryValidations, stringValidations } from './vest.util';
-import { LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
 
 /**
  * Validates BkModel attributes:

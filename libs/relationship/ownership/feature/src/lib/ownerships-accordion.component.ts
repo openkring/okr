@@ -1,19 +1,20 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { getAvatarKey, hasRole } from '@bk2/shared/util-core';
-import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared/models';
-import { ResourceTypes } from '@bk2/shared/categories';
+import { ResourceTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
+import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent } from '@bk2/shared-ui';
+import { getAvatarKey, hasRole } from '@bk2/shared-util-core';
 import { OwnershipAccordionStore } from './ownerships-accordion.store';
-import { EmptyListComponent } from '@bk2/shared/ui';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
+import { AvatarPipe } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-ownerships-accordion',
+  standalone: true,
   imports: [
     TranslatePipe, AvatarPipe, AsyncPipe, DurationPipe, SvgIconPipe, EmptyListComponent,
     IonAccordion, IonItem, IonLabel, IonList, IonButton, IonIcon,

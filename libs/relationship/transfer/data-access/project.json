@@ -1,7 +1,7 @@
 {
-  "name": "transfer/data-access",
+  "name": "relationship-transfer-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/transfer/data-access/src",
+  "sourceRoot": "libs/relationship/transfer/data-access/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:data-access", "scope:transfer", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/relationship/transfer/data-access",
         "main": "libs/relationship/transfer/data-access/src/index.ts",
         "tsConfig": "libs/relationship/transfer/data-access/tsconfig.lib.json",
-        "assets": ["libs/relationship/transfer/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/relationship/transfer/data-access/jest.config.ts"
+        "assets": ["libs/relationship/transfer/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

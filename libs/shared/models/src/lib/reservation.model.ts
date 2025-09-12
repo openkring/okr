@@ -1,23 +1,23 @@
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from "./base.model";
-import { ModelType } from "./enums/model-type.enum";
-import { ResourceType } from "./enums/resource-type.enum";
-import { Periodicity } from "./enums/periodicity.enum";
-import { ReservationState } from "./enums/reservation-state.enum";
-import { ReservationReason } from "./enums/reservation-reason.enum";
-import { GenderType } from "./enums/gender-type.enum";
-import { DocumentType } from "./enums/document-type.enum";
-import { OrgType } from "./enums/org-type.enum";
-import { AccountType } from "./enums/account-type.enum";
+import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { AccountType } from './enums/account-type.enum';
+import { DocumentType } from './enums/document-type.enum';
+import { GenderType } from './enums/gender-type.enum';
+import { ModelType } from './enums/model-type.enum';
+import { OrgType } from './enums/org-type.enum';
+import { Periodicity } from './enums/periodicity.enum';
+import { ReservationReason } from './enums/reservation-reason.enum';
+import { ReservationState } from './enums/reservation-state.enum';
+import { ResourceType } from './enums/resource-type.enum';
 
 /**
  * A reservation of a resource or a rowing boat.
- * 
+ *
  * Person|Org            reserves|isReservedBy      Resource|RowingBoat
- * 
+ *
  * ReservationState: Reserved, Confirmed, Cancelled, NoShow, ...
  * ReservationType: Booking, Reservation, Registration (WaitingList/Application = RelationshipState.Applied)
  * ReservationReason: Course, Workshop, Meeting, Party, SocialEvent, Maintenance, SportsEvent, BusinessEvent, PrivateEvent, PublicEvent, StoragePlace, ClubEvent
- * 
+ *
  * Examples:
  * - reservation of a rowing boat
  * - booking of a room
@@ -31,14 +31,14 @@ export class ReservationModel implements BkModel, NamedModel, SearchableModel, T
   public isArchived = false;
   public index = '';
   public tags = '';
-  public name = ''; 
-  public notes = ''; 
+  public name = '';
+  public notes = '';
 
   // the person or org making the reservation
   public reserverKey = '';
-  public reserverName = '';  // e.g. firstname of subject
+  public reserverName = ''; // e.g. firstname of subject
   public reserverName2 = ''; // name of subject, e.g. lastname
-  public reserverModelType: ModelType = ModelType.Person;   // Person or Org
+  public reserverModelType: ModelType = ModelType.Person; // Person or Org
   public reserverType?: GenderType | OrgType; // gender for Person or orgType for Org
 
   // the resource that the reservation is for
@@ -50,19 +50,19 @@ export class ReservationModel implements BkModel, NamedModel, SearchableModel, T
 
   public startDate = '';
   public startTime = '';
-  public endDate = ''; 
+  public endDate = '';
   public endTime = '';
   public numberOfParticipants = '';
   public area = '';
-  public reservationRef = '';       // e.g. the reservation number or contact person
-  public reservationState?: ReservationState; 
+  public reservationRef = ''; // e.g. the reservation number or contact person
+  public reservationState?: ReservationState;
   public reservationReason?: ReservationReason;
-  public priority?: number;  // e.g. relevant for waiting list (state applied)
+  public priority?: number; // e.g. relevant for waiting list (state applied)
 
   public price = 0;
   public currency = 'CHF';
   public periodicity = Periodicity.Once;
-  
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }

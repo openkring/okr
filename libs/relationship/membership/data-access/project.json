@@ -1,7 +1,7 @@
 {
-  "name": "membership/data-access",
+  "name": "relationship-membership-data-access",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/membership/data-access/src",
+  "sourceRoot": "libs/relationship/membership/data-access/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:data-access", "scope:membership", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/relationship/membership/data-access",
         "main": "libs/relationship/membership/data-access/src/index.ts",
         "tsConfig": "libs/relationship/membership/data-access/tsconfig.lib.json",
-        "assets": ["libs/relationship/membership/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/relationship/membership/data-access/jest.config.ts"
+        "assets": ["libs/relationship/membership/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

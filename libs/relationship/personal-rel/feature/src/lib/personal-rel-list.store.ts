@@ -1,19 +1,20 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, isPersonalRel, nameMatches } from '@bk2/shared/util-core';
-import { AllCategories, ModelType, PersonalRelModel, PersonalRelType } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
-import { categoryMatches } from '@bk2/shared/categories';
-import { selectDate } from '@bk2/shared/ui';
+import { categoryMatches } from '@bk2/shared-categories';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, ModelType, PersonalRelModel, PersonalRelType } from '@bk2/shared-models';
+import { selectDate } from '@bk2/shared-ui';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, isPersonalRel, nameMatches } from '@bk2/shared-util-core';
 
-import { PersonalRelService } from '@bk2/relationship/personal-rel/data-access';
-import { PersonalRelModalsService } from './personal-rel-modals.service';
+import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
+import { convertFormToNewPersonalRel, PersonalRelNewFormModel } from '@bk2/relationship-personal-rel-util';
+
 import { PersonalRelEditModalComponent } from './personal-rel-edit.modal';
+import { PersonalRelModalsService } from './personal-rel-modals.service';
 import { PersonalRelNewModalComponent } from './personal-rel-new.modal';
-import { convertFormToNewPersonalRel, PersonalRelNewFormModel } from '@bk2/relationship/personal-rel/util';
 
 export type PersonalRelListState = {
   searchTerm: string;

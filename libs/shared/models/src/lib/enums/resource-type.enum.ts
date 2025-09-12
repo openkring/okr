@@ -1,11 +1,11 @@
 export enum ResourceType {
-    RowingBoat,
-    Boat,
-    Car,
-    Locker,
-    Key,
-    RealEstate,
-    Other,
+  RowingBoat,
+  Boat,
+  Car,
+  Locker,
+  Key,
+  RealEstate,
+  Other,
 }
 
 /* 
@@ -59,7 +59,7 @@ export enum BikeType {
   Tandem,
   Recumbent,
   TouringBike,
-  FixedGear
+  FixedGear,
 }
 
 export enum MotorcycleType {
@@ -68,7 +68,7 @@ export enum MotorcycleType {
   Adventure,
   Sport,
   Touring,
-  Scooter
+  Scooter,
 }
 
 export enum AirplaneType {
@@ -84,7 +84,7 @@ export enum AirplaneType {
   PrivateJet,
   Airship,
   Balloon,
-  Drone
+  Drone,
 }
 
 export enum RealEstateType {
@@ -144,7 +144,7 @@ export enum RealEstateType {
   Aquarium,
   BotanicalGarden,
   NatureReserve,
-  Forest
+  Forest,
 }
 
 export enum ElectronicsType {
@@ -166,19 +166,19 @@ export enum ElectronicsType {
   Projector,
   GameConsole,
   NetworkDevice,
-  StorageDevice
+  StorageDevice,
 }
 
 // 2 taxonomies: soft/hard,  transferrable/personal/knowledge
 export enum SkillsType {
-  Soft,             // emotional intelligence, communication, adaptibility, e.g. patience, communication, empathy, cultural, multitasking
-  Hard,             // specific, teachable, measurable, job-specific abilities (= knowledge), e.g. language, programming, cooking, design, teaching
-  Transferrable,    // applicable across different jobs and industries, e.g. communication, organization, analytical thinking, critical thinking, computing, writing
-  Personal,         // individual's innate abilities and character traits, e.g. independence, integrity, patience, compassion, assertiveness, creativity, resilience
-  Knowledge         // acquired through learning & education, e.g. programming, copywriting, seo, driving
+  Soft, // emotional intelligence, communication, adaptibility, e.g. patience, communication, empathy, cultural, multitasking
+  Hard, // specific, teachable, measurable, job-specific abilities (= knowledge), e.g. language, programming, cooking, design, teaching
+  Transferrable, // applicable across different jobs and industries, e.g. communication, organization, analytical thinking, critical thinking, computing, writing
+  Personal, // individual's innate abilities and character traits, e.g. independence, integrity, patience, compassion, assertiveness, creativity, resilience
+  Knowledge, // acquired through learning & education, e.g. programming, copywriting, seo, driving
 }
 
-export enum NaturalResourcetype {
+export enum NaturalResourceType {
   Energy,
   Fuel,
   Water,
@@ -186,5 +186,5 @@ export enum NaturalResourcetype {
   Land,
   Forest,
   Biological,
-  Mineral
+  Mineral,
 }

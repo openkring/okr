@@ -1,18 +1,19 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { computed, inject } from '@angular/core';
-import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { HttpClient } from '@angular/common/http';
-import { catchError, from, map, Observable, of } from 'rxjs';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ChannelService, ChatClientService, StreamI18nService } from 'stream-chat-angular';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
+import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
+import { catchError, from, map, Observable, of } from 'rxjs';
+import { ChannelService, ChatClientService, StreamI18nService } from 'stream-chat-angular';
 
-import { ChatConfig, ModelType } from '@bk2/shared/models';
-import { debugData, debugItemLoaded, debugMessage, die } from '@bk2/shared/util-core';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { ChatConfig, DefaultLanguage, ModelType } from '@bk2/shared-models';
+import { debugData, debugItemLoaded, debugMessage, die } from '@bk2/shared-util-core';
 
-import { newChatConfig } from '@bk2/cms/section/util';
-import { AvatarService } from '@bk2/avatar/data-access';
+import { AvatarService } from '@bk2/avatar-data-access';
+import { newChatConfig } from '@bk2/cms-section-util';
+import { Languages } from '@bk2/shared-categories';
 
 export interface ChatUser {
   id: string;
@@ -147,7 +148,10 @@ export const ChatSectionStore = signalStore(
 
       async initializeChat(chatUser: ChatUser, token: string): Promise<void> {
         store.chatService.init(store.appStore.env.services.chatStreamApiKey, chatUser.id, token); 
-        store.streamI18nService.setTranslation();
+        const _langCode = store.currentUser()?.userLanguage || DefaultLanguage;
+        const _lang = Languages[_langCode].abbreviation;
+        console.log(`ChatSectionStore.initializeChat: Setting chat language to ${_lang} (${_langCode})`);
+        //store.streamI18nService.setTranslation(_lang);
         const _config = store.config() ?? die('ChatSectionStore.initializeChat: No config found.');
         const channel = store.chatService.chatClient.channel(_config.channelType ?? 'messaging', _config.channelId, {
           image: _config.channelImageUrl ?? '',

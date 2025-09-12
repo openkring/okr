@@ -2,13 +2,15 @@ import { Component, computed, linkedSignal, model, output } from '@angular/core'
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { GalleryEffects } from '@bk2/shared/categories';
-import { CategoryComponent, CheckboxComponent, TextInputComponent } from '@bk2/shared/ui';
-import { AlbumStyles, SectionFormModel } from '@bk2/cms/section/util';
-import { AlbumStyle, GalleryEffect } from '@bk2/shared/models';
+import { GalleryEffects } from '@bk2/shared-categories';
+import { AlbumStyle, GalleryEffect } from '@bk2/shared-models';
+import { CategoryComponent, CheckboxComponent, TextInputComponent } from '@bk2/shared-ui';
+
+import { AlbumStyles, SectionFormModel } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-album-section-config',
+  standalone: true,
   imports: [
     IonGrid, IonRow, IonCol,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,

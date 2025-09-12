@@ -1,4 +1,4 @@
-import { PrivacyAccessor, RoleName, Roles, UserModel } from "@bk2/shared/models";
+import { PrivacyAccessor, RoleName, Roles, UserModel } from "@bk2/shared-models";
 import { die } from "./log.util";
 
 /**

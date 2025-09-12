@@ -13,5 +13,5 @@ export enum SectionType {
   Table,
   Iframe,
   Chat,
-  Tracker
+  Tracker,
 }

@@ -1,16 +1,17 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
-import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared/util-core';
-import { confirm } from '@bk2/shared/util-angular';
-import { selectDate } from '@bk2/shared/ui';
+import { AppStore } from '@bk2/shared-feature';
+import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared-models';
+import { selectDate } from '@bk2/shared-ui';
+import { confirm } from '@bk2/shared-util-angular';
+import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared-util-core';
 
-import { OwnershipService } from '@bk2/relationship/ownership/data-access';
+import { OwnershipService } from '@bk2/relationship-ownership-data-access';
+
 import { OwnershipModalsService } from './ownership-modals.service';
 
 export type OwnershipAccordionState = {

@@ -1,5 +1,5 @@
 {
-  "name": "document/feature",
+  "name": "document-feature",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/document/feature/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/document/feature",
         "main": "libs/document/feature/src/index.ts",
         "tsConfig": "libs/document/feature/tsconfig.lib.json",
-        "assets": ["libs/document/feature/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/document/feature/jest.config.ts"
+        "assets": ["libs/document/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

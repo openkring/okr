@@ -11,7 +11,8 @@ import { AfterViewInit, Directive, ElementRef, input } from '@angular/core';
  * Usage: <input bkAutofocus>
  */
 @Directive({
-  selector: '[bkFocus]'
+  selector: '[bkFocus]',
+  standalone: true
 })
 export class AutofocusDirective implements AfterViewInit {
   public readonly hostElement = input.required<ElementRef>();

@@ -1,9 +1,10 @@
-import { only, staticSuite} from 'vest';
-import { avatarInfoValidations, categoryValidations, dateValidations, stringValidations } from '@bk2/shared/util-core';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { TaskFormModel } from './task-form.model';
-import { Importance, Priority, TaskState } from '@bk2/shared/models';
+import { only, staticSuite } from 'vest';
 
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { Importance, Priority, TaskState } from '@bk2/shared-models';
+import { avatarInfoValidations, categoryValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
+
+import { TaskFormModel } from './task-form.model';
 
 export const taskFormValidations = staticSuite((model: TaskFormModel, field?: string) => {
   if (field) only(field);

@@ -1,7 +1,7 @@
 {
-  "name": "social-feed/feature",
+  "name": "social-feed-feature",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/social-feed/social-feed-feature/src",
+  "sourceRoot": "libs/social-feed/feature/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:feature", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/social-feed/feature",
         "main": "libs/social-feed/feature/src/index.ts",
         "tsConfig": "libs/social-feed/feature/tsconfig.lib.json",
-        "assets": ["libs/social-feed/feature/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/social-feed/feature/jest.config.ts"
+        "assets": ["libs/social-feed/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

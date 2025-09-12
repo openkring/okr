@@ -1,19 +1,21 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonAccordion, IonAvatar, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryNamePipe, FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { ModelType, WorkingRelModel, RoleName } from '@bk2/shared/models';
-import { hasRole, isOngoing } from '@bk2/shared/util-core';
-import { EmptyListComponent } from '@bk2/shared/ui';
+import { WorkingRelTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, RoleName, WorkingRelModel } from '@bk2/shared-models';
+import { CategoryNamePipe, FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent } from '@bk2/shared-ui';
+import { hasRole, isOngoing } from '@bk2/shared-util-core';
+
 import { WorkingRelAccordionStore } from './working-rel-accordion.store';
-import { WorkingRelTypes } from '@bk2/shared/categories';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
+import { AvatarPipe } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-working-rel-accordion',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, CategoryNamePipe,
     EmptyListComponent,

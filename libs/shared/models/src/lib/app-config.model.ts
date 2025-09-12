@@ -90,7 +90,7 @@ export class AppConfig {
 
   // settings defaults
   public avatarUsage = 3;
-  public invoiceDelivery = 1; 
+  public invoiceDelivery = 1;
   public maxYear = 2050; // maximum year for date inputs
   public minYear = 1850; // minimum year for date inputs
   public nameDisplay = 0; // name display format, e.g. 0 for full name, 1 for first name only
@@ -106,13 +106,12 @@ export class AppConfig {
     this.logoUrl = `tenant/${tenantId}/logo/logo_round.svg`;
     this.welcomeBannerUrl = `tenant/${tenantId}/app/welcome.jpg`;
     this.notfoundBannerUrl = `tenant/${tenantId}/app/not-found.jpg`;
-    this.ownerUserId = `owner_${tenantId}`; 
+    this.ownerUserId = `owner_${tenantId}`;
     this.ownerOrgId = tenantId;
     this.ownerLocationId = `${tenantId}`;
     this.defaultResourceId = `${tenantId}_default`;
     this.issueUrl = `https://github.com/${this.gitOrg}/${this.gitRepo}/issues/new`;
   }
 }
-
 
 export const AppConfigCollection = 'app-config';

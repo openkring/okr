@@ -1,11 +1,12 @@
 import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { ModelType, OrgModel, PersonModel, ResourceModel, TransferModel } from "@bk2/shared/models";
-import { AppStore } from "@bk2/shared/feature";
+import { AppStore } from "@bk2/shared-feature";
+import { ModelType, OrgModel, PersonModel, ResourceModel, TransferModel } from "@bk2/shared-models";
 
-import { TransferService } from "@bk2/relationship/transfer/data-access";
-import { isTransfer } from "@bk2/relationship/transfer/util";
+import { TransferService } from "@bk2/relationship-transfer-data-access";
+import { isTransfer } from "@bk2/relationship-transfer-util";
+
 import { TransferEditModalComponent } from "./transfer-edit.modal";
 import { TransferNewModalComponent } from "./transfer-new.modal";
 

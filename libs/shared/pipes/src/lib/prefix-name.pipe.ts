@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { bkTranslate } from '@bk2/shared/i18n';
+import { bkTranslate } from '@bk2/shared-i18n';
 @Pipe({
   name: 'prefixName',
+  standalone: true
 })
 export class PrefixNamePipe implements PipeTransform {
   transform(name: string, prefix: string | undefined): string {

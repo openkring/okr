@@ -1,21 +1,21 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { AsyncPipe } from '@angular/common';
-import { Router } from '@angular/router';
 
-import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { GenderType, ModelType, PersonalRelType, UserModel, RoleName } from '@bk2/shared/models';
-import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
-import { FullNamePipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { PersonalRelTypes } from '@bk2/shared/categories';
-
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidations } from '@bk2/relationship/personal-rel/util';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidations } from '@bk2/relationship-personal-rel-util';
+import { PersonalRelTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { GenderType, ModelType, PersonalRelType, RoleName, UserModel } from '@bk2/shared-models';
+import { FullNamePipe } from '@bk2/shared-pipes';
+import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-personal-rel-form',
+  standalone: true,
   imports: [
     vestForms,
     AvatarPipe, AsyncPipe, FullNamePipe, TranslatePipe,

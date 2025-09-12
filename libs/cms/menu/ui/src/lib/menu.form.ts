@@ -1,17 +1,20 @@
 import { Component, computed, input, linkedSignal, model, output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { MenuActions, RoleEnums } from '@bk2/shared/categories';
-import { NAME_LENGTH } from '@bk2/shared/constants';
-import { CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, PropertyListComponent, StringsComponent, TextInputComponent, UrlInputComponent } from '@bk2/shared/ui';
-import { MenuItemFormModel, menuItemFormModelShape, menuItemFormValidation } from '@bk2/cms/menu/util';
-import { BaseProperty, MenuAction, RoleEnum, UserModel, RoleName } from '@bk2/shared/models';
-import { FormsModule } from '@angular/forms';
-import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
+import { MenuActions, RoleEnums } from '@bk2/shared-categories';
+import { NAME_LENGTH } from '@bk2/shared-constants';
+import { BaseProperty, MenuAction, RoleEnum, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, PropertyListComponent, StringsComponent, TextInputComponent, UrlInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
+
+import { MenuItemFormModel, menuItemFormModelShape, menuItemFormValidation } from '@bk2/cms-menu-util';
+
 
 @Component({
   selector: 'bk-menu-item-form',
+  standalone: true,
   imports: [
     vestForms, FormsModule,
     TextInputComponent, UrlInputComponent, CategoryComponent, ChipsComponent, NotesInputComponent, 

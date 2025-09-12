@@ -1,13 +1,13 @@
-import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { AlertController, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { NAME_LENGTH } from '@bk2/shared/constants';
-import { AvatarInfo } from '@bk2/shared/models';
-import { getFullPersonName, newAvatarInfo } from '@bk2/shared/util-core';
-import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared/util-angular';
+import { NAME_LENGTH } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AvatarInfo } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
+import { getFullPersonName, newAvatarInfo } from '@bk2/shared-util-core';
 
 import { AvatarDisplayComponent } from './avatar-display.component';
 
@@ -19,6 +19,7 @@ import { AvatarDisplayComponent } from './avatar-display.component';
 
 @Component({
   selector: 'bk-avatars',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     AvatarDisplayComponent,

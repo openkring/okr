@@ -1,16 +1,18 @@
-import { Component, inject, signal, OnInit, input } from '@angular/core';
 import { AsyncPipe, DecimalPipe } from '@angular/common';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonLabel, IonProgressBar, IonRow, ModalController } from '@ionic/angular/standalone';
 import { UploadTask, UploadTaskSnapshot, getDownloadURL } from 'firebase/storage';
 
-import { TranslatePipe} from '@bk2/shared/i18n';
-import { uploadToFirebaseStorage } from '@bk2/shared/config';
-import { die } from '@bk2/shared/util-core';
-import { error } from '@bk2/shared/util-angular';
+import { uploadToFirebaseStorage } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { error } from '@bk2/shared-util-angular';
+import { die } from '@bk2/shared-util-core';
+
 import { HeaderComponent } from './header.component';
 
 @Component({
   selector: 'bk-upload-task',
+  standalone: true,
   imports: [
     AsyncPipe, DecimalPipe, TranslatePipe,
     HeaderComponent,

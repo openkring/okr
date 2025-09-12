@@ -1,33 +1,67 @@
+import * as functions from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
-import * as logger from "firebase-functions/logger";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
 
-// app is initialized in init.ts (with default service account) which is imported in main.ts 
+export const impersonateUser = functions.onCall(
+  {
+    region: 'europe-west6',
+    enforceAppCheck: true
+  },
+  async (request: functions.CallableRequest<{ uid: string }>) => {
+    // onCall methods are automatically POST requests, so we don't need to check the method.
 
-export const impersonateUser = onCall({ region: 'europe-west6', cors: true }, async (request) => {
-  logger.log("impersonateUser: impersonating user", request.data?.uid);
+    logger.info('impersonateUser: Processing request', {
+      uid: request.data.uid,
+      authUid: request.auth?.uid,
+      appCheck: !!request.app,
+      serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
+    });
 
-  // Checking that the user is authenticated
-  if (!request.auth) {
-    logger.error("impersonateUser: user is not authenticated");
-    throw new HttpsError("failed-precondition", "impersonateUser must be called while authenticated.");
+    // Check App Check token
+    if (!request.app) {
+      logger.error('impersonateUser: App Check token missing or invalid');
+      throw new functions.HttpsError('failed-precondition', 'App Check verification failed.');
+    }
+
+    // Check if the user is authenticated
+    if (!request.auth) {
+      logger.error(`impersonateUser: user ${request.data?.uid} is not authenticated`);
+      throw new functions.HttpsError('unauthenticated', 'impersonateUser must be called while authenticated.');
+    }
+
+    // Check if the user has admin rights
+    if (!request.auth.token.admin) {
+      logger.error(`impersonateUser: user ${request.auth.uid} must be an admin`);
+      throw new functions.HttpsError('permission-denied', 'impersonateUser can only be used by admin users.');
+    }
+
+    // Check if the uid of the user to impersonate is provided
+    if (!request.data.uid || typeof request.data.uid !== 'string') {
+      logger.error(`impersonateUser: invalid uid <${request.data?.uid}> provided`);
+      throw new functions.HttpsError('invalid-argument', 'impersonateUser must be called with a valid UID to impersonate.');
+    }
+
+    try {
+      logger.info(`impersonateUser: Attempting to impersonate user ${request.data.uid}`);
+      logger.info(`impersonateUser: Service account=<${process.env.GOOGLE_APPLICATION_CREDENTIALS}>`);
+      logger.info(`impersonateUser: User${request.auth.uid} is impersonating ${request.data.uid}`);
+      const _customToken = await admin.auth().createCustomToken(request.data.uid);
+      logger.info(`impersonateUser: custom token created successfully: ${_customToken}`);
+      return { success: true, token: _customToken };
+    } catch (error) {
+      let errorInfo: { code?: unknown; message?: unknown; stack?: unknown } = {};
+      if (error && typeof error === 'object') {
+        errorInfo = {
+          code: (error as any).code,
+          message: (error as any).message,
+          stack: (error as any).stack,
+        };
+      }
+      logger.error('impersonateUser: Error creating custom token', {
+        uid: request.data.uid,
+        error: errorInfo,
+      });
+      throw new functions.HttpsError('internal', 'Could not create custom token.', error);
+    }
   }
-  // checking that the user has admin rights (claims, set in firefoo)
-  if (!request.auth.token['admin']) {
-    logger.error("impersonateUser: must be called by an admin user");
-    throw new HttpsError("permission-denied", "impersonateUser can only be used by admin users.");
-  }
-  // check if the uid of the user to impersonate is provided
-  if (!request.data?.uid) {
-    logger.error("impersonateUser: must be called with a uid to impersonate");
-    throw new HttpsError("invalid-argument", "impersonateUser must be called with a uid to impersonate.");
-  }
-  try {
-    const _result = await admin.auth().createCustomToken(request.data.uid);
-    logger.log("impersonateUser: custom token created", _result);
-    return _result; // return the custom token
-  } catch (error) {
-    console.error('impersonateUser: error creating custom token', error);
-    throw new HttpsError("aborted", "Could not create custom token");
-  }
-});
+);

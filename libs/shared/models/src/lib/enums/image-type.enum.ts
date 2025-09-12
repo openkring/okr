@@ -6,5 +6,5 @@ export enum ImageType {
   Pdf,
   Doc,
   Dir,
-  Other
-};
+  Other,
+}

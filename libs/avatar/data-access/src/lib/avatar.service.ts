@@ -1,12 +1,12 @@
-import { Injectable, inject } from "@angular/core";
-import { map, Observable, of } from "rxjs";
+import { Inject, Injectable } from '@angular/core';
+import { map, Observable, of } from 'rxjs';
 
-import { AvatarCollection, AvatarModel, ModelType, ResourceType } from "@bk2/shared/models";
-import { FirestoreService } from "@bk2/shared/data-access";
-import { addImgixParams, getModelAndKey } from "@bk2/shared/util-core";
-import { ENV } from "@bk2/shared/config";
-import { THUMBNAIL_SIZE } from "@bk2/shared/constants";
-import { getCategoryIcon, ModelTypes, ResourceTypes, RowingBoatTypes } from "@bk2/shared/categories";
+import { getCategoryIcon, ModelTypes, ResourceTypes, RowingBoatTypes } from '@bk2/shared-categories';
+import { BkEnvironment, ENV } from '@bk2/shared-config';
+import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AvatarCollection, AvatarModel, ModelType, ResourceType } from '@bk2/shared-models';
+import { addImgixParams, getModelAndKey } from '@bk2/shared-util-core';
 
 export interface UserPhoto {
   filepath: string;
@@ -14,14 +14,15 @@ export interface UserPhoto {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AvatarService {
-  private readonly firestoreService = inject(FirestoreService);
-  private readonly env = inject(ENV);
+  // classic DI to enable mocks for testing
+  // eslint-disable-next-line @angular-eslint/prefer-inject
+  constructor(private readonly firestoreService: FirestoreService, @Inject(ENV) private readonly env: BkEnvironment) {}
 
   /**
-   * Save a model as a new Firestore document into the database. 
+   * Save a model as a new Firestore document into the database.
    * We use a combination of the modelType and mkey as the document ID.
    * @param model the avatar data to save
    * @returns a Promise of the key of the newly stored model or undefined if the operation failed
@@ -51,7 +52,7 @@ export class AvatarService {
   public getAvatarImgixUrl(key: string, size = THUMBNAIL_SIZE, imgixBaseUrl = this.env.services.imgixBaseUrl, expandImgixBaseUrl = true): Observable<string> {
     const [_modelType, _key] = getModelAndKey(key);
     return this.firestoreService.readModel<AvatarModel>(AvatarCollection, key).pipe(
-      map((_avatar) => {
+      map(_avatar => {
         return this.getImgixUrl(_modelType, _key, imgixBaseUrl, size, _avatar as AvatarModel, expandImgixBaseUrl);
       })
     );
@@ -72,9 +73,7 @@ export class AvatarService {
       const _iconName = this.getDefaultIcon(modelType, key);
       return `${imgixBaseUrl}/logo/icons/${_iconName}.svg`;
     } else {
-      return expandImgixBaseUrl ?
-        `${imgixBaseUrl}/${addImgixParams(avatar.storagePath, size)}` :
-        addImgixParams(avatar.storagePath, size);
+      return expandImgixBaseUrl ? `${imgixBaseUrl}/${addImgixParams(avatar.storagePath, size)}` : addImgixParams(avatar.storagePath, size);
     }
   }
 
@@ -83,9 +82,9 @@ export class AvatarService {
    * For most modelTypes, this is the icon of the category of the modelType.
    * ModelType[.ResourceType[_SubType]]:key
    * For Resources, the given key consists of resourceType:key and the icon is derived from the resourceType, e.g. 20.0:key.
-   * @param modelType 
-   * @param key 
-   * @returns 
+   * @param modelType
+   * @param key
+   * @returns
    */
   public getDefaultIcon(modelType: ModelType, key: string): string {
     if (modelType === ModelType.Resource) {

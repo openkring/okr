@@ -1,4 +1,4 @@
-import { AddressChannel, CategoryModel } from "@bk2/shared/models";
+import { AddressChannel, CategoryModel } from '@bk2/shared-models';
 
 export type AddressChannelCategory = CategoryModel; 
 

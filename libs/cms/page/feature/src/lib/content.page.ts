@@ -1,22 +1,23 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, effect, inject, input } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { Meta, Title } from '@angular/platform-browser';
 
-import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared/util-core';
-import { AppNavigationService, error, navigateByUrl } from '@bk2/shared/util-angular';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName } from '@bk2/shared/models';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { RoleName } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { AppNavigationService, error, navigateByUrl } from '@bk2/shared-util-angular';
+import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
-import { MenuComponent } from '@bk2/cms/menu/feature';
+import { MenuComponent } from '@bk2/cms-menu-feature';
 
-import { SectionComponent } from '@bk2/cms/section/feature';
+import { SectionComponent } from '@bk2/cms-section-feature';
 import { PageDetailStore } from './page-detail.store';
 
 @Component({
   selector: 'bk-content-page',
+  standalone: true,
   imports: [
     SectionComponent, MenuComponent,
     TranslatePipe, AsyncPipe, SvgIconPipe,

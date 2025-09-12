@@ -1,7 +1,7 @@
-import { ToastController, AlertController, AlertOptions } from '@ionic/angular';
+import { AlertController, AlertOptions, ToastController } from '@ionic/angular';
 
-import { bkTranslate } from '@bk2/shared/i18n';
-import { TOAST_LENGTH } from '@bk2/shared/constants';
+import { TOAST_LENGTH } from '@bk2/shared-constants';
+import { bkTranslate } from '@bk2/shared-i18n';
 
 /**
 * In debug mode, write an error message to the console.
@@ -73,13 +73,6 @@ export async function confirm(
   return role === 'confirm';
 }
 
-/* export async function confirmAction(message: string, writeWarning = true, toastController?: ToastController): Promise<void> {
-  if (toastController !== undefined) {
-      await showToast(toastController, message);
-  }
-  if (writeWarning === true) warn(bkTranslate(message));
-} */
-
 export type PromptInputType = 'text' | 'number' | 'password';
 
 /**
@@ -107,8 +100,9 @@ export async function bkPrompt(alertController: AlertController, header: string,
   });
   await _alert.present();
   const { data, role } = await _alert.onWillDismiss();
+  if (data?.values?.length === 0) return undefined;
   if (role === 'confirm') {
-    return data.values[0] as string;
+    return data?.values[0] as string;
   } else {
     return undefined;
   }

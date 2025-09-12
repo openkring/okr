@@ -1,21 +1,22 @@
-import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { chipMatches, debugListLoaded, hasRole, nameMatches } from '@bk2/shared/util-core';
-import { AppNavigationService, confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared/util-angular';
-import { categoryMatches } from '@bk2/shared/categories';
-import { AddressModel, AllCategories, GenderType, MembershipCollection, MembershipModel, ModelType, PersonModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { categoryMatches } from '@bk2/shared-categories';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { AddressModel, AllCategories, GenderType, MembershipCollection, MembershipModel, ModelType, PersonModel } from '@bk2/shared-models';
+import { AppNavigationService, confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
+import { chipMatches, debugListLoaded, hasRole, nameMatches } from '@bk2/shared-util-core';
 
-import { CategoryService } from '@bk2/category/data-access';
-import { AddressService } from '@bk2/subject/address/data-access';
-import { PersonService } from '@bk2/subject/person/data-access';
-import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/subject/person/util';
+import { CategoryService } from '@bk2/category-data-access';
+import { AddressService } from '@bk2/subject-address-data-access';
+import { PersonService } from '@bk2/subject-person-data-access';
+import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/subject-person-util';
+
 import { PersonNewModalComponent } from './person-new.modal';
 
 export type PersonListState = {

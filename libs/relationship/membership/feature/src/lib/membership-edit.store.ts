@@ -1,14 +1,14 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
-import { debugItemLoaded } from '@bk2/shared/util-core';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared-models';
+import { debugItemLoaded } from '@bk2/shared-util-core';
 
-import { MembershipService } from '@bk2/relationship/membership/data-access';
-import { AppStore } from '@bk2/shared/feature';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { MembershipService } from '@bk2/relationship-membership-data-access';
 
 export type MembershipEditState = {
   membership: MembershipModel | undefined;

@@ -2,13 +2,15 @@ import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, linkedSignal, model } from '@angular/core';
 import { IonCol, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { TextInputComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { SectionFormModel } from '@bk2/cms/section/util';
-import { ENV, LatitudeMask, LongitudeMask, ZoomMask } from '@bk2/shared/config';
+import { ENV, LatitudeMask, LongitudeMask, ZoomMask } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { TextInputComponent } from '@bk2/shared-ui';
+
+import { SectionFormModel } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-map-section-form',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonRow, IonCol, IonLabel,

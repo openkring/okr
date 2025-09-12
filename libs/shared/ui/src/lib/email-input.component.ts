@@ -1,15 +1,16 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, input, model, output } from '@angular/core';
-import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
+import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { EMAIL_LENGTH } from '@bk2/shared/constants';
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { EMAIL_LENGTH } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { ButtonCopyComponent } from './button-copy.component';
 
 @Component({
   selector: 'bk-email',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
     FormsModule,

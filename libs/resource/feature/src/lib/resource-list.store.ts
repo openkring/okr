@@ -1,18 +1,19 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
+import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, getSystemQuery, isResource, nameMatches } from '@bk2/shared/util-core';
-import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
-import { categoryMatches } from '@bk2/shared/categories';
-import { AllCategories, GenderType, ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { categoryMatches } from '@bk2/shared-categories';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, GenderType, ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared-models';
+import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
+import { chipMatches, getSystemQuery, isResource, nameMatches } from '@bk2/shared-util-core';
 
-import { ResourceService } from '@bk2/resource/data-access';
+import { ResourceService } from '@bk2/resource-data-access';
+import { FirestoreService } from '@bk2/shared-data-access';
+
 import { ResourceEditModalComponent } from './resource-edit.modal';
-import { FirestoreService } from '@bk2/shared/data-access';
 
 export type ResourceListState = {
   searchTerm: string;

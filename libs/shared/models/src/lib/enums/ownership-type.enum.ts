@@ -3,5 +3,5 @@ export enum OwnershipType {
   Usage,
   Rent,
   Lease,
-  PartialOwnership
+  PartialOwnership,
 }

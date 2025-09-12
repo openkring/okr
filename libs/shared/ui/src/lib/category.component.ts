@@ -1,11 +1,11 @@
-import { Component, computed, input, model, output } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, input, model, output } from '@angular/core';
+import { IonItem, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { compareCategories } from '@bk2/shared/categories';
-import { IonItem, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryModel } from '@bk2/shared/models';
+import { compareCategories } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryModel } from '@bk2/shared-models';
 
 /**
  * A component to select a category from a list of categories.
@@ -16,6 +16,7 @@ import { CategoryModel } from '@bk2/shared/models';
  */
 @Component({
   selector: 'bk-cat',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonItem, IonSelect, IonSelectOption, IonNote

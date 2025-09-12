@@ -1,6 +1,7 @@
-import { AvatarInfo, Importance, Priority, TaskModel, TaskState } from "@bk2/shared/models";
-import { isType } from "@bk2/shared/util-core";
-import { TaskFormModel } from "./task-form.model";
+import { AvatarInfo, Importance, Priority, TaskModel, TaskState } from '@bk2/shared-models';
+import { isType } from '@bk2/shared-util-core';
+
+import { TaskFormModel } from './task-form.model';
 
 export function newTaskFormModel(author?: AvatarInfo, assignee?: AvatarInfo): TaskFormModel {
   return {
@@ -19,8 +20,8 @@ export function newTaskFormModel(author?: AvatarInfo, assignee?: AvatarInfo): Ta
     importance: Importance.Medium,
 
     scope: undefined,
-    calendars: []
-  }
+    calendars: [],
+  };
 }
 
 export function convertTaskToForm(task: TaskModel): TaskFormModel {
@@ -40,8 +41,8 @@ export function convertTaskToForm(task: TaskModel): TaskFormModel {
     importance: task.importance,
 
     scope: task.scope,
-    calendars: task.calendars
-  }
+    calendars: task.calendars,
+  };
 }
 
 export function convertFormToTask(task: TaskModel | undefined, vm: TaskFormModel, tenantId: string): TaskModel {

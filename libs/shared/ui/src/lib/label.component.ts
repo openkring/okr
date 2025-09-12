@@ -1,12 +1,13 @@
 import { Component, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared/categories';
-import { CategoryPlainNamePipe } from '@bk2/shared/pipes';
-import { ColorIonic } from '@bk2/shared/models';
+import { ColorsIonic } from '@bk2/shared-categories';
+import { ColorIonic } from '@bk2/shared-models';
+import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-label',
+  standalone: true,
   imports: [
     CategoryPlainNamePipe,
     IonItem, IonLabel

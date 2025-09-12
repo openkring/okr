@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { jsonPrettyPrint } from '@bk2/shared/util-core';
+import { jsonPrettyPrint } from '@bk2/shared-util-core';
 
 /**
  * Pretty print JSON code.
@@ -11,6 +11,7 @@ import { jsonPrettyPrint } from '@bk2/shared/util-core';
  */
 @Pipe({
     name: 'prettyjson',
+    standalone: true
 })
 export class PrettyjsonPipe implements PipeTransform {
 

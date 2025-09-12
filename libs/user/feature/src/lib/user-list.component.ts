@@ -1,19 +1,22 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonList, IonPopover } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { UserListStore } from './user-list.store';
-import { RoleName, UserModel } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util-core';
-import { error } from '@bk2/shared/util-angular';
+import { Component, computed, inject, input } from '@angular/core';
+import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { MenuComponent } from '@bk2/cms/menu/feature';
+import { MenuComponent } from '@bk2/cms-menu-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { RoleName, UserModel } from '@bk2/shared-models';
+import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { error } from '@bk2/shared-util-angular';
+import { hasRole } from '@bk2/shared-util-core';
+
+import { UserListStore } from './user-list.store';
+
 
 
 @Component({
     selector: 'bk-user-list',
+    standalone: true,
     imports: [
       TranslatePipe, AsyncPipe, SvgIconPipe, FullNamePipe,
       SpinnerComponent, EmptyListComponent, ListFilterComponent,

@@ -1,4 +1,4 @@
-import { CategoryModel, CalEventType } from "@bk2/shared/models";
+import { CalEventType, CategoryModel } from '@bk2/shared-models';
 
 
 export type CalEventTypeCategory = CategoryModel;

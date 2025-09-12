@@ -1,9 +1,10 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { AddressChannel } from '@bk2/shared/models';
-import { formatIban, IbanFormat } from '@bk2/shared/util-angular';
+import { AddressChannel } from '@bk2/shared-models';
+import { formatIban, IbanFormat } from '@bk2/shared-util-angular';
 
 @Pipe({
   name: 'formatAddress',
+  standalone: true
 })
 export class FormatAddressPipe implements PipeTransform {
 

@@ -1,19 +1,19 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
-import { ENV } from '@bk2/shared/config';
-import { MembershipModel, ModelType } from '@bk2/shared/models';
-import { debugData, debugItemLoaded, getTodayStr, isPerson } from '@bk2/shared/util-core';
-import { AppNavigationService } from '@bk2/shared/util-angular';
-import { AppStore, PersonSelectModalComponent } from '@bk2/shared/feature';
+import { ENV } from '@bk2/shared-config';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { MembershipModel, ModelType } from '@bk2/shared-models';
+import { AppNavigationService } from '@bk2/shared-util-angular';
+import { debugData, debugItemLoaded, getTodayStr, isPerson } from '@bk2/shared-util-core';
 
-import { convertFormToGroup, GroupFormModel } from '@bk2/subject/group/util';
-import { GroupService } from '@bk2/subject/group/data-access';
-import { MembershipService } from '@bk2/relationship/membership/data-access';
+import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { GroupService } from '@bk2/subject-group-data-access';
+import { convertFormToGroup, GroupFormModel } from '@bk2/subject-group-util';
 
 export type GroupEditState = {
   groupKey: string | undefined;

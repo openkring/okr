@@ -1,7 +1,8 @@
-import { LONG_NAME_LENGTH } from '@bk2/shared/constants';
-import { stringValidations } from '@bk2/shared/util-core';
-import { test, enforce, omitWhen } from 'vest';
+import { enforce, omitWhen, test } from 'vest';
 import 'vest/enforce/email';
+
+import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
+import { stringValidations } from '@bk2/shared-util-core';
 
 export function emailValidations(fieldName: string, email: unknown) {
 

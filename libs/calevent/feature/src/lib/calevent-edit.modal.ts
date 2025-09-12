@@ -1,18 +1,19 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CalEventModel, UserModel, RoleName } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util-core';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CalEventModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { convertCalEventToForm, convertFormToCalEvent } from '@bk2/calevent/util';
-import { CalEventFormComponent } from '@bk2/calevent/ui';
+import { CalEventFormComponent } from '@bk2/calevent-ui';
+import { convertCalEventToForm, convertFormToCalEvent } from '@bk2/calevent-util';
 
 @Component({
   selector: 'bk-calevent-edit-modal',
+  standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
     CalEventFormComponent,

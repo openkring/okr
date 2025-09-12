@@ -1,4 +1,4 @@
-import { CategoryModel, PersonSortCriteria } from '@bk2/shared/models';
+import { CategoryModel, PersonSortCriteria } from '@bk2/shared-models';
 
 export type PersonSortCriteriaCategory = CategoryModel;
 

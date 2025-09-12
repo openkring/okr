@@ -2,20 +2,22 @@ import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, signal } from '@angular/core';
 import { IonButton, IonContent, IonIcon, ModalController, Platform } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { getImgixUrlWithAutoParams } from '@bk2/shared/util-core';
-import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { getDocumentStoragePath, pickPhoto } from '@bk2/document/util';
-import { ImageConfigFormComponent } from '@bk2/document/ui';
-import { ModelType, newImage, UserModel } from '@bk2/shared/models';
-import { ENV } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, newImage, UserModel } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
+import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
+
+import { ImageConfigFormComponent } from '@bk2/document-ui';
+import { getDocumentStoragePath, pickPhoto } from '@bk2/document-util';
 
 /**
  * This modal requests a user to select an image file and provide some metadata about the image.
  */
 @Component({
   selector: 'bk-image-select-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     HeaderComponent, ChangeConfirmationComponent, ImageConfigFormComponent,

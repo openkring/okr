@@ -1,18 +1,19 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, of } from 'rxjs';
 
-import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared/models';
-import { convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, isValidAt } from '@bk2/shared/util-core';
-import { confirm } from '@bk2/shared/util-angular';
-import { AppStore } from '@bk2/shared/feature';
-import { selectDate } from '@bk2/shared/ui';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared-models';
+import { selectDate } from '@bk2/shared-ui';
+import { confirm } from '@bk2/shared-util-angular';
+import { convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, isValidAt } from '@bk2/shared-util-core';
 
-import { MembershipService } from '@bk2/relationship/membership/data-access';
+import { MembershipService } from '@bk2/relationship-membership-data-access';
+
 import { MembershipModalsService } from './membership-modals.service';
-import { FirestoreService } from '@bk2/shared/data-access';
 
 export type MembersAccordionState = {
   orgKey: string | undefined;

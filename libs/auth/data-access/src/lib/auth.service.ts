@@ -1,13 +1,13 @@
-import { Injectable, inject } from "@angular/core";
-import { browserLocalPersistence, sendPasswordResetEmail, setPersistence, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { ToastController } from "@ionic/angular";
-import { Router } from "@angular/router";
+import { Injectable, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { ToastController } from '@ionic/angular';
+import { browserLocalPersistence, sendPasswordResetEmail, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
-import { AUTH } from "@bk2/shared/config";
-import { bkTranslate } from "@bk2/shared/i18n";
-import { die, warn } from "@bk2/shared/util-core";
-import { navigateByUrl, showToast } from "@bk2/shared/util-angular";
-import { AuthCredentials } from "@bk2/shared/models";
+import { AUTH } from '@bk2/shared-config';
+import { bkTranslate } from '@bk2/shared-i18n';
+import { AuthCredentials } from '@bk2/shared-models';
+import { navigateByUrl, showToast } from '@bk2/shared-util-angular';
+import { die, warn } from '@bk2/shared-util-core';
 
 /**
  * This provider centralizes the authentication functions
@@ -41,8 +41,7 @@ export class AuthService {
    */
   public async login(credentials: AuthCredentials, rootUrl: string, loginUrl: string): Promise<void> {
     try {
-      if (!credentials.loginEmail || credentials.loginEmail.length === 0 || 
-          !credentials.loginPassword || credentials.loginPassword.length === 0) die('AuthService.login: email and password are mandatory.');
+      if (!credentials.loginEmail || credentials.loginEmail.length === 0 || !credentials.loginPassword || credentials.loginPassword.length === 0) die('AuthService.login: email and password are mandatory.');
       /*  browserLocalPersistence indicates that the state will be persisted even when the browser window is closed. 
           An explicit sign out is needed to clear that state. 
           Note that Firebase Auth web sessions are single host origin and will be persisted for a single domain only.
@@ -52,12 +51,23 @@ export class AuthService {
       await setPersistence(this.auth, browserLocalPersistence);
       await signInWithEmailAndPassword(this.auth, credentials.loginEmail, credentials.loginPassword);
       showToast(this.toastController, '@auth.operation.login.confirmation');
-      await navigateByUrl(this.router, rootUrl);  
-    } 
-    catch(_ex) {
+      await navigateByUrl(this.router, rootUrl);
+    } catch (_ex) {
       console.error('AuthService.login: error: ', _ex);
       await showToast(this.toastController, '@auth.operation.login.error');
-      await navigateByUrl(this.router, loginUrl)
+      await navigateByUrl(this.router, loginUrl);
+    }
+  }
+
+  public async loginWithToken(token: string, url: string): Promise<void> {
+    try {
+      await signInWithCustomToken(this.auth, token);
+      showToast(this.toastController, '@auth.operation.login.confirmation');
+      await navigateByUrl(this.router, url);
+    } catch (_ex) {
+      console.error('AuthService.loginWithToken: error: ', _ex);
+      await showToast(this.toastController, '@auth.operation.login.error');
+      await navigateByUrl(this.router, url);
     }
   }
 
@@ -71,12 +81,11 @@ export class AuthService {
       if (!loginEmail || loginEmail.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
       await sendPasswordResetEmail(this.auth, loginEmail);
       await showToast(this.toastController, bkTranslate('@auth.operation.pwdreset.confirmation') + loginEmail);
-      await navigateByUrl(this.router, loginUrl)
-    } 
-    catch (_ex) {
+      await navigateByUrl(this.router, loginUrl);
+    } catch (_ex) {
       console.error('AuthService.resetPassword: error: ', _ex);
       await showToast(this.toastController, '@auth.operation.pwdreset.error');
-      await navigateByUrl(this.router, loginUrl)
+      await navigateByUrl(this.router, loginUrl);
     }
   }
 
@@ -85,8 +94,7 @@ export class AuthService {
       await signOut(this.auth);
       await showToast(this.toastController, '@auth.operation.logout.confirmation');
       return Promise.resolve(true);
-    } 
-    catch (_ex) {
+    } catch (_ex) {
       console.error('AuthService.logout: error: ', _ex);
       await showToast(this.toastController, '@auth.operation.logout.error');
       return Promise.resolve(false);
@@ -97,17 +105,16 @@ export class AuthService {
   /**
    * Retrieve the uid of the user with the given login email.
    * This will fail if the user does not exist or the password is wrong.
-   * @param loginEmail 
-   * @param password 
-   * @returns 
+   * @param loginEmail
+   * @param password
+   * @returns
    */
   public async getFirebaseUid(credentials: AuthCredentials): Promise<string | undefined> {
     if (!credentials.loginEmail || credentials.loginEmail.length === 0 || !credentials.loginPassword || !credentials.loginPassword) return undefined;
     try {
       const _fbCredentials = await signInWithEmailAndPassword(this.auth, credentials.loginEmail, credentials.loginPassword);
       return _fbCredentials.user.uid;
-    }
-    catch(_ex) {
+    } catch (_ex) {
       warn(`AuthService.getFirebaseUid: error: ${_ex}`);
       return undefined;
     }

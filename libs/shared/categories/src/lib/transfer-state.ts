@@ -1,4 +1,4 @@
-import { CategoryModel, TransferState } from '@bk2/shared/models';
+import { CategoryModel, TransferState } from '@bk2/shared-models';
 
 export type TransferStateCategory = CategoryModel;
 

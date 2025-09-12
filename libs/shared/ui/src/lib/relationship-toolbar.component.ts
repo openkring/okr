@@ -1,17 +1,18 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonToolbar, ModalController } from '@ionic/angular/standalone';
-
-import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { ColorsIonic } from '@bk2/shared/categories';
-import { ColorIonic, ModelType } from '@bk2/shared/models';
-import { HashMap } from '@jsverse/transloco';
-import { Router } from '@angular/router';
-import { AppNavigationService, navigateByUrl } from '@bk2/shared/util-angular';
-import { TranslatePipe } from '@bk2/shared/i18n';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input } from '@angular/core';
+import { Router } from '@angular/router';
+import { IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { HashMap } from '@jsverse/transloco';
+
+import { ColorsIonic } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ColorIonic, ModelType } from '@bk2/shared-models';
+import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-relationship-toolbar',
+  standalone: true,
   imports: [
     CategoryPlainNamePipe, SvgIconPipe, TranslatePipe, AsyncPipe,
     IonToolbar, IonIcon, IonItem, IonGrid, IonRow, IonCol, IonLabel

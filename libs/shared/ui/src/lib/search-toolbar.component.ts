@@ -4,6 +4,7 @@ import { SearchbarComponent } from './searchbar.component';
 
 @Component({
   selector: 'bk-search-toolbar',
+  standalone: true,
   imports: [
     SearchbarComponent, 
     IonToolbar, IonGrid, IonRow, IonCol

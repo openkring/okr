@@ -1,12 +1,12 @@
-import { Component, computed, input, model, output } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, input, model, output } from '@angular/core';
+import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular/standalone';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryItemModel, CategoryListModel } from '@bk2/shared/models';
-import { getItemLabel } from '@bk2/shared/util-core';
-import { SvgIconPipe } from '@bk2/shared/pipes';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { getItemLabel } from '@bk2/shared-util-core';
 
 // unique id to avoid duplicated IDs in reusable component
 let id = 0;
@@ -25,6 +25,7 @@ let id = 0;
  */
 @Component({
   selector: 'bk-cat-select',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonItem, IonNote, IonButton, IonPopover, IonContent, IonList, IonIcon, IonLabel

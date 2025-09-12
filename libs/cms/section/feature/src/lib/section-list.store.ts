@@ -1,17 +1,18 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 
-import { AllCategories, SectionModel, SectionType } from '@bk2/shared/models';
-import { categoryMatches, SectionTypes } from '@bk2/shared/categories';
-import { nameMatches } from '@bk2/shared/util-core';
-import { CardSelectModalComponent } from '@bk2/shared/ui';
-import { AppStore } from '@bk2/shared/feature';
+import { categoryMatches, SectionTypes } from '@bk2/shared-categories';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, SectionModel, SectionType } from '@bk2/shared-models';
+import { CardSelectModalComponent } from '@bk2/shared-ui';
+import { nameMatches } from '@bk2/shared-util-core';
 
-import { SectionService } from '@bk2/cms/section/data-access';
-import { createSection, isSection } from '@bk2/cms/section/util';
+import { SectionService } from '@bk2/cms-section-data-access';
+import { createSection, isSection } from '@bk2/cms-section-util';
+
 import { SectionEditModalComponent } from './section-edit.modal';
 
 export type SectionListState = {

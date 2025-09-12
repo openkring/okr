@@ -1,17 +1,19 @@
 import { AsyncPipe } from "@angular/common";
 import { Component, computed, inject, input, model, output, signal } from "@angular/core";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
-
-import { TranslatePipe } from "@bk2/shared/i18n";
-import { PrivacyUsage, UserModel } from "@bk2/shared/models";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
-import { CategoryComponent } from "@bk2/shared/ui";
-import { PrivacyFormModel, privacyFormModelShape, privacyFormValidations } from "@bk2/profile/util";
-import { PrivacyUsages } from "@bk2/shared/categories";
-import { debugFormErrors } from "@bk2/shared/util-core";
+
+import { PrivacyUsages } from "@bk2/shared-categories";
+import { TranslatePipe } from "@bk2/shared-i18n";
+import { PrivacyUsage, UserModel } from "@bk2/shared-models";
+import { CategoryComponent } from "@bk2/shared-ui";
+import { debugFormErrors } from "@bk2/shared-util-core";
+
+import { PrivacyFormModel, privacyFormModelShape, privacyFormValidations } from "@bk2/profile-util";
 
 @Component({
   selector: 'bk-profile-privacy-accordion',
+  standalone: true,
   imports: [ 
     TranslatePipe, AsyncPipe,
     vestForms,

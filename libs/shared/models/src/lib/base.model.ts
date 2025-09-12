@@ -10,7 +10,7 @@
  * Printable
  */
 
-import { Roles } from "./roles";
+import { Roles } from './roles';
 
 // this is how the models are stored in the database (Firestore Document ID instead of bkey)
 export interface PersistedModel {
@@ -45,7 +45,7 @@ export interface AddressableModel {
 }
 
 export type BaseType = string | number | boolean;
-export type BaseProperty = { key: string, value: BaseType };
+export type BaseProperty = { key: string; value: BaseType };
 export type PropertyList = Map<string, BaseType>;
 // add a new property to the list:  params.set('key', 'value');
 // get a property from the list: params.get('key');
@@ -54,8 +54,7 @@ export type PropertyList = Map<string, BaseType>;
 // keys() returns an iterator for the keys
 // values() returns an iterator for the values
 
-export type MetaTag = { name: string, content: string};
-
+export type MetaTag = { name: string; content: string };
 
 export interface FieldDescription {
   name: string;

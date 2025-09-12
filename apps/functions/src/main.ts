@@ -21,13 +21,13 @@ const app = express();
 // Enable CORS for requests from your local development server
 app.use(cors({ origin: 'http://localhost:4200' }));
 
-// bind the onRequest functions to express routes
-app.use('/echo', Test.echoHandler);
-app.use('/getIpInfo', Test.getIpInfoHandler);
 
 export { app };
 
 functions.logger.info('[Emulator/Direct] functions are exported directly.');
+
+export const getEcho = Test.getEcho;
+export const getIpInfo = Test.getIpInfo;
 
 export const onPersonAddressChange = Replication.onPersonAddressChange;
 export const onOrgAddressChange = Replication.onOrgAddressChange;

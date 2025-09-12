@@ -2,13 +2,14 @@ import { Component, computed, input, model, output, signal } from '@angular/core
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { CategoryItemsComponent, CheckboxComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { CategoryItemModel, UserModel, RoleName } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util-core';
-import { CategoryListFormModel, categoryListFormModelShape, categoryListFormValidations } from '@bk2/category/util';
+import { CategoryListFormModel, categoryListFormModelShape, categoryListFormValidations } from '@bk2/category-util';
+import { CategoryItemModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryItemsComponent, CheckboxComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-category-list-form',
+  standalone: true,
   imports: [
     vestForms,
     ChipsComponent, NotesInputComponent,

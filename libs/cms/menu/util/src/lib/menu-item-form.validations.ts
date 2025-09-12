@@ -1,8 +1,9 @@
+import { SHORT_NAME_LENGTH } from "@bk2/shared-constants";
+import { MenuAction, RoleEnum } from "@bk2/shared-models";
+import { categoryValidations, isArrayOfBaseProperties, isArrayOfStrings, stringValidations } from "@bk2/shared-util-core";
 import { enforce, omitWhen, only, staticSuite, test } from "vest";
-import { categoryValidations, isArrayOfBaseProperties, isArrayOfStrings, stringValidations } from "@bk2/shared/util-core";
-import { SHORT_NAME_LENGTH } from "@bk2/shared/constants";
+
 import { MenuItemFormModel } from "./menu-item-form.model";
-import { MenuAction, RoleEnum } from "@bk2/shared/models";
 
 
 export const menuItemFormValidation = staticSuite((model: MenuItemFormModel, field?: string) => {

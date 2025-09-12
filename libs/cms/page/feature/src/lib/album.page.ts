@@ -1,15 +1,17 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonToolbar } from '@ionic/angular/standalone';
 
-import { HeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { ENV } from '@bk2/shared/config';
-import { AlbumSectionComponent } from '@bk2/cms/section/feature';
-import { createSection, newAlbumConfig } from '@bk2/cms/section/util';
-import { SectionType } from '@bk2/shared/models';
-import { extractFirstPartOfOptionalTupel, getPartsOfTupel } from '@bk2/shared/util-core';
+import { ENV } from '@bk2/shared-config';
+import { SectionType } from '@bk2/shared-models';
+import { HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { extractFirstPartOfOptionalTupel, getPartsOfTupel } from '@bk2/shared-util-core';
+
+import { AlbumSectionComponent } from '@bk2/cms-section-feature';
+import { createSection, newAlbumConfig } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-album-page',
+  standalone: true,
   imports: [
     HeaderComponent, SpinnerComponent, AlbumSectionComponent,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonContent

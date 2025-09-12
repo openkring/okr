@@ -1,17 +1,18 @@
 import { Component, inject, input, output } from '@angular/core';
 import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetail, ModalController } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared/models';
-import { CategoryNamePipe } from '@bk2/shared/pipes';
-import { HeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { SectionTypes } from '@bk2/shared/categories';
-import { arrayMove } from '@bk2/shared/util-core';
+import { SectionTypes } from '@bk2/shared-categories';
+import { SectionModel } from '@bk2/shared-models';
+import { CategoryNamePipe } from '@bk2/shared-pipes';
+import { HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { arrayMove } from '@bk2/shared-util-core';
 
 /**
  * Modal to sort the sections of a page.
  */
 @Component({
   selector: 'bk-page-sort-modal',
+  standalone: true,
   imports: [ 
     CategoryNamePipe,
     SpinnerComponent, HeaderComponent,

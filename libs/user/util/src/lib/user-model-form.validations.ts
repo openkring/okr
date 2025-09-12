@@ -1,6 +1,8 @@
-import { only, staticSuite} from 'vest';
-import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { stringValidations } from '@bk2/shared/util-core';
+import { only, staticSuite } from 'vest';
+
+import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { stringValidations } from '@bk2/shared-util-core';
+
 import { UserModelFormModel } from './user-model-form.model';
 
 export const userModelFormValidations = staticSuite((model: UserModelFormModel, field?: string) => {

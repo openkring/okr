@@ -2,13 +2,15 @@ import { Component, computed, input, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { ErrorNoteComponent, TextInputComponent } from '@bk2/shared/ui';
-import { UserModel, RoleName } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util-core';
-import { ResourceFormModel, resourceFormValidations } from '@bk2/resource/util';
+import { RoleName, UserModel } from '@bk2/shared-models';
+import { ErrorNoteComponent, TextInputComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
+
+import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
 
 @Component({
   selector: 'bk-key',
+  standalone: true,
   imports: [
     vestForms,
     IonRow, IonCol, IonCard, IonCardTitle, IonCardHeader, IonCardContent, IonGrid,

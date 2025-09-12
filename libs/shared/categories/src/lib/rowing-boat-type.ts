@@ -1,4 +1,4 @@
-import { CategoryModel, RowingBoatType } from "@bk2/shared/models";
+import { CategoryModel, RowingBoatType } from '@bk2/shared-models';
 
 export type RowingBoatTypeCategory = CategoryModel;
 

@@ -10,5 +10,5 @@ export enum ReservationReason {
   Course,
   Workshop,
   Meeting,
-  Party
+  Party,
 }

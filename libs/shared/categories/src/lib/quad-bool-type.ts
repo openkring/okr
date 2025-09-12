@@ -1,4 +1,4 @@
-import { CategoryModel, QuadBoolType } from '@bk2/shared/models';
+import { CategoryModel, QuadBoolType } from '@bk2/shared-models';
 
 export type QuadBoolCategory = CategoryModel;
 

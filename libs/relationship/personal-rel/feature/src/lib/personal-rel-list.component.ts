@@ -1,23 +1,23 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonImg, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input } from '@angular/core';
+import { IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { hasRole, isOngoing } from '@bk2/shared/util-core';
-import { error } from '@bk2/shared/util-angular';
-import { ModelType, PersonalRelModel, RoleName } from '@bk2/shared/models';
-import { addAllCategory, PersonalRelTypes } from '@bk2/shared/categories';
+import { addAllCategory, PersonalRelTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, PersonalRelModel, RoleName } from '@bk2/shared-models';
+import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { error } from '@bk2/shared-util-angular';
+import { hasRole, isOngoing } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { MenuComponent } from '@bk2/cms/menu/feature';
-
-import { PersonalRelNamePipe } from '@bk2/relationship/personal-rel/util';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { MenuComponent } from '@bk2/cms-menu-feature';
+import { PersonalRelNamePipe } from '@bk2/relationship-personal-rel-util';
 import { PersonalRelListStore } from './personal-rel-list.store';
 
 @Component({
   selector: 'bk-personal-rel-list',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
     ListFilterComponent, EmptyListComponent, SpinnerComponent,

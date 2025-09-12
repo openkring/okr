@@ -1,4 +1,4 @@
-import { CategoryModel, ReservationReason } from '@bk2/shared/models';
+import { CategoryModel, ReservationReason } from '@bk2/shared-models';
 
 export type ReservationReasonCategory = CategoryModel;
 

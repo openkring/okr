@@ -1,5 +1,5 @@
 {
-  "name": "cms/menu/ui",
+  "name": "cms-menu-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/cms/menu/ui/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/cms/menu/ui",
         "main": "libs/cms/menu/ui/src/index.ts",
         "tsConfig": "libs/cms/menu/ui/tsconfig.lib.json",
-        "assets": ["libs/cms/menu/ui/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/cms/menu/ui/jest.config.ts"
+        "assets": ["libs/cms/menu/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

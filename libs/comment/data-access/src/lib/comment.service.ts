@@ -1,13 +1,13 @@
 import { Injectable, inject } from "@angular/core";
 import { Observable, of } from "rxjs";
 
-import { DateFormat, getFullPersonName, getSystemQuery, getTodayStr } from "@bk2/shared/util-core";
-import { CommentCollection, CommentModel, UserModel } from "@bk2/shared/models";
-import { ENV } from "@bk2/shared/config";
-import { FirestoreService } from "@bk2/shared/data-access";
+import { ENV } from "@bk2/shared-config";
+import { FirestoreService } from "@bk2/shared-data-access";
+import { CommentCollection, CommentModel, UserModel } from "@bk2/shared-models";
+import { error } from "@bk2/shared-util-angular";
+import { DateFormat, getFullPersonName, getSystemQuery, getTodayStr } from "@bk2/shared-util-core";
 
-import { createComment } from "@bk2/comment/util";
-import { error } from "@bk2/shared/util-angular";
+import { createComment } from "@bk2/comment-util";
 
 @Injectable({
     providedIn: 'root'

@@ -1,5 +1,5 @@
-import {Pipe, PipeTransform } from '@angular/core';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared/util-core';
+import { Pipe, PipeTransform } from '@angular/core';
+import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
 
 /**
  * Convert a date in IsoFormat to View Date Format
@@ -8,6 +8,7 @@ import { convertDateFormatToString, DateFormat } from '@bk2/shared/util-core';
  */
 @Pipe({
   name: 'iso2viewDateFormat',
+  standalone: true
 })
 export class Iso2viewDateFormatPipe implements PipeTransform {
 

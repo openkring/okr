@@ -2,13 +2,14 @@ import { AsyncPipe } from '@angular/common';
 import { Component, input, output } from '@angular/core';
 import { IonButton, IonButtons, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { CategoryPlainNamePipe } from '@bk2/shared/pipes';
-import { ColorsIonic } from '@bk2/shared/categories';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ColorIonic } from '@bk2/shared/models';
+import { ColorsIonic } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ColorIonic } from '@bk2/shared-models';
+import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-change-confirmation',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, CategoryPlainNamePipe,
     IonButton, IonToolbar, IonTitle, IonButtons

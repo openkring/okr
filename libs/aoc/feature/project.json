@@ -1,11 +1,23 @@
 {
-  "name": "aoc/feature",
+  "name": "aoc-feature",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/aoc/feature/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:feature", "scope:aoc", "platform:mobile", "platform:web"],
   "targets": {
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write ."
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check ."
+      }
+    },
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
@@ -13,14 +25,8 @@
         "outputPath": "dist/libs/aoc/feature",
         "main": "libs/aoc/feature/src/index.ts",
         "tsConfig": "libs/aoc/feature/tsconfig.lib.json",
-        "assets": ["libs/aoc/feature/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/aoc/feature/jest.config.ts"
+        "assets": ["libs/aoc/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

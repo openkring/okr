@@ -1,21 +1,24 @@
-import { Component, computed, inject, input, linkedSignal, model, output, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { Router } from '@angular/router';
-import { vestForms } from 'ngx-vest-forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
-
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ButtonCopyComponent, CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent } from '@bk2/shared/ui';
-import { PageFormModel, pageFormModelShape, pageFormValidations } from '@bk2/cms/page/util';
-import { CaseInsensitiveWordMask } from '@bk2/shared/config';
+import { Component, computed, inject, input, linkedSignal, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ContentState, PageType, UserModel, RoleName } from '@bk2/shared/models';
-import { debugFormErrors, debugFormModel, hasRole } from '@bk2/shared/util-core';
-import { ContentStates, PageTypes } from '@bk2/shared/categories';
+import { Router } from '@angular/router';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { vestForms } from 'ngx-vest-forms';
+
+import { ContentStates, PageTypes } from '@bk2/shared-categories';
+import { CaseInsensitiveWordMask } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ContentState, PageType, RoleName, UserModel } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { ButtonCopyComponent, CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+
+import { PageFormModel, pageFormModelShape, pageFormValidations } from '@bk2/cms-page-util';
+
 
 @Component({
   selector: 'bk-page-form',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     vestForms, FormsModule,

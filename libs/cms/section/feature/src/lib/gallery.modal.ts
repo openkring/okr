@@ -1,60 +1,92 @@
-import { AfterViewInit, Component, CUSTOM_ELEMENTS_SCHEMA, inject, input, viewChild } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { AfterViewInit, Component, inject, input, viewChild, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
 import { register, SwiperContainer } from 'swiper/element/bundle';
 
-import { Image } from '@bk2/shared/models';
-import { HeaderComponent, LabelComponent } from '@bk2/shared/ui';
-import { die, getSizedImgixParamsByExtension } from '@bk2/shared/util-core';
-import { downloadToBrowser } from '@bk2/shared/util-angular';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { Image } from '@bk2/shared-models';
+import { HeaderComponent, LabelComponent } from '@bk2/shared-ui';
+import { downloadToBrowser } from '@bk2/shared-util-angular';
+import { die, getSizedImgixParamsByExtension } from '@bk2/shared-util-core';
 
 register(); // globally register Swiper's custom elements.
 
 @Component({
   selector: 'bk-gallery-modal',
+  standalone: true,
+  imports: [TranslatePipe, AsyncPipe, HeaderComponent, LabelComponent, IonContent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [
-    TranslatePipe, AsyncPipe,
-    HeaderComponent, LabelComponent,
-    IonContent
+  styles: [
+    `
+      html,
+      body {
+        position: relative;
+        height: 100%;
+      }
+      body {
+        background: #eee;
+        font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        color: #000;
+        margin: 0;
+        padding: 0;
+      }
+      swiper-container {
+        width: 100%;
+        height: 100%;
+      }
+      swiper-slide {
+        text-align: center;
+        font-size: 18px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .mainSwiper {
+        height: 85%;
+        width: 100%;
+      }
+      .thumbsSwiper {
+        height: 15%;
+        box-sizing: border-box;
+        padding: 10px 0;
+      }
+      .thumbsSwiper swiper-slide {
+        width: 20%;
+        height: 100%;
+        opacity: 0.4;
+      }
+      .thumbsSwiper .swiper-slide-thumb-active {
+        opacity: 1;
+      }
+    `,
   ],
-  styles: [`
-    html, body { position: relative; height: 100%; }
-    body { background: #eee; font-family: Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 14px; color: #000; margin: 0; padding: 0;}
-    swiper-container { width: 100%; height: 100%;}
-    swiper-slide { text-align: center; font-size: 18px; background: #fff; display: flex; align-items: center; justify-content: center; }
-    .mainSwiper { height: 85%; width: 100%; }
-    .thumbsSwiper { height: 15%; box-sizing: border-box; padding: 10px 0; }
-    .thumbsSwiper swiper-slide { width: 20%; height: 100%; opacity: 0.4; }
-    .thumbsSwiper .swiper-slide-thumb-active { opacity: 1; }
-  `],
   template: `
     <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
     <ion-content>
       @if(imageList(); as images) {
-        <swiper-container #mainSwiper class="mainSwiper" [loop]="false" [navigation]="true" 
-        thumbs-swiper=".thumbsSwiper" [initialSlide]="initialSlide()" autoplay="false" [effect]="effect()">
-          @for(image of images; track image.url) {
-            <!-- <swiper-slide>
+      <swiper-container #mainSwiper class="mainSwiper" [loop]="false" [navigation]="true" thumbs-swiper=".thumbsSwiper" [initialSlide]="initialSlide()" autoplay="false" [effect]="effect()">
+        @for(image of images; track image.url) {
+        <!-- <swiper-slide>
               <bk-img [image]="image" />
             </swiper-slide> -->
-            <swiper-slide [style]="getBackgroundStyle(image)" />
-          }
-        </swiper-container>
-        <swiper-container #thumbsSwiper class="thumbsSwiper" space-between="10" slides-per-view="6" loop="false" 
-        free-mode="true" watch-slides-progress="true">
-          @for(image of images; track image.url) {
-            <swiper-slide [style]="getBackgroundStyle(image)"/>
-          }
-        </swiper-container>
+        <swiper-slide [style]="getBackgroundStyle(image)" />
+        }
+      </swiper-container>
+      <swiper-container #thumbsSwiper class="thumbsSwiper" space-between="10" slides-per-view="6" loop="false" free-mode="true" watch-slides-progress="true">
+        @for(image of images; track image.url) {
+        <swiper-slide [style]="getBackgroundStyle(image)" />
+        }
+      </swiper-container>
       } @else {
-        <bk-label>{{ '@content.section.error.noImages' | translate | async }}</bk-label>
+      <bk-label>{{ '@content.section.error.noImages' | translate | async }}</bk-label>
       }
-  `
+    </ion-content>
+  `,
 })
-export class GalleryModalComponent implements AfterViewInit{
+export class GalleryModalComponent implements AfterViewInit {
   protected readonly appStore = inject(AppStore);
 
   protected imageList = input.required<Image[]>();
@@ -79,9 +111,9 @@ export class GalleryModalComponent implements AfterViewInit{
   ngAfterViewInit(): void {
     const _swiper = this.mainSwiper();
     if (_swiper) {
-    //  _swiper.initialSlide = this.initialSlide();
+      //  _swiper.initialSlide = this.initialSlide();
       console.log('GalleryModalComponent -> mainSwiper: ', _swiper);
-   /*    if (_swiper.swiper) {
+      /*    if (_swiper.swiper) {
         console.log('activeIndex: ', _swiper.swiper.activeIndex);
         console.log('autoplay: ', _swiper.swiper.autoplay.running);  
         _swiper.swiper.slideTo(this.initialSlide());
@@ -101,12 +133,12 @@ export class GalleryModalComponent implements AfterViewInit{
     if (!image.width || !image.height) die('GalleryModalComponent: image width and height must be set');
     const _params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
     const _url = this.baseImgixUrl + '/' + image.url + '?' + _params;
-    return { 
-      'background-image': `url(${_url})`, 
+    return {
+      'background-image': `url(${_url})`,
       'min-height': '200px',
       'background-size': 'cover',
       'background-position': 'center',
-      'border': '1px'
+      border: '1px',
     };
   }
 }

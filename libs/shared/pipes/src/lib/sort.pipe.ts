@@ -1,8 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { sortAscending, sortDescending } from '@bk2/shared/util-core';
+import { sortAscending, sortDescending } from '@bk2/shared-util-core';
 
 @Pipe({
     name: 'sort',
+    standalone: true
 })
 export class SortPipe implements PipeTransform{
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

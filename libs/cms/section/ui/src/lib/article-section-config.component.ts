@@ -1,15 +1,16 @@
-import { Component, linkedSignal, model } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonRow } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { EditorComponent } from '@bk2/shared/ui';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { EditorComponent } from '@bk2/shared-ui';
 
-import { SectionFormModel } from '@bk2/cms/section/util';
+import { SectionFormModel } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-article-section-config',
+  standalone: true,
   viewProviders: [vestFormsViewProviders],
   imports: [
     TranslatePipe, AsyncPipe,

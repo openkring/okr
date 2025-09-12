@@ -1,4 +1,4 @@
-import { CategoryModel, Language } from "@bk2/shared/models";
+import { CategoryModel, Language } from '@bk2/shared-models';
 
 export type LanguageCategory = CategoryModel;
 

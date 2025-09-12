@@ -20,6 +20,7 @@ import { Component, CUSTOM_ELEMENTS_SCHEMA, input } from '@angular/core';
 
 @Component({
     selector: 'bk-video',
+    standalone: true,
     imports: [
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],

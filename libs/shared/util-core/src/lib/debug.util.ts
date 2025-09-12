@@ -1,4 +1,4 @@
-import { UserModel } from "@bk2/shared/models"
+import { UserModel } from "@bk2/shared-models";
 import { Observable } from "rxjs";
 
 /**

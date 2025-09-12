@@ -1,11 +1,12 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { SectionModel, ViewPosition } from '@bk2/shared/models';
-import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
+import { SectionModel, ViewPosition } from '@bk2/shared-models';
+import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-article-section',
+  standalone: true,
   imports: [
     SpinnerComponent, EditorComponent, ImageComponent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,

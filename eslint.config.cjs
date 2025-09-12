@@ -1,10 +1,13 @@
 const nx = require('@nx/eslint-plugin');
 const js = require('@eslint/js');
+const prettier = require('eslint-plugin-prettier');
+const prettierConfig = require('eslint-config-prettier');
 
 module.exports = [
   {
     plugins: {
       '@nx': nx,
+      prettier,
     },
   },
   // TS/TSX files (replaces compat for @nx/typescript and @nx/angular)
@@ -15,15 +18,12 @@ module.exports = [
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parserOptions: {
-        project: [
-          'apps/*/tsconfig.app.json',
-          'libs/*/tsconfig.lib.json',
-          'apps/*/tsconfig.spec.json',
-          'libs/*/tsconfig.spec.json',
-        ],
+        project: ['apps/*/tsconfig.app.json', 'apps/*/tsconfig.spec.json', 'libs/**/tsconfig*.json'],
       },
     },
     rules: {
+      ...prettierConfig.rules, // Disable conflicting ESLint rules
+      'prettier/prettier': ['error', {}, { usePrettierrc: true }], // Run Prettier as ESLint rule
       '@nx/enforce-module-boundaries': [
         'error',
         {
@@ -31,7 +31,7 @@ module.exports = [
           allow: [],
           depConstraints: [
             { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['type:feature', 'type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
-            { sourceTag: 'type:feature', onlyDependOnLibsWithTags: ['type:feature','type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
+            { sourceTag: 'type:feature', onlyDependOnLibsWithTags: ['type:feature', 'type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
             { sourceTag: 'type:ui', onlyDependOnLibsWithTags: ['type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
             { sourceTag: 'type:data-access', onlyDependOnLibsWithTags: ['type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
             { sourceTag: 'type:util', onlyDependOnLibsWithTags: ['type:util', 'type:model', 'type:constants', 'type:config'] },
@@ -49,18 +49,11 @@ module.exports = [
   {
     files: ['**/*.js', '**/*.jsx'],
     rules: {
-      // Add any custom JS rules here if needed
+      ...prettierConfig.rules,
+      'prettier/prettier': ['error', {}, { usePrettierrc: true }],
     },
   },
   {
-    ignores: [
-      'node_modules', 
-      'tmp', 
-      '**/android', 
-      '**/ios', 
-      '**/web',
-      '**/jest.config.ts',
-      '**/test-setup.ts'
-    ],
-  }
+    ignores: ['node_modules', 'tmp', '**/android', '**/ios', '**/web', '**/test-setup.ts', '**/vite.config.*.timestamp*', '**/vitest.config.*.timestamp*'],
+  },
 ];

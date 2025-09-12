@@ -1,7 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { Image } from "@bk2/shared/models";
+import { Image } from "@bk2/shared-models";
 import { ImageEditModalComponent } from "./image-edit.modal";
 
 @Injectable({

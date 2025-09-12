@@ -1,14 +1,14 @@
-import { Component, inject, input, model, output, viewChild } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, inject, input, model, output, viewChild } from '@angular/core';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
-import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 import { MaskitoDirective } from '@maskito/angular';
+import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { LowercaseWordMask } from '@bk2/shared/config';
-import { NAME_LENGTH } from '@bk2/shared/constants';
-import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared/util-angular';
+import { LowercaseWordMask } from '@bk2/shared-config';
+import { NAME_LENGTH } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
 
 /**
  * Vest updates work by binding to ngModel.
@@ -18,6 +18,7 @@ import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared/util-angu
 
 @Component({
   selector: 'bk-strings',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     MaskitoDirective,
@@ -147,6 +148,6 @@ export class StringsComponent {
     this.updateStrings(ev.detail.complete(this.strings()));
   }
 
-  readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => ((el as unknown) as HTMLIonInputElement).getInputElement();
 }
 

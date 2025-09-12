@@ -1,4 +1,4 @@
-import { AvatarUsage, CategoryModel } from '@bk2/shared/models';
+import { AvatarUsage, CategoryModel } from '@bk2/shared-models';
 
 export type AvatarUsageCategory = CategoryModel;
 

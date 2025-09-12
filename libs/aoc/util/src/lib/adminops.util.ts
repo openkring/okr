@@ -1,16 +1,16 @@
-import { LogInfo, PersonModel, UserModel } from '@bk2/shared/models';
-import { die, generateRandomString, warn } from '@bk2/shared/util-core';
-import { showToast } from '@bk2/shared/util-angular';
+import { LogInfo, PersonModel, UserModel } from '@bk2/shared-models';
+import { showToast } from '@bk2/shared-util-angular';
+import { die, generateRandomString, warn } from '@bk2/shared-util-core';
 import { ToastController } from '@ionic/angular/standalone';
 import { Auth, AuthError, createUserWithEmailAndPassword, User } from 'firebase/auth';
 
 export function getLogInfo(key: string | undefined, name: string | undefined, message: string, isVerbose = true): LogInfo {
-if (isVerbose === true) console.log(`${key}/${name}: ${message}`);
-return {
+  if (isVerbose === true) console.log(`${key}/${name}: ${message}`);
+  return {
     id: key ?? '',
     name: name ?? '',
-    message: message
-};
+    message: message,
+  };
 }
 
 /**
@@ -60,11 +60,11 @@ export async function updateUser(auth: Auth, user: User | undefined | null): Pro
 
 /**
  * Create a user that corresponds to the given person. This is used when registering a new user.
- * @param person the person that the user should be created for 
+ * @param person the person that the user should be created for
  * @returns user model that corresponds to the given person
  */
 export function createUserFromPerson(person: PersonModel, tenantId: string): UserModel {
-  if (!person.bkey) die('AdminOpsUtil.createUserFromPerson: person must have a bkey.')
+  if (!person.bkey) die('AdminOpsUtil.createUserFromPerson: person must have a bkey.');
   const _user = new UserModel(tenantId);
   _user.loginEmail = person.fav_email;
   _user.personKey = person.bkey;
@@ -75,7 +75,7 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
   return _user;
 }
 
-/* 
+/*
   export const validateFunction = (sig: OpSignature): Promise<void> => {
     if (!sig.modelValidationType) return Promise.resolve();
     const _validationResults = validateModel(sig.modelValidationType, sig.model);
@@ -124,29 +124,29 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
   return Promise.resolve();
 } */
 
- /*    // disable the following lines to avoid updating the model
-    try {
-      if (modelValidationType === ModelValidationType.Address) { // CollectionGroup
-        // BEWARE: this is destructive !
-        //await setDoc(doc(getFirestore(), `${CollectionNames.Subject}/${_newModel.parentKey}/${modelValidationType}`, oldModel['bkey']), _newModel);
-        // usually, do it non-destructive like this (in this case, _newModel must contain a bkey. This is removed in the updateModel function): 
-        // await dataService.updateModel(`${CollectionNames.Subject}/${_newModel.parentKey}/${modelValidationType}`, _newModel);
-      } else if (modelValidationType === ModelValidationType.Comment) { // CollectionGroup
-        console.log(`set comment on ${_newModel.parentCollection}/${_newModel.parentKey}/${modelValidationType}/${oldModel['bkey']}`);
-        // BEWARE: this is destructive !
-        //await setDoc(doc(getFirestore(), `${_newModel.parentCollection}/${_newModel.parentKey}/${modelValidationType}`, oldModel['bkey']), _newModel);
-        // usually, do it non-destructive like this (in this case, _newModel must contain a bkey. This is removed in the updateModel function):
-        // await dataService.updateModel(`${_newModel.parentCollection}/${_newModel.parentKey}/${modelValidationType}`, _newModel);
-      } else {    // Collection (in this case, _newModel must contain a bkey. This is removed in the updateModel function)
-        // await dataService.updateModel(modelValidationType, model);
-      }
-      // logInfo.push(getLogInfo(model.bkey, model.name, 'fixed'));  
-    }
-    catch (error) {
-      console.log('error on ' + _newModel.parentKey + '/' + oldModel['bkey'] + ': ', error);
-    }
-  }
-  return Promise.resolve();
+/*    // disable the following lines to avoid updating the model
+   try {
+     if (modelValidationType === ModelValidationType.Address) { // CollectionGroup
+       // BEWARE: this is destructive !
+       //await setDoc(doc(getFirestore(), `${CollectionNames.Subject}/${_newModel.parentKey}/${modelValidationType}`, oldModel['bkey']), _newModel);
+       // usually, do it non-destructive like this (in this case, _newModel must contain a bkey. This is removed in the updateModel function): 
+       // await dataService.updateModel(`${CollectionNames.Subject}/${_newModel.parentKey}/${modelValidationType}`, _newModel);
+     } else if (modelValidationType === ModelValidationType.Comment) { // CollectionGroup
+       console.log(`set comment on ${_newModel.parentCollection}/${_newModel.parentKey}/${modelValidationType}/${oldModel['bkey']}`);
+       // BEWARE: this is destructive !
+       //await setDoc(doc(getFirestore(), `${_newModel.parentCollection}/${_newModel.parentKey}/${modelValidationType}`, oldModel['bkey']), _newModel);
+       // usually, do it non-destructive like this (in this case, _newModel must contain a bkey. This is removed in the updateModel function):
+       // await dataService.updateModel(`${_newModel.parentCollection}/${_newModel.parentKey}/${modelValidationType}`, _newModel);
+     } else {    // Collection (in this case, _newModel must contain a bkey. This is removed in the updateModel function)
+       // await dataService.updateModel(modelValidationType, model);
+     }
+     // logInfo.push(getLogInfo(model.bkey, model.name, 'fixed'));  
+   }
+   catch (error) {
+     console.log('error on ' + _newModel.parentKey + '/' + oldModel['bkey'] + ': ', error);
+   }
+ }
+ return Promise.resolve();
 } */
 /******************************************************************************************************************* */
 
@@ -231,7 +231,6 @@ export const updateMembershipAttributes = async (sig: OpSignature): Promise<void
       });
   }
 } */
-
 
 /*    private async executeAocOperation(modelValidationType: ModelValidationType, opLabel: string, op: (sig: OpSignature) => Promise<void>): Promise<void> {
       this.logInfo = [];

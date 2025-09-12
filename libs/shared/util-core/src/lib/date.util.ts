@@ -1,6 +1,6 @@
-import { format, isValid, isAfter, isFuture, differenceInCalendarDays, differenceInHours, getISODay, parse, compareAsc, add, Duration } from 'date-fns';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { add, compareAsc, differenceInCalendarDays, differenceInHours, Duration, format, getISODay, isAfter, isFuture, isValid, parse } from 'date-fns';
 import { die, warn } from './log.util';
-import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
 
 export enum DateFormat {
     Date = 'EEE MMM dd yyyy',
@@ -299,7 +299,7 @@ export function getYearDiff(date1: string, dateFormat = DateFormat.StoreDate, da
 }
 
 /**
- * Compare two dates and return 1 if the first date is after the second, -1 if the firste date is before the second, and 0 if they are equal.
+ * Compare two dates and return 1 if the first date is after the second, -1 if the first date is before the second, and 0 if they are equal.
  * @param date1 first date
  * @param date2 second date
  * @param dateFormat the date format of the two dates (default is StoreDate = YYYYMMDD)
@@ -307,6 +307,7 @@ export function getYearDiff(date1: string, dateFormat = DateFormat.StoreDate, da
  */
 export function compareDate(date1: string, date2: string, dateFormat = DateFormat.StoreDate): number {
   if (date1 === END_FUTURE_DATE_STR) return 1;
+  if (date2 === END_FUTURE_DATE_STR) return -1;
   const _date1 = parseDate(date1, dateFormat, false) ?? die('date.util/compareDate: invalid date ' + date1);
   const _date2 = parseDate(date2, dateFormat, false) ?? die('date.util/compareDate: invalid date ' + date2);
   return compareAsc(_date1, _date2);
@@ -385,7 +386,14 @@ export function getDayDiff(fromDate: string, toDate: string): number {
     return !_fromDate || !_toDate ? -1 : differenceInCalendarDays(_toDate, _fromDate);
 }
 
+/**
+ * Check if a date is in the future.
+ * @param date a date in StoreDate format (i.e. yyyymmdd)
+ * @param dateFormat the format of the date (default is StoreDate)
+ * @returns true if the date is in the future, false otherwise
+ */
 export function isFutureDate(date: string, dateFormat = DateFormat.StoreDate): boolean {
+    if (date === END_FUTURE_DATE_STR) return true;
     const _parsedDate = parseDate(date, dateFormat);
     if (!_parsedDate) die('date.util/isFutureDate: could not parse date ' + date);
     return isFuture(_parsedDate);

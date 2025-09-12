@@ -1,4 +1,4 @@
-import { BkModel } from '@bk2/shared/models';
+import { BkModel } from '@bk2/shared-models';
 import { sortAscending, SortCriteria, sortDescending, SortDirection } from './sort.util';
 
 /*-------------------------SORT --------------------------------------------*/
@@ -12,7 +12,7 @@ export function sortModels(models: BkModel[], sortCriteria: SortCriteria): BkMod
 
 /* ---------------------- Index operations -------------------------------*/
 export function addIndexElement(index: string, key: string, value: string | number | boolean): string {
-  if (!value || !key || key.length === 0) {
+  if (!key || key.length === 0) {
     return index;
   }
   if (typeof (value) === 'string') {

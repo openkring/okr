@@ -3,15 +3,15 @@ import { Component, computed, input } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { EChartsOption } from 'echarts';
-import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
 import { BarChart, LineChart } from 'echarts/charts';
-import { CanvasRenderer } from 'echarts/renderers';
-echarts.use([BarChart, GridComponent, CanvasRenderer, ToolboxComponent, LegendComponent, TooltipComponent, LineChart]);
+import { GridComponent, LegendComponent, ToolboxComponent, TooltipComponent } from 'echarts/components';
 import * as echarts from 'echarts/core';
-import { GridComponent, ToolboxComponent, LegendComponent, TooltipComponent } from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
+import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
+echarts.use([BarChart, GridComponent, CanvasRenderer, ToolboxComponent, LegendComponent, TooltipComponent, LineChart]);
 
-import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { SectionModel } from '@bk2/shared/models';
+import { SectionModel } from '@bk2/shared-models';
+import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 /**
  * Data grid based on open source (Generic UI Data Grid)[https://generic-ui.com/].
@@ -21,6 +21,7 @@ import { SectionModel } from '@bk2/shared/models';
  */
 @Component({
   selector: 'bk-chart-section',
+  standalone: true,
   imports: [
     SpinnerComponent, EditorComponent, OptionalCardHeaderComponent,
     CommonModule, NgxEchartsDirective,

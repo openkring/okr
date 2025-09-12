@@ -1,4 +1,4 @@
-import { CategoryModel, WorkingRelState } from '@bk2/shared/models';
+import { CategoryModel, WorkingRelState } from '@bk2/shared-models';
 
 export type WorkingRelStateCategory = CategoryModel;
 

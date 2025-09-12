@@ -5,7 +5,7 @@ export enum PageType {
   Content,
   Dashboard,
   Shop,
-  SearchResults
+  SearchResults,
 }
 
 /**

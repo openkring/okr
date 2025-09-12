@@ -1,5 +1,5 @@
 
-import { CategoryModel, PersonalRelType } from '@bk2/shared/models';
+import { CategoryModel, PersonalRelType } from '@bk2/shared-models';
 
 export type PersonalRelTypeCategory = CategoryModel;
 

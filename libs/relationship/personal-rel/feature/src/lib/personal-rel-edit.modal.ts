@@ -1,20 +1,21 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { getFullPersonName, hasRole } from '@bk2/shared/util-core';
-import { ModelType, PersonalRelCollection, PersonalRelModel, UserModel, RoleName } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, PersonalRelCollection, PersonalRelModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { getFullPersonName, hasRole } from '@bk2/shared-util-core';
 
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { PersonalRelFormComponent } from '@bk2/relationship/personal-rel/ui';
-import { convertFormToPersonalRel, convertPersonalRelToForm } from '@bk2/relationship/personal-rel/util';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { PersonalRelFormComponent } from '@bk2/relationship-personal-rel-ui';
+import { convertFormToPersonalRel, convertPersonalRelToForm } from '@bk2/relationship-personal-rel-util';
 import { PersonalRelModalsService } from './personal-rel-modals.service';
 
 @Component({
   selector: 'bk-personal-rel-edit-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     CommentsAccordionComponent, HeaderComponent,

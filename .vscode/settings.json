@@ -1,27 +1,95 @@
 {
-  "nxConsole.generateAiAgentRules": true,
-  "nxConsole.nxWorkspacePath": "",
-  "IDX.aI.enableInlineCompletion": true,
-  "IDX.aI.enableCodebaseIndexing": true,
-  "chat.mcp.serverSampling": {
-    "bk2/.vscode/mcp.json: nx-mcp": {
-      "allowedModels": [
-        "github.copilot-chat/gemini-2.5-pro",
-        "github.copilot-chat/gpt-4.1"
-      ]
-    }
-  },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
+
+  // verbose (1 TB log data/per day !), off (none), normal (errors, warnings)
+  "typescript.tsserver.log": "normal",
+  "typescript.tsserver.maxTsServerMemory": 8192, // Increase to 8GB (default is ~3GB)
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false, // Disable heavy diagnostics for monorepos
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.tsserver.nodeOptions": "--max-old-space-size=8192",
+  "nx.cli": "nx",
+  "nx.formatOnSave": true,
+  "nxConsole.generateAiAgentRules": true,
+
   "files.exclude": {
     "**/node_modules": true,
-    "**/dist": true,
     "**/.nx/cache": true
   },
+  // Limit file watching to reduce memory
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/coverage/**": true,
+    "**/.nx/**": true,
+    "**/.firebase/**": true
+  },
+
+// Optimize search to exclude large directories
   "search.exclude": {
     "**/node_modules": true,
-    "**/dist": true
+    "**/dist": true,
+    "**/coverage": true,
+    "**/.nx": true,
+    "**/.firebase": true,
+    "**/*.spec.ts": true // Exclude test files if not needed during searches
   },
-  "editor.formatOnSave": true,
-  "eslint.workingDirectories": ["."]  // Ensure ESLint uses root config
+  "search.followSymlinks": false, // Prevent memory spikes from symlinked node_modules
+
+   "ionic.autocomplete": true,
+
+  "eslint.workingDirectories": ["."],
+  // Disable unnecessary extension features
+  "eslint.probe": ["javascript", "typescript", "html"], // Limit ESLint to relevant file types
+
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": false,
+  "editor.formatOnPaste": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "never"
+  },
+
+  "prettier.configPath": "./.prettierrc",
+  "prettier.ignorePath": "./.prettierignore",
+
+  "[typescript]": { 
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": false
+  },
+  "[typescriptreact]": { 
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": false
+  },
+  "[html]": { 
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": false
+  },
+  "[scss]": { 
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": false
+  },
+
+  "nodeTdd.testFramework": "vite",
+
+  "debug.node.autoAttach": "on",
+  "debug.javascript.autoAttachFilter": "smart",
+
+  "terminal.integrated.env.osx": {
+    "NVM_DIR": "$HOME/.nvm",
+    "PATH": "$HOME/.nvm/versions/node/v20.19.3/bin:$PATH"
+  },
+
+  "recommendations": [
+    "WebNative.webnative",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "nrwl.angular-console",
+    "angular.ng-template",
+    "ms-vscode.vscode-typescript-next",
+    "firebase.firebase",
+  ],
+  "angular.enable-strict-mode-prompt": false,
+  "angular.experimental-ivy": true
 }

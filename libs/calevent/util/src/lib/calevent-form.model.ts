@@ -1,5 +1,6 @@
-import { AvatarInfo, CalEventType, Periodicity } from '@bk2/shared/models';
 import { DeepRequired } from 'ngx-vest-forms';
+
+import { AvatarInfo, CalEventType, Periodicity } from '@bk2/shared-models';
 
 // a form model is always deep partial because angular will create it over time organically
 export type CalEventFormModel = {

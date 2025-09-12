@@ -1,5 +1,6 @@
-import { ContentState, PageType } from '@bk2/shared/models';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+
+import { ContentState, PageType } from '@bk2/shared-models';
 
 export type PageFormModel = DeepPartial<{
     bkey: string,

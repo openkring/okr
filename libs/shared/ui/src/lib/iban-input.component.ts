@@ -1,19 +1,20 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, input, model, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
+import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
 
-import { ChIbanMask } from '@bk2/shared/config';
-import { IBAN_LENGTH } from '@bk2/shared/constants';
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { ChIbanMask } from '@bk2/shared-config';
+import { IBAN_LENGTH } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { ButtonCopyComponent } from './button-copy.component';
-import { FormsModule } from '@angular/forms';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 @Component({
   selector: 'bk-iban',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
     MaskitoDirective, FormsModule,
@@ -62,7 +63,7 @@ export class IbanComponent {
   public changed = output<string>();
 
   protected chIbanMask = ChIbanMask;
-  readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => (el as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => ((el as unknown) as HTMLIonInputElement).getInputElement();
 
   public onChange(event: CustomEvent): void {
     const _iban = event.detail.value;

@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { extractSecondPartOfOptionalTupel } from '@bk2/shared/util-core';
+import { extractSecondPartOfOptionalTupel } from '@bk2/shared-util-core';
 
 /**
  * Takes a string in the form of [key]@[label]
@@ -14,6 +14,7 @@ import { extractSecondPartOfOptionalTupel } from '@bk2/shared/util-core';
  */
 @Pipe({
   name: 'label',
+  standalone: true
 })
 export class LabelPipe implements PipeTransform {
   transform(label: string): string {

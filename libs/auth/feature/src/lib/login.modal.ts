@@ -1,32 +1,29 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, effect, inject, signal } from '@angular/core';
 import { IonButton, IonContent, IonItem, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { HeaderComponent } from '@bk2/shared/ui';
-import { AppStore } from '@bk2/shared/feature';
-import { AuthCredentials } from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AuthCredentials } from '@bk2/shared-models';
+import { HeaderComponent } from '@bk2/shared-ui';
 
-import { LoginFormComponent } from '@bk2/auth/ui';
-import { AuthService } from '@bk2/auth/data-access';
+import { AuthService } from '@bk2/auth-data-access';
+import { LoginFormComponent } from '@bk2/auth-ui';
 
 @Component({
   selector: 'bk-login-modal',
-  imports: [
-    HeaderComponent, LoginFormComponent,
-    TranslatePipe, AsyncPipe,
-    IonContent, IonButton, IonItem
-  ],
+  standalone: true,
+  imports: [HeaderComponent, LoginFormComponent, TranslatePipe, AsyncPipe, IonContent, IonButton, IonItem],
   template: `
     <bk-header title="{{ '@auth.operation.login.title' | translate | async }}" [isModal]="true" />
     <ion-content>
       <bk-login-form [(vm)]="currentCredentials" (validChange)="formIsValid = $event" />
       <ion-item lines="none">
         <ion-button slot="start" fill="clear" (click)="cancel()">{{ '@general.operation.change.cancel' | translate | async }}</ion-button>
-        <ion-button slot="end" fill="clear" [disabled]="!formIsValid" (click)="login()">{{ '@auth.operation.login.title' | translate | async}}</ion-button>
+        <ion-button slot="end" fill="clear" [disabled]="!formIsValid" (click)="login()">{{ '@auth.operation.login.title' | translate | async }}</ion-button>
       </ion-item>
     </ion-content>
-  `
+  `,
 })
 export class LoginModalComponent {
   private readonly modalController = inject(ModalController);
@@ -36,7 +33,7 @@ export class LoginModalComponent {
   protected formIsValid = false;
   public currentCredentials = signal<AuthCredentials>({
     loginEmail: '',
-    loginPassword: ''
+    loginPassword: '',
   });
 
   constructor() {

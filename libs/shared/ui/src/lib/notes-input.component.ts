@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, model, output } from '@angular/core';
-import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonTextarea } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
+import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonTextarea } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { DESCRIPTION_LENGTH } from '@bk2/shared/constants';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe, bkTranslate } from '@bk2/shared/i18n';
-import { decrypt, encrypt } from '@bk2/shared/util-core';
+import { DESCRIPTION_LENGTH } from '@bk2/shared-constants';
+import { TranslatePipe, bkTranslate } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { decrypt, encrypt } from '@bk2/shared-util-core';
 import { ButtonCopyComponent } from './button-copy.component';
 
 /**
@@ -17,6 +17,7 @@ import { ButtonCopyComponent } from './button-copy.component';
  */
 @Component({
   selector: 'bk-notes',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     FormsModule,

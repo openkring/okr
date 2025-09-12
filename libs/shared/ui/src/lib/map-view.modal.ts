@@ -1,11 +1,11 @@
 import { AsyncPipe } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, inject, input } from '@angular/core';
-import { IonContent } from '@ionic/angular/standalone';
 import { GoogleMap, MapType } from '@capacitor/google-maps';
+import { IonContent } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ENV} from '@bk2/shared/config';
-import { die } from '@bk2/shared/util-core';
+import { ENV } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { die } from '@bk2/shared-util-core';
 import { HeaderComponent } from './header.component';
 
 export interface GeoCoordinates {
@@ -15,6 +15,7 @@ export interface GeoCoordinates {
 
 @Component({
   selector: 'bk-map-view-modal',
+  standalone: true,
   styles: [`
   capacitor-google-map {
   display: inline-block;

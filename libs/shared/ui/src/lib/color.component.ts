@@ -1,11 +1,11 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, model, output } from '@angular/core';
-import { IonItem, IonLabel, IonChip, ModalController } from '@ionic/angular/standalone';
+import { IonChip, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { error } from '@bk2/shared-util-angular';
 import { ColorSelectModalComponent } from './color-select.modal';
-import { error } from '@bk2/shared/util-angular';
 
 /**
  * Color is in hex format e.g. #FF0000 for red.
@@ -13,6 +13,7 @@ import { error } from '@bk2/shared/util-angular';
  */
 @Component({
   selector: 'bk-color',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonItem, IonLabel, IonChip

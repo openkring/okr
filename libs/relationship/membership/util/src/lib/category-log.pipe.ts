@@ -2,6 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
   name: 'categoryLog',
+  standalone: true
 })
 export class CategoryLogPipe implements PipeTransform {
 

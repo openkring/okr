@@ -1,5 +1,5 @@
 {
-  "name": "document/ui",
+  "name": "document-ui",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/document/ui/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/document/ui",
         "main": "libs/document/ui/src/index.ts",
         "tsConfig": "libs/document/ui/tsconfig.lib.json",
-        "assets": ["libs/document/ui/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/document/ui/jest.config.ts"
+        "assets": ["libs/document/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

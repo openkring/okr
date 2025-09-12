@@ -1,5 +1,6 @@
-import { GenderType, OrgType, Periodicity, WorkingRelState, WorkingRelType } from "@bk2/shared/models";
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+
+import { GenderType, OrgType, Periodicity, WorkingRelState, WorkingRelType } from "@bk2/shared-models";
 
 // tbd: in a first phase, we only support persons as subjects; support for org subjects will be added later
 export type WorkingRelFormModel = DeepPartial<{

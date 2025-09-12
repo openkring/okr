@@ -1,17 +1,18 @@
 
-import { Component, computed, input, model, output } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
 
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { getIndexOfKey } from '@bk2/shared/util-core';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { LowercaseWordMask, MaskPredicate } from '@bk2/shared/config';
-import { BaseProperty } from '@bk2/shared/models';
+import { LowercaseWordMask, MaskPredicate } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { BaseProperty } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { getIndexOfKey } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-property-list',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     MaskitoDirective,

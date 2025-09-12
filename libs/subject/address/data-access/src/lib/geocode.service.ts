@@ -1,11 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 import { ToastController } from '@ionic/angular';
-import { ENV } from '@bk2/shared/config';
-import { AddressChannel, AddressModel } from '@bk2/shared/models';
-import { stringifyAddress } from '@bk2/subject/address/util';
-import { error } from '@bk2/shared/util-angular';
+import { firstValueFrom } from 'rxjs';
+
+import { ENV } from '@bk2/shared-config';
+import { AddressChannel, AddressModel } from '@bk2/shared-models';
+import { error } from '@bk2/shared-util-angular';
+
+import { stringifyAddress } from '@bk2/subject-address-util';
 
 export interface GeoCoordinates {
   lat: number;

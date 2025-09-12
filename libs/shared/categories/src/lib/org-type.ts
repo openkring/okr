@@ -1,4 +1,4 @@
-import { CategoryModel, OrgType } from '@bk2/shared/models';
+import { CategoryModel, OrgType } from '@bk2/shared-models';
 
 export type OrgTypeCategory = CategoryModel;
 

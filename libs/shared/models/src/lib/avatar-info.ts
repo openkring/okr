@@ -1,4 +1,4 @@
-import { ModelType } from "./enums/model-type.enum";
+import { ModelType } from './enums/model-type.enum';
 
 export interface AvatarInfo {
   key: string; // key of the avatar
@@ -13,5 +13,5 @@ export const DefaultAvatarInfo: AvatarInfo = {
   name1: '',
   name2: '',
   modelType: ModelType.Person,
-  label: ''
+  label: '',
 };

@@ -1,4 +1,4 @@
-import { CategoryModel, Importance } from "@bk2/shared/models";
+import { CategoryModel, Importance } from '@bk2/shared-models';
 
 export type ImportanceCategory = CategoryModel;
 

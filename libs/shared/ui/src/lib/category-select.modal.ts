@@ -2,8 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryModel } from '@bk2/shared/models';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryModel } from '@bk2/shared-models';
 import { HeaderComponent } from './header.component';
 
 /**
@@ -14,6 +14,7 @@ import { HeaderComponent } from './header.component';
  */
 @Component({
   selector: 'bk-category-select-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
     HeaderComponent,

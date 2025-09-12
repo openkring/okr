@@ -63,10 +63,20 @@ export async function pasteFromClipboard(): Promise<string> {
  * Executes a function several times.
  * source: https://stackoverflow.com/questions/30452263/is-there-a-mechanism-to-loop-x-times-in-es6-ecmascript-6-without-mutable-varia
  * use it like this:   times (3) (() => console.log('hi'))
+ * The given value is not truncated, so be careful with fractions (e.g. 3.7 is executed 4 times).
  * @param x defines how many times the function f should be executed
- * @returns 
  */
 export const times = (x: number) => (f: () => void) => {
+  if (Number.isNaN(x)) {
+    console.warn('copy.util: number may not be NaN');
+    return;
+  }
+  const inf = Infinity;
+  if (x === inf) {
+    console.warn('copy.util: number may not be Infinity');
+    return;
+  }
+
   if (x > 0) {
     f()
     times (x - 1) (f)

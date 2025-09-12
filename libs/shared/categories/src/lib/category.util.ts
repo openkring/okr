@@ -1,5 +1,4 @@
-import { AccountType, AllCategories, CategoryModel, GenderType, MembershipModel, ModelType, OrgType, OwnershipModel, ResourceType } from '@bk2/shared/models';
-import { die, getProperty } from '@bk2/shared/util-core';
+import { AccountType, AllCategories, CategoryModel, GenderType, MembershipModel, ModelType, OrgType, OwnershipModel, ResourceType } from '@bk2/shared-models';
 
 /**
  * Return a Category based on its id.
@@ -18,12 +17,12 @@ export function newCategoryAll(): CategoryModel {
     abbreviation: 'ALL',
     name: 'all',
     i18nBase: 'general.category.all',
-    icon: 'radio-button-on'
-  }
+    icon: 'radio-button-on',
+  };
 }
 
 export function addCategory(categories: CategoryModel[], category: CategoryModel): CategoryModel[] {
-  return [...categories, category];   // clones the array
+  return [...categories, category]; // clones the array
 }
 
 export function addAllCategory(categories: CategoryModel[]): CategoryModel[] {
@@ -43,18 +42,20 @@ export function countCategories(categories: CategoryModel[]): number {
 }
 
 export function getCategoryField(categories: CategoryModel[], categoryId: number, fieldName: string): string | number {
-  return getProperty(readCategory(categories, categoryId), fieldName as keyof CategoryModel);
+  const _cat = readCategory(categories, categoryId);
+  const _key = fieldName as keyof CategoryModel;
+  return _cat[_key];
 }
 
 export function getCategoryStringField(categories: CategoryModel[], categoryId: number, fieldName: string): string {
   const _field = getCategoryField(categories, categoryId, fieldName);
-  if (typeof _field !== 'string') die(`category.util/getStringField(): type of field ${fieldName} must be string.`);
+  if (typeof _field !== 'string') throw new Error(`category.util/getStringField(): type of field ${fieldName} must be string.`);
   return _field;
 }
 
 export function getCategoryNumberField(categories: CategoryModel[], categoryId: number, fieldName: string): number {
   const _field = getCategoryField(categories, categoryId, fieldName);
-  if (typeof _field !== 'number') die(`category.util/getNumberField(): type of field ${fieldName} must be number.`);
+  if (typeof _field !== 'number') throw new Error(`category.util/getNumberField(): type of field ${fieldName} must be number.`);
   return _field;
 }
 
@@ -129,9 +130,10 @@ export function categoryMatches(catProperty: number | undefined, catFilter: numb
 export function memberTypeMatches(membership: MembershipModel, memberType?: GenderType | OrgType | typeof AllCategories): boolean {
   if (!memberType || memberType === AllCategories) return true;
   if (membership.memberModelType === ModelType.Person) {
-    return membership.memberType as GenderType === memberType;
-  } else {    // org
-    return membership.memberType as OrgType === memberType;
+    return (membership.memberType as GenderType) === memberType;
+  } else {
+    // org
+    return (membership.memberType as OrgType) === memberType;
   }
 }
 
@@ -139,9 +141,10 @@ export function memberTypeMatches(membership: MembershipModel, memberType?: Gend
 export function resourceTypeMatches(ownership: OwnershipModel, resourceType?: ResourceType | AccountType | typeof AllCategories): boolean {
   if (!resourceType || resourceType === AllCategories) return true;
   if (ownership.resourceModelType === ModelType.Resource) {
-    return ownership.resourceType as ResourceType === resourceType;
-  } else {    // account
-    return ownership.resourceType as AccountType === resourceType;
+    return (ownership.resourceType as ResourceType) === resourceType;
+  } else {
+    // account
+    return (ownership.resourceType as AccountType) === resourceType;
   }
 }
 
@@ -152,7 +155,8 @@ export function ownerTypeMatches(ownership: OwnershipModel, selectedModelType: M
     if (ownership.ownerModelType !== ModelType.Person) return false;
     if (selectedGender === AllCategories) return true;
     return ownership.ownerType === selectedGender;
-  } else {    // org
+  } else {
+    // org
     if (ownership.ownerModelType !== ModelType.Org) return false;
     if (selectedOrgType === AllCategories) return true;
     return ownership.ownerType === selectedOrgType;

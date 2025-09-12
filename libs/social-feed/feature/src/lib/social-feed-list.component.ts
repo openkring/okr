@@ -1,15 +1,16 @@
 import { Component, inject, linkedSignal, viewChild } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { tap } from 'rxjs';
 import { IonContent, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonList } from '@ionic/angular/standalone';
+import { tap } from 'rxjs';
 
-import { SocialPostComponent } from '@bk2/social-feed/ui';
-import { SocialPostModel } from '@bk2/shared/models';
-import { SocialFeedService } from '@bk2/social-feed/data-access';
+import { SocialPostModel } from '@bk2/shared-models';
+import { SocialFeedService } from '@bk2/social-feed-data-access';
+import { SocialPostComponent } from '@bk2/social-feed-ui';
 
 
 @Component({
   selector: 'bk-social-feed-feature',
+  standalone: true,
   imports: [ 
     IonContent, IonInfiniteScroll, IonInfiniteScrollContent, IonList, IonItem,
     SocialPostComponent

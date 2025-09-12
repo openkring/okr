@@ -1,5 +1,5 @@
-import { SHORT_NAME_LENGTH } from "@bk2/shared/constants";
-import { stringValidations } from "@bk2/shared/util-core";
+import { SHORT_NAME_LENGTH } from "@bk2/shared-constants";
+import { stringValidations } from "@bk2/shared-util-core";
 
 export function phoneValidations(fieldName: string, phoneNumber: unknown ) {
 

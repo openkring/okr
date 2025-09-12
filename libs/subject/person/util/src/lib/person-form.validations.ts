@@ -1,8 +1,10 @@
-import { enforce, omitWhen, only, staticSuite, test} from 'vest';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { GenderType } from '@bk2/shared-models';
+import { categoryValidations, dateValidations, isAfterDate, isFutureDate, stringValidations } from '@bk2/shared-util-core';
+
 import { PersonFormModel } from './person-form.model';
-import { categoryValidations, dateValidations, isAfterDate, isFutureDate, stringValidations } from '@bk2/shared/util-core';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { GenderType } from '@bk2/shared/models';
 import { ssnValidations } from './ssn.validations';
 
 export const personFormValidations = staticSuite((model: PersonFormModel, field?: string) => {

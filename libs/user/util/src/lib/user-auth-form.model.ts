@@ -1,10 +1,11 @@
-import { Roles } from '@bk2/shared/models';
 import { DeepRequired } from 'ngx-vest-forms';
 
+import { Roles } from '@bk2/shared-models';
+
 export type UserAuthFormModel = {
-  roles: Roles,
-  useTouchId: boolean,
-  useFaceId: boolean  
+  roles: Roles;
+  useTouchId: boolean;
+  useFaceId: boolean;
 };
 
 export const userAuthFormModelShape: DeepRequired<UserAuthFormModel> = {
@@ -17,9 +18,10 @@ export const userAuthFormModelShape: DeepRequired<UserAuthFormModel> = {
     eventAdmin: false,
     memberAdmin: false,
     treasurer: false,
-    admin: false
+    groupAdmin: false,
+    admin: false,
   },
 
   useTouchId: false,
-  useFaceId: false
+  useFaceId: false,
 };

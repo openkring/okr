@@ -1,21 +1,22 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { AvatarSelectComponent, ChangeConfirmationComponent, ChipsComponent, HeaderComponent, StringsComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { RoleName, TaskCollection, TaskModel } from '@bk2/shared/models';
-import { LowercaseWordMask } from '@bk2/shared/config';
-import { debugFormModel, hasRole } from '@bk2/shared/util-core';
+import { LowercaseWordMask } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { RoleName, TaskCollection, TaskModel } from '@bk2/shared-models';
+import { AvatarSelectComponent, ChangeConfirmationComponent, ChipsComponent, HeaderComponent, StringsComponent } from '@bk2/shared-ui';
+import { debugFormModel, hasRole } from '@bk2/shared-util-core';
 
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
 
-import { TaskFormComponent } from '@bk2/task/ui';
-import { convertFormToTask, convertTaskToForm, TaskFormModel, taskFormValidations } from '@bk2/task/util';
+import { TaskFormComponent } from '@bk2/task-ui';
+import { convertFormToTask, convertTaskToForm, TaskFormModel, taskFormValidations } from '@bk2/task-util';
 import { TaskEditStore } from './task-edit.store';
 
 @Component({
   selector: 'bk-task-edit-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     HeaderComponent, ChangeConfirmationComponent, TaskFormComponent, CommentsAccordionComponent,

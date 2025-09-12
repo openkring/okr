@@ -1,4 +1,4 @@
-import { CategoryModel, DocumentType } from "@bk2/shared/models";
+import { CategoryModel, DocumentType } from '@bk2/shared-models';
 
 export type DocumentTypeCategory = CategoryModel;
 

@@ -1,20 +1,21 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { AppStore } from '@bk2/shared/feature';
-import { ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType, RoleName } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util-core';
-import { ResourceTypes, RowingBoatTypes } from '@bk2/shared/categories';
+import { ResourceTypes, RowingBoatTypes } from '@bk2/shared-categories';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, ResourceCollection, ResourceModel, ResourceType, RoleName, RowingBoatType } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
-import { ResourceFormComponent } from '@bk2/resource/ui';
-import { convertFormToResource, convertResourceToForm, isReservable } from '@bk2/resource/util';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { ResourceFormComponent } from '@bk2/resource-ui';
+import { convertFormToResource, convertResourceToForm, isReservable } from '@bk2/resource-util';
 
 @Component({
   selector: 'bk-resource-edit-modal',
+  standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
     ResourceFormComponent, IconToolbarComponent, CommentsAccordionComponent,

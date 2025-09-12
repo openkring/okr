@@ -1,15 +1,15 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared/util-core';
-import { AllCategories, ModelType, PageModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
-import { categoryMatches } from '@bk2/shared/categories';
+import { categoryMatches } from '@bk2/shared-categories';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, ModelType, PageModel } from '@bk2/shared-models';
+import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared-util-core';
 
-import { isPage } from '@bk2/cms/page/util';
-import { PageService } from '@bk2/cms/page/data-access';
+import { PageService } from '@bk2/cms-page-data-access';
+import { isPage } from '@bk2/cms-page-util';
 import { PageEditModalComponent } from './page-edit.modal';
 
 export type PageList = {

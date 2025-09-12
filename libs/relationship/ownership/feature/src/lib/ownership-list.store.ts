@@ -1,16 +1,16 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared/util-core';
-import { confirm } from '@bk2/shared/util-angular';
-import { AllCategories, GenderType, ModelType, OrgType, OwnershipModel, OwnershipType, OwnerTypeSelect, ResourceType, RowingBoatType } from '@bk2/shared/models';
-import { categoryMatches, ownerTypeMatches } from '@bk2/shared/categories';
-import { AppStore } from '@bk2/shared/feature';
-import { selectDate } from '@bk2/shared/ui';
+import { categoryMatches, ownerTypeMatches } from '@bk2/shared-categories';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, GenderType, ModelType, OrgType, OwnershipModel, OwnershipType, OwnerTypeSelect, ResourceType, RowingBoatType } from '@bk2/shared-models';
+import { selectDate } from '@bk2/shared-ui';
+import { confirm } from '@bk2/shared-util-angular';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
 
-import { OwnershipService } from '@bk2/relationship/ownership/data-access';
+import { OwnershipService } from '@bk2/relationship-ownership-data-access';
 import { OwnershipModalsService } from './ownership-modals.service';
 
 export type OwnershipListState = {

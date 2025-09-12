@@ -1,7 +1,7 @@
 {
-  "name": "swisscities/ui",
+  "name": "subject-swisscities-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/swisscities/ui/src",
+  "sourceRoot": "libs/subject/swisscities/ui/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:ui", "scope:swisscities", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/subject/swisscities/ui",
         "main": "libs/subject/swisscities/ui/src/index.ts",
         "tsConfig": "libs/subject/swisscities/ui/tsconfig.lib.json",
-        "assets": ["libs/subject/swisscities/ui/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/subject/swisscities/ui/jest.config.ts"
+        "assets": ["libs/subject/swisscities/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

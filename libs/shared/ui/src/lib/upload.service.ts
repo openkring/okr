@@ -1,13 +1,14 @@
 import { inject, Injectable } from "@angular/core";
-import { ModalController } from "@ionic/angular/standalone";
-import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera";
+import { FilePicker } from "@capawesome/capacitor-file-picker";
+import { ModalController } from "@ionic/angular/standalone";
 
-import { UploadTaskComponent } from "./upload-task.modal";
-import { warn } from "@bk2/shared/util-core";
-import { error } from "@bk2/shared/util-angular";
-import { Image } from "@bk2/shared/models";
+import { Image } from "@bk2/shared-models";
+import { error } from "@bk2/shared-util-angular";
+import { warn } from "@bk2/shared-util-core";
+
 import { showZoomedImage } from "./ui.util";
+import { UploadTaskComponent } from "./upload-task.modal";
 
 @Injectable({
     providedIn: 'root'

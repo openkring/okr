@@ -1,5 +1,5 @@
-import { DateFormat, getTodayStr } from "@bk2/shared/util-core";
-import { CommentModel } from "@bk2/shared/models";
+import { CommentModel } from "@bk2/shared-models";
+import { DateFormat, getTodayStr } from "@bk2/shared-util-core";
 
 /* ---------------------- Model  -------------------------------*/
  /**

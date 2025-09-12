@@ -1,4 +1,4 @@
-import { CategoryModel, ResourceType } from '@bk2/shared/models';
+import { CategoryModel, ResourceType } from '@bk2/shared-models';
 
 export type ResourceTypeCategory = CategoryModel;
 

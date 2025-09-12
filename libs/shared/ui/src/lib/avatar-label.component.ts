@@ -1,15 +1,16 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared/categories';
-import { CategoryPlainNamePipe } from '@bk2/shared/pipes';
-import { ColorIonic } from '@bk2/shared/models';
+import { ColorsIonic } from '@bk2/shared-categories';
+import { ColorIonic } from '@bk2/shared-models';
+import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 
-import { AvatarService } from '@bk2/avatar/data-access';
+import { AvatarService } from '@bk2/avatar-data-access';
 
 @Component({
   selector: 'bk-avatar-label',
+  standalone: true,
   imports: [
     CategoryPlainNamePipe,
     IonItem, IonAvatar, IonImg, IonLabel

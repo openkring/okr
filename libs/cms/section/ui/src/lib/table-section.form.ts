@@ -1,12 +1,13 @@
 import { Component, computed, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { Table } from '@bk2/shared/models';
-import { StringsComponent, TextInputComponent } from '@bk2/shared/ui';
-import { HtmlTextMask } from '@bk2/shared/config';
+import { HtmlTextMask } from '@bk2/shared-config';
+import { Table } from '@bk2/shared-models';
+import { StringsComponent, TextInputComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-table-section-form',
+  standalone: true,
   imports: [
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     StringsComponent, TextInputComponent

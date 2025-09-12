@@ -2,17 +2,18 @@ import { Component, computed, inject, input, model, output, signal } from '@angu
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { AvatarsComponent, CategoryComponent, ChipsComponent, DateInputComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared/ui';
-import { ChFutureDate, LowercaseWordMask } from '@bk2/shared/config';
-import { NAME_LENGTH } from '@bk2/shared/constants';
-import { CalEventTypes, PeriodicityTypes } from '@bk2/shared/categories';
-import { AvatarInfo, CalEventType, Periodicity, UserModel } from '@bk2/shared/models';
-import { convertDateFormatToString, DateFormat, debugFormErrors } from '@bk2/shared/util-core';
+import { CalEventTypes, PeriodicityTypes } from '@bk2/shared-categories';
+import { ChFutureDate, LowercaseWordMask } from '@bk2/shared-config';
+import { NAME_LENGTH } from '@bk2/shared-constants';
+import { AvatarInfo, CalEventType, Periodicity, UserModel } from '@bk2/shared-models';
+import { AvatarsComponent, CategoryComponent, ChipsComponent, DateInputComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared-ui';
+import { convertDateFormatToString, DateFormat, debugFormErrors } from '@bk2/shared-util-core';
 
-import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } from '@bk2/calevent/util';
+import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } from '@bk2/calevent-util';
 
 @Component({
   selector: 'bk-calevent-form',
+  standalone: true,
   imports: [
     vestForms,
     CategoryComponent, ChipsComponent, NotesInputComponent, DateInputComponent,

@@ -1,31 +1,32 @@
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
-import { getModelSlug } from '@bk2/shared/categories';
-import { DOCUMENT_DIR, ModelType } from '@bk2/shared/models';
-import { checkUrlType, warn } from '@bk2/shared/util-core';
-import { readAsFile } from '@bk2/avatar/util';
+import { getModelSlug } from '@bk2/shared-categories';
+import { DOCUMENT_DIR, ModelType } from '@bk2/shared-models';
+import { checkUrlType, warn } from '@bk2/shared-util-core';
+
+import { readAsFile } from '@bk2/avatar-util';
 
 /* ---------------------- Camera -------------------------*/
-  /**
-   * Select a photo from the camera or the photo library.
-   * @returns the image taken or selected
-   */
-  export async function pickPhoto(platform: Platform): Promise<File | undefined> {
-    const _photo = await Camera.getPhoto({
-      quality: 90,
-      allowEditing: false,
-      resultType: CameraResultType.Uri,
-      source: platform.is('mobile') ? CameraSource.Prompt : CameraSource.Photos 
-    });
-    return await readAsFile(_photo, platform);
-  }
+/**
+ * Select a photo from the camera or the photo library.
+ * @returns the image taken or selected
+ */
+export async function pickPhoto(platform: Platform): Promise<File | undefined> {
+  const _photo = await Camera.getPhoto({
+    quality: 90,
+    allowEditing: false,
+    resultType: CameraResultType.Uri,
+    source: platform.is('mobile') ? CameraSource.Prompt : CameraSource.Photos,
+  });
+  return await readAsFile(_photo, platform);
+}
 
 /* ---------------------- Helpers -------------------------*/
 /**
  * Determine the title of a document based on a given operation.
- * @param operation 
- * @returns 
+ * @param operation
+ * @returns
  */
 export function getDocumentTitle(operation: string): string {
   return `document.operation.${operation}.label`;
@@ -78,4 +79,3 @@ export function getStoragePath(url: string | undefined, modelType: ModelType, te
   }
   return undefined;
 }
-

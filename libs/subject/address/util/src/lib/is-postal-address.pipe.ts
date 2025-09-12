@@ -1,8 +1,10 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { AddressChannel } from '@bk2/shared/models';
+
+import { AddressChannel } from '@bk2/shared-models';
 
 @Pipe({
   name: 'isPostal',
+  standalone: true
 })
 export class IsPostalAddressPipe implements PipeTransform {
 

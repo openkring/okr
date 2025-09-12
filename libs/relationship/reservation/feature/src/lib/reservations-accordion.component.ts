@@ -1,19 +1,20 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel, RoleName } from '@bk2/shared/models';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel, RoleName } from '@bk2/shared-models';
+import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent } from '@bk2/shared-ui';
+import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared-util-core';
+
+import { AvatarPipe } from '@bk2/avatar-ui';
 
 import { ReservationsAccordionStore } from './reservations-accordion.store';
-import { EmptyListComponent } from '@bk2/shared/ui';
-import { DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared/util-core';
-
-import { AvatarPipe } from '@bk2/avatar/ui';
 
 @Component({
   selector: 'bk-reservations-accordion',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, DurationPipe,
     EmptyListComponent,

@@ -1,14 +1,15 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared/util-core';
-import { AllCategories, ModelType, Priority, TaskCollection, TaskModel, TaskState } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, ModelType, Priority, TaskCollection, TaskModel, TaskState } from '@bk2/shared-models';
+import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
 
-import { TaskService } from '@bk2/task/data-access';
+import { TaskService } from '@bk2/task-data-access';
+
 import { TaskModalsService } from './task-modals.service';
-import { FirestoreService } from '@bk2/shared/data-access';
 
 export type TaskListState = {
   calendarName: string;

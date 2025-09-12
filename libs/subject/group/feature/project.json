@@ -1,7 +1,7 @@
 {
-  "name": "group/feature",
+  "name": "subject-group-feature",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/group/feature/src",
+  "sourceRoot": "libs/subject/group/feature/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:feature", "scope:group", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/subject/group/feature",
         "main": "libs/subject/group/feature/src/index.ts",
         "tsConfig": "libs/subject/group/feature/tsconfig.lib.json",
-        "assets": ["libs/subject/group/feature/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/group/feature/jest.config.ts"
+        "assets": ["libs/subject/group/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {
@@ -28,3 +22,4 @@
     }
   }
 }
+

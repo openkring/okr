@@ -1,17 +1,18 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ModelType, PersonModel, UserModel } from '@bk2/shared/models';
-import { FullNamePipe } from '@bk2/shared/pipes';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, PersonModel, UserModel } from '@bk2/shared-models';
+import { FullNamePipe } from '@bk2/shared-pipes';
+import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
+import { AvatarPipe } from '@bk2/avatar-ui';
 import { PersonSelectStore } from './person-select.store';
 
 @Component({
   selector: 'bk-person-select-modal',
+  standalone: true,
   imports: [
     HeaderComponent, SpinnerComponent,
     TranslatePipe, AsyncPipe, FullNamePipe, AvatarPipe, EmptyListComponent,

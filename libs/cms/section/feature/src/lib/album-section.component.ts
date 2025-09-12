@@ -1,15 +1,16 @@
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject, input, linkedSignal, viewChild, PLATFORM_ID } from '@angular/core';
-import { AsyncPipe, NgStyle, isPlatformBrowser } from '@angular/common';
+import { AsyncPipe, isPlatformBrowser, NgStyle } from '@angular/common';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject, input, linkedSignal, PLATFORM_ID, viewChild } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
-import { TranslatePipe } from '@ngx-translate/core';
 
-import { debugData, debugMessage } from '@bk2/shared/util-core';
-import { downloadToBrowser } from '@bk2/shared/util-angular';
-import { AlbumStyle, Image, ImageAction, ImageType, SectionModel } from '@bk2/shared/models';
-import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared/pipes';
-import { CategoryComponent, ImageComponent, LabelComponent, SpinnerComponent, VideoComponent, browse, showZoomedImage } from '@bk2/shared/ui';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AlbumStyle, Image, ImageAction, ImageType, SectionModel } from '@bk2/shared-models';
+import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
+import { browse, CategoryComponent, ImageComponent, LabelComponent, showZoomedImage, SpinnerComponent, VideoComponent } from '@bk2/shared-ui';
+import { downloadToBrowser } from '@bk2/shared-util-angular';
+import { debugData, debugMessage } from '@bk2/shared-util-core';
 
-import { AlbumStyles, convertThumbnailToFullImage, getBackgroundStyle } from '@bk2/cms/section/util';
+import { AlbumStyles, convertThumbnailToFullImage, getBackgroundStyle } from '@bk2/cms-section-util';
+
 import { AlbumStore } from './album-section.store';
 
 /**
@@ -29,6 +30,7 @@ import { AlbumStore } from './album-section.store';
  */
 @Component({
   selector: 'bk-album-section',
+  standalone: true,
   imports: [
     NgStyle,
     TranslatePipe, AsyncPipe, SvgIconPipe, JpgUrlPipe, PdfUrlPipe, ThumbnailUrlPipe,

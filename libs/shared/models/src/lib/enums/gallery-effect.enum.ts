@@ -5,5 +5,5 @@ export enum GalleryEffect {
   Coverflow,
   Flip,
   Creative,
-  Cards
+  Cards,
 }

@@ -1,5 +1,6 @@
-import { ModelType } from '@bk2/shared/models';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+
+import { ModelType } from '@bk2/shared-models';
 
 export type GroupNewFormModel = DeepPartial<{
   name: string,

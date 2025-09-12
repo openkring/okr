@@ -1,10 +1,16 @@
 {
-  "name": "@bk2/person-util",
+  "name": "@bk2/subject-person-util",
   "version": "0.0.1",
-  "dependencies": {
-    "tslib": "^2.3.0"
-  },
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
-  "private": true
+  "sideEffects": false,
+  "private": true,
+  "dependencies": {
+    "tslib": "^2.8.1",
+    "@bk2/shared-models": "*",
+    "@bk2/shared-constants": "*",
+    "@bk2/shared-util-angular": "*",
+    "@bk2/shared-util-core": "*",
+    "@bk2/subject-address-util": "*"
+  }
 }

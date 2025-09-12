@@ -1,15 +1,15 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
-import { AllCategories, DocumentCollection, DocumentModel, ModelType } from '@bk2/shared/models';
-import { categoryMatches } from '@bk2/shared/categories';
-import { AppStore } from '@bk2/shared/feature';
+import { categoryMatches } from '@bk2/shared-categories';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, DocumentCollection, DocumentModel, ModelType } from '@bk2/shared-models';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
 import { DocumentModalsService } from './document-modals.service';
-import { FirestoreService } from '@bk2/shared/data-access';
 
 export type DocumentListState = {
   searchTerm: string;

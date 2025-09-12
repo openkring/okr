@@ -1,9 +1,10 @@
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
-import { categoryValidations, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@bk2/shared/util-core';
-import { enforce, omitWhen, only, staticSuite, test} from 'vest';
-import { WorkingRelNewFormModel } from './working-rel-new-form.model';
-import { GenderType, Periodicity, WorkingRelState, WorkingRelType } from '@bk2/shared/models';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
+import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { GenderType, Periodicity, WorkingRelState, WorkingRelType } from '@bk2/shared-models';
+import { categoryValidations, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
+
+import { WorkingRelNewFormModel } from './working-rel-new-form.model';
 
 export const workingRelNewFormValidations = staticSuite((model: WorkingRelNewFormModel, field?: string) => {
   if (field) only(field);

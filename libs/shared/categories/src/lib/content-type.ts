@@ -1,4 +1,4 @@
-import { CategoryModel, ContentType } from "@bk2/shared/models";
+import { CategoryModel, ContentType } from '@bk2/shared-models';
 
 export interface ContentTypeCategory extends CategoryModel {
     isSection: boolean;

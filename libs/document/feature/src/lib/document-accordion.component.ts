@@ -1,17 +1,18 @@
-import { Component, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { IonAccordion, IonButton, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
+import { Component, inject, input } from '@angular/core';
 import { Browser } from '@capacitor/browser';
+import { IonAccordion, IonButton, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
-import { DocumentModel, RoleName } from '@bk2/shared/models';
-import { EmptyListComponent, SpinnerComponent, UploadService } from '@bk2/shared/ui';
-import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AppStore } from '@bk2/shared/feature';
-import { hasRole } from '@bk2/shared/util-core';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { DocumentModel, RoleName } from '@bk2/shared-models';
+import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent, SpinnerComponent, UploadService } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-documents-accordion',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, FileLogoPipe, PrettyDatePipe, FileSizePipe, SvgIconPipe, FileNamePipe,
     SpinnerComponent, EmptyListComponent,

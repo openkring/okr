@@ -1,18 +1,19 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, linkedSignal, OnInit, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { hasRole } from '@bk2/shared/util-core';
-import { AccountModel, ModelType, OrgModel, PersonModel, ResourceModel, UserModel, RoleName} from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AccountModel, ModelType, OrgModel, PersonModel, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { newOwnership } from '@bk2/relationship/ownership/util';
+import { newOwnership } from '@bk2/relationship-ownership-util';
 import { OwnershipNewFormComponent } from './ownership-new.form';
 
 @Component({
   selector: 'bk-ownership-new-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     HeaderComponent, OwnershipNewFormComponent,

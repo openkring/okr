@@ -3,5 +3,5 @@ export enum OrgType {
   LegalEntity,
   Authority,
   Other,
-  Custom
+  Custom,
 }

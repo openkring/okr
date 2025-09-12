@@ -1,5 +1,6 @@
-import { PrivacyUsage } from '@bk2/shared/models';
 import { DeepRequired } from 'ngx-vest-forms';
+
+import { PrivacyUsage } from '@bk2/shared-models';
 
 export type UserPrivacyFormModel = {
   usage_images: PrivacyUsage,

@@ -1,16 +1,17 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, getSystemQuery, getYear, nameMatches } from '@bk2/shared/util-core';
-import { categoryMatches, yearMatches } from '@bk2/shared/categories';
-import { AllCategories, ModelType, TransferCollection, TransferModel, TransferType } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { categoryMatches, yearMatches } from '@bk2/shared-categories';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, ModelType, TransferCollection, TransferModel, TransferType } from '@bk2/shared-models';
+import { chipMatches, getSystemQuery, getYear, nameMatches } from '@bk2/shared-util-core';
 
-import { TransferService } from '@bk2/relationship/transfer/data-access';
+import { TransferService } from '@bk2/relationship-transfer-data-access';
+
 import { TransferModalsService } from './transfer-modals.service';
-import { FirestoreService } from '@bk2/shared/data-access';
 
 export type TransferListState = {
   searchTerm: string;

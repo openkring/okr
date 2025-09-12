@@ -1,7 +1,7 @@
 export enum ReservationType {
   Booking,
   Registration,
-  Reservation
+  Reservation,
 }
 
 // Waitinglist / Application is solved with ReservationState.Applied

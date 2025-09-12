@@ -1,14 +1,14 @@
 import { Injectable, inject } from "@angular/core";
-import { Observable, map, of } from "rxjs";
 import { ToastController } from "@ionic/angular/standalone";
+import { Observable, map, of } from "rxjs";
 
-import { ENV } from "@bk2/shared/config";
-import { AddressChannel, AddressModel, DefaultLanguage, UserModel } from "@bk2/shared/models";
-import { die, getSystemQuery } from "@bk2/shared/util-core";
-import { Languages } from "@bk2/shared/categories";
-import { FirestoreService } from "@bk2/shared/data-access";
+import { Languages } from "@bk2/shared-categories";
+import { ENV } from "@bk2/shared-config";
+import { FirestoreService } from "@bk2/shared-data-access";
+import { AddressChannel, AddressModel, DefaultLanguage, UserModel } from "@bk2/shared-models";
+import { die, getSystemQuery } from "@bk2/shared-util-core";
 
-import { copyAddress, getAddressCollection } from "@bk2/subject/address/util";
+import { copyAddress, getAddressCollection } from "@bk2/subject-address-util";
 
 @Injectable({
     providedIn: 'root'

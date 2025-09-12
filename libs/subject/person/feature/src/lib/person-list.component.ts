@@ -1,21 +1,23 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList, IonPopover } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input } from '@angular/core';
+import { IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { FullNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { AllCategories, ModelType, PersonModel, RoleName } from '@bk2/shared/models';
-import { addAllCategory, GenderTypes } from '@bk2/shared/categories';
-import { hasRole } from '@bk2/shared/util-core';
-import { error } from '@bk2/shared/util-angular';
+import { addAllCategory, GenderTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AllCategories, ModelType, PersonModel, RoleName } from '@bk2/shared-models';
+import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { error } from '@bk2/shared-util-angular';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { MenuComponent } from '@bk2/cms/menu/feature';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { MenuComponent } from '@bk2/cms-menu-feature';
+
 import { PersonListStore } from './person-list.store';
 
 @Component({
   selector: 'bk-person-list',
+  standalone: true,
   imports: [
     TranslatePipe, FullNamePipe, AsyncPipe, AvatarPipe, SvgIconPipe,
     SpinnerComponent, EmptyListComponent, ListFilterComponent, MenuComponent,

@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { HeaderComponent } from '@bk2/shared/ui';
+import { HeaderComponent } from '@bk2/shared-ui';
+
 import { QuizStore } from './quiz.store';
 
 @Component({
   selector: 'bk-quiz-page',
+  standalone: true,
   imports: [
     HeaderComponent,
     IonContent, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonButton

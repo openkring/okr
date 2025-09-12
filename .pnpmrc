@@ -1,2 +1,5 @@
-store-dir=/workspace/.pnpm-store # where to store pnpm packages
+use-node-version=20.19.3
+package-manager=pnpm
+save-exact=true
+store-dir=~/.pnpm-store
 shared-workspace-lockfile=false # do not share lockfile across builds

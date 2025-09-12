@@ -1,4 +1,4 @@
-import { CategoryModel, ImageAction } from "@bk2/shared/models";
+import { CategoryModel, ImageAction } from '@bk2/shared-models';
 
 export type ImageActionCategory = CategoryModel;
 

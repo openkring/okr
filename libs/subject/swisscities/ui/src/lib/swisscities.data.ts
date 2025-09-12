@@ -1,4 +1,4 @@
-import { SwissCity } from "@bk2/shared/models";
+import { SwissCity } from "@bk2/shared-models";
 
 /**
  * sources:  

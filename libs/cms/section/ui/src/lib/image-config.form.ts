@@ -1,15 +1,17 @@
-import { Component, linkedSignal, model } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { CategoryComponent, CheckboxComponent, NumberInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ImageAction, newDefaultImageConfig, Slot } from '@bk2/shared/models';
-import { ImageActions } from '@bk2/shared/categories';
-import { SectionFormModel } from '@bk2/cms/section/util';
+import { ImageActions } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ImageAction, newDefaultImageConfig, Slot } from '@bk2/shared-models';
+import { CategoryComponent, CheckboxComponent, NumberInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
+
+import { SectionFormModel } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-image-config-form',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid,

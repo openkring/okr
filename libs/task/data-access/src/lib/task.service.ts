@@ -1,11 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { TaskCollection, TaskModel, UserModel } from '@bk2/shared/models';
-import { ENV } from '@bk2/shared/config';
-
-import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared/util-core';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { ENV } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { TaskCollection, TaskModel, UserModel } from '@bk2/shared-models';
+import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 @Injectable({
   providedIn: 'root'

@@ -1,26 +1,26 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { SectionType, RoleName } from '@bk2/shared/models';
-import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared/util-core';
+import { RoleName, SectionType } from '@bk2/shared-models';
+import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
-import { ArticleSectionComponent } from './article-section.component';
-import { MissingSectionComponent } from './missing-section.component';
-import { TableSectionComponent } from './table-section.component';
-import { VideoSectionComponent } from './video-section.component';
-import { IframeSectionComponent } from './iframe-section.component';
-import { MapSectionComponent } from './map-section.component';
 import { AlbumSectionComponent } from './album-section.component';
+import { ArticleSectionComponent } from './article-section.component';
 import { ButtonSectionComponent } from './button-section.component';
 import { CalendarSectionComponent } from './calendar-section.component';
-import { PeopleListSectionComponent } from './people-list-section.component';
-import { GallerySectionComponent } from './gallery-section.component';
-import { HeroSectionComponent } from './hero-section.component';
-import { SwiperSectionComponent } from './swiper-section.component';
 import { ChartSectionComponent } from './chart-section.component';
 import { ChatSectionComponent } from './chat-section.component';
-import { TrackerSectionComponent } from './tracker-section.component';
+import { GallerySectionComponent } from './gallery-section.component';
+import { HeroSectionComponent } from './hero-section.component';
+import { IframeSectionComponent } from './iframe-section.component';
+import { MapSectionComponent } from './map-section.component';
+import { MissingSectionComponent } from './missing-section.component';
+import { PeopleListSectionComponent } from './people-list-section.component';
 import { SectionDetailStore } from './section-detail.store';
+import { SwiperSectionComponent } from './swiper-section.component';
+import { TableSectionComponent } from './table-section.component';
+import { TrackerSectionComponent } from './tracker-section.component';
+import { VideoSectionComponent } from './video-section.component';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -29,6 +29,7 @@ import { SectionDetailStore } from './section-detail.store';
  */
 @Component({
   selector: 'bk-section',
+  standalone: true,
   imports: [
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,

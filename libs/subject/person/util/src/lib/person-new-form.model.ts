@@ -1,6 +1,7 @@
-import { GenderType } from '@bk2/shared/models';
-import { getTodayStr } from '@bk2/shared/util-core';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+
+import { GenderType } from '@bk2/shared-models';
+import { getTodayStr } from '@bk2/shared-util-core';
 
 export type PersonNewFormModel = DeepPartial<{
   firstName: string,

@@ -1,18 +1,19 @@
-import { Component, computed, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { AvatarInfo, ColorIonic, ModelType, NameDisplay, SectionModel } from '@bk2/shared/models';
-import { getFullPersonName } from '@bk2/shared/util-core';
-import { navigateByUrl } from '@bk2/shared/util-angular';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarLabelComponent } from '@bk2/shared/ui';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AvatarInfo, ColorIonic, ModelType, NameDisplay, SectionModel } from '@bk2/shared-models';
+import { AvatarLabelComponent } from '@bk2/shared-ui';
+import { navigateByUrl } from '@bk2/shared-util-angular';
+import { getFullPersonName } from '@bk2/shared-util-core';
 
-import { newAvatar } from '@bk2/cms/section/util';
+import { newAvatar } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-persons-widget',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonGrid,IonRow, IonCol,

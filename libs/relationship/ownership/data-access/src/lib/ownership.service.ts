@@ -1,13 +1,13 @@
-import { Injectable, inject } from '@angular/core';
-import { map, Observable, of } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
+import { map, Observable, of } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
-import { ModelType, OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared/models';
-import { findByKey, getSystemQuery } from '@bk2/shared/util-core';
+import { ENV } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { ModelType, OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared-models';
+import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
-import { getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from '@bk2/relationship/ownership/util';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from '@bk2/relationship-ownership-util';
 
 @Injectable({
   providedIn: 'root'

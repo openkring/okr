@@ -1,12 +1,12 @@
 import { Injectable, inject } from "@angular/core";
-import { Observable } from "rxjs";
 import { AlertController } from "@ionic/angular/standalone";
+import { Observable } from "rxjs";
 
-import { ENV } from "@bk2/shared/config";
-import { PageCollection, PageModel, UserModel } from "@bk2/shared/models";
-import { findByKey, getSystemQuery } from "@bk2/shared/util-core";
-import { bkPrompt } from "@bk2/shared/util-angular";
-import { FirestoreService } from "@bk2/shared/data-access";
+import { ENV } from "@bk2/shared-config";
+import { FirestoreService } from "@bk2/shared-data-access";
+import { PageCollection, PageModel, UserModel } from "@bk2/shared-models";
+import { bkPrompt } from "@bk2/shared-util-angular";
+import { findByKey, getSystemQuery } from "@bk2/shared-util-core";
 
 @Injectable({
     providedIn: 'root'

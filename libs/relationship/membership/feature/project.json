@@ -1,7 +1,7 @@
 {
-  "name": "membership/feature",
+  "name": "relationship-membership-feature",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/membership/feature/src",
+  "sourceRoot": "libs/relationship/membership/feature/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:feature", "scope:membership", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/relationship/membership/feature",
         "main": "libs/relationship/membership/feature/src/index.ts",
         "tsConfig": "libs/relationship/membership/feature/tsconfig.lib.json",
-        "assets": ["libs/relationship/membership/feature/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/relationship/membership/feature/jest.config.ts"
+        "assets": ["libs/relationship/membership/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {
@@ -28,3 +22,4 @@
     }
   }
 }
+

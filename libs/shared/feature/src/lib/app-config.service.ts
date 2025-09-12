@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { AppConfig, AppConfigCollection } from '@bk2/shared/models';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppConfig, AppConfigCollection } from '@bk2/shared-models';
 
 @Injectable({
   providedIn: 'root'

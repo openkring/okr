@@ -1,4 +1,4 @@
-import { AlbumStyle, CategoryModel } from "@bk2/shared/models";
+import { AlbumStyle, CategoryModel } from "@bk2/shared-models";
 
 export const DefaultAlbumStyle = AlbumStyle.Pinterest;
 

@@ -1,12 +1,13 @@
-import { Component, input, output } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, input, output } from '@angular/core';
 import { IonItem, IonNote, IonSelect, IonSelectOption, SelectChangeEventDetail } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-string-select',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonSelect, IonSelectOption, IonNote, IonItem

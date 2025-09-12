@@ -1,6 +1,6 @@
-import { BkModel, MetaTag, NamedModel, SearchableModel, TaggedModel } from "./base.model";
-import { ContentState } from "./enums/content-state.enum";
-import { PageType } from "./enums/page-type.enum";
+import { BkModel, MetaTag, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { ContentState } from './enums/content-state.enum';
+import { PageType } from './enums/page-type.enum';
 
 export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
   public bkey = '';
@@ -9,8 +9,8 @@ export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedMo
   public name = ''; // a meaningful name for the trip
   public index = '';
   public tags = '';
-  public title = '';      // used for SEO 
-  public meta?: MetaTag[] = [];        // meta tags for SEO  
+  public title = ''; // used for SEO
+  public meta?: MetaTag[] = []; // meta tags for SEO
   public type = PageType.Content;
   public state = ContentState.Draft; // the state of the page
   public notes = ''; // a detailed description of the trip
@@ -22,6 +22,5 @@ export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedMo
 }
 
 export const PageCollection = 'pages2';
-
 
 // tbd: maybe add state for staging: draft, review, published, archived

@@ -1,5 +1,6 @@
-import { AccountType, GenderType, ModelType, OrgType, Periodicity, ResourceType, RowingBoatType } from '@bk2/shared/models';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+
+import { AccountType, GenderType, ModelType, OrgType, Periodicity, ResourceType, RowingBoatType } from '@bk2/shared-models';
 
 export type OwnershipFormModel = DeepPartial<{
   bkey: string,

@@ -3,5 +3,5 @@ export enum ContentState {
   InReview,
   Published,
   Decommitted,
-  Archived  
+  Archived,
 }

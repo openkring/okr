@@ -1,59 +1,61 @@
-import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonModel, PersonSortCriteria, PrivacyUsage, UserModel } from '@bk2/shared/models';
-import { die } from '@bk2/shared/util-core';
-import { AhvFormat, formatAhv } from '@bk2/shared/util-angular';
+import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonModel, PersonSortCriteria, PrivacyUsage, UserModel } from '@bk2/shared-models';
+import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
+import { die } from '@bk2/shared-util-core';
+
 import { PersonalDataFormModel } from './personal-data-form.model';
-import { SettingsFormModel } from './settings-form.model';
 import { PrivacyFormModel } from './privacy-form.model';
+import { SettingsFormModel } from './settings-form.model';
 
 export function convertPersonToDataForm(person?: PersonModel): PersonalDataFormModel {
-  if (!person) return {
-    personKey: 'personKey',                // readonly
-    firstName: 'firstName',                // readonly
-    lastName: 'lastName',                  // readonly
-    gender: undefined,                     // readonly
-    dateOfBirth: '',                       // readonly
-    ssnId: '',
-
-  };
+  if (!person) {
+    return {
+      personKey: 'personKey', // readonly
+      firstName: 'firstName', // readonly
+      lastName: 'lastName', // readonly
+      gender: undefined, // readonly
+      dateOfBirth: '', // readonly
+      ssnId: '',
+    };
+  }
   return {
-      personKey: person.bkey,              // readonly
-      firstName: person.firstName,         // readonly
-      lastName: person.lastName,           // readonly
-      gender: person.gender,               // readonly
-      dateOfBirth: person.dateOfBirth,     // readonly
-      ssnId: formatAhv(person.ssnId, AhvFormat.Friendly),
+    personKey: person.bkey, // readonly
+    firstName: person.firstName, // readonly
+    lastName: person.lastName, // readonly
+    gender: person.gender, // readonly
+    dateOfBirth: person.dateOfBirth, // readonly
+    ssnId: formatAhv(person.ssnId, AhvFormat.Friendly),
   };
 }
 
 export function convertUserToSettingsForm(user?: UserModel): SettingsFormModel {
   if (!user) die('profile.util.convertUserToSettingsForm: User is mandatory.');
   return {
-      language: user.userLanguage,
-      showDebugInfo: user.showDebugInfo,
-      showArchivedData: user.showArchivedData,
-      showHelpers: user.showHelpers,
-      userKey: user.bkey,
-      useTouchId: user.useTouchId,
-      useFaceId: user.useFaceId,
-      avatarUsage: user.avatarUsage,
-      gravatarEmail: user.gravatarEmail,
-      nameDisplay: user.nameDisplay,
-      useDisplayName: user.useDisplayName,
-      personSortCriteria: user.personSortCriteria,
-      newsDelivery: user.newsDelivery,
-      invoiceDelivery: user.invoiceDelivery
+    language: user.userLanguage,
+    showDebugInfo: user.showDebugInfo,
+    showArchivedData: user.showArchivedData,
+    showHelpers: user.showHelpers,
+    userKey: user.bkey,
+    useTouchId: user.useTouchId,
+    useFaceId: user.useFaceId,
+    avatarUsage: user.avatarUsage,
+    gravatarEmail: user.gravatarEmail,
+    nameDisplay: user.nameDisplay,
+    useDisplayName: user.useDisplayName,
+    personSortCriteria: user.personSortCriteria,
+    newsDelivery: user.newsDelivery,
+    invoiceDelivery: user.invoiceDelivery,
   };
 }
 
 export function convertUserToPrivacyForm(user?: UserModel): PrivacyFormModel {
   if (!user) die('profile.util.convertUserToPrivacyForm: User is mandatory.');
   return {
-      usage_images: user.usage_images,
-      usage_dateOfBirth: user.usage_dateOfBirth,
-      usage_postalAddress: user.usage_postalAddress,
-      usage_email: user.usage_email,
-      usage_phone: user.usage_phone,
-      usage_name: user.usage_name
+    usage_images: user.usage_images,
+    usage_dateOfBirth: user.usage_dateOfBirth,
+    usage_postalAddress: user.usage_postalAddress,
+    usage_email: user.usage_email,
+    usage_phone: user.usage_phone,
+    usage_name: user.usage_name,
   };
 }
 

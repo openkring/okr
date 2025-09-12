@@ -1,7 +1,8 @@
-import { only, staticSuite} from 'vest';
-import { booleanValidations, categoryValidations, stringValidations } from '@bk2/shared/util-core';
-import { GroupModel, ModelType } from '@bk2/shared/models';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared/constants';
+import { only, staticSuite } from 'vest';
+
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { GroupModel, ModelType } from '@bk2/shared-models';
+import { booleanValidations, categoryValidations, stringValidations } from '@bk2/shared-util-core';
 
 export const groupValidations = staticSuite((model: GroupModel, field?: string) => {
   if (field) only(field);

@@ -1,15 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { map, Observable, of } from 'rxjs';
-import { ref, getDownloadURL, getMetadata, listAll, FullMetadata } from "firebase/storage";
+import { FullMetadata, getDownloadURL, getMetadata, listAll, ref } from "firebase/storage";
+import { Observable, of } from 'rxjs';
 
-import { DocumentTypes, getCategoryAbbreviation } from '@bk2/shared/categories';
-import { DocumentCollection, DocumentModel, DocumentType, ModelType, UserModel } from '@bk2/shared/models';
-import { DateFormat, addIndexElement, convertDateFormatToString, die, dirName, fileExtension, fileName, fileSizeUnit, findByKey, generateRandomString, getSystemQuery, getTodayStr} from '@bk2/shared/util-core';
-import { error } from '@bk2/shared/util-angular';
-import { ENV, STORAGE } from '@bk2/shared/config';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { DocumentTypes, getCategoryAbbreviation } from '@bk2/shared-categories';
+import { ENV, STORAGE } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { DocumentCollection, DocumentModel, DocumentType, ModelType, UserModel } from '@bk2/shared-models';
+import { error } from '@bk2/shared-util-angular';
+import { DateFormat, addIndexElement, convertDateFormatToString, die, dirName, fileExtension, fileName, fileSizeUnit, findByKey, generateRandomString, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
-import { getDocumentStoragePath } from '@bk2/document/util';
+import { getDocumentStoragePath } from '@bk2/document-util';
 
 @Injectable({
   providedIn: 'root'

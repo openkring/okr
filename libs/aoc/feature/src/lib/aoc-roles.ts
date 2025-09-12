@@ -1,26 +1,19 @@
-import { AsyncPipe } from "@angular/common";
-import { Component, computed, inject, signal } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow } from "@ionic/angular/standalone";
+import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from "@bk2/shared/i18n";
-import { AvatarDisplayComponent, HeaderComponent, ResultLogComponent } from "@bk2/shared/ui";
-import { AocRolesStore } from "./aoc-roles.store";
-import { ModelType } from "@bk2/shared/models";
-import { SvgIconPipe } from "@bk2/shared/pipes";
-import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
-
+import { PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { AvatarDisplayComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
+import { AocRolesStore } from './aoc-roles.store';
 
 @Component({
   selector: 'bk-aoc-roles',
-  imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
-    FormsModule,
-    HeaderComponent, AvatarDisplayComponent, ResultLogComponent,
-    IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle,
-    IonGrid, IonRow, IonCol, IonLabel, IonButton, IonIcon,
-    IonNote, IonInput, IonInputPasswordToggle, IonItem
-  ],
+  standalone: true,
+  imports: [TranslatePipe, AsyncPipe, SvgIconPipe, FormsModule, HeaderComponent, AvatarDisplayComponent, ResultLogComponent, IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonLabel, IonButton, IonIcon, IonNote, IonInput, IonInputPasswordToggle, IonItem],
   providers: [AocRolesStore],
   template: `
     <bk-header title="{{ '@aoc.roles.title' | translate | async }}" />
@@ -34,23 +27,75 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
             <ion-row>
               <ion-col>{{ '@aoc.roles.personSelect.content' | translate | async }}</ion-col>
             </ion-row>
-              <ion-row>
-                @if(avatar(); as avatar) {
-                  <ion-label>
-                    <bk-avatar-display [avatars]="[avatar]" [showName]="true" />
-                    <ion-icon src="{{'close_cancel' | svgIcon}}" slot="end" (click)="clearPerson()" />
-                  </ion-label>
-                } @else {
-                  <ion-button (click)="selectPerson()">
-                    <ion-icon src="{{'personSearch' | svgIcon}}" slot="start" />
-                    {{ '@aoc.roles.account.select' | translate | async  }}
-                  </ion-button>
-                }
-              </ion-row>
-            </ion-grid>
+            <ion-row>
+              @if(avatar(); as avatar) {
+              <ion-label>
+                <bk-avatar-display [avatars]="[avatar]" [showName]="true" />
+                <ion-icon src="{{ 'close_cancel' | svgIcon }}" slot="end" (click)="clearPerson()" />
+              </ion-label>
+              } @else {
+              <ion-button (click)="selectPerson()">
+                <ion-icon src="{{ 'personSearch' | svgIcon }}" slot="start" />
+                {{ '@aoc.roles.account.select' | translate | async }}
+              </ion-button>
+              }
+            </ion-row>
+            @if(selectedPerson(); as person) {
+            <ion-row>
+              <ion-col size="3">
+                <ion-label>Person:</ion-label>
+              </ion-col>
+              <ion-col size="3">
+                <ion-label>{{ person.firstName }} {{ person.lastName }}</ion-label>
+              </ion-col>
+              <ion-col size="3">
+                <ion-label>{{ person.bkey }}</ion-label>
+              </ion-col>
+              <ion-col size="3">
+                <ion-label>{{ person.fav_email }}</ion-label>
+              </ion-col>
+            </ion-row>
+            } @if(selectedUser(); as user) {
+            <ion-row>
+              <ion-col size="3">
+                <ion-label>User:</ion-label>
+              </ion-col>
+              <ion-col size="3">
+                <ion-label>{{ user.firstName }} {{ user.lastName }}</ion-label>
+              </ion-col>
+              <ion-col size="3">
+                <ion-label>{{ user.bkey }}</ion-label>
+              </ion-col>
+              <ion-col size="3">
+                <ion-label>{{ user.loginEmail }}</ion-label>
+              </ion-col>
+            </ion-row>
+            }
+          </ion-grid>
         </ion-card-content>
       </ion-card>
 
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ '@aoc.roles.impersonate.title' | translate | async }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col>{{ '@aoc.roles.impersonate.content' | translate | async }}</ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="6"></ion-col>
+              <ion-col size="6">
+                <ion-button (click)="impersonateUser()" [disabled]="!selectedUser()">
+                  <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" slot="start" />
+                  {{ '@aoc.roles.impersonate.button' | translate | async }}
+                </ion-button>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@aoc.roles.check.title' | translate | async }}</ion-card-title>
@@ -64,8 +109,8 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="checkAuthorisation()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{'shield-checkmark' | svgIcon}}" slot="start" />
-                  {{ '@aoc.roles.check.button' | translate | async  }}
+                  <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" slot="start" />
+                  {{ '@aoc.roles.check.button' | translate | async }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -73,71 +118,70 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
         </ion-card-content>
       </ion-card>
       <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ '@aoc.roles.assignment.title' | translate | async }}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row>
-                <ion-col>{{ '@aoc.roles.assignment.content' | translate | async }}</ion-col>
-              </ion-row>
-              </ion-grid>
-          </ion-card-content>
-      </ion-card>
-      <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ '@aoc.roles.account.title' | translate | async  }}</ion-card-title>
+          <ion-card-title>{{ '@aoc.roles.assignment.title' | translate | async }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ '@aoc.roles.account.content' | translate | async  }}</ion-col>
+              <ion-col>{{ '@aoc.roles.assignment.content' | translate | async }}</ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ '@aoc.roles.account.title' | translate | async }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col>{{ '@aoc.roles.account.content' | translate | async }}</ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="6">
-                <ion-input (ionInput)="onPasswordChange($event)"
+                <ion-input
+                  (ionInput)="onPasswordChange($event)"
                   type="password"
-                  name="passwordAoc" 
+                  name="passwordAoc"
                   [ngModel]="value()"
                   labelPlacement="floating"
-                  label="{{'@input.passwordAoc.label' | translate | async }}"
-                  placeholder="{{'@input.passwordAoc.placeholder' | translate | async }}"
+                  label="{{ '@input.passwordAoc.label' | translate | async }}"
+                  placeholder="{{ '@input.passwordAoc.placeholder' | translate | async }}"
                   inputMode="text"
                   [maxlength]="maxLength"
                   [clearInput]="true"
                   (ionClear)="clearInput()"
                   [counter]="true"
-                  >
+                >
                   <ion-input-password-toggle slot="end"></ion-input-password-toggle>
                 </ion-input>
                 <ion-item lines="none" class="helper">
-                  <ion-note>{{'@input.passwordAoc.helper' | translate | async}}</ion-note>
+                  <ion-note>{{ '@input.passwordAoc.helper' | translate | async }}</ion-note>
                 </ion-item>
               </ion-col>
               <ion-col size="6">
                 <ion-button (click)="createAccountAndUser()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{'create_edit' | svgIcon}}" slot="start" />
-                  {{ '@aoc.roles.account.button' | translate | async  }}
+                  <ion-icon src="{{ 'create_edit' | svgIcon }}" slot="start" />
+                  {{ '@aoc.roles.account.button' | translate | async }}
                 </ion-button>
               </ion-col>
             </ion-row>
-            <!--
             <ion-row>
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="setPassword()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{'lock-closed' | svgIcon}}" slot="start" />
-                  {{ '@aoc.roles.account.password-set' | translate | async  }}
+                  <ion-icon src="{{ 'lock-closed' | svgIcon }}" slot="start" />
+                  {{ '@aoc.roles.account.password-set' | translate | async }}
                 </ion-button>
               </ion-col>
             </ion-row>
-              -->
             <ion-row>
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="resetPassword()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{'email' | svgIcon}}" slot="start" />
-                  {{ '@aoc.roles.account.password-reset' | translate | async  }}
+                  <ion-icon src="{{ 'email' | svgIcon }}" slot="start" />
+                  {{ '@aoc.roles.account.password-reset' | translate | async }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -157,8 +201,8 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="checkChatUser()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{'chatbox' | svgIcon}}" slot="start" />
-                  {{ '@aoc.roles.chat.check' | translate | async  }}
+                  <ion-icon src="{{ 'chatbox' | svgIcon }}" slot="start" />
+                  {{ '@aoc.roles.chat.check' | translate | async }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -166,8 +210,8 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="createStreamUser()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{'chatbox' | svgIcon}}" slot="start" />
-                  {{ '@aoc.roles.chat.add' | translate | async  }}
+                  <ion-icon src="{{ 'chatbox' | svgIcon }}" slot="start" />
+                  {{ '@aoc.roles.chat.add' | translate | async }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -175,8 +219,8 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="revokeStreamUserToken()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{'chatbox' | svgIcon}}" slot="start" />
-                  {{ '@aoc.roles.chat.revoke' | translate | async  }}
+                  <ion-icon src="{{ 'chatbox' | svgIcon }}" slot="start" />
+                  {{ '@aoc.roles.chat.revoke' | translate | async }}
                 </ion-button>
               </ion-col>
             </ion-row>
@@ -185,7 +229,7 @@ import { PASSWORD_MAX_LENGTH } from "@bk2/shared/constants";
       </ion-card>
       <bk-result-log [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
-    `
+  `,
 })
 export class AocRolesComponent {
   protected readonly aocRolesStore = inject(AocRolesStore);
@@ -198,6 +242,7 @@ export class AocRolesComponent {
   protected maxLength = PASSWORD_MAX_LENGTH;
 
   protected selectedPerson = computed(() => this.aocRolesStore.selectedPerson());
+  protected selectedUser = computed(() => this.aocRolesStore.selectedUser());
   protected avatar = computed(() => {
     const _person = this.aocRolesStore.selectedPerson();
     if (_person) {
@@ -257,8 +302,8 @@ export class AocRolesComponent {
     this.aocRolesStore.createStreamUser();
   }
 
-  public impersonateUser(uid: string): void {
-    this.aocRolesStore.impersonateUser(uid);
+  public impersonateUser(): void {
+    this.aocRolesStore.impersonateUser();
   }
 
   protected onPasswordChange(event: CustomEvent): void {

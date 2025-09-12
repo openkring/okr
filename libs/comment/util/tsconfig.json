@@ -1,28 +1,14 @@
 {
-  "compilerOptions": {
-    "target": "es2022",
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "files": [],
-  "include": [],
-  "references": [
-    {
-      "path": "./tsconfig.lib.json"
-    },
-    {
-      "path": "./tsconfig.spec.json"
-    }
-  ],
   "extends": "../../../tsconfig.base.json",
-  "angularCompilerOptions": {
-    "enableI18nLegacyMessageIdFormat": false,
-    "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true,
-    "strictTemplates": true
-  }
+  "compilerOptions": {
+    "types": ["node", "vitest"],
+    "declaration": true
+  },
+  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts", "vite.config.ts"],
+  "exclude": ["dist/**/*"],
+  "references": [
+    { "path": "../../shared/models/tsconfig.lib.json" },
+    { "path": "../../shared/constants/tsconfig.lib.json" },
+    { "path": "../../shared/util-core/tsconfig.lib.json" }
+  ]
 }

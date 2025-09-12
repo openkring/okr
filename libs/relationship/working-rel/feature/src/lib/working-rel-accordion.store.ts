@@ -1,19 +1,20 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
 
-import { WorkingRelModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
-import { debugListLoaded, isValidAt } from '@bk2/shared/util-core';
-import { confirm } from '@bk2/shared/util-angular';
+import { AppStore } from '@bk2/shared-feature';
+import { WorkingRelModel } from '@bk2/shared-models';
+import { confirm } from '@bk2/shared-util-angular';
+import { debugListLoaded, isValidAt } from '@bk2/shared-util-core';
 
-import { AvatarService } from '@bk2/avatar/data-access';
-import { WorkingRelService } from '@bk2/relationship/working-rel/data-access';
-import { WorkingRelModalsService } from './working-rel-modals.service';
+import { AvatarService } from '@bk2/avatar-data-access';
+import { WorkingRelService } from '@bk2/relationship-working-rel-data-access';
+import { isWorkingRel } from '@bk2/relationship-working-rel-util';
+
 import { WorkingRelEditModalComponent } from './working-rel-edit.modal';
-import { isWorkingRel } from '@bk2/relationship/working-rel/util';
+import { WorkingRelModalsService } from './working-rel-modals.service';
 
 export type WorkingRelAccordionState = {
   personKey: string | undefined;

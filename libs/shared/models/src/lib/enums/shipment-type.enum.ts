@@ -1,6 +1,6 @@
 export enum ShipmentType {
-    Letter,
-    AddressOnly,
-    MembershipFee,
-    FreeInvoice
+  Letter,
+  AddressOnly,
+  MembershipFee,
+  FreeInvoice,
 }

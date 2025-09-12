@@ -1,33 +1,35 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonSegment, IonSegmentButton, IonSegmentContent, IonSegmentView, IonTitle, IonToolbar, Platform } from '@ionic/angular/standalone';
 import { Photo } from '@capacitor/camera';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonSpinner, IonMenuButton, IonPopover, IonSegment, IonSegmentButton, IonTitle, IonToolbar, Platform } from '@ionic/angular/standalone';
 
-import { ChangeConfirmationComponent, UploadService } from '@bk2/shared/ui';
-import { ENV } from '@bk2/shared/config';
-import { GroupCollection, ModelType, RoleName } from '@bk2/shared/models';
-import { debugData, hasRole } from '@bk2/shared/util-core';
-import { error } from '@bk2/shared/util-angular';
+import { ENV } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { GroupCollection, ModelType, RoleName } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { ChangeConfirmationComponent, UploadService } from '@bk2/shared-ui';
+import { error } from '@bk2/shared-util-angular';
+import { debugData, hasRole } from '@bk2/shared-util-core';
 
-import { AvatarService } from '@bk2/avatar/data-access';
-import { getDocumentStoragePath } from '@bk2/document/util';
+import { AvatarService } from '@bk2/avatar-data-access';
+import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
+import { GroupMenuComponent } from '@bk2/cms-menu-ui';
+import { ContentComponent } from '@bk2/cms-page-feature';
+import { getDocumentStoragePath } from '@bk2/document-util';
+import { MembersComponent } from '@bk2/relationship-membership-feature';
+import { SimpleTaskListComponent } from '@bk2/task-feature';
+
+import { convertGroupToForm } from '@bk2/subject-group-util';
 
 import { GroupEditStore } from './group-edit.store';
-import { convertGroupToForm } from '@bk2/subject/group/util';
-import { ContentComponent } from '@bk2/cms/page/feature';
-import { MembersComponent } from '@bk2/relationship/membership/feature';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AsyncPipe } from '@angular/common';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { GroupMenuComponent } from '@bk2/cms/menu/ui';
-import { SimpleTaskListComponent } from '@bk2/task/feature';
-import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
 
 @Component({
   selector: 'bk-group-view-page',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     ChangeConfirmationComponent, ContentComponent, MembersComponent, GroupMenuComponent, SimpleTaskListComponent,
-    IonContent, IonSegment, IonSegmentButton, IonLabel, IonSegmentView, IonSegmentContent, IonToolbar,
+    IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
     IonHeader, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover
   ],
   providers: [GroupEditStore],
@@ -54,37 +56,37 @@ import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
       <ion-toolbar>
       <ion-segment [scrollable]="true" color="secondary" (ionChange)="onSegmentChanged($event)" value="content">
         @if(hasContent()) {
-          <ion-segment-button value="content" content-id="content">
+          <ion-segment-button value="content">
             <ion-label>{{ '@subject.group.segment.content' | translate | async}}</ion-label>
           </ion-segment-button>
         }
         @if(hasChat()) {
-          <ion-segment-button value="chat" content-id="chat">
+          <ion-segment-button value="chat">
             <ion-label>{{ '@subject.group.segment.chat' | translate | async}}</ion-label>
           </ion-segment-button>
         }
         @if(hasCalendar()) {
-          <ion-segment-button value="calendar" content-id="calendar">
+          <ion-segment-button value="calendar">
             <ion-label>{{ '@subject.group.segment.calendar' | translate | async}}</ion-label>
           </ion-segment-button>
         }
         @if(hasTasks()) {
-          <ion-segment-button value="tasks" content-id="tasks">
+          <ion-segment-button value="tasks">
             <ion-label>{{ '@subject.group.segment.tasks' | translate | async}}</ion-label>
           </ion-segment-button>
         }
         @if(hasFiles()) {
-          <ion-segment-button value="files" content-id="files">
+          <ion-segment-button value="files">
             <ion-label>{{ '@subject.group.segment.files' | translate | async}}</ion-label>
           </ion-segment-button>
         }
         @if(hasAlbum()) {
-          <ion-segment-button value="album" content-id="album">
+          <ion-segment-button value="album">
             <ion-label>{{ '@subject.group.segment.album' | translate | async}}</ion-label>
           </ion-segment-button>
         }
         @if(hasMembers()) {
-          <ion-segment-button value="members" content-id="members">
+          <ion-segment-button value="members">
             <ion-label>{{ '@subject.group.segment.members' | translate | async}}</ion-label>
           </ion-segment-button>
         }
@@ -94,44 +96,58 @@ import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
     @if(formIsValid()) {
       <bk-change-confirmation (okClicked)="save()" />
     }
-    <ion-content>
-      <ion-segment-view>
-        @if(hasContent()) {
-          <ion-segment-content id="content">
+    <ion-content class="ion-padding">
+      @switch (selectedSegment()) {
+        @case ('content') {
+          @defer (on immediate) {
             <bk-content id="{{id() + '_content'}}" />
-          </ion-segment-content>
+          } @placeholder {
+            <div class="placeholder-center"><ion-spinner /></div>
+          }
         }
-        @if(hasChat()) {
-          <ion-segment-content id="chat">
+        @case ('chat') {
+          @defer (on immediate) {
             <bk-content id="{{id() + '_chat'}}" />
-          </ion-segment-content>
+          } @placeholder {
+            <div class="placeholder-center"><ion-spinner /></div>
+          }
         }
-        @if(hasCalendar()) {
-          <ion-segment-content id="calendar">
+        @case ('calendar') {
+          @defer (on immediate) {
             <bk-content id="{{id() + '_calendar'}}" />
-          </ion-segment-content>
+          } @placeholder {
+            <div class="placeholder-center"><ion-spinner /></div>
+          }
         }
-        @if(hasTasks()) {
-          <ion-segment-content id="tasks">
-            <bk-simple-task-list listId="{{id()}}" />
-          </ion-segment-content>
+        @case ('tasks') {
+          @defer (on immediate) {
+            <bk-simple-task-list [listId]="id()" />
+          } @placeholder {
+            <div class="placeholder-center"><ion-spinner /></div>
+          }
         }
-        @if(hasFiles()) {
-          <ion-segment-content id="files">
+        @case ('files') {
+          @defer (on immediate) {
             <bk-content id="{{id() + '_files'}}" />
-          </ion-segment-content>
+          } @placeholder {
+            <div class="placeholder-center"><ion-spinner /></div>
+          }
         }
-        @if(hasAlbum()) {
-          <ion-segment-content id="album">
+        @case ('album') {
+          @defer (on immediate) {
             <bk-content id="{{id() + '_album'}}" />
-          </ion-segment-content>
+          } @placeholder {
+            <div class="placeholder-center"><ion-spinner /></div>
+          }
         }
-        @if(hasMembers()) {
-          <ion-segment-content id="members">
+        @case ('members') {
+          @defer (on immediate) {
             <bk-members [orgKey]="groupKey()" />
-          </ion-segment-content>
+          } @placeholder {
+            <div class="placeholder-center"><ion-spinner /></div>
+          }
         }
-      </ion-segment-view>
+      }
     </ion-content>
   `
 })

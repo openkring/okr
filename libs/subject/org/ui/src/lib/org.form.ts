@@ -1,16 +1,17 @@
-import { Component, computed, input, model, output, signal} from '@angular/core';
+import { Component, computed, input, model, output, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subject/org/util';
-import { OrgTypes } from '@bk2/shared/categories';
-import { BexioIdMask, ChVatMask } from '@bk2/shared/config';
-import { OrgType, UserModel, RoleName } from '@bk2/shared/models';
-import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, hasRole } from '@bk2/shared/util-core';
+import { OrgTypes } from '@bk2/shared-categories';
+import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
+import { OrgType, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subject-org-util';
 
 @Component({
   selector: 'bk-org-form',
+  standalone: true,
   imports: [
     vestForms,
     CategoryComponent, DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent,

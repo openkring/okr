@@ -1,21 +1,22 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared/ui';
-import { ENV } from '@bk2/shared/config';
-import { hasRole } from '@bk2/shared/util-core';
-import { MembershipCollection, MembershipModel, ModelType, UserModel, RoleName } from '@bk2/shared/models';
+import { ENV } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { MembershipCollection, MembershipModel, ModelType, RoleName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { CommentsAccordionComponent } from '@bk2/comment/feature';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
 
-import { MembershipFormComponent } from '@bk2/relationship/membership/ui';
-import { convertFormToMembership, convertMembershipToForm, getMembershipName } from '@bk2/relationship/membership/util';
+import { MembershipFormComponent } from '@bk2/relationship-membership-ui';
+import { convertFormToMembership, convertMembershipToForm, getMembershipName } from '@bk2/relationship-membership-util';
 import { MembershipEditStore } from './membership-edit.store';
 
 @Component({
   selector: 'bk-membership-edit-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     CommentsAccordionComponent, MembershipFormComponent, RelationshipToolbarComponent, HeaderComponent,

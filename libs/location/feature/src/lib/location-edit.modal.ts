@@ -1,18 +1,19 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { LocationModel, ModelType, UserModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { LocationModel, ModelType, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
-import { LocationFormComponent } from '@bk2/location/ui';
-import { convertFormToLocation, convertLocationToForm, getLocationTitle } from '@bk2/location/util';
+import { LocationFormComponent } from '@bk2/location-ui';
+import { convertFormToLocation, convertLocationToForm, getLocationTitle } from '@bk2/location-util';
 
 
 @Component({
   selector: 'bk-location-edit-modal',
+  standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent, LocationFormComponent,
     TranslatePipe, AsyncPipe,

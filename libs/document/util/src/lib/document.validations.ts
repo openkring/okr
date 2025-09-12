@@ -1,7 +1,8 @@
-import { enforce, omitWhen, only, staticSuite, test} from 'vest';
-import { baseValidations, categoryValidations, compareDate, dateValidations, isFutureDate, numberValidations, stringValidations } from '@bk2/shared/util-core';
-import { DocumentModel } from '@bk2/shared/models';
-import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+
+import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { DocumentModel } from '@bk2/shared-models';
+import { baseValidations, categoryValidations, compareDate, dateValidations, isFutureDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
 export const documentValidations = staticSuite((model: DocumentModel, field?: string) => {
   if (field) only(field);

@@ -1,13 +1,16 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { IonAccordion, IonGrid, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CommentHeaderComponent, CommentInputComponent, CommentsListComponent } from '@bk2/comment/ui';
+import { TranslatePipe } from '@bk2/shared-i18n';
+
+import { CommentHeaderComponent, CommentInputComponent, CommentsListComponent } from '@bk2/comment-ui';
+
 import { CommentListStore } from './comment-list.store';
 
 @Component({
   selector: 'bk-comments-accordion',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonAccordion, IonItem, IonLabel, IonGrid,

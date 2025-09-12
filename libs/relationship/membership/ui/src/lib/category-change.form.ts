@@ -1,15 +1,19 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model, output, signal } from '@angular/core';
 import { IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { CategorySelectComponent, DateInputComponent } from '@bk2/shared/ui';
-import { CategoryChangeFormModel, categoryChangeFormModelShape, categoryChangeFormValidations, MembershipFormModel } from '@bk2/relationship/membership/util';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AsyncPipe } from '@angular/common';
-import { CategoryListModel } from '@bk2/shared/models';
-import { SvgIconPipe } from '@bk2/shared/pipes';
+
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryListModel } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { CategorySelectComponent, DateInputComponent } from '@bk2/shared-ui';
+
+import { CategoryChangeFormModel, categoryChangeFormModelShape, categoryChangeFormValidations, MembershipFormModel } from '@bk2/relationship-membership-util';
+
 
 @Component({
   selector: 'bk-category-change-form',
+  standalone: true,
   imports: [
     vestForms,
     TranslatePipe, AsyncPipe, SvgIconPipe,

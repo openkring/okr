@@ -3,16 +3,17 @@ import { Component, computed, input, model, output, signal } from "@angular/core
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
-import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared/categories";
-import { DeliveryType, UserModel } from "@bk2/shared/models";
-import { CategoryComponent, CheckboxComponent } from "@bk2/shared/ui";
-import { TranslatePipe } from "@bk2/shared/i18n";
+import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
+import { TranslatePipe } from "@bk2/shared-i18n";
+import { DeliveryType, UserModel } from "@bk2/shared-models";
+import { CategoryComponent, CheckboxComponent } from "@bk2/shared-ui";
 
-import { UserDisplayFormModel, userDisplayFormModelShape, userDisplayFormValidations } from "@bk2/user/util";
-import { debugFormErrors } from "@bk2/shared/util-core";
+import { debugFormErrors } from "@bk2/shared-util-core";
+import { UserDisplayFormModel, userDisplayFormModelShape, userDisplayFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-display-form',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,

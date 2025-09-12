@@ -1,21 +1,22 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonTitle, IonToolbar, IonItemSliding, IonList, IonItemOptions, IonItemOption, IonPopover } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryNamePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { AvatarDisplayComponent, EmptyListComponent, ListFilterComponent } from '@bk2/shared/ui';
-import { TransferModel, RoleName } from '@bk2/shared/models';
-import { addAllCategory, TransferStates, TransferTypes } from '@bk2/shared/categories';
-import { getYearList, hasRole } from '@bk2/shared/util-core';
-import { error } from '@bk2/shared/util-angular';
+import { addAllCategory, TransferStates, TransferTypes } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { RoleName, TransferModel } from '@bk2/shared-models';
+import { CategoryNamePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { AvatarDisplayComponent, EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
+import { error } from '@bk2/shared-util-angular';
+import { getYearList, hasRole } from '@bk2/shared-util-core';
 
-import { MenuComponent } from '@bk2/cms/menu/feature';
+import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { TransferListStore } from './transfer-list.store';
 
 @Component({
   selector: 'bk-transfer-list',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe, CategoryNamePipe,
     EmptyListComponent, ListFilterComponent, AvatarDisplayComponent, MenuComponent,

@@ -1,16 +1,16 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
 
-import { AppStore } from '@bk2/shared/feature';
-import { debugItemLoaded } from '@bk2/shared/util-core';
-import { AppNavigationService } from '@bk2/shared/util-angular';
-import { ModelType, ResourceModel} from '@bk2/shared/models';
+import { AppStore } from '@bk2/shared-feature';
+import { ModelType, ResourceModel } from '@bk2/shared-models';
+import { AppNavigationService } from '@bk2/shared-util-angular';
+import { debugItemLoaded } from '@bk2/shared-util-core';
 
-import { ResourceService } from '@bk2/resource/data-access';
-import { convertFormToResource, ResourceFormModel } from '@bk2/resource/util';
+import { ResourceService } from '@bk2/resource-data-access';
+import { convertFormToResource, ResourceFormModel } from '@bk2/resource-util';
 
 /**
  * the resourceEditPage is setting the resourceKey, the store needs to read the corresponding resource 

@@ -9,7 +9,6 @@ export * from './lib/date.util';
 export * from './lib/debug.util';
 export * from './lib/dencrypt.util';
 export * from './lib/file.util';
-export * from './lib/html.util';
 export * from './lib/icon.util';
 export * from './lib/img.util';
 export * from './lib/log.util';
@@ -19,3 +18,4 @@ export * from './lib/sort.util';
 export * from './lib/type.util';
 export * from './lib/validate.util';
 export * from './lib/vest.util';
+

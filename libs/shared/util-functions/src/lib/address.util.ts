@@ -1,30 +1,25 @@
-import { Firestore } from 'firebase-admin/firestore';
-import * as logger from "firebase-functions/logger"; 
 import * as admin from 'firebase-admin';
+import { Firestore } from 'firebase-admin/firestore';
+import * as logger from 'firebase-functions/logger';
 
-import { die, getCountryName } from "@bk2/shared/util-core";
-import { AddressChannel, AddressModel } from '@bk2/shared/models';
+import { AddressChannel, AddressModel } from '@bk2/shared-models';
+import { die, getCountryName } from '@bk2/shared-util-core';
 
 export interface FavoriteAddressInfo {
-  fav_email: string,
-  fav_phone: string,
-  fav_street: string,
-  fav_zip: string,
-  fav_city: string,
-  fav_country: string,
-  fav_web: string,
+  fav_email: string;
+  fav_phone: string;
+  fav_street: string;
+  fav_zip: string;
+  fav_city: string;
+  fav_country: string;
+  fav_web: string;
 }
 
-export async function updateFavoriteAddressInfo(
-  firestore: Firestore,
-  parentId: string,
-  parentCollection: 'persons' | 'orgs',
-  slug: 'person' | 'org',
-): Promise<void> {
+export async function updateFavoriteAddressInfo(firestore: Firestore, parentId: string, parentCollection: 'persons' | 'orgs', slug: 'person' | 'org'): Promise<void> {
   logger.info(`Address change for ${slug} ${parentId}`);
   const _ref = admin.firestore().doc(`${parentCollection}/${parentId}`);
 
-  // with every address change, we update all favorite address info 
+  // with every address change, we update all favorite address info
   try {
     const favoriteAddressInfo = await getFavoriteAddressInfo(firestore, parentId, parentCollection);
     logger.info(`Updating favorite address info for ${slug} ${parentId}`, favoriteAddressInfo);
@@ -37,11 +32,10 @@ export async function updateFavoriteAddressInfo(
       fav_country: favoriteAddressInfo.fav_country,
     });
     logger.info(`Successfully updated favorite address info for ${slug} ${parentId}`);
-
   } catch (error) {
     logger.error(`Error updating ${slug} ${parentId}:`, error);
   }
-} 
+}
 
 export async function getFavoriteAddressInfo(firestore: Firestore, parentId: string, parentCollection: 'persons' | 'orgs'): Promise<FavoriteAddressInfo> {
   const _collection = `${parentCollection}/${parentId}/addresses`;
@@ -52,7 +46,7 @@ export async function getFavoriteAddressInfo(firestore: Firestore, parentId: str
   if (_snapshot.empty) {
     logger.info(`getFavoriteAddressInfo: no favorite addresses found for ${parentCollection}/${parentId})`);
   } else {
-    const _favs = _snapshot.docs.map((doc) => {
+    const _favs = _snapshot.docs.map(doc => {
       return { ...doc.data(), bkey: doc.id } as AddressModel;
     });
     logger.info(`getFavoriteAddressInfo: found ${_favs.length} favorite addresses for ${parentCollection}/${parentId}`);
@@ -78,17 +72,17 @@ export async function getFavoriteAddressInfo(firestore: Firestore, parentId: str
       }
     }
   }
-  return _favAddressInfo; 
+  return _favAddressInfo;
 }
 
 function getEmptyFavoriteAddressInfo(): FavoriteAddressInfo {
   return {
-    'fav_email': '',
-    'fav_phone': '',
-    'fav_street': '',
-    'fav_zip': '',
-    'fav_city': '',
-    'fav_country': '',
-    'fav_web': '',
+    fav_email: '',
+    fav_phone: '',
+    fav_street: '',
+    fav_zip: '',
+    fav_city: '',
+    fav_country: '',
+    fav_web: '',
   };
 }

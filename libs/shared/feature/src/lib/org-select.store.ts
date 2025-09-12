@@ -1,11 +1,11 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared/util-core';
-import { OrgCollection, OrgModel, UserModel } from '@bk2/shared/models';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { OrgCollection, OrgModel, UserModel } from '@bk2/shared-models';
+import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 import { AppStore } from './app.store';
 
 export type OrgSelectState = {

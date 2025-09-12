@@ -3,5 +3,5 @@ export enum RowingBoatUsage {
   Breitensport,
   Routinierte,
   Leistungssport,
-  Private
+  Private,
 }

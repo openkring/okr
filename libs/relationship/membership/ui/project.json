@@ -1,7 +1,7 @@
 {
-  "name": "membership/ui",
+  "name": "relationship-membership-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/membership/ui/src",
+  "sourceRoot": "libs/relationship/membership/ui/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:ui", "scope:membership", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/relationship/membership/ui",
         "main": "libs/relationship/membership/ui/src/index.ts",
         "tsConfig": "libs/relationship/membership/ui/tsconfig.lib.json",
-        "assets": ["libs/relationship/membership/ui/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/relationship/membership/ui/jest.config.ts"
+        "assets": ["libs/relationship/membership/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {
@@ -28,3 +22,4 @@
     }
   }
 }
+

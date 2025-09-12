@@ -1,17 +1,18 @@
 import { inject, Injectable } from "@angular/core";
-import { ModalController, Platform } from "@ionic/angular/standalone";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { ModalController, Platform } from "@ionic/angular/standalone";
 
-import { AppStore } from "@bk2/shared/feature";
-import { AddressChannel, AddressModel, DefaultLanguage, EZS_DIR } from "@bk2/shared/models";
-import { getModelSlug, Languages } from "@bk2/shared/categories";
-import { ImageViewModalComponent, MapViewModalComponent, UploadService } from "@bk2/shared/ui";
-import { getModelAndKey, warn } from "@bk2/shared/util-core";
+import { getModelSlug, Languages } from "@bk2/shared-categories";
+import { AppStore } from "@bk2/shared-feature";
+import { AddressChannel, AddressModel, DefaultLanguage, EZS_DIR } from "@bk2/shared-models";
+import { ImageViewModalComponent, MapViewModalComponent, UploadService } from "@bk2/shared-ui";
+import { getModelAndKey, warn } from "@bk2/shared-util-core";
 
-import { readAsFile } from "@bk2/avatar/util";
+import { readAsFile } from "@bk2/avatar-util";
 
-import { AddressService, GeocodingService } from "@bk2/subject/address/data-access";
-import { browseUrl, getStringifiedPostalAddress, isAddress } from "@bk2/subject/address/util";
+import { AddressService, GeocodingService } from "@bk2/subject-address-data-access";
+import { browseUrl, getStringifiedPostalAddress, isAddress } from "@bk2/subject-address-util";
+
 import { AddressEditModalComponent } from "./address-edit.modal";
 
 @Injectable({

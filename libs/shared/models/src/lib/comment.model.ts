@@ -1,4 +1,4 @@
-import { BkModel, SearchableModel } from "./base.model";
+import { BkModel, SearchableModel } from './base.model';
 
 export class CommentModel implements BkModel, SearchableModel {
   bkey = '';

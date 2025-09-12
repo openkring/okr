@@ -1,7 +1,7 @@
 {
-  "name": "personal-rel/ui",
+  "name": "relationship-personal-rel-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/personal-rel/ui/src",
+  "sourceRoot": "libs/relationship/personal-rel/ui/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:ui", "scope:personal-rel", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/relationship/personal-rel/ui",
         "main": "libs/relationship/personal-rel/ui/src/index.ts",
         "tsConfig": "libs/relationship/personal-rel/ui/tsconfig.lib.json",
-        "assets": ["libs/relationship/personal-rel/ui/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/relationship/personal-rel/ui/jest.config.ts"
+        "assets": ["libs/relationship/personal-rel/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

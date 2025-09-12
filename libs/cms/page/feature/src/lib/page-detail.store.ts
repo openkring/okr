@@ -1,19 +1,19 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { PageService } from '@bk2/cms/page/data-access';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, of } from 'rxjs';
 
-import { debugItemLoaded, debugMessage, die } from '@bk2/shared/util-core';
-import { PageModel, SectionModel } from '@bk2/shared/models';
-import { SectionTypes } from '@bk2/shared/categories';
-import { CardSelectModalComponent } from '@bk2/shared/ui';
-import { AppStore } from '@bk2/shared/feature';
+import { SectionTypes } from '@bk2/shared-categories';
+import { AppStore } from '@bk2/shared-feature';
+import { PageModel, SectionModel } from '@bk2/shared-models';
+import { CardSelectModalComponent } from '@bk2/shared-ui';
+import { debugItemLoaded, debugMessage, die } from '@bk2/shared-util-core';
 
-import { createSection } from '@bk2/cms/section/util';
-import { SectionService } from '@bk2/cms/section/data-access';
-import { SectionSelectModalComponent } from '@bk2/cms/section/feature';
+import { PageService } from '@bk2/cms-page-data-access';
+import { SectionService } from '@bk2/cms-section-data-access';
+import { SectionSelectModalComponent } from '@bk2/cms-section-feature';
+import { createSection } from '@bk2/cms-section-util';
 import { PageSortModalComponent } from './page-sort.modal';
 
 export type PageDetailState = {

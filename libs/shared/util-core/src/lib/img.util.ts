@@ -4,10 +4,10 @@
    one single image in high resolution is uploaded to firebase storage.
    Firebase storage is linked as a source to imgix CDN and the images can be served from there.
 */
-import { Image, ImageType } from "@bk2/shared/models";
+import { THUMBNAIL_SIZE } from "@bk2/shared-constants";
+import { Image, ImageType } from "@bk2/shared-models";
 import { fileExtension, fileLogo, isAudio, isDocument, isImage, isPdf, isStreamingVideo, isVideo } from './file.util';
 import { die, warn } from './log.util';
-import { THUMBNAIL_SIZE } from "@bk2/shared/constants";
 
 
 export function getImageType(fileName: string): ImageType {
@@ -69,7 +69,7 @@ export function checkUrlType(url: string | undefined): UrlType | undefined {
     return 'https';
   } else if (url.startsWith('http://')) {
     return 'http';
-  } else if (url.startsWith('assets')) {
+  } else if (url.startsWith('assets/')) {
     return 'assets';
   } else if (url.indexOf('/') > 0) {
     return 'storage';

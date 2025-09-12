@@ -2,14 +2,16 @@ import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { RowingBoatTypes, RowingBoatUsages } from '@bk2/shared/categories';
-import { CategoryComponent, ColorComponent, ErrorNoteComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { RowingBoatType, RowingBoatUsage, UserModel, RoleName } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util-core';
-import { ResourceFormModel, resourceFormValidations } from '@bk2/resource/util';
+import { RowingBoatTypes, RowingBoatUsages } from '@bk2/shared-categories';
+import { RoleName, RowingBoatType, RowingBoatUsage, UserModel } from '@bk2/shared-models';
+import { CategoryComponent, ColorComponent, ErrorNoteComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
+
+import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
 
 @Component({
   selector: 'bk-rowing-boat',
+  standalone: true,
   imports: [
     vestForms,
     IonRow, IonCol, IonCard, IonCardTitle, IonCardHeader, IonCardContent, IonGrid,

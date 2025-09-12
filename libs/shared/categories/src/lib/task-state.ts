@@ -1,4 +1,4 @@
-import { CategoryModel, TaskState } from '@bk2/shared/models';
+import { CategoryModel, TaskState } from '@bk2/shared-models';
 
 export type TaskStateCategory = CategoryModel;
 

@@ -1,43 +1,44 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/constants";
-import { GenderType, ModelType, OrgModel, Periodicity, PersonModel, ReservationModel, ReservationReason, ReservationState, ResourceModel, ResourceType, UserModel } from "@bk2/shared/models";
-import { addIndexElement, die, getTodayStr, isType } from "@bk2/shared/util-core";
-import { ReservationFormModel } from "./reservation-form.model";
-import { ReservationNewFormModel } from "./reservation-new-form.model";
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { GenderType, ModelType, OrgModel, Periodicity, PersonModel, ReservationModel, ReservationReason, ReservationState, ResourceModel, ResourceType, UserModel } from '@bk2/shared-models';
+import { addIndexElement, die, getTodayStr, isType } from '@bk2/shared-util-core';
+
+import { ReservationFormModel } from './reservation-form.model';
+import { ReservationNewFormModel } from './reservation-new-form.model';
 
 export function newReservationFormModel(): ReservationFormModel {
   return {
-  bkey: '',
-  tags: '',
-  notes: '',
-  name: '',
+    bkey: '',
+    tags: '',
+    notes: '',
+    name: '',
 
-  reserverKey: '',
-  reserverName: '',
-  reserverName2: '',
-  reserverModelType: ModelType.Person,
-  reserverType: GenderType.Male,
+    reserverKey: '',
+    reserverName: '',
+    reserverName2: '',
+    reserverModelType: ModelType.Person,
+    reserverType: GenderType.Male,
 
-  resourceKey: '',
-  resourceName: '',
-  resourceModelType: ModelType.Resource,
-  resourceType: ResourceType.RowingBoat,
-  resourceSubType: GenderType.Male,
+    resourceKey: '',
+    resourceName: '',
+    resourceModelType: ModelType.Resource,
+    resourceType: ResourceType.RowingBoat,
+    resourceSubType: GenderType.Male,
 
-  startDate: getTodayStr(),
-  startTime: '',
-  endDate: END_FUTURE_DATE_STR,
-  endTime: '',
-  numberOfParticipants: '',
-  area: '',
-  reservationRef: '',
-  reservationState: ReservationState.Active,
-  reservationReason: ReservationReason.SocialEvent,
-  priority: 0,
+    startDate: getTodayStr(),
+    startTime: '',
+    endDate: END_FUTURE_DATE_STR,
+    endTime: '',
+    numberOfParticipants: '',
+    area: '',
+    reservationRef: '',
+    reservationState: ReservationState.Active,
+    reservationReason: ReservationReason.SocialEvent,
+    priority: 0,
 
-  price: 0,
-  currency: 'CHF',
-  periodicity: Periodicity.Once
-  }
+    price: 0,
+    currency: 'CHF',
+    periodicity: Periodicity.Once,
+  };
 }
 
 export function convertReservationToForm(reservation: ReservationModel | undefined): ReservationFormModel {
@@ -71,8 +72,8 @@ export function convertReservationToForm(reservation: ReservationModel | undefin
     priority: reservation.priority ?? 0,
     price: reservation.price ?? 0,
     currency: reservation.currency ?? 'CHF',
-    periodicity: reservation.periodicity ?? Periodicity.Once
-  }
+    periodicity: reservation.periodicity ?? Periodicity.Once,
+  };
 }
 
 /**
@@ -82,7 +83,7 @@ export function convertReservationToForm(reservation: ReservationModel | undefin
  * @returns the updated membership.
  */
 export function convertFormToReservation(reservation: ReservationModel | undefined, vm: ReservationFormModel, tenantId: string): ReservationModel {
-  if (!reservation) { 
+  if (!reservation) {
     reservation = new ReservationModel(tenantId);
     reservation.bkey = vm.bkey ?? '';
   }
@@ -92,7 +93,7 @@ export function convertFormToReservation(reservation: ReservationModel | undefin
   reservation.reserverKey = vm.reserverKey ?? '';
   reservation.reserverName = vm.reserverName ?? '';
   reservation.reserverName2 = vm.reserverName2 ?? '';
-  reservation.reserverModelType = vm.reserverModelType ?? ModelType.Person; 
+  reservation.reserverModelType = vm.reserverModelType ?? ModelType.Person;
   reservation.reserverType = vm.reserverType ?? GenderType.Male;
   reservation.resourceKey = vm.resourceKey ?? '';
   reservation.resourceName = vm.resourceName ?? '';
@@ -115,7 +116,7 @@ export function convertFormToReservation(reservation: ReservationModel | undefin
   return reservation;
 }
 
-export function convertReserverAndResourceToNewForm(reserver: PersonModel | OrgModel, resource: ResourceModel, currentUser?: UserModel, modelType?: ModelType): ReservationNewFormModel {  
+export function convertReserverAndResourceToNewForm(reserver: PersonModel | OrgModel, resource: ResourceModel, currentUser?: UserModel, modelType?: ModelType): ReservationNewFormModel {
   if (!currentUser) die('reservation.util.convertReserverAndResourceToNewForm: currentUser is mandatory');
   if (!modelType) die('reservation.util.convertReserverAndResourceToNewForm: modelType is mandatory');
 
@@ -150,8 +151,8 @@ export function convertReserverAndResourceToNewForm(reserver: PersonModel | OrgM
 
       price: 0,
       currency: 'CHF',
-      periodicity: Periodicity.Once
-    }
+      periodicity: Periodicity.Once,
+    };
   }
   if (modelType === ModelType.Org) {
     const _org = reserver as OrgModel;
@@ -184,10 +185,9 @@ export function convertReserverAndResourceToNewForm(reserver: PersonModel | OrgM
 
       price: 0,
       currency: 'CHF',
-      periodicity: Periodicity.Once
-    }
-  }
-  else {
+      periodicity: Periodicity.Once,
+    };
+  } else {
     die('reservation.util.convertReserverAndResourceToNewForm: modelType is not Person or Org');
   }
 }
@@ -242,10 +242,10 @@ export function isReservation(reservation: unknown, tenantId: string): reservati
 export function getReservationSearchIndex(reservation: ReservationModel): string {
   let _index = '';
   _index = addIndexElement(_index, 'rn', reservation.reserverName + ' ' + reservation.reserverName2);
-  _index = addIndexElement(_index, 'rk', reservation.reserverKey)
+  _index = addIndexElement(_index, 'rk', reservation.reserverKey);
   _index = addIndexElement(_index, 'resn', reservation.resourceName);
   _index = addIndexElement(_index, 'resk', reservation.resourceKey);
-  return _index;  
+  return _index;
 }
 
 /**

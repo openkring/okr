@@ -1,24 +1,25 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { AsyncPipe } from '@angular/common';
 
-import { GenderTypes } from '@bk2/shared/categories';
-import { BexioIdMask, ChSsnMask } from '@bk2/shared/config';
-import { CategoryListModel, GenderType, ModelType, RoleName, PrivacyAccessor, PrivacySettings, SwissCity, UserModel } from '@bk2/shared/models';
-import { CategoryComponent, CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared/ui';
-import { debugFormErrors, debugFormModel, getTodayStr, hasRole, isOrg, isVisibleToUser } from '@bk2/shared/util-core';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { OrgSelectModalComponent, AppStore } from '@bk2/shared/feature';
+import { GenderTypes } from '@bk2/shared-categories';
+import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
+import { AppStore, OrgSelectModalComponent } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryListModel, GenderType, ModelType, PrivacyAccessor, PrivacySettings, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
+import { CategoryComponent, CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { debugFormErrors, debugFormModel, getTodayStr, hasRole, isOrg, isVisibleToUser } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { SwissCitySearchComponent } from '@bk2/subject/swisscities/ui';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
 
-import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations } from '@bk2/subject/person/util';
+import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations } from '@bk2/subject-person-util';
 
 @Component({
   selector: 'bk-person-new-form',
+  standalone: true,
   imports: [
     vestForms,
     FormsModule,

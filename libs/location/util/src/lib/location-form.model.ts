@@ -1,6 +1,7 @@
 
-import { LocationType } from '@bk2/shared/models';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+
+import { LocationType } from '@bk2/shared-models';
 
 export type LocationFormModel = DeepPartial<{
   bkey: string,

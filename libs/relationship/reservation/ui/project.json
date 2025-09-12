@@ -1,7 +1,7 @@
 {
-  "name": "reservation/ui",
+  "name": "relationship-reservation-ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/reservation/ui/src",
+  "sourceRoot": "libs/relationship/reservation/ui/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:ui", "scope:reservation", "platform:mobile", "platform:web"],
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/relationship/reservation/ui",
         "main": "libs/relationship/reservation/ui/src/index.ts",
         "tsConfig": "libs/relationship/reservation/ui/tsconfig.lib.json",
-        "assets": ["libs/relationship/reservation/ui/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/relationship/reservation/ui/jest.config.ts"
+        "assets": ["libs/relationship/reservation/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

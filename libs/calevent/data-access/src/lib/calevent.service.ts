@@ -1,15 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
 import { EventInput } from '@fullcalendar/core';
+import { Observable } from 'rxjs';
 
-import { ENV } from '@bk2/shared/config';
-import { CalEventCollection, CalEventModel, UserModel } from '@bk2/shared/models';
-import { CalEventTypes, getCategoryAbbreviation } from '@bk2/shared/categories';
-import { addIndexElement, die, findByKey, getSystemQuery } from '@bk2/shared/util-core';
-import { FirestoreService } from '@bk2/shared/data-access';
+import { CalEventTypes, getCategoryAbbreviation } from '@bk2/shared-categories';
+import { ENV } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { CalEventCollection, CalEventModel, UserModel } from '@bk2/shared-models';
+import { addIndexElement, die, findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CalEventService {
   private readonly env = inject(ENV);
@@ -72,7 +72,7 @@ export class CalEventService {
   /*-------------------------- search index --------------------------------*/
   /**
    * Create an index entry for a given CalEvent based on its values.
-   * @param calEvent 
+   * @param calEvent
    * @returns the index string
    */
   public getSearchIndex(calEvent: CalEventModel): string {
@@ -96,43 +96,48 @@ export class CalEventService {
   /*-------------------------- event helpers --------------------------------*/
   public convertEventModelToCalendarEvent(calEvent: CalEventModel): EventInput {
     if (!calEvent.startDate || calEvent.startDate.length !== 8) die('CalEventService.convertEventModelToCalendarEvent: calEvent ' + calEvent.bkey + ' has invalid start date: ' + calEvent.startDate);
-    if (!calEvent.startTime || calEvent.startTime.length !== 4) {   // fullDay CalEvent have no startTime
-      if (!calEvent.endDate || calEvent.endDate.length !== 8) { // same day CalEvent
+    if (!calEvent.startTime || calEvent.startTime.length !== 4) {
+      // fullDay CalEvent have no startTime
+      if (!calEvent.endDate || calEvent.endDate.length !== 8) {
+        // same day CalEvent
         return {
           title: calEvent.name,
           start: this.getIsoDate(calEvent.startDate),
-          eventKey: calEvent.bkey
+          eventKey: calEvent.bkey,
         };
-      } else {    // multi day event
+      } else {
+        // multi day event
         return {
           title: calEvent.name,
           start: this.getIsoDate(calEvent.startDate),
           end: this.getIsoDate(calEvent.endDate),
-          eventKey: calEvent.bkey
+          eventKey: calEvent.bkey,
         };
       }
-    } else {      // not a fullday event
-      const _endTime = (!calEvent.endTime || calEvent.endTime.length !== 4) ? this.getDefaultEndTime(calEvent.startTime) : calEvent.endTime;
-      if (!calEvent.endDate || calEvent.endDate.length !== 8) { // same day event
+    } else {
+      // not a fullday event
+      const _endTime = !calEvent.endTime || calEvent.endTime.length !== 4 ? this.getDefaultEndTime(calEvent.startTime) : calEvent.endTime;
+      if (!calEvent.endDate || calEvent.endDate.length !== 8) {
+        // same day event
         return {
           title: calEvent.name,
           start: this.getIsoDateTime(calEvent.startDate, calEvent.startTime),
           end: this.getIsoDateTime(calEvent.startDate, _endTime),
-          eventKey: calEvent.bkey
+          eventKey: calEvent.bkey,
         };
       } else {
         return {
           title: calEvent.name,
           start: this.getIsoDateTime(calEvent.startDate, calEvent.startTime),
           end: this.getIsoDateTime(calEvent.endDate, _endTime),
-          eventKey: calEvent.bkey
+          eventKey: calEvent.bkey,
         };
       }
     }
   }
 
   private getIsoDate(dateStr: string): string {
-    return dateStr.substring(0, 4) + '-' + dateStr.substring(4, 6) + '-' + dateStr.substring(6, 8)
+    return dateStr.substring(0, 4) + '-' + dateStr.substring(4, 6) + '-' + dateStr.substring(6, 8);
   }
 
   private getIsoTime(timeStr: string): string {

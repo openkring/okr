@@ -1,15 +1,16 @@
 import { Component, input, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared/categories';
-import { CategoryPlainNamePipe } from '@bk2/shared/pipes';
-import { ColorIonic } from '@bk2/shared/models';
-import { TranslatePipe } from '@bk2/shared/i18n';
+import { ColorsIonic } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ColorIonic } from '@bk2/shared-models';
+import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 
 import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'bk-avatar-select',
+  standalone: true,
   imports: [
     AsyncPipe, CategoryPlainNamePipe, TranslatePipe,
     IonItem, IonAvatar, IonImg, IonLabel, IonButton,

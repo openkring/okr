@@ -6,5 +6,5 @@ export enum TransferType {
   Deposit,
   Loan,
   Custom,
-  Booking,          // Buchungssatz Soll/Haben
+  Booking, // Buchungssatz Soll/Haben
 }

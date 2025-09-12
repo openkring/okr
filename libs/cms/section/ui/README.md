@@ -1,7 +1,7 @@
-# cms/section/ui
+# cms-section-ui
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Running unit tests
 
-Run `nx test cms/section/ui` to execute the unit tests.
+There are currently no unit tests for this library.

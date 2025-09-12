@@ -1,4 +1,4 @@
-import { CategoryModel, WeatherCondition } from '@bk2/shared/models';
+import { CategoryModel, WeatherCondition } from '@bk2/shared-models';
 
 export type WeatherConditionCategory = CategoryModel;
 

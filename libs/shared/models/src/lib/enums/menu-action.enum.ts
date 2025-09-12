@@ -5,5 +5,5 @@ export enum MenuAction {
   Divider,
   MainMenu,
   ContextMenu,
-  CallFunction
+  CallFunction,
 }

@@ -1,22 +1,23 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
 
-import { PersonalRelModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
-import { convertDateFormatToString, DateFormat, debugListLoaded, isPersonalRel, isValidAt } from '@bk2/shared/util-core';
-import { confirm } from '@bk2/shared/util-angular';
-import { selectDate } from '@bk2/shared/ui';
+import { AppStore } from '@bk2/shared-feature';
+import { PersonalRelModel } from '@bk2/shared-models';
+import { selectDate } from '@bk2/shared-ui';
+import { confirm } from '@bk2/shared-util-angular';
+import { convertDateFormatToString, DateFormat, debugListLoaded, isPersonalRel, isValidAt } from '@bk2/shared-util-core';
 
-import { AvatarService } from '@bk2/avatar/data-access';
+import { AvatarService } from '@bk2/avatar-data-access';
 
-import { PersonalRelService } from '@bk2/relationship/personal-rel/data-access';
-import { PersonalRelModalsService } from './personal-rel-modals.service';
+import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
+import { convertFormToNewPersonalRel, PersonalRelNewFormModel } from '@bk2/relationship-personal-rel-util';
+
 import { PersonalRelEditModalComponent } from './personal-rel-edit.modal';
+import { PersonalRelModalsService } from './personal-rel-modals.service';
 import { PersonalRelNewModalComponent } from './personal-rel-new.modal';
-import { convertFormToNewPersonalRel, PersonalRelNewFormModel } from '@bk2/relationship/personal-rel/util';
 
 export type PersonalRelAccordionState = {
   personKey: string | undefined;

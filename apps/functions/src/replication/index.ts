@@ -1,16 +1,16 @@
-import { onDocumentWritten } from "firebase-functions/v2/firestore";
-import * as logger from "firebase-functions/logger";
 import * as admin from 'firebase-admin';
+import * as logger from "firebase-functions/logger";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
-import { GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, ReservationCollection, ResourceCollection, WorkingRelCollection } from "@bk2/shared/models";
-import {  
-  getAllMembershipsOfMember, getAllMembershipsOfOrg, 
-  getAllOwnershipsOfOwner, getAllOwnershipsOfResource, 
+import { GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, ReservationCollection, ResourceCollection, WorkingRelCollection } from "@bk2/shared-models";
+import {
+  getAllMembershipsOfMember, getAllMembershipsOfOrg,
+  getAllOwnershipsOfOwner, getAllOwnershipsOfResource,
   getAllPersonalRelsOfObject, getAllPersonalRelsOfSubject,
+  getAllReservationsOfReserver, getAllReservationsOfResource,
   getAllWorkingRelsOfObject, getAllWorkingRelsOfSubject,
-  getAllReservationsOfReserver, getAllReservationsOfResource, 
   updateFavoriteAddressInfo
-} from "@bk2/shared/util-functions";
+} from "@bk2/shared-util-functions";
 
 const firestore = admin.firestore(); 
 
@@ -58,7 +58,7 @@ export const onResourceChange = onDocumentWritten(
     logger.info(`resource ${resourceId} has changed`);
 
     try {
-      const _resource = event.data.after.data();
+      const _resource = event.data?.after.data();
       if (_resource) {
 
         // synchronize the ownerships
@@ -88,7 +88,7 @@ export const onResourceChange = onDocumentWritten(
         logger.warn(`Resource ${resourceId} does not exist or has been deleted.`);
       }
     } catch (error) {
-      logger.error(`Error updating resource ${resourceId}:`, error);
+      logger.error(`Error updating resource ${resourceId}:`, { error });
     }
   }
 );
@@ -107,7 +107,7 @@ export const onPersonChange = onDocumentWritten(
     logger.info(`person ${personId} has changed`);
 
     try {
-      const _person = event.data.after.data();
+      const _person = event.data?.after.data();
       if (_person) {
 
         // synchronize the ownerships
@@ -190,7 +190,7 @@ export const onPersonChange = onDocumentWritten(
         logger.warn(`Person ${personId} does not exist or has been deleted.`);
       }
     } catch (error) {
-      logger.error(`Error updating person ${personId}:`, error);
+      logger.error(`Error updating person ${personId}:`, { error });
     }
   }
 );
@@ -209,7 +209,7 @@ export const onOrgChange = onDocumentWritten(
     logger.info(`org ${_orgId} has changed`);
 
     try {
-      const _org = event.data.after.data();
+      const _org = event.data?.after.data();
       if (_org) {
 
         // synchronize the ownerships
@@ -264,7 +264,7 @@ export const onOrgChange = onDocumentWritten(
         logger.warn(`Org ${_orgId} does not exist or has been deleted.`);
       }
     } catch (error) {
-      logger.error(`Error updating org ${_orgId}:`, error);
+      logger.error(`Error updating org ${_orgId}:`, { error });
     }
   }
 );
@@ -283,7 +283,7 @@ export const onGroupChange = onDocumentWritten(
     logger.info(`group ${_groupId} has changed`);
 
     try {
-      const _group = event.data.after.data();
+      const _group = event.data?.after.data();
       if (_group) {
 
         // synchronize the memberships of the member group
@@ -314,7 +314,7 @@ export const onGroupChange = onDocumentWritten(
         logger.warn(`Org ${_groupId} does not exist or has been deleted.`);
       }
     } catch (error) {
-      logger.error(`Error updating org ${_groupId}:`, error);
+      logger.error(`Error updating org ${_groupId}:`, { error });
     }
   }
 );

@@ -1,4 +1,4 @@
-import { AvatarInfo, ModelType, NameDisplay, OrgModel, PersonModel, UserModel } from '@bk2/shared/models';
+import { AvatarInfo, ModelType, NameDisplay, OrgModel, PersonModel, UserModel } from '@bk2/shared-models';
 import { die, warn } from './log.util';
 
 /*-------------------------------------------- STRING ----------------------------------------------------- */

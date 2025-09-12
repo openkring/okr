@@ -1,19 +1,20 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { CategoryLogPipe } from '@bk2/relationship/membership/util';
+import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { DurationPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { MembershipModel, ModelType, OrgModel, PersonModel, RoleName } from '@bk2/shared/models';
-import { hasRole, isOngoing } from '@bk2/shared/util-core';
-import { EmptyListComponent } from '@bk2/shared/ui';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { MembershipModel, ModelType, OrgModel, PersonModel, RoleName } from '@bk2/shared-models';
+import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent } from '@bk2/shared-ui';
+import { hasRole, isOngoing } from '@bk2/shared-util-core';
 import { MembershipAccordionStore } from './membership-accordion.store';
 
 @Component({
   selector: 'bk-membership-accordion',
+  standalone: true,
   imports: [
     TranslatePipe, DurationPipe, AsyncPipe, SvgIconPipe, CategoryLogPipe, AvatarPipe, EmptyListComponent,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList,

@@ -1,8 +1,8 @@
 import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { AppStore } from "@bk2/shared/feature";
-import { Image } from "@bk2/shared/models";
+import { AppStore } from "@bk2/shared-feature";
+import { Image } from "@bk2/shared-models";
 
 import { ImageSelectModalComponent } from "./image-select.modal";
 

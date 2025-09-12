@@ -1,5 +1,5 @@
 {
-  "name": "document/data-access",
+  "name": "document-data-access",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/document/data-access/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/document/data-access",
         "main": "libs/document/data-access/src/index.ts",
         "tsConfig": "libs/document/data-access/tsconfig.lib.json",
-        "assets": ["libs/document/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/document/data-access/jest.config.ts"
+        "assets": ["libs/document/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

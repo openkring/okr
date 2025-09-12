@@ -1,23 +1,26 @@
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { register } from 'swiper/element/bundle';
+import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { Image, SectionModel } from '@bk2/shared/models';
-import { LabelComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { die, getSizedImgixParamsByExtension } from '@bk2/shared/util-core';
-import { downloadToBrowser } from '@bk2/shared/util-angular';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { Image, SectionModel } from '@bk2/shared-models';
+import { LabelComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { downloadToBrowser } from '@bk2/shared-util-angular';
+import { die, getSizedImgixParamsByExtension } from '@bk2/shared-util-core';
 
 register(); // globally register Swiper's custom elements.
 
 @Component({
   selector: 'bk-gallery-section',
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
+    IonCard, IonCardContent,
     SpinnerComponent, LabelComponent, OptionalCardHeaderComponent
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   styles: [`
     html, body { position: relative; height: 100%; }
 

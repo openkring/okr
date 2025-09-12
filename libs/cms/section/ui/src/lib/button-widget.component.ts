@@ -1,19 +1,20 @@
 import { NgStyle } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonButton, IonIcon, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
+import { IonButton, IonIcon, ModalController } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared/categories';
-import { ButtonAction, ColorIonic, ImageAction, newButton, newIcon, newImage, SectionModel } from '@bk2/shared/models';
-import { CategoryPlainNamePipe, FileTypeIconPipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { downloadToBrowser, navigateByUrl } from '@bk2/shared/util-angular';
-import { showZoomedImage } from '@bk2/shared/ui';
-import { ENV } from '@bk2/shared/config';
-import { BUTTON_HEIGHT, BUTTON_WIDTH, ICON_SIZE } from '@bk2/shared/constants';
+import { ColorsIonic } from '@bk2/shared-categories';
+import { ENV } from '@bk2/shared-config';
+import { BUTTON_HEIGHT, BUTTON_WIDTH, ICON_SIZE } from '@bk2/shared-constants';
+import { ButtonAction, ColorIonic, ImageAction, newButton, newIcon, newImage, SectionModel } from '@bk2/shared-models';
+import { CategoryPlainNamePipe, FileTypeIconPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { showZoomedImage } from '@bk2/shared-ui';
+import { downloadToBrowser, navigateByUrl } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-button-widget',
+  standalone: true,
   imports: [
     CategoryPlainNamePipe, FileTypeIconPipe, SvgIconPipe,
     NgStyle,

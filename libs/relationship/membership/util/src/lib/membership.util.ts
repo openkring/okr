@@ -1,8 +1,9 @@
-import { CategoryItemModel, GenderType, MembershipModel, ModelType, OrgModel, OrgType, Periodicity, PersonModel, UserModel } from '@bk2/shared/models';
-import { MembershipFormModel } from './membership-form.model';
-import { addIndexElement, DateFormat, die, getFullPersonName, getTodayStr } from '@bk2/shared/util-core';
-import { END_FUTURE_DATE_STR } from '@bk2/shared/constants';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { CategoryItemModel, GenderType, MembershipModel, ModelType, OrgModel, OrgType, Periodicity, PersonModel, UserModel } from '@bk2/shared-models';
+import { addIndexElement, DateFormat, die, getFullPersonName, getTodayStr } from '@bk2/shared-util-core';
+
 import { CategoryChangeFormModel } from './category-change-form.model';
+import { MembershipFormModel } from './membership-form.model';
 import { MembershipNewFormModel } from './membership-new-form.model';
 
 export function newMembershipFormModel(): MembershipFormModel {
@@ -33,8 +34,8 @@ export function newMembershipFormModel(): MembershipFormModel {
     relIsLast: true,
     price: 0,
     currency: 'CHF',
-    periodicity: Periodicity.Yearly
-  }
+    periodicity: Periodicity.Yearly,
+  };
 }
 
 export function convertMembershipToForm(membership: MembershipModel | undefined): MembershipFormModel {
@@ -66,8 +67,8 @@ export function convertMembershipToForm(membership: MembershipModel | undefined)
     relIsLast: membership.relIsLast ?? true,
     price: membership.price ?? 0,
     currency: membership.currency ?? 'CHF',
-    periodicity: membership.periodicity ?? Periodicity.Yearly
-  }
+    periodicity: membership.periodicity ?? Periodicity.Yearly,
+  };
 }
 
 /**
@@ -77,7 +78,7 @@ export function convertMembershipToForm(membership: MembershipModel | undefined)
  * @returns the updated membership.
  */
 export function convertFormToMembership(membership: MembershipModel | undefined, vm: MembershipFormModel, tenantId: string): MembershipModel {
-  if (!membership) { 
+  if (!membership) {
     membership = new MembershipModel(tenantId);
     membership.bkey = vm.bkey ?? '';
   }
@@ -89,13 +90,13 @@ export function convertFormToMembership(membership: MembershipModel | undefined,
   membership.memberName1 = vm.memberName1 ?? '';
   membership.memberName2 = vm.memberName2 ?? '';
   membership.memberModelType = vm.memberModelType ?? ModelType.Person;
-  membership.memberType = vm.memberType ?? (vm.memberModelType === ModelType.Person) ? GenderType.Male : OrgType.Association;
+  membership.memberType = vm.memberType ?? vm.memberModelType === ModelType.Person ? GenderType.Male : OrgType.Association;
   membership.memberNickName = vm.memberNickName ?? '';
   membership.memberAbbreviation = vm.memberAbbreviation ?? '';
-  membership.memberDateOfBirth = vm.memberDateOfBirth ?? '';      // readonly
-  membership.memberDateOfDeath = vm.memberDateOfDeath ?? '';      // readonly
-  membership.memberZipCode = vm.memberZipCode ?? '';      // readonly 
-  membership.memberBexioId = vm.memberBexioId ?? '';      // can be a different one than the person's bexioId, default is to use the persons' bexioId
+  membership.memberDateOfBirth = vm.memberDateOfBirth ?? ''; // readonly
+  membership.memberDateOfDeath = vm.memberDateOfDeath ?? ''; // readonly
+  membership.memberZipCode = vm.memberZipCode ?? ''; // readonly
+  membership.memberBexioId = vm.memberBexioId ?? ''; // can be a different one than the person's bexioId, default is to use the persons' bexioId
 
   membership.orgKey = vm.orgKey ?? '';
   membership.orgName = vm.orgName ?? '';
@@ -107,10 +108,10 @@ export function convertFormToMembership(membership: MembershipModel | undefined,
   membership.orgFunction = vm.orgFunction ?? '';
 
   membership.priority = vm.priority ?? 0;
-  membership.relLog = vm.relLog ?? ''; 
+  membership.relLog = vm.relLog ?? '';
   membership.relIsLast = vm.relIsLast ?? true;
 
-  membership.price = parseInt(vm.price + '') ?? 0;   // make sure it's a number (input returns string)
+  membership.price = parseInt(vm.price + '') ?? 0; // make sure it's a number (input returns string)
   membership.currency = vm.currency ?? 'CHF';
   membership.periodicity = vm.periodicity ?? Periodicity.Yearly;
 
@@ -179,13 +180,13 @@ export function newMembershipForOrg(org: OrgModel, orgKey: string, orgName: stri
 
 export function convertMembershipToCategoryChangeForm(membership: MembershipModel): CategoryChangeFormModel {
   return {
-    bkey: membership.bkey ?? '',                                              // readonly
-    memberName: membership.memberName1 + ' ' + membership.memberName2,        // readonly
-    orgName: membership.orgName ?? '',                                        // readonly
+    bkey: membership.bkey ?? '', // readonly
+    memberName: membership.memberName1 + ' ' + membership.memberName2, // readonly
+    orgName: membership.orgName ?? '', // readonly
     dateOfChange: getTodayStr(DateFormat.StoreDate),
-    membershipCategoryOld: membership.membershipCategory ?? 'active',    // readonly
+    membershipCategoryOld: membership.membershipCategory ?? 'active', // readonly
     membershipCategoryNew: membership.membershipCategory ?? 'active',
-  }
+  };
 }
 
 export function convertMemberAndOrgToNewForm(member: PersonModel | OrgModel, org: OrgModel, currentUser?: UserModel, modelType?: ModelType): MembershipNewFormModel {
@@ -199,28 +200,28 @@ export function convertMemberAndOrgToNewForm(member: PersonModel | OrgModel, org
       memberKey: _person.bkey,
       memberName1: _person.firstName,
       memberName2: _person.lastName,
-      memberName: getMemberName(_person, currentUser),    
+      memberName: getMemberName(_person, currentUser),
       memberModelType: ModelType.Person,
       memberType: _person.gender,
       memberDateOfBirth: _person.dateOfBirth,
       memberDateOfDeath: _person.dateOfDeath,
       memberZipCode: _person.fav_zip,
       memberBexioId: _person.bexioId,
-    
+
       orgKey: org.bkey,
       orgName: org.name,
       dateOfEntry: getTodayStr(),
       membershipCategory: 'active',
-      membershipCategoryAbbreviation: 'A'
-    }
-  } 
+      membershipCategoryAbbreviation: 'A',
+    };
+  }
   if (modelType === ModelType.Org) {
     const _org = member as OrgModel;
     return {
       memberKey: _org.bkey,
       memberName1: '',
       memberName2: _org.name,
-      memberName: _org.name,    
+      memberName: _org.name,
       memberModelType: ModelType.Org,
       memberType: _org.type,
       memberDateOfBirth: _org.dateOfFoundation,
@@ -232,8 +233,8 @@ export function convertMemberAndOrgToNewForm(member: PersonModel | OrgModel, org
       orgName: org.name,
       dateOfEntry: getTodayStr(),
       membershipCategory: 'active',
-      membershipCategoryAbbreviation: 'A'
-    }
+      membershipCategoryAbbreviation: 'A',
+    };
   }
   die('membership.util.convertMembershipToNewForm: member is neither a person nor an org');
 }
@@ -297,11 +298,12 @@ export function getMembershipName(membership: MembershipModel): string {
  * @param priorRelLog the relLog entry of the previous membership
  * @param dateOfEntry the start date of the current membership
  * @param category the membership category abbreviation for the current membership
- * @returns 
+ * @returns
  */
 export function getRelLogEntry(priority: number, priorRelLog: string, dateOfEntry: string, category: string): string {
   let _relLog = '';
-  if (priority === 1) {    // first membership
+  if (priority === 1) {
+    // first membership
     _relLog = `${dateOfEntry}:${category}`;
   } else {
     _relLog = `${priorRelLog},${category}`;
@@ -324,12 +326,12 @@ export function getMembershipCategoryChangeComment(oldMembershipCategory?: strin
 export function getMembershipSearchIndex(membership: MembershipModel): string {
   let _index = '';
   _index = addIndexElement(_index, 'mn', membership.memberName1 + ' ' + membership.memberName2);
-  _index = addIndexElement(_index, 'mk', membership.memberKey)
+  _index = addIndexElement(_index, 'mk', membership.memberKey);
   _index = addIndexElement(_index, 'ok', membership.orgKey);
   if (membership?.memberNickName) {
-      _index = addIndexElement(_index, 'nn', membership.memberNickName);
-    }
-  return _index;  
+    _index = addIndexElement(_index, 'nn', membership.memberNickName);
+  }
+  return _index;
 }
 
 /**

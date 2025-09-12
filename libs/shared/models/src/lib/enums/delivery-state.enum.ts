@@ -1,8 +1,8 @@
 export enum DeliveryState {
-    Created,
-    ReadyToReview,
-    ReadyToSend,
-    Sent,
-    Completed,
-    Archived
+  Created,
+  ReadyToReview,
+  ReadyToSend,
+  Sent,
+  Completed,
+  Archived,
 }

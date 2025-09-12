@@ -1,10 +1,11 @@
-import { ModalController } from "@ionic/angular/standalone";
 import { Browser } from "@capacitor/browser";
+import { ModalController } from "@ionic/angular/standalone";
 
-import { Image, ImageAction } from "@bk2/shared/models";
-import { ImageViewModalComponent } from "./image-view.modal";
+import { Image, ImageAction } from "@bk2/shared-models";
+import { DateFormat, getTodayStr, warn } from "@bk2/shared-util-core";
+
 import { DateSelectModalComponent } from "./date-select.modal";
-import { DateFormat, getTodayStr, warn } from "@bk2/shared/util-core";
+import { ImageViewModalComponent } from "./image-view.modal";
 
 export interface ValidationInfo {
   type: string,

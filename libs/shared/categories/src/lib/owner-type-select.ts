@@ -1,4 +1,4 @@
-import { CategoryModel, OwnerTypeSelect } from '@bk2/shared/models';
+import { CategoryModel, OwnerTypeSelect } from '@bk2/shared-models';
 
 export type OwnerTypeCategory = CategoryModel;
 

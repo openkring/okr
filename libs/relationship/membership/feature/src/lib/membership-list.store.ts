@@ -1,18 +1,18 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared/util-core';
-import { memberTypeMatches } from '@bk2/shared/categories';
-import { AllCategories, CategoryCollection, CategoryListModel, GenderType, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, OrgType, PersonCollection, PersonModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
-import { selectDate } from '@bk2/shared/ui';
+import { memberTypeMatches } from '@bk2/shared-categories';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, CategoryCollection, CategoryListModel, GenderType, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, OrgType, PersonCollection, PersonModel } from '@bk2/shared-models';
+import { selectDate } from '@bk2/shared-ui';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
 
-import { MembershipService } from '@bk2/relationship/membership/data-access';
+import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { MembershipModalsService } from './membership-modals.service';
-import { FirestoreService } from '@bk2/shared/data-access';
 
 export type MembershipListState = {
   orgId: string;

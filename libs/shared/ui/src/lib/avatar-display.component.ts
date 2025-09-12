@@ -2,13 +2,14 @@ import { AsyncPipe } from "@angular/common";
 import { Component, input } from "@angular/core";
 import { IonAvatar, IonChip, IonImg, IonLabel } from "@ionic/angular/standalone";
 
-import { AvatarInfo } from "@bk2/shared/models";
-import { FullNamePipe } from '@bk2/shared/pipes';
+import { AvatarInfo } from "@bk2/shared-models";
+import { FullNamePipe } from '@bk2/shared-pipes';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
+import { AvatarPipe } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-avatar-display',
+  standalone: true,
   imports: [
     AvatarPipe, AsyncPipe, FullNamePipe,
     IonAvatar, IonLabel, IonImg, IonChip

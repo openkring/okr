@@ -3,5 +3,5 @@ export enum NameDisplay {
   FirstLast,
   LastFirst,
   FirstOnly,
-  LastOnly
+  LastOnly,
 }

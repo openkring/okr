@@ -1,5 +1,5 @@
 {
-  "name": "avatar/data-access",
+  "name": "avatar-data-access",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/avatar/data-access/src",
   "prefix": "bk",
@@ -13,14 +13,8 @@
         "outputPath": "dist/libs/avatar/data-access",
         "main": "libs/avatar/data-access/src/index.ts",
         "tsConfig": "libs/avatar/data-access/tsconfig.lib.json",
-        "assets": ["libs/avatar/data-access/*.md"]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/avatar/data-access/jest.config.ts"
+        "assets": ["libs/avatar/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
       }
     },
     "lint": {

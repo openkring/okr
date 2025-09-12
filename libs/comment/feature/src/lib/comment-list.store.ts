@@ -1,12 +1,12 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { debugListLoaded } from '@bk2/shared/util-core';
-import { AppStore } from '@bk2/shared/feature';
+import { AppStore } from '@bk2/shared-feature';
+import { debugListLoaded } from '@bk2/shared-util-core';
 
-import { CommentService } from '@bk2/comment/data-access';
+import { CommentService } from '@bk2/comment-data-access';
 
 export type CommentListState = {
   collectionName: string;

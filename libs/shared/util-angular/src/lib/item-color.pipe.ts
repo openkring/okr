@@ -1,8 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { BkModel } from '@bk2/shared/models';
+import { BkModel } from '@bk2/shared-models';
 
 @Pipe({
   name: 'itemColor',
+  standalone: true
 })
 export class ItemColorPipe implements PipeTransform {
 

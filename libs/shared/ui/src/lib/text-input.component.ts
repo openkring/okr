@@ -1,19 +1,20 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { MaskitoDirective } from '@maskito/angular';
+import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe} from '@bk2/shared/i18n';
-import { AnyCharacterMask, MaskPredicate } from '@bk2/shared/config';
-import { AutoComplete, InputMode, SHORT_NAME_LENGTH } from '@bk2/shared/constants';
+import { AnyCharacterMask, MaskPredicate } from '@bk2/shared-config';
+import { AutoComplete, InputMode, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { ButtonCopyComponent } from './button-copy.component';
-import { FormsModule } from '@angular/forms';
-
 
 @Component({
   selector: 'bk-text-input',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     ButtonCopyComponent,

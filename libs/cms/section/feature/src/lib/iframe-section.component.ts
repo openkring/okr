@@ -1,12 +1,13 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { DomSanitizer } from '@angular/platform-browser';
+import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared/models';
-import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
+import { SectionModel } from '@bk2/shared-models';
+import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-iframe-section',
+  standalone: true,
   imports: [
     SpinnerComponent, OptionalCardHeaderComponent,
     IonCard, IonCardContent

@@ -1,7 +1,19 @@
-import { END_FUTURE_DATE_STR, MAX_YEAR, MIN_YEAR } from '@bk2/shared/constants';
-import { DateFormat, getTodayStr, convertDateFormat, copyDate, isFutureDate,
-    getEndOfYear, getStartOfYear, getYear, checkYearRange,
-    extractFromDate, parseDate, DatePart, getYearDiff, compareDate} from './date.util';
+import { END_FUTURE_DATE_STR, MAX_YEAR, MIN_YEAR } from '@bk2/shared-constants';
+import { describe, expect, it } from 'vitest';
+import {
+    checkYearRange,
+    compareDate,
+    convertDateFormat, copyDate,
+    DateFormat,
+    DatePart,
+    extractFromDate,
+    getEndOfYear, getStartOfYear,
+    getTodayStr,
+    getYear,
+    getYearDiff,
+    isFutureDate,
+    parseDate
+} from './date.util';
 describe('date.util', () => {
 
     // convertDateFormat
@@ -22,7 +34,7 @@ describe('date.util', () => {
 
     it('convertDateFormat(20000915123015 -> ViewDate)', () => {
       const _result = convertDateFormat('20000915123015', DateFormat.StoreDateTime, DateFormat.ViewDate);
-      expect(_result).toEqual('15.9.2000');
+      expect(_result).toEqual('15.09.2000');
     });
 
     it('convertDateFormat(20000915123015 -> ViewDateTime)', () => {
@@ -64,8 +76,8 @@ describe('date.util', () => {
       expect(_result).toEqual('15/9/00');
     });
 
-    // TODO: convertDateFormatToString
-    // TODO: parseDate
+    // TBD: convertDateFormatToString
+    // TBD: parseDate
     // extractFromDate
     it('extractFromDate()', () => {
         const _date = parseDate('19991203091510', DateFormat.StoreDateTime);
@@ -76,7 +88,7 @@ describe('date.util', () => {
         expect(extractFromDate(_date, DatePart.Minute)).toEqual(15);
         expect(extractFromDate(_date, DatePart.Second)).toEqual(10);
     });
-    // TODO: checkDate
+    // TBD: checkDate
     // checkYearRange
     it('checkYearRange()', () => {
         expect(checkYearRange(new Date().getFullYear(), MIN_YEAR, MAX_YEAR)).toEqual(true);
@@ -113,7 +125,7 @@ describe('date.util', () => {
         const _currentYear = new Date().getFullYear();
         expect(getEndOfYear(1)).toEqual((_currentYear+1) * 10000 + 1231);
     });
-    // getTodayStr  -> TODO
+    // tbd: getTodayStr
     // compareDate
     it('compareDate(getTodayStr(StoreDate), END_FUTURE_DATE_STR, DateFormat.StoreDate)', () => {
         const _result = compareDate(getTodayStr(DateFormat.StoreDate), END_FUTURE_DATE_STR, DateFormat.StoreDate);

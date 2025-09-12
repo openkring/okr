@@ -1,10 +1,11 @@
-import { LocationModel, LocationType } from "@bk2/shared/models";
-import { LocationFormModel } from "./location-form.model";
-import { isType } from '@bk2/shared/util-core';
+import { LocationModel, LocationType } from '@bk2/shared-models';
+import { isType } from '@bk2/shared-util-core';
+
+import { LocationFormModel } from './location-form.model';
 
 export function getLocationTitle(locationKey: string | undefined): string {
   const _operation = !locationKey ? 'create' : 'update';
-  return `@location.operation.${_operation}.label`;  
+  return `@location.operation.${_operation}.label`;
 }
 
 export function newLocationFormModel(): LocationFormModel {
@@ -22,7 +23,7 @@ export function newLocationFormModel(): LocationFormModel {
     speed: 0,
     direction: 0,
     notes: '',
-  }
+  };
 }
 
 export function convertLocationToForm(location: LocationModel | undefined): LocationFormModel {
@@ -40,13 +41,13 @@ export function convertLocationToForm(location: LocationModel | undefined): Loca
     speed: location.speed,
     direction: location.direction,
     notes: location.notes,
-    tags: location.tags
-  }
+    tags: location.tags,
+  };
 }
 
 export function convertFormToLocation(location: LocationModel | undefined, vm: LocationFormModel, tenantId: string): LocationModel {
   location ??= new LocationModel(tenantId);
-  location.bkey = vm.bkey ?? ''; 
+  location.bkey = vm.bkey ?? '';
   location.name = vm.name ?? '';
   location.address = vm.address ?? '';
   location.type = vm.type ?? LocationType.Address;
@@ -65,8 +66,3 @@ export function convertFormToLocation(location: LocationModel | undefined, vm: L
 export function isLocation(location: unknown, tenantId: string): location is LocationModel {
   return isType(location, new LocationModel(tenantId));
 }
-
-
-
-
-

@@ -1,11 +1,12 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { getCategoryImage } from '@bk2/shared/categories';
+import { getCategoryImage } from '@bk2/shared-categories';
 
 /**
  * Returns the translated i18n label for a category.
  */
 @Pipe({
   name: 'categoryImage',
+  standalone: true
 })
 export class CategoryImagePipe implements PipeTransform {
   transform(categoryName: string | undefined, assetFolderName: string): string {

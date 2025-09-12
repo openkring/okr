@@ -1,19 +1,20 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared/ui';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AvatarInfo, RoleName } from '@bk2/shared/models';
-import { hasRole } from '@bk2/shared/util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AvatarInfo, RoleName } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
-import { TaskFormComponent } from '@bk2/task/ui';
-import { convertFormToTask, newTaskFormModel } from '@bk2/task/util';
+import { TaskFormComponent } from '@bk2/task-ui';
+import { convertFormToTask, newTaskFormModel } from '@bk2/task-util';
 import { TaskEditStore } from './task-edit.store';
 
 
 @Component({
   selector: 'bk-task-new-modal',
+  standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent, TaskFormComponent,
     TranslatePipe, AsyncPipe,

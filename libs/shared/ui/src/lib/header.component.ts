@@ -1,14 +1,15 @@
-import { Component, inject, input, output } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, inject, input, output } from '@angular/core';
 import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { AppNavigationService } from '@bk2/shared/util-angular';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { AppNavigationService } from '@bk2/shared-util-angular';
 import { SearchbarComponent } from './searchbar.component';
 
 @Component({
   selector: 'bk-header',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonIcon, IonButton,

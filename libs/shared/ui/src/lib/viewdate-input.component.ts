@@ -1,15 +1,15 @@
-import { Component, computed, inject, input, model, output } from '@angular/core';
-import { IonInput, IonItem, IonNote, ModalController } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { IonInput, IonItem, IonNote, ModalController } from '@ionic/angular/standalone';
 
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { DateFormat, getTodayStr } from '@bk2/shared/util-core';
-import { DATE_LENGTH, InputMode } from '@bk2/shared/constants';
-import { ChAnyDate } from '@bk2/shared/config';
+import { ChAnyDate } from '@bk2/shared-config';
+import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
 
 /**
  * This ui component enables to input a date in ViewDate format (dd.MM.yyyy) in a text input field.
@@ -18,6 +18,7 @@ import { ChAnyDate } from '@bk2/shared/config';
  */
 @Component({
   selector: 'bk-viewdate-input',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     MaskitoDirective, FormsModule,
@@ -69,7 +70,7 @@ export class ViewDateInputComponent {
   protected label = computed(() => '@input.' + this.name() + '.label');
   protected placeholder = computed(() => '@input.' + this.name() + '.label');
 
-  protected readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => (el as HTMLIonInputElement).getInputElement();
+  protected readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => ((el as unknown) as HTMLIonInputElement).getInputElement();
 
   public onChange(event: CustomEvent): void {
     this.viewDate.set(event.detail.value);

@@ -1,15 +1,17 @@
+import { isPlatformBrowser } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { StreamAutocompleteTextareaModule, StreamChatModule } from 'stream-chat-angular';
 import { TranslateModule } from '@ngx-translate/core';
+import { StreamAutocompleteTextareaModule, StreamChatModule } from 'stream-chat-angular';
 
-import { SectionModel } from '@bk2/shared/models';
-import { SpinnerComponent } from '@bk2/shared/ui';
+import { SectionModel } from '@bk2/shared-models';
+import { SpinnerComponent } from '@bk2/shared-ui';
+
 import { ChatSectionStore } from './chat-section.store';
-import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'bk-chat-section',
+  standalone: true,
   imports: [
     SpinnerComponent,
     TranslateModule,

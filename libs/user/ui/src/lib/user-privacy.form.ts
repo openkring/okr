@@ -3,16 +3,17 @@ import { Component, computed, input, model, output, signal } from "@angular/core
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
-import { PrivacyUsages } from "@bk2/shared/categories";
-import { TranslatePipe } from "@bk2/shared/i18n";
-import { FieldDescription, PrivacyUsage, UserModel } from "@bk2/shared/models";
-import { CategoryComponent } from "@bk2/shared/ui";
-import { debugFormErrors } from "@bk2/shared/util-core";
+import { PrivacyUsages } from "@bk2/shared-categories";
+import { TranslatePipe } from "@bk2/shared-i18n";
+import { FieldDescription, PrivacyUsage, UserModel } from "@bk2/shared-models";
+import { CategoryComponent } from "@bk2/shared-ui";
+import { debugFormErrors } from "@bk2/shared-util-core";
 
-import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidations } from "@bk2/user/util";
+import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-privacy-form',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,

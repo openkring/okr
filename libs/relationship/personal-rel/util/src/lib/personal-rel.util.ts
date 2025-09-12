@@ -1,8 +1,9 @@
-import { END_FUTURE_DATE_STR } from "@bk2/shared/constants";
-import { addIndexElement, die, getTodayStr } from "@bk2/shared/util-core";
-import { PersonalRelFormModel } from "./personal-rel-form.model";
-import { GenderType, PersonalRelModel, PersonalRelType, PersonModel, UserModel } from "@bk2/shared/models";
-import { PersonalRelNewFormModel } from "./personal-rel-new-form.model";
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { GenderType, PersonalRelModel, PersonalRelType, PersonModel, UserModel } from '@bk2/shared-models';
+import { addIndexElement, die, getTodayStr } from '@bk2/shared-util-core';
+import { PersonalRelFormModel } from './personal-rel-form.model';
+
+import { PersonalRelNewFormModel } from './personal-rel-new-form.model';
 
 export function newPersonalRelFormModel(): PersonalRelFormModel {
   return {
@@ -23,8 +24,8 @@ export function newPersonalRelFormModel(): PersonalRelFormModel {
     type: PersonalRelType.Partner,
     label: '',
     validFrom: getTodayStr(),
-    validTo: END_FUTURE_DATE_STR
-  }
+    validTo: END_FUTURE_DATE_STR,
+  };
 }
 
 export function convertPersonalRelToForm(personalRel: PersonalRelModel | undefined): PersonalRelFormModel {
@@ -48,7 +49,7 @@ export function convertPersonalRelToForm(personalRel: PersonalRelModel | undefin
     label: personalRel.label ?? '',
     validFrom: personalRel.validFrom ?? getTodayStr(),
     validTo: personalRel.validTo ?? END_FUTURE_DATE_STR,
-  }
+  };
 }
 
 /**
@@ -58,7 +59,7 @@ export function convertPersonalRelToForm(personalRel: PersonalRelModel | undefin
  * @returns the updated membership.
  */
 export function convertFormToPersonalRel(personalRel: PersonalRelModel | undefined, vm: PersonalRelFormModel, tenantId: string): PersonalRelModel {
-  if (!personalRel) { 
+  if (!personalRel) {
     personalRel = new PersonalRelModel(tenantId);
     personalRel.bkey = vm.bkey ?? '';
   }
@@ -82,7 +83,7 @@ export function convertFormToPersonalRel(personalRel: PersonalRelModel | undefin
   return personalRel;
 }
 
-export function convertPersonsToNewForm(subject: PersonModel, object: PersonModel, currentUser?: UserModel): PersonalRelNewFormModel {  
+export function convertPersonsToNewForm(subject: PersonModel, object: PersonModel, currentUser?: UserModel): PersonalRelNewFormModel {
   if (!currentUser) die('personal-rel.util.convertPersonsToNewForm: currentUser is mandatory');
 
   return {
@@ -99,8 +100,8 @@ export function convertPersonsToNewForm(subject: PersonModel, object: PersonMode
     type: PersonalRelType.Partner,
     label: '',
     validFrom: getTodayStr(),
-    validTo: END_FUTURE_DATE_STR
-  }
+    validTo: END_FUTURE_DATE_STR,
+  };
 }
 
 export function convertFormToNewPersonalRel(vm: PersonalRelFormModel, tenantId: string): PersonalRelModel {
@@ -131,7 +132,7 @@ export function getPersonalRelSearchIndex(personalRel: PersonalRelModel): string
   _index = addIndexElement(_index, 'sn', personalRel.subjectFirstName + ' ' + personalRel.subjectLastName);
   _index = addIndexElement(_index, 'ok', personalRel.objectKey);
   _index = addIndexElement(_index, 'on', personalRel.objectFirstName + ' ' + personalRel.objectLastName);
-  return _index;  
+  return _index;
 }
 
 /**

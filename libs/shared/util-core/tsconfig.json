@@ -1,23 +1,13 @@
 {
-  "compilerOptions": {
-    "target": "es2022",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "files": [],
-  "include": [],
-  "references": [
-    {
-      "path": "./tsconfig.lib.json"
-    },
-    {
-      "path": "./tsconfig.spec.json"
-    }
-  ],
   "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vitest"],
+    "noEmit": true
+  },
+  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": ["dist/**/*"],
+  "references": [
+    {"path": "../../shared/models/tsconfig.lib.json"},
+    {"path": "../../shared/constants/tsconfig.lib.json"}
+  ]
 }

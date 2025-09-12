@@ -1,12 +1,13 @@
-import { Component, effect, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, effect, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { LogInfo } from '@bk2/shared/models';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { LogInfo } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-result-log',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,

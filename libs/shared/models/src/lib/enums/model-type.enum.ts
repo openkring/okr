@@ -27,5 +27,5 @@ export enum ModelType {
   User,
   WorkingRel,
   Category,
-  Group
+  Group,
 }

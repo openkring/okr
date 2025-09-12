@@ -1,25 +1,26 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, Platform } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
+import { IonContent, Platform } from '@ionic/angular/standalone';
 
-import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent, UploadService } from '@bk2/shared/ui';
-import { ModelType, UserCollection } from '@bk2/shared/models';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { debugFormModel, getFullPersonName } from '@bk2/shared/util-core';
-import { ENV } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared-config';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ModelType, UserCollection } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
+import { debugFormModel, getFullPersonName } from '@bk2/shared-util-core';
 
-import { AvatarService } from '@bk2/avatar/data-access';
-import { AvatarToolbarComponent } from '@bk2/avatar/feature';
-import { newAvatarModel, readAsFile } from '@bk2/avatar/util';
-import { CommentsCardComponent } from '@bk2/comment/feature';
+import { AvatarService } from '@bk2/avatar-data-access';
+import { AvatarToolbarComponent } from '@bk2/avatar-feature';
+import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
+import { CommentsCardComponent } from '@bk2/comment-feature';
 
-import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user/util';
-import { UserAuthFormComponent, UserDisplayFormComponent, UserModelFormComponent, UserNotificationFormComponent, UserPrivacyFormComponent } from '@bk2/user/ui';
+import { UserAuthFormComponent, UserDisplayFormComponent, UserModelFormComponent, UserNotificationFormComponent, UserPrivacyFormComponent } from '@bk2/user-ui';
+import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user-util';
 import { UserEditStore } from './user-edit.store';
 
 @Component({
   selector: 'bk-user-page',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     HeaderComponent, ChangeConfirmationComponent, AvatarToolbarComponent, ChipsComponent, CommentsCardComponent,

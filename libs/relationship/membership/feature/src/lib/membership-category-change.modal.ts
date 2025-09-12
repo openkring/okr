@@ -1,15 +1,16 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared/ui';
-import { CategoryListModel, MembershipModel, ModelType } from '@bk2/shared/models';
-import { CategoryChangeFormComponent } from '@bk2/relationship/membership/ui';
-import { convertMembershipToCategoryChangeForm, getMembershipName } from '@bk2/relationship/membership/util';
+import { CategoryChangeFormComponent } from '@bk2/relationship-membership-ui';
+import { convertMembershipToCategoryChangeForm, getMembershipName } from '@bk2/relationship-membership-util';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CategoryListModel, MembershipModel, ModelType } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-category-change-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
     HeaderComponent, ChangeConfirmationComponent, CategoryChangeFormComponent, RelationshipToolbarComponent,

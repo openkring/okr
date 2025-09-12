@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared/models';
-import { FirestoreService } from '@bk2/shared/data-access';
-import { getSystemQuery } from '@bk2/shared/util-core';
-import { ENV } from '@bk2/shared/config';
+import { ENV } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { getSystemQuery } from '@bk2/shared-util-core';
 
 @Injectable({
   providedIn: 'root'

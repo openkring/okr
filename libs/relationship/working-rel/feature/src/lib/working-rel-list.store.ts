@@ -1,18 +1,19 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, debugListLoaded, die, nameMatches } from '@bk2/shared/util-core';
-import { AllCategories, ModelType, WorkingRelModel, WorkingRelType } from '@bk2/shared/models';
-import { categoryMatches } from '@bk2/shared/categories';
-import { AppStore } from '@bk2/shared/feature';
+import { categoryMatches } from '@bk2/shared-categories';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, ModelType, WorkingRelModel, WorkingRelType } from '@bk2/shared-models';
+import { chipMatches, debugListLoaded, die, nameMatches } from '@bk2/shared-util-core';
 
-import { WorkingRelService } from '@bk2/relationship/working-rel/data-access';
+import { WorkingRelService } from '@bk2/relationship-working-rel-data-access';
+import { convertFormToNewWorkingRel, isWorkingRel, WorkingRelNewFormModel } from '@bk2/relationship-working-rel-util';
+
+import { WorkingRelEditModalComponent } from './working-rel-edit.modal';
 import { WorkingRelModalsService } from './working-rel-modals.service';
 import { WorkingRelNewModalComponent } from './working-rel-new.modal';
-import { convertFormToNewWorkingRel, isWorkingRel, WorkingRelNewFormModel } from '@bk2/relationship/working-rel/util';
-import { WorkingRelEditModalComponent } from './working-rel-edit.modal';
 
 export type WorkingRelListState = {
   searchTerm: string;

@@ -1,25 +1,27 @@
-import { Component, forwardRef, inject, input } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { Component, forwardRef, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonMenuButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
-import { SectionModel, SectionType } from '@bk2/shared/models';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { ArticleSectionComponent } from './article-section.component';
-import { SwiperSectionComponent } from './swiper-section.component';
-import { GallerySectionComponent } from './gallery-section.component';
-import { PeopleListSectionComponent } from './people-list-section.component';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SectionModel, SectionType } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+
 import { AlbumSectionComponent } from './album-section.component';
-import { MapSectionComponent } from './map-section.component';
-import { VideoSectionComponent } from './video-section.component';
-import { CalendarSectionComponent } from './calendar-section.component';
-import { HeroSectionComponent } from './hero-section.component';
+import { ArticleSectionComponent } from './article-section.component';
 import { ButtonSectionComponent } from './button-section.component';
+import { CalendarSectionComponent } from './calendar-section.component';
+import { GallerySectionComponent } from './gallery-section.component';
+import { HeroSectionComponent } from './hero-section.component';
 import { IframeSectionComponent } from './iframe-section.component';
+import { MapSectionComponent } from './map-section.component';
+import { PeopleListSectionComponent } from './people-list-section.component';
+import { SwiperSectionComponent } from './swiper-section.component';
 import { TableSectionComponent } from './table-section.component';
+import { VideoSectionComponent } from './video-section.component';
 
 @Component( {
   selector: 'bk-preview-modal',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     ArticleSectionComponent, SwiperSectionComponent, GallerySectionComponent, 

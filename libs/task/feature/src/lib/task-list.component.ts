@@ -1,17 +1,17 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonTitle, IonToolbar, IonItemSliding, IonItemOptions, IonItemOption, IonList, IonTextarea, IonAvatar, IonImg, IonChip, IonPopover } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
+import { Component, computed, effect, inject, input } from '@angular/core';
+import { IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryAbbreviationPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { EmptyListComponent, ListFilterComponent } from '@bk2/shared/ui';
-import { RoleName, TaskModel } from '@bk2/shared/models';
-import { addAllCategory, Importances, Priorities, TaskStates } from '@bk2/shared/categories';
-import { extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared/util-core';
-import { error } from '@bk2/shared/util-angular';
+import { addAllCategory, Importances, Priorities, TaskStates } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { RoleName, TaskModel } from '@bk2/shared-models';
+import { CategoryAbbreviationPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
+import { error } from '@bk2/shared-util-angular';
+import { extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar/ui';
-import { MenuComponent } from '@bk2/cms/menu/feature';
+import { AvatarPipe } from '@bk2/avatar-ui';
+import { MenuComponent } from '@bk2/cms-menu-feature';
 import { TaskListStore } from './task-list.store';
 
 /**
@@ -26,6 +26,7 @@ import { TaskListStore } from './task-list.store';
  */
 @Component({
   selector: 'bk-task-list',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, CategoryAbbreviationPipe, PrettyDatePipe, AvatarPipe,
     EmptyListComponent, ListFilterComponent, MenuComponent,

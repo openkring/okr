@@ -1,17 +1,18 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared/util-core';
-import { AllCategories, ModelType, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared/models';
-import { categoryMatches, yearMatches } from '@bk2/shared/categories';
-import { selectDate } from '@bk2/shared/ui';
-import { AppStore } from '@bk2/shared/feature';
+import { categoryMatches, yearMatches } from '@bk2/shared-categories';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, ModelType, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
+import { selectDate } from '@bk2/shared-ui';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
 
-import { ReservationService } from '@bk2/relationship/reservation/data-access';
+import { ReservationService } from '@bk2/relationship-reservation-data-access';
+
 import { ReservationModalsService } from './reservation-modals.service';
-import { FirestoreService } from '@bk2/shared/data-access';
 
 export type ReservationListState = {
   resourceId: string;

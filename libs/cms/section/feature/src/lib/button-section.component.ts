@@ -1,13 +1,13 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { SectionModel, ViewPosition } from '@bk2/shared/models';
-import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared/ui';
-
-import { ButtonWidgetComponent } from '@bk2/cms/section/ui';
+import { ButtonWidgetComponent } from '@bk2/cms-section-ui';
+import { SectionModel, ViewPosition } from '@bk2/shared-models';
+import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-button-section',
+  standalone: true,
   imports: [
     SpinnerComponent, ButtonWidgetComponent,
     EditorComponent, OptionalCardHeaderComponent,

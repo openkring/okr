@@ -1,5 +1,5 @@
 import { Params, Router } from '@angular/router';
-import { die } from '@bk2/shared/util-core';
+import { die } from '@bk2/shared-util-core';
 import { Subscription } from 'rxjs';
 
 /************************************** routing helpers ********************************** */

@@ -1,6 +1,8 @@
-import { only, staticSuite} from 'vest';
-import { booleanValidations, categoryValidations } from '@bk2/shared/util-core';
-import { AvatarUsage, Language, NameDisplay, PersonSortCriteria } from '@bk2/shared/models';
+import { only, staticSuite } from 'vest';
+
+import { AvatarUsage, Language, NameDisplay, PersonSortCriteria } from '@bk2/shared-models';
+import { booleanValidations, categoryValidations } from '@bk2/shared-util-core';
+
 import { UserDisplayFormModel } from './user-display-form.model';
 
 export const userDisplayFormValidations = staticSuite((model: UserDisplayFormModel, field?: string) => {

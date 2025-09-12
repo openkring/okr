@@ -1,4 +1,5 @@
-import { parseIban, formatIban, extractIbanPart, checkIban, IbanPart, IbanFormat } from './iban.util';
+import { describe, expect, it } from 'vitest';
+import { checkIban, extractIbanPart, formatIban, IbanFormat, IbanPart, parseIban } from './iban.util';
 
 describe('iban.util', () => {
 

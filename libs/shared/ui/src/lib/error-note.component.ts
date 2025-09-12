@@ -1,14 +1,15 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonItem, IonNote } from '@ionic/angular/standalone';
-
-import { ColorsIonic } from '@bk2/shared/categories';
-import { TranslocoService } from '@jsverse/transloco';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { IonItem, IonNote } from '@ionic/angular/standalone';
+import { TranslocoService } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
-import { ColorIonic } from '@bk2/shared/models';
+
+import { ColorsIonic } from '@bk2/shared-categories';
+import { ColorIonic } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-error-note',
+  standalone: true,
   imports: [
     IonNote, IonItem
   ],

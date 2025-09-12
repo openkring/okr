@@ -1,14 +1,14 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
-
-import { debugItemLoaded, debugMessage } from '@bk2/shared/util-core';
-import { SectionModel } from '@bk2/shared/models';
-import { AppStore } from '@bk2/shared/feature';
-
-import { SectionService } from '@bk2/cms/section/data-access';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
+
+import { AppStore } from '@bk2/shared-feature';
+import { SectionModel } from '@bk2/shared-models';
+import { debugItemLoaded, debugMessage } from '@bk2/shared-util-core';
+
+import { SectionService } from '@bk2/cms-section-data-access';
 
 export type SectionDetailState = {
   sectionId: string;

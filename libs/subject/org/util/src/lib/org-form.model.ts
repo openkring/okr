@@ -1,17 +1,18 @@
-import { OrgType } from '@bk2/shared/models';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
+import { OrgType } from '@bk2/shared-models';
+
 export type OrgFormModel = DeepPartial<{
-  bkey: string,
-  orgName: string,
-  type: number,
-  dateOfFoundation: string,
-  dateOfLiquidation: string,
-  taxId: string,
-  bexioId: string,
-  membershipCategoryKey: string,
-  tags: string,
-  notes: string
+  bkey: string;
+  orgName: string;
+  type: number;
+  dateOfFoundation: string;
+  dateOfLiquidation: string;
+  taxId: string;
+  bexioId: string;
+  membershipCategoryKey: string;
+  tags: string;
+  notes: string;
 }>;
 
 export const orgFormModelShape: DeepRequired<OrgFormModel> = {
@@ -24,5 +25,5 @@ export const orgFormModelShape: DeepRequired<OrgFormModel> = {
   bexioId: '',
   membershipCategoryKey: '',
   tags: '',
-  notes: ''
+  notes: '',
 };

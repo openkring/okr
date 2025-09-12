@@ -1,11 +1,13 @@
 import { Component, input } from '@angular/core';
 import { IonButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
-import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared/pipes';
-import { ColorsIonic } from '@bk2/shared/categories';
-import { ColorIonic } from '@bk2/shared/models';
+
+import { ColorsIonic } from '@bk2/shared-categories';
+import { ColorIonic } from '@bk2/shared-models';
+import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-button',
+  standalone: true,
   imports: [
     CategoryPlainNamePipe, SvgIconPipe,
     IonButton, IonIcon, IonLabel

@@ -1,15 +1,16 @@
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { chipMatches, nameMatches } from '@bk2/shared/util-core';
-import { AllCategories, LocationModel, LocationType, ModelType } from '@bk2/shared/models';
-import { categoryMatches } from '@bk2/shared/categories';
-import { AppStore } from '@bk2/shared/feature';
+import { categoryMatches } from '@bk2/shared-categories';
+import { AppStore } from '@bk2/shared-feature';
+import { AllCategories, LocationModel, LocationType, ModelType } from '@bk2/shared-models';
+import { chipMatches, nameMatches } from '@bk2/shared-util-core';
 
-import { LocationService } from '@bk2/location/data-access';
-import { isLocation } from '@bk2/location/util';
+import { LocationService } from '@bk2/location-data-access';
+import { isLocation } from '@bk2/location-util';
+
 import { LocationEditModalComponent } from './location-edit.modal';
 
 export type LocationListState = {

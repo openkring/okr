@@ -1,9 +1,10 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { ModelType, NameDisplay } from '@bk2/shared/models';
-import { createFullName, getFullPersonName } from '@bk2/shared/util-core';
+import { ModelType, NameDisplay } from '@bk2/shared-models';
+import { createFullName, getFullPersonName } from '@bk2/shared-util-core';
 
 @Pipe({
   name: 'fullName',
+  standalone: true
 })
 export class FullNamePipe implements PipeTransform {
 

@@ -1,19 +1,21 @@
 
-import { Component, inject, input, model, output } from '@angular/core';
-import { IonIcon, IonInput, IonItem, IonNote, ModalController } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
+import { Component, inject, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { IonIcon, IonInput, IonItem, IonNote, ModalController } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
 
-import { ChTimeMask, MaskPredicate } from '@bk2/shared/config';
-import { InputMode, TIME_LENGTH } from '@bk2/shared/constants';
-import { SvgIconPipe } from '@bk2/shared/pipes';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { getCurrentTime } from '@bk2/shared/util-core';
+import { ChTimeMask, MaskPredicate } from '@bk2/shared-config';
+import { InputMode, TIME_LENGTH } from '@bk2/shared-constants';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { getCurrentTime } from '@bk2/shared-util-core';
+
 import { TimeSelectModalComponent } from './time-select.modal';
 
 @Component({
   selector: 'bk-time-input',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     MaskitoDirective, FormsModule,

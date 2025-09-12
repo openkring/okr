@@ -1,4 +1,4 @@
-import { CategoryModel, ExportFormat } from "@bk2/shared/models";
+import { CategoryModel, ExportFormat } from '@bk2/shared-models';
 
 export type ExportFormatCategory = CategoryModel;
 

@@ -1,14 +1,14 @@
 import { Inject } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { ToastController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
-import { ref, getDownloadURL, deleteObject } from "firebase/storage";
-import * as XLSX from 'xlsx';
-import * as JSZip from 'jszip';
+import { ToastController } from '@ionic/angular';
 import { saveAs } from 'file-saver';
+import { deleteObject, getDownloadURL, ref } from "firebase/storage";
+import * as JSZip from 'jszip';
+import * as XLSX from 'xlsx';
 
-import { STORAGE } from '@bk2/shared/config';
-import { DateFormat, getTodayStr } from '@bk2/shared/util-core';
+import { STORAGE } from '@bk2/shared-config';
+import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
 
 import { error, showToast } from './alert.util';
 // import * as papa from 'papaparse'; // for csv conversions

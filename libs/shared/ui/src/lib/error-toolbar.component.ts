@@ -2,13 +2,14 @@ import { AsyncPipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { IonItem, IonToolbar } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared/categories';
-import { TranslatePipe } from '@bk2/shared/i18n';
-import { CategoryPlainNamePipe } from '@bk2/shared/pipes';
-import { ColorIonic } from '@bk2/shared/models';
+import { ColorsIonic } from '@bk2/shared-categories';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { ColorIonic } from '@bk2/shared-models';
+import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-error-toolbar',
+  standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, CategoryPlainNamePipe,
     IonToolbar, IonItem

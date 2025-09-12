@@ -1,4 +1,12 @@
 {
+  "hosting": {
+    "headers": [
+      {
+        "key": "Content-Security-Policy",
+        "value": "script-src 'self' 'unsafe-inline' https://www.gstatic.com; object-src 'none'; base-uri 'self';"
+      }
+    ]
+  },
   "firestore": {
     "database": "(default)",
     "rules": "firestore.rules",

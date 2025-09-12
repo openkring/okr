@@ -1,4 +1,4 @@
-import { CategoryModel, MenuAction } from "@bk2/shared/models";
+import { CategoryModel, MenuAction } from '@bk2/shared-models';
 
 export type MenuActionCategory = CategoryModel; 
 
