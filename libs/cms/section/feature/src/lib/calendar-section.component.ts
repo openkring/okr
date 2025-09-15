@@ -92,8 +92,10 @@ export class CalendarSectionComponent implements OnInit {
       // angular component calls render() from ngAfterViewInit() which is too early for fullcalendar in Ionic (should be in ionViewDidLoad())
       // the calendar renders correctly if render() is called after the page is loaded, e.g. by resizing the window.
       // that's what this hack is doing: trigger resize window after 1ms
-      setTimeout(function () {
-        window.dispatchEvent(new Event('resize'));
+      setTimeout( () => {
+        if (isPlatformBrowser(this.platformId)) {
+          window.dispatchEvent(new Event('resize'));
+        }
       }, 1);
     }
   }

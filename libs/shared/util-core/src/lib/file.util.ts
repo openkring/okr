@@ -263,7 +263,7 @@ export function convertBase64ToBlob(base64Image: string) {
   const imageType = parts[0].split(':')[1];
 
   // Decode Base64 string
-  const decodedData = window.atob(parts[1]);
+  const decodedData = Buffer.from(parts[1], 'base64').toString('binary');
 
   // Create UNIT8ARRAY of size same as row data length
   const uInt8Array = new Uint8Array(decodedData.length);

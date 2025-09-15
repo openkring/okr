@@ -66,6 +66,10 @@ export class MapSectionComponent implements OnInit, OnDestroy {
   }
 
 async loadMap() {
+  if (!isPlatformBrowser(this.platformId)) {
+    console.warn('MapSectionComponent.loadMap: Not in browser, skipping map load');
+    return;
+  }
   const _mapRef = document.getElementById('map'); // reference to the capacitor-google-map element
   if (!_mapRef) die('MapSectionComponent.loadMap: Map element not found');
   let _centerLatitude = this.centerLatitude();

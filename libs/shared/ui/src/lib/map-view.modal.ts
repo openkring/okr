@@ -1,5 +1,5 @@
-import { AsyncPipe } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { AsyncPipe, isPlatformBrowser } from '@angular/common';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, inject, input, PLATFORM_ID } from '@angular/core';
 import { GoogleMap, MapType } from '@capacitor/google-maps';
 import { IonContent } from '@ionic/angular/standalone';
 
@@ -38,6 +38,7 @@ export interface GeoCoordinates {
 })
 export class MapViewModalComponent implements OnInit, OnDestroy {
   private readonly env = inject(ENV);
+  private readonly platformId = inject(PLATFORM_ID);
 
   public initialPosition = input.required<GeoCoordinates>();
   public coordinates = input<GeoCoordinates[]>([]);
@@ -58,6 +59,11 @@ export class MapViewModalComponent implements OnInit, OnDestroy {
   }
 
   async loadMap() {
+    if (!isPlatformBrowser(this.platformId)) {
+      console.warn('MapSectionComponent.loadMap: Not in browser, skipping map load');
+      return;
+    }
+    
     const _mapRef = document.getElementById('map'); // reference to the capacitor-google-map element
     if (!_mapRef) die('MapViewModal.loadMap: Map element not found');
     this.map = await GoogleMap.create({

@@ -83,12 +83,6 @@ export class AddressModalsService {
     });
     _modal.present();
     await _modal.onWillDismiss();
-    // temporary solution
-    //const _url = `https://www.google.com/maps/search/?api=1&query=${_addressStr}`;
-    //window.open(_url, '_blank');
-
-    // route: 
-    // https://www.google.com/maps/dir/47.2455199,8.710301/47.366659,8.550004/@47.3037508,8.4689009,11z?entry=ttu
   }
 
   public async showQrPaymentSlip(address: AddressModel): Promise<void> {
