@@ -14,7 +14,7 @@ export class LocationModel implements BkModel, NamedModel, SearchableModel, Tagg
   public longitude = 0;
   public placeId = '';
   public what3words = '';
-  public seaLevel = 406; // meters above sea level
+  public seaLevel = 0; // meters above sea level
   public speed = 0; // m/s
   public direction = 0; // degrees
   public notes = '';
