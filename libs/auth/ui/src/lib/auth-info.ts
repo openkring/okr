@@ -1,18 +1,16 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { User } from 'firebase/auth';
-import { map } from 'rxjs';
 
 import { UserModel } from '@bk2/shared-models';
 import { FullNamePipe } from '@bk2/shared-pipes';
+import { NetworkStatusService } from './network-status.service';
 
-import { isOnline$ } from '@bk2/auth-util';
 
 @Component({
   selector: 'bk-auth-info',
   standalone: true,
-  imports: [AsyncPipe, FullNamePipe, IonGrid, IonRow, IonCol],
+  imports: [FullNamePipe, IonGrid, IonRow, IonCol],
   template: `
     <ion-grid>
       <ion-row>
@@ -21,7 +19,7 @@ import { isOnline$ } from '@bk2/auth-util';
       <ion-row>
         <ion-col><small>online status:</small></ion-col>
         <ion-col>
-          <small>{{ online$ | async }}</small>
+          <small>{{ networkStatusService.isOnline() }} ({{ networkStatusService.onlineStatus()}})</small>
         </ion-col>
       </ion-row>
       <ion-row>
@@ -88,12 +86,11 @@ import { isOnline$ } from '@bk2/auth-util';
   `,
 })
 export class AuthInfoComponent {
+  protected networkStatusService = inject(NetworkStatusService);
   public currentUser = input.required<UserModel | undefined>();
   public fbUser = input.required<User | null | undefined>();
   public isAuthenticated = input.required<boolean>();
   public isAdmin = input.required<boolean>();
-
-  public online$ = isOnline$.pipe(map(online => (online ? 'online' : 'offline')));
 
   public printRoles(): string {
     const _roles = this.currentUser()?.roles ?? [];
