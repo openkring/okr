@@ -1,5 +1,4 @@
 import { inject, Injectable } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
 import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
@@ -15,7 +14,6 @@ import { getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from '@bk2/relat
 export class OwnershipService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
-  private readonly toastController = inject(ToastController);
 
   private readonly tenantId = this.env.tenantId;
 
