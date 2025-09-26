@@ -110,7 +110,7 @@ export function newAlbumConfig(tenantId?: string, year?: string): AlbumConfig {
 
 export function newChatConfig(imgixBaseUrl: string): ChatConfig {
   return {
-    channelId: 'chat',
+    channelId: `chat-${Math.random().toString(36).substring(2)}`,
     channelName: 'Gruppenchat',
     channelImageUrl: imgixBaseUrl + '/logo/icons/chatbox.svg',
     channelDescription: '',

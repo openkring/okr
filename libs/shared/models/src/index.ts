@@ -16,6 +16,7 @@ export * from './lib/competition-level.model';
 export * from './lib/db-query.model';
 export * from './lib/document.model';
 export * from './lib/expense.model';
+export * from './lib/firebase-user.model';
 export * from './lib/geoposition.model';
 export * from './lib/group.model';
 export * from './lib/invoice-position.model';

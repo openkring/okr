@@ -15,6 +15,20 @@ import {
 const firestore = admin.firestore(); 
 
 /**
+ * BE AWARE OF RECURSIVE TRIGGERS !
+ * 
+ * person/address -> person (fav_*)
+ * org/address -> org (fav_*)
+ * resource -> ownership, reservation
+ * person -> ownership, membership, personalRel, workingRel, reservation
+ * org -> ownership, membership, workingRel
+ * group -> membership
+ * 
+ * As a general rule, there must be no trigger on any relationships.
+ * Also, person and org should not trigger a change down into addresses (only upwards from address to person or org)
+ */
+
+/**
  * If a person is changed, we update the favorite address info of the person.
  * This is necessary to keep the favorite address info in sync with the address data.
  * THIS UPDATES PERSON (AND TRIGGERS onPersonChange) - be cautious about circular updates!   

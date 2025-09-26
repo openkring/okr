@@ -1,8 +1,10 @@
-import { LogInfo, PersonModel, UserModel } from '@bk2/shared-models';
-import { showToast } from '@bk2/shared-util-angular';
-import { die, generateRandomString, warn } from '@bk2/shared-util-core';
+import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { ToastController } from '@ionic/angular/standalone';
-import { Auth, AuthError, createUserWithEmailAndPassword, User } from 'firebase/auth';
+
+import { FirebaseUserModel, LogInfo, PersonModel, UserModel } from '@bk2/shared-models';
+import { error, showToast } from '@bk2/shared-util-angular';
+import { die, generateRandomString } from '@bk2/shared-util-core';
+import { getApp } from 'firebase/app';
 
 export function getLogInfo(key: string | undefined, name: string | undefined, message: string, isVerbose = true): LogInfo {
   if (isVerbose === true) console.log(`${key}/${name}: ${message}`);
@@ -14,48 +16,171 @@ export function getLogInfo(key: string | undefined, name: string | undefined, me
 }
 
 /**
+ * Validate email format
+ */
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * Validate password strength (Firebase minimum: 6 characters)
+ */
+export function isValidPassword(password: string): boolean {
+  return !!password && password.length >= 6;
+}
+
+/**
  * Create a new Firebase account with the given email address.
- * On successful creation of the user account, this new user is signed in. That's why we update the user to the former current user.
- * @param the current firebase user
+ * @param toastController used to show a toast message
  * @param loginEmail the login email address of the new user
+ * @param password the password of the new user account
+ * @param displayName the display name of the new user account, by default the login email is used
  * @returns the uid of the new Firebase account or undefined if there was an error.
  */
-export async function createFirebaseAccount(auth: Auth, toastController: ToastController, fbUser: User, loginEmail: string, password?: string): Promise<string | undefined> {
-  let _password = password;
-  if (!_password || _password.length === 0) _password = generateRandomString(12);
+export async function createFirebaseAccount(toastController: ToastController, loginEmail: string, password: string, displayName?: string): Promise<string | undefined> {
   try {
-    const _userCredential = await createUserWithEmailAndPassword(auth, loginEmail, _password);
-    await showToast(toastController, '@auth.operation.create.confirmation');
-    await updateUser(auth, fbUser); // reset the logged-in user
-    return _userCredential.user.uid;
-  } catch (_ex) {
-    const _error = _ex as AuthError;
-    switch (_error.code) {
-      case 'auth/email-already-in-use':
-        warn(`Email address ${loginEmail} already in use.`);
-        break;
-      case 'auth/invalid-email':
-        warn(`Email address ${loginEmail} is invalid.`);
-        break;
-      case 'auth/operation-not-allowed':
-        warn(`Error during sign up (not allowed).`);
-        break;
-      case 'auth/weak-password':
-        warn('Password is not strong enough. Add additional characters including special characters and numbers.');
-        break;
-      default:
-        warn(_error.message);
-        break;
+    if (!isValidPassword(password)) {
+      await showToast(toastController, 'adminops.util.createFirebaseAccount: password must be at least 6 characters');
+      return undefined;
     }
-    await updateUser(auth, fbUser); // reset the logged-in user
-    return undefined;
+    if (!displayName || displayName.length === 0) {
+      displayName = loginEmail;
+    }
+    
+    // Get a reference to the Firebase Functions service.
+    const functions = getFunctions(getApp(), 'europe-west6');
+    //if (store.appStore.env.useEmulators) {
+    //  connectFunctionsEmulator(functions, 'localhost', 5001);
+    //}
+    const _createFirebaseUserFunction = httpsCallable(functions, 'createFirebaseUser');
+    const _result = await _createFirebaseUserFunction({ email: loginEmail, password, displayName });
+    const _data = _result.data as { uid: string; };
+    
+    await showToast(toastController, '@auth.operation.create.confirmation');
+    console.log(`adminops.util.createFirebaseAccount: successfully created user ${_data.uid} for ${loginEmail}`);
+    return _data.uid;
+  }
+  catch(_ex) {
+    error(toastController, 'adminops.util.createFirebaseAccount:  -> error: ' + JSON.stringify(_ex));
   }
 }
 
-export async function updateUser(auth: Auth, user: User | undefined | null): Promise<void> {
-  if (user) {
-    await auth.updateCurrentUser(user);
+/**
+ * Look for a user with the given loginEmail and return its firebase uid.
+ * @param loginEmail the login email address of the new user
+ * @returns the firebase user id
+ */
+export async function getUidByEmail(loginEmail: string): Promise<string | undefined> {
+  try {
+    // Get a reference to the Firebase Functions service.
+    const functions = getFunctions(getApp(), 'europe-west6');
+    //if (store.appStore.env.useEmulators) {
+    //  connectFunctionsEmulator(functions, 'localhost', 5001);
+    //}
+    const _getUidByEmailFunction = httpsCallable(functions, 'getUidByEmail');
+    const _result = await _getUidByEmailFunction({ email: loginEmail });
+    const _data = _result.data as { uid: string; };
+    console.log(`adminops.util.getUidByEmail: received uid ${_data.uid} for ${loginEmail}`);    
+    return _data.uid;
+  } 
+  catch (error) {
+    console.error('adminops.util.getUidByEmail:  -> error: ' + JSON.stringify(error));
   }
+}
+
+/**
+ * Lookup a firebase user by its uid.
+ * @param uid the firebase user id
+ * @returns limited user data to avoid exposing sensitive data
+ */
+export async function getFirebaseUser(uid: string): Promise<FirebaseUserModel | undefined> {
+  try {
+    // Get a reference to the Firebase Functions service.
+    const functions = getFunctions(getApp(), 'europe-west6');
+    //if (store.appStore.env.useEmulators) {
+    //  connectFunctionsEmulator(functions, 'localhost', 5001);
+    //}
+    const _getFirebaseUserFunction = httpsCallable(functions, 'getFirebaseUser');
+    const _result = await _getFirebaseUserFunction({ uid });
+    const _fbUser = _result.data as FirebaseUserModel;
+    console.log(`adminops.util.getFirebaseUser: received firebase user`, _fbUser);    
+    return _fbUser;
+  } 
+  catch (error) {
+    console.error('adminops.util.getFirebaseUser:  -> error: ' + JSON.stringify(error));
+  }
+}
+
+/**
+ * Set a new password for the firebase user with a given uid.
+ * @param uid the firebase user id of the user to set its password for
+ * @param password the new password
+ */
+export async function setPassword(uid: string, password: string): Promise<void> {
+  try {
+    // Get a reference to the Firebase Functions service.
+    const functions = getFunctions(getApp(), 'europe-west6');
+    //if (store.appStore.env.useEmulators) {
+    //  connectFunctionsEmulator(functions, 'localhost', 5001);
+    //}
+    const _setPasswordFunction = httpsCallable(functions, 'getUidByEmail');
+    await _setPasswordFunction({ uid, password });
+    console.log(`adminops.util.setPassword: setting new password for user ${uid}`);    
+  } 
+  catch (error) {
+    console.error('adminops.util.setPassword:  -> error: ' + JSON.stringify(error));
+  }
+}
+
+/**
+ * Set a new loginEmail for the firebase user with a given uid.
+ * @param uid the firebase user id of the user to set its password for
+ * @param email the new login email
+ */
+export async function setLoginEmail(uid: string, email: string): Promise<void> {
+  try {
+    const functions = getFunctions(getApp(), 'europe-west6');
+    //if (store.appStore.env.useEmulators) {
+    //  connectFunctionsEmulator(functions, 'localhost', 5001);
+    //}
+    const _setLoginEmailFunction = httpsCallable(functions, 'setLoginEmail');
+    await _setLoginEmailFunction({ uid, email });
+    console.log(`adminops.util.setLoginEmail: setting new email for user ${uid}`);    
+  } 
+  catch (error) {
+    console.error('adminops.util.setLoginEmail:  -> error: ' + JSON.stringify(error));
+  }
+}
+
+/**
+ * Update an existing firebase user. This can also be used to change the users loginEmail.
+ * @param uid the firebase user id of the user to set its password for
+ * @param fbUser the FirebaseUserModel data structure (it needs to be complete and is saved as is)
+ */
+export async function updateFirebaseUser(fbUser: FirebaseUserModel, useEmulator = true): Promise<void> {
+  try {
+    const functions = getFunctions(getApp(), 'europe-west6');
+    if (useEmulator) {
+      connectFunctionsEmulator(functions, 'localhost', 5001);
+    }
+    const _updateFirebaseUserFunction = httpsCallable(functions, 'updateFirebaseUser');
+    await _updateFirebaseUserFunction(fbUser);
+    console.log(`adminops.util.updateFirebaseUser: user ${fbUser.uid} updated.`);    
+  } 
+  catch (error) {
+    console.error('adminops.util.updateFirebaseUser:  -> error: ' + JSON.stringify(error));
+  }
+}
+
+/**
+ * Generates a password.
+ * By default, the password is a 12 char long random string.
+ * Optionally, a password can be preset.
+ * @param password the preset password
+ */
+export function generatePassword(password?: string): string {
+  return (!password || password.length === 0) ? generateRandomString(12) : password;
 }
 
 /**

@@ -75,11 +75,12 @@ export class FirestoreService {
     // If bkey is not set, the document ID is automatically assigned, otherwise bkey is used as the document ID in Firestore.
     const _key = model.bkey;
     const _collection = (_key?.length === 0) ? collectionName : `${collectionName}/${_key}`;
-    const _ref = doc(collection(this.firestore, _collection));
+    const _ref = doc(this.firestore, _collection);
 
     // we delete the bkey from the model because we don't want to store it in the database (_ref.id is available instead)
     const _storedModel = removeKeyFromBkModel(model);
     _storedModel.tenants = [this.env.tenantId];   // ensure that the tenant is set
+        console.log('FirestoreService.createModel: storedModel: ', _storedModel);
 
     try {
       // we need to convert the custom object to a pure JavaScript object (e.g. arrays)

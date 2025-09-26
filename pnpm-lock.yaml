@@ -204,11 +204,11 @@ importers:
         specifier: ~7.8.2
         version: 7.8.2
       stream-chat:
-        specifier: ^8.60.0
-        version: 8.60.0
+        specifier: ^9.19.1
+        version: 9.19.1
       stream-chat-angular:
-        specifier: ^5.14.0
-        version: 5.14.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@ngx-translate/core@17.0.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2)(stream-chat@8.60.0)
+        specifier: ^6.2.0
+        version: 6.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@ngx-translate/core@17.0.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2)(stream-chat@9.19.1)
       swiper:
         specifier: ^11.2.10
         version: 11.2.10
@@ -7623,6 +7623,9 @@ packages:
     resolution: {integrity: sha512-cNOjgCnLB+FnvWWtyRTzmB3POJ+cXxTA81LoW7u8JdmhfXzriropYwpjShnz1QLLWsQwY7nIxoDmcPTwphDK9w==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
+  linkifyjs@4.3.2:
+    resolution: {integrity: sha512-NT1CJtq3hHIreOianA8aSXn6Cw0JzYOuDQbOrSPe7gqFnCpKP++MQe3ODgO3oh2GJFORkAAdqredOa60z63GbA==}
+
   listr2@3.14.0:
     resolution: {integrity: sha512-TyWI8G99GX9GjE54cJ+RrNMcIFBfwMPxc3XTFiAYGN4s10hWROGtOg7+O6u6LE3mNkyld7RSLE6nrKBvTfcs3g==}
     engines: {node: '>=10.0.0'}
@@ -9787,15 +9790,15 @@ packages:
   stream-chain@2.2.5:
     resolution: {integrity: sha512-1TJmBx6aSWqZ4tx7aTpBDXK0/e2hhcNSTV8+CbFJtDjbb+I1mZ8lHit0Grw9GRT+6JbIrrDd8esncgBi8aBXGA==}
 
-  stream-chat-angular@5.14.0:
-    resolution: {integrity: sha512-iKkidNdd0ssStUkX1/pv2BzBLcSVakaPih/sDEONCIWsMyFOKEQhTgENg7gRQ++Zh95M60ZP6BJteAiaYuvpZA==}
+  stream-chat-angular@6.2.0:
+    resolution: {integrity: sha512-kzyzIxHu39Ycy8k+sUURkDtcChUvUB/ooL1sNSuyGXWDMTCQqyMhyenMwszIX+H99n8e7AM/aWqbLum9h0dbiQ==}
     peerDependencies:
-      '@angular/common': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      '@angular/core': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      '@angular/common': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0
+      '@angular/core': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0
       '@breezystack/lamejs': ^1.2.7
-      '@ngx-translate/core': ^14.0.0 || ^15.0.0
+      '@ngx-translate/core': ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
       rxjs: ^7.4.0
-      stream-chat: ^8.60.0
+      stream-chat: ^9.0.0
     peerDependenciesMeta:
       '@breezystack/lamejs':
         optional: true
@@ -9803,6 +9806,10 @@ packages:
   stream-chat@8.60.0:
     resolution: {integrity: sha512-7FpO7Wno++r+n+x9aFuXtGYtNO06CIMd2Bxe3doYZLhMfS0nuaXloeFlGcMT0r4U/6bnguz1qQdDJUPNQAS8bQ==}
     engines: {node: '>=16'}
+
+  stream-chat@9.19.1:
+    resolution: {integrity: sha512-gii7sdM+MWMkJk3rdUDlDSr21DYfF5L3K2W9GDGb+8ofcbi1IHk5lOnP5R+ItsdtkvYKKw9E5/N1RjfhTyqxvQ==}
+    engines: {node: '>=18'}
 
   stream-events@1.0.5:
     resolution: {integrity: sha512-E1GUzBSgvct8Jsb3v2X15pjzN1tYebtbLaMg+eBOUOAxgbLoSbT2NS91ckc5lJD1KfLjId+jXJRgo0qnV5Nerg==}
@@ -18979,6 +18986,10 @@ snapshots:
     dependencies:
       ws: 8.18.0
 
+  isomorphic-ws@5.0.0(ws@8.18.3):
+    dependencies:
+      ws: 8.18.3
+
   isstream@0.1.2: {}
 
   istanbul-lib-coverage@3.2.2: {}
@@ -19604,6 +19615,8 @@ snapshots:
   lines-and-columns@1.2.4: {}
 
   lines-and-columns@2.0.3: {}
+
+  linkifyjs@4.3.2: {}
 
   listr2@3.14.0(enquirer@2.4.1):
     dependencies:
@@ -22029,7 +22042,7 @@ snapshots:
 
   stream-chain@2.2.5: {}
 
-  stream-chat-angular@5.14.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@ngx-translate/core@17.0.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2)(stream-chat@8.60.0):
+  stream-chat-angular@6.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@ngx-translate/core@17.0.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2)(stream-chat@9.19.1):
     dependencies:
       '@angular/common': 20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2)
       '@angular/core': 20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)
@@ -22043,7 +22056,7 @@ snapshots:
       ngx-float-ui: 19.0.1(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2)
       pretty-bytes: 6.1.1
       rxjs: 7.8.2
-      stream-chat: 8.60.0
+      stream-chat: 9.19.1
       tslib: 2.8.1
       uuid: 9.0.1
 
@@ -22058,6 +22071,22 @@ snapshots:
       isomorphic-ws: 4.0.1(ws@7.5.10)
       jsonwebtoken: 9.0.2
       ws: 7.5.10
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - utf-8-validate
+
+  stream-chat@9.19.1:
+    dependencies:
+      '@types/jsonwebtoken': 9.0.10
+      '@types/ws': 8.18.1
+      axios: 1.10.0
+      base64-js: 1.5.1
+      form-data: 4.0.4
+      isomorphic-ws: 5.0.0(ws@8.18.3)
+      jsonwebtoken: 9.0.2
+      linkifyjs: 4.3.2
+      ws: 8.18.3
     transitivePeerDependencies:
       - bufferutil
       - debug

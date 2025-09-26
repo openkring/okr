@@ -3,7 +3,7 @@
     "headers": [
       {
         "key": "Content-Security-Policy",
-        "value": "script-src 'self' 'unsafe-inline' https://www.gstatic.com; object-src 'none'; base-uri 'self';"
+        "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://apis.google.com https://static.imgix.net https://maps.googleapis.com 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.stream-io-api.com wss://*.stream-io-api.com;"
       }
     ]
   },

@@ -23,10 +23,12 @@ export interface ChatUser {
 
 export interface ChatSectionState {
   config: ChatConfig | undefined;
+  isChatInitialized: boolean;
 }
 
 export const initialState: ChatSectionState = {
   config: undefined,
+  isChatInitialized: false
 };
 
 export const ChatSectionStore = signalStore(
@@ -146,18 +148,36 @@ export const ChatSectionStore = signalStore(
         debugData<ChatConfig | undefined>(`ChatSectionStore.setConfig:`, config, store.currentUser());
       },
 
+      setIsInitialized(isChatInitialized: boolean): void {
+        patchState(store, { isChatInitialized });
+      },
+
       async initializeChat(chatUser: ChatUser, token: string): Promise<void> {
-        store.chatService.init(store.appStore.env.services.chatStreamApiKey, chatUser.id, token); 
-        const _langCode = store.currentUser()?.userLanguage || DefaultLanguage;
-        const _lang = Languages[_langCode].abbreviation;
-        console.log(`ChatSectionStore.initializeChat: Setting chat language to ${_lang} (${_langCode})`);
-        //store.streamI18nService.setTranslation(_lang);
+        // a guard to ensure initilialization is only done once per user session
+        if (store.isChatInitialized()) {
+          debugMessage(`ChatSectionStore.initializeChat: Chat already initialized for user ${chatUser.id}`);
+          return; // Skip if already initialized
+        }
+
+        store.chatService.init(store.appStore.env.services.chatStreamApiKey, chatUser.id, token);
+        patchState(store, { isChatInitialized: true }); // Mark as initialized
+
+        try {
+          const _langCode = store.currentUser()?.userLanguage || DefaultLanguage;
+          const _lang = Languages[_langCode].abbreviation;
+          await store.streamI18nService.setTranslation(_lang);
+          console.log(`ChatSectionStore.initializeChat: Setting chat language to ${_lang} (${_langCode})`);
+        } catch (error) {
+          console.error(`ChatSectionStore.initializeChat: Failed to set German translation:`, error);
+          // Fallback: proceed without translation or use default
+        }
+
         const _config = store.config() ?? die('ChatSectionStore.initializeChat: No config found.');
         const channel = store.chatService.chatClient.channel(_config.channelType ?? 'messaging', _config.channelId, {
           image: _config.channelImageUrl ?? '',
           name: _config.channelName ?? '',
-        });
-        await channel.create();
+        } as any);
+        const _state = await channel.watch();
 
         store.channelService.init({
           type: _config.channelType ?? 'messaging',

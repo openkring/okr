@@ -31,7 +31,6 @@ export const MenuStore = signalStore(
         if (!params.name || params.name.length === 0) {
           return of(undefined);
         }
-        debugMessage(`MenuStore: loading menu with name:${params.name}`, params.user);
         return store.menuService.read(params.name);
       }
     })

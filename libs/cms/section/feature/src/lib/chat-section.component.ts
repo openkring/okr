@@ -1,11 +1,11 @@
 import { isPlatformBrowser } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, Component, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
-import { TranslateModule } from '@ngx-translate/core';
 import { StreamAutocompleteTextareaModule, StreamChatModule } from 'stream-chat-angular';
 
 import { SectionModel } from '@bk2/shared-models';
 import { SpinnerComponent } from '@bk2/shared-ui';
+import { debugMessage } from '@bk2/shared-util-core';
 
 import { ChatSectionStore } from './chat-section.store';
 
@@ -14,7 +14,6 @@ import { ChatSectionStore } from './chat-section.store';
   standalone: true,
   imports: [
     SpinnerComponent,
-    TranslateModule,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,
     StreamChatModule, StreamAutocompleteTextareaModule,
   ],
@@ -63,6 +62,7 @@ import { ChatSectionStore } from './chat-section.store';
 export class ChatSectionComponent {
   private readonly chatSectionStore = inject(ChatSectionStore);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
 
   public section = input<SectionModel>();
   protected readonly title = computed(() => this.section()?.title);
@@ -81,7 +81,7 @@ export class ChatSectionComponent {
       if (isPlatformBrowser(this.platformId)) {
         const _chatUser = this.chatSectionStore.chatUser();
         const _token = this.chatSectionStore.userToken();
-        if (_chatUser && _token) {
+        if (_chatUser && _token && !this.chatSectionStore.isChatInitialized()) {
           this.chatSectionStore.initializeChat(_chatUser, _token);
         }
       }

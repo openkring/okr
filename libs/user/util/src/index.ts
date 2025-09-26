@@ -1,4 +1,5 @@
 export * from './lib/user.util';
+export * from './lib/fbuser.validations';
 export * from './lib/user.validations';
 export * from './lib/user-auth-form.model';
 export * from './lib/user-auth-form.validations';

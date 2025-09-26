@@ -6,18 +6,19 @@ import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
-import { of } from 'rxjs';
+import { firstValueFrom, from, of } from 'rxjs';
 
 import { AUTH } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
-import { debugListLoaded, die, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@bk2/shared-util-core';
+import { debugListLoaded, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@bk2/shared-util-core';
 
-import { createFirebaseAccount, createUserFromPerson } from '@bk2/aoc-util';
+import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, setLoginEmail, getFirebaseUser, updateFirebaseUser } from '@bk2/aoc-util';
 import { AuthService } from '@bk2/auth-data-access';
 import { UserService } from '@bk2/user-data-access';
+import { FbuserEditModalComponent } from '@bk2/user-feature';
 
 export type AocRolesState = {
   calendarName: string;
@@ -104,6 +105,25 @@ export const AocRolesStore = signalStore(
     };
   }),
 
+  withProps(store => ({
+    fbUserResource: rxResource({
+      params: () => ({
+        selectedUser: store.selectedUser(),
+      }),
+      stream: ({ params }) => {
+        const _selectedUser = params.selectedUser;
+        if (!_selectedUser) return of(undefined);
+        return from(getFirebaseUser(_selectedUser.bkey));
+      }
+    })
+  })),
+
+  withComputed(state => {
+    return {
+      selectedFbUser: computed(() => state.fbUserResource.value())
+    };
+  }),
+
   withMethods(store => {
     return {
       /******************************** setters (filter) ******************************************* */
@@ -135,48 +155,67 @@ export const AocRolesStore = signalStore(
        * Creates a new Firebase user account for the selected person if it does not yet exist.
        * Additionally, it creates a new user account for the same user to link the Firebase account with the person.
        * Check whether a Firebase account already exists for this email address. If not, create the account.
-       * On successful creation of the user account, this new user is signed in. That's why we update the user to the former current user.
-       * User account creation can fail if the account already exists and the password is invalid.
+       * On successful creation of the firebase user account, this new user is signed in. That's why we update the user to the former current user.
+       * User account creation can fail if the account already exists or the password is invalid.
        * see https://stackoverflow.com/questions/37517208/firebase-kicks-out-current-user/38013551#38013551
        * for solutions to solve this admin function on the client side without being looged out.
        * @param password - optional password for the new user account. If not given, a random password is generated.
        */
       async createAccountAndUser(password?: string): Promise<void> {
+        let _password = generatePassword(password);
+
         const _person = store.selectedPerson();
         if (!_person) {
           warn('RolesStore.createAccountAndUser: please select a person first.');
-        } else {
-          try {
-            patchState(store, { log: [], logTitle: `creating account for ${_person.firstName} ${_person.lastName}/${_person.bkey}/${_person.fav_email}` });
-            const _user = createUserFromPerson(_person, store.appStore.env.tenantId);
-            const _currentFbUser = store.appStore.fbUser() ?? die('RolesStore.createAccountAndUser: no current Firebase user');
-            if (!_user.loginEmail || _user.loginEmail.length === 0) die('RolesStore.createAccountAndUser: loginEmail is missing - can not register this user');
-            const _uid = await createFirebaseAccount(store.auth, store.toastController, _currentFbUser, _user.loginEmail, password);
-            if (_uid) {
-              // the Firebase account exists, now create the user
+          return;
+        }
+        try {
+          patchState(store, { log: [], logTitle: `creating account for ${_person.firstName} ${_person.lastName}/${_person.bkey}/${_person.fav_email}` });
+          const _user = createUserFromPerson(_person, store.appStore.env.tenantId);
+          if (!_user.loginEmail || _user.loginEmail.length === 0 || !isValidEmail(_user.loginEmail)) {
+            console.warn('RolesStore.createAccountAndUser: loginEmail is missing or invalid - can not register this user');
+            return;
+          }
+          let _uid = await getUidByEmail(_user.loginEmail);
+          if (!_uid) {
+            _uid = await createFirebaseAccount(store.toastController, _user.loginEmail, _password);
+            console.log(`RolesStore.createAccountAndUser: Firebase user <${_uid}/${_user.loginEmail}> created.`);
+          } else {
+            console.log(`RolesStore.createAccountAndUser: Firebase user <${_uid}/${_user.loginEmail}> already exists.`);
+          }
+
+          if (_uid) { // the Firebase account exists, now create the user
+            // check whether this user already exists
+            const _existingUser = await firstValueFrom(store.userService.read(_uid));
+            console.log(`RolesStore.createAccountAndUser: read user ${_uid}`, _existingUser);
+            if (!_existingUser) {
               _user.bkey = _uid;
-              _user.index = store.userService.getSearchIndex(_user);
-              await store.userService.create(_user);
+              console.log('RolesStore.createAccountAndUser: creating user: ', _user);
+              await store.userService.create(_user, store.currentUser());
               store.usersResource.reload();
               store.userResource.reload();
+              console.log(`RolesStore.createAccountAndUser: user ${_uid} was created.`);
+            } else {
+              console.log(`RolesStore.createAccountAndUser: user ${_uid} already exists.`);
             }
-          } catch (_ex) {
-            error(store.toastController, 'RolesStore.createAccountAndUser -> error: ' + JSON.stringify(_ex));
+          } else {
+            console.error('RolesStore.createAccountAndUser: did not receive a valid firebase uid.');
           }
+        } catch (_ex) {
+          error(store.toastController, 'RolesStore.createAccountAndUser -> error: ' + JSON.stringify(_ex));
         }
       },
 
       /**
-       * Reset the password for the user account. This sends a reset password email to the user.
+       * Reset the password for the user account. This sends a reset password email to the user, so that the email receiver can set a new password.
        * This is only possible if the user account has been created before.
-       * This is a sensitive operation and should be avoided (as the admin then knows the user's password).
        */
       async resetPassword(): Promise<void> {
         const _user = store.selectedUser();
         if (!_user) {
           if (store.selectedPerson()) {
-            patchState(store, { log: [], logTitle: 'user is missing; please create a user and account first for this person' });
-            warn('RolesStore.resetPassword: user is missing; please create a user and account first for this person.');
+            patchState(store, { log: [], logTitle: 'user is missing.' });
+            warn('RolesStore.resetPassword: user is missing.');
           } else {
             warn('RolesStore.resetPassword: please select a person first.');
           }
@@ -199,34 +238,57 @@ export const AocRolesStore = signalStore(
        * Set the password for the user account to a given value.
        * This is only possible if the user account has been created before.
        * This is a sensitive operation and should be avoided (as the admin then knows the user's password).
+       * @param password - optional password. If not given, a random password is generated.
        */
-      async setPassword(): Promise<void> {
+      async setPassword(password?: string): Promise<void> {
+        const _password = generatePassword(password);
+
         const _user = store.selectedUser();
         if (!_user) {
           if (store.selectedPerson()) {
-            patchState(store, { log: [], logTitle: 'user is missing; please create a user and account first for this person' });
-            warn('RolesStore.setPassword: user is missing; please create a user and account first for this person.');
+            patchState(store, { log: [], logTitle: 'user is missing' });
+            warn('RolesStore.setPassword: user is missing');
           } else {
             patchState(store, { log: [], logTitle: 'please select a person first' });
             warn('RolesStore.setPassword: please select a person first.');
           }
         } else {
           // a user is selected
-          patchState(store, { log: [], logTitle: 'this is not yet implemented as it needs a cloud function' });
-          console.log('RolesPageComponent.setPassword: this is not yet implemented as it needs a cloud function');
-          /*
-              see: https://stackoverflow.com/questions/29889729/how-to-get-the-email-of-any-user-in-firebase-based-on-user-id
-              1) Implement cloud functions with admin SDK:
-                admin.auth().getUser(uid)
-                admin.auth().getUserByEmail(email)
-                admin.auth().getUserByPhoneNumber(phoneNumber) 
-  
-                admin.auth().getUser(data.uid)
-                  .then(userRecord => resolve(userRecord.toJSON().email))
-                  .catch(error => reject({status: 'error', code: 500, error}))
-  
-              2) Call the cloud function from the client
-          */
+          try {
+            patchState(store, { log: [], logTitle: `setting new password for user ${_user.bkey}` });
+            setPassword(_user.bkey, _password);
+          } catch (_ex) {
+            error(store.toastController, 'RolesStore.setPassword -> error: ' + JSON.stringify(_ex));
+          }
+        }
+      },
+
+      /**
+       * Update the selected firebase user.
+       */
+      async updateFbuser(): Promise<void> {
+        const _fbuser = store.selectedFbUser();
+        if (!_fbuser) {
+          patchState(store, { log: [], logTitle: 'firebase user is missing' });
+          warn('RolesStore.updateFbuser: firebase user is missing');
+        } else {  // a firebase user is selected
+          try {
+            patchState(store, { log: [], logTitle: `updating firebase user ${_fbuser.uid}.` });
+            const _modal = await store.modalController.create({
+              component: FbuserEditModalComponent,
+              componentProps: {
+                fbuser: _fbuser,
+                currentUser: store.currentUser()
+              }
+            });
+            _modal.present();
+            const { data, role } = await _modal.onWillDismiss();
+            if (role === 'confirm') {
+              await updateFirebaseUser(data as FirebaseUserModel, store.appStore.env.useEmulators);
+            }
+          } catch (_ex) {
+            error(store.toastController, 'RolesStore.updateFbuser -> error: ' + JSON.stringify(_ex));
+          }
         }
       },
 
@@ -239,25 +301,36 @@ export const AocRolesStore = signalStore(
         }
         const _email = _person.fav_email;
         patchState(store, { log: [], logTitle: `checking authorisation for ${_person.firstName} ${_person.lastName}/${_person.bkey}/${_email}` });
-
+        patchState(store, { log: logMessage(_log, 'person ID: ' + _person.bkey) });
+        patchState(store, { log: logMessage(_log, 'person tenants: ' + _person.tenants.join(', ')) });
         if (!_email || _email.length === 0) {
           patchState(store, { log: logMessage(_log, 'The person does not have an email address. Therefore, an account can not be opened.') });
         } else {
-          patchState(store, { log: logMessage(_log, 'Email address: ' + _email) });
-        }
+          patchState(store, { log: logMessage(_log, 'person email: ' + _email) });
 
-        const _user = store.selectedUser();
-        if (!_user) {
-          patchState(store, { log: logMessage(_log, 'user is missing; please create a user and Firebase account for this person') });
-        } else {
-          patchState(store, { log: logMessage(_log, 'Corresponding user: ' + _user.bkey) });
-          patchState(store, { log: logMessage(_log, 'isArchived: ' + _user.isArchived) });
-          patchState(store, { log: logMessage(_log, 'user-person link: ' + (_user.personKey === _person.bkey ? 'OK' : 'ERROR: ' + _user.personKey + ' != ' + _person.bkey)) });
-          patchState(store, { log: logMessage(_log, 'tenants: ' + _user.tenants.join(', ')) });
-          patchState(store, { log: logMessage(_log, 'roles: ' + Object.keys(_user.roles)) });
+          const _user = store.selectedUser();
+          if (!_user) {
+            patchState(store, { log: logMessage(_log, 'user is missing') });
+          } else {
+            patchState(store, { log: logMessage(_log, 'user ID: ' + _user.bkey) });
+            patchState(store, { log: logMessage(_log, 'user email: ' + _user.loginEmail) });
+            patchState(store, { log: logMessage(_log, 'isArchived: ' + _user.isArchived) });
+            patchState(store, { log: logMessage(_log, 'user tenants: ' + _user.tenants.join(', ')) });
+            patchState(store, { log: logMessage(_log, 'roles: ' + Object.keys(_user.roles)) });
+            patchState(store, { log: logMessage(_log, 'user-person link: ' + (_user.personKey === _person.bkey ? 'OK' : 'ERROR: ' + _user.personKey + ' != ' + _person.bkey)) });
 
-          // tbd: check firebase auth user account -> how ? lookup by email ?
-          // tbd: check for Firebase acocunt and person not having a user
+          }
+          const _fbUser = store.selectedFbUser();
+          if (!_fbUser) {
+            patchState(store, { log: logMessage(_log, 'firebase user was not found by id (reason could be that there is no user)') });
+            // tbd: try to get the user with uid = getuidByEmail(person.email) -> getFirebaseUser(uid) 
+          } else {
+            patchState(store, { log: logMessage(_log, 'firebase user ID: ' + _fbUser.uid) });
+            patchState(store, { log: logMessage(_log, 'firebase email: ' + _fbUser.email) });
+            if (_user) {
+              patchState(store, { log: logMessage(_log, 'fbUser-user link: ' + (_fbUser.uid === _user.bkey ? 'OK' : 'ERROR: ' + _fbUser.uid + ' != ' + _user.bkey)) });
+            }
+          }
           // tbd: check for all users that have the same email address (and different tenants)
         }
       },
@@ -282,9 +355,9 @@ export const AocRolesStore = signalStore(
           if (store.appStore.env.useEmulators) {
             connectFunctionsEmulator(functions, 'localhost', 5001);
           }
-          const impersonateUserFunction = httpsCallable(functions, 'impersonateUser');
-          const _result = await impersonateUserFunction({ uid: _user.bkey });
-          patchState(store, { log: [], logTitle: `AocRolesStore.impersonateUser: SUCCESS: ${_result}` });
+          const _createCustomTokenFunction = httpsCallable(functions, 'createCustomToken');
+          const _result = await _createCustomTokenFunction({ uid: _user.bkey });
+          patchState(store, { log: [], logTitle: `AocRolesStore.impersonateUser: createCustomToken was successful: ${_result}` });
           const _token = _result.data as string;
           patchState(store, { log: logMessage(_log, `AocRolesStore.impersonateUser: impersonation token <${_token}>`) });
           // Now we can use the impersonation token to sign in the user
@@ -377,6 +450,10 @@ export const AocRolesStore = signalStore(
           console.error('AocRolesStore.createStreamUser: Error creating stream user:', _ex);
         }
       },
+
+      async updateUser(newUser: UserModel): Promise<void> {
+        store.userService.update(newUser, store.currentUser(), '@user.operation.update');
+      }
     };
   })
 );

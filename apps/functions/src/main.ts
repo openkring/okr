@@ -26,9 +26,15 @@ export { app };
 
 functions.logger.info('[Emulator/Direct] functions are exported directly.');
 
-export const getEcho = Test.getEcho;
-export const getIpInfo = Test.getIpInfo;
+// auth
+export const createCustomToken = Auth.createCustomToken; // uid
+export const createFirebaseUser = Auth.createFirebaseUser; // email, password, displayName
+export const getUidByEmail = Auth.getUidByEmail;  // email
+export const getFirebaseUser = Auth.getFirebaseUser; // uid
+export const setPassword = Auth.setPassword; // uid, password
+export const updateFirebaseUser = Auth.updateFirebaseUser; // uid, email, displayName, emailVerified, disabled, phone, photoUrl
 
+// replication
 export const onPersonAddressChange = Replication.onPersonAddressChange;
 export const onOrgAddressChange = Replication.onOrgAddressChange;
 export const onResourceChange = Replication.onResourceChange;
@@ -36,6 +42,7 @@ export const onPersonChange = Replication.onPersonChange;
 export const onOrgChange = Replication.onOrgChange;
 export const onGroupChange = Replication.onGroupChange;
 
+// stream
 export const getStreamUserToken = Stream.getStreamUserToken;
 export const getOtherStreamUserToken = Stream.getOtherStreamUserToken; // uid
 export const revokeOtherStreamUserToken = Stream.revokeOtherStreamUserToken; // uid 
@@ -43,4 +50,9 @@ export const revokeOtherStreamUserToken = Stream.revokeOtherStreamUserToken; // 
 export const onUserCreated = Stream.onUserCreated;
 export const onUserDeleted = Stream.onUserDeleted;
 export const createOtherStreamUser = Stream.createOtherStreamUser; // uid, name, email, image
-export const impersonateUser = Auth.impersonateUser; // uid
+
+// test
+export const getEcho = Test.getEcho;
+export const getIpInfo = Test.getIpInfo;
+
+

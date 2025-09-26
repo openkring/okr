@@ -1,6 +1,6 @@
 import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { StreamChat } from "stream-chat";
+import { StreamChat, UserResponse } from "stream-chat";
 import * as logger from "firebase-functions/logger";
 import * as functions from "firebase-functions/v1";
 
@@ -29,7 +29,6 @@ export const onUserCreated = functions
     const response = await _client.upsertUser({
       id: user.uid,
       name: user.displayName,
-      email: user.email,
       image: user.photoURL,
     });
     logger.log("onUserCreated: stream user created", { response });
@@ -188,7 +187,6 @@ export const createOtherStreamUser = onCall({
     const response = await _client.upsertUser({
       id: request.data.uid,
       name: request.data.name,
-      email: request.data.email,
       image: request.data.image,
     });
     logger.log("createOtherStreamUser: stream user created", { response });
