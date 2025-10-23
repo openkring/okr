@@ -26,7 +26,15 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
       <ion-card>
         <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
-          <iframe id="ytplayer" type="text/html" width="width()" height="height()" [src]="videoUrl()" frameborder="frameborder()"></iframe>
+          <iframe 
+            id="ytplayer"
+            type="text/html"
+            [width]="width()"
+            [height]="height()"
+            [src]="videoUrl()"
+            [attr.frameborder]="frameborder()"
+            allowfullscreen>
+          </iframe>
         </ion-card-content>
       </ion-card>
     } @else {
