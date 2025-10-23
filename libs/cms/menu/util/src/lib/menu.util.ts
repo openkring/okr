@@ -4,7 +4,7 @@ import { Browser } from '@capacitor/browser';
 import { getCategoryAbbreviation, MenuActions, RoleEnums } from '@bk2/shared-categories';
 import { MenuAction, MenuItemModel, RoleEnum, RoleName } from '@bk2/shared-models';
 import { navigateByUrl } from '@bk2/shared-util-angular';
-import { die, getPropertyValue, isType, warn } from '@bk2/shared-util-core';
+import { getPropertyValue, isType, warn } from '@bk2/shared-util-core';
 
 import { MenuItemFormModel } from './menu-item-form.model';
 
@@ -80,34 +80,30 @@ export function convertFormToMenuItem(menuItem: MenuItemModel | undefined, vm: M
   return menuItem;
 }
 
+/**
+ * Map a role name to its corresponding RoleEnum value by searching the RoleEnums array (from @bk2/shared-categories) 
+ * for an entry where the name property matches the input roleName. It is primarily used in the convertMenuItemToForm function to 
+ * transform a MenuItemModel’s roleNeeded field into a RoleEnum for the MenuItemFormModel. If the input roleName is invalid, 
+ * it logs a warning using warn (from @bk2/shared-util-core) and returns RoleEnum.None, ensuring graceful error handling.
+ * @param roleName The corresponding RoleEnum value from the RoleEnums array (e.g., RoleEnum.Admin, RoleEnum.Registered).
+ * @returns Returns RoleEnum.None if the role name is invalid or not found.
+ */
 export function convertRoleNameToEnum(roleName?: string): RoleEnum {
   if (!roleName) return RoleEnum.None;
-  switch (roleName) {
-    case 'none':
-      return RoleEnum.None;
-    case 'anonymous':
-      return RoleEnum.Anonymous;
-    case 'registered':
-      return RoleEnum.Registered;
-    case 'privileged':
-      return RoleEnum.Privileged;
-    case 'contentAdmin':
-      return RoleEnum.ContentAdmin;
-    case 'resourceAdmin':
-      return RoleEnum.ResourceAdmin;
-    case 'memberAdmin':
-      return RoleEnum.MemberAdmin;
-    case 'eventAdmin':
-      return RoleEnum.EventAdmin;
-    case 'treasurer':
-      return RoleEnum.Treasurer;
-    case 'admin':
-      return RoleEnum.Admin;
-    default:
-      die('MenuUtil.convertRoleNameToEnum: invalid roleName=' + roleName);
+
+  const _role = RoleEnums.find(enumItem => enumItem.name === roleName);
+  if (!_role) {
+    warn(`MenuUtil.convertRoleNameToEnum: invalid roleName=${roleName}, defaulting to RoleEnum.None`);
+    return RoleEnum.None;
   }
+  return _role.id;
 }
 
+/**
+ * Map a RoleEnum value to its role name by searching the RoleEnums array (from @bk2/shared-categories)
+ * @param roleEnum the RoleEnum value
+ * @returns the corresponding role name of the role value
+ */
 export function convertRoleEnumToName(roleEnum?: RoleEnum): RoleName | undefined {
   console.log('MenuUtil.convertRoleEnumToName: roleEnum=' + roleEnum);
   return roleEnum === undefined ? 'none' : (RoleEnums[roleEnum].name as RoleName);
