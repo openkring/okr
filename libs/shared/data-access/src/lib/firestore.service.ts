@@ -24,11 +24,11 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
-import { collection, deleteDoc, doc, query, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
-import { Observable, of, shareReplay } from 'rxjs';
+import { BehaviorSubject, from, interval, map, Observable, of, shareReplay, startWith, switchMap } from 'rxjs';
 
-import { ENV, FIRESTORE } from '@bk2/shared-config';
+import { ENV, FIRESTORE, isFirestoreInitializedCheck, isSafari } from '@bk2/shared-config';
 import { BkModel, CommentCollection, CommentModel, DbQuery, UserModel } from "@bk2/shared-models";
 import { error, showToast } from '@bk2/shared-util-angular';
 import { debugMessage, getFullPersonName, getQuery, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
@@ -43,9 +43,9 @@ export class FirestoreService {
   private readonly firestore = inject(FIRESTORE);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly toastController = inject(ToastController);
-
-  // Cache for query Observables to avoid duplicate listeners
+    // Cache for query Observables to avoid duplicate listeners
   private readonly queryCache = new Map<string, Observable<unknown>>();
+  private readonly safariCache = new Map<string, BehaviorSubject<any[]>>();
 
   /**
    * Save a model as a new Firestore document into the database. 
@@ -80,7 +80,6 @@ export class FirestoreService {
     // we delete the bkey from the model because we don't want to store it in the database (_ref.id is available instead)
     const _storedModel = removeKeyFromBkModel(model);
     _storedModel.tenants = [this.env.tenantId];   // ensure that the tenant is set
-        console.log('FirestoreService.createModel: storedModel: ', _storedModel);
 
     try {
       // we need to convert the custom object to a pure JavaScript object (e.g. arrays)
@@ -365,6 +364,9 @@ export class FirestoreService {
    * Execute a Firestore query to search for data in a collection.
    * This method is stateless and can be called multiple times without side effects.
    * It returns an Observable that emits the results of the query.
+   * It detects Safari browsers to handle known Safari-specific quirk with Firestore's WebSocket-base real-time listeners 
+   * (e.g. onSnapshot or collectionData). Safari falls back to HTTP long polling via /channel endpoints, which can trigger 
+   * stricter CORS checks or indexedDB access issues during page navigation/reloads, unlike Chrome's WebSocket preference.
    * @param collectionName The name of the collection.
    * @param dbQuery The query parameters.
    * @param orderByParam The field to order by.
@@ -379,14 +381,54 @@ export class FirestoreService {
   ): Observable<T[]> {
     // ensure that the method is only called in the browser context; returns [] in SSR context
     if (!isPlatformBrowser(this.platformId)) {
+      console.warn('FirestoreService.searchData: Called in non-browser context, returning empty array.');
       return of([]);
     }
 
+    // Guard against queries before Firestore initialization
+    if (!isFirestoreInitializedCheck()) {
+      console.warn('FirestoreService.searchData: Firestore not initialized yet, returning empty array.');
+      return of([]);
+    }
+
+    const isSafariBrowser = isSafari();
+    
     // Create a cache key based on query parameters to avoid duplicate listeners
     const cacheKey = JSON.stringify({ collectionName, dbQuery, orderByParam, sortOrderParam });
 
+    // Clear cache on page reload for Safari to avoid stale WebChannel connections
+    if (isSafariBrowser && performance?.navigation?.type === 1) {
+      console.log('FirestoreService.searchData: Clearing cache for Safari on reload.');
+      this.queryCache.delete(cacheKey);
+      this.safariCache.delete(cacheKey);
+    }
+
+    if (isSafariBrowser) {
+      console.log(`FirestoreService.searchData: Using polling with manual session cache for Safari on ${collectionName}`);
+      // Initialize session cache if not exists
+      if (!this.safariCache.has(cacheKey)) {
+        console.log('FirestoreService.searchData: initializing session cache');
+        this.safariCache.set(cacheKey, new BehaviorSubject<T[]>(this.loadFromSessionStorage(cacheKey)));
+      }
+      const cacheSubject = this.safariCache.get(cacheKey)!;
+
+      // poll every hour (60 * 60 * 1000 ms) to refresh data
+      return interval(3600000).pipe(
+        startWith(0), // Trigger immediately
+        switchMap(() => from(this.getSnapshot<T>(collectionName, dbQuery, orderByParam, sortOrderParam))),
+        map(data => {
+          // Update session storage and BehaviorSubject
+          this.saveToSessionStorage(cacheKey, data);
+          cacheSubject.next(data);
+          return data;
+        }),
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+    }
+
     // Return cached Observable if it exists
     if (this.queryCache.has(cacheKey)) {
+      console.log(`FirestoreService.searchData: Returning cached data for ${cacheKey}`);
       return this.queryCache.get(cacheKey) as Observable<T[]>;
     }
 
@@ -401,11 +443,47 @@ export class FirestoreService {
       ) as Observable<T[]>;
 
       // Cache the Observable
+      console.log(`FirestoreService.searchData: Setting cache for ${cacheKey}`);
       this.queryCache.set(cacheKey, data$);
       return data$;
     } catch (error) {
       console.error(`Firestore query error for ${collectionName}:`, error);
       return of([]); // Return empty array on error
+    }
+  }
+
+  /**
+   * One-time query using getDocs/query. This is only used by Safari browsers, because of its WebSocket limitations.
+   * @param collectionName 
+   * @param dbQuery 
+   * @param orderByParam 
+   * @param sortOrderParam 
+   * @returns 
+   */
+  private async getSnapshot<T>(collectionName: string, dbQuery: DbQuery[], orderByParam: string, sortOrderParam: string): Promise<T[]> {
+    try {
+      const _queries = getQuery(dbQuery, orderByParam, sortOrderParam);
+      const _collectionRef = collection(this.firestore, collectionName);
+      const _queryRef = query(_collectionRef, ..._queries);
+      const snapshot = await getDocs(_queryRef);
+      return snapshot.docs.map(doc => ({ ...doc.data(), bkey: doc.id } as T));
+    } catch (error) {
+      console.error(`FirestoreService.getSnapshot: Error for ${collectionName}:`, error);
+      return [];
+    }
+  }
+
+  private loadFromSessionStorage<T>(cacheKey: string): T[] {
+    console.log(`FirestoreService.loadFromSessionStorage(${cacheKey})`);
+    if (typeof sessionStorage === 'undefined') return [];
+    const cached = sessionStorage.getItem(cacheKey);
+    return cached ? JSON.parse(cached) : [];
+  }
+
+  private saveToSessionStorage<T>(cacheKey: string, data: T[]): void {
+    if (typeof sessionStorage !== 'undefined') {
+      console.log(`FirestoreService.saveToSessionStorage(${cacheKey})`);
+      sessionStorage.setItem(cacheKey, JSON.stringify(data));
     }
   }
 

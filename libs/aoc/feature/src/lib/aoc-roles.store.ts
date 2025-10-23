@@ -8,7 +8,7 @@ import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom, from, of } from 'rxjs';
 
-import { AUTH } from '@bk2/shared-config';
+import { AUTH, isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
@@ -53,6 +53,10 @@ export const AocRolesStore = signalStore(
   withProps(store => ({
     personsResource: rxResource({
       stream: () => {
+        if (!isFirestoreInitializedCheck()) {
+          console.warn('AocRolesStore.personsResource: Firestore not initialized, returning empty stream.');
+          return of([]);
+        }
         const persons$ = store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
         debugListLoaded<PersonModel>('RolesStore.persons', persons$, store.appStore.currentUser());
         return persons$;
@@ -60,6 +64,10 @@ export const AocRolesStore = signalStore(
     }),
     usersResource: rxResource({
       stream: () => {
+        if (!isFirestoreInitializedCheck()) {
+          console.warn('AocRolesStore.usersResource: Firestore not initialized, returning empty stream.');
+          return of([]);
+        }
         const users$ = store.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(store.appStore.env.tenantId), 'loginEmail', 'asc');
         debugListLoaded<UserModel>('RolesStore.users', users$, store.appStore.currentUser());
         return users$;
