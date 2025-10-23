@@ -15,7 +15,7 @@ import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, 
 import { error } from '@bk2/shared-util-angular';
 import { debugListLoaded, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@bk2/shared-util-core';
 
-import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, setLoginEmail, getFirebaseUser, updateFirebaseUser } from '@bk2/aoc-util';
+import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, getFirebaseUser, updateFirebaseUser } from '@bk2/aoc-util';
 import { AuthService } from '@bk2/auth-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { FbuserEditModalComponent } from '@bk2/user-feature';
@@ -114,13 +114,13 @@ export const AocRolesStore = signalStore(
         const _selectedUser = params.selectedUser;
         if (!_selectedUser) return of(undefined);
         return from(getFirebaseUser(_selectedUser.bkey));
-      }
-    })
+      },
+    }),
   })),
 
   withComputed(state => {
     return {
-      selectedFbUser: computed(() => state.fbUserResource.value())
+      selectedFbUser: computed(() => state.fbUserResource.value()),
     };
   }),
 
@@ -162,7 +162,7 @@ export const AocRolesStore = signalStore(
        * @param password - optional password for the new user account. If not given, a random password is generated.
        */
       async createAccountAndUser(password?: string): Promise<void> {
-        let _password = generatePassword(password);
+        const _password = generatePassword(password);
 
         const _person = store.selectedPerson();
         if (!_person) {
@@ -184,7 +184,8 @@ export const AocRolesStore = signalStore(
             console.log(`RolesStore.createAccountAndUser: Firebase user <${_uid}/${_user.loginEmail}> already exists.`);
           }
 
-          if (_uid) { // the Firebase account exists, now create the user
+          if (_uid) {
+            // the Firebase account exists, now create the user
             // check whether this user already exists
             const _existingUser = await firstValueFrom(store.userService.read(_uid));
             console.log(`RolesStore.createAccountAndUser: read user ${_uid}`, _existingUser);
@@ -256,7 +257,7 @@ export const AocRolesStore = signalStore(
           // a user is selected
           try {
             patchState(store, { log: [], logTitle: `setting new password for user ${_user.bkey}` });
-            setPassword(_user.bkey, _password);
+            setPassword(_user.bkey, _password, store.appStore.env.useEmulators);
           } catch (_ex) {
             error(store.toastController, 'RolesStore.setPassword -> error: ' + JSON.stringify(_ex));
           }
@@ -271,15 +272,16 @@ export const AocRolesStore = signalStore(
         if (!_fbuser) {
           patchState(store, { log: [], logTitle: 'firebase user is missing' });
           warn('RolesStore.updateFbuser: firebase user is missing');
-        } else {  // a firebase user is selected
+        } else {
+          // a firebase user is selected
           try {
             patchState(store, { log: [], logTitle: `updating firebase user ${_fbuser.uid}.` });
             const _modal = await store.modalController.create({
               component: FbuserEditModalComponent,
               componentProps: {
                 fbuser: _fbuser,
-                currentUser: store.currentUser()
-              }
+                currentUser: store.currentUser(),
+              },
             });
             _modal.present();
             const { data, role } = await _modal.onWillDismiss();
@@ -318,12 +320,11 @@ export const AocRolesStore = signalStore(
             patchState(store, { log: logMessage(_log, 'user tenants: ' + _user.tenants.join(', ')) });
             patchState(store, { log: logMessage(_log, 'roles: ' + Object.keys(_user.roles)) });
             patchState(store, { log: logMessage(_log, 'user-person link: ' + (_user.personKey === _person.bkey ? 'OK' : 'ERROR: ' + _user.personKey + ' != ' + _person.bkey)) });
-
           }
           const _fbUser = store.selectedFbUser();
           if (!_fbUser) {
             patchState(store, { log: logMessage(_log, 'firebase user was not found by id (reason could be that there is no user)') });
-            // tbd: try to get the user with uid = getuidByEmail(person.email) -> getFirebaseUser(uid) 
+            // tbd: try to get the user with uid = getuidByEmail(person.email) -> getFirebaseUser(uid)
           } else {
             patchState(store, { log: logMessage(_log, 'firebase user ID: ' + _fbUser.uid) });
             patchState(store, { log: logMessage(_log, 'firebase email: ' + _fbUser.email) });
@@ -453,7 +454,7 @@ export const AocRolesStore = signalStore(
 
       async updateUser(newUser: UserModel): Promise<void> {
         store.userService.update(newUser, store.currentUser(), '@user.operation.update');
-      }
+      },
     };
   })
 );

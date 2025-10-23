@@ -47,7 +47,7 @@ export async function createFirebaseAccount(toastController: ToastController, lo
     if (!displayName || displayName.length === 0) {
       displayName = loginEmail;
     }
-    
+
     // Get a reference to the Firebase Functions service.
     const functions = getFunctions(getApp(), 'europe-west6');
     //if (store.appStore.env.useEmulators) {
@@ -55,13 +55,12 @@ export async function createFirebaseAccount(toastController: ToastController, lo
     //}
     const _createFirebaseUserFunction = httpsCallable(functions, 'createFirebaseUser');
     const _result = await _createFirebaseUserFunction({ email: loginEmail, password, displayName });
-    const _data = _result.data as { uid: string; };
-    
+    const _data = _result.data as { uid: string };
+
     await showToast(toastController, '@auth.operation.create.confirmation');
     console.log(`adminops.util.createFirebaseAccount: successfully created user ${_data.uid} for ${loginEmail}`);
     return _data.uid;
-  }
-  catch(_ex) {
+  } catch (_ex) {
     error(toastController, 'adminops.util.createFirebaseAccount:  -> error: ' + JSON.stringify(_ex));
   }
 }
@@ -80,11 +79,10 @@ export async function getUidByEmail(loginEmail: string): Promise<string | undefi
     //}
     const _getUidByEmailFunction = httpsCallable(functions, 'getUidByEmail');
     const _result = await _getUidByEmailFunction({ email: loginEmail });
-    const _data = _result.data as { uid: string; };
-    console.log(`adminops.util.getUidByEmail: received uid ${_data.uid} for ${loginEmail}`);    
+    const _data = _result.data as { uid: string };
+    console.log(`adminops.util.getUidByEmail: received uid ${_data.uid} for ${loginEmail}`);
     return _data.uid;
-  } 
-  catch (error) {
+  } catch (error) {
     console.error('adminops.util.getUidByEmail:  -> error: ' + JSON.stringify(error));
   }
 }
@@ -104,10 +102,9 @@ export async function getFirebaseUser(uid: string): Promise<FirebaseUserModel | 
     const _getFirebaseUserFunction = httpsCallable(functions, 'getFirebaseUser');
     const _result = await _getFirebaseUserFunction({ uid });
     const _fbUser = _result.data as FirebaseUserModel;
-    console.log(`adminops.util.getFirebaseUser: received firebase user`, _fbUser);    
+    console.log(`adminops.util.getFirebaseUser: received firebase user`, _fbUser);
     return _fbUser;
-  } 
-  catch (error) {
+  } catch (error) {
     console.error('adminops.util.getFirebaseUser:  -> error: ' + JSON.stringify(error));
   }
 }
@@ -117,18 +114,17 @@ export async function getFirebaseUser(uid: string): Promise<FirebaseUserModel | 
  * @param uid the firebase user id of the user to set its password for
  * @param password the new password
  */
-export async function setPassword(uid: string, password: string): Promise<void> {
+export async function setPassword(uid: string, password: string, useEmulators = false): Promise<void> {
   try {
     // Get a reference to the Firebase Functions service.
     const functions = getFunctions(getApp(), 'europe-west6');
-    //if (store.appStore.env.useEmulators) {
-    //  connectFunctionsEmulator(functions, 'localhost', 5001);
-    //}
-    const _setPasswordFunction = httpsCallable(functions, 'getUidByEmail');
+    if (useEmulators) {
+      connectFunctionsEmulator(functions, 'localhost', 5001);
+    }
+    const _setPasswordFunction = httpsCallable(functions, 'setPassword');
     await _setPasswordFunction({ uid, password });
-    console.log(`adminops.util.setPassword: setting new password for user ${uid}`);    
-  } 
-  catch (error) {
+    console.log(`adminops.util.setPassword: setting new password for user ${uid}`);
+  } catch (error) {
     console.error('adminops.util.setPassword:  -> error: ' + JSON.stringify(error));
   }
 }
@@ -146,9 +142,8 @@ export async function setLoginEmail(uid: string, email: string): Promise<void> {
     //}
     const _setLoginEmailFunction = httpsCallable(functions, 'setLoginEmail');
     await _setLoginEmailFunction({ uid, email });
-    console.log(`adminops.util.setLoginEmail: setting new email for user ${uid}`);    
-  } 
-  catch (error) {
+    console.log(`adminops.util.setLoginEmail: setting new email for user ${uid}`);
+  } catch (error) {
     console.error('adminops.util.setLoginEmail:  -> error: ' + JSON.stringify(error));
   }
 }
@@ -166,9 +161,8 @@ export async function updateFirebaseUser(fbUser: FirebaseUserModel, useEmulator 
     }
     const _updateFirebaseUserFunction = httpsCallable(functions, 'updateFirebaseUser');
     await _updateFirebaseUserFunction(fbUser);
-    console.log(`adminops.util.updateFirebaseUser: user ${fbUser.uid} updated.`);    
-  } 
-  catch (error) {
+    console.log(`adminops.util.updateFirebaseUser: user ${fbUser.uid} updated.`);
+  } catch (error) {
     console.error('adminops.util.updateFirebaseUser:  -> error: ' + JSON.stringify(error));
   }
 }
@@ -180,7 +174,7 @@ export async function updateFirebaseUser(fbUser: FirebaseUserModel, useEmulator 
  * @param password the preset password
  */
 export function generatePassword(password?: string): string {
-  return (!password || password.length === 0) ? generateRandomString(12) : password;
+  return !password || password.length === 0 ? generateRandomString(12) : password;
 }
 
 /**

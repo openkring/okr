@@ -1,13 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import * as admin from 'firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
-
 
 // onCall methods are automatically POST requests, so we don't need to check the method.
 
 /**
- * Creates a custom token for an existing user. 
+ * Creates a custom token for an existing user.
  * The custom token can be used by admin users on the client side to login as this user (impersonate).
  * @param: uid the firebase user id of the user to impersonate
  * @return: the custom token of the given user
@@ -15,11 +14,9 @@ import { getAuth } from 'firebase-admin/auth';
 export const createCustomToken = functions.onCall(
   {
     region: 'europe-west6',
-    enforceAppCheck: true
+    enforceAppCheck: true,
   },
-  async (request: functions.CallableRequest<{ 
-    uid: string 
-  }>) => {
+  async (request: functions.CallableRequest<{ uid: string }>) => {
     logger.info('createCustomToken: Processing request', {
       uid: request.data.uid,
       authUid: request.auth?.uid,
@@ -33,7 +30,7 @@ export const createCustomToken = functions.onCall(
     checkStringField(request, 'createCustomToken', 'uid');
 
     try {
-      logger.info(`createCustomToken: user ${request.auth!.uid} wants custom token of user ${request.data.uid}`);
+      logger.info(`createCustomToken: user ${request.auth?.uid} wants custom token of user ${request.data.uid}`);
       const _customToken = await getAuth().createCustomToken(request.data.uid);
       logger.info(`createCustomToken: custom token created successfully: ${_customToken}`);
       return { success: true, token: _customToken };
@@ -53,40 +50,37 @@ export const createCustomToken = functions.onCall(
 export const createFirebaseUser = functions.onCall(
   {
     region: 'europe-west6',
-    enforceAppCheck: true
-  },  
-  async (request: functions.CallableRequest<{ 
-    email: string,
-    password: string,
-    displayName: string
-  }>) => {
-  logger.info('createFirebaseUser: Processing request', {
-    email: request.data.email,
-    password: request.data.password,
-    displayName: request.data.displayName,
-    authUid: request.auth?.uid,
-    appCheck: !!request.app,
-    serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
-  });
-
-  checkAppCheckToken(request, 'createFirebaseUser');
-  checkAuthentication(request, 'createFirebaseUser');
-  checkAdminUser(request, 'createFirebaseUser');
-  await checkAdminClaim(request, 'createFirebaseUser');
-
-  try {
-    const userRecord = await getAuth().createUser({
+    enforceAppCheck: true,
+  },
+  async (request: functions.CallableRequest<{ email: string; password: string; displayName: string }>) => {
+    logger.info('createFirebaseUser: Processing request', {
       email: request.data.email,
       password: request.data.password,
       displayName: request.data.displayName,
+      authUid: request.auth?.uid,
+      appCheck: !!request.app,
+      serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
     });
-    console.log('createFirebaseUser: OK');
-    return { uid: userRecord.uid };
-  } catch (error: any) {
-    console.error('createFirebaseUser: ERROR: ', error);
-    throw new functions.HttpsError('internal', `Failed to create user: ${error.message}`);
+
+    checkAppCheckToken(request, 'createFirebaseUser');
+    checkAuthentication(request, 'createFirebaseUser');
+    checkAdminUser(request, 'createFirebaseUser');
+    await checkAdminClaim(request, 'createFirebaseUser');
+
+    try {
+      const userRecord = await getAuth().createUser({
+        email: request.data.email,
+        password: request.data.password,
+        displayName: request.data.displayName,
+      });
+      console.log('createFirebaseUser: OK');
+      return { uid: userRecord.uid };
+    } catch (error: any) {
+      console.error('createFirebaseUser: ERROR: ', error);
+      throw new functions.HttpsError('internal', `Failed to create user: ${error.message}`);
+    }
   }
-});
+);
 
 /**
  * Lookup a firebase user by its loginEmail and return its uid.
@@ -96,11 +90,9 @@ export const createFirebaseUser = functions.onCall(
 export const getUidByEmail = functions.onCall(
   {
     region: 'europe-west6',
-    enforceAppCheck: true
-  },  
-  async (request: functions.CallableRequest<{ 
-    email: string,
-  }>) => {
+    enforceAppCheck: true,
+  },
+  async (request: functions.CallableRequest<{ email: string }>) => {
     logger.info('getUidByEmail: Processing request', {
       email: request.data.email,
       authUid: request.auth?.uid,
@@ -117,7 +109,7 @@ export const getUidByEmail = functions.onCall(
       const user = await getAuth().getUserByEmail(request.data.email);
       console.log('getUidByEmail: OK');
       return { uid: user.uid };
-    } catch(error: any) {
+    } catch (error: any) {
       console.error('getUidByEmail: ERROR: ', error);
       throw new functions.HttpsError('internal', `Failed to get the uid: ${error.message}`);
     }
@@ -132,11 +124,9 @@ export const getUidByEmail = functions.onCall(
 export const getFirebaseUser = functions.onCall(
   {
     region: 'europe-west6',
-    enforceAppCheck: true
-  },  
-  async (request: functions.CallableRequest<{ 
-    uid: string,
-  }>) => {
+    enforceAppCheck: true,
+  },
+  async (request: functions.CallableRequest<{ uid: string }>) => {
     logger.info('getFirebaseUser: Processing request', {
       uid: request.data.uid,
       authUid: request.auth?.uid,
@@ -152,17 +142,17 @@ export const getFirebaseUser = functions.onCall(
     try {
       const _user = await getAuth().getUser(request.data.uid);
       console.log('getFirebaseUser: OK');
-      return { 
+      return {
         uid: _user.uid,
         email: _user.email,
         displayName: _user.displayName,
         emailVerified: _user.emailVerified,
         disabled: _user.disabled,
         phone: _user.phoneNumber,
-        photoUrl: _user.photoURL
+        photoUrl: _user.photoURL,
       };
       // tbd: customClaims, multiFactor
-    } catch(error: any) {
+    } catch (error: any) {
       console.error('getFirebaseUser: ERROR: ', error);
       throw new functions.HttpsError('internal', `Failed to get the firebase user: ${error.message}`);
     }
@@ -177,12 +167,9 @@ export const getFirebaseUser = functions.onCall(
 export const setPassword = functions.onCall(
   {
     region: 'europe-west6',
-    enforceAppCheck: true
-  },  
-  async (request: functions.CallableRequest<{ 
-      uid: string,
-      password: string,
-  }>) => {
+    enforceAppCheck: true,
+  },
+  async (request: functions.CallableRequest<{ uid: string; password: string }>) => {
     logger.info('setPassword: Processing request', {
       uid: request.data.uid,
       password: request.data.password,
@@ -199,7 +186,7 @@ export const setPassword = functions.onCall(
     try {
       await getAuth().updateUser(request.data.uid, { password: request.data.password });
       console.log('setPassword: OK');
-    } catch(error: any) {
+    } catch (error: any) {
       console.error('setPassword: ERROR: ', error);
       throw new functions.HttpsError('internal', `Failed to set the password: ${error.message}`);
     }
@@ -219,17 +206,9 @@ export const setPassword = functions.onCall(
 export const updateFirebaseUser = functions.onCall(
   {
     region: 'europe-west6',
-    enforceAppCheck: true
-  },  
-  async (request: functions.CallableRequest<{ 
-      uid: string,
-      email: string,
-      displayName: string,
-      emailVerified: boolean,
-      disabled: boolean,
-      phone: string,
-      photoUrl: string
-  }>) => {
+    enforceAppCheck: true,
+  },
+  async (request: functions.CallableRequest<{ uid: string; email: string; displayName: string; emailVerified: boolean; disabled: boolean; phone: string; photoUrl: string }>) => {
     logger.info('setLoginEmail: Processing request', {
       uid: request.data.uid,
       email: request.data.email,
@@ -249,7 +228,7 @@ export const updateFirebaseUser = functions.onCall(
     checkStringField(request, 'updateFirebaseUser', 'uid');
     checkStringField(request, 'updateFirebaseUser', 'email');
     try {
-      await getAuth().updateUser(request.data.uid, { 
+      await getAuth().updateUser(request.data.uid, {
         email: request.data.email,
         displayName: request.data.displayName,
         emailVerified: request.data.emailVerified,
@@ -258,7 +237,7 @@ export const updateFirebaseUser = functions.onCall(
         photoURL: request.data.photoUrl,
       });
       console.log('updateFirebaseUser: OK');
-    } catch(error: any) {
+    } catch (error: any) {
       console.error('updateFirebaseUser: ERROR: ', error);
       throw new functions.HttpsError('internal', `Failed to update the firebase user: ${error.message}`);
     }
@@ -281,18 +260,22 @@ function checkAuthentication(request: functions.CallableRequest, nameOfCallingFu
 }
 
 function checkAdminUser(request: functions.CallableRequest, nameOfCallingFunction: string): void {
-  if (!request.auth!.token.admin) {
-    logger.error(`${nameOfCallingFunction}: user ${request.auth!.uid} must be an admin`);
+  if (!request.auth?.token.admin) {
+    logger.error(`${nameOfCallingFunction}: user ${request.auth?.uid} must be an admin`);
     throw new functions.HttpsError('permission-denied', 'impersonateUser can only be used by admin users.');
   }
 }
 
 async function checkAdminClaim(request: functions.CallableRequest, nameOfCallingFunction: string): Promise<void> {
-  const caller = await getAuth().getUser(request.auth!.uid);
-  
-  if (!caller.customClaims?.admin) {
-    logger.error(`createFirebaseUser: user ${request.auth!.uid} must be an admin`);
-    throw new functions.HttpsError('permission-denied', 'Only admins can create users');
+  if (!request.auth?.uid) {
+    logger.error(`${nameOfCallingFunction}: uid is mandatory`);
+  } else {
+    const caller = await getAuth().getUser(request.auth.uid);
+
+    if (!caller.customClaims?.admin) {
+      logger.error(`${nameOfCallingFunction}: user ${request.auth?.uid} must be an admin`);
+      throw new functions.HttpsError('permission-denied', 'Only admins can create users');
+    }
   }
 }
 
