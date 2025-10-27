@@ -30,7 +30,7 @@ import { PersonFormModel, personFormModelShape, personFormValidations } from '@b
         <ion-card-header>
           <ion-card-title>Angaben zur Person</ion-card-title>
         </ion-card-header>
-        <ion-card-content>
+        <ion-card-content class="ion-no-padding">
           <ion-grid>
               <ion-row> 
                 <ion-col size="12" size-md="6">
@@ -48,7 +48,7 @@ import { PersonFormModel, personFormModelShape, personFormValidations } from '@b
                   <ion-row>
                     @if(isVisibleToUser(priv().showDateOfBirth)) {
                       <ion-col size="12" size-md="6"> 
-                        <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" autocomplete="bday" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfBirth', $event)" />
+                        <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" autocomplete="bday" [showHelper]=false [readOnly]="readOnly()" (changed)="onChange('dateOfBirth', $event)" />
                       </ion-col>
                     }
 

@@ -32,21 +32,23 @@ import { ButtonCopyComponent } from './button-copy.component';
       <ion-card-title>Notizen</ion-card-title>
     </ion-card-header>
     <ion-card-content>
-      <ion-textarea (ionInput)="onChange($event)"
-          type="text"
-          [name]="name()"
-          [ngModel]="value()"
-          labelPlacement="floating"
-          label="{{'@input.' + name() + '.label' | translate | async }}"
-          placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
-          inputMode="text"
-          [counter]="!readOnly()"
-          fill="outline"
-          [autoGrow]="autoGrow()"
-          [maxlength]="maxLength()"
-          [rows]="rows()"
-          [readonly]="readOnly()"
-        />
+      <ion-item lines="none">
+        <ion-textarea (ionInput)="onChange($event)"
+            type="text"
+            [name]="name()"
+            [ngModel]="value()"
+            labelPlacement="floating"
+            label="{{'@input.' + name() + '.label' | translate | async }}"
+            placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
+            inputMode="text"
+            [counter]="!readOnly()"
+            fill="outline"
+            [autoGrow]="autoGrow()"
+            [maxlength]="maxLength()"
+            [rows]="rows()"
+            [readonly]="readOnly()"
+          />
+      </ion-item>
       <ion-item lines="none">
         @if (clearable()) {
           <ion-icon src="{{'close_cancel' | svgIcon }}" (click)="clearValue()" />

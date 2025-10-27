@@ -45,25 +45,25 @@ import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
             <ion-item-sliding #slidingItem>
               <ion-grid (click)="edit(undefined, personalRel)">
                 <ion-row>
-                  <ion-col size="4">
+                  <ion-col size="3" size-md="4">
                     <ion-item lines="none">
                       <ion-avatar slot="start" class="list-avatar">
                         <ion-img src="{{ modelType.Person + '.' + personalRel.subjectKey | avatar | async}}" alt="avatar of first person" />
                       </ion-avatar>
-                      <ion-label>{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
+                      <ion-label class="ion-hide-md-down">{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
                     </ion-item>
                   </ion-col>
-                  <ion-col size="4">
+                  <ion-col size="6" size-md="4">
                     <ion-item lines="none">
                       <ion-label>{{ personalRel.type | personalRelName:personalRel.label }}</ion-label>
                     </ion-item>
                   </ion-col>
-                  <ion-col size="4">
+                  <ion-col size="3" size-md="4">
                     <ion-item lines="none">
                       <ion-avatar slot="start" class="list-avatar">
                         <ion-img src="{{ modelType.Person + '.' + personalRel.objectKey | avatar | async}}" alt="avatar of second person" />
                       </ion-avatar>
-                      <ion-label>{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
+                      <ion-label class="ion-hide-md-down">{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
                     </ion-item> 
                   </ion-col>
                 </ion-row>

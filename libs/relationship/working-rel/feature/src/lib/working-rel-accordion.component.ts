@@ -40,25 +40,25 @@ import { AvatarPipe } from '@bk2/avatar-ui';
             <ion-item-sliding #slidingItem>
               <ion-grid (click)="edit(undefined, workingRel)">
                 <ion-row>
-                  <ion-col size="4">
+                  <ion-col size="3" size-md="4">
                     <ion-item lines="none">
                       <ion-avatar slot="start" class="list-avatar">
                         <ion-img src="{{ modelType.Person + '.' + workingRel.subjectKey | avatar | async}}" alt="avatar of person" />
                       </ion-avatar>
-                      <ion-label>{{workingRel.subjectName1 | fullName:workingRel.subjectName2}}</ion-label>
+                      <ion-label class="ion-hide-md-down">{{workingRel.subjectName1 | fullName:workingRel.subjectName2}}</ion-label>
                     </ion-item>
                   </ion-col>
-                  <ion-col size="4">
+                  <ion-col size="6" size-md="4">
                     <ion-item lines="none">
                       <ion-label>{{ workingRel.type | categoryName:workingRelTypes }}</ion-label>
                     </ion-item>
                   </ion-col>
-                  <ion-col size="4">
+                  <ion-col size="3" size-md="4">
                     <ion-item lines="none">
                       <ion-avatar slot="start" class="list-avatar">
                         <ion-img src="{{ modelType.Org + '.' + workingRel.objectKey | avatar | async}}" alt="logo of organization" />
                       </ion-avatar>
-                      <ion-label>{{workingRel.objectName }}</ion-label>
+                      <ion-label class="ion-hide-md-down">{{workingRel.objectName }}</ion-label>
                     </ion-item> 
                   </ion-col>
                 </ion-row>
