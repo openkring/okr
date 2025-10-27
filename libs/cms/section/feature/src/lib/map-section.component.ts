@@ -1,14 +1,14 @@
 import { isPlatformBrowser } from '@angular/common';
-import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, inject, input } from '@angular/core';
+import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import { GoogleMap, MapType } from '@capacitor/google-maps';
 import { Capacitor } from '@capacitor/core';
-import { IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { AlertController, IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { LocationCollection, LocationModel, SectionModel } from '@bk2/shared-models';
 import { OptionalCardHeaderComponent } from '@bk2/shared-ui';
-import { die } from '@bk2/shared-util-core';
+import { debugMessage, die } from '@bk2/shared-util-core';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { firstValueFrom } from 'rxjs';
 
@@ -30,12 +30,22 @@ import { firstValueFrom } from 'rxjs';
       display: block;
     }
   `],
-  imports: [IonCard, IonCardContent, OptionalCardHeaderComponent],
+  imports: [
+    IonCard, IonCardContent, OptionalCardHeaderComponent
+  ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <ion-card>
       <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
+        @if(locationError) {
+          <div class="error-message">
+            {{ locationError }}
+          </div>
+        }
+        @if(useCurrentLocation()) {
+          <ion-button (click)="triggerGeolocation()">Use My Location</ion-button>
+        }
         <div class="map-container">
           <capacitor-google-map [id]="mapId" />
         </div>
@@ -49,8 +59,8 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
 
   public section = input.required<SectionModel>();
-  //public mapId = computed(() => `map-${this.section().bkey || Math.random().toString(36).substring(2)}`); // Unique ID per instance
   protected mapId: string;
+  protected locationError: string | null = null;
 
   private readonly centerLatitude = computed(() => parseFloat(this.section()?.properties?.map?.centerLatitude ?? '') || 0);
   private readonly centerLongitude = computed(() => parseFloat(this.section()?.properties?.map?.centerLongitude ?? '') || 0);
@@ -69,6 +79,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   async ngAfterViewInit(): Promise<void> {
     if (isPlatformBrowser(this.platformId)) {
       await this.loadMap();
+      await this.checkGeolocationStatus();
     }
   }
 
@@ -77,42 +88,78 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
     this.resizeObserver?.disconnect();
   }
 
-  async loadMap() {
-    console.log('loading map with id ' + this.mapId);
-    const _mapRef = document.getElementById(this.mapId);
-    if (!_mapRef) die('MapSectionComponent.loadMap: Map element not found');
+  private async checkGeolocationStatus(): Promise<void> {
+    if (!navigator.geolocation) {
+      debugMessage('MapSectionComponent.checkGeolocationStatus: geolocation is not supported');
+      return;
+    }
+    try {
+      const status = await navigator.permissions.query({ name: 'geolocation' });
+      debugMessage(`MapSectionComponent.checkGeolocationStatus: geolocation permission status:${status.state}`);
+    } catch (error) {
+      console.log('Permission query failed:', error);
+    }
+  }
+
+  public async triggerGeolocation(): Promise<void> {
+    this.locationError = null;
+    try {
+      const position = await this.getCurrentPosition();
+      await this.updateMapCenter(position.coords.latitude, position.coords.longitude);
+    } catch (error: any) {
+      this.locationError = 'Location access denied. Please enable in Safari Settings > Privacy > Location Services.';
+      console.error('MapSectionComponent: Failed to get current position:', error.message);
+      const defaultPosition = await this.getDefaultPosition();
+      await this.updateMapCenter(defaultPosition.coords.latitude, defaultPosition.coords.longitude, defaultPosition.zoom);
+    }
+  }
+
+  private async updateMapCenter(lat: number, lng: number, zoom: number = this.zoom()): Promise<void> {
+    if (!this.map) return;
+    await this.map.setCamera({
+      coordinate: { lat, lng },
+      zoom
+    });
+  }
+
+  /**
+   * Load a map into the view.
+   */
+  private async loadMap(): Promise<void> {
+    console.log('MapSectionComponent.loadMap: loading map with id ' + this.mapId);
+    const mapRef = document.getElementById(this.mapId);
+    if (!mapRef) die('MapSectionComponent.loadMap: Map element not found');
 
     // Wait for valid map dimensions with retries
-    await this.waitForMapDimensions(_mapRef);
+    await this.waitForMapDimensions(mapRef);
 
-    let _centerLatitude = this.centerLatitude();
-    let _centerLongitude = this.centerLongitude();
+    let centerLatitude = this.centerLatitude();
+    let centerLongitude = this.centerLongitude();
     let zoom = this.zoom();
 
     if (this.useCurrentLocation()) {
-      try {
-        const position = await this.getCurrentPosition();
-        _centerLatitude = position.coords.latitude;
-        _centerLongitude = position.coords.longitude;
-      } catch (error: any) {
-        console.error('MapSectionComponent: Failed to get current position, using default coordinates:', error.message);
-        const _defaultPosition = await this.getDefaultPosition();
-        _centerLatitude = _defaultPosition.coords.latitude;
-        _centerLongitude = _defaultPosition.coords.longitude;
-        zoom = _defaultPosition.zoom;
-      }
+      const defaultPosition = await this.getDefaultPosition();
+      centerLatitude = defaultPosition.coords.latitude;
+      centerLongitude = defaultPosition.coords.longitude;
+      zoom = defaultPosition.zoom;
     }
 
-    this.map = await GoogleMap.create({
-      id: this.mapId,
-      element: _mapRef,
-      apiKey: this.appStore.env.services.gmapKey,
-      config: {
-        center: { lat: _centerLatitude, lng: _centerLongitude },
-        zoom
-      }
-    });
-    await this.map.setMapType(MapType.Satellite);
+    try {
+      this.map = await GoogleMap.create({
+        id: this.mapId,
+        element: mapRef,
+        apiKey: this.appStore.env.services.gmapKey,
+        config: {
+          center: { lat: centerLatitude, lng: centerLongitude },
+          zoom
+        }
+      });
+      debugMessage(`MapSectionComponent.loadMap: map ${this.mapId} initialized successfully.`);
+      await this.map.setMapType(MapType.Satellite);
+    } catch (error: any) {
+      console.error(`MapSectionComponent.loadMap: failed to initialize map ${this.mapId}`, error);
+      throw error;
+    }
   }
 
   /**
@@ -123,10 +170,10 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   private async waitForMapDimensions(mapRef: HTMLElement): Promise<void> {
     return new Promise((resolve, reject) => {
       const maxTimeout = 2000; // 2 seconds max wait
-      const startTime = Date.now();
 
       this.resizeObserver = new ResizeObserver(entries => {
         const rect = entries[0].contentRect;
+        debugMessage(`MapSectionComponent.waitForMapDimensions: Dimensions - width: ${rect.width}, height: ${rect.height}`);
         if (rect.width > 0 && rect.height > 0) {
           this.resizeObserver?.disconnect();
           resolve();
@@ -139,6 +186,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
       setTimeout(() => {
         const rect = mapRef.getBoundingClientRect();
         this.resizeObserver?.disconnect();
+        debugMessage(`MapSectionComponent.waitForMapDimensions: Timeout check - width: ${rect.width}, height: ${rect.height}`);
         if (rect.width > 0 && rect.height > 0) {
           resolve();
         } else {
@@ -167,6 +215,16 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
     } else {
       if (!navigator.geolocation) {
         throw new Error('Geolocation not supported in this browser');
+      }
+      // Check permission status before requesting
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+        if (permissionStatus.state === 'denied') {
+          throw new Error('User denied Geolocation');
+        }
+        debugMessage('MapSectionComponent.getCurrentPosition: geolocation accepted.');
+      } catch (error) {
+        console.warn('MapSectionComponent: Permission query not supported or failed:', error);
       }
       return await new Promise<Position>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
