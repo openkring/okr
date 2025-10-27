@@ -129,11 +129,11 @@ export class GroupListComponent {
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     console.log('GroupListComponent.onPopoverDismiss', $event);
-    const _selectedMethod = $event.detail.data;
-    switch (_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
       case 'add': await this.groupListStore.add(); break;
       case 'exportRaw': await this.groupListStore.export("raw_groups"); break;
-      default: error(undefined, `GroupListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `GroupListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 

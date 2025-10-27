@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CITY_LENGTH, COUNTRY_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
+import { CITY_LENGTH, COUNTRY_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
 import { AddressChannel, AddressModel, AddressUsage } from '@bk2/shared-models';
 import { baseValidations, booleanValidations, categoryValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
 
@@ -12,7 +12,10 @@ export const addressValidations = staticSuite((model: AddressModel, field?: stri
   stringValidations('channelLabel', model.channelLabel, SHORT_NAME_LENGTH);
   categoryValidations('usageType', model.usageType, AddressUsage);
   stringValidations('usageLabel', model.usageLabel, SHORT_NAME_LENGTH);
-  stringValidations('addressValue', model.addressValue, LONG_NAME_LENGTH);
+  stringValidations('phone', model.phone, PHONE_LENGTH);
+  stringValidations('email', model.email, EMAIL_LENGTH);
+  stringValidations('streetName', model.streetName, NAME_LENGTH);
+  stringValidations('streetNumber', model.streetNumber, NUMBER_LENGTH);
   stringValidations('addressValue2', model.addressValue2, SHORT_NAME_LENGTH);
   stringValidations('zipCode', model.zipCode, ZIP_LENGTH);
   stringValidations('city', model.city, CITY_LENGTH);
@@ -26,10 +29,6 @@ export const addressValidations = staticSuite((model: AddressModel, field?: stri
   //tagValidations('tags', model.tags);
   stringValidations('description', model.description, LONG_NAME_LENGTH);
   stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH, 0, true);
-
-  test('addressValue', 'addressValueMandatory', () => {
-    enforce(model.addressValue).isNotEmpty();
-  });
 
   // cross validations
   omitWhen(model.channelType !== AddressChannel.Custom, () => {

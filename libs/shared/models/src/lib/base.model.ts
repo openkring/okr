@@ -38,10 +38,11 @@ export interface SearchableModel {
 export interface AddressableModel {
   fav_email: string;
   fav_phone: string;
-  fav_street: string;
-  fav_zip: string;
+  fav_street_name: string;
+  fav_street_number: string;
+  fav_zip_code: string;
   fav_city: string;
-  fav_country: string;
+  fav_country_code: string;
 }
 
 export type BaseType = string | number | boolean;
@@ -79,7 +80,7 @@ export function isSearchableModel(obj: unknown): obj is SearchableModel {
 }
 
 export function isAddressableModel(obj: unknown): obj is AddressableModel {
-  return typeof obj === 'object' && obj !== null && 'fav_email' in obj && 'fav_phone' in obj && 'fav_street' in obj && 'fav_zip' in obj && 'fav_city' in obj && 'fav_country' in obj;
+  return typeof obj === 'object' && obj !== null && 'fav_email' in obj && 'fav_phone' in obj && 'fav_street_name' in obj && 'fav_street_number' in obj && 'fav_zipCode' in obj && 'fav_city' in obj && 'fav_countryCode' in obj;
 }
 
 export function isPersistedModel(obj: unknown): obj is PersistedModel {

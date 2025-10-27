@@ -123,7 +123,7 @@ export class GroupFormComponent {
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   protected onValueChange(value: GroupFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((vm) => ({...vm, ...value}));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 

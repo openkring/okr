@@ -1,5 +1,5 @@
 
-import { LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, BkModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, ModelType } from '@bk2/shared-models';
 import { only, staticSuite } from 'vest';
 import { booleanValidations, categoryValidations, stringValidations } from './vest.util';
@@ -33,10 +33,11 @@ export const baseValidations = staticSuite((model: BkModel, field?: string) => {
   if (isAddressableModel(model)) {
     stringValidations('fav_email', model.fav_email, SHORT_NAME_LENGTH);
     stringValidations('fav_phone', model.fav_phone, SHORT_NAME_LENGTH);
-    stringValidations('fav_street', model.fav_street, SHORT_NAME_LENGTH);
-    stringValidations('fav_zip', model.fav_zip, SHORT_NAME_LENGTH);
+    stringValidations('fav_street_name', model.fav_street_name, NAME_LENGTH);
+    stringValidations('fav_street_number', model.fav_street_number, NUMBER_LENGTH);
+    stringValidations('fav_zip_code', model.fav_zip_code, SHORT_NAME_LENGTH);
     stringValidations('fav_city', model.fav_city, SHORT_NAME_LENGTH);
-    stringValidations('fav_country', model.fav_country, SHORT_NAME_LENGTH);
+    stringValidations('fav_country_code', model.fav_country_code, SHORT_NAME_LENGTH);
   }
   if (isPersistedModel(model)) {  
    // tenantValidations(model.tenants);

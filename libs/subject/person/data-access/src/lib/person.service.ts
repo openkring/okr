@@ -108,8 +108,8 @@ export class PersonService {
    * @returns an Observable of the list of addresses
    */
   public listAddresses(person: PersonModel): Observable<AddressModel[]> {
-    const _collection = `${PersonCollection}/${person.bkey}/${AddressCollection}`;
-    return this.firestoreService.searchData<AddressModel>(_collection, getSystemQuery(this.env.tenantId));    
+    const collection = `${PersonCollection}/${person.bkey}/${AddressCollection}`;
+    return this.firestoreService.searchData<AddressModel>(collection, getSystemQuery(this.env.tenantId));
   }
 
   /*-------------------------- search index --------------------------------*/

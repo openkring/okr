@@ -12,7 +12,8 @@ export type PersonNewFormModel = DeepPartial<{
   ssnId: string,
   bexioId: string
 
-  street: string,
+  streetName: string,
+  streetNumber: string,
   zipCode: string,
   city: string,
   countryCode: string,
@@ -42,7 +43,8 @@ export const personNewFormModelShape: DeepRequired<PersonNewFormModel> = {
   bexioId: '',
 
   // address
-  street: '',
+  streetName: '',
+  streetNumber: '',
   zipCode: '',
   city: '',
   countryCode: 'CH',

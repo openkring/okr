@@ -25,10 +25,11 @@ export class OrgModel implements BkModel, NamedModel, AddressableModel, Searchab
 
   public fav_email = '';
   public fav_phone = '';
-  public fav_street = '';
-  public fav_zip = '';
+  public fav_street_name = '';
+  public fav_street_number = '';
+  public fav_zip_code = '';
   public fav_city = '';
-  public fav_country = '';
+  public fav_country_code = '';
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

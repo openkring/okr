@@ -8,8 +8,11 @@ export class AddressModel implements BkModel, TaggedModel {
   public channelLabel = ''; // optional label for custom channel types
   public usageType = AddressUsage.Home;
   public usageLabel = ''; // optional label for custom address types
-  public addressValue = ''; // e.g. phone number, email address, street address
-  public addressValue2 = ''; // optional if postal address
+  public email = '';
+  public phone = '';
+  public streetName = '';
+  public streetNumber = '';
+  public addressValue2 = ''; // optional address, e.g. c/o, company
   public zipCode = '';
   public city = '';
   public countryCode = '';

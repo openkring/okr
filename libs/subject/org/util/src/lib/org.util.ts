@@ -73,13 +73,14 @@ export function createNewOrgFormModel(): OrgNewFormModel {
     type: OrgType.Association,
     dateOfFoundation: '',
     dateOfLiquidation: '',
-    street: '',
+    streetName: '',
+    streetNumber: '',
     zipCode: '',
     city: '',
     countryCode: 'CH',
     phone: '',
     email: '',
-    web: '',
+    url: '',
     taxId: '',
     bexioId: '',
     membershipCategoryKey: 'mcat_default',
@@ -89,24 +90,25 @@ export function createNewOrgFormModel(): OrgNewFormModel {
 }
 
 export function convertFormToNewOrg(vm: OrgNewFormModel, tenantId: string): OrgModel {
-  const _org = new OrgModel(tenantId);
-  _org.bkey = '';
-  _org.name = vm.orgName ?? '';
-  _org.type = vm.type ?? OrgType.Association;
-  _org.dateOfFoundation = vm.dateOfFoundation ?? '';
-  _org.dateOfLiquidation = vm.dateOfLiquidation ?? '';
-  _org.taxId = vm.taxId ?? '';
-  _org.notes = vm.notes ?? '';
-  _org.bexioId = vm.bexioId ?? '';
-  _org.tags = vm.tags ?? '';
+  const org = new OrgModel(tenantId);
+  org.bkey = '';
+  org.name = vm.orgName ?? '';
+  org.type = vm.type ?? OrgType.Association;
+  org.dateOfFoundation = vm.dateOfFoundation ?? '';
+  org.dateOfLiquidation = vm.dateOfLiquidation ?? '';
+  org.taxId = vm.taxId ?? '';
+  org.notes = vm.notes ?? '';
+  org.bexioId = vm.bexioId ?? '';
+  org.tags = vm.tags ?? '';
 
-  _org.fav_email = vm.email ?? '';
-  _org.fav_phone = vm.phone ?? '';
-  _org.fav_street = vm.street ?? '';
-  _org.fav_zip = vm.zipCode ?? '';
-  _org.fav_city = vm.city ?? '';
-  _org.fav_country = vm.countryCode ?? '';
-  return _org;
+  org.fav_email = vm.email ?? '';
+  org.fav_phone = vm.phone ?? '';
+  org.fav_street_name = vm.streetName ?? '';
+  org.fav_street_number = vm.streetNumber ?? '';
+  org.fav_zip_code = vm.zipCode ?? '';
+  org.fav_city = vm.city ?? '';
+  org.fav_country_code = vm.countryCode ?? '';
+  return org;
 }
 
 export function convertNewOrgFormToEmailAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
@@ -118,9 +120,9 @@ export function convertNewOrgFormToPhoneAddress(vm: OrgNewFormModel, tenantId: s
 }
 
 export function convertNewOrgFormToWebAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoriteWebAddress(AddressUsage.Work, vm.web ?? '', tenantId);
+  return createFavoriteWebAddress(AddressUsage.Work, vm.url ?? '', tenantId);
 }
 
 export function convertNewOrgFormToPostalAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoritePostalAddress(AddressUsage.Work, vm.street ?? '', vm.zipCode ?? '', vm.city ?? '', vm.countryCode ?? '', tenantId);
+  return createFavoritePostalAddress(AddressUsage.Work, vm.streetName ?? '', vm.streetNumber ?? '', vm.zipCode ?? '', vm.city ?? '', vm.countryCode ?? '', tenantId);
 }

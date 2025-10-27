@@ -107,10 +107,10 @@ export const GroupListStore = signalStore(
       _modal.present();
       const { data, role } = await _modal.onDidDismiss();
       if (role === 'confirm') {
-        const _vm = data as GroupNewFormModel;
-        const _key = ModelType.Group + '.' + await this.saveGroup(_vm);
+        const vm = data as GroupNewFormModel;
+        const key = ModelType.Group + '.' + await this.saveGroup(vm);
         // tbd: save avatar image if provided
-        console.log(`GroupListStore.add: new group created with key ${_key}`);
+        console.log(`GroupListStore.add: new group created with key ${key}`);
       }
       store.groupsResource.reload();
     },

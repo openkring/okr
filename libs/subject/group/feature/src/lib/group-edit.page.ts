@@ -85,14 +85,14 @@ export class GroupEditPageComponent {
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   public async onImageSelected(photo: Photo): Promise<void> {
-    const _group = this.group();
-    if (!_group) return;
-    const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.tenantId], ModelType.Group, _group.bkey, _file.name);
-    const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
+    const group = this.group();
+    if (!group) return;
+    const file = await readAsFile(photo, this.platform);
+    const avatar = newAvatarModel([this.env.tenantId], ModelType.Group, group.bkey, file.name);
+    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, '@document.operation.upload.avatar.title')
 
-    if (_downloadUrl) {
-      await this.avatarService.updateOrCreate(_avatar);
+    if (downloadUrl) {
+      await this.avatarService.updateOrCreate(avatar);
     }
   }
 

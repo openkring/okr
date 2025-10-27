@@ -55,7 +55,8 @@ export function createNewPersonFormModel(org?: OrgModel): PersonNewFormModel {
     ssnId: '',
     bexioId: '',
 
-    street: '',
+    streetName: '',
+    streetNumber: '',
     zipCode: '',
     city: '',
     countryCode: 'CH',
@@ -76,27 +77,28 @@ export function createNewPersonFormModel(org?: OrgModel): PersonNewFormModel {
 }
 
 export function convertFormToNewPerson(vm: PersonNewFormModel, tenantId: string): PersonModel {
-  const _person = new PersonModel(tenantId);
-  _person.bkey = '';
-  _person.firstName = vm.firstName ?? '';
-  _person.lastName = vm.lastName ?? '';
-  _person.gender = vm.gender ?? GenderType.Male;
-  _person.dateOfBirth = vm.dateOfBirth ?? '';
-  _person.dateOfDeath = vm.dateOfDeath ?? '';
-  _person.ssnId = vm.ssnId ?? '';
-  _person.bexioId = vm.bexioId ?? '';
+  const person = new PersonModel(tenantId);
+  person.bkey = '';
+  person.firstName = vm.firstName ?? '';
+  person.lastName = vm.lastName ?? '';
+  person.gender = vm.gender ?? GenderType.Male;
+  person.dateOfBirth = vm.dateOfBirth ?? '';
+  person.dateOfDeath = vm.dateOfDeath ?? '';
+  person.ssnId = vm.ssnId ?? '';
+  person.bexioId = vm.bexioId ?? '';
 
-  _person.fav_email = vm.email ?? '';
-  _person.fav_phone = vm.phone ?? '';
-  _person.fav_street = vm.street ?? '';
-  _person.fav_zip = vm.zipCode ?? '';
-  _person.fav_city = vm.city ?? '';
-  _person.fav_country = vm.countryCode ?? '';
+  person.fav_email = vm.email ?? '';
+  person.fav_phone = vm.phone ?? '';
+  person.fav_street_name = vm.streetName ?? '';
+  person.fav_street_number = vm.streetNumber ?? '';
+  person.fav_zip_code = vm.zipCode ?? '';
+  person.fav_city = vm.city ?? '';
+  person.fav_country_code = vm.countryCode ?? '';
 
-  _person.notes = vm.notes ?? '';
-  _person.tags = vm.tags ?? '';
+  person.notes = vm.notes ?? '';
+  person.tags = vm.tags ?? '';
 
-  return _person;
+  return person;
 }
 
 export function convertNewPersonFormToEmailAddress(vm: PersonNewFormModel, tenantId: string): AddressModel {
@@ -112,40 +114,48 @@ export function convertNewPersonFormToWebAddress(vm: PersonNewFormModel, tenantI
 }
 
 export function convertNewPersonFormToPostalAddress(vm: PersonNewFormModel, tenantId: string): AddressModel {
-  return createFavoritePostalAddress(AddressUsage.Work, vm.street ?? '', vm.zipCode ?? '', vm.city ?? '', vm.countryCode ?? '', tenantId);
+  return createFavoritePostalAddress(
+    AddressUsage.Work, 
+    vm.streetName ?? '',
+    vm.streetNumber ?? '', 
+    vm.zipCode ?? '', 
+    vm.city ?? '', 
+    vm.countryCode ?? '', 
+    tenantId,
+  );
 }
 
 export function convertNewPersonFormToMembership(vm: PersonNewFormModel, personKey: string, tenantId: string): MembershipModel {
-  const _m = new MembershipModel(tenantId);
-  _m.tenants = [tenantId];
-  _m.isArchived = false;
-  _m.tags = '';
-  _m.notes = '';
-  _m.memberKey = personKey;
-  _m.memberName1 = vm.firstName ?? '';
-  _m.memberName2 = vm.lastName ?? '';
-  _m.memberModelType = ModelType.Person;
-  _m.memberType = vm.gender;
-  _m.memberNickName = '';
-  _m.memberAbbreviation = '';
-  _m.memberDateOfBirth = vm.dateOfBirth ?? '';
-  _m.memberDateOfDeath = vm.dateOfDeath ?? '';
-  _m.memberZipCode = vm.zipCode ?? '';
-  _m.memberBexioId = vm.bexioId ?? '';
-  _m.memberId = '';
-  _m.orgKey = vm.orgKey ?? die('membership.util.convertFormToNewMembership: orgKey is mandatory');
-  _m.orgName = vm.orgName ?? '';
-  _m.dateOfEntry = vm.dateOfEntry ?? getTodayStr();
-  _m.dateOfExit = END_FUTURE_DATE_STR;
-  _m.membershipCategory = vm.membershipCategory ?? 'active';
-  _m.membershipState = 'active';
-  _m.priority = 1;
-  _m.relLog = _m.dateOfEntry + ':' + (vm.membershipCategoryAbbreviation ?? 'A');
-  _m.relIsLast = true;
-  _m.price = 0;
-  _m.currency = 'CHF';
-  _m.periodicity = Periodicity.Yearly;
-  _m.index = 'mn:' + _m.memberName1 + ' ' + _m.memberName2 + ', mk:' + _m.memberKey + ', ok:' + _m.orgKey;
-  console.log('convertNewPersonFormToMembership: ' + JSON.stringify(_m));
-  return _m;
+  const member = new MembershipModel(tenantId);
+  member.tenants = [tenantId];
+  member.isArchived = false;
+  member.tags = '';
+  member.notes = '';
+  member.memberKey = personKey;
+  member.memberName1 = vm.firstName ?? '';
+  member.memberName2 = vm.lastName ?? '';
+  member.memberModelType = ModelType.Person;
+  member.memberType = vm.gender;
+  member.memberNickName = '';
+  member.memberAbbreviation = '';
+  member.memberDateOfBirth = vm.dateOfBirth ?? '';
+  member.memberDateOfDeath = vm.dateOfDeath ?? '';
+  member.memberZipCode = vm.zipCode ?? '';
+  member.memberBexioId = vm.bexioId ?? '';
+  member.memberId = '';
+  member.orgKey = vm.orgKey ?? die('membership.util.convertFormToNewMembership: orgKey is mandatory');
+  member.orgName = vm.orgName ?? '';
+  member.dateOfEntry = vm.dateOfEntry ?? getTodayStr();
+  member.dateOfExit = END_FUTURE_DATE_STR;
+  member.membershipCategory = vm.membershipCategory ?? 'active';
+  member.membershipState = 'active';
+  member.priority = 1;
+  member.relLog = member.dateOfEntry + ':' + (vm.membershipCategoryAbbreviation ?? 'A');
+  member.relIsLast = true;
+  member.price = 0;
+  member.currency = 'CHF';
+  member.periodicity = Periodicity.Yearly;
+  member.index = 'mn:' + member.memberName1 + ' ' + member.memberName2 + ', mk:' + member.memberKey + ', ok:' + member.orgKey;
+  console.log('convertNewPersonFormToMembership: ' + JSON.stringify(member));
+  return member;
 }

@@ -93,9 +93,13 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
       <ion-card-content>
         <ion-grid>
           <ion-row>
-            <ion-col size="12">
-              <bk-text-input name="street" [value]="street()" autocomplete="street-address" (changed)="onChange('street', $event)" />
-              <bk-error-note [errors]="streetErrors()" />                                                                                                                     
+            <ion-col size="9">
+              <bk-text-input name="streetName" [value]="streetName()" autocomplete="street-address" (changed)="onChange('streetName', $event)" />
+              <bk-error-note [errors]="streetNameErrors()" />                                                                                                                     
+            </ion-col>
+            <ion-col size="3">
+              <bk-text-input name="streetNumber" [value]="streetNumber()" (changed)="onChange('streetNumber', $event)" />
+              <bk-error-note [errors]="streetNumberErrors()" />                                                                                                                     
             </ion-col>
           </ion-row>
 
@@ -235,7 +239,8 @@ export class PersonNewFormComponent {
   protected readonly locale = computed(() => this.appStore.appConfig().locale);
 
   // address
-  protected street = computed(() => this.vm().street ?? '');
+  protected streetName = computed(() => this.vm().streetName ?? '');
+  protected streetNumber = computed(() => this.vm().streetNumber ?? '');
   protected zipCode = computed(() => this.vm().zipCode ?? '');
   protected city = computed(() => this.vm().city ?? '');
   protected countryCode = computed(() => this.vm().countryCode ?? '');
@@ -254,7 +259,8 @@ export class PersonNewFormComponent {
   private readonly validationResult = computed(() => personNewFormValidations(this.vm()));
   protected firstNameErrors = computed(() => this.validationResult().getErrors('firstName'));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
-  protected streetErrors = computed(() => this.validationResult().getErrors('street'));
+  protected streetNameErrors = computed(() => this.validationResult().getErrors('streetName'));
+  protected streetNumberErrors = computed(() => this.validationResult().getErrors('streetNumber'));
   protected phoneErrors = computed(() => this.validationResult().getErrors('phone'));
   protected emailErrors = computed(() => this.validationResult().getErrors('email'));
   protected webErrors = computed(() => this.validationResult().getErrors('web'));

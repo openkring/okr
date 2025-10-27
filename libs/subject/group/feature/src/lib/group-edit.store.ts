@@ -79,10 +79,10 @@ export const GroupEditStore = signalStore(
       /************************************ ACTIONS ************************************* */
 
       async save(vm: GroupFormModel): Promise<void> {
-        const _group = convertFormToGroup(store.group(), vm, store.env.tenantId);
-        await (!_group.bkey ? 
-          store.groupService.create(_group, store.currentUser()) : 
-          store.groupService.update(_group, store.currentUser()));
+        const group = convertFormToGroup(store.group(), vm, store.env.tenantId);
+        await (!group.bkey ? 
+          store.groupService.create(group, store.currentUser()) : 
+          store.groupService.update(group, store.currentUser()));
         store.appNavigationService.logLinkHistory();
         store.appNavigationService.back();
       },
@@ -107,7 +107,7 @@ export const GroupEditStore = signalStore(
       },
       async addMember(): Promise<void> {
         console.log('GroupEditStore.addMember: Not implemented yet');
-        const _modal = await store.modalController.create({
+        const modal = await store.modalController.create({
           component: PersonSelectModalComponent,
           cssClass: 'list-modal',
           componentProps: {
@@ -115,29 +115,29 @@ export const GroupEditStore = signalStore(
             currentUser: store.currentUser()
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onWillDismiss();
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm') {
           if (isPerson(data, store.tenantId())) {
-            const _membership = new MembershipModel(store.tenantId());
-            _membership.memberKey = data.bkey;
-            _membership.memberName1 = data.firstName;
-            _membership.memberName2 = data.lastName;
-            _membership.memberModelType = ModelType.Person;
-            _membership.memberType = data.gender;
-            _membership.memberDateOfBirth = data.dateOfBirth;
-            _membership.memberDateOfDeath = data.dateOfDeath;
-            _membership.memberZipCode = data.fav_zip;
-            _membership.memberBexioId = data.bexioId;
-            _membership.orgKey = store.groupKey() ?? '';
-            _membership.orgName = store.group()?.name ?? '';
-            _membership.dateOfEntry = getTodayStr();
-            _membership.dateOfExit = END_FUTURE_DATE_STR;
-            _membership.index = store.membershipService.getSearchIndex(_membership);
-            _membership.priority = 1; // default priority for the first membership
-            _membership.relIsLast = true; // this is the last membership of this person in
-            debugData(`GroupEditStore.addMember: new membership: `, _membership, store.currentUser());
-            store.membershipService.create(_membership, store.appStore.currentUser());
+            const membership = new MembershipModel(store.tenantId());
+            membership.memberKey = data.bkey;
+            membership.memberName1 = data.firstName;
+            membership.memberName2 = data.lastName;
+            membership.memberModelType = ModelType.Person;
+            membership.memberType = data.gender;
+            membership.memberDateOfBirth = data.dateOfBirth;
+            membership.memberDateOfDeath = data.dateOfDeath;
+            membership.memberZipCode = data.fav_zip_code;
+            membership.memberBexioId = data.bexioId;
+            membership.orgKey = store.groupKey() ?? '';
+            membership.orgName = store.group()?.name ?? '';
+            membership.dateOfEntry = getTodayStr();
+            membership.dateOfExit = END_FUTURE_DATE_STR;
+            membership.index = store.membershipService.getSearchIndex(membership);
+            membership.priority = 1; // default priority for the first membership
+            membership.relIsLast = true; // this is the last membership of this person in
+            debugData(`GroupEditStore.addMember: new membership: `, membership, store.currentUser());
+            store.membershipService.create(membership, store.appStore.currentUser());
           }
         }
       },

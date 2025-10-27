@@ -107,11 +107,11 @@ export class GroupNewFormComponent {
   protected idErrors = computed(() => this.validationResult().getErrors('id'));
 
   protected onCitySelected(city: SwissCity): void {
-    this.vm.update((_vm) => ({ ..._vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
+    this.vm.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
   }
 
   protected onValueChange(value: GroupFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((vm) => ({...vm, ...value}));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 

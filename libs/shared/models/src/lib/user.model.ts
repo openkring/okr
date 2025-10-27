@@ -38,12 +38,13 @@ export class UserModel implements BkModel, TaggedModel, SearchableModel {
   public showHelpers = true;
 
   // privacy restrictions
-  public usage_images = PrivacyUsage.Public;
-  public usage_dateOfBirth = PrivacyUsage.Restricted;
-  public usage_postalAddress = PrivacyUsage.Restricted;
-  public usage_email = PrivacyUsage.Restricted;
-  public usage_phone = PrivacyUsage.Restricted;
-  public usage_name = PrivacyUsage.Restricted;
+  public usageImages = PrivacyUsage.Public;
+  public usageDateOfBirth = PrivacyUsage.Restricted;
+  public usagePostalAddress = PrivacyUsage.Restricted;
+  public usageEmail = PrivacyUsage.Restricted;
+  public usagePhone = PrivacyUsage.Restricted;
+  public usageName = PrivacyUsage.Restricted;
+  public srvEmail = true;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

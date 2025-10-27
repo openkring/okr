@@ -29,8 +29,7 @@ export class AddressService {
    */
   public async create(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
     address.index = this.getSearchIndex(address);
-    const _collection = getAddressCollection(address.parentKey);
-    return this.firestoreService.createModel<AddressModel>(_collection, address, '@subject.address.operation.create', currentUser);
+    return this.firestoreService.createModel<AddressModel>(getAddressCollection(address.parentKey), address, '@subject.address.operation.create', currentUser);
 }
 
  /**
@@ -40,8 +39,7 @@ export class AddressService {
    * @return an Observable of the AddressModel or undefined if not found
    */
   public read(parentKey: string, addressKey: string): Observable<AddressModel | undefined> {
-    const _collection = getAddressCollection(parentKey);
-    return this.firestoreService.readModel<AddressModel>(_collection, addressKey);
+    return this.firestoreService.readModel<AddressModel>(getAddressCollection(parentKey), addressKey);
   }
 
   /**
@@ -53,8 +51,7 @@ export class AddressService {
    */
   public async update(address: AddressModel, currentUser?: UserModel, confirmMessage = '@subject.address.operation.update'): Promise<string | undefined> {
     address.index = this.getSearchIndex(address);
-    const _collection = getAddressCollection(address.parentKey);
-    return await this.firestoreService.updateModel<AddressModel>(_collection, address, false, confirmMessage, currentUser);
+    return await this.firestoreService.updateModel<AddressModel>(getAddressCollection(address.parentKey), address, false, confirmMessage, currentUser);
   }
 
   /**
@@ -74,10 +71,9 @@ export class AddressService {
    * @param parentKey the key of the parent object (a subject)
    */
     public list(parentKey: string, byChannel?: AddressChannel, orderBy = 'bkey', sortOrder = 'asc'): Observable<AddressModel[]> {
-    const _collection = getAddressCollection(parentKey);
-    const _query = getSystemQuery(this.env.tenantId);
-    if (byChannel) _query.push({ key: 'channelType', operator: '==', value: byChannel });
-    return this.firestoreService.searchData<AddressModel>(_collection, _query, orderBy, sortOrder);
+    const query = getSystemQuery(this.env.tenantId);
+    if (byChannel) query.push({ key: 'channelType', operator: '==', value: byChannel });
+    return this.firestoreService.searchData<AddressModel>(getAddressCollection(parentKey), query, orderBy, sortOrder);
   }
 
   /**
@@ -97,13 +93,13 @@ export class AddressService {
    * @returns the favorite address fo the given channel or null
    */
   public getFavoriteAddressByChannel(parentKey: string, channel: AddressChannel): Observable<AddressModel | null> {
-    const _collection = getAddressCollection(parentKey);
-    const _query = getSystemQuery(this.env.tenantId);
-    _query.push({ key: 'channelType', operator: '==', value: channel });
-    _query.push({ key: 'isFavorite', operator: '==', value: true });
-    return this.firestoreService.searchData<AddressModel>(_collection, _query).pipe(map(_addresses => {
-      if (_addresses.length > 1) die(`AddressUtil.getFavoriteAddressByChannel -> ERROR: only one favorite adress can exist per channel type (${_collection})`);
-      if (_addresses.length === 1) return _addresses[0];
+    const query = getSystemQuery(this.env.tenantId);
+    const collection = getAddressCollection(parentKey);
+    query.push({ key: 'channelType', operator: '==', value: channel });
+    query.push({ key: 'isFavorite', operator: '==', value: true });
+    return this.firestoreService.searchData<AddressModel>(collection, query).pipe(map(addresses => {
+      if (addresses.length > 1) die(`AddressUtil.getFavoriteAddressByChannel -> ERROR: only one favorite adress can exist per channel type (${collection})`);
+      if (addresses.length === 1) return addresses[0];
       return null;
     }));
   }
@@ -118,9 +114,16 @@ export class AddressService {
 
   /*-------------------------- search index --------------------------------*/
   public getSearchIndex(address: AddressModel): string {
-    return (address.channelType === AddressChannel.Postal) ?
-    `n:${address.addressValue}, ${address.countryCode} ${address.zipCode} ${address.city}` :
-    `n:${address.addressValue}`;
+    switch (address.channelType) {
+      case AddressChannel.Phone: 
+        return `n:${address.phone}`;
+      case AddressChannel.Email: 
+        return `n:${address.email}`;
+      case AddressChannel.Postal: 
+        return `n:${address.streetName} + ${address.streetNumber}, ${address.countryCode} ${address.zipCode} ${address.city}`;
+      default:
+        return `n:${address.url}`;
+    }
   }
 
   public getSearchIndexInfo(): string {

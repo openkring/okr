@@ -94,24 +94,24 @@ export function createNewGroupFormModel(): GroupNewFormModel {
 }
 
 export function convertFormToNewGroup(vm: GroupNewFormModel, tenantId: string): GroupModel {
-  const _group = new GroupModel(tenantId);
-  _group.bkey = '';
-  _group.name = vm.name ?? '';
-  _group.id = vm.id ?? '';
-  _group.notes = vm.notes ?? '';
-  _group.tags = vm.tags ?? '';
+  const group = new GroupModel(tenantId);
+  group.bkey = '';
+  group.name = vm.name ?? '';
+  group.id = vm.id ?? '';
+  group.notes = vm.notes ?? '';
+  group.tags = vm.tags ?? '';
 
-  _group.hasContent = vm.hasContent ?? true;
-  _group.hasChat = vm.hasChat ?? true;
-  _group.hasCalendar = vm.hasCalendar ?? true;
-  _group.hasTasks = vm.hasTasks ?? true;
-  _group.hasFiles = vm.hasFiles ?? true;
-  _group.hasAlbum = vm.hasAlbum ?? true;
-  _group.hasMembers = vm.hasMembers ?? true;
+  group.hasContent = vm.hasContent ?? true;
+  group.hasChat = vm.hasChat ?? true;
+  group.hasCalendar = vm.hasCalendar ?? true;
+  group.hasTasks = vm.hasTasks ?? true;
+  group.hasFiles = vm.hasFiles ?? true;
+  group.hasAlbum = vm.hasAlbum ?? true;
+  group.hasMembers = vm.hasMembers ?? true;
 
-  _group.parentKey = vm.parentKey ?? '';
-  _group.parentName = vm.parentName ?? '';
-  _group.parentModelType = vm.parentModelType ?? ModelType.Org;
+  group.parentKey = vm.parentKey ?? '';
+  group.parentName = vm.parentName ?? '';
+  group.parentModelType = vm.parentModelType ?? ModelType.Org;
 
-  return _group;
+  return group;
 }

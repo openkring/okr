@@ -152,6 +152,7 @@ export type BkFormModel = Partial<{
   srvMemberType: number; // MemberType
   srvLicenseOwnershipKey: string;
   srvLicenseValidUntil: string;
+  srvEmail: boolean;
   ssn: string;
   startDate: string;
   startTime: string;
@@ -173,12 +174,12 @@ export type BkFormModel = Partial<{
   type: number;
   url: string;
   urgency: number;
-  usage_images: number;
-  usage_dateOfBirth: number;
-  usage_postalAddress: number;
-  usage_email: number;
-  usage_phone: number;
-  usage_name: number;
+  usageImages: number;
+  usageDateOfBirth: number;
+  usagePostalAddress: number;
+  usageEmail: number;
+  usagePhone: number;
+  usageName: number;
   useDisplayName: boolean;
   useFaceId: boolean;
   useTouchId: boolean;

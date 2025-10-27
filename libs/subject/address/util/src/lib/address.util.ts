@@ -3,80 +3,83 @@ import { ToastController } from '@ionic/angular';
 
 import { bkTranslate } from '@bk2/shared-i18n';
 import { AddressChannel, AddressCollection, AddressModel, AddressUsage, ModelType, OrgCollection, PersonCollection } from '@bk2/shared-models';
-import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
+import { copyToClipboard, formatIban, IbanFormat, showToast } from '@bk2/shared-util-angular';
 import { die, getCountryName, getModelAndKey } from '@bk2/shared-util-core';
 
 /***************************  helpers *************************** */
 export function getAddressModalTitle(addressKey: string | undefined): string {
-  const _operation = !addressKey ? 'create' : 'update';
-  return `@subject.address.operation.${_operation}.label`;
-}
-
-export function getStringifiedPostalAddress(address: AddressModel, lang: string): string | undefined {
-  if (!address || address.channelType !== AddressChannel.Postal) return undefined;
-  const _countryName = getCountryName(address.countryCode, lang);
-  return !_countryName ? `${address.addressValue}, ${address.zipCode} ${address.city}` : `${address.addressValue}, ${address.zipCode} ${address.city}, ${_countryName}`;
+  const operation = !addressKey ? 'create' : 'update';
+  return `@subject.address.operation.${operation}.label`;
 }
 
 /**
- * Analyzes the given key and constructs a collection name:    PersonCollection|OrgCollection/parentkey/AddressCollection
- * @param parentKey  of format:  Modeltype.key
+ * Analyzes the given key and constructs a collection name:    PersonCollection|OrgCollection/parentId/AddressCollection
+ * @param parentId  of format:  Modeltype.key
  * @returns the hierarchical collection name
  */
-export function getAddressCollection(parentKey: string): string {
-  if (parentKey?.length === 0) die('AddressService.read: uid is mandatory');
-  if (parentKey.indexOf('.') === -1) die(`AddressService.read: invalid key ${parentKey} (expected Modeltype.key)`);
-  const [_parentModelType, _parentKey] = getModelAndKey(parentKey);
-  const _parentCollection = _parentModelType === ModelType.Org ? OrgCollection : PersonCollection;
-  return `${_parentCollection}/${_parentKey}/${AddressCollection}`;
-}
-
-/**
- * Convenience method for migration and import. Creates an arbitrary address.
- */
-export function createAddress(tenantId: string, usageType: AddressUsage, channelType: AddressChannel, value: string, isFavorite = false, isValidated = false, isCc = false, isArchived = false): AddressModel {
-  const _address = new AddressModel(tenantId);
-  _address.usageType = usageType;
-  _address.channelType = channelType;
-  _address.addressValue = value;
-  _address.isFavorite = isFavorite;
-  _address.isCc = isCc;
-  _address.isArchived = isArchived;
-  _address.isValidated = isValidated;
-  return _address;
+export function getAddressCollection(parentId: string): string {
+  if (parentId?.length === 0) die('AddressService.read: parentId is mandatory');
+  if (parentId.indexOf('.') === -1) die(`AddressService.read: invalid key ${parentId} (expected Modeltype.key)`);
+  const [parentModelType, parentKey] = getModelAndKey(parentId);
+  const parentCollection = parentModelType === ModelType.Org ? OrgCollection : PersonCollection;
+  return `${parentCollection}/${parentKey}/${AddressCollection}`;
 }
 
 /**
  * Create a favorite email address.
  * @param addressUsage the usage type of the email address (e.g. home, work)
- * @param addressValue the email address
+ * @param email the email address
  * @param tenantId the tenant ID
  * @returns the AddressModel of the email address
  */
-export function createFavoriteEmailAddress(usageType: AddressUsage, value: string, tenantId: string): AddressModel {
-  return createAddress(tenantId, usageType, AddressChannel.Email, value, true);
+export function createFavoriteEmailAddress(addressUsage: AddressUsage, email: string, tenantId: string): AddressModel {
+  const address = new AddressModel(tenantId);
+  address.usageType = addressUsage;
+  address.channelType = AddressChannel.Email;
+  address.email = email;
+  address.isFavorite = true;
+  address.isCc = false;
+  address.isArchived = false;
+  address.isValidated = false;
+  return address;
 }
 
 /**
  * Create a favorite phone address.
  * @param addressUsage the usage type of the phone number (e.g. home, work, mobile)
- * @param addressValue the phone number
+ * @param phone the phone number
  * @param tenantId the tenant ID
  * @returns the AddressModel of the phone number
  */
-export function createFavoritePhoneAddress(addressUsage: AddressUsage, addressValue: string, tenantId: string): AddressModel {
-  return createAddress(tenantId, addressUsage, AddressChannel.Phone, addressValue, true);
+export function createFavoritePhoneAddress(addressUsage: AddressUsage, phone: string, tenantId: string): AddressModel {
+  const address = new AddressModel(tenantId);
+  address.usageType = addressUsage;
+  address.channelType = AddressChannel.Phone;
+  address.phone = phone;
+  address.isFavorite = true;
+  address.isCc = false;
+  address.isArchived = false;
+  address.isValidated = false;
+  return address;
 }
 
 /**
  * Create a favorite web address (URL)
  * @param usageType the usage type of the web address (e.g. home, work)
- * @param addressValue the URL of the web address
+ * @param url the URL of the web address
  * @param tenantId the tenant ID
  * @returns the AddressModel of the web address
  */
-export function createFavoriteWebAddress(usageType: AddressUsage, addressValue: string, tenantId: string): AddressModel {
-  return createAddress(tenantId, usageType, AddressChannel.Web, addressValue, true);
+export function createFavoriteWebAddress(usageType: AddressUsage, url: string, tenantId: string): AddressModel {
+  const address = new AddressModel(tenantId);
+  address.usageType = usageType;
+  address.channelType = AddressChannel.Web;
+  address.url = url;
+  address.isFavorite = true;
+  address.isCc = false;
+  address.isArchived = false;
+  address.isValidated = false;
+  return address;
 }
 
 /**
@@ -94,34 +97,36 @@ export function createFavoriteWebAddress(usageType: AddressUsage, addressValue: 
  * @param isArchived
  * @returns the AddressModel of the postal address
  */
-export function createPostalAddress(tenantId: string, usageType: AddressUsage, street: string, addressValue2: string, zipCode: string, city: string, countryCode: string, isFavorite = false, isValidated = false, isCc = false, isArchived = false): AddressModel {
-  const _address = new AddressModel(tenantId);
-  _address.usageType = usageType;
-  _address.channelType = AddressChannel.Postal;
-  _address.addressValue = street;
-  _address.addressValue2 = addressValue2;
-  _address.zipCode = zipCode;
-  _address.city = city;
-  _address.countryCode = countryCode;
-  _address.isFavorite = isFavorite;
-  _address.isCc = isCc;
-  _address.isArchived = isArchived;
-  _address.isValidated = isValidated;
-  return _address;
+export function createPostalAddress(tenantId: string, usageType: AddressUsage, streetName: string, streetNumber: string, addressValue2: string, zipCode: string, city: string, countryCode: string, isFavorite = false, isValidated = false, isCc = false, isArchived = false): AddressModel {
+  const address = new AddressModel(tenantId);
+  address.usageType = usageType;
+  address.channelType = AddressChannel.Postal;
+  address.streetName = streetName;
+  address.streetNumber = streetNumber;
+  address.addressValue2 = addressValue2;
+  address.zipCode = zipCode;
+  address.city = city;
+  address.countryCode = countryCode;
+  address.isFavorite = isFavorite;
+  address.isCc = isCc;
+  address.isArchived = isArchived;
+  address.isValidated = isValidated;
+  return address;
 }
 
 /**
  * Create a favorite postal address.
  * @param addressUsage the usage type of the address (e.g. home, work, mobile)
- * @param street, the street name
- * @param zipCode, a zip code, 8712 by default
- * @param city, a city name, Stäfa by default
+ * @param streetName, the street name
+ * @param streetNumber, the street number
+ * @param zipCode, a zip code
+ * @param city, a city name
  * @param countryCode a country code, CH by default
  * @param tenantId the tenant ID
  * @returns the address model of the favorite postal address
  */
-export function createFavoritePostalAddress(usageType: AddressUsage, street: string, zipCode: string, city: string, countryCode: string, tenantId: string): AddressModel {
-  return createPostalAddress(tenantId, usageType, street, '', zipCode, city, countryCode, true);
+export function createFavoritePostalAddress(usageType: AddressUsage, streetName: string, streetNumber: string, zipCode: string, city: string, countryCode: string, tenantId: string): AddressModel {
+  return createPostalAddress(tenantId, usageType, streetName, streetNumber, '', zipCode, city, countryCode, true);
 }
 
 /**
@@ -130,12 +135,30 @@ export function createFavoritePostalAddress(usageType: AddressUsage, street: str
  * @param address the address to copy
  */
 export async function copyAddress(toastController: ToastController, address: AddressModel, lang: string): Promise<void> {
-  if (address.channelType === AddressChannel.Postal) {
-    await copyToClipboard(getStringifiedPostalAddress(address, lang));
-  } else {
-    await copyToClipboard(address.addressValue);
-  }
+  await copyToClipboard(stringifyAddress(address, lang));
   await showToast(toastController, bkTranslate('@subject.address.operation.copy.conf'));
+}
+
+export function stringifyAddress(address: AddressModel, lang = 'de'): string {
+  if (!address) return '';
+  switch (address.channelType) {
+    case AddressChannel.Email: 
+      return address.email;
+    case AddressChannel.Phone: 
+      return address.phone;
+    case AddressChannel.Postal: 
+      return stringifyPostalAddress(address, lang);
+    case AddressChannel.BankAccount:
+      return formatIban(address.addressValue2, IbanFormat.Friendly)
+    default: 
+      return address.url;
+  }
+}
+
+export function stringifyPostalAddress(address: AddressModel, lang: string): string {
+  if (!address || address.channelType !== AddressChannel.Postal) return '';
+  const countryName = getCountryName(address.countryCode, lang);
+  return !countryName ? `${address.streetName} ${address.streetNumber}, ${address.zipCode} ${address.city}` : `${address.streetName} ${address.streetNumber}, ${address.zipCode} ${address.city}, ${countryName}`;
 }
 
 /**
@@ -145,13 +168,4 @@ export async function copyAddress(toastController: ToastController, address: Add
  */
 export async function browseUrl(url: string, prefix: string): Promise<void> {
   return Browser.open({ url: prefix + url });
-}
-
-export function stringifyAddress(address: AddressModel): string {
-  if (!address) return '';
-  if (address.channelType === AddressChannel.Postal) {
-    return `${address.addressValue}, ${address.zipCode} ${address.city}`;
-  } else {
-    return address.addressValue;
-  }
 }

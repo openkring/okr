@@ -74,10 +74,10 @@ export class GroupService  {
    * @returns the index string
    */
   public getSearchIndex(group: GroupModel): string {
-    let _index = '';
-    _index = addIndexElement(_index, 'n', group.name);
-    _index = addIndexElement(_index, 'id', group.id);
-    return _index;
+    let index = '';
+    index = addIndexElement(index, 'n', group.name);
+    index = addIndexElement(index, 'id', group.id);
+    return index;
   }
 
   /**

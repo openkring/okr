@@ -80,12 +80,13 @@ export function convertUserToNotificationForm(user: UserModel): UserNotification
 }
 export function convertUserToPrivacyForm(user: UserModel): UserPrivacyFormModel {
   return {
-    usage_images: user.usage_images ?? 0,
-    usage_dateOfBirth: user.usage_dateOfBirth ?? 1,
-    usage_postalAddress: user.usage_postalAddress ?? 1,
-    usage_email: user.usage_email ?? 1,
-    usage_phone: user.usage_phone ?? 1,
-    usage_name: user.usage_name ?? 1,
+    usageImages: user.usageImages ?? 0,
+    usageDateOfBirth: user.usageDateOfBirth ?? 1,
+    usagePostalAddress: user.usagePostalAddress ?? 1,
+    usageEmail: user.usageEmail ?? 1,
+    usagePhone: user.usagePhone ?? 1,
+    usageName: user.usageName ?? 1,
+    srvEmail: user.srvEmail ?? true,
   };
 }
 
@@ -129,12 +130,13 @@ export function convertNotificationFormToUser(vm: UserNotificationFormModel, use
 }
 export function convertPrivacyFormToUser(vm: UserPrivacyFormModel, user?: UserModel): UserModel {
   if (!user) die('user.util.convertPrivacyFormToUser: User is mandatory.');
-  user.usage_images = vm.usage_images ?? user.usage_images;
-  user.usage_dateOfBirth = vm.usage_dateOfBirth ?? user.usage_dateOfBirth;
-  user.usage_postalAddress = vm.usage_postalAddress ?? user.usage_postalAddress;
-  user.usage_email = vm.usage_email ?? user.usage_email;
-  user.usage_phone = vm.usage_phone ?? user.usage_phone;
-  user.usage_name = vm.usage_name ?? user.usage_name;
+  user.usageImages = vm.usageImages ?? user.usageImages;
+  user.usageDateOfBirth = vm.usageDateOfBirth ?? user.usageDateOfBirth;
+  user.usagePostalAddress = vm.usagePostalAddress ?? user.usagePostalAddress;
+  user.usageEmail = vm.usageEmail ?? user.usageEmail;
+  user.usagePhone = vm.usagePhone ?? user.usagePhone;
+  user.usageName = vm.usageName ?? user.usageName;
+  user.srvEmail = vm.srvEmail ?? user.srvEmail;
   return user;
 }
 

@@ -1,3 +1,4 @@
+export * from './lib/action-sheet.util';
 export * from './lib/ahv.util';
 export * from './lib/alert.util';
 export * from './lib/app-navigation.service';

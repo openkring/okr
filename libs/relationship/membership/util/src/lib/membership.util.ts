@@ -119,63 +119,63 @@ export function convertFormToMembership(membership: MembershipModel | undefined,
 }
 
 export function newMembershipForPerson(person: PersonModel, orgKey: string, orgName: string, membershipCategory: CategoryItemModel, dateOfEntry = getTodayStr(DateFormat.StoreDate)): MembershipModel {
-  const _membership = new MembershipModel('dummy');
-  _membership.tenants = person.tenants;
+  const membership = new MembershipModel('dummy');
+  membership.tenants = person.tenants;
 
-  _membership.memberKey = person.bkey ?? die('membership.util.newMembershipForPerson: person.bkey is undefined');
-  _membership.memberName1 = person.firstName;
-  _membership.memberName2 = person.lastName;
-  _membership.memberModelType = ModelType.Person;
-  _membership.memberType = person.gender;
-  _membership.memberDateOfBirth = person.dateOfBirth;
-  _membership.memberDateOfDeath = person.dateOfDeath;
-  _membership.memberZipCode = person.fav_zip;
-  _membership.memberBexioId = person.bexioId;
+  membership.memberKey = person.bkey ?? die('membership.util.newMembershipForPerson: person.bkey is undefined');
+  membership.memberName1 = person.firstName;
+  membership.memberName2 = person.lastName;
+  membership.memberModelType = ModelType.Person;
+  membership.memberType = person.gender;
+  membership.memberDateOfBirth = person.dateOfBirth;
+  membership.memberDateOfDeath = person.dateOfDeath;
+  membership.memberZipCode = person.fav_zip_code;
+  membership.memberBexioId = person.bexioId;
 
-  _membership.orgKey = orgKey;
-  _membership.orgName = orgName;
+  membership.orgKey = orgKey;
+  membership.orgName = orgName;
 
-  _membership.dateOfEntry = dateOfEntry;
-  _membership.dateOfExit = END_FUTURE_DATE_STR;
-  _membership.membershipCategory = membershipCategory.name;
+  membership.dateOfEntry = dateOfEntry;
+  membership.dateOfExit = END_FUTURE_DATE_STR;
+  membership.membershipCategory = membershipCategory.name;
 
-  _membership.priority = 1;
-  _membership.relLog = getRelLogEntry(_membership.priority, '', _membership.dateOfEntry, membershipCategory.abbreviation);
-  _membership.relIsLast = true;
+  membership.priority = 1;
+  membership.relLog = getRelLogEntry(membership.priority, '', membership.dateOfEntry, membershipCategory.abbreviation);
+  membership.relIsLast = true;
 
-  _membership.price = 0;
+  membership.price = 0;
 
-  return _membership;
+  return membership;
 }
 
 export function newMembershipForOrg(org: OrgModel, orgKey: string, orgName: string, membershipCategory: CategoryItemModel, dateOfEntry = getTodayStr(DateFormat.StoreDate)): MembershipModel {
-  const _membership = new MembershipModel('dummy');
-  _membership.tenants = org.tenants;
+  const membership = new MembershipModel('dummy');
+  membership.tenants = org.tenants;
 
-  _membership.memberKey = org.bkey ?? die('membership.util.newMembershipForOrg: org.bkey is undefined');
-  _membership.memberName1 = '';
-  _membership.memberName2 = org.name;
-  _membership.memberModelType = ModelType.Org;
-  _membership.memberType = OrgType.Association;
-  _membership.memberDateOfBirth = org.dateOfFoundation;
-  _membership.memberDateOfDeath = '';
-  _membership.memberZipCode = org.fav_zip;
-  _membership.memberBexioId = org.bexioId;
+  membership.memberKey = org.bkey ?? die('membership.util.newMembershipForOrg: org.bkey is undefined');
+  membership.memberName1 = '';
+  membership.memberName2 = org.name;
+  membership.memberModelType = ModelType.Org;
+  membership.memberType = OrgType.Association;
+  membership.memberDateOfBirth = org.dateOfFoundation;
+  membership.memberDateOfDeath = '';
+  membership.memberZipCode = org.fav_zip_code;
+  membership.memberBexioId = org.bexioId;
 
-  _membership.orgKey = orgKey;
-  _membership.orgName = orgName;
+  membership.orgKey = orgKey;
+  membership.orgName = orgName;
 
-  _membership.dateOfEntry = dateOfEntry;
-  _membership.dateOfExit = END_FUTURE_DATE_STR;
-  _membership.membershipCategory = membershipCategory.name;
+  membership.dateOfEntry = dateOfEntry;
+  membership.dateOfExit = END_FUTURE_DATE_STR;
+  membership.membershipCategory = membershipCategory.name;
 
-  _membership.priority = 1;
-  _membership.relLog = getRelLogEntry(_membership.priority, '', _membership.dateOfEntry, membershipCategory.abbreviation);
-  _membership.relIsLast = true;
+  membership.priority = 1;
+  membership.relLog = getRelLogEntry(membership.priority, '', membership.dateOfEntry, membershipCategory.abbreviation);
+  membership.relIsLast = true;
 
-  _membership.price = 0;
+  membership.price = 0;
 
-  return _membership;
+  return membership;
 }
 
 export function convertMembershipToCategoryChangeForm(membership: MembershipModel): CategoryChangeFormModel {
@@ -195,18 +195,18 @@ export function convertMemberAndOrgToNewForm(member: PersonModel | OrgModel, org
 
   // tbd: resolve the org name with OrgService.read(orgKey)
   if (modelType === ModelType.Person) {
-    const _person = member as PersonModel;
+    const person = member as PersonModel;
     return {
-      memberKey: _person.bkey,
-      memberName1: _person.firstName,
-      memberName2: _person.lastName,
-      memberName: getMemberName(_person, currentUser),
+      memberKey: person.bkey,
+      memberName1: person.firstName,
+      memberName2: person.lastName,
+      memberName: getMemberName(person, currentUser),
       memberModelType: ModelType.Person,
-      memberType: _person.gender,
-      memberDateOfBirth: _person.dateOfBirth,
-      memberDateOfDeath: _person.dateOfDeath,
-      memberZipCode: _person.fav_zip,
-      memberBexioId: _person.bexioId,
+      memberType: person.gender,
+      memberDateOfBirth: person.dateOfBirth,
+      memberDateOfDeath: person.dateOfDeath,
+      memberZipCode: person.fav_zip_code,
+      memberBexioId: person.bexioId,
 
       orgKey: org.bkey,
       orgName: org.name,
@@ -216,18 +216,18 @@ export function convertMemberAndOrgToNewForm(member: PersonModel | OrgModel, org
     };
   }
   if (modelType === ModelType.Org) {
-    const _org = member as OrgModel;
+    const org = member as OrgModel;
     return {
-      memberKey: _org.bkey,
+      memberKey: org.bkey,
       memberName1: '',
-      memberName2: _org.name,
-      memberName: _org.name,
+      memberName2: org.name,
+      memberName: org.name,
       memberModelType: ModelType.Org,
-      memberType: _org.type,
-      memberDateOfBirth: _org.dateOfFoundation,
-      memberDateOfDeath: _org.dateOfLiquidation,
-      memberZipCode: _org.fav_zip,
-      memberBexioId: _org.bexioId,
+      memberType: org.type,
+      memberDateOfBirth: org.dateOfFoundation,
+      memberDateOfDeath: org.dateOfLiquidation,
+      memberZipCode: org.fav_zip_code,
+      memberBexioId: org.bexioId,
 
       orgKey: org.bkey,
       orgName: org.name,
@@ -240,37 +240,37 @@ export function convertMemberAndOrgToNewForm(member: PersonModel | OrgModel, org
 }
 
 export function convertFormToNewMembership(vm: MembershipNewFormModel, tenantId: string): MembershipModel {
-  const _membership = new MembershipModel(tenantId);
-  _membership.tenants = [tenantId];
-  _membership.isArchived = false;
-  _membership.tags = '';
-  _membership.notes = '';
-  _membership.memberKey = vm.memberKey ?? die('membership.util.convertFormToNewMembership: memberKey is mandatory');
-  _membership.memberName1 = vm.memberName1 ?? '';
-  _membership.memberName2 = vm.memberName2 ?? '';
-  _membership.memberModelType = vm.memberModelType ?? ModelType.Person;
-  _membership.memberType = vm.memberType;
-  _membership.memberNickName = '';
-  _membership.memberAbbreviation = '';
-  _membership.memberDateOfBirth = vm.memberDateOfBirth ?? '';
-  _membership.memberDateOfDeath = vm.memberDateOfDeath ?? '';
-  _membership.memberZipCode = vm.memberZipCode ?? '';
-  _membership.memberBexioId = vm.memberBexioId ?? '';
-  _membership.memberId = '';
-  _membership.orgKey = vm.orgKey ?? die('membership.util.convertFormToNewMembership: orgKey is mandatory');
-  _membership.orgName = vm.orgName ?? '';
-  _membership.dateOfEntry = vm.dateOfEntry ?? getTodayStr();
-  _membership.dateOfExit = END_FUTURE_DATE_STR;
-  _membership.membershipCategory = vm.membershipCategory ?? 'active';
-  _membership.membershipState = 'active';
-  _membership.priority = 1;
-  _membership.relLog = getRelLogEntry(_membership.priority, '', _membership.dateOfEntry, vm.membershipCategoryAbbreviation ?? 'A');
-  _membership.relIsLast = true;
-  _membership.price = 0;
-  _membership.currency = 'CHF';
-  _membership.periodicity = Periodicity.Yearly;
-  _membership.index = getMembershipSearchIndex(_membership);
-  return _membership;
+  const membership = new MembershipModel(tenantId);
+  membership.tenants = [tenantId];
+  membership.isArchived = false;
+  membership.tags = '';
+  membership.notes = '';
+  membership.memberKey = vm.memberKey ?? die('membership.util.convertFormToNewMembership: memberKey is mandatory');
+  membership.memberName1 = vm.memberName1 ?? '';
+  membership.memberName2 = vm.memberName2 ?? '';
+  membership.memberModelType = vm.memberModelType ?? ModelType.Person;
+  membership.memberType = vm.memberType;
+  membership.memberNickName = '';
+  membership.memberAbbreviation = '';
+  membership.memberDateOfBirth = vm.memberDateOfBirth ?? '';
+  membership.memberDateOfDeath = vm.memberDateOfDeath ?? '';
+  membership.memberZipCode = vm.memberZipCode ?? '';
+  membership.memberBexioId = vm.memberBexioId ?? '';
+  membership.memberId = '';
+  membership.orgKey = vm.orgKey ?? die('membership.util.convertFormToNewMembership: orgKey is mandatory');
+  membership.orgName = vm.orgName ?? '';
+  membership.dateOfEntry = vm.dateOfEntry ?? getTodayStr();
+  membership.dateOfExit = END_FUTURE_DATE_STR;
+  membership.membershipCategory = vm.membershipCategory ?? 'active';
+  membership.membershipState = 'active';
+  membership.priority = 1;
+  membership.relLog = getRelLogEntry(membership.priority, '', membership.dateOfEntry, vm.membershipCategoryAbbreviation ?? 'A');
+  membership.relIsLast = true;
+  membership.price = 0;
+  membership.currency = 'CHF';
+  membership.periodicity = Periodicity.Yearly;
+  membership.index = getMembershipSearchIndex(membership);
+  return membership;
 }
 
 function getMemberName(person?: PersonModel, currentUser?: UserModel): string {
@@ -301,14 +301,14 @@ export function getMembershipName(membership: MembershipModel): string {
  * @returns
  */
 export function getRelLogEntry(priority: number, priorRelLog: string, dateOfEntry: string, category: string): string {
-  let _relLog = '';
+  let relLog = '';
   if (priority === 1) {
     // first membership
-    _relLog = `${dateOfEntry}:${category}`;
+    relLog = `${dateOfEntry}:${category}`;
   } else {
-    _relLog = `${priorRelLog},${category}`;
+    relLog = `${priorRelLog},${category}`;
   }
-  return _relLog;
+  return relLog;
 }
 
 /**
@@ -320,18 +320,18 @@ export function getRelLogEntry(priority: number, priorRelLog: string, dateOfEntr
 export function getMembershipCategoryChangeComment(oldMembershipCategory?: string, newMembershipCategory?: string): string {
   const _oldMembershipCategory = oldMembershipCategory ?? 'undefined';
   const _newMembershipCategory = newMembershipCategory ?? 'undefined';
-  return `${_oldMembershipCategory} -> ${_newMembershipCategory}`;
+  return `${oldMembershipCategory} -> ${_newMembershipCategory}`;
 }
 
 export function getMembershipSearchIndex(membership: MembershipModel): string {
-  let _index = '';
-  _index = addIndexElement(_index, 'mn', membership.memberName1 + ' ' + membership.memberName2);
-  _index = addIndexElement(_index, 'mk', membership.memberKey);
-  _index = addIndexElement(_index, 'ok', membership.orgKey);
+  let index = '';
+  index = addIndexElement(index, 'mn', membership.memberName1 + ' ' + membership.memberName2);
+  index = addIndexElement(index, 'mk', membership.memberKey);
+  index = addIndexElement(index, 'ok', membership.orgKey);
   if (membership?.memberNickName) {
-    _index = addIndexElement(_index, 'nn', membership.memberNickName);
+    index = addIndexElement(index, 'nn', membership.memberNickName);
   }
-  return _index;
+  return index;
 }
 
 /**

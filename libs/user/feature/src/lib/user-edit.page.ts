@@ -39,7 +39,7 @@ import { UserEditStore } from './user-edit.store';
         <bk-user-model-form [(vm)]="userModelVm" (validChange)="formIsValid.set($event)" />
         <bk-user-auth-form [(vm)]="userAuthVm" (validChange)="formIsValid.set($event)" />
         <bk-user-display-form [(vm)]="userDisplayVm" (validChange)="formIsValid.set($event)" />
-        <bk-user-privacy-form [(vm)]="userPrivacyVm" (validChange)="formIsValid.set($event)" />
+        <bk-user-privacy-form [(vm)]="userPrivacyVm" [currentUser]="currentUser()" (validChange)="formIsValid.set($event)" />
         <bk-user-notification-form [(vm)]="userNotificationVm" (validChange)="formIsValid.set($event)" />
         <bk-chips chipName="tag" [storedChips]="user.tags" [allChips]="userTags()" chipName="tag" (changed)="onTagsChanged($event)" />
       }
@@ -61,6 +61,7 @@ export class UserPageComponent{
   protected readonly avatarTitle = computed(() => getFullPersonName(this.user().firstName, this.user().lastName));
   protected readonly avatarKey = computed(() => `${ModelType.Person}.${this.user().bkey}`);
   protected readonly userTags = computed(() => this.userEditStore.getTags());
+  protected readonly currentUser = computed(() => this.userEditStore.currentUser());
 
   protected userAuthVm = linkedSignal(() => convertUserToAuthForm(this.user()));
   protected userDisplayVm = linkedSignal(() => convertUserToDisplayForm(this.user()));
@@ -74,11 +75,11 @@ export class UserPageComponent{
 
   constructor() {
     effect(() => { this.userEditStore.setUserKey(this.userKey()); });
-    effect(() => { debugFormModel<UserAuthFormModel>('userAuth', this.userAuthVm(), this.userEditStore.currentUser()); });
-    effect(() => { debugFormModel<UserDisplayFormModel>('userDisplay', this.userDisplayVm(), this.userEditStore.currentUser()); });
-    effect(() => { debugFormModel<UserModelFormModel>('userModel', this.userModelVm(), this.userEditStore.currentUser()); });
-    effect(() => { debugFormModel<UserNotificationFormModel>('userNotification', this.userNotificationVm(), this.userEditStore.currentUser()); });
-    effect(() => { debugFormModel<UserPrivacyFormModel>('userPrivacy', this.userPrivacyVm(), this.userEditStore.currentUser()); });
+    effect(() => { debugFormModel<UserAuthFormModel>('userAuth', this.userAuthVm(), this.currentUser()); });
+    effect(() => { debugFormModel<UserDisplayFormModel>('userDisplay', this.userDisplayVm(), this.currentUser()); });
+    effect(() => { debugFormModel<UserModelFormModel>('userModel', this.userModelVm(), this.currentUser()); });
+    effect(() => { debugFormModel<UserNotificationFormModel>('userNotification', this.userNotificationVm(), this.currentUser()); });
+    effect(() => { debugFormModel<UserPrivacyFormModel>('userPrivacy', this.userPrivacyVm(), this.currentUser()); });
   }
 
   /******************************* actions *************************************** */

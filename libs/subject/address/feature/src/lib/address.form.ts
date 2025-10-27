@@ -77,12 +77,16 @@ import { AddressFormModel, addressFormModelShape, addressFormValidations } from 
         }
         @case (addressChannel.Postal) {
           <ion-row>
-            <ion-col size="12" size-md="6">
-              <bk-text-input name="street" [value]="street()" autocomplete="street-address" (changed)="onChange('street', $event)" />
-              <bk-error-note [errors]="streetError()" />                                                                                                                     
+            <ion-col size="9">
+              <bk-text-input name="streetName" [value]="streetName()" autocomplete="street-address" (changed)="onChange('streetName', $event)" />
+              <bk-error-note [errors]="streetNameError()" />                                                                                                                     
             </ion-col>
-    
-            <ion-col size="12" size-md="6">
+            <ion-col size="3">
+              <bk-text-input name="streetNumber" [value]="streetNumber()" (changed)="onChange('streetNumber', $event)" />
+              <bk-error-note [errors]="streetNumberError()" />                                                                                                                     
+            </ion-col>
+
+            <ion-col size="12">
               <bk-text-input name="addressValue2" [value]="addressValue2()" (changed)="onChange('addressValue2', $event)" />
             </ion-col>
           </ion-row>
@@ -114,8 +118,8 @@ import { AddressFormModel, addressFormModelShape, addressFormValidations } from 
         @default {
           <ion-row>
             <ion-col size="12">
-              <bk-text-input name="addressValue" [value]="addressValue()" (changed)="onChange('addressValue', $event)" />
-              <bk-error-note [errors]="addressValueError()" />                                                                                                                     
+              <bk-text-input name="url" [value]="url()" (changed)="onChange('url', $event)" />
+              <bk-error-note [errors]="urlError()" />                                                                                                                     
             </ion-col>
           </ion-row>
         }
@@ -157,9 +161,10 @@ export class AddressFormComponent {
   protected usageLabelError = computed(() => this.validationResult().getErrors('usageLabel'));
   protected emailError = computed(() => this.validationResult().getErrors('email'));
   protected phoneError = computed(() => this.validationResult().getErrors('phone'));
-  protected streetError = computed(() => this.validationResult().getErrors('street'));
+  protected streetNameError = computed(() => this.validationResult().getErrors('streetName'));
+  protected streetNumberError = computed(() => this.validationResult().getErrors('streetNumber'));
   protected ibanError = computed(() => this.validationResult().getErrors('iban'));
-  protected addressValueError = computed(() => this.validationResult().getErrors('addressValue'));
+  protected urlError = computed(() => this.validationResult().getErrors('url'));
   protected swissCity = computed(() => {
     return {
       countryCode: this.countryCode(),
@@ -173,14 +178,15 @@ export class AddressFormComponent {
   protected channelLabel = computed(() => this.vm().channelLabel ?? '');
   protected usageType = computed(() => this.vm().usageType ?? AddressUsage.Home);
   protected usageLabel = computed(() => this.vm().usageLabel ?? '');
-  protected addressValue = computed(() => this.vm().addressValue ?? '');
-  protected addressValue2 = computed(() => this.vm().addressValue2 ?? '');
   protected email = computed(() => this.vm().email ?? '');
   protected phone = computed(() => this.vm().phone ?? '');
-  protected street = computed(() => this.vm().street ?? '');
+  protected streetName = computed(() => this.vm().streetName ?? '');
+  protected streetNumber = computed(() => this.vm().streetNumber ?? '');
+  protected addressValue2 = computed(() => this.vm().addressValue2 ?? '');
   protected countryCode = computed(() => this.vm().countryCode ?? 'CH');
   protected zipCode = computed(() => this.vm().zipCode ?? '');
   protected city = computed(() => this.vm().city ?? '');
+  protected url = computed(() => this.vm().url ?? '');
   protected iban = computed(() => this.vm().iban ?? '');
   protected tags = computed(() => this.vm().tags ?? '');
   protected isFavorite = computed(() => this.vm().isFavorite ?? false);
@@ -196,29 +202,20 @@ export class AddressFormComponent {
   }
 
   protected onValueChange(value: AddressFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((vm) => ({...vm, ...value}));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 
-  // beware/tbd: email: addressValue + email, phone: addressValue + phone, iban: addressValue + iban
   protected onChange(fieldName: string, value: string | string[] | number | boolean): void {
     if (!value) return;
-    if (fieldName === 'email') {
-      this.vm.update((_vm) => ({..._vm, email: value as string, addressValue: value as string}));
-    } else if (fieldName === 'phone') {
-      this.vm.update((_vm) => ({..._vm, phone: value as string, addressValue: value as string}));
-    } else if (fieldName === 'iban') {
-      this.vm.update((_vm) => ({..._vm, iban: value as string, addressValue: value as string}));
-    } else {
-      this.vm.update((vm) => ({ ...vm, [fieldName]: value }));
-    }
+    this.vm.update((vm) => ({ ...vm, [fieldName]: value }));
     debugFormErrors('AddressForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 
   protected onCitySelected(city: SwissCity): void {
-    this.vm.update((_vm) => ({ ..._vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
+    this.vm.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
   }
 
   protected hasRole(role: RoleName): boolean {

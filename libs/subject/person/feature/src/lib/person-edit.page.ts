@@ -53,7 +53,7 @@ import { PersonEditStore } from './person-edit.store';
           (validChange)="formIsValid.set($event)" />
 
         <ion-accordion-group value="addresses" [multiple]="true">
-          <bk-addresses-accordion [parentKey]="personKey()" [readOnly]="false" [parentModelType]="modelType.Person" [addresses]="addresses()" 
+          <bk-addresses-accordion [parentKey]="person.bkey" [parentModelType]="modelType.Person" [addresses]="addresses()" 
             [readOnly]="!hasRole('memberAdmin')" (addressesChanged)="onAddressesChanged()" />
           <bk-membership-accordion [member]="person" />
           <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" />

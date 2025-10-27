@@ -103,28 +103,28 @@ export const OrgListStore = signalStore(
       console.log(`OrgListStore.export(${type}) is not yet implemented.`);
     },
     async add(): Promise<void> {
-      const _modal = await store.modalController.create({
+      const modal = await store.modalController.create({
         component: OrgNewModalComponent,
         componentProps: {
           currentUser: store.currentUser()
         }
       });
-      _modal.present();
-      const { data, role } = await _modal.onDidDismiss();
+      modal.present();
+      const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm') {
-        const _vm = data as OrgNewFormModel;
-        const _key = ModelType.Org + '.' + await store.orgService.create(convertFormToNewOrg(_vm, store.tenantId()), store.currentUser());
-        if ((_vm.email ?? '').length > 0) {
-          this.saveAddress(convertNewOrgFormToEmailAddress(_vm, store.tenantId()), _key);
+        const vm = data as OrgNewFormModel;
+        const key = ModelType.Org + '.' + await store.orgService.create(convertFormToNewOrg(vm, store.tenantId()), store.currentUser());
+        if ((vm.email ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToEmailAddress(vm, store.tenantId()), key);
         }
-        if ((_vm.phone ?? '').length > 0) {
-          this.saveAddress(convertNewOrgFormToPhoneAddress(_vm, store.tenantId()), _key);
+        if ((vm.phone ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToPhoneAddress(vm, store.tenantId()), key);
         }
-        if ((_vm.web ?? '').length > 0) {
-          this.saveAddress(convertNewOrgFormToWebAddress(_vm, store.tenantId()), _key);
+        if ((vm.url ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToWebAddress(vm, store.tenantId()), key);
         }
-        if ((_vm.city ?? '').length > 0) {
-          this.saveAddress(convertNewOrgFormToPostalAddress(_vm, store.tenantId()), _key);
+        if ((vm.city ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToPostalAddress(vm, store.tenantId()), key);
         }
       }
       store.orgsResource.reload();
@@ -159,11 +159,11 @@ export const OrgListStore = signalStore(
       this.reset();
     },
     async copyEmailAddresses(): Promise<void> {
-      const _allEmails = store.filteredOrgs().map((_org) => _org.fav_email);
-      const _emails = _allEmails.filter((e) => e);
+      const allEmails = store.filteredOrgs().map((org) => org.fav_email);
+      const emails = allEmails.filter((e) => e);
       await copyToClipboardWithConfirmation(
         store.toastController,
-        _emails.toString() ?? '',
+        emails.toString() ?? '',
         '@subject.address.operation.emailCopy.conf'
       );
     },

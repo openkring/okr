@@ -42,7 +42,7 @@ import { convertPersonalDataFormToPerson, convertPersonToDataForm, convertPrivac
       <ion-accordion-group value="addresses" [multiple]="true">
         <bk-profile-data-accordion [(vm)]="personalData" [currentUser]="currentUser()" (validChange)="formIsValid.set($event)"/>
         @if(personKey(); as personKey) {
-          <bk-addresses-accordion [parentKey]="personKey" [readOnly]="false" color="light" [parentModelType]="modelType.Person" [addresses]="addresses()" />
+          <bk-addresses-accordion [parentKey]="personKey" [readOnly]="false" [parentModelType]="modelType.Person" [addresses]="addresses()" />
         }
         <bk-profile-settings-accordion [(vm)]="settings" [currentUser]="currentUser()" (validChange)="formIsValid.set($event) "/>
         <bk-profile-privacy-accordion [(vm)]="privacy" [currentUser]="currentUser()" (validChange)="formIsValid.set($event)" />

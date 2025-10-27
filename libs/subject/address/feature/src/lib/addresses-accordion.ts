@@ -1,6 +1,6 @@
 import { AsyncPipe } from "@angular/common";
 import { Component, inject, input, model, output } from "@angular/core";
-import { IonAccordion, IonButton, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, ModalController } from "@ionic/angular/standalone";
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList, ModalController } from "@ionic/angular/standalone";
 
 import { AddressChannels, AddressUsages, getCategoryIcon } from "@bk2/shared-categories";
 import { AppStore } from "@bk2/shared-feature";
@@ -13,6 +13,8 @@ import { AddressService } from "@bk2/subject-address-data-access";
 import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/subject-address-util";
 
 import { AddressModalsService } from "./address-modals.service";
+import { createActionSheetButton, createActionSheetOptions } from "@bk2/shared-util-angular";
+import { hasRole } from "@bk2/shared-util-core";
 
 @Component({
   selector: 'bk-addresses-accordion',
@@ -21,8 +23,7 @@ import { AddressModalsService } from "./address-modals.service";
     TranslatePipe, AsyncPipe,
     FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe, SvgIconPipe,
     EmptyListComponent,
-    IonAccordion, IonItem, IonLabel, IonButton, IonIcon,  
-    IonItemSliding, IonItemOptions, IonItemOption, IonList
+    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList
   ],
   styles: [`
     ion-icon {
@@ -45,35 +46,20 @@ import { AddressModalsService } from "./address-modals.service";
       } @else {
         <ion-list lines="inset">
           @for(address of addresses(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-item (click)="use(slidingItem, address)">
-                <ion-label>
-                  <ion-icon src="{{ address.isFavorite | favoriteIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
-                  @if(address.isCc) {
-                    <ion-icon src="{{ 'cc-circle' | svgIcon }}" />
-                  }
-                  @if(address.isValidated) {
-                    <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" />
-                  }
-                  <ion-icon [src]="getChannelIcon(address.channelType) | svgIcon" />
-                  <!-- <ion-icon [src]="address.channelType | channelIcon" /> -->
-                  <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
-                </ion-label>
-                <ion-label>
-                  {{ address.addressValue | formatAddress:address.addressValue2:address.zipCode:address.city:address.channelType }}
-                </ion-label>
-              </ion-item>
-              @if(readOnly() === false) {
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="delete(slidingItem, address)"><ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" /></ion-item-option>
-                  <ion-item-option color="light" (click)="copy(slidingItem, address)"><ion-icon slot="icon-only" src="{{'copy' | svgIcon }}" /></ion-item-option>
-                  <ion-item-option color="primary" (click)="edit(slidingItem, address)"><ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" /></ion-item-option>
-                  @if(address.channelType === addressChannel.BankAccount) {
-                    <ion-item-option color="light" (click)="uploadEzs(slidingItem, address)"><ion-icon slot="icon-only" src="{{'qrcode' | svgIcon }}" /></ion-item-option>
-                  }
-                </ion-item-options>
-              }
-            </ion-item-sliding>
+            <ion-item (click)="showActions(address)">
+              <ion-label>
+                <ion-icon src="{{ address.isFavorite | favoriteIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                @if(address.isCc) {
+                  <ion-icon src="{{ 'cc-circle' | svgIcon }}" />
+                }
+                @if(address.isValidated) {
+                  <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" />
+                }
+                <ion-icon [src]="getChannelIcon(address.channelType) | svgIcon" />
+                <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
+                {{ address | formatAddress }}
+              </ion-label>
+            </ion-item>
           }
         </ion-list>
       }
@@ -83,6 +69,7 @@ import { AddressModalsService } from "./address-modals.service";
 })
 export class AddressesAccordionComponent {
   protected readonly modalController = inject(ModalController);
+  private actionSheetController = inject(ActionSheetController);
   public readonly addressService = inject(AddressService);
   private readonly addressModalsService = inject(AddressModalsService);
   private readonly appStore = inject(AppStore);
@@ -91,6 +78,7 @@ export class AddressesAccordionComponent {
   public parentKey = input.required<string>(); // the parent key of the addresses
   public parentModelType = input.required<ModelType>(); // the parent model type of the addresses
   public addressesChanged = output(); // event emitted when the addresses have changed
+  private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 
   // we need to solve the access with an input parameter (instead of using the authorizationService),
   // in order to support the profile use case (where the current user is allowed to edit addresses even if she does not have memberAdmin role)
@@ -117,24 +105,88 @@ export class AddressesAccordionComponent {
     }
   }
 
-  public async delete(slidingItem?: IonItemSliding, address?: AddressModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  // 4a upload ezs
+  // 5) replace all slidingItems
+  /**
+   * 
+   * @param address 
+   */
+  protected async showActions(address: AddressModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, address);
+    await this.executeActions(actionSheetOptions, address);
+  }
+
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
+   if (hasRole('admin', this.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('copy', this.imgixBaseUrl, 'copy'));
+    if (hasRole('memberAdmin', this.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    switch(address.channelType) {
+      case AddressChannel.BankAccount:
+        actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'qrcode'));
+        actionSheetOptions.buttons.push(createActionSheetButton('upload', this.imgixBaseUrl, 'qrcode'));
+        break;
+      case AddressChannel.Email:
+        actionSheetOptions.buttons.push(createActionSheetButton('send', this.imgixBaseUrl, 'email'));
+        break;
+      case AddressChannel.Phone:
+        actionSheetOptions.buttons.push(createActionSheetButton('call', this.imgixBaseUrl, 'tel'));
+        break;
+      case AddressChannel.Postal:
+        actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'location'));
+        break;
+      case AddressChannel.Web:
+        actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'link'));
+        break;
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+  }
+
+  private async executeActions(actionSheetOptions: ActionSheetOptions, address: AddressModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.delete(address);
+          break;
+        case 'copy':
+          await this.copy(address);
+          break;
+        case 'edit':
+          await this.edit(address);
+          break;
+        case 'upload':
+          await this.uploadEzs(address);
+          break;
+        case 'show':
+        case 'send':
+        case 'call':
+          await this.use(address);
+          break;
+      }
+    }
+  }
+
+  public async delete(address?: AddressModel): Promise<void> {
     if (address) await this.addressService.delete(address, this.appStore.currentUser());
     this.addressesChanged.emit();
   }
 
-  public async use(slidingItem?: IonItemSliding, address?: AddressModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  public async use(address?: AddressModel): Promise<void> {
     if (address) await this.addressModalsService.use(address);
   }
 
-  public async copy(slidingItem?: IonItemSliding, address?: AddressModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  public async copy(address?: AddressModel): Promise<void> {
     if (address) await this.addressService.copy(address);
   }
 
-  public async edit(slidingItem?: IonItemSliding, address?: AddressModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  public async edit(address?: AddressModel): Promise<void> {
     if (address) await this.addressModalsService.edit(address);
     else {
       const _newAddress = new AddressModel(this.addressModalsService.tenantId);
@@ -144,8 +196,7 @@ export class AddressesAccordionComponent {
     this.addressesChanged.emit();
   }
 
-  public async uploadEzs(slidingItem?: IonItemSliding, address?: AddressModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  public async uploadEzs(address?: AddressModel): Promise<void> {
     if (address) {
       const _url = await this.addressModalsService.uploadEzs(address);
       if (_url) {

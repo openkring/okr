@@ -64,8 +64,12 @@ import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidati
           ADDRESSES  
           --------------------------------------------------->
           <ion-row>
-            <ion-col size="12">
-              <bk-text-input name="street" [value]="street()" autocomplete="street-address" (changed)="onChange('street', $event)" />
+            <ion-col size="10">
+              <bk-text-input name="streetName" [value]="streetName()" autocomplete="street-address" (changed)="onChange('streetName', $event)" />
+              <bk-error-note [errors]="streetErrors()" />                                                                                                                     
+            </ion-col>
+            <ion-col size="2">
+              <bk-text-input name="streetNumber" [value]="streetNumber()" (changed)="onChange('streetNumber', $event)" />
               <bk-error-note [errors]="streetErrors()" />                                                                                                                     
             </ion-col>
           </ion-row>
@@ -95,8 +99,8 @@ import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidati
               <bk-error-note [errors]="emailErrors()" />                                                                                                                     
             </ion-col>
             <ion-col size="12">
-              <bk-text-input name="web" [value]="web()" (changed)="onChange('web', $event)" />
-              <bk-error-note [errors]="webErrors()" />                                                                                                                     
+              <bk-text-input name="url" [value]="url()" (changed)="onChange('url', $event)" />
+              <bk-error-note [errors]="urlErrors()" />                                                                                                                     
             </ion-col>
           </ion-row>
           <ion-row>
@@ -144,13 +148,14 @@ export class OrgNewFormComponent {
   protected dateOfFoundation = computed(() => this.vm().dateOfFoundation ?? '');
   protected dateOfLiquidation = computed(() => this.vm().dateOfLiquidation ?? '');
 
-  protected street = computed(() => this.vm().street ?? '');
+  protected streetName = computed(() => this.vm().streetName ?? '');
+  protected streetNumber = computed(() => this.vm().streetNumber ?? '');
   protected zipCode = computed(() => this.vm().zipCode ?? '');
   protected city = computed(() => this.vm().city ?? '');
   protected countryCode = computed(() => this.vm().countryCode ?? '');
   protected phone = computed(() => this.vm().phone ?? '');
   protected email = computed(() => this.vm().email ?? '');
-  protected web = computed(() => this.vm().web ?? '');
+  protected url = computed(() => this.vm().url ?? '');
 
   protected taxId = computed(() => this.vm().taxId ?? '');
   protected bexioId = computed(() => this.vm().bexioId ?? '');
@@ -162,7 +167,7 @@ export class OrgNewFormComponent {
   protected streetErrors = computed(() => this.validationResult().getErrors('street'));
   protected phoneErrors = computed(() => this.validationResult().getErrors('phone'));
   protected emailErrors = computed(() => this.validationResult().getErrors('email'));
-  protected webErrors = computed(() => this.validationResult().getErrors('web'));
+  protected urlErrors = computed(() => this.validationResult().getErrors('url'));
 
   public orgTypeEnum = OrgType;
   public orgTypes = OrgTypes;
@@ -170,11 +175,11 @@ export class OrgNewFormComponent {
   protected vatMask = ChVatMask;
 
   protected onCitySelected(city: SwissCity): void {
-    this.vm.update((_vm) => ({ ..._vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
+    this.vm.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
   }
 
   protected onValueChange(value: OrgFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((vm) => ({...vm, ...value}));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 

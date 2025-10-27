@@ -39,7 +39,7 @@ export const onPersonAddressChange = onDocumentWritten(
     region: 'europe-west6'
   }, 
   async (event) => {
-    await updateFavoriteAddressInfo(firestore, event.params.personId, PersonCollection, 'person');
+    await updateFavoriteAddressInfo(firestore, event.params.personId, PersonCollection);
   }
 );
 
@@ -54,7 +54,7 @@ export const onOrgAddressChange = onDocumentWritten(
     region: 'europe-west6'
   }, 
   async (event) => {
-    await updateFavoriteAddressInfo(firestore, event.params.orgId, OrgCollection, 'org');
+    await updateFavoriteAddressInfo(firestore, event.params.orgId, OrgCollection);
   }
 );
 

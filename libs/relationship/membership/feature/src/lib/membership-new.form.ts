@@ -157,7 +157,7 @@ export class MembershipNewFormComponent {
           memberType: data.gender,
           memberDateOfBirth: data.dateOfBirth,
           memberDateOfDeath: data.dateOfDeath,
-          memberZipCode: data.fav_zip,
+          memberZipCode: data.fav_zip_code,
           memberBexioId: data.bexioId
         }));
         debugFormErrors('MembershipNewForm (Person)', this.validationResult().errors, this.currentUser());

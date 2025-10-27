@@ -5,12 +5,14 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Observable, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, ModelType, PersonModel, ResourceModel } from '@bk2/shared-models';
+import { AddressCollection, AddressModel, ModelType, PersonCollection, PersonModel, ResourceModel } from '@bk2/shared-models';
 import { AppNavigationService } from '@bk2/shared-util-angular';
 import { debugItemLoaded, debugListLoaded } from '@bk2/shared-util-core';
 
 import { PersonService } from '@bk2/subject-person-data-access';
 import { convertFormToPerson, PersonFormModel } from '@bk2/subject-person-util';
+import { collection, query } from 'firebase/firestore';
+import { collectionData } from 'rxfire/firestore';
 
 /**
  * the personEditPage is setting the personKey.
@@ -31,7 +33,7 @@ export const PersonEditStore = signalStore(
     personService: inject(PersonService),
     appNavigationService: inject(AppNavigationService),
     appStore: inject(AppStore),
-    modalController: inject(ModalController),    
+    modalController: inject(ModalController)
   })),
 
   withProps((store) => ({
@@ -40,17 +42,17 @@ export const PersonEditStore = signalStore(
         personKey: store.personKey()
       }),
       stream: ({params}) => {
-        if (!params.personKey) return of(undefined);
-        const _person$ = store.personService.read(params.personKey);
-        debugItemLoaded('PersonEditStore.person', _person$, store.appStore.currentUser());
-        return _person$;
+        if (!params.personKey?.length) return new Observable<PersonModel>(() => {});
+        const person$ = store.personService.read(params.personKey);
+        debugItemLoaded('PersonEditStore.person', person$, store.appStore.currentUser());
+        return person$;
       }
     }),
   })),
 
   withComputed((state) => {
     return {
-      person: computed(() => state.personResource.value() ?? new PersonModel(state.appStore.env.tenantId)),
+      person: computed(() => state.personResource.value()),
       currentUser: computed(() => state.appStore.currentUser()),
       defaultResource : computed(() => state.appStore.defaultResource() ?? new ResourceModel(state.appStore.env.tenantId)),
       tenantId: computed(() => state.appStore.env.tenantId),
@@ -64,12 +66,14 @@ export const PersonEditStore = signalStore(
         person: store.person()
       }),
       stream: ({params}) => {
-        let addresses$: Observable<AddressModel[]> = of([]);
-        if (params.person) {
-          addresses$ = store.personService.listAddresses(params.person);
-          debugListLoaded('PersonEditStore.addresses', addresses$, store.appStore.currentUser());
-        }
-        return addresses$;
+                if (!params.person) return of([]);
+                const _ref = query(collection(store.appStore.firestore, `${PersonCollection}/${params.person.bkey}/${AddressCollection}`));
+                return collectionData(_ref, { idField: 'bkey' }) as Observable<AddressModel[]>;
+        
+/*         if (!params.person?.bkey?.length) return new Observable<AddressModel[]>(() => {});    
+        const addresses$ = store.personService.listAddresses(params.person);
+        debugListLoaded('PersonEditStore.addresses', addresses$, store.appStore.currentUser());
+        return addresses$; */
       }
     }),
   })),

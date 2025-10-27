@@ -25,10 +25,11 @@ export const userValidations = staticSuite((model: UserModel, field?: string) =>
   booleanValidations('showDebugInfo', model.showDebugInfo);
   booleanValidations('showHelpers', model.showHelpers);
 
-  categoryValidations('usage_images', model.usage_images, PrivacyUsage);
-  categoryValidations('usage_dateOfBirth', model.usage_dateOfBirth, PrivacyUsage);
-  categoryValidations('usage_postalAddress', model.usage_postalAddress, PrivacyUsage);
-  categoryValidations('usage_phone', model.usage_phone, PrivacyUsage);
-  categoryValidations('usage_email', model.usage_email, PrivacyUsage);
-  categoryValidations('usage_name', model.usage_name, PrivacyUsage);
+  categoryValidations('usageImages', model.usageImages, PrivacyUsage);
+  categoryValidations('usageDateOfBirth', model.usageDateOfBirth, PrivacyUsage);
+  categoryValidations('usagePostalAddress', model.usagePostalAddress, PrivacyUsage);
+  categoryValidations('usagePhone', model.usagePhone, PrivacyUsage);
+  categoryValidations('usageEmail', model.usageEmail, PrivacyUsage);
+  categoryValidations('usageName', model.usageName, PrivacyUsage);
+  booleanValidations('srvEmail', model.srvEmail);
 });

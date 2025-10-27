@@ -30,21 +30,21 @@ export class GeocodingService {
    */
   public async geocodeAddress(address: AddressModel | string): Promise<GeoCoordinates | undefined> {
     if (!address) return undefined;
-    let _addressStr = '';
+    let addressStr = '';
     if (typeof address === 'string') {
-      _addressStr = address; 
+      addressStr = address; 
     } else {      // address is of type AddressModel
       if (address.channelType !== AddressChannel.Postal) return undefined;
-      _addressStr = stringifyAddress(address);
+      addressStr = stringifyAddress(address);
     }
 
-    const params = { address: _addressStr, key: this.env.services.gmapKey }; 
+    const params = { address: addressStr, key: this.env.services.gmapKey }; 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const _result = await firstValueFrom(this.http.get<any>(this.apiUrl, { params: params }));
-      if (_result.results && _result.results.length > 0) {
-        const _location = _result.results[0].geometry.location;
-        return { lat: _location.lat, lng: _location.lng };
+      const result = await firstValueFrom(this.http.get<any>(this.apiUrl, { params: params }));
+      if (result.results && result.results.length > 0) {
+        const location = result.results[0].geometry.location;
+        return { lat: location.lat, lng: location.lng };
       } else {
         error(this.toastController, 'Address not found');
         return undefined;

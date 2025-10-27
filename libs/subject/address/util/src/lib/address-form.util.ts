@@ -10,10 +10,10 @@ export function newAddressFormModel(): AddressFormModel {
     channelLabel: '',
     usageType: AddressUsage.Home,
     usageLabel: '',
-    addressValue: '',
     phone: '',
     email: '',
-    street: '',
+    streetName: '',
+    streetNumber: '',
     addressValue2: '',
     zipCode: '',
     city: '',
@@ -38,16 +38,16 @@ export function convertAddressToForm(address: AddressModel | undefined): Address
     channelLabel: address.channelLabel,
     usageType: address.usageType,
     usageLabel: address.usageLabel,
-    addressValue: address.addressValue,
-    phone: address.channelType === AddressChannel.Phone ? address.addressValue : '',
-    email: address.channelType === AddressChannel.Email ? address.addressValue : '',
-    street: address.channelType === AddressChannel.Postal ? address.addressValue : '',
+    phone: address.phone,
+    email: address.email,
+    streetName: address.streetName,
+    streetNumber: address.streetNumber,
     addressValue2: address.addressValue2,
     zipCode: address.zipCode,
     city: address.city,
     countryCode: address.countryCode,
     url: address.url,
-    iban: address.channelType === AddressChannel.BankAccount ? formatIban(address.addressValue, IbanFormat.Friendly) : '',
+    iban: address.channelType === AddressChannel.BankAccount ? formatIban(address.addressValue2, IbanFormat.Friendly) : '',
     isFavorite: address.isFavorite,
     isCc: address.isCc,
     isValidated: address.isValidated,
@@ -63,8 +63,11 @@ export function convertFormToAddress(address: AddressModel | undefined, vm: Addr
   address.channelLabel = vm.channelLabel ?? '';
   address.usageType = vm.usageType ?? AddressUsage.Mobile;
   address.usageLabel = vm.usageLabel ?? '';
-  address.addressValue = getAddressValueByChannel(vm);
-  address.addressValue2 = vm.addressValue2 ?? '';
+  address.phone = vm.phone ?? '';
+  address.email = vm.email ?? '';
+  address.streetName = vm.streetName ?? '';
+  address.streetNumber = vm.streetNumber ?? '';
+  address.addressValue2 = vm.channelType === AddressChannel.BankAccount ? vm.iban ?? '' : vm.addressValue2 ?? '';
   address.zipCode = vm.zipCode ?? '';
   address.city = vm.city ?? '';
   address.countryCode = vm.countryCode ?? '';
@@ -86,18 +89,18 @@ export function getAddressValueByChannel(vm: AddressFormModel): string {
 
   // make some corrections of user input
   // street:  replace str. with strasse
-  if (vm.street) {
-    vm.street = replaceSubstring(vm.street ?? '', 'str.', 'strasse');
+  if (vm.streetName) {
+    vm.streetName = replaceSubstring(vm.streetName ?? '', 'str.', 'strasse');
   }
-  if (vm.addressValue) {
-    vm.addressValue = replaceSubstring(vm.addressValue, 'http://', '');
-    vm.addressValue = replaceSubstring(vm.addressValue, 'https://', '');
-    vm.addressValue = replaceSubstring(vm.addressValue, 'twitter.com/', '');
-    vm.addressValue = replaceSubstring(vm.addressValue, 'www.xing.com/profile/', '');
-    vm.addressValue = replaceSubstring(vm.addressValue, 'www.facebook.com/', '');
-    vm.addressValue = replaceSubstring(vm.addressValue, 'www.linkedin.com/in/', '');
-    vm.addressValue = replaceSubstring(vm.addressValue, 'www.instagram.com/', '');
-    vm.addressValue = replaceEndingSlash(vm.addressValue);
+  if (vm.url) {
+    vm.url = replaceSubstring(vm.url, 'http://', '');
+    vm.url = replaceSubstring(vm.url, 'https://', '');
+    vm.url = replaceSubstring(vm.url, 'twitter.com/', '');
+    vm.url = replaceSubstring(vm.url, 'www.xing.com/profile/', '');
+    vm.url = replaceSubstring(vm.url, 'www.facebook.com/', '');
+    vm.url = replaceSubstring(vm.url, 'www.linkedin.com/in/', '');
+    vm.url = replaceSubstring(vm.url, 'www.instagram.com/', '');
+    vm.url = replaceEndingSlash(vm.url);
   }
   if (vm.phone) {
     vm.phone = replaceSubstring(vm.phone, 'tel:', '');
@@ -108,9 +111,9 @@ export function getAddressValueByChannel(vm: AddressFormModel): string {
   switch (vm.channelType) {
     case AddressChannel.Phone: return vm.phone ?? '';
     case AddressChannel.Email: return vm.email ?? '';
-    case AddressChannel.Postal: return vm.street ?? '';
+    case AddressChannel.Postal: return vm.streetName ?? '' + vm.streetNumber ?? '';
     case AddressChannel.BankAccount: return formatIban(vm.iban ?? '', IbanFormat.Electronic);
-    default: return vm.addressValue ?? '';
+    default: return vm.url ?? '';
   }
 }
 

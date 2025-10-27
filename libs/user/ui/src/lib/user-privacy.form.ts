@@ -1,12 +1,12 @@
 import { AsyncPipe } from "@angular/common";
 import { Component, computed, input, model, output, signal } from "@angular/core";
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { PrivacyUsages } from "@bk2/shared-categories";
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { FieldDescription, PrivacyUsage, UserModel } from "@bk2/shared-models";
-import { CategoryComponent } from "@bk2/shared-ui";
+import { CategoryComponent, CheckboxComponent } from "@bk2/shared-ui";
 import { debugFormErrors } from "@bk2/shared-util-core";
 
 import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidations } from "@bk2/user-util";
@@ -17,9 +17,9 @@ import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidat
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
-    CategoryComponent,
+    CategoryComponent, CheckboxComponent,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle,
-    IonGrid, IonRow, IonCol
+    IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
   viewProviders: [vestFormsViewProviders],
   template: `
@@ -38,24 +38,38 @@ import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidat
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usage_images" [value]="usage_images()" [categories]="privacyUsages" (changed)="onChange('usage_images', $event)" />
+                <bk-cat name="usageImages" [value]="usageImages()" [categories]="privacyUsages" (changed)="onChange('usageImages', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usage_dateOfBirth" [value]="usage_dateOfBirth()" [categories]="privacyUsages" (changed)="onChange('usage_dateOfBirth', $event)" />
+                <bk-cat name="usageDateOfBirth" [value]="usageDateOfBirth()" [categories]="privacyUsages" (changed)="onChange('usageDateOfBirth', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usage_postalAddress" [value]="usage_postalAddress()" [categories]="privacyUsages" (changed)="onChange('usage_postalAddress', $event)" />
+                <bk-cat name="usagePostalAddress" [value]="usagePostalAddress()" [categories]="privacyUsages" (changed)="onChange('usagePostalAddress', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usage_email" [value]="usage_email()" [categories]="privacyUsages" (changed)="onChange('usage_email', $event)" />
+                <bk-cat name="usageEmail" [value]="usageEmail()" [categories]="privacyUsages" (changed)="onChange('usageEmail', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usage_phone" [value]="usage_phone()" [categories]="privacyUsages" (changed)="onChange('usage_phone', $event)" />
+                <bk-cat name="usagePhone" [value]="usagePhone()" [categories]="privacyUsages" (changed)="onChange('usagePhone', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usage_name" [value]="usage_name()" [categories]="privacyUsages" (changed)="onChange('usage_name', $event)" />
+                <bk-cat name="usageName" [value]="usageName()" [categories]="privacyUsages" (changed)="onChange('usageName', $event)" />
               </ion-col>
             </ion-row>
+            @if(isScs()) {
+              <ion-row>
+                <ion-col>
+                  <ion-item lines="none">
+                    <ion-label>{{ '@auth.privacyUsage.srv.description' | translate | async }}</ion-label>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col>
+                  <bk-checkbox name="srvEmail" [isChecked]="srvEmail()" [showHelper]="true" (changed)="onChange('srvEmail', $event)" />
+                </ion-col>
+              </ion-row>
+            }
           </ion-grid>
         </ion-card-content>
       </ion-card>
@@ -66,22 +80,23 @@ export class UserPrivacyFormComponent {
   public vm = model.required<UserPrivacyFormModel>();
   public currentUser = input<UserModel | undefined>();
 
-  protected privacyUsages = PrivacyUsages;
-  public changedField = output<FieldDescription>();
-
-  protected usage_images = computed(() => this.vm().usage_images ?? PrivacyUsage.Restricted);
-  protected usage_dateOfBirth = computed(() => this.vm().usage_dateOfBirth ?? PrivacyUsage.Restricted);
-  protected usage_postalAddress = computed(() => this.vm().usage_postalAddress ?? PrivacyUsage.Restricted);
-  protected usage_email = computed(() => this.vm().usage_email ?? PrivacyUsage.Restricted);
-  protected usage_phone = computed(() => this.vm().usage_phone ?? PrivacyUsage.Restricted);
-  protected usage_name = computed(() => this.vm().usage_name ?? PrivacyUsage.Restricted);
-
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
   private readonly validationResult = computed(() => userPrivacyFormValidations(this.vm()));
 
+  protected usageImages = computed(() => this.vm().usageImages ?? PrivacyUsage.Restricted);
+  protected usageDateOfBirth = computed(() => this.vm().usageDateOfBirth ?? PrivacyUsage.Restricted);
+  protected usagePostalAddress = computed(() => this.vm().usagePostalAddress ?? PrivacyUsage.Restricted);
+  protected usageEmail = computed(() => this.vm().usageEmail ?? PrivacyUsage.Restricted);
+  protected usagePhone = computed(() => this.vm().usagePhone ?? PrivacyUsage.Restricted);
+  protected usageName = computed(() => this.vm().usageName ?? PrivacyUsage.Restricted);
+  protected isScs = computed(() => this.currentUser()?.tenants.includes('scs') || this.currentUser()?.tenants.includes('test'));
+  protected srvEmail = computed(() => this.vm().srvEmail ?? true);
+
   protected readonly suite = userPrivacyFormValidations;
   protected readonly shape = userPrivacyFormModelShape;
+
+  protected privacyUsages = PrivacyUsages;
 
   protected onValueChange(value: UserPrivacyFormModel): void {
     this.vm.update((_vm) => ({..._vm, ...value}));

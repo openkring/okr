@@ -50,12 +50,13 @@ export function convertUserToSettingsForm(user?: UserModel): SettingsFormModel {
 export function convertUserToPrivacyForm(user?: UserModel): PrivacyFormModel {
   if (!user) die('profile.util.convertUserToPrivacyForm: User is mandatory.');
   return {
-    usage_images: user.usage_images,
-    usage_dateOfBirth: user.usage_dateOfBirth,
-    usage_postalAddress: user.usage_postalAddress,
-    usage_email: user.usage_email,
-    usage_phone: user.usage_phone,
-    usage_name: user.usage_name,
+    usageImages: user.usageImages,
+    usageDateOfBirth: user.usageDateOfBirth,
+    usagePostalAddress: user.usagePostalAddress,
+    usageEmail: user.usageEmail,
+    usagePhone: user.usagePhone,
+    usageName: user.usageName,
+    srvEmail: user.srvEmail,
   };
 }
 
@@ -84,11 +85,12 @@ export function convertSettingsFormToUser(vm: SettingsFormModel, user?: UserMode
 }
 
 export function convertPrivacyFormToUser(vm: PrivacyFormModel, user: UserModel): UserModel {
-  user.usage_images = vm.usage_images ?? PrivacyUsage.Public;
-  user.usage_dateOfBirth = vm.usage_dateOfBirth ?? PrivacyUsage.Restricted;
-  user.usage_postalAddress = vm.usage_postalAddress ?? PrivacyUsage.Restricted;
-  user.usage_email = vm.usage_email ?? PrivacyUsage.Restricted;
-  user.usage_phone = vm.usage_phone ?? PrivacyUsage.Restricted;
-  user.usage_name = vm.usage_name ?? PrivacyUsage.Restricted;
+  user.usageImages = vm.usageImages ?? PrivacyUsage.Public;
+  user.usageDateOfBirth = vm.usageDateOfBirth ?? PrivacyUsage.Restricted;
+  user.usagePostalAddress = vm.usagePostalAddress ?? PrivacyUsage.Restricted;
+  user.usageEmail = vm.usageEmail ?? PrivacyUsage.Restricted;
+  user.usagePhone = vm.usagePhone ?? PrivacyUsage.Restricted;
+  user.usageName = vm.usageName ?? PrivacyUsage.Restricted;
+  user.srvEmail = vm.srvEmail ?? true;
   return user;
 }
