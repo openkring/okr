@@ -9,6 +9,11 @@ export class SvgIconPipe implements PipeTransform {
   private readonly env = inject(ENV);
 
   transform(iconName: string): string {
-    return `${this.env.services.imgixBaseUrl}/logo/icons/${iconName}.svg`;
+    return getSvgIconUrl(this.env.services.imgixBaseUrl, iconName);
   }
+}
+
+
+export function getSvgIconUrl(imgixBaseUrl: string, iconName: string): string {
+  return `${imgixBaseUrl}/logo/icons/${iconName}.svg`;
 }
