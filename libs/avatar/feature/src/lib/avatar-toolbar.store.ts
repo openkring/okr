@@ -6,7 +6,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AvatarService } from '@bk2/avatar-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { ImageAction, newImage } from '@bk2/shared-models';
-import { UploadService } from '@bk2/shared-ui';
+import { getImageDimensionsFromMetadata, updateImageDimensions, UploadService } from '@bk2/shared-ui';
 
 export interface AvatarToolbarState {
   key: string; // = ModelType.ModelKey e.g. 1.lasdfölj
@@ -29,7 +29,7 @@ export const AvatarToolbarStore = signalStore(
         key: store.key(),
         currentUser: store.appStore.currentUser(),
       }),
-      stream: ({ params }) => store.avatarService.getAvatarImgixUrl(params.key, undefined, undefined, true),
+      stream: ({ params }) => store.avatarService.getRelStorageUrl(params.key),
     }),
   })),
 
@@ -54,13 +54,23 @@ export const AvatarToolbarStore = signalStore(
       },
 
       async showZoomedImage(title?: string): Promise<void> {
-        const _url = store.relStorageUrl();
-        if (_url && _url.length > 0) {
-          const _image = newImage('@content.type.article.zoomedImage', _url, _url);
-          _image.width = 160;
-          _image.height = 83;
-          _image.imageAction = ImageAction.Zoom;
-          await store.uploadService.showZoomedImage(_image, title ?? '');
+        const path = store.relStorageUrl();
+        if (path && path.length > 0) {
+          let dimensions = await getImageDimensionsFromMetadata(path);
+
+          // if we can not read the dimensions from the image meta data, calculate them from the image file and upload as metadata to firebase storage
+          if (!dimensions) {
+            dimensions = await updateImageDimensions(path, store.appStore.currentUser());
+          }
+          
+          // if we have valid dimensions, show the zoomed image in a modal
+          if (dimensions) {
+            const image = newImage('@content.type.article.zoomedImage', path, path);
+            image.width = parseInt(dimensions.width);
+            image.height = parseInt(dimensions.height);
+            image.imageAction = ImageAction.Zoom;
+            await store.uploadService.showZoomedImage(image, title ?? '');
+          }
         }
       },
 

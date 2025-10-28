@@ -41,6 +41,14 @@ export class AvatarService {
     return this.firestoreService.readModel<AvatarModel>(AvatarCollection, key);
   }
 
+  public getRelStorageUrl(key: string): Observable<string> {
+    return this.firestoreService.readModel<AvatarModel>(AvatarCollection, key).pipe(
+      map(avatar => {
+        return avatar?.storagePath ?? '';
+      })
+    );
+  }
+
   /**
    * Get the imgix URL for an avatar by its key.
    * @param key the key of the avatar in the format ModelType.ModelKey e.g. 15.1123123asdf
@@ -50,10 +58,10 @@ export class AvatarService {
    * @returns an Observable of the imgix (absolute) URL for the avatar or the default icon if no avatar is found
    */
   public getAvatarImgixUrl(key: string, size = THUMBNAIL_SIZE, imgixBaseUrl = this.env.services.imgixBaseUrl, expandImgixBaseUrl = true): Observable<string> {
-    const [_modelType, _key] = getModelAndKey(key);
+    const [modelType, modelKey] = getModelAndKey(key);
     return this.firestoreService.readModel<AvatarModel>(AvatarCollection, key).pipe(
-      map(_avatar => {
-        return this.getImgixUrl(_modelType, _key, imgixBaseUrl, size, _avatar as AvatarModel, expandImgixBaseUrl);
+      map(avatar => {
+        return this.getImgixUrl(modelType, modelKey, imgixBaseUrl, size, avatar as AvatarModel, expandImgixBaseUrl);
       })
     );
   }
@@ -68,10 +76,10 @@ export class AvatarService {
    * @param expandImgixBaseUrl
    * @returns
    */
-  public getImgixUrl(modelType: ModelType, key: string, imgixBaseUrl: string, size: number, avatar?: AvatarModel, expandImgixBaseUrl = true): string {
+  private getImgixUrl(modelType: ModelType, key: string, imgixBaseUrl: string, size: number, avatar?: AvatarModel, expandImgixBaseUrl = true): string {
     if (!avatar) {
-      const _iconName = this.getDefaultIcon(modelType, key);
-      return `${imgixBaseUrl}/logo/icons/${_iconName}.svg`;
+      const iconName = this.getDefaultIcon(modelType, key);
+      return `${imgixBaseUrl}/logo/icons/${iconName}.svg`;
     } else {
       return expandImgixBaseUrl ? `${imgixBaseUrl}/${addImgixParams(avatar.storagePath, size)}` : addImgixParams(avatar.storagePath, size);
     }
@@ -86,18 +94,18 @@ export class AvatarService {
    * @param key
    * @returns
    */
-  public getDefaultIcon(modelType: ModelType, key: string): string {
+  private getDefaultIcon(modelType: ModelType, key: string): string {
     if (modelType === ModelType.Resource) {
-      const _resourceTypePart = key.split(':')[0];
-      if (_resourceTypePart.includes('_')) {
-        const [_resTypePart, _subTypePart] = _resourceTypePart.split('_');
-        if (parseInt(_resTypePart) === ResourceType.RowingBoat) {
-          return getCategoryIcon(RowingBoatTypes, parseInt(_subTypePart));
+      const resourceTypePart = key.split(':')[0];
+      if (resourceTypePart.includes('_')) {
+        const [resTypePart, subTypePart] = resourceTypePart.split('_');
+        if (parseInt(resTypePart) === ResourceType.RowingBoat) {
+          return getCategoryIcon(RowingBoatTypes, parseInt(subTypePart));
         } else {
-          return getCategoryIcon(ResourceTypes, parseInt(_resTypePart));
+          return getCategoryIcon(ResourceTypes, parseInt(resTypePart));
         }
       }
-      return getCategoryIcon(ResourceTypes, parseInt(_resourceTypePart));
+      return getCategoryIcon(ResourceTypes, parseInt(resourceTypePart));
     } else {
       return getCategoryIcon(ModelTypes, modelType);
     }

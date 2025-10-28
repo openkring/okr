@@ -4,8 +4,8 @@ import { ModalController, Platform } from "@ionic/angular/standalone";
 
 import { getModelSlug, Languages } from "@bk2/shared-categories";
 import { AppStore } from "@bk2/shared-feature";
-import { AddressChannel, AddressModel, DefaultLanguage, EZS_DIR } from "@bk2/shared-models";
-import { ImageViewModalComponent, MapViewModalComponent, UploadService } from "@bk2/shared-ui";
+import { AddressChannel, AddressModel, DefaultLanguage, EZS_DIR, ImageAction, newImage } from "@bk2/shared-models";
+import { getImageDimensionsFromMetadata, ImageViewModalComponent, MapViewModalComponent, showZoomedImage, updateImageDimensions, UploadService } from "@bk2/shared-ui";
 import { getModelAndKey, warn } from "@bk2/shared-util-core";
 
 import { readAsFile } from "@bk2/avatar-util";
@@ -64,7 +64,7 @@ export class AddressModalsService {
       case AddressChannel.Facebook: return browseUrl(address.url, 'https://www.facebook.com/');
       case AddressChannel.Linkedin: return browseUrl(address.url, 'https://www.linkedin.com/in/');
       case AddressChannel.Instagram: return browseUrl(address.url, 'https://www.instagram.com/');
-      case AddressChannel.BankAccount: return await this.showQrPaymentSlip(address);
+      case AddressChannel.BankAccount: return await this.showQrPaymentSlip(address.url);
       default: warn('AddressModalsService.useAddress: unsupported address channel ' + address.channelType + ' for address ' + address.parentKey + '/' + address.bkey);
     }
   }
@@ -85,26 +85,25 @@ export class AddressModalsService {
     await modal.onWillDismiss();
   }
 
-  public async showQrPaymentSlip(address: AddressModel): Promise<void> {
-    const modal = await this.modalController.create({
-      component: ImageViewModalComponent,
-      componentProps: {
-        title: "QR Einzahlungsschein",
-        image: {
-          url: address.url,
-          imageLabel: '',
-          downloadUrl: '',
-          imageOverlay: '',
-          altText: 'QR Code of Payment Slip',
-          isThumbnail: false,
-          isZoomable: false,
-          hasPriority: true,
-          fill: true,
-          sizes: '(max-width: 786px) 50vw, 100vw',
-        }}
-    });
-    modal.present();
-    await modal.onWillDismiss();
+  public async showQrPaymentSlip(path: string): Promise<void> {
+    const title = 'QR Rechnung';
+    if (path && path.length > 0) {
+      let dimensions = await getImageDimensionsFromMetadata(path);
+
+      // if we can not read the dimensions from the image meta data, calculate them from the image file and upload as metadata to firebase storage
+      if (!dimensions) {
+        dimensions = await updateImageDimensions(path, this.appStore.currentUser());
+      }
+      
+      // if we have valid dimensions, show the zoomed image in a modal
+      if (dimensions) {
+        const image = newImage(title, path, path);
+        image.width = parseInt(dimensions.width);
+        image.height = parseInt(dimensions.height);
+        image.imageAction = ImageAction.Zoom;
+        await showZoomedImage(this.modalController, title, image, 'zoom-modal');     
+      }
+    }
   }
 
  /***************************  bank account / payment slip *************************** */

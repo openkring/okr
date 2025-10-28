@@ -9,15 +9,15 @@ import { die, warn } from './log.util';
  * @returns  a tuple with both parts in order of appearance
  */
 export function getPartsOfTupel(tupel: string, separator = '.'): [string, string] {
-  const _parts = tupel.split(separator);
-  if (_parts.length !== 2) die('TypeUtil.getPartsOfTupel: invalid tupel <' + tupel + '> (must have format part' + separator + 'part).');
-  return [_parts[0], _parts[1]];
+  const parts = tupel.split(separator);
+  if (parts.length !== 2) die('TypeUtil.getPartsOfTupel: invalid tupel <' + tupel + '> (must have format part' + separator + 'part).');
+  return [parts[0], parts[1]];
 }
 
 // converts the first part to the ModelType.
 export function getModelAndKey(tupel: string): [ModelType, string] {
-  const [_modelType, _key] = getPartsOfTupel(tupel);
-  return [parseInt(_modelType) as ModelType, _key];
+  const [modelType, modelKey] = getPartsOfTupel(tupel);
+  return [parseInt(modelType) as ModelType, modelKey];
 }
 
 export function extractFirstPartOfOptionalTupel(composite: string, separator = '.'): string {
@@ -39,20 +39,20 @@ export function extractSecondPartOfOptionalTupel(composite: string, separator = 
 }
 
 export function extractTagAndDate(composite: string): [string, string, string] {
-  let _tags = '';
-  let _date = '';
-  let _name = '';
-  const _words = composite.split(' ');
-  for(const _word of _words) {
-    if (_word.startsWith(':')) {
-      _tags = _word.substring(1);
-    } else if (_word.startsWith('//')) {
-      _date = _word.substring(2);
+  let tags = '';
+  let date = '';
+  let name = '';
+  const words = composite.split(' ');
+  for(const word of words) {
+    if (word.startsWith(':')) {
+      tags = word.substring(1);
+    } else if (word.startsWith('//')) {
+      date = word.substring(2);
     } else {
-      _name = _name + ' ' + _word;
+      name = name + ' ' + word;
     }
   }
-  return [_tags, _date, _name.trim()];
+  return [tags, date, name.trim()];
 }
 
 /************************************************* Property ********************************************************** */
@@ -89,7 +89,7 @@ export function hasProperty(obj: any, key: string): boolean {
  */
 export function removeProperty(obj: object, key: string): object {
   return Object.fromEntries(Object.entries(obj).filter(([k]) => k !== key));
-  // or const _copy = structuredClone(obj); delete _copy[key]; return _copy;
+  // or const copy = structuredClone(obj); delete copy[key]; return copy;
 }
 
 export function removeKeyFromBkModel(model: BkModel): PersistedModel {
@@ -126,12 +126,12 @@ export function getPropertyValue(propertyList: BaseProperty[] | undefined, key: 
     warn('TypeUtil.getPropertyValue: missing propertyList, returning defaultValue <' + defaultValue + '>.');
     return defaultValue;
   } else {
-    const _index = getIndexOfKey(propertyList, key);
-    if (_index === -1) {
+    const index = getIndexOfKey(propertyList, key);
+    if (index === -1) {
       warn('TypeUtil.getPropertyValue: missing property, returning defaultValue <' + defaultValue + '>.');
       return defaultValue;  
     } else {
-      return propertyList[_index].value;
+      return propertyList[index].value;
     }
   }
 }
@@ -183,8 +183,8 @@ export function compareName(name1: string, name2: string): boolean {
 
 export function numberMatches(numberProperty: number, searchTerm: string | number | null | undefined): boolean {
   if (searchTerm === undefined || searchTerm === null) return true;
-  const _searchNumber = parseInt(searchTerm + '');
-  return compareNumbers(numberProperty, _searchNumber) === 0;
+  const searchNumber = parseInt(searchTerm + '');
+  return compareNumbers(numberProperty, searchNumber) === 0;
 }
 
 export function zipCodeMatches(zipCode: number, searchTerm: number): boolean {
@@ -427,21 +427,21 @@ export function arrayMove(data: any[], fromIndex: number, toIndex: number): void
 }
 
 export function mapMove(propertyList: Map<string, BaseType>, fromIndex: number, toIndex: number): Map<string, BaseType> {
-  const _keys = Array.from(propertyList.keys());
-  arrayMove(_keys, fromIndex, toIndex); // an array with the newly ordered keys
-  const _propertyList = new Map<string, BaseType>();
-  for (const element of _keys) {
-    const _value = propertyList.get(element);
-    if (_value !== undefined) _propertyList.set(element, _value);
+  const keys = Array.from(propertyList.keys());
+  arrayMove(keys, fromIndex, toIndex); // an array with the newly ordered keys
+  const propertyList2 = new Map<string, BaseType>();
+  for (const element of keys) {
+    const value = propertyList.get(element);
+    if (value !== undefined) propertyList2.set(element, value);
   }
   propertyList.clear();
-  return _propertyList;
+  return propertyList2;
 }
 
 export function getNextChar(char: string): string | null {
   if (char.length !== 1) return null; // ensure the input is a single character
-  const _charCode = char.charCodeAt(0);
-  return String.fromCharCode(_charCode + 1);
+  const charCode = char.charCodeAt(0);
+  return String.fromCharCode(charCode + 1);
 }
 
 /**
@@ -454,14 +454,14 @@ export function getNextChar(char: string): string | null {
  * TBD: check and handle Umlaute !
  */
 export function getNextString(str: string): string | null {
-  const _lastIndex = str.length - 1;
-  const _lastChar = str.charAt(_lastIndex); // get the last character
-  const _nextChar = getNextChar(_lastChar);
-  if (!_nextChar) return null;
-  if (_nextChar > 'z') { // if the next character is 'z', wrap arount to 'a'
-    return str.substring(0, _lastIndex) + 'a';
+  const lastIndex = str.length - 1;
+  const lastChar = str.charAt(lastIndex); // get the last character
+  const nextChar = getNextChar(lastChar);
+  if (!nextChar) return null;
+  if (nextChar > 'z') { // if the next character is 'z', wrap arount to 'a'
+    return str.substring(0, lastIndex) + 'a';
   } else {    // otherwise, replace the last character with the next character
-    return str.substring(0, _lastIndex) + _nextChar;
+    return str.substring(0, lastIndex) + nextChar;
   }
 }
 

@@ -3,7 +3,7 @@ import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { Image } from "@bk2/shared-models";
+import { Dimensions, Image } from "@bk2/shared-models";
 import { error } from "@bk2/shared-util-angular";
 import { warn } from "@bk2/shared-util-core";
 
@@ -24,7 +24,7 @@ export class UploadService {
    * @returns the download URL of the uploaded image
    */
   public async uploadFile(file: File, fullPath: string, title: string): Promise<string | undefined> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: UploadTaskComponent,
       cssClass: 'upload-modal',
       componentProps: {
@@ -33,15 +33,15 @@ export class UploadService {
         title: title
       }
     });
-    _modal.present();
+    modal.present();
     try {
-      const { data, role } = await _modal.onWillDismiss();    // data contains the Firestorage download URL
+      const { data, role } = await modal.onWillDismiss();    // data contains the Firestorage download URL
       if (role === 'confirm') {
         return data as string;    // return the firebase storage download URL
       }
     }
-    catch (_ex) {
-      error(undefined, 'UploadService.uploadFile -> ERROR: ' + JSON.stringify(_ex));
+    catch (ex) {
+      error(undefined, 'UploadService.uploadFile -> ERROR: ' + JSON.stringify(ex));
     }
     return undefined;
   }
@@ -52,22 +52,22 @@ export class UploadService {
    * @returns the selected file or undefined if the file dialog was cancelled
    */
   public async pickFile(mimeTypes: string[]): Promise<File | undefined> {
-    const _result = await FilePicker.pickFiles({
+    const result = await FilePicker.pickFiles({
       types: mimeTypes
     });
-    if (_result.files.length !== 1) {
-      warn('UploadService.pickFile: expected 1 file, got ' + _result.files.length);
+    if (result.files.length !== 1) {
+      warn('UploadService.pickFile: expected 1 file, got ' + result.files.length);
       return undefined;
     }
-    const _blob = _result.files[0].blob;
-    if (!_blob) {
+    const blob = result.files[0].blob;
+    if (!blob) {
       warn('UploadService.pickFile: blob is mandatory.');
       return undefined;
     }
-    const _file = new File([_blob], _result.files[0].name, {
-      type: _result.files[0].mimeType
+    const file = new File([blob], result.files[0].name, {
+      type: result.files[0].mimeType
     });
-    return _file;
+    return file;
   }
 
   /**

@@ -18,20 +18,18 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
       <ion-avatar (click)="editImage()">
         <ion-img [src]="avatarToolbarStore.url()" [alt]="alt()" />
         @if(isEditable()) {
-        <ion-icon src="{{ 'camera' | svgIcon }}" />
+          <ion-icon src="{{ 'camera' | svgIcon }}" />
         }
       </ion-avatar>
 
       @if(title()) {
-      <ion-item style="padding:0px !important; --min-height: 30px;" color="primary" lines="none">
-        <ion-title style="padding:0px !important;" (click)="avatarToolbarStore.showZoomedImage()">{{ title() }}</ion-title>
-      </ion-item>
+        <ion-item style="padding:0px !important; --min-height: 30px;" color="primary" lines="none">
+          <ion-title style="padding:0px !important;" (click)="avatarToolbarStore.showZoomedImage()">{{ title() }}</ion-title>
+        </ion-item>
       } @if(subTitle()) {
-      <ion-item style="padding:0px !important; --min-height: 30px;" color="primary" lines="none">
-        <ion-title style="padding:0px !important;"
-          ><small>{{ subTitle() }}</small></ion-title
-        >
-      </ion-item>
+        <ion-item style="padding:0px !important; --min-height: 30px;" color="primary" lines="none">
+          <ion-title style="padding:0px !important;"><small>{{ subTitle() }}</small></ion-title>
+        </ion-item>
       }
     </ion-toolbar>
   `,
@@ -84,10 +82,10 @@ export class AvatarToolbarComponent {
     if (this.isEditable() === false) {
       this.avatarToolbarStore.showZoomedImage(this.title()); // zoom the avatar image to show it bigger
     } else {
-      const _photo = await this.avatarToolbarStore.uploadPhoto();
+      const photo = await this.avatarToolbarStore.uploadPhoto();
 
-      if (_photo) {
-        this.imageSelected.emit(_photo);
+      if (photo) {
+        this.imageSelected.emit(photo);
       }
     }
   }
