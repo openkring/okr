@@ -1,17 +1,18 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { ResourceListStore } from './resource-list.store';
+import { ActionSheetController } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'bk-key-list',
@@ -21,8 +22,7 @@ import { ResourceListStore } from './resource-list.store';
     SpinnerComponent, EmptyListComponent,
     MenuComponent, ListFilterComponent,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList,
-    IonIcon, IonItem, IonLabel, IonContent, IonItemSliding, 
-    IonItemOption, IonItemOptions, IonPopover
+    IonIcon, IonItem, IonLabel, IonContent, IonPopover
   ],
   providers: [ResourceListStore],
   template: `
@@ -73,23 +73,11 @@ import { ResourceListStore } from './resource-list.store';
     } @else {
       <ion-list lines="full">
         @for(key of filteredKeys(); track $index) {
-          <ion-item-sliding #slidingItem>
-            <ion-item class="ion-text-wrap" (click)="edit(undefined, key)">
-              <ion-icon slot="start" src="{{ 'resource_key' | svgIcon }}" />
-              <ion-label>{{ key.name }}</ion-label>
-              <ion-label>{{ key.description }}</ion-label>
-            </ion-item>
-            @if(hasRole('resourceAdmin')) {
-              <ion-item-options side="end">
-                <ion-item-option color="primary" (click)="edit(slidingItem, key)">
-                  <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                </ion-item-option>
-                <ion-item-option color="danger" (click)="delete(slidingItem, key)">
-                  <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                </ion-item-option>
-              </ion-item-options>
-            }
-          </ion-item-sliding>
+          <ion-item class="ion-text-wrap" (click)="showActions(key)">
+            <ion-icon slot="start" src="{{ 'resource_key' | svgIcon }}" />
+            <ion-label>{{ key.name }}</ion-label>
+            <ion-label>{{ key.description }}</ion-label>
+          </ion-item>
         }
       </ion-list>
     }
@@ -99,6 +87,7 @@ import { ResourceListStore } from './resource-list.store';
 })
 export class KeyListComponent {
   protected readonly resourceListStore = inject(ResourceListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -109,7 +98,8 @@ export class KeyListComponent {
   protected isLoading = computed(() => this.resourceListStore.isLoading());
   protected keyTags = computed(() => this.resourceListStore.getKeyTags() ?? []);
   protected title = '@resource.key.plural'
-  
+  private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
+
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
     this.resourceListStore.setSearchTerm(searchTerm);
@@ -121,23 +111,58 @@ export class KeyListComponent {
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
       case 'add':  await this.resourceListStore.add(false); break;
       case 'exportRaw': await this.resourceListStore.export("raw"); break;
-      default: error(undefined, `BoatListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `BoatListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async edit(slidingItem?: IonItemSliding, resource?: ResourceModel, isTypeEditable = false): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    resource ??= new ResourceModel(this.resourceListStore.tenantId());
-    await this.resourceListStore.edit(resource, isTypeEditable);
+  /**
+   * Displays an ActionSheet with all possible actions on a key. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param key 
+   */
+  protected async showActions(key: ResourceModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, key);
+    await this.executeActions(actionSheetOptions, key);
   }
 
-  public async delete(slidingItem?: IonItemSliding, resource?: ResourceModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (resource) await this.resourceListStore.delete(resource);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param key 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, key: ResourceModel): void {
+    if (hasRole('resourceAdmin', this.resourceListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (hasRole('admin', this.resourceListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param key 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, key: ResourceModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.resourceListStore.delete(key);
+          break;
+        case 'edit':
+          await this.resourceListStore.edit(key);
+          break;
+      }
+    }
   }
 
   /******************************** helpers ******************************************* */

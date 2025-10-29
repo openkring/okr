@@ -82,16 +82,16 @@ export const LocationListStore = signalStore(
 
       /******************************* actions *************************************** */
       async add(): Promise<void> {
-        const _location = new LocationModel(store.appStore.tenantId());
-        const _modal = await store.modalController.create({
+        const location = new LocationModel(store.appStore.tenantId());
+        const modal = await store.modalController.create({
           component: LocationEditModalComponent,
           componentProps: {
-            location: _location,
+            location: location,
             currentUser: store.currentUser()
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onDidDismiss();
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm') {
           if (isLocation(data, store.appStore.tenantId())) {
             await store.locationService.create(data, store.currentUser());
@@ -106,15 +106,15 @@ export const LocationListStore = signalStore(
       },
 
       async edit(location: LocationModel): Promise<void> {
-        const _modal = await store.modalController.create({
+        const modal = await store.modalController.create({
           component: LocationEditModalComponent,
           componentProps: {
             location: location,
             currentUser: store.currentUser()
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onDidDismiss();
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm') {
           if (isLocation(data, store.appStore.tenantId())) {
             await store.locationService.update(data, store.currentUser());
@@ -125,6 +125,14 @@ export const LocationListStore = signalStore(
 
       async export(type: string): Promise<void> {
         console.log(`LocationListStore.export(${type}) is not yet implemented.`);
+      },
+
+      async show(location: LocationModel): Promise<void> {
+        console.log('LocationListStore.show is not yet implemented.');
+      },
+
+      async copy(location: LocationModel): Promise<void> {
+        console.log('LocationListStore.copy is not yet implemented.');
       },
   }})
 );

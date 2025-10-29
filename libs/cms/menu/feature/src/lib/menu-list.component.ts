@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, MenuActions } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -11,6 +11,8 @@ import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuItemListStore } from './menu-list.store';
 import { MenuStore } from './menu.component.store';
+import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { ActionSheetController } from '@ionic/angular';
 
 @Component({
   selector: 'bk-menu-item-all-list',
@@ -19,8 +21,7 @@ import { MenuStore } from './menu.component.store';
     TranslatePipe, AsyncPipe, SvgIconPipe, CategoryNamePipe,
     SearchbarComponent, CategoryComponent, SpinnerComponent, EmptyListComponent,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
-    IonTitle, IonMenuButton, IonContent, IonItem, IonItemSliding, IonItemOptions, IonItemOption,
-    IonGrid, IonRow, IonCol, IonList
+    IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList
   ],
   providers: [MenuItemListStore, MenuStore],
   template: `
@@ -89,8 +90,7 @@ import { MenuStore } from './menu.component.store';
         } @else {
           <ion-list lines="inset">
             @for(menuItem of filteredMenuItems(); track menuItem.bkey) {
-              <ion-item-sliding #slidingItem>
-                <ion-item (click)="edit(slidingItem, menuItem)">
+                <ion-item (click)="showActions(menuItem)">
                   <ion-label>{{ menuItem.name }}</ion-label>
                   @if(menuItem.action === MA.SubMenu) {
                     <ion-label class="ion-hide-md-down">{{ menuItem.menuItems }}</ion-label>
@@ -100,11 +100,6 @@ import { MenuStore } from './menu.component.store';
                   }
                   <ion-label>{{ menuItem.action | categoryName:menuActions }}</ion-label>
                 </ion-item>
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="delete(slidingItem, menuItem)"><ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" /></ion-item-option>
-                  <ion-item-option color="primary" (click)="edit(slidingItem, menuItem)"><ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" /></ion-item-option>
-                </ion-item-options>
-              </ion-item-sliding>
             }
           </ion-list>
         }
@@ -115,6 +110,7 @@ import { MenuStore } from './menu.component.store';
 export class MenuListComponent {
   protected menuItemListStore = inject(MenuItemListStore);
   protected readonly menuStore = inject(MenuStore);
+  private actionSheetController = inject(ActionSheetController);
 
   protected filteredMenuItems = computed(() => this.menuItemListStore.filteredMenuItems() ?? []);
   protected menuItemsCount = computed(() => this.menuItemListStore.menuItemsCount());
@@ -125,6 +121,7 @@ export class MenuListComponent {
   protected categories = addAllCategory(MenuActions);
   protected menuActions = MenuActions;
   protected MA = MenuAction;
+  private imgixBaseUrl = this.menuStore.appStore.env.services.imgixBaseUrl;
 
   protected onSearchtermChange($event: Event): void {
     this.menuItemListStore.setSearchTerm(($event.target as HTMLInputElement).value);
@@ -134,14 +131,56 @@ export class MenuListComponent {
     this.menuItemListStore.setSelectedCategory($event);
   }
 
-  protected async edit(slidingItem?: IonItemSliding, menuItem?: MenuItemModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  /**
+   * Displays an ActionSheet with all possible actions on a MenuItem. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param menuItem 
+   */
+  protected async showActions(menuItem: MenuItemModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, menuItem);
+    await this.executeActions(actionSheetOptions, menuItem);
+  }
+
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param menuItem 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, menuItem: MenuItemModel): void {
+    if (hasRole('contentAdmin', this.menuStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param menuItem 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, menuItem: MenuItemModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.delete(menuItem);
+          break;
+        case 'edit':
+          await this.edit(menuItem);
+          break;
+      }
+    }
+  }
+
+  protected async edit(menuItem?: MenuItemModel): Promise<void> {
     await this.menuItemListStore.edit(menuItem);
     this.menuStore.reload();
   }
 
-  protected async delete(slidingItem: IonItemSliding, menuItem: MenuItemModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  protected async delete(menuItem: MenuItemModel): Promise<void> {
     await this.menuItemListStore.delete(menuItem);
     this.menuStore.reload();
   }

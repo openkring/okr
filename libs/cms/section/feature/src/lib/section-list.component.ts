@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, SectionTypes } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
@@ -11,6 +11,7 @@ import { CategoryComponent, EmptyListComponent, SearchbarComponent, SpinnerCompo
 import { hasRole } from '@bk2/shared-util-core';
 
 import { SectionListStore } from './section-list.store';
+import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-section-all-list',
@@ -19,9 +20,7 @@ import { SectionListStore } from './section-list.store';
     TranslatePipe, AsyncPipe, CategoryNamePipe, SvgIconPipe,
     SearchbarComponent, CategoryComponent, SpinnerComponent, EmptyListComponent,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
-    IonTitle, IonMenuButton, IonContent, IonItem,
-    IonItemSliding, IonItemOptions, IonItemOption,
-    IonGrid, IonRow, IonCol, IonList
+    IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList
   ],
     providers: [SectionListStore],
   template: `
@@ -32,7 +31,7 @@ import { SectionListStore } from './section-list.store';
       <ion-title>{{ selectedSectionsCount() }}/{{ sectionsCount() }} {{ '@content.section.plural' | translate | async }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('contentAdmin')) {
-          <ion-button (click)="editSection()">
+          <ion-button (click)="edit()">
             <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
           </ion-button>
         }
@@ -90,21 +89,11 @@ import { SectionListStore } from './section-list.store';
       } @else {
         <ion-list lines="inset">
           @for(section of filteredSections(); track section.bkey) {
-            <ion-item-sliding #slidingItem>
-              <ion-item (click)="editSection(slidingItem, section.bkey)">
-                <ion-label class="ion-hide-md-down">{{ section.bkey }}</ion-label>
-                <ion-label>{{ section.name }}</ion-label>
-                <ion-label>{{ section.type | categoryName:sectionTypes }}</ion-label>
-              </ion-item>
-              <ion-item-options side="end">
-                <ion-item-option color="danger" (click)="deleteSection(slidingItem, section)">
-                  <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                </ion-item-option>
-                <ion-item-option color="primary" (click)="editSection(slidingItem, section.bkey)">
-                  <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                </ion-item-option>
-              </ion-item-options>
-            </ion-item-sliding>
+            <ion-item (click)="showActions(section)">
+              <ion-label class="ion-hide-md-down">{{ section.bkey }}</ion-label>
+              <ion-label>{{ section.name }}</ion-label>
+              <ion-label>{{ section.type | categoryName:sectionTypes }}</ion-label>
+            </ion-item>
           }
         </ion-list>
       }
@@ -115,6 +104,7 @@ import { SectionListStore } from './section-list.store';
 export class SectionAllListComponent {
   protected appStore = inject(AppStore);
   protected sectionListStore = inject(SectionListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   protected filteredSections = computed(() => this.sectionListStore.filteredSections() ?? []);
   protected sectionsCount = computed(() => this.sectionListStore.sections()?.length ?? 0);
@@ -125,6 +115,7 @@ export class SectionAllListComponent {
   protected categories = addAllCategory(SectionTypes);
   protected sectionTypes = SectionTypes;
   protected ST = SectionType;
+  private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 
   protected onSearchtermChange($event: Event): void {
     this.sectionListStore.setSearchTerm(($event.target as HTMLInputElement).value);
@@ -134,13 +125,55 @@ export class SectionAllListComponent {
     this.sectionListStore.setSelectedCategory($event);
   }
 
-  public async editSection(slidingItem?: IonItemSliding, sectionKey?: string) { 
-    if (slidingItem) slidingItem.close();
-    this.sectionListStore.edit(sectionKey);
+  /**
+   * Displays an ActionSheet with all possible actions on a Section. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param section 
+   */
+  protected async showActions(section: SectionModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, section);
+    await this.executeActions(actionSheetOptions, section);
+  }
+
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param section 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
+    if (hasRole('contentAdmin', this.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param section 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, section: SectionModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.delete(section);
+          break;
+        case 'edit':
+          await this.edit(section);
+          break;
+      }
+    }
+  }
+
+  public async edit(section?: SectionModel) { 
+    this.sectionListStore.edit(section?.bkey);
   } 
   
-  public async deleteSection(slidingItem: IonItemSliding, section: SectionModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  public async delete(section: SectionModel): Promise<void> {
     await this.sectionListStore.delete(section);
   }
 

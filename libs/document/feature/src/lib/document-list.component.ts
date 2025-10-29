@@ -1,15 +1,14 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { Browser } from '@capacitor/browser';
-import { IonItemSliding } from '@ionic/angular';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, DocumentTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { DocumentModel, RoleName } from '@bk2/shared-models';
 import { CategoryAbbreviationPipe, FileExtensionPipe, FileLogoPipe, FileNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -59,6 +58,7 @@ import { DocumentListStore } from './document-list.store';
     (typeChanged)="onTypeSelected($event)"
   />
 
+  <!-- list header -->
   <ion-toolbar color="primary">
     <ion-grid>
       <ion-row>
@@ -75,6 +75,8 @@ import { DocumentListStore } from './document-list.store';
     </ion-grid>
   </ion-toolbar>
 </ion-header>
+
+<!-- list data -->
 <ion-content #content>
   @if(!isLoading()) {
     @if (filteredDocuments.length === 0) {
@@ -83,7 +85,7 @@ import { DocumentListStore } from './document-list.store';
       <ion-grid>
         <!-- don't use 'document' here as it leads to confusions with HTML document -->
         @for(doc of filteredDocuments(); track doc.bkey) {
-          <ion-row (click)="showDocument(doc.url)">
+          <ion-row (click)="showActions(doc)">
             <ion-col size="12" size-sm="8">
               <ion-item lines="none">
                 <ion-icon src="{{ doc.fullPath | fileLogo }}" />&nbsp;
@@ -112,6 +114,7 @@ import { DocumentListStore } from './document-list.store';
 })
 export class DocumentAllListComponent {
   protected documentListStore = inject(DocumentListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -124,23 +127,75 @@ export class DocumentAllListComponent {
 
   protected docTypes = addAllCategory(DocumentTypes);
   protected typeName = 'documentType';
+  private imgixBaseUrl = this.documentListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
       case 'add':  await this.documentListStore.add(); break;
       case 'export': await this.documentListStore.export(); break;
-      default: error(undefined, `DocumentListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `DocumentListComponent.call: unknown method ${selectedMethod}`);
     }
   }
-  public async edit(slidingItem?: IonItemSliding, doc?: DocumentModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (doc) await this.documentListStore.edit(doc);
+
+/**
+   * Displays an ActionSheet with all possible actions on a Document. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param document 
+   */
+  protected async showActions(document: DocumentModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, document);
+    await this.executeActions(actionSheetOptions, document);
   }
 
-  public async showDocument(url: string): Promise<void> {
-    await Browser.open({ url: url, windowName: '_blank' });
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param document 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, document: DocumentModel): void {
+    if (hasRole('contentAdmin', this.documentListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param document 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, document: DocumentModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.delete(document);
+          break;
+        case 'edit':
+          await this.edit(document);
+          break;
+        case 'show':
+          await this.show(document);
+          break;
+      }
+    }
+  }
+
+  public async show(document: DocumentModel): Promise<void> {
+    await Browser.open({ url: document.url, windowName: '_blank' });
+  }
+
+  protected async delete(doc?: DocumentModel): Promise<void> {
+    if (doc) await this.documentListStore.delete(doc);
+  }
+
+  public async edit(doc?: DocumentModel): Promise<void> {
+    if (doc) await this.documentListStore.edit(doc);
   }
 
   /******************************* change notifications *************************************** */

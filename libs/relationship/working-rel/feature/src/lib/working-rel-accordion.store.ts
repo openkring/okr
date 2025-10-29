@@ -11,10 +11,11 @@ import { debugListLoaded, isValidAt } from '@bk2/shared-util-core';
 
 import { AvatarService } from '@bk2/avatar-data-access';
 import { WorkingRelService } from '@bk2/relationship-working-rel-data-access';
-import { isWorkingRel } from '@bk2/relationship-working-rel-util';
+import { convertFormToNewWorkingRel, isWorkingRel, WorkingRelFormModel } from '@bk2/relationship-working-rel-util';
 
 import { WorkingRelEditModalComponent } from './working-rel-edit.modal';
 import { WorkingRelModalsService } from './working-rel-modals.service';
+import { WorkingRelNewModalComponent } from 'libs/relationship/working-rel/feature/src/lib/working-rel-new.modal';
 
 export type WorkingRelAccordionState = {
   personKey: string | undefined;
@@ -47,12 +48,12 @@ export const WorkingRelAccordionStore = signalStore(
         personKey: store.personKey(),
       }),
       stream: ({ params }) => {
-        let _workingRels$: Observable<WorkingRelModel[]> = of([]);
+        let workingRels$: Observable<WorkingRelModel[]> = of([]);
         if (params.personKey) {
-          _workingRels$ = store.workingRelService.listWorkingRelsOfPerson(params.personKey);
+          workingRels$ = store.workingRelService.listWorkingRelsOfPerson(params.personKey);
         }
-        debugListLoaded('WorkingRelAccordionStore.workingRels of person', _workingRels$, store.appStore.currentUser());
-        return _workingRels$;
+        debugListLoaded('WorkingRelAccordionStore.workingRels of person', workingRels$, store.appStore.currentUser());
+        return workingRels$;
       }
     }),
     workersResource: rxResource({
@@ -60,12 +61,12 @@ export const WorkingRelAccordionStore = signalStore(
         orgKey: store.orgKey(),
       }),
       stream: ({ params }) => {
-        let _workers$: Observable<WorkingRelModel[]> = of([]);
+        let workers$: Observable<WorkingRelModel[]> = of([]);
         if (params.orgKey) {
-          _workers$ = store.workingRelService.listWorkersOfOrg(params.orgKey);
+          workers$ = store.workingRelService.listWorkersOfOrg(params.orgKey);
         }
-        debugListLoaded('WorkingRelAccordionStore.workers of org', _workers$, store.appStore.currentUser());
-        return _workers$;
+        debugListLoaded('WorkingRelAccordionStore.workers of org', workers$, store.appStore.currentUser());
+        return workers$;
       }
     })
   })),
@@ -103,23 +104,49 @@ export const WorkingRelAccordionStore = signalStore(
 
       /******************************** actions ******************************************* */
       /**
-       * Show a modal to edit an existing workingRel.
-       * @param workingRel the workingRel to edit
+       * Show a modal to add a new workRel.
        */
-      async edit(workingRel?: WorkingRelModel): Promise<void> {
-        let _workingRel = workingRel;
-        _workingRel ??= new WorkingRelModel(store.appStore.tenantId());
+      async add(): Promise<void> {
+        const person = structuredClone(store.appStore.currentPerson() ?? await store.workingRelModalsService.selectPerson());
+        const org = structuredClone(store.appStore.defaultOrg() ?? await store.workingRelModalsService.selectOrg());
+        if (person && org) {
+          const modal = await store.modalController.create({
+            component: WorkingRelNewModalComponent,
+            cssClass: 'small-modal',
+            componentProps: {
+              subject: person,
+              object: org,
+              currentUser: store.appStore.currentUser()
+            }
+          });
+          modal.present();
+          const { data, role } = await modal.onDidDismiss();
+          if (role === 'confirm') {
+            const workRel = convertFormToNewWorkingRel(data as WorkingRelFormModel, store.appStore.tenantId());
+            await store.workingRelService.create(workRel, store.appStore.currentUser());
+          }
+        }
+        store.workingRelsResource.reload();
+      },
 
-        const _modal = await store.modalController.create({
+      /**
+       * Show a modal to edit an existing work relationship.
+       * @param workRel the work relationship to edit
+       */
+      async edit(workRel?: WorkingRelModel): Promise<void> {
+        let _workRel = workRel;
+        _workRel ??= new WorkingRelModel(store.appStore.tenantId());
+
+        const modal = await store.modalController.create({
           component: WorkingRelEditModalComponent,
           componentProps: {
-            workingRel: _workingRel,
+            workingRel: _workRel,
             currentUser: store.appStore.currentUser(),
           }
         });
-        _modal.present();
-        await _modal.onWillDismiss();
-        const { data, role } = await _modal.onDidDismiss();
+        modal.present();
+        await modal.onWillDismiss();
+        const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm') {
           if (isWorkingRel(data, store.appStore.tenantId())) {
             await (!data.bkey ?
@@ -130,17 +157,17 @@ export const WorkingRelAccordionStore = signalStore(
         }
       },
 
-      async end(workingRel?: WorkingRelModel): Promise<void> {
-        if (workingRel) {
-          await store.workingRelModalsService.end(workingRel);
+      async end(workRel?: WorkingRelModel): Promise<void> {
+        if (workRel) {
+          await store.workingRelModalsService.end(workRel);
           store.workingRelsResource.reload();
         }
       },
 
       async delete(workingRel?: WorkingRelModel): Promise<void> {
         if (workingRel) {
-          const _result = await confirm(store.alertController, '@workingRel.operation.delete.confirm', true);
-          if (_result === true) {
+          const result = await confirm(store.alertController, '@workingRel.operation.delete.confirm', true);
+          if (result === true) {
             await store.workingRelService.delete(workingRel, store.appStore.currentUser());
             store.workingRelsResource.reload();
           }

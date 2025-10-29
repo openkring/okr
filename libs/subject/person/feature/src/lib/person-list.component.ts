@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, GenderTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AllCategories, ModelType, PersonModel, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -21,9 +21,9 @@ import { PersonListStore } from './person-list.store';
   imports: [
     TranslatePipe, FullNamePipe, AsyncPipe, AvatarPipe, SvgIconPipe,
     SpinnerComponent, EmptyListComponent, ListFilterComponent, MenuComponent,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover,
-    IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList
+    IonAvatar, IonImg, IonList
   ],
   providers: [PersonListStore],
   template: `
@@ -86,46 +86,26 @@ import { PersonListStore } from './person-list.store';
       } @else {
         <ion-list lines="inset">
           @for(person of filteredPersons(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-item>
-                <ion-avatar slot="start" (click)="edit(person, slidingItem)">
-                  <ion-img src="{{ modelType.Person + '.' + person.bkey | avatar | async }}" alt="Avatar Logo" />
-                </ion-avatar>
-                <ion-label (click)="edit(person, slidingItem)">{{person.firstName | fullName:person.lastName}}</ion-label>      
-                <ion-label class="ion-hide-sm-down">
-                  @if(person.fav_phone) {
-                    <a href="tel:{{person.fav_phone}}" style="text-decoration:none;">
-                      <span>{{person.fav_phone }}</span>
-                    </a>
-                  }
-                </ion-label>
-                <ion-label class="ion-hide-sm-down">
-                  @if(person?.fav_email) {
-                    <a href="mailto:{{person.fav_email}}" style="text-decoration:none;">
-                      <span>{{person.fav_email }}</span>
-                    </a>
-                  }
-                </ion-label> 
-                <ion-buttons slot="end" class="ion-hide-sm-up">
-                  <ion-button>
-                    <ion-icon src="{{'tel' | svgIcon }}" slot="start" color="primary" />
-                  </ion-button>
-                  <ion-button>
-                  <ion-icon src="{{'email' | svgIcon }}" slot="icon-only" color="primary"/>
-                  </ion-button>
-                </ion-buttons>
-              </ion-item>
-              @if(hasRole('memberAdmin')) {
-                <ion-item-options side="end">
-                <ion-item-option color="primary" (click)="edit(person, slidingItem)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                  <ion-item-option color="danger" (click)="delete(person, slidingItem)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding>
+            <ion-item (click)="showActions(person)">
+              <ion-avatar slot="start">
+                <ion-img src="{{ modelType.Person + '.' + person.bkey | avatar | async }}" alt="Avatar Logo" />
+              </ion-avatar>
+              <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>      
+              <ion-label>
+                @if(person.fav_phone) {
+                  <a href="tel:{{person.fav_phone}}" style="text-decoration:none;">
+                    <span>{{person.fav_phone }}</span>
+                  </a>
+                }
+              </ion-label>
+              <ion-label class="ion-hide-sm-down">
+                @if(person?.fav_email) {
+                  <a href="mailto:{{person.fav_email}}" style="text-decoration:none;">
+                    <span>{{person.fav_email }}</span>
+                  </a>
+                }
+              </ion-label> 
+            </ion-item>
           }
         </ion-list>
       }
@@ -135,6 +115,7 @@ import { PersonListStore } from './person-list.store';
 })
 export class PersonListComponent {
   protected readonly personListStore = inject(PersonListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -148,6 +129,7 @@ export class PersonListComponent {
   protected selectedCategory = AllCategories;
   protected genders = addAllCategory(GenderTypes);
   protected readonly modelType = ModelType;
+  private imgixBaseUrl = this.personListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -164,23 +146,59 @@ export class PersonListComponent {
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch (_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
       case 'add': await this.personListStore.add(); break;
       case 'exportRaw': await this.personListStore.export('raw'); break;
       case 'copyEmailAddresses': await this.personListStore.copyEmailAddresses(); break;
-      default: error(undefined, `PersonListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `PersonListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async edit(person: PersonModel, slidingItem?: IonItemSliding,): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.personListStore.edit(person);
+  /**
+   * Displays an ActionSheet with all possible actions on a Person. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param person 
+   */
+  protected async showActions(person: PersonModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, person);
+    await this.executeActions(actionSheetOptions, person);
   }
 
-  public async delete(person: PersonModel, slidingItem?: IonItemSliding): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.personListStore.delete(person);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param person 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): void {
+    if (hasRole('memberAdmin', this.personListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (hasRole('admin', this.personListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param person 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.personListStore.delete(person);
+          break;
+        case 'edit':
+          await this.personListStore.edit(person);
+          break;
+      }
+    }
   }
 
   /******************************** helpers ******************************************* */

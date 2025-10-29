@@ -1,14 +1,14 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, GenderTypes, ResourceTypes, RowingBoatTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { OwnershipModel, RoleName } from '@bk2/shared-models';
 import { CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
-import { getYearList, hasRole } from '@bk2/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -22,9 +22,8 @@ import { OwnershipListStore } from './ownership-list.store';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryNamePipe, AvatarPipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-    IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption,
-    IonBackdrop, IonAvatar, IonImg, IonList, IonPopover
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+    IonLabel, IonContent, IonItem, IonBackdrop, IonAvatar, IonImg, IonList, IonPopover
   ],
   providers: [OwnershipListStore],
   template: `
@@ -88,39 +87,24 @@ import { OwnershipListStore } from './ownership-list.store';
       } @else {
         <ion-list lines="inset">
           @for(ownership of filteredOwnerships(); track $index) {
-            <ion-item-sliding #slidingItem>
-              @if(listId() === 'scsBoats') {
-                <ion-item class="ion-text-wrap" (click)="edit(undefined, ownership)">
-                  <ion-icon slot="start" color="primary" src="{{ getIcon(ownership) | svgIcon }}" />
-                  <ion-label>{{ ownership.resourceName }}</ion-label>
-                  <ion-label>{{ ownership.resourceSubType | categoryName:boatTypes }}</ion-label>
-                  <ion-label class="ion-hide-md-down">{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>
-                </ion-item>
-              }
-              @else {
-                <ion-item (click)="edit(undefined, ownership)">
-                  <ion-avatar slot="start">
-                    <ion-img src="{{ ownership.ownerModelType + '.' + ownership.ownerKey | avatar | async }}" alt="Avatar Logo" />
-                  </ion-avatar>
-                  <ion-label>{{getOwnerName(ownership)}}</ion-label>      
-                  <ion-label>{{ownership.resourceName}}</ion-label>      
-                  <ion-label class="ion-hide-md-down">{{ownership.validFrom | duration:ownership.validTo}}</ion-label>
-                </ion-item>
-              }
-              @if(hasRole('resourceAdmin')) {
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="delete(slidingItem, ownership)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                  <ion-item-option color="warning" (click)="end(slidingItem, ownership)">
-                    <ion-icon slot="icon-only" src="{{'stop-circle' | svgIcon }}" />
-                  </ion-item-option>
-                  <ion-item-option color="primary" (click)="edit(slidingItem, ownership)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding>
+            @if(listId() === 'scsBoats') {
+              <ion-item class="ion-text-wrap" (click)="showActions(ownership)">
+                <ion-icon slot="start" color="primary" src="{{ getIcon(ownership) | svgIcon }}" />
+                <ion-label>{{ ownership.resourceName }}</ion-label>
+                <ion-label>{{ ownership.resourceSubType | categoryName:boatTypes }}</ion-label>
+                <ion-label class="ion-hide-md-down">{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>
+              </ion-item>
+            }
+            @else {
+              <ion-item (click)="showActions(ownership)">
+                <ion-avatar slot="start">
+                  <ion-img src="{{ ownership.ownerModelType + '.' + ownership.ownerKey | avatar | async }}" alt="Avatar Logo" />
+                </ion-avatar>
+                <ion-label>{{getOwnerName(ownership)}}</ion-label>      
+                <ion-label>{{ownership.resourceName}}</ion-label>      
+                <ion-label class="ion-hide-md-down">{{ownership.validFrom | duration:ownership.validTo}}</ion-label>
+              </ion-item>
+            }
           }
         </ion-list>
       }
@@ -130,6 +114,7 @@ import { OwnershipListStore } from './ownership-list.store';
 })
 export class OwnershipListComponent {
   protected ownershipListStore = inject(OwnershipListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -188,30 +173,68 @@ export class OwnershipListComponent {
   protected popupId = computed(() => 'c_ownerships_' + this.listId());
 
   protected boatTypes = RowingBoatTypes;
+  private imgixBaseUrl = this.ownershipListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch (_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
       case 'add': await this.ownershipListStore.add(); break;
       case 'exportRaw': await this.ownershipListStore.export("raw"); break;
-      default: error(undefined, `OwnershipListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `OwnershipListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async delete(slidingItem?: IonItemSliding, ownership?: OwnershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.ownershipListStore.delete(ownership);
+  /**
+   * Displays an ActionSheet with all possible actions on a Ownership. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param ownership 
+   */
+  protected async showActions(ownership: OwnershipModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, ownership);
+    await this.executeActions(actionSheetOptions, ownership);
   }
 
-  public async end(slidingItem?: IonItemSliding, ownership?: OwnershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (ownership) await this.ownershipListStore.end(ownership);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param ownership 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
+    if (hasRole('resourceAdmin', this.ownershipListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      if (isOngoing(ownership.validTo)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('endownership', this.imgixBaseUrl, 'stop-circle'));
+      }
+    }
+    if (hasRole('admin', this.ownershipListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
   }
 
-  public async edit(slidingItem?: IonItemSliding, ownership?: OwnershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.ownershipListStore.edit(ownership);
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param ownership 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.ownershipListStore.delete(ownership);
+          break;
+        case 'edit':
+          await this.ownershipListStore.edit(ownership);
+          break;
+        case 'endownership':
+          await this.ownershipListStore.end(ownership);
+          break;
+      }
+    }
   }
 
   /******************************* change notifications *************************************** */

@@ -1,12 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, ModelType, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -21,9 +21,9 @@ import { GroupListStore } from './group-list.store';
     TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe,
     SpinnerComponent, EmptyListComponent,
     MenuComponent, ListFilterComponent,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover,
-    IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList
+    IonAvatar, IonImg, IonList
   ],
   providers: [GroupListStore],
   template: `
@@ -78,24 +78,12 @@ import { GroupListStore } from './group-list.store';
       } @else {
         <ion-list lines="inset">
           @for(group of filteredGroups(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-item (click)="view(slidingItem, group)">
-                <ion-avatar slot="start">
-                  <ion-img src="{{ modelType.Group + '.' + group.bkey | avatar | async }}" alt="Avatar Logo" />
-                </ion-avatar>
-                <ion-label>{{group.name}}</ion-label>      
-              </ion-item>
-              @if(hasRole('memberAdmin')) {
-                <ion-item-options side="end">
-                  <ion-item-option color="primary" (click)="edit(slidingItem, group)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                  <ion-item-option color="danger" (click)="delete(slidingItem, group)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding>
+            <ion-item (click)="showActions(group)">
+              <ion-avatar slot="start">
+                <ion-img src="{{ modelType.Group + '.' + group.bkey | avatar | async }}" alt="Avatar Logo" />
+              </ion-avatar>
+              <ion-label>{{group.name}}</ion-label>      
+            </ion-item>
           }
         </ion-list>
       }
@@ -105,6 +93,7 @@ import { GroupListStore } from './group-list.store';
 })
 export class GroupListComponent {
   protected readonly groupListStore = inject(GroupListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -116,6 +105,7 @@ export class GroupListComponent {
   protected groupTags = computed(() => this.groupListStore.getTags());
 
   protected modelType = ModelType;
+  private imgixBaseUrl = this.groupListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -137,19 +127,54 @@ export class GroupListComponent {
     }
   }
 
-  public async edit(slidingItem?: IonItemSliding, group?: GroupModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.groupListStore.edit(group);
+  /**
+   * Displays an ActionSheet with all possible actions on a Group. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param group 
+   */
+  protected async showActions(group: GroupModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, group);
+    await this.executeActions(actionSheetOptions, group);
   }
 
-  public async view(slidingItem?: IonItemSliding, group?: GroupModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.groupListStore.view(group);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param group 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): void {
+    actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    if (hasRole('memberAdmin', this.groupListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    if (hasRole('admin', this.groupListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
   }
 
-  public async delete(slidingItem?: IonItemSliding, group?: GroupModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.groupListStore.delete(group);
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param group 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, group: GroupModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.groupListStore.delete(group);
+          break;
+        case 'edit':
+          await this.groupListStore.edit(group);
+          break;
+        case 'show':
+          await this.groupListStore.view(group);
+          break;
+      }
+    }
   }
 
   /******************************** helpers ******************************************* */

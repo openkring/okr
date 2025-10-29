@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, Importances, Priorities, TaskStates } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TaskModel } from '@bk2/shared-models';
 import { CategoryAbbreviationPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -30,9 +30,8 @@ import { TaskListStore } from './task-list.store';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, CategoryAbbreviationPipe, PrettyDatePipe, AvatarPipe,
     EmptyListComponent, ListFilterComponent, MenuComponent,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-    IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg,
-    IonItemOptions, IonItemOption, IonTextarea, IonChip, IonPopover
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+    IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg, IonTextarea, IonChip, IonPopover
   ],
   providers: [TaskListStore],
   styles: [`
@@ -99,42 +98,30 @@ import { TaskListStore } from './task-list.store';
       } @else {
         <ion-list lines="inset">
           @for(task of filteredTasks(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-item>
-                <ion-icon src="{{ getIcon(task) | svgIcon }}"  (click)="toggleCompleted(task)" />
-                <div class="tags ion-hide-md-down">
-                  @for (tag of task.tags.split(','); track tag) {
-                    @if(tag.length > 0) {
-                      <ion-chip color="primary">
-                        <ion-label>{{ tag }}</ion-label>
-                      </ion-chip>
-                    }
+            <ion-item>
+              <ion-icon src="{{ getIcon(task) | svgIcon }}"  (click)="toggleCompleted(task)" />
+              <div class="tags ion-hide-md-down">
+                @for (tag of task.tags.split(','); track tag) {
+                  @if(tag.length > 0) {
+                    <ion-chip color="primary">
+                      <ion-label>{{ tag }}</ion-label>
+                    </ion-chip>
                   }
-                </div>
-                <ion-label class="name" (click)="edit(undefined, task)">{{ task.name }}</ion-label>
-                @if(task.dueDate.length > 0) {
-                  <ion-label>{{ task.dueDate | prettyDate }}</ion-label>
                 }
-                @if(task.assignee !== undefined) {
-                  <ion-avatar>
-                    <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar | async }}" alt="Avatar of the assigned person" />
-                  </ion-avatar>
-                }
-                <ion-label class="ion-hide-md-down ion-text-end">
-                  {{task.priority | categoryAbbreviation:types}} {{task.importance | categoryAbbreviation:importances}}
-                </ion-label> 
-              </ion-item>
-              @if(hasRole('privileged') || hasRole('eventAdmin')) {
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="delete(slidingItem, task)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                  <ion-item-option color="primary" (click)="edit(slidingItem, task)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
+              </div>
+              <ion-label class="name" (click)="edit(undefined, task)">{{ task.name }}</ion-label>
+              @if(task.dueDate.length > 0) {
+                <ion-label>{{ task.dueDate | prettyDate }}</ion-label>
               }
-            </ion-item-sliding>
+              @if(task.assignee !== undefined) {
+                <ion-avatar>
+                  <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar | async }}" alt="Avatar of the assigned person" />
+                </ion-avatar>
+              }
+              <ion-label class="ion-hide-md-down ion-text-end">
+                {{task.priority | categoryAbbreviation:types}} {{task.importance | categoryAbbreviation:importances}}
+              </ion-label> 
+            </ion-item>
           }
         </ion-list>
       }
@@ -143,6 +130,7 @@ import { TaskListStore } from './task-list.store';
 })
 export class TaskListComponent {
   protected taskListStore = inject(TaskListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -157,6 +145,7 @@ export class TaskListComponent {
   protected types = addAllCategory(Priorities);
   protected typeName = 'priority';
   protected importances = Importances;
+  private imgixBaseUrl = this.taskListStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
@@ -170,10 +159,10 @@ export class TaskListComponent {
    * @param taskName 
    */
   protected async addName(bkTaskName: IonTextarea): Promise<void> {
-    const _task = new TaskModel(this.taskListStore.tenantId());
-    [_task.tags, _task.dueDate, _task.name] = extractTagAndDate(bkTaskName.value?.trim() ?? '');
-    _task.author = getAvatarInfoFromCurrentUser(this.taskListStore.currentUser());
-    await this.taskListStore.addName(_task);
+    const task = new TaskModel(this.taskListStore.tenantId());
+    [task.tags, task.dueDate, task.name] = extractTagAndDate(bkTaskName.value?.trim() ?? '');
+    task.author = getAvatarInfoFromCurrentUser(this.taskListStore.currentUser());
+    await this.taskListStore.addName(task);
     bkTaskName.value = '';
   }
 
@@ -186,14 +175,48 @@ export class TaskListComponent {
     }
   }
 
-  public async edit(slidingItem?: IonItemSliding, task?: TaskModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (task) await this.taskListStore.edit(task);
+  /**
+   * Displays an ActionSheet with all possible actions on a Task. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param task 
+   */
+  protected async showActions(task: TaskModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, task);
+    await this.executeActions(actionSheetOptions, task);
   }
 
-  public async delete(slidingItem?: IonItemSliding, task?: TaskModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (task) await this.taskListStore.delete(task);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param task 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
+    if (hasRole('privileged', this.taskListStore.appStore.currentUser()) || hasRole('eventAdmin', this.taskListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param task 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, task: TaskModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.taskListStore.delete(task);
+          break;
+        case 'edit':
+          await this.taskListStore.edit(task);
+          break;
+      }
+    }
   }
 
   public async toggleCompleted(task: TaskModel): Promise<void> {

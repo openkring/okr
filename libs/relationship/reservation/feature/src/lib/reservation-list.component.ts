@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, ReservationStates, ResourceTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ModelType, ReservationModel, RoleName } from '@bk2/shared-models';
 import { CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -22,9 +22,8 @@ import { ReservationListStore } from './reservation-list.store';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe, CategoryNamePipe,
     ListFilterComponent, EmptyListComponent, MenuComponent,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-    IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList,
-    IonPopover
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover
   ],
   providers: [ReservationListStore],
   template: `
@@ -81,32 +80,15 @@ import { ReservationListStore } from './reservation-list.store';
     } @else {
       <ion-list lines="inset">
         @for(reservation of filteredReservations(); track $index) {
-          <ion-item-sliding #slidingItem>
-            <ion-item (click)="edit(undefined, reservation)">
-              <ion-avatar slot="start">
-                <ion-img src="{{ modelType.Person + '.' + reservation.reserverKey | avatar | async }}" alt="Avatar Logo" />
-              </ion-avatar>
-              <ion-label>{{getReserverName(reservation)}}</ion-label>
-              <ion-label>{{reservation.resourceName}}</ion-label>
-              <ion-label>{{reservation.startDate | duration:reservation.endDate}}</ion-label>      
-              <ion-label class="ion-hide-md-down">{{reservation.reservationState|categoryName:reservationStates}}</ion-label>
-            </ion-item>
-            @if(hasRole('resourceAdmin')) {
-              <ion-item-options side="end">
-                <ion-item-option color="danger" (click)="delete(slidingItem, reservation)">
-                  <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                </ion-item-option>
-                @if(isOngoing(reservation)) {
-                  <ion-item-option color="warning" (click)="end(slidingItem, reservation)">
-                    <ion-icon slot="icon-only" src="{{'stop-circle' | svgIcon }}" />
-                  </ion-item-option>
-                }
-                <ion-item-option color="primary" (click)="edit(slidingItem, reservation)">
-                  <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                </ion-item-option>
-              </ion-item-options>
-            }
-          </ion-item-sliding>
+          <ion-item (click)="showActions(reservation)">
+            <ion-avatar slot="start">
+              <ion-img src="{{ modelType.Person + '.' + reservation.reserverKey | avatar | async }}" alt="Avatar Logo" />
+            </ion-avatar>
+            <ion-label>{{getReserverName(reservation)}}</ion-label>
+            <ion-label>{{reservation.resourceName}}</ion-label>
+            <ion-label>{{reservation.startDate | duration:reservation.endDate}}</ion-label>      
+            <ion-label class="ion-hide-md-down">{{reservation.reservationState|categoryName:reservationStates}}</ion-label>
+          </ion-item>
         }
       </ion-list>
     }
@@ -115,6 +97,7 @@ import { ReservationListStore } from './reservation-list.store';
 })
 export class ReservationListComponent {
   protected reservationListStore = inject(ReservationListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -132,30 +115,68 @@ export class ReservationListComponent {
   protected resourceTypes = addAllCategory(ResourceTypes);
   protected modelType = ModelType;
   protected years = getYearList();
+  private imgixBaseUrl = this.reservationListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch (_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
       case 'add': await this.reservationListStore.add(); break;
       case 'exportRaw': await this.reservationListStore.export("raw"); break;
-      default: error(undefined, `ReservationListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `ReservationListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async edit(slidingItem?: IonItemSliding, reservation?: ReservationModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.reservationListStore.edit(reservation);
+  /**
+   * Displays an ActionSheet with all possible actions on a Reservation. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param reservation 
+   */
+  protected async showActions(reservation: ReservationModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, reservation);
+    await this.executeActions(actionSheetOptions, reservation);
   }
 
-  public async delete(slidingItem?: IonItemSliding, reservation?: ReservationModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.reservationListStore.delete(reservation);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param reservation 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {
+    if (hasRole('resourceAdmin', this.reservationListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      if (isOngoing(reservation.endDate)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('endres', this.imgixBaseUrl, 'stop-circle'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (hasRole('admin', this.reservationListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
   }
 
-  public async end(slidingItem?: IonItemSliding, reservation?: ReservationModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.reservationListStore.end(reservation);
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param reservation 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.reservationListStore.delete(reservation);
+          break;
+        case 'edit':
+          await this.reservationListStore.edit(reservation);
+          break;
+        case 'endres':
+          await this.reservationListStore.end(reservation);
+          break;
+      }
+    }
   }
 
   /******************************* change notifications *************************************** */

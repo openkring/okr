@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, PageTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { PageModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -21,9 +21,7 @@ import { PageListStore } from './page-list.store';
     TranslatePipe, AsyncPipe, SvgIconPipe,
     SpinnerComponent, EmptyListComponent, MenuComponent, ListFilterComponent,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
-    IonTitle, IonMenuButton, IonContent, IonItem,
-    IonItemSliding, IonItemOptions, IonItemOption,
-    IonGrid, IonRow, IonCol, IonList, IonPopover
+    IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList, IonPopover
   ],
   providers: [PageListStore],
   template: `
@@ -93,21 +91,11 @@ import { PageListStore } from './page-list.store';
     } @else {
       <ion-list lines="inset">
         @for(page of filteredPages(); track page.bkey) {
-          <ion-item-sliding #slidingItem>
-            <ion-item (click)="editPage(slidingItem, page)">
-              <ion-label class="ion-hide-md-down">{{ page.bkey }}</ion-label>
-              <ion-label>{{ page.name }}</ion-label>
-              <ion-label>{{ page.sections.length }}</ion-label>
-            </ion-item>
-            <ion-item-options side="end">
-              <ion-item-option color="danger" (click)="deletePage(slidingItem, page)">
-                <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-              </ion-item-option>
-              <ion-item-option color="primary" (click)="editPage(slidingItem, page)">
-                <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-              </ion-item-option>
-            </ion-item-options>
-          </ion-item-sliding>
+          <ion-item (click)="showActions(page)">
+            <ion-label class="ion-hide-md-down">{{ page.bkey }}</ion-label>
+            <ion-label>{{ page.name }}</ion-label>
+            <ion-label>{{ page.sections.length }}</ion-label>
+          </ion-item>
         }
       </ion-list>
     }
@@ -117,6 +105,7 @@ import { PageListStore } from './page-list.store';
 })
 export class PageAllListComponent {
   protected pageListStore = inject(PageListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -128,6 +117,7 @@ export class PageAllListComponent {
   protected pageTags = computed(() => this.pageListStore.getTags());
 
   protected pageTypes = addAllCategory(PageTypes);
+  private imgixBaseUrl = this.pageListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* change notifications *************************************** */
   public onSearchtermChange(searchTerm: string): void {
@@ -143,22 +133,64 @@ export class PageAllListComponent {
   }
 
   /******************************* actions *************************************** */
-  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
-      case 'add':  await this.pageListStore.add(); break;
-      case 'exportRaw': await this.pageListStore.export("raw"); break;
-      default: error(undefined, `PageListComponent.call: unknown method ${_selectedMethod}`);
+  /**
+   * Displays an ActionSheet with all possible actions on a Page. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param page 
+   */
+  protected async showActions(page: PageModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, page);
+    await this.executeActions(actionSheetOptions, page);
+  }
+
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param page 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, page: PageModel): void {
+    if (hasRole('contentAdmin', this.pageListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
   }
 
-  public async deletePage(slidingItem: IonItemSliding, page: PageModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param page 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, page: PageModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.delete(page);
+          break;
+        case 'edit':
+          await this.edit(page);
+          break;
+      }
+    }
+  }
+
+  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
+      case 'add':  await this.pageListStore.add(); break;
+      case 'exportRaw': await this.pageListStore.export("raw"); break;
+      default: error(undefined, `PageListComponent.call: unknown method ${selectedMethod}`);
+    }
+  }
+
+  public async delete(page: PageModel): Promise<void> {
     await this.pageListStore.delete(page);
   }
 
-  public async editPage(slidingItem?: IonItemSliding, page?: PageModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  public async edit(page?: PageModel): Promise<void> {
     if (page) await this.pageListStore.edit(page);
   }
 

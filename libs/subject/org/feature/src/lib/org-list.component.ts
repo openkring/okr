@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, OrgTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AllCategories, ModelType, OrgModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -23,9 +23,9 @@ import { OrgListStore } from './org-list.store';
     TranslatePipe, AsyncPipe, AvatarPipe, SvgIconPipe,
     SpinnerComponent, EmptyListComponent,
     MenuComponent, ListFilterComponent,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover,
-    IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList
+    IonAvatar, IonImg, IonList
   ],
   providers: [OrgListStore],
   template: `
@@ -90,46 +90,34 @@ import { OrgListStore } from './org-list.store';
       } @else {
         <ion-list lines="inset">
           @for(org of filteredOrgs(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-item>
-                <ion-avatar slot="start" (click)="edit(undefined, org)">
-                  <ion-img src="{{ modelType.Org + '.' + org.bkey | avatar | async }}" alt="Avatar Logo" />
-                </ion-avatar>
-                <ion-label (click)="edit(undefined, org)">{{org.name}}</ion-label>      
-                <ion-label class="ion-hide-sm-down">
-                  @if(org.fav_phone) {
-                    <a href="tel:{{org.fav_phone}}" style="text-decoration:none;">
-                      <span>{{org.fav_phone }}</span>
-                    </a>
-                  }
-                </ion-label>
-                <ion-label class="ion-hide-sm-down">
-                  @if(org?.fav_email) {
-                    <a href="mailto:{{org.fav_email}}" style="text-decoration:none;">
-                      <span>{{org.fav_email }}</span>
-                    </a>
-                  }
-                </ion-label>
-                <ion-buttons slot="end" class="ion-hide-sm-up">
-                  <ion-button>
-                    <ion-icon src="{{'tel' | svgIcon }}" slot="start" color="primary" />
-                  </ion-button>
-                  <ion-button>
-                    <ion-icon src="{{'email' | svgIcon }}" slot="icon-only" color="primary"/>
-                  </ion-button>
-                </ion-buttons> 
-              </ion-item>
-              @if(hasRole('memberAdmin')) {
-                <ion-item-options side="end">
-                  <ion-item-option color="primary" (click)="edit(slidingItem, org)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                  <ion-item-option color="danger" (click)="delete(slidingItem, org)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding>
+            <ion-item (click)="showActions(org)">
+              <ion-avatar slot="start">
+                <ion-img src="{{ modelType.Org + '.' + org.bkey | avatar | async }}" alt="Avatar Logo" />
+              </ion-avatar>
+              <ion-label>{{org.name}}</ion-label>      
+              <ion-label class="ion-hide-sm-down">
+                @if(org.fav_phone) {
+                  <a href="tel:{{org.fav_phone}}" style="text-decoration:none;">
+                    <span>{{org.fav_phone }}</span>
+                  </a>
+                }
+              </ion-label>
+              <ion-label class="ion-hide-sm-down">
+                @if(org?.fav_email) {
+                  <a href="mailto:{{org.fav_email}}" style="text-decoration:none;">
+                    <span>{{org.fav_email }}</span>
+                  </a>
+                }
+              </ion-label>
+              <ion-buttons slot="end" class="ion-hide-sm-up">
+                <ion-button>
+                  <ion-icon src="{{'tel' | svgIcon }}" slot="start" color="primary" />
+                </ion-button>
+                <ion-button>
+                  <ion-icon src="{{'email' | svgIcon }}" slot="icon-only" color="primary"/>
+                </ion-button>
+              </ion-buttons> 
+            </ion-item>
           }
         </ion-list>
       }
@@ -139,6 +127,7 @@ import { OrgListStore } from './org-list.store';
 })
 export class OrgListComponent {
   protected readonly orgListStore = inject(OrgListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -153,6 +142,7 @@ export class OrgListComponent {
   protected selectedCategory = AllCategories;
   protected orgTypes = addAllCategory(OrgTypes);
   protected modelType = ModelType;
+  private imgixBaseUrl = this.orgListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -169,25 +159,60 @@ export class OrgListComponent {
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch (_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
       case 'add': await this.orgListStore.add(); break;
       case 'exportAddresses': await this.orgListStore.export("addresses"); break;
       case 'exportRaw': await this.orgListStore.export("raw_orgs"); break;
       case 'copyEmailAddresses': await this.orgListStore.copyEmailAddresses(); break;
-      default: error(undefined, `OrgListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `OrgListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async edit(slidingItem?: IonItemSliding, org?: OrgModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    org ??= new OrgModel(this.orgListStore.tenantId());
-    await this.orgListStore.edit(org);
+  /**
+   * Displays an ActionSheet with all possible actions on an Organization. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param org 
+   */
+  protected async showActions(org: OrgModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, org);
+    await this.executeActions(actionSheetOptions, org);
   }
 
-  public async delete(slidingItem?: IonItemSliding, org?: OrgModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.orgListStore.delete(org);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param org 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, org: OrgModel): void {
+    if (hasRole('memberAdmin', this.orgListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (hasRole('memberAdmin', this.orgListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param org 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, org: OrgModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.orgListStore.delete(org);
+          break;
+        case 'edit':
+          await this.orgListStore.edit(org);
+          break;
+      }
+    }
   }
 
   /******************************** helpers ******************************************* */

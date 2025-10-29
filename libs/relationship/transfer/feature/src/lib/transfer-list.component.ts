@@ -1,14 +1,14 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, TransferStates, TransferTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TransferModel } from '@bk2/shared-models';
 import { CategoryNamePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { AvatarDisplayComponent, EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
-import { getYearList, hasRole } from '@bk2/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
@@ -20,8 +20,8 @@ import { TransferListStore } from './transfer-list.store';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe, CategoryNamePipe,
     EmptyListComponent, ListFilterComponent, AvatarDisplayComponent, MenuComponent,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-    IonLabel, IonContent, IonItem, IonList, IonItemOptions, IonItemOption, IonPopover
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+    IonLabel, IonContent, IonItem, IonList, IonPopover
   ],
   providers: [TransferListStore],
   template: `
@@ -82,26 +82,14 @@ import { TransferListStore } from './transfer-list.store';
     } @else {
       <ion-list lines="inset">
         @for(transfer of filteredTransfers(); track $index) {
-          <ion-item-sliding #slidingItem>
-            <ion-item (click)="edit(undefined, transfer)" detail="false">
+          <ion-item (click)="showActions(transfer)" detail="false">
             <ion-label class="ion-hide-md-down">{{transfer.dateOfTransfer | prettyDate}}</ion-label>
-              <ion-label><bk-avatar-display [avatars]="transfer.subjects" /></ion-label>
-              <ion-label><bk-avatar-display [avatars]="transfer.objects" /></ion-label>
-              <ion-label>{{transfer.resource.name}}</ion-label>
-              <ion-label class="ion-hide-lg-down">{{transfer.name}}</ion-label>
-              <ion-label class="ion-hide-lg-down">{{transfer.state | categoryName:transferStates}}</ion-label>
-            </ion-item>
-            @if(hasRole('resourceAdmin')) {
-              <ion-item-options side="end">
-                <ion-item-option color="danger" (click)="delete(slidingItem, transfer)">
-                  <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                </ion-item-option>
-                <ion-item-option color="primary" (click)="edit(slidingItem, transfer)">
-                  <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                </ion-item-option>
-              </ion-item-options>
-            }
-          </ion-item-sliding>
+            <ion-label><bk-avatar-display [avatars]="transfer.subjects" /></ion-label>
+            <ion-label><bk-avatar-display [avatars]="transfer.objects" /></ion-label>
+            <ion-label>{{transfer.resource.name}}</ion-label>
+            <ion-label class="ion-hide-lg-down">{{transfer.name}}</ion-label>
+            <ion-label class="ion-hide-lg-down">{{transfer.state | categoryName:transferStates}}</ion-label>
+          </ion-item>
         }
       </ion-list>
     }
@@ -110,6 +98,7 @@ import { TransferListStore } from './transfer-list.store';
 })
 export class TransferListComponent {
   protected readonly transferListStore = inject(TransferListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -124,25 +113,62 @@ export class TransferListComponent {
   protected transferStates = TransferStates;
   protected allTransferStates = addAllCategory(TransferStates);
   protected years = getYearList();
-  
+    private imgixBaseUrl = this.transferListStore.appStore.env.services.imgixBaseUrl;
+
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
       case 'add':  await this.transferListStore.add(); break;
       case 'exportRaw': await this.transferListStore.export("raw"); break;
-      default: error(undefined, `TransferListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `TransferListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async edit(slidingItem?: IonItemSliding, transfer?: TransferModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.transferListStore.edit(transfer);
+  /**
+   * Displays an ActionSheet with all possible actions on a Transfer. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param transfer 
+   */
+  protected async showActions(transfer: TransferModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, transfer);
+    await this.executeActions(actionSheetOptions, transfer);
   }
 
-  public async delete(slidingItem?: IonItemSliding, transfer?: TransferModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.transferListStore.delete(transfer);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param transfer 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, transfer: TransferModel): void {
+    if (hasRole('resourceAdmin', this.transferListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (hasRole('admin', this.transferListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param transfer 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, transfer: TransferModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.transferListStore.delete(transfer);
+          break;
+        case 'edit':
+          await this.transferListStore.edit(transfer);
+          break;
+      }
+    }
   }
 
   /******************************* change notifications *************************************** */

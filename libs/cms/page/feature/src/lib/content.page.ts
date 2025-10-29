@@ -2,18 +2,19 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { RoleName } from '@bk2/shared-models';
+import { PageModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { AppNavigationService, error, navigateByUrl } from '@bk2/shared-util-angular';
+import { AppNavigationService, createActionSheetButton, createActionSheetOptions, error, navigateByUrl } from '@bk2/shared-util-angular';
 import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { SectionComponent } from '@bk2/cms-section-feature';
 import { PageDetailStore } from './page-detail.store';
+import { ActionSheetController } from '@ionic/angular';
 
 @Component({
   selector: 'bk-content-page',
@@ -21,9 +22,7 @@ import { PageDetailStore } from './page-detail.store';
   imports: [
     SectionComponent, MenuComponent,
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton,
-    IonContent, IonList, IonItemSliding, IonItem, IonItemOptions, IonItemOption, IonLabel,
-    IonPopover
+    IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent, IonList, IonItem, IonLabel, IonPopover
   ],
   styles: [`
   bk-section { width: 100%; }
@@ -65,19 +64,9 @@ import { PageDetailStore } from './page-detail.store';
         } @else {     <!-- page contains sections -->
           <ion-list>
             @for(sectionId of pageStore.sections(); track $index) {
-              <ion-item-sliding #slidingList>
-                <ion-item lines="none">
-                  <bk-section [id]="sectionId" />
-                </ion-item>
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="deleteSection(slidingList, sectionId)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                  <ion-item-option color="success" (click)="editSection(slidingList, sectionId)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              </ion-item-sliding>
+              <ion-item lines="none" click="showActions(sectionId)">
+                <bk-section [id]="sectionId" />
+              </ion-item>
             }
           </ion-list>
         }
@@ -101,6 +90,7 @@ export class ContentPageComponent {
   private readonly title = inject(Title);
   private readonly router = inject(Router);
   private readonly appNavigationService = inject(AppNavigationService);
+  private actionSheetController = inject(ActionSheetController);
 
   public id = input.required<string>();     // pageId (can contain @TID@ placeholder)
   public contextMenuName = input.required<string>();
@@ -108,53 +98,95 @@ export class ContentPageComponent {
   protected tenantId = this.pageStore.appStore.env.tenantId;
   protected showDebugInfo = computed(() => this.pageStore.showDebugInfo());
   protected popupId = computed(() => 'c_contentpage_' + this.id());
+  private imgixBaseUrl = this.pageStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
-      const _id = replaceSubstring(this.id(), '@TID@', this.pageStore.appStore.env.tenantId);
-      debugMessage(`ContentPageComponent: pageId=${this.id()} -> ${_id}`, this.pageStore.currentUser());
-      this.pageStore.setPageId(_id);
+      const id = replaceSubstring(this.id(), '@TID@', this.pageStore.appStore.env.tenantId);
+      debugMessage(`ContentPageComponent: pageId=${this.id()} -> ${id}`, this.pageStore.currentUser());
+      this.pageStore.setPageId(id);
     });
     effect(() => {
-      const _meta = this.pageStore.meta();
-      if (_meta) {
-        this.meta.addTags(_meta);
+      const meta = this.pageStore.meta();
+      if (meta) {
+        this.meta.addTags(meta);
       }
     });
     effect(() => {
-      const _title = this.pageStore.page()?.title;
-      if (_title && _title.length > 0) {
-        this.title.setTitle(_title);
+      const title = this.pageStore.page()?.title;
+      if (title && title.length > 0) {
+        this.title.setTitle(title);
       }
     });
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
       case 'sortSections':  await this.pageStore.sortSections(); break;
       case 'selectSection': await this.pageStore.selectSection(); break;
       case 'addSection':    await this.pageStore.addSection(); break;
       case 'exportRaw': await this.pageStore.export("raw"); break;
-      default: error(undefined, `ContentPage.onPopoverDismiss: unknown method ${_selectedMethod}`);
+      default: error(undefined, `ContentPage.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 
-  public async editSection(slidingItem: IonItemSliding, sectionKey: string) { 
-    if (slidingItem) slidingItem.close();
-    const _sectionId = replaceSubstring(sectionKey, '@TID@', this.pageStore.appStore.env.tenantId);
-    debugMessage(`ContentPageComponent.editSection: sectionId=${sectionKey} -> ${_sectionId}`, this.pageStore.currentUser());
+  /**
+   * Displays an ActionSheet with all possible actions on a Page. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param sectionId 
+   */
+  protected async showActions(sectionId: string): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, sectionId);
+    await this.executeActions(actionSheetOptions, sectionId);
+  }
 
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param sectionId 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, sectionId: string): void {
+    if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param sectionId 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, sectionId: string): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.delete(sectionId);
+          break;
+        case 'edit':
+          await this.edit(sectionId);
+          break;
+      }
+    }
+  }
+
+  public async edit(sectionKey: string) { 
+    const sectionId = replaceSubstring(sectionKey, '@TID@', this.pageStore.appStore.env.tenantId);
+    debugMessage(`ContentPageComponent.editSection: sectionId=${sectionKey} -> ${sectionId}`, this.pageStore.currentUser());
     this.appNavigationService.pushLink('private/' + this.pageStore.pageId());
-    navigateByUrl(this.router, `/section/${_sectionId}`);
+    navigateByUrl(this.router, `/section/${sectionId}`);
   } 
 
-  public deleteSection(slidingItem: IonItemSliding, sectionKey: string) {
-    if (slidingItem) slidingItem.close();
-    const _sectionId = replaceSubstring(sectionKey, '@TID@', this.pageStore.appStore.env.tenantId);
-    debugMessage(`ContentPageComponent.deleteSection: sectionId=${sectionKey} -> ${_sectionId}`, this.pageStore.currentUser());
-    this.pageStore.deleteSectionFromPage(_sectionId);
+  public delete(sectionKey: string) {
+    const sectionId = replaceSubstring(sectionKey, '@TID@', this.pageStore.appStore.env.tenantId);
+    debugMessage(`ContentPageComponent.deleteSection: sectionId=${sectionKey} -> ${sectionId}`, this.pageStore.currentUser());
+    this.pageStore.deleteSectionFromPage(sectionId);
   }
 
   protected hasRole(role: RoleName): boolean {

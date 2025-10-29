@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
 
 import { PersonalRelTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -12,6 +12,7 @@ import { hasRole, isOngoing } from '@bk2/shared-util-core';
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { PersonalRelNamePipe } from '@bk2/relationship-personal-rel-util';
 import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
+import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-personal-rel-accordion',
@@ -20,7 +21,7 @@ import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
     TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
     EmptyListComponent,
     IonAccordion, IonItem, IonLabel, IonIcon, IonList, IonButton,
-    IonImg, IonItemSliding, IonItemOptions, IonItemOption, IonGrid, IonRow, IonCol, IonAvatar
+    IonImg, IonGrid, IonRow, IonCol, IonAvatar
   ],
   providers: [PersonalRelAccordionStore],
   styles: [`
@@ -30,7 +31,7 @@ import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
   <ion-accordion toggle-icon-slot="start" value="personalRels">
     <ion-item slot="header" [color]="color()">
       <ion-label>{{ title() | translate | async }}</ion-label>
-      @if(hasRole('resourceAdmin')) {
+      @if(hasRole('memberAdmin')) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
@@ -42,51 +43,31 @@ import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
       } @else {
         <ion-list lines="inset">
           @for(personalRel of personalRels(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-grid (click)="edit(undefined, personalRel)">
-                <ion-row>
-                  <ion-col size="3" size-md="4">
-                    <ion-item lines="none">
-                      <ion-avatar slot="start" class="list-avatar">
-                        <ion-img src="{{ modelType.Person + '.' + personalRel.subjectKey | avatar | async}}" alt="avatar of first person" />
-                      </ion-avatar>
-                      <ion-label class="ion-hide-md-down">{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
-                    </ion-item>
-                  </ion-col>
-                  <ion-col size="6" size-md="4">
-                    <ion-item lines="none">
-                      <ion-label>{{ personalRel.type | personalRelName:personalRel.label }}</ion-label>
-                    </ion-item>
-                  </ion-col>
-                  <ion-col size="3" size-md="4">
-                    <ion-item lines="none">
-                      <ion-avatar slot="start" class="list-avatar">
-                        <ion-img src="{{ modelType.Person + '.' + personalRel.objectKey | avatar | async}}" alt="avatar of second person" />
-                      </ion-avatar>
-                      <ion-label class="ion-hide-md-down">{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
-                    </ion-item> 
-                  </ion-col>
-                </ion-row>
-              </ion-grid>
-
-              @if(hasRole('resourceAdmin')) {
-                <ion-item-options side="end">
-                  @if(hasRole('admin')) {
-                    <ion-item-option color="danger" (click)="delete(slidingItem, personalRel)">
-                      <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                    </ion-item-option>
-                  }
-                  @if(isOngoing(personalRel)) {
-                  <ion-item-option color="warning" (click)="end(slidingItem, personalRel)">
-                    <ion-icon slot="icon-only" src="{{'stop-circle' | svgIcon }}" />
-                  </ion-item-option>
-                } 
-                  <ion-item-option color="primary" (click)="edit(slidingItem, personalRel)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding> 
+            <ion-grid (click)="showActions(personalRel)">
+              <ion-row>
+                <ion-col size="3" size-md="4">
+                  <ion-item lines="none">
+                    <ion-avatar slot="start" class="list-avatar">
+                      <ion-img src="{{ modelType.Person + '.' + personalRel.subjectKey | avatar | async}}" alt="avatar of first person" />
+                    </ion-avatar>
+                    <ion-label class="ion-hide-md-down">{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="6" size-md="4">
+                  <ion-item lines="none">
+                    <ion-label>{{ personalRel.type | personalRelName:personalRel.label }}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="3" size-md="4">
+                  <ion-item lines="none">
+                    <ion-avatar slot="start" class="list-avatar">
+                      <ion-img src="{{ modelType.Person + '.' + personalRel.objectKey | avatar | async}}" alt="avatar of second person" />
+                    </ion-avatar>
+                    <ion-label class="ion-hide-md-down">{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
+                  </ion-item> 
+                </ion-col>
+              </ion-row>
+            </ion-grid>
           }
         </ion-list>
       }
@@ -96,6 +77,7 @@ import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
 })
 export class PersonalRelAccordionComponent {
   protected readonly personalRelStore = inject(PersonalRelAccordionStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public personKey = input.required<string>();
   public color = input('light');
@@ -106,6 +88,7 @@ export class PersonalRelAccordionComponent {
 
   protected modelType = ModelType;
   protected personalRelTypes = PersonalRelTypes;
+  private imgixBaseUrl = this.personalRelStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
@@ -121,19 +104,56 @@ export class PersonalRelAccordionComponent {
     await this.personalRelStore.add();
   }
 
-  protected async edit(slidingItem?: IonItemSliding, personalRel?: PersonalRelModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (personalRel) await this.personalRelStore.edit(personalRel);
+  /**
+   * Displays an ActionSheet with all possible actions on a Personal Relationship. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param personalRel 
+   */
+  protected async showActions(personalRel: PersonalRelModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, personalRel);
+    await this.executeActions(actionSheetOptions, personalRel);
   }
 
-  public async delete(slidingItem?: IonItemSliding, personalRel?: PersonalRelModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (personalRel) await this.personalRelStore.delete(personalRel);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param personalRel 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, personalRel: PersonalRelModel): void {
+    if (hasRole('memberAdmin', this.personalRelStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      if (isOngoing(personalRel.validTo)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('endrel', this.imgixBaseUrl, 'stop-circle'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (hasRole('admin', this.personalRelStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
   }
 
-  public async end(slidingItem?: IonItemSliding, personalRel?: PersonalRelModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (personalRel) await this.personalRelStore.end(personalRel);
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param personalRel 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, personalRel: PersonalRelModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.personalRelStore.delete(personalRel);
+          break;
+        case 'edit':
+          await this.personalRelStore.edit(personalRel);
+          break;
+        case 'endrel':
+          await this.personalRelStore.end(personalRel);
+          break;
+      }
+    }
   }
 
   /******************************* helpers *************************************** */

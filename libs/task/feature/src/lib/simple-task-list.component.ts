@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonAvatar, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonItemSliding, IonLabel, IonList, IonTextarea } from '@ionic/angular/standalone';
+import { IonAvatar, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonTextarea } from '@ionic/angular/standalone';
 
 import { addAllCategory, Importances, Priorities, TaskStates } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -16,7 +16,6 @@ import { TaskListStore } from './task-list.store';
 /**
  * Task items can be marked as done/completed by checking the checkbox.
  * isCompleted() is computed from the completion date (if it is set, the task is completed).
- * Task items can be manually archived with 'delete' button.
  * Quick entry accepts tag:[tag:] @assignedPerson //dueDate.
  * A notification is sent to the assigned person.
  * Later, a cloud function will automatically archive all completed task items after one day.
@@ -24,7 +23,6 @@ import { TaskListStore } from './task-list.store';
  * Completed task items are added to the diary at the same date as the completion date.
  * 
  * This simple task list is used by group segment task. 
- * It does not have a header and no sliding items.
  * The actions are provided be the static group menu.
  */
 @Component({
@@ -92,7 +90,7 @@ import { TaskListStore } from './task-list.store';
                     }
                   }
                 </div>
-                <ion-label class="name" (click)="edit(undefined, task)">{{ task.name }}</ion-label>
+                <ion-label class="name" (click)="edit(task)">{{ task.name }}</ion-label>
                 @if(task.dueDate.length > 0) {
                   <ion-label>{{ task.dueDate | prettyDate }}</ion-label>
                 }
@@ -138,30 +136,24 @@ export class SimpleTaskListComponent {
    * @param taskName 
    */
   protected async addName(bkTaskName: IonTextarea): Promise<void> {
-    const _task = new TaskModel(this.taskListStore.tenantId());
-    [_task.tags, _task.dueDate, _task.name] = extractTagAndDate(bkTaskName.value?.trim() ?? '');
-    _task.author = getAvatarInfoFromCurrentUser(this.taskListStore.currentUser());
-    await this.taskListStore.addName(_task);
+    const task = new TaskModel(this.taskListStore.tenantId());
+    [task.tags, task.dueDate, task.name] = extractTagAndDate(bkTaskName.value?.trim() ?? '');
+    task.author = getAvatarInfoFromCurrentUser(this.taskListStore.currentUser());
+    await this.taskListStore.addName(task);
     bkTaskName.value = '';
   }
 
-  public async edit(slidingItem?: IonItemSliding, task?: TaskModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.taskListStore.edit(task);
-  }
-
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch (_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
       case 'add': await this.taskListStore.add(); break;
       case 'export': await this.taskListStore.export(); break;
-      default: error(undefined, `TaskListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `TaskListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async delete(slidingItem: IonItemSliding, task: TaskModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.taskListStore.delete(task);
+  public async edit(task: TaskModel): Promise<void> {
+    await this.taskListStore.edit(task);
   }
 
   public async toggleCompleted(task: TaskModel): Promise<void> {

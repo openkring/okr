@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, LocationTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AllCategories, LocationModel, RoleName } from '@bk2/shared-models';
 import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -22,7 +22,6 @@ import { LocationListStore } from './location-list.store';
     SpinnerComponent, EmptyListComponent, MenuComponent, ListFilterComponent,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
     IonTitle, IonMenuButton, IonContent, IonItem, IonBackdrop,
-    IonItemSliding, IonItemOptions, IonItemOption,
     IonGrid, IonRow, IonCol, IonList, IonPopover
   ],
   providers: [LocationListStore],
@@ -91,20 +90,10 @@ import { LocationListStore } from './location-list.store';
     } @else {
       <ion-list lines="inset">
         @for(location of filteredLocations(); track location.bkey) {
-          <ion-item-sliding #slidingItem>
-            <ion-item (click)="edit(slidingItem, location)">
-              <ion-label>{{ location.name }}</ion-label>
-              <ion-label>{{ location.type | categoryName:locationTypes }}</ion-label>
-            </ion-item>
-            <ion-item-options side="end">
-              <ion-item-option color="danger" (click)="delete(slidingItem, location)">
-                <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-              </ion-item-option>
-              <ion-item-option color="primary" (click)="edit(slidingItem, location)">
-                <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-              </ion-item-option>
-            </ion-item-options>
-          </ion-item-sliding>
+          <ion-item (click)="showActions(location)">
+            <ion-label>{{ location.name }}</ion-label>
+            <ion-label>{{ location.type | categoryName:locationTypes }}</ion-label>
+          </ion-item>
         }
       </ion-list> 
     }
@@ -114,6 +103,7 @@ import { LocationListStore } from './location-list.store';
 })
 export class LocationListComponent {
   protected locationListStore = inject(LocationListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -127,24 +117,84 @@ export class LocationListComponent {
 
   protected locationTypes = addAllCategory(LocationTypes);
   protected selectedCategory = AllCategories;
+  private imgixBaseUrl = this.locationListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
       case 'add':  await this.locationListStore.add(); break;
       case 'exportRaw': await this.locationListStore.export("raw"); break;
-      default: error(undefined, `LocationListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `LocationListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async edit(slidingItem?: IonItemSliding, location?: LocationModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+ /**
+   * Displays an ActionSheet with all possible actions on a Location. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param location 
+   */
+  protected async showActions(location: LocationModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, location);
+    await this.executeActions(actionSheetOptions, location);
+  }
+
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param location 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, location: LocationModel): void {
+    actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'location'));
+    actionSheetOptions.buttons.push(createActionSheetButton('copy', this.imgixBaseUrl, 'copy'));
+    if (hasRole('contentAdmin', this.locationListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'location'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param location 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, location: LocationModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.delete(location);
+          break;
+        case 'edit':
+          await this.edit(location);
+          break;
+        case 'show':
+          await this.show(location);
+          break;
+        case 'copy':
+          await this.copy(location);
+          break;
+      }
+    }
+  }
+
+  public async edit(location?: LocationModel): Promise<void> {
     if (location) await this.locationListStore.edit(location);
   }
   
-  public async delete(slidingItem?: IonItemSliding, location?: LocationModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  public async delete(location?: LocationModel): Promise<void> {
+    if (location) await this.locationListStore.delete(location);
+  }
+
+   public async show(location?: LocationModel): Promise<void> {
+    if (location) await this.locationListStore.delete(location);
+  }
+
+   public async copy(location?: LocationModel): Promise<void> {
     if (location) await this.locationListStore.delete(location);
   }
 

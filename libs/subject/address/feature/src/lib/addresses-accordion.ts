@@ -35,7 +35,7 @@ import { hasRole } from "@bk2/shared-util-core";
     <ion-item slot="header" [color]="color()">
         <ion-label>{{ label() | translate | async }}</ion-label>
         @if(readOnly() === false) {
-          <ion-button fill="clear" (click)="edit()" size="default">
+          <ion-button fill="clear" (click)="add()" size="default">
             <ion-icon color="secondary" slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
           </ion-button>
         }
@@ -105,10 +105,9 @@ export class AddressesAccordionComponent {
     }
   }
 
-  // 4a upload ezs
-  // 5) replace all slidingItems
   /**
-   * 
+   * Displays an ActionSheet with all possible actions on an address. Only actions are shown, the user has permission for.
+   * After user selected an action this action is executed.
    * @param address 
    */
   protected async showActions(address: AddressModel): Promise<void> {
@@ -117,8 +116,12 @@ export class AddressesAccordionComponent {
     await this.executeActions(actionSheetOptions, address);
   }
 
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param address 
+   */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
-   if (hasRole('admin', this.appStore.currentUser())) {
+    if (hasRole('admin', this.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('copy', this.imgixBaseUrl, 'copy'));
@@ -146,6 +149,11 @@ export class AddressesAccordionComponent {
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
   }
 
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param address 
+   */
   private async executeActions(actionSheetOptions: ActionSheetOptions, address: AddressModel): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
@@ -153,56 +161,36 @@ export class AddressesAccordionComponent {
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
         case 'delete':
-          await this.delete(address);
+          await this.addressService.delete(address, this.appStore.currentUser());
+          this.addressesChanged.emit();
           break;
         case 'copy':
-          await this.copy(address);
+          await this.addressService.copy(address);
           break;
         case 'edit':
-          await this.edit(address);
+          await this.addressModalsService.edit(address);
+          this.addressesChanged.emit();
           break;
         case 'upload':
-          await this.uploadEzs(address);
+          const url = await this.addressModalsService.uploadEzs(address);
+          if (url) {
+            address.url = url;
+            await this.addressService.update(address, this.appStore.currentUser());
+          }
           break;
         case 'show':
         case 'send':
         case 'call':
-          await this.use(address);
+          await this.addressModalsService.use(address);
           break;
       }
     }
   }
 
-  public async delete(address?: AddressModel): Promise<void> {
-    if (address) await this.addressService.delete(address, this.appStore.currentUser());
+  public async add(): Promise<void> {
+    const newAddress = new AddressModel(this.addressModalsService.tenantId);
+    newAddress.parentKey = this.parentModelType() + '.' + this.parentKey();
+    await this.addressModalsService.edit(newAddress);
     this.addressesChanged.emit();
-  }
-
-  public async use(address?: AddressModel): Promise<void> {
-    if (address) await this.addressModalsService.use(address);
-  }
-
-  public async copy(address?: AddressModel): Promise<void> {
-    if (address) await this.addressService.copy(address);
-  }
-
-  public async edit(address?: AddressModel): Promise<void> {
-    if (address) await this.addressModalsService.edit(address);
-    else {
-      const _newAddress = new AddressModel(this.addressModalsService.tenantId);
-      _newAddress.parentKey = this.parentModelType() + '.' + this.parentKey();
-      await this.addressModalsService.edit(_newAddress);
-    }
-    this.addressesChanged.emit();
-  }
-
-  public async uploadEzs(address?: AddressModel): Promise<void> {
-    if (address) {
-      const _url = await this.addressModalsService.uploadEzs(address);
-      if (_url) {
-        address.url = _url;
-        await this.addressService.update(address, this.appStore.currentUser());
-      }
-    }
   }
 }

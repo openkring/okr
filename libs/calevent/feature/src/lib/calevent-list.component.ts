@@ -1,19 +1,20 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, CalEventTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AllCategories, CalEventModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { CalEventDurationPipe } from '@bk2/calevent-util';
 import { CalEventListStore } from './calevent-list.store';
+import { AppStore } from '@bk2/shared-feature';
 
 @Component({
     selector: 'bk-calevent-list',
@@ -22,9 +23,8 @@ import { CalEventListStore } from './calevent-list.store';
       TranslatePipe, AsyncPipe, CalEventDurationPipe, SvgIconPipe,
       SpinnerComponent, EmptyListComponent,
       MenuComponent, ListFilterComponent,
-      IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-      IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem,
-      IonItemOptions, IonItemOption, IonList, IonPopover
+      IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+      IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
     providers: [CalEventListStore],
     template: `
@@ -83,22 +83,10 @@ import { CalEventListStore } from './calevent-list.store';
       } @else {
         <ion-list lines="inset">
           @for(event of filteredCalEvents(); track event.bkey) {
-            <ion-item-sliding #slidingItem>
-              <ion-item (click)="edit(undefined, event)">
-                <ion-label>{{event.name}}</ion-label>      
-                <ion-label>{{ event | calEventDuration }}</ion-label>
-              </ion-item>
-              @if(hasRole('privileged') || hasRole('eventAdmin')) {
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="edit(slidingItem, event)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                  <ion-item-option color="primary" (click)="delete(slidingItem, event)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding>
+            <ion-item (click)="showActions(event)">
+              <ion-label>{{event.name}}</ion-label>      
+              <ion-label>{{ event | calEventDuration }}</ion-label>
+            </ion-item>
           }
         </ion-list>
       }
@@ -108,6 +96,8 @@ import { CalEventListStore } from './calevent-list.store';
 })
 export class CalEventListComponent {
   protected calEventListStore = inject(CalEventListStore);
+  private actionSheetController = inject(ActionSheetController);
+  private readonly appStore = inject(AppStore);
 
   public listId = input.required<string>();     // calendar name
   public contextMenuName = input.required<string>();
@@ -121,6 +111,7 @@ export class CalEventListComponent {
 
   protected selectedCategory = AllCategories;
   protected calEventTypes = addAllCategory(CalEventTypes);
+  private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => this.calEventListStore.setCalendarName(this.listId()));
@@ -128,22 +119,56 @@ export class CalEventListComponent {
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
       case 'add':  await this.calEventListStore.add(); break;
       case 'exportRaw': await this.calEventListStore.export("raw"); break;
-      default: error(undefined, `CalEventListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `CalEventListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async delete(slidingItem?: IonItemSliding, calEvent?: CalEventModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (calEvent) await this.calEventListStore.delete(calEvent);
+  /**
+   * Displays an ActionSheet with all possible actions on a CalEvent. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param calEvent 
+   */
+  protected async showActions(calEvent: CalEventModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, calEvent);
+    await this.executeActions(actionSheetOptions, calEvent);
   }
 
-  public async edit(slidingItem?: IonItemSliding, calEvent?: CalEventModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (calEvent) await this.calEventListStore.edit(calEvent);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param calEvent 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): void {
+    if (hasRole('privileged', this.appStore.currentUser()) || hasRole('eventAdmin', this.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param calEvent 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.calEventListStore.delete(calEvent);
+          break;
+        case 'edit':
+          await this.calEventListStore.edit(calEvent);
+          break;
+      }
+    }
   }
 
   /******************************* change notifications *************************************** */

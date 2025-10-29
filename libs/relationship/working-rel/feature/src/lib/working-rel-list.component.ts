@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, WorkingRelStates, WorkingRelTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ModelType, RoleName, WorkingRelModel } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -15,6 +15,7 @@ import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { WorkingRelNamePipe } from '@bk2/relationship-working-rel-util';
 import { WorkingRelListStore } from './working-rel-list.store';
+import { ActionSheetController } from '@ionic/angular';
 
 @Component({
   selector: 'bk-working-rel-list',
@@ -22,9 +23,8 @@ import { WorkingRelListStore } from './working-rel-list.store';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, WorkingRelNamePipe,
     ListFilterComponent, EmptyListComponent, SpinnerComponent, MenuComponent,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-    IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, IonImg, IonList,
-    IonGrid, IonRow, IonCol, IonAvatar, IonPopover
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+    IonLabel, IonContent, IonItem, IonImg, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover
   ],
   providers: [WorkingRelListStore],
   template: `
@@ -32,7 +32,7 @@ import { WorkingRelListStore } from './working-rel-list.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedWorkingRelsCount()}}/{{workingRelsCount()}} {{ '@workingRel.list.title' | translate | async }}</ion-title>
+        <ion-title>{{ selectedWorkRelsCount()}}/{{workRelsCount()}} {{ '@workingRel.list.title' | translate | async }}</ion-title>
         <ion-buttons slot="end">
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <ion-buttons slot="end">
@@ -52,7 +52,7 @@ import { WorkingRelListStore } from './working-rel-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="workingRelTags()"
+      [tags]="workRelTags()"
       [types]="allWorkingRelTypes"
       typeName="workingRelType"
       [states]="allWorkingRelStates"
@@ -78,53 +78,36 @@ import { WorkingRelListStore } from './working-rel-list.store';
     @if(isLoading() === true) {
       <bk-spinner />
     } @else {
-      @if(selectedWorkingRelsCount() === 0) {
+      @if(selectedWorkRelsCount() === 0) {
         <bk-empty-list message="@workingRel.field.empty" />
       } @else {
         <ion-list lines="inset">
-          @for(workingRel of filteredWorkingRels(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-grid (click)="edit(undefined, workingRel)">
-                <ion-row>
-                  <ion-col size="4">
-                    <ion-item lines="none">
-                      <ion-avatar slot="start">
-                        <ion-img src="{{ modelType.Person + '.' + workingRel.subjectKey | avatar | async}}" alt="avatar of first person" />
-                      </ion-avatar>
-                      <ion-label>{{workingRel.subjectName1 | fullName:workingRel.subjectName2}}</ion-label>
-                    </ion-item>
-                  </ion-col>
-                  <ion-col size="4">
-                    <ion-item lines="none">
-                      <ion-label>{{ workingRel.type | workingRelName:workingRel.label }}</ion-label>
-                    </ion-item>
-                  </ion-col>
-                  <ion-col size="4">
-                    <ion-item lines="none">
-                      <ion-avatar slot="start">
-                        <ion-img src="{{ modelType.Org + '.' + workingRel.objectKey | avatar | async}}" alt="avatar of second person" />
-                      </ion-avatar>
-                      <ion-label>{{workingRel.objectName }}</ion-label>
-                    </ion-item> 
-                  </ion-col>
-                </ion-row>
-              </ion-grid>
-              @if(hasRole('resourceAdmin')) {
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="delete(slidingItem, workingRel)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                  @if(isOngoing(workingRel)) {
-                    <ion-item-option color="warning" (click)="end(slidingItem, workingRel)">
-                      <ion-icon slot="icon-only" src="{{'stop-circle' | svgIcon }}" />
-                    </ion-item-option>
-                  }
-                  <ion-item-option color="primary" (click)="edit(slidingItem, workingRel)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding>
+          @for(workingRel of filteredWorkRels(); track $index) {
+            <ion-grid (click)="showActions(workingRel)">
+              <ion-row>
+                <ion-col size="4">
+                  <ion-item lines="none">
+                    <ion-avatar slot="start">
+                      <ion-img src="{{ modelType.Person + '.' + workingRel.subjectKey | avatar | async}}" alt="avatar of first person" />
+                    </ion-avatar>
+                    <ion-label>{{workingRel.subjectName1 | fullName:workingRel.subjectName2}}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="4">
+                  <ion-item lines="none">
+                    <ion-label>{{ workingRel.type | workingRelName:workingRel.label }}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="4">
+                  <ion-item lines="none">
+                    <ion-avatar slot="start">
+                      <ion-img src="{{ modelType.Org + '.' + workingRel.objectKey | avatar | async}}" alt="avatar of second person" />
+                    </ion-avatar>
+                    <ion-label>{{workingRel.objectName }}</ion-label>
+                  </ion-item> 
+                </ion-col>
+              </ion-row>
+            </ion-grid>
           }
         </ion-list>
       }
@@ -133,67 +116,106 @@ import { WorkingRelListStore } from './working-rel-list.store';
     `
 })
 export class WorkingRelListComponent {
-  protected workingRelListStore = inject(WorkingRelListStore);
+  protected workRelListStore = inject(WorkingRelListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  protected filteredWorkingRels = computed(() => this.workingRelListStore.filteredWorkingRels());
-  protected allWorkingRels = computed(() => this.workingRelListStore.allWorkingRels());
-  protected workingRelsCount = computed(() => this.workingRelListStore.allWorkingRels()?.length ?? 0);
-  protected selectedWorkingRelsCount = computed(() => this.filteredWorkingRels()?.length ?? 0);
-  protected isLoading = computed(() => this.workingRelListStore.isLoading());
-  protected workingRelTags = computed(() => this.workingRelListStore.getTags());
+  protected filteredWorkRels = computed(() => this.workRelListStore.filteredWorkingRels());
+  protected allWorkRels = computed(() => this.workRelListStore.allWorkingRels());
+  protected workRelsCount = computed(() => this.workRelListStore.allWorkingRels()?.length ?? 0);
+  protected selectedWorkRelsCount = computed(() => this.filteredWorkRels()?.length ?? 0);
+  protected isLoading = computed(() => this.workRelListStore.isLoading());
+  protected workRelTags = computed(() => this.workRelListStore.getTags());
 
   protected modelType = ModelType;
   protected readonly allWorkingRelTypes = addAllCategory(WorkingRelTypes);
   protected readonly allWorkingRelStates = addAllCategory(WorkingRelStates);
+  private imgixBaseUrl = this.workRelListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch (_selectedMethod) {
-      case 'add': await this.workingRelListStore.add(); break;
-      case 'exportRaw': await this.workingRelListStore.export('raw'); break;
-      default: error(undefined, `WorkingRelListComponent.call: unknown method ${_selectedMethod}`);
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
+      case 'add': await this.workRelListStore.add(); break;
+      case 'exportRaw': await this.workRelListStore.export('raw'); break;
+      default: error(undefined, `WorkingRelListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async delete(slidingItem?: IonItemSliding, workingRel?: WorkingRelModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.workingRelListStore.delete(workingRel);
-  }
-
-  public async end(slidingItem?: IonItemSliding, workingRel?: WorkingRelModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.workingRelListStore.end(workingRel);
-  }
-
-  public async edit(slidingItem?: IonItemSliding, workingRel?: WorkingRelModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.workingRelListStore.edit(workingRel);
-  }
+    /**
+     * Displays an ActionSheet with all possible actions on a Work Relationship. Only actions are shown, that the user has permission for.
+     * After user selected an action this action is executed.
+     * @param workRel 
+     */
+    protected async showActions(workRel: WorkingRelModel): Promise<void> {
+      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      this.addActionSheetButtons(actionSheetOptions, workRel);
+      await this.executeActions(actionSheetOptions, workRel);
+    }
+  
+    /**
+     * Fills the ActionSheet with all possible actions, considering the user permissions.
+     * @param workRel 
+     */
+    private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, workRel: WorkingRelModel): void {
+      if (hasRole('memberAdmin', this.workRelListStore.appStore.currentUser())) {
+        actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+        if (isOngoing(workRel.validTo)) {
+          actionSheetOptions.buttons.push(createActionSheetButton('endrel', this.imgixBaseUrl, 'stop-circle'));
+        }
+        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      }
+      if (hasRole('admin', this.workRelListStore.appStore.currentUser())) {
+        actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      }
+    }
+  
+    /**
+     * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+     * @param actionSheetOptions 
+     * @param workRel 
+     */
+    private async executeActions(actionSheetOptions: ActionSheetOptions, workRel: WorkingRelModel): Promise<void> {
+      if (actionSheetOptions.buttons.length > 0) {
+        const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+        await actionSheet.present();
+        const { data } = await actionSheet.onDidDismiss();
+        switch (data.action) {
+          case 'delete':
+            await this.workRelListStore.delete(workRel);
+            break;
+          case 'edit':
+            await this.workRelListStore.edit(workRel);
+            break;
+          case 'endrel':
+            await this.workRelListStore.end(workRel);
+            break;
+        }
+      }
+    }
 
   /******************************* change notifications *************************************** */
   protected onSearchtermChange(searchTerm: string): void {
-    this.workingRelListStore.setSearchTerm(searchTerm);
+    this.workRelListStore.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.workingRelListStore.setSelectedTag(tag);
+    this.workRelListStore.setSelectedTag(tag);
   }
 
   protected onTypeSelected(workingRelType: number): void {
-    this.workingRelListStore.setSelectedType(workingRelType);
+    this.workRelListStore.setSelectedType(workingRelType);
   }
 
   protected onStateSelected(workingRelState: number): void {
-    this.workingRelListStore.setSelectedState(workingRelState);
+    this.workRelListStore.setSelectedState(workingRelState);
   }
 
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.workingRelListStore.currentUser());
+    return hasRole(role, this.workRelListStore.currentUser());
   }
 
   protected isOngoing(workingRel: WorkingRelModel): boolean {

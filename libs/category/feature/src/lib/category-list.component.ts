@@ -1,17 +1,18 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { CategoryListStore } from './category-list.store';
+import { AppStore } from '@bk2/shared-feature';
 
 
 @Component({
@@ -20,9 +21,8 @@ import { CategoryListStore } from './category-list.store';
     imports: [
       TranslatePipe, AsyncPipe, SvgIconPipe,
       SpinnerComponent, EmptyListComponent, MenuComponent, ListFilterComponent,
-      IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-      IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem,
-      IonItemOptions, IonItemOption, IonList, IonPopover
+      IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+      IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
     providers: [CategoryListStore],
     template: `
@@ -82,20 +82,11 @@ import { CategoryListStore } from './category-list.store';
       } @else {
         <ion-list lines="inset">
           @for(cat of filteredCategories(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-item (click)="edit(cat)">
-                <ion-label>{{cat.name}}</ion-label>      
-                <ion-label>{{cat.i18nBase}}</ion-label>      
-                <ion-label class="ion-hide-lg-down">{{ cat.notes }}</ion-label>
-              </ion-item>
-              @if(hasRole('privileged') || hasRole('eventAdmin')) {
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="delete(slidingItem, cat)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding>
+            <ion-item (click)="showActions(cat)">
+              <ion-label>{{cat.name}}</ion-label>      
+              <ion-label>{{cat.i18nBase}}</ion-label>      
+              <ion-label class="ion-hide-lg-down">{{ cat.notes }}</ion-label>
+            </ion-item>
           }
         </ion-list>
       }
@@ -105,7 +96,9 @@ import { CategoryListStore } from './category-list.store';
 })
 export class CategoryListComponent {
   protected categoryListStore = inject(CategoryListStore);
-  
+  private actionSheetController = inject(ActionSheetController);
+  private readonly appStore = inject(AppStore);
+
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
@@ -117,19 +110,62 @@ export class CategoryListComponent {
   protected categoryTags = computed(() => this.categoryListStore.getTags());
   
   protected isYearly = false;
+  private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
       case 'add':  await this.categoryListStore.add('mcat_default'); break;
       case 'exportRaw': await this.categoryListStore.export("raw"); break;
-      default: error(undefined, `CategoryListComponent.onPopoverDismiss: unknown method ${_selectedMethod}`);
+      default: error(undefined, `CategoryListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 
-  public async delete(slidingItem?: IonItemSliding, cat?: CategoryListModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
+  /**
+   * Displays an ActionSheet with all possible actions on a Category. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param cat 
+   */
+  protected async showActions(cat: CategoryListModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, cat);
+    await this.executeActions(actionSheetOptions, cat);
+  }
+
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param cat 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, cat: CategoryListModel): void {
+    if (hasRole('privileged', this.appStore.currentUser()) || hasRole('eventAdmin', this.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param cat 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, cat: CategoryListModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.delete(cat);
+          break;
+        case 'edit':
+          await this.edit(cat);
+          break;
+      }
+    }
+  }
+  public async delete(cat?: CategoryListModel): Promise<void> {
     if (cat) await this.categoryListStore.delete(cat);
   }
 

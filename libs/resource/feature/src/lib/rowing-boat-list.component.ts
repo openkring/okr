@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, RowingBoatTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AllCategories, ResourceModel, RoleName } from '@bk2/shared-models';
 import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -21,8 +21,7 @@ import { ResourceListStore } from './resource-list.store';
     TranslatePipe, AsyncPipe, SvgIconPipe, CategoryNamePipe,
     MenuComponent, ListFilterComponent,
     SpinnerComponent, EmptyListComponent,
-    IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList, IonPopover,
-    IonIcon, IonItem, IonLabel, IonContent, IonItemSliding, IonItemOption, IonItemOptions
+    IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList, IonPopover, IonIcon, IonItem, IonLabel, IonContent
   ],
   providers: [ResourceListStore],
   template: `
@@ -76,25 +75,13 @@ import { ResourceListStore } from './resource-list.store';
       <bk-empty-list message="@resource.boat.field.empty" />
     } @else {
       <ion-list lines="inset">
-        @for(resource of filteredBoats(); track $index) {
-          <ion-item-sliding #slidingItem>
-            <ion-item class="ion-text-wrap" (click)="edit(undefined, resource)">
-              <ion-icon slot="start" color="primary" src="{{ getIcon(resource) | svgIcon }}" />
-              <ion-label>{{ resource.name }}</ion-label>
-              <ion-label>{{ resource.subType | categoryName:boatTypes }}</ion-label>
-              <ion-label class="ion-hide-md-down">{{ resource?.load }}</ion-label>
-            </ion-item>
-            @if(hasRole('resourceAdmin')) {
-              <ion-item-options side="end">
-                <ion-item-option color="primary" (click)="edit(slidingItem, resource)">
-                  <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                </ion-item-option>
-                <ion-item-option color="danger" (click)="delete(slidingItem, resource)">
-                  <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                </ion-item-option>
-              </ion-item-options>
-            }
-          </ion-item-sliding>
+        @for(boat of filteredBoats(); track $index) {
+          <ion-item class="ion-text-wrap" (click)="showActions(boat)">
+            <ion-icon slot="start" color="primary" src="{{ getIcon(boat) | svgIcon }}" />
+            <ion-label>{{ boat.name }}</ion-label>
+            <ion-label>{{ boat.subType | categoryName:boatTypes }}</ion-label>
+            <ion-label class="ion-hide-md-down">{{ boat?.load }}</ion-label>
+          </ion-item>
         }
       </ion-list>
     }
@@ -104,6 +91,7 @@ import { ResourceListStore } from './resource-list.store';
 })
 export class RowingBoatListComponent {
   protected readonly resourceListStore = inject(ResourceListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public filter = input.required<string>();
@@ -120,6 +108,7 @@ export class RowingBoatListComponent {
   protected allBoatTypes = addAllCategory(RowingBoatTypes);
   protected selectedCategory = AllCategories;
   protected categories = addAllCategory(RowingBoatTypes);
+  private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -141,23 +130,58 @@ export class RowingBoatListComponent {
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
       case 'add':  await this.resourceListStore.add(false); break;
       case 'exportRaw': await this.resourceListStore.export("raw"); break;
-      default: error(undefined, `RowingBoatListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `RowingBoatListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async edit(slidingItem?: IonItemSliding, resource?: ResourceModel, isTypeEditable = false): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    resource ??= new ResourceModel(this.resourceListStore.tenantId());
-    await this.resourceListStore.edit(resource, isTypeEditable);
+  /**
+   * Displays an ActionSheet with all possible actions on a rowing boat. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param boat 
+   */
+  protected async showActions(boat: ResourceModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, boat);
+    await this.executeActions(actionSheetOptions, boat);
   }
 
-  public async delete(slidingItem?: IonItemSliding, resource?: ResourceModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (resource) await this.resourceListStore.delete(resource);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param boat 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, boat: ResourceModel): void {
+    if (hasRole('resourceAdmin', this.resourceListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (hasRole('admin', this.resourceListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param boat 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, boat: ResourceModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.resourceListStore.delete(boat);
+          break;
+        case 'edit':
+          await this.resourceListStore.edit(boat);
+          break;
+      }
+    }
   }
 
   /******************************** helpers ******************************************* */

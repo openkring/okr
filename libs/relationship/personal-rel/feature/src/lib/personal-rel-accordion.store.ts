@@ -48,12 +48,12 @@ export const PersonalRelAccordionStore = signalStore(
         personKey: store.personKey(),
       }),
       stream: ({params}) => {
-        let _personalRels$: Observable<PersonalRelModel[]> = of([]);
+        let personalRels$: Observable<PersonalRelModel[]> = of([]);
         if (params.personKey) {
-          _personalRels$ = store.personalRelService.listPersonalRelsOfPerson(params.personKey);
+          personalRels$ = store.personalRelService.listPersonalRelsOfPerson(params.personKey);
         }
-        debugListLoaded('PersonalRelAccordionStore.personalRels (subject)', _personalRels$, store.appStore.currentUser());
-        return _personalRels$;
+        debugListLoaded('PersonalRelAccordionStore.personalRels (subject)', personalRels$, store.appStore.currentUser());
+        return personalRels$;
       }
     })
   })),
@@ -84,24 +84,22 @@ export const PersonalRelAccordionStore = signalStore(
       /******************************** actions ******************************************* */
       /**
        * Show a modal to add a new personalRel.
-       * @param subject first person to be related
-       * @param object second person to be related
        */
       async add(): Promise<void> {
-        const _subject = structuredClone(store.appStore.currentPerson() ?? await store.personalRelModalsService.selectPerson());
-        const _object = structuredClone(store.appStore.currentPerson() ?? await store.personalRelModalsService.selectPerson());
-        if (_subject && _object) {
-          const _modal = await store.modalController.create({
+        const subject = structuredClone(store.appStore.currentPerson() ?? await store.personalRelModalsService.selectPerson());
+        const object = structuredClone(store.appStore.currentPerson() ?? await store.personalRelModalsService.selectPerson());
+        if (subject && object) {
+          const modal = await store.modalController.create({
             component: PersonalRelNewModalComponent,
             cssClass: 'small-modal',
             componentProps: {
-              subject: _subject,
-              object: _object,
+              subject: subject,
+              object: object,
               currentUser: store.appStore.currentUser()
             }
           });
-          _modal.present();
-          const { data, role } = await _modal.onDidDismiss();
+          modal.present();
+          const { data, role } = await modal.onDidDismiss();
           if (role === 'confirm') {
             const _personalRel = convertFormToNewPersonalRel(data as PersonalRelNewFormModel, store.appStore.tenantId());
             await store.personalRelService.create(_personalRel, store.appStore.currentUser());
@@ -114,16 +112,16 @@ export const PersonalRelAccordionStore = signalStore(
         let _personalRel = personalRel;
         _personalRel ??= new PersonalRelModel(store.appStore.tenantId());
         
-        const _modal = await store.modalController.create({
+        const modal = await store.modalController.create({
           component: PersonalRelEditModalComponent,
           componentProps: {
             personalRel: _personalRel,
             currentUser: store.appStore.currentUser()
           }
         });
-        _modal.present();
-        await _modal.onWillDismiss();
-        const { data, role } = await _modal.onDidDismiss();
+        modal.present();
+        await modal.onWillDismiss();
+        const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm') {
           if (isPersonalRel(data, store.appStore.tenantId())) {
             await (!data.bkey ? 
@@ -136,17 +134,17 @@ export const PersonalRelAccordionStore = signalStore(
 
       async end(personalRel?: PersonalRelModel): Promise<void> {
         if (personalRel) {
-          const _date = await selectDate(store.modalController);
-          if (!_date) return;
-          await store.personalRelService.endPersonalRelByDate(personalRel, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
+          const date = await selectDate(store.modalController);
+          if (!date) return;
+          await store.personalRelService.endPersonalRelByDate(personalRel, convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
           store.personalRelsResource.reload();  
         }
       },
 
       async delete(personalRel?: PersonalRelModel): Promise<void> {
         if (personalRel) {
-          const _result = await confirm(store.alertController, '@personalRel.operation.delete.confirm', true);
-          if (_result === true) {
+          const result = await confirm(store.alertController, '@personalRel.operation.delete.confirm', true);
+          if (result === true) {
             await store.personalRelService.delete(personalRel, store.appStore.currentUser());
             store.personalRelsResource.reload();
           } 

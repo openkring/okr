@@ -1,12 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { MembershipModel, ModelType, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -22,8 +22,8 @@ import { MembershipListStore } from './membership-list.store';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryLogPipe, AvatarPipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-    IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, IonAvatar, IonImg, IonList, IonPopover
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover
   ],
   providers: [MembershipListStore],
   template: `
@@ -84,8 +84,7 @@ import { MembershipListStore } from './membership-list.store';
       } @else {
         <ion-list lines="inset">
           @for(membership of filteredMemberships(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-item (click)="edit(undefined, membership)">
+              <ion-item (click)="showActions(membership)">
                 <ion-avatar slot="start">
                   <ion-img src="{{ modelType.Person + '.' + membership.memberKey | avatar | async }}" alt="Avatar Logo" />
                 </ion-avatar>
@@ -93,25 +92,6 @@ import { MembershipListStore } from './membership-list.store';
                 <ion-label>{{membership.relLog | duration:membership.dateOfExit}}</ion-label>      
                 <ion-label class="ion-hide-md-down">{{membership.relLog|categoryLog}}</ion-label>
               </ion-item>
-              @if(hasRole('memberAdmin')) {
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="delete(slidingItem, membership)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                  @if(isOngoing(membership)) {
-                    <ion-item-option color="warning" (click)="end(slidingItem, membership)">
-                      <ion-icon slot="icon-only" src="{{'stop-circle' | svgIcon }}" />
-                    </ion-item-option>
-                    <ion-item-option color="secondary" (click)="changeMembershipCategory(slidingItem, membership)">
-                      <ion-icon slot="icon-only" src="{{'swap-horizontal' | svgIcon }}" />
-                    </ion-item-option>
-                  }
-                  <ion-item-option color="primary" (click)="edit(slidingItem, membership)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding>
           }
         </ion-list>
       }
@@ -121,6 +101,7 @@ import { MembershipListStore } from './membership-list.store';
 })
 export class MembershipListComponent {
   protected membershipListStore = inject(MembershipListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public orgId = input.required<string>();
@@ -187,6 +168,7 @@ export class MembershipListComponent {
   protected isLoading = computed(() => this.membershipListStore.isLoading());
 
   protected modelType = ModelType;
+  private imgixBaseUrl = this.membershipListStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => this.membershipListStore.setOrgId(this.orgId()));
@@ -203,24 +185,60 @@ export class MembershipListComponent {
     }
   }
 
-  public async delete(slidingItem?: IonItemSliding, membership?: MembershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.membershipListStore.delete(membership);
+  /**
+   * Displays an ActionSheet with all possible actions on a Membership. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param membership 
+   */
+  protected async showActions(membership: MembershipModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, membership);
+    await this.executeActions(actionSheetOptions, membership);
   }
 
-  public async end(slidingItem?: IonItemSliding, membership?: MembershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.membershipListStore.end(membership);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param membership 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): void {
+    if (hasRole('memberAdmin', this.membershipListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      if (isOngoing(membership.dateOfExit)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('endMembership', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('changeMcat', this.imgixBaseUrl, 'member_change'));
+      }
+    }
+    if (hasRole('admin', this.membershipListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
   }
 
-  public async edit(slidingItem?: IonItemSliding, membership?: MembershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.membershipListStore.edit(membership);
-  }
-
-  public async changeMembershipCategory(slidingItem?: IonItemSliding, membership?: MembershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.membershipListStore.changeMembershipCategory(membership);
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param membership 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.membershipListStore.delete(membership);
+          break;
+        case 'edit':
+          await this.membershipListStore.edit(membership);
+          break;
+        case 'endMembership':
+          await this.membershipListStore.end(membership);
+          break;
+        case 'changeMcat':
+          await this.membershipListStore.changeMembershipCategory(membership);
+          break;
+      }
+    }
   }
 
   /******************************* change notifications *************************************** */

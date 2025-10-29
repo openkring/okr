@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, output } from '@angular/core';
-import { IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
 import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 
@@ -11,14 +11,14 @@ import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
 import { hasRole, isOngoing } from '@bk2/shared-util-core';
 import { MembershipAccordionStore } from './membership-accordion.store';
+import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-membership-accordion',
   standalone: true,
   imports: [
     TranslatePipe, DurationPipe, AsyncPipe, SvgIconPipe, CategoryLogPipe, AvatarPipe, EmptyListComponent,
-    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList,
-    IonImg, IonItemSliding, IonItemOptions, IonItemOption, IonThumbnail
+    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonImg, IonThumbnail
   ],
   providers: [MembershipAccordionStore],
   styles: [`
@@ -40,35 +40,13 @@ import { MembershipAccordionStore } from './membership-accordion.store';
       } @else {
         <ion-list lines="inset">
           @for(membership of memberships(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-item (click)="edit(undefined, membership)">
-                <ion-thumbnail slot="start">
-                  <ion-img src="{{ modelTypeEnum.Org + '.' + membership.orgKey | avatar | async}}" alt="membership avatar" />
-                </ion-thumbnail>
-                <ion-label>{{ membership.orgName }}</ion-label>
-                <ion-label>{{ membership.relLog | categoryLog }} / {{ membership.dateOfEntry | duration:membership.dateOfExit }}</ion-label>
-              </ion-item>
-              @if(hasRole('memberAdmin')) {
-                <ion-item-options side="end">
-                  @if(hasRole('admin')) {
-                    <ion-item-option color="danger" (click)="delete(slidingItem, membership)">
-                      <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                    </ion-item-option>
-                  }
-                  @if(isOngoing(membership)) {
-                  <ion-item-option color="warning" (click)="end(slidingItem, membership)">
-                    <ion-icon slot="icon-only" src="{{'stop-circle' | svgIcon }}" />
-                  </ion-item-option>
-                  <ion-item-option color="secondary" (click)="changeMembershipCategory(slidingItem, membership)">
-                    <ion-icon slot="icon-only" src="{{'swap-horizontal' | svgIcon }}" />
-                  </ion-item-option>
-                } 
-                  <ion-item-option color="primary" (click)="edit(slidingItem, membership)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding> 
+            <ion-item (click)="showActions(membership)">
+              <ion-thumbnail slot="start">
+                <ion-img src="{{ modelTypeEnum.Org + '.' + membership.orgKey | avatar | async}}" alt="membership avatar" />
+              </ion-thumbnail>
+              <ion-label>{{ membership.orgName }}</ion-label>
+              <ion-label>{{ membership.relLog | categoryLog }} / {{ membership.dateOfEntry | duration:membership.dateOfExit }}</ion-label>
+            </ion-item>
           }
         </ion-list>
       }
@@ -78,6 +56,7 @@ import { MembershipAccordionStore } from './membership-accordion.store';
 })
 export class MembershipAccordionComponent {
   protected readonly membershipStore = inject(MembershipAccordionStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public member = input.required<PersonModel | OrgModel>();
   public modelType = input<ModelType>(ModelType.Person);
@@ -88,6 +67,7 @@ export class MembershipAccordionComponent {
   protected memberships = computed(() => this.membershipStore.memberships());
 
   protected modelTypeEnum = ModelType;
+  private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => this.membershipStore.setMember(this.member(), this.modelType()));
@@ -99,24 +79,60 @@ export class MembershipAccordionComponent {
     await this.membershipStore.add(this.member(), this.modelType());
   }
 
-  protected async edit(slidingItem?: IonItemSliding, membership?: MembershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (membership) await this.membershipStore.edit(membership);
+  /**
+   * Displays an ActionSheet with all possible actions on a Membership. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param membership 
+   */
+  protected async showActions(membership: MembershipModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, membership);
+    await this.executeActions(actionSheetOptions, membership);
   }
 
-  protected async delete(slidingItem?: IonItemSliding, membership?: MembershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (membership) await this.membershipStore.delete(membership);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param membership 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): void {
+    if (hasRole('memberAdmin', this.membershipStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      if (isOngoing(membership.dateOfExit)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('endMembership', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('changeMcat', this.imgixBaseUrl, 'member_change'));
+      }
+    }
+    if (hasRole('admin', this.membershipStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
   }
 
-  protected async end(slidingItem?: IonItemSliding, membership?: MembershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (membership) await this.membershipStore.end(membership);
-  }
-
-  protected async changeMembershipCategory(slidingItem?: IonItemSliding, membership?: MembershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (membership) await this.membershipStore.changeMembershipCategory(membership);
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param membership 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.membershipStore.delete(membership);
+          break;
+        case 'edit':
+          await this.membershipStore.edit(membership);
+          break;
+        case 'endMembership':
+          await this.membershipStore.end(membership);
+          break;
+        case 'changeMcat':
+          await this.membershipStore.changeMembershipCategory(membership);
+          break;
+      }
+    }
   }
 
   /******************************* helpers *************************************** */

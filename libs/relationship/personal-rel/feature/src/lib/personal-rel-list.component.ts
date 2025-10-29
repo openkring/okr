@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { addAllCategory, PersonalRelTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ModelType, PersonalRelModel, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -22,9 +22,8 @@ import { PersonalRelListStore } from './personal-rel-list.store';
     TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
     ListFilterComponent, EmptyListComponent, SpinnerComponent,
     MenuComponent,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonItemSliding,
-    IonLabel, IonContent, IonItem, IonItemOptions, IonItemOption, IonImg, IonList,
-    IonGrid, IonRow, IonCol, IonAvatar, IonPopover
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+    IonLabel, IonContent, IonItem, IonImg, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover
   ],
   providers: [PersonalRelListStore],
   template: `
@@ -81,48 +80,31 @@ import { PersonalRelListStore } from './personal-rel-list.store';
       } @else {
         <ion-list lines="inset">
           @for(personalRel of filteredPersonalRels(); track $index) {
-            <ion-item-sliding #slidingItem>
-              <ion-grid (click)="edit(undefined, personalRel)">
-                <ion-row>
-                  <ion-col size="4">
-                    <ion-item lines="none">
-                      <ion-avatar slot="start">
-                        <ion-img src="{{ modelType.Person + '.' + personalRel.subjectKey | avatar | async}}" alt="avatar of first person" />
-                      </ion-avatar>
-                      <ion-label>{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
-                    </ion-item>
-                  </ion-col>
-                  <ion-col size="4">
-                    <ion-item lines="none">
-                      <ion-label>{{ personalRel.type | personalRelName:personalRel.label }}</ion-label>
-                    </ion-item>
-                  </ion-col>
-                  <ion-col size="4">
-                    <ion-item lines="none">
-                      <ion-avatar slot="start">
-                        <ion-img src="{{ modelType.Person + '.' + personalRel.objectKey | avatar | async}}" alt="avatar of second person" />
-                      </ion-avatar>
-                      <ion-label>{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
-                    </ion-item> 
-                  </ion-col>
-                </ion-row>
-              </ion-grid>
-              @if(hasRole('resourceAdmin')) {
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="delete(slidingItem, personalRel)">
-                    <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                  </ion-item-option>
-                  @if(isOngoing(personalRel)) {
-                    <ion-item-option color="warning" (click)="end(slidingItem, personalRel)">
-                      <ion-icon slot="icon-only" src="{{'stop-circle' | svgIcon }}" />
-                    </ion-item-option>
-                  }
-                  <ion-item-option color="primary" (click)="edit(slidingItem, personalRel)">
-                    <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                  </ion-item-option>
-                </ion-item-options>
-              }
-            </ion-item-sliding>
+            <ion-grid (click)="showActions(personalRel)">
+              <ion-row>
+                <ion-col size="4">
+                  <ion-item lines="none">
+                    <ion-avatar slot="start">
+                      <ion-img src="{{ modelType.Person + '.' + personalRel.subjectKey | avatar | async}}" alt="avatar of first person" />
+                    </ion-avatar>
+                    <ion-label>{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="4">
+                  <ion-item lines="none">
+                    <ion-label>{{ personalRel.type | personalRelName:personalRel.label }}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="4">
+                  <ion-item lines="none">
+                    <ion-avatar slot="start">
+                      <ion-img src="{{ modelType.Person + '.' + personalRel.objectKey | avatar | async}}" alt="avatar of second person" />
+                    </ion-avatar>
+                    <ion-label>{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
+                  </ion-item> 
+                </ion-col>
+              </ion-row>
+            </ion-grid>
           }
         </ion-list>
       }
@@ -132,6 +114,7 @@ import { PersonalRelListStore } from './personal-rel-list.store';
 })
 export class PersonalRelListComponent {
   protected personalRelListStore = inject(PersonalRelListStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
@@ -145,30 +128,68 @@ export class PersonalRelListComponent {
 
   protected modelType = ModelType;
   protected readonly personalRelTypes = addAllCategory(PersonalRelTypes);
+  private imgixBaseUrl = this.personalRelListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch (_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
       case 'add': await this.personalRelListStore.add(); break;
       case 'exportRaw': await this.personalRelListStore.export("raw"); break;
-      default: error(undefined, `PersonalRelListComponent.call: unknown method ${_selectedMethod}`);
+      default: error(undefined, `PersonalRelListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
-  public async delete(slidingItem?: IonItemSliding, personalRel?: PersonalRelModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.personalRelListStore.delete(personalRel);
+  /**
+   * Displays an ActionSheet with all possible actions on a Personal Relationship. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param personalRel 
+   */
+  protected async showActions(personalRel: PersonalRelModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, personalRel);
+    await this.executeActions(actionSheetOptions, personalRel);
   }
 
-  public async end(slidingItem?: IonItemSliding, personalRel?: PersonalRelModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.personalRelListStore.end(personalRel);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param personalRel 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, personalRel: PersonalRelModel): void {
+    if (hasRole('resourceAdmin', this.personalRelListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      if (isOngoing(personalRel.validTo)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('endrel', this.imgixBaseUrl, 'stop-circle'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (hasRole('admin', this.personalRelListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
   }
 
-  public async edit(slidingItem?: IonItemSliding, personalRel?: PersonalRelModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    await this.personalRelListStore.edit(personalRel);
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param personalRel 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, personalRel: PersonalRelModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.personalRelListStore.delete(personalRel);
+          break;
+        case 'edit':
+          await this.personalRelListStore.edit(personalRel);
+          break;
+        case 'endrel':
+          await this.personalRelListStore.end(personalRel);
+          break;
+      }
+    }
   }
 
   /******************************* change notifications *************************************** */

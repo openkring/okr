@@ -1,24 +1,24 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
 import { ResourceTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
-import { getAvatarKey, hasRole } from '@bk2/shared-util-core';
+import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared-util-core';
 import { OwnershipAccordionStore } from './ownerships-accordion.store';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
+import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-ownerships-accordion',
   standalone: true,
   imports: [
     TranslatePipe, AvatarPipe, AsyncPipe, DurationPipe, SvgIconPipe, EmptyListComponent,
-    IonAccordion, IonItem, IonLabel, IonList, IonButton, IonIcon,
-    IonThumbnail, IonImg, IonItemSliding, IonItemOptions, IonItemOption
+    IonAccordion, IonItem, IonLabel, IonList, IonButton, IonIcon, IonThumbnail, IonImg
   ],
   providers: [OwnershipAccordionStore],
   styles: [`
@@ -40,28 +40,13 @@ import { AvatarPipe } from '@bk2/avatar-ui';
         } @else {
           <ion-list lines="inset">
             @for(ownership of ownerships(); track $index) {
-              <ion-item-sliding #slidingItem>
-                <ion-item (click)="edit(undefined, ownership)">
-                  <ion-thumbnail slot="start">
-                    <ion-img [src]="getAvatarKey(ownership) | avatar | async" alt="resource avatar" />
-                  </ion-thumbnail>
-                  <ion-label>{{ownership.resourceName}}</ion-label>
-                  <ion-label>{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>
-                </ion-item>
-                @if(hasRole('resourceAdmin')) {
-                  <ion-item-options side="end">
-                    <ion-item-option color="danger" (click)="delete(slidingItem, ownership)">
-                      <ion-icon slot="icon-only" src="{{'trash_delete' | svgIcon }}" />
-                    </ion-item-option>
-                    <ion-item-option color="warning" (click)="end(slidingItem, ownership)">
-                      <ion-icon slot="icon-only" src="{{'stop-circle' | svgIcon }}" />
-                    </ion-item-option>
-                    <ion-item-option color="primary" (click)="edit(slidingItem, ownership)">
-                      <ion-icon slot="icon-only" src="{{'create_edit' | svgIcon }}" />
-                    </ion-item-option>
-                  </ion-item-options>
-                }
-              </ion-item-sliding>
+              <ion-item (click)="showActions(ownership)">
+                <ion-thumbnail slot="start">
+                  <ion-img [src]="getAvatarKey(ownership) | avatar | async" alt="resource avatar" />
+                </ion-thumbnail>
+                <ion-label>{{ownership.resourceName}}</ion-label>
+                <ion-label>{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>
+              </ion-item>
             }
           </ion-list>
         }
@@ -71,6 +56,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
 })
 export class OwnershipAccordionComponent {
   private readonly ownershipStore = inject(OwnershipAccordionStore);
+  private actionSheetController = inject(ActionSheetController);
 
   public owner = input.required<PersonModel | OrgModel>();
   public ownerModelType = input<ModelType>(ModelType.Person);
@@ -82,6 +68,7 @@ export class OwnershipAccordionComponent {
 
   protected modelType = ModelType;
   protected resourceTypes = ResourceTypes;
+  private imgixBaseUrl = this.ownershipStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => this.ownershipStore.setOwner(this.owner(), this.ownerModelType()));
@@ -95,25 +82,62 @@ export class OwnershipAccordionComponent {
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    const _resource = this.defaultResource();
-    if (_resource) {
-      await this.ownershipStore.add(this.owner(), this.ownerModelType(), _resource);
+    const resource = this.defaultResource();
+    if (resource) {
+      await this.ownershipStore.add(this.owner(), this.ownerModelType(), resource);
     }
   }
 
-  protected async edit(slidingItem?: IonItemSliding, ownership?: OwnershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (ownership) await this.ownershipStore.edit(ownership);
+  /**
+   * Displays an ActionSheet with all possible actions on a Ownership. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param ownership 
+   */
+  protected async showActions(ownership: OwnershipModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, ownership);
+    await this.executeActions(actionSheetOptions, ownership);
   }
 
-  public async delete(slidingItem?: IonItemSliding, ownership?: OwnershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (ownership) await this.ownershipStore.delete(ownership);
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param ownership 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
+    if (hasRole('resourceAdmin', this.ownershipStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      if (isOngoing(ownership.validTo)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('endownership', this.imgixBaseUrl, 'stop-circle'));
+      }
+    }
+    if (hasRole('admin', this.ownershipStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
   }
 
-  public async end(slidingItem?: IonItemSliding, ownership?: OwnershipModel): Promise<void> {
-    if (slidingItem) slidingItem.close();
-    if (ownership) await this.ownershipStore.end(ownership);
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param ownership 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      switch (data.action) {
+        case 'delete':
+          await this.ownershipStore.delete(ownership);
+          break;
+        case 'edit':
+          await this.ownershipStore.edit(ownership);
+          break;
+        case 'endownership':
+          await this.ownershipStore.end(ownership);
+          break;
+      }
+    }
   }
 
   /******************************* helpers *************************************** */
