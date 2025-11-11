@@ -2,8 +2,8 @@ import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { RoleName, UserModel } from '@bk2/shared-models';
-import { ColorComponent, ErrorNoteComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CategorySelectComponent, ColorComponent, ErrorNoteComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
@@ -14,7 +14,7 @@ import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
   imports: [
     vestForms,
     IonRow, IonCol, IonCard, IonCardTitle, IonCardHeader, IonCardContent, IonGrid,
-    TextInputComponent, NumberInputComponent, ColorComponent, ErrorNoteComponent
+    TextInputComponent, NumberInputComponent, ColorComponent, ErrorNoteComponent, CategorySelectComponent
   ],
   viewProviders: [vestFormsViewProviders],
   template: `
@@ -29,6 +29,9 @@ import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
                   <bk-text-input name="name" [value]="name()" [maxLength]=30 [readOnly]="readOnly()" />
                   <bk-error-note [errors]="nameErrors()" />                                                                                                                                                       
                 </ion-col>
+                <ion-col size="12">
+                  <bk-cat-select [category]="subTypes()!" [selectedItemName]="vm().subType" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('subType', $event)" />
+                </ion-col>
                 <ion-col size="12" size-md="6">
                   <bk-text-input name="load" [value]="load()" [maxLength]=20 [readOnly]="readOnly()" />
                   <bk-error-note [errors]="loadErrors()" />                                                                                                                                                                                                
@@ -38,7 +41,7 @@ import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
                   <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                                                                    
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-color [hexColor]="hexColor()" />
+                  <bk-color [hexColor]="hexColor()" [readOnly]="readOnly()"  />
                   <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
                 </ion-col>
               </ion-row>
@@ -50,6 +53,7 @@ import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
 export class CarComponent {
   public vm = model.required<ResourceFormModel>();
   public currentUser = input.required<UserModel | undefined>();
+  public subTypes = input.required<CategoryListModel | undefined>();
 
   public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   
@@ -68,8 +72,8 @@ export class CarComponent {
     return hasRole(role, this.currentUser());
   }
 
-  protected onValueChange(value: ResourceFormModel): void {
-    this.vm.update((_vm) => ({ ..._vm, ...value }));
+  protected onChange(fieldName: string, $event: string): void {
+    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
   }
 }
 

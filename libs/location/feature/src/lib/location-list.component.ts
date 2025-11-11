@@ -2,9 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, LocationTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, LocationModel, RoleName } from '@bk2/shared-models';
+import { LocationModel, RoleName } from '@bk2/shared-models';
 import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -56,11 +55,10 @@ import { LocationListStore } from './location-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="locationTags()"
-      [types]="locationTypes"
-      typeName="locationType"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+      [type]="types()" (typeChanged)="onTypeSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)" />
+    />
 
     <!-- list header -->
     <ion-toolbar color="primary">
@@ -112,11 +110,10 @@ export class LocationListComponent {
   protected locationsCount = computed(() => this.locationListStore.locationsCount());
   protected selectedLocationsCount = computed(() => this.filteredLocations.length);
   protected isLoading = computed(() => this.locationListStore.isLoading());
-  protected locationTags = computed(() => this.locationListStore.getTags());
+  protected tags = computed(() => this.locationListStore.getTags());
+  protected types = computed(() => this.locationListStore.appStore.getCategory('location_type'))
   protected popupId = computed(() => 'c_locations_' + this.listId());
 
-  protected locationTypes = addAllCategory(LocationTypes);
-  protected selectedCategory = AllCategories;
   private imgixBaseUrl = this.locationListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
@@ -207,8 +204,8 @@ export class LocationListComponent {
     this.locationListStore.setSelectedTag($event);
   }
 
-  protected onCategoryChange($event: number): void {
-    this.locationListStore.setSelectedCategory($event);
+  protected onTypeSelected(type: string): void {
+    this.locationListStore.setSelectedCategory(type);
   }
 
   protected hasRole(role: RoleName): boolean {

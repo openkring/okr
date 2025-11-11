@@ -31,9 +31,9 @@ export class ButtonCopyComponent {
   public label = input(''); // optional label for the button
 
   public copyValue(): void {
-    const _value = this.value();
-    if (_value !== undefined && _value !== null) {
-      copyToClipboard(_value);
+    const value = this.value();
+    if (value !== undefined && value !== null) {
+      copyToClipboard(value);
       showToast(this.toastController, '@general.operation.copy.conf');  
     }
   }

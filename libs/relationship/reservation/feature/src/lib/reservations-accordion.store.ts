@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } from '@bk2/shared-models';
+import { OrgModel, PersonModel, ReservationModel, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { confirm } from '@bk2/shared-util-angular';
 import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared-util-core';
@@ -16,13 +16,13 @@ import { ReservationModalsService } from './reservation-modals.service';
 
 export type ReservationsAccordionState = {
   reserver: PersonModel | OrgModel | undefined;
-  reserverModelType: ModelType;
+  reserverModelType: 'person' | 'org';
   showOnlyCurrent: boolean;
 };
 
 const initialState: ReservationsAccordionState = {
   reserver: undefined,
-  reserverModelType: ModelType.Person,
+  reserverModelType: 'person',
   showOnlyCurrent: true,
 };
 
@@ -68,7 +68,7 @@ export const ReservationsAccordionStore = signalStore(
     return {
 
       /******************************** setters ******************************************* */
-      setReserver(reserver: PersonModel | OrgModel, reserverModelType: ModelType) {
+      setReserver(reserver: PersonModel | OrgModel, reserverModelType: 'person' | 'org') {
         patchState(store, { reserver, reserverModelType });
         store.reservationsResource.reload();
       },
@@ -82,7 +82,7 @@ export const ReservationsAccordionStore = signalStore(
         console.log('ReservationAccordionStore.export() is not yet implemented.');
       },
 
-      async add(reserver: PersonModel | OrgModel, reserverModelType: ModelType, defaultResource: ResourceModel | undefined): Promise<void> {
+      async add(reserver: PersonModel | OrgModel, reserverModelType: 'person' | 'org', defaultResource: ResourceModel | undefined): Promise<void> {
         if (defaultResource !== undefined) {
           await store.reservationModalsService.add(reserver, reserverModelType, defaultResource);
           store.reservationsResource.reload();

@@ -3,10 +3,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches } from '@bk2/shared-categories';
 import { ENV } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, MenuAction, MenuItemModel } from '@bk2/shared-models';
+import { MenuItemModel } from '@bk2/shared-models';
 import { debugListLoaded, nameMatches } from '@bk2/shared-util-core';
 
 import { MenuService } from '@bk2/cms-menu-data-access';
@@ -16,12 +15,12 @@ import { MenuItemModalComponent } from './menu.modal';
 
 export type MenuItemList = {
   searchTerm: string;
-  selectedCategory: MenuAction | typeof AllCategories;
+  selectedCategory: string;
 };
 
 export const initialState: MenuItemList = {
   searchTerm: '',
-  selectedCategory: AllCategories,
+  selectedCategory: 'all',
 };
 
 export const MenuItemListStore = signalStore(
@@ -48,7 +47,8 @@ export const MenuItemListStore = signalStore(
       menuItemsCount: computed(() => state.menuItemsResource.value()?.length ?? 0),
       filteredMenuItems: computed(() => 
         state.menuItemsResource.value()?.filter((menuItem: MenuItemModel) => 
-          nameMatches(menuItem.index, state.searchTerm()) && categoryMatches(menuItem.action, state.selectedCategory())   
+          nameMatches(menuItem.index, state.searchTerm()) && 
+          nameMatches(menuItem.action, state.selectedCategory())   
       )),
       currentUser: computed(() => state.appStore.currentUser()),
       isLoading: computed(() => state.menuItemsResource.isLoading()),
@@ -61,7 +61,7 @@ export const MenuItemListStore = signalStore(
         patchState(store, { searchTerm });
       },
 
-      setSelectedCategory(selectedCategory: MenuAction | typeof AllCategories) {
+      setSelectedCategory(selectedCategory: string) {
         patchState(store, { selectedCategory });
       },
 

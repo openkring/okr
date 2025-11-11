@@ -2,10 +2,9 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent } from '@ionic/angular/standalone';
 
-import { ResourceTypes, RowingBoatTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, ResourceCollection, ResourceType, RoleName, RowingBoatType } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared-ui';
+import { ResourceCollection, RoleName } from '@bk2/shared-models';
+import { CategorySelectComponent, ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
@@ -18,7 +17,7 @@ import { ResourceEditStore } from './resource-edit.store';
   standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
-    CommentsAccordionComponent, IconToolbarComponent, ResourceFormComponent,
+    CommentsAccordionComponent, IconToolbarComponent, ResourceFormComponent, CategorySelectComponent,
     TranslatePipe, AsyncPipe,
     IonContent, IonAccordionGroup
   ],
@@ -30,8 +29,24 @@ import { ResourceEditStore } from './resource-edit.store';
     }
     <ion-content>
       <bk-icon-toolbar icon="{{icon()}}" title="{{ title() }}"/>
+      @if(isTypeEditable() === true && types()) {
+        <ion-grid>
+          <ion-row>
+            <ion-col size="12" size-md="6">
+              <bk-cat-select [category]="types()!" [selectedItemName]="type()" [withAll]="false" (changed)="onTypeChange($event)" />
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      }
       @if(resource(); as resource) {
-        <bk-resource-form [(vm)]="vm" [currentUser]="currentUser()" [resourceTags]="resourceTags()" (validChange)="formIsValid.set($event)" [isTypeEditable]="isTypeEditable()" />
+        <bk-resource-form [(vm)]="vm" 
+          [currentUser]="currentUser()"
+          [types]="types()"
+          [subTypes]="subTypes()"
+          [usages]="usages()"
+          [allTags]="tags()"
+          (validChange)="formIsValid.set($event)"
+        />
       }
 
       <ion-accordion-group [multiple]="true">
@@ -57,20 +72,18 @@ export class ResourceEditPageComponent {
   public vm = linkedSignal(() => convertResourceToForm(this.resource()));
   protected headerTitle = computed(() => this.isNew() ? '@resource.operation.create.label' : '@resource.operation.update.label');
   protected currentUser = computed(() => this.resourceEditStore.currentUser());
+  protected types = computed(() => this.resourceEditStore.appStore.getCategory(this.vm().type));
+  protected subTypes = computed(() => this.resourceEditStore.appStore.getCategory(this.vm().subType));
+  protected usages = computed(() => this.resourceEditStore.appStore.getCategory(this.vm().usage));
+  private rowingBoatIcon = computed(() => this.resourceEditStore.appStore.getCategoryItem('rboat_type', this.vm().subType));
+  private resourceIcon = computed(() => this.resourceEditStore.appStore.getCategoryIcon('resource_type', this.vm().type));
+  protected icon = computed(() => this.vm().type === 'rboat' ? this.rowingBoatIcon() : this.resourceIcon());
+
   protected resource = computed(() => this.resourceEditStore.resource());
   protected title = computed(() => `${this.vm()?.name}`);
-  protected type = computed(() => this.vm().type ?? ResourceType.RowingBoat);
-  protected rowingBoatType = computed(() => this.vm().rowingBoatType ?? RowingBoatType.b1x);
-  protected rowingBoatIcon = computed(() => RowingBoatTypes[this.rowingBoatType()].icon);
-  protected resourceIcon = computed(() => ResourceTypes[this.type()].icon);
-  protected resourceTags = computed(() => this.resourceEditStore.getTags());
-
-  protected icon = computed(() => {
-    return this.vm().type === ResourceType.RowingBoat ? this.rowingBoatIcon() : this.resourceIcon();
-  });
+  protected tags = computed(() => this.resourceEditStore.getTags());
 
   protected formIsValid = signal(false);
-  protected modelType = ModelType;
   protected resourceCollection = ResourceCollection;
 
   constructor() {
@@ -89,8 +102,8 @@ export class ResourceEditPageComponent {
     return hasRole(role, this.currentUser());
   }
 
-  protected isReservable(resourceType?: ResourceType): boolean {
-    if (!resourceType) return false;
+  protected isReservable(resourceType?: string): boolean {
+    if (!resourceType || resourceType.length === 0) return false;
     return isReservable(resourceType);
   }
 }

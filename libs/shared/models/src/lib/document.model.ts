@@ -1,5 +1,5 @@
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
-import { DocumentType } from './enums/document-type.enum';
+import { DEFAULT_DATE, DEFAULT_DOCUMENT_SOURCE, DEFAULT_DOCUMENT_TYPE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PATH, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE, DEFAULT_URL } from '@bk2/shared-constants';
 
 export const DOCUMENT_DIR = 'documents';
 export const EZS_DIR = 'ezs';
@@ -16,28 +16,29 @@ export const EZS_DIR = 'ezs';
  * fullPath is set explicitly. All other parts can be derived from fullPath.
  */
 export class DocumentModel implements BkModel, SearchableModel, TaggedModel {
-  public bkey = '';
-  public tenants: string[] = [];
+  public bkey = DEFAULT_KEY;
+  public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
-  public index = '';
-  public tags = '';
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS;
 
-  public fullPath = ''; // {/dir}/baseName.extension in firebase storage
-  public description = ''; // a human-readable, translatable file name (i18n)
-  public title = ''; // e.g. short image title
+  public fullPath = DEFAULT_PATH; // {/dir}/baseName.extension in firebase storage
+  public description = DEFAULT_NOTES; // a human-readable, translatable file name (i18n)
+  public title = DEFAULT_TITLE; // e.g. short image title
   public altText = ''; // alternate text for images (default = name)
 
-  public type: DocumentType | undefined = undefined;
-  public url = ''; // url: url of the original file
+  public type = DEFAULT_DOCUMENT_TYPE;   // marketing, doc, hr, business, finance, info, legal etc.
+  public source = DEFAULT_DOCUMENT_SOURCE;   // name, storage, external
+  public url = DEFAULT_URL; // url: url of the original file
   public mimeType = ''; // = firestorage:  contentType
   public size = 0;
-  public authorKey = ''; // the author of the document, does not need to be the same as the person that saved the file
-  public authorName = ''; // the author of the document, does not need to be the same as the person that save the file
-  public dateOfDocCreation = ''; // the date the document was created
-  public dateOfDocLastUpdate = ''; // the date the document was last updated
-  public locationKey = ''; // the location where an image was taken
+  public authorKey = DEFAULT_KEY; // the author of the document, does not need to be the same as the person that saved the file
+  public authorName = DEFAULT_NAME; // the author of the document, does not need to be the same as the person that save the file
+  public dateOfDocCreation = DEFAULT_DATE; // the date the document was created
+  public dateOfDocLastUpdate = DEFAULT_DATE; // the date the document was last updated
+  public locationKey = DEFAULT_KEY; // the location where an image was taken
   public md5hash = ''; // md5hash value of the file
-  public priorVersionKey = '';
+  public priorVersionKey = DEFAULT_KEY;
   public version = '';
 
   constructor(tenantId: string) {
@@ -50,3 +51,11 @@ export class DocumentModel implements BkModel, SearchableModel, TaggedModel {
 //   public md5hash: string;  // from firestorage
 
 export const DocumentCollection = 'documents';
+
+
+// tbd: Protocol can be derived for external files (absolute link: protocol)
+// ftp/s, http/s, webdav, etc.
+
+// tbd: Provider can be derived for external files (absolute link: domain)
+// dropbox, google drive, tresorit, sharepoint, icloud, firebase, nextcloud, website (= other)
+

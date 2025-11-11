@@ -1,6 +1,7 @@
 import { DeepRequired } from 'ngx-vest-forms';
 
-import { BaseProperty, CarType, GenderType, ResourceType, RowingBoatType, RowingBoatUsage } from '@bk2/shared-models';
+import { BaseProperty } from '@bk2/shared-models';
+import { DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 // can not use the DeepPartial from ngx-vest-forms because it is not compatible with BaseProperty[].
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,11 +14,9 @@ export type ResourceFormModel = DeepPartial<{
   name: string,
   keyNr: number,
   lockerNr: number,
-  type: ResourceType,      
-  gender: GenderType,       // Locker
-  rowingBoatType: RowingBoatType,  // RowingBoat
-  carType: CarType,       // Car
-  usage: RowingBoatUsage,   // RowingBoat
+  type: string,      
+  subType: string,       // rboat, car, gender (locker)
+  usage: string,   // rboat
   currentValue: number,
   weight: number,
   load: string,
@@ -35,16 +34,14 @@ export type ResourceFormModel = DeepPartial<{
 }>;
 
 export const resourceFormShape: DeepRequired<ResourceFormModel> = {
-  bkey: '',
-  name: '',
+  bkey: DEFAULT_KEY,
+  name: DEFAULT_NAME,
   keyNr: 0,
   lockerNr: 0,
-  type: ResourceType.RowingBoat,
-  gender: GenderType.Male,
-  rowingBoatType: RowingBoatType.b1x,
-  carType: CarType.Sedan,
-  usage: RowingBoatUsage.Breitensport,
-  currentValue: 0,
+  type: DEFAULT_RESOURCE_TYPE,
+  subType: DEFAULT_RBOAT_TYPE,
+  usage: DEFAULT_RBOAT_USAGE,
+  currentValue: DEFAULT_PRICE,
   weight: 0,
   load: '',
   brand: '',
@@ -56,6 +53,6 @@ export const resourceFormShape: DeepRequired<ResourceFormModel> = {
   height: 0,
   hexColor: '',
   data: [],
-  description: '',
-  tags: '',
+  description: DEFAULT_NOTES,
+  tags: DEFAULT_TAGS,
 };

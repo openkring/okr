@@ -6,7 +6,7 @@ import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { MembershipModel, ModelType, OrgModel, PersonModel, RoleName } from '@bk2/shared-models';
+import { MembershipModel, OrgModel, PersonModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
 import { hasRole, isOngoing } from '@bk2/shared-util-core';
@@ -42,7 +42,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
           @for(membership of memberships(); track $index) {
             <ion-item (click)="showActions(membership)">
               <ion-thumbnail slot="start">
-                <ion-img src="{{ modelTypeEnum.Org + '.' + membership.orgKey | avatar | async}}" alt="membership avatar" />
+                <ion-img src="{{ 'org.' + membership.orgKey | avatar | async}}" alt="membership avatar" />
               </ion-thumbnail>
               <ion-label>{{ membership.orgName }}</ion-label>
               <ion-label>{{ membership.relLog | categoryLog }} / {{ membership.dateOfEntry | duration:membership.dateOfExit }}</ion-label>
@@ -59,14 +59,13 @@ export class MembershipAccordionComponent {
   private actionSheetController = inject(ActionSheetController);
 
   public member = input.required<PersonModel | OrgModel>();
-  public modelType = input<ModelType>(ModelType.Person);
+  public modelType = input<'person' | 'org'>('person');
   public color = input('light');
   public title = input('@membership.plural');
   public membershipsChanged = output();
 
   protected memberships = computed(() => this.membershipStore.memberships());
 
-  protected modelTypeEnum = ModelType;
   private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {

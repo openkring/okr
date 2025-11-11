@@ -5,7 +5,7 @@ import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalo
 
 import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, PersonCollection, RoleName } from '@bk2/shared-models';
+import { PersonCollection, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
 import { getFullPersonName, hasRole } from '@bk2/shared-util-core';
 
@@ -16,7 +16,7 @@ import { MembershipAccordionComponent } from '@bk2/relationship-membership-featu
 import { OwnershipAccordionComponent } from '@bk2/relationship-ownership-feature';
 import { PersonalRelAccordionComponent } from '@bk2/relationship-personal-rel-feature';
 import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
-import { WorkingRelAccordionComponent } from '@bk2/relationship-working-rel-feature';
+import { WorkrelAccordionComponent } from '@bk2/relationship-workrel-feature';
 import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
 
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
@@ -33,7 +33,7 @@ import { PersonEditStore } from './person-edit.store';
     HeaderComponent, ChangeConfirmationComponent,
     PersonFormComponent, AvatarToolbarComponent, AddressesAccordionComponent, CommentsAccordionComponent,
     MembershipAccordionComponent, OwnershipAccordionComponent, ReservationsAccordionComponent,
-    PersonalRelAccordionComponent, WorkingRelAccordionComponent,
+    PersonalRelAccordionComponent, WorkrelAccordionComponent,
     TranslatePipe, AsyncPipe,
     IonContent, IonAccordionGroup
   ],
@@ -49,18 +49,19 @@ import { PersonEditStore } from './person-edit.store';
         <bk-person-form [(vm)]="vm" 
           [currentUser]="currentUser()"
           [priv]="priv()"
-          [personTags]="personTags()"
+          [genders]="genders()"
+          [allTags]="tags()"
           (validChange)="formIsValid.set($event)" />
 
         <ion-accordion-group value="addresses" [multiple]="true">
-          <bk-addresses-accordion [parentKey]="person.bkey" [parentModelType]="modelType.Person" [addresses]="addresses()" 
+          <bk-addresses-accordion [parentKey]="person.bkey" parentModelType="person" [addresses]="addresses()" 
             [readOnly]="!hasRole('memberAdmin')" (addressesChanged)="onAddressesChanged()" />
           <bk-membership-accordion [member]="person" />
           <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" />
           <bk-reservations-accordion [reserver]="person" [defaultResource]="defaultResource()" />
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <bk-personal-rel-accordion [personKey]="personKey()" />
-            <bk-working-rel-accordion [personKey]="personKey()" />
+            <bk-workrel-accordion [personKey]="personKey()" />
           }
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
               <bk-comments-accordion [collectionName]="personCollection" [parentKey]="personKey()" />
@@ -85,12 +86,12 @@ export class PersonEditPageComponent {
   protected defaultResource = computed(() => this.personEditStore.defaultResource());
   protected addresses = computed(() => this.personEditStore.addresses());
   public vm = linkedSignal(() => convertPersonToForm(this.person()));
-  protected avatarKey = computed(() => `${ModelType.Person}.${this.personKey()}`);
+  protected avatarKey = computed(() => `person.${this.personKey()}`);
   protected title = computed(() => getFullPersonName(this.person()?.firstName ?? '', this.person()?.lastName ?? ''));
-  protected personTags = computed(() => this.personEditStore.getTags());
+  protected tags = computed(() => this.personEditStore.getTags());
+  protected genders = computed(() => this.personEditStore.appStore.getCategory('gender'));
 
   protected formIsValid = signal(false);
-  protected modelType = ModelType;
   protected personCollection = PersonCollection;
 
   constructor() {
@@ -112,7 +113,7 @@ export class PersonEditPageComponent {
     const _person = this.person();
     if (!_person) return;
     const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.tenantId], ModelType.Group, _person.bkey, _file.name);
+    const _avatar = newAvatarModel([this.env.tenantId], 'group', _person.bkey, _file.name);
     const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
 
     if (_downloadUrl) {

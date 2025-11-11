@@ -38,7 +38,7 @@ describe('Person Utils', () => {
     person.bkey = 'person-1';
     person.firstName = 'John';
     person.lastName = 'Doe';
-    person.gender = GenderType.Male;
+    person.gender = 'male';
     person.dateOfBirth = '19900101';
     person.ssnId = '123.4567.8901.23';
     person.notes = 'Some notes';
@@ -62,7 +62,7 @@ describe('Person Utils', () => {
         bkey: 'person-1',
         firstName: 'Jane',
         lastName: 'Smith',
-        gender: GenderType.Female,
+        gender: 'female',
         dateOfBirth: '19920202',
         ssnId: '756.6543.2109.87',
         notes: 'Updated notes',
@@ -73,7 +73,7 @@ describe('Person Utils', () => {
       const updatedPerson = convertFormToPerson(person, formModel, tenantId);
       expect(updatedPerson.firstName).toBe('Jane');
       expect(updatedPerson.lastName).toBe('Smith');
-      expect(updatedPerson.gender).toBe(GenderType.Female);
+      expect(updatedPerson.gender).toBe('female');
       expect(updatedPerson.ssnId).toBe('formatted:756.6543.2109.87:electronic');
       expect(mockFormatAhv).toHaveBeenCalledWith('756.6543.2109.87', 'electronic');
     });

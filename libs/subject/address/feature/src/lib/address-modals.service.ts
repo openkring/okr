@@ -2,10 +2,10 @@ import { inject, Injectable } from "@angular/core";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { ModalController, Platform } from "@ionic/angular/standalone";
 
-import { getModelSlug, Languages } from "@bk2/shared-categories";
+import { Languages } from "@bk2/shared-categories";
 import { AppStore } from "@bk2/shared-feature";
 import { AddressChannel, AddressModel, DefaultLanguage, EZS_DIR, ImageAction, newImage } from "@bk2/shared-models";
-import { getImageDimensionsFromMetadata, ImageViewModalComponent, MapViewModalComponent, showZoomedImage, updateImageDimensions, UploadService } from "@bk2/shared-ui";
+import { getImageDimensionsFromMetadata, MapViewModalComponent, showZoomedImage, updateImageDimensions, UploadService } from "@bk2/shared-ui";
 import { getModelAndKey, warn } from "@bk2/shared-util-core";
 
 import { readAsFile } from "@bk2/avatar-util";
@@ -122,7 +122,7 @@ export class AddressModalsService {
       source: this.platform.is('mobile') ? CameraSource.Prompt : CameraSource.Photos 
     });
     const file = await readAsFile(photo, this.platform);
-    const path = `${this.tenantId}/${getModelSlug(parentModelType)}/${parentKey}/${EZS_DIR}/${file.name}`;
+    const path = `${this.tenantId}/${parentModelType}/${parentKey}/${EZS_DIR}/${file.name}`;
     return await this.uploadService.uploadFile(file, path, '@document.operation.upload.ezs');
   }
 }

@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withHooks, withMethods, withProp
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, ModelType, OrgCollection, OrgModel } from '@bk2/shared-models';
+import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, OrgCollection, OrgModel } from '@bk2/shared-models';
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
 export type PersonNewState = {
@@ -75,7 +75,7 @@ export const PersonNewStore = signalStore(
       },
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Person);
+        return store.appStore.getTags('person');
       },
     };
   }),

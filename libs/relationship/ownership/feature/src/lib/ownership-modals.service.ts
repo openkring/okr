@@ -2,7 +2,7 @@ import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
 import { AppStore } from "@bk2/shared-feature";
-import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel } from "@bk2/shared-models";
+import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from "@bk2/shared-models";
 
 import { OwnershipService } from "@bk2/relationship-ownership-data-access";
 import { convertFormToOwnership, isOwnership, OwnershipNewFormModel } from "@bk2/relationship-ownership-util";
@@ -26,7 +26,7 @@ export class OwnershipModalsService {
      * @param resource the owned resource
      * @param modelType the type of the member (Person or Org)
      */
-  public async add(owner: PersonModel | OrgModel, modelType: ModelType, resource: ResourceModel): Promise<void> {
+  public async add(owner: PersonModel | OrgModel, modelType: 'person' | 'org', resource: ResourceModel): Promise<void> {
     const _modal = await this.modalController.create({
       component: OwnershipNewModalComponent,
       cssClass: 'small-modal',

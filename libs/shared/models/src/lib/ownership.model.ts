@@ -1,11 +1,5 @@
+import { DEFAULT_COUNT, DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_OCAT, DEFAULT_OSTATE, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
-import { AccountType } from './enums/account-type.enum';
-import { GenderType } from './enums/gender-type.enum';
-import { ModelType } from './enums/model-type.enum';
-import { OrgType } from './enums/org-type.enum';
-import { Periodicity } from './enums/periodicity.enum';
-import { ResourceType } from './enums/resource-type.enum';
-import { RowingBoatType } from './enums/rowing-boat-type.enum';
 
 /**
  * A person or org owns a resource, e.g. a rowing boat or an account.
@@ -22,39 +16,39 @@ import { RowingBoatType } from './enums/rowing-boat-type.enum';
  */
 export class OwnershipModel implements BkModel, SearchableModel, TaggedModel {
   // base
-  public bkey = '';
-  public tenants: string[] = [];
+  public bkey = DEFAULT_KEY;
+  public tenants = DEFAULT_TENANTS;
   public isArchived = false;
-  public index = '';
-  public tags = '';
-  public notes = ''; // a detailed description of the trip
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS;
+  public notes = DEFAULT_NOTES; // a detailed description of the trip
 
   // the owner person or org
-  public ownerKey = '';
-  public ownerName1 = ''; // e.g. firstName of person
-  public ownerName2 = ''; // e.g. lastname of person or company name
-  public ownerModelType? = ModelType.Person | ModelType.Org;
-  public ownerType?: GenderType | OrgType;
+  public ownerKey = DEFAULT_KEY;
+  public ownerName1 = DEFAULT_NAME; // e.g. firstName of person
+  public ownerName2 = DEFAULT_NAME; // e.g. lastname of person or company name
+  public ownerModelType: 'person' | 'org' = 'person'; 
+  public ownerType = DEFAULT_GENDER;
 
   // the owned resource
-  public resourceKey = '';
-  public resourceName = '';
-  public resourceModelType: ModelType = ModelType.Resource; // Resource or Account
-  public resourceType?: ResourceType | AccountType;
-  public resourceSubType?: RowingBoatType; // e.g. the boat type (which is a subtype of ResourceType)
+  public resourceKey = DEFAULT_KEY;
+  public resourceName = DEFAULT_NAME;
+  public resourceModelType: 'resource' | 'account' = 'resource';
+  public resourceType = DEFAULT_RESOURCE_TYPE;
+  public resourceSubType = DEFAULT_RBOAT_TYPE; 
 
   // ownership
-  public validFrom = ''; // membership: entryDate
-  public validTo = ''; // membership: exitDate
-  public ownershipCategory = 'use';
-  public ownershipState = 'active';
+  public validFrom = DEFAULT_DATE; // membership: entryDate
+  public validTo = DEFAULT_DATE; // membership: exitDate
+  public ownershipCategory = DEFAULT_OCAT;
+  public ownershipState = DEFAULT_OSTATE;
 
-  public count = '1'; // e.g. how many of the same resources are owned
-  public priority?: number; // e.g. relevant for waiting list (state applied)
+  public count = DEFAULT_COUNT; // e.g. how many of the same resources are owned
+  public order = 1; // e.g. relevant for waiting list (state applied)
 
-  public price = 0; // overwrites the default ownership price from OwnershipCategories[ownershipCategory].price
-  public currency = 'CHF';
-  public periodicity = Periodicity.Yearly;
+  public price = DEFAULT_PRICE; // overwrites the default ownership price from OwnershipCategories[ownershipCategory].price
+  public currency = DEFAULT_CURRENCY;
+  public periodicity = 'yearly';
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

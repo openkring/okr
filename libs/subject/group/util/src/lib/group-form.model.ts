@@ -1,6 +1,5 @@
+import { DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
-import { ModelType } from '@bk2/shared-models';
 
 export type GroupFormModel = DeepPartial<{
   bkey: string,
@@ -17,15 +16,15 @@ export type GroupFormModel = DeepPartial<{
   hasMembers: boolean,
   parentKey: string,
   parentName: string,
-  parentModelType: ModelType,
+  parentModelType: 'org' | 'group',
 }>;
 
 export const groupFormModelShape: DeepRequired<GroupFormModel> = {
-  bkey: '',
-  name: '',
-  id: '',
-  tags: '',
-  notes: '',
+  bkey: DEFAULT_KEY,
+  name: DEFAULT_NAME,
+  id: DEFAULT_ID,
+  tags: DEFAULT_TAGS,
+  notes: DEFAULT_NOTES,
   hasContent: true,
   hasChat: true,
   hasCalendar: true,
@@ -33,7 +32,7 @@ export const groupFormModelShape: DeepRequired<GroupFormModel> = {
   hasFiles: true,
   hasAlbum: true,
   hasMembers: true,
-  parentKey: '',
-  parentName: '',
-  parentModelType: ModelType.Org
+  parentKey: DEFAULT_KEY,
+  parentName: DEFAULT_NAME,
+  parentModelType: 'org'
 };

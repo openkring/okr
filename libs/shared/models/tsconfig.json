@@ -14,4 +14,7 @@
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
+  "references": [
+    {"path": "../../shared/constants/tsconfig.lib.json"},
+  ]
 }

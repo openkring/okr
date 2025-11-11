@@ -1,13 +1,12 @@
 import { Component, computed, inject, input, model, output, signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { CalEventTypes, PeriodicityTypes } from '@bk2/shared-categories';
 import { ChFutureDate, LowercaseWordMask } from '@bk2/shared-config';
-import { NAME_LENGTH } from '@bk2/shared-constants';
-import { AvatarInfo, CalEventType, Periodicity, UserModel } from '@bk2/shared-models';
-import { AvatarsComponent, CategoryComponent, ChipsComponent, DateInputComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared-ui';
-import { convertDateFormatToString, DateFormat, debugFormErrors } from '@bk2/shared-util-core';
+import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, NAME_LENGTH } from '@bk2/shared-constants';
+import { AvatarInfo, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { AvatarsComponent, CategorySelectComponent, ChipsComponent, DateInputComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared-ui';
+import { convertDateFormatToString, DateFormat, debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
 import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } from '@bk2/calevent-util';
 
@@ -16,10 +15,9 @@ import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } fr
   standalone: true,
   imports: [
     vestForms,
-    CategoryComponent, ChipsComponent, NotesInputComponent, DateInputComponent,
-    TimeInputComponent, TextInputComponent, ChipsComponent, ErrorNoteComponent, StringsComponent,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent,
-    AvatarsComponent
+    CategorySelectComponent, ChipsComponent, NotesInputComponent, DateInputComponent, TimeInputComponent,
+    TextInputComponent, ChipsComponent, ErrorNoteComponent, StringsComponent, AvatarsComponent,
+    IonGrid, IonRow, IonCol
 ],
   template: ` 
   <form scVestForm 
@@ -29,52 +27,48 @@ import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } fr
     (dirtyChange)="dirtyChange.set($event)"
     (formValueChange)="onValueChange($event)">
 
-    <ion-card>
-      <ion-card-content>
-        <ion-grid>
-          <ion-row>
-            <ion-col size="12">
-              <bk-cat name="calEventType" [value]="calEventType()" [categories]="calEventTypes" (changed)="onChange('calEventType', $event)" />
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12">
+          <bk-cat-select [category]="types()!" selectedItemName="typeName()" [withAll]="false" (changed)="onChange('calEventType', $event)" />
+        </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="12">
+            <bk-text-input name="name" [value]="name()" [autofocus]="true"  (changed)="onChange('name', $event)" /> 
+            <bk-error-note [errors]="nameErrors()" />                                                                               
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="12" size-md="6">
+            <bk-date-input name="startDate"  [storeDate]="startDate()" [locale]="locale()" [showHelper]=true  (changed)="onChange('startDate', $event)" />
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <bk-time-input name="startTime" [value]="startTime()" [locale]="locale()"  (changed)="onChange('startTime', $event)" />
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <bk-date-input name="endDate"  [storeDate]="endDate()" [showHelper]=true  (changed)="onChange('endDate', $event)" />
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <bk-time-input name="endTime" [value]="endTime()" [locale]="locale()"  (changed)="onChange('endTime', $event)" />
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" (changed)="onChange('periodicity', $event)" />
+          </ion-col>
+          @if(periodicity() !== 'once') {
+            <ion-col size="12" size-md="6">
+              <bk-date-input name="repeatUntilDate" [storeDate]="repeatUntilDate()" [locale]="locale()" [mask]="chFutureDate" [showHelper]=true  (changed)="onChange('repeatUntilDate', $event)" />
             </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="12">
-                <bk-text-input name="name" [value]="name()" [autofocus]="true"  (changed)="onChange('name', $event)" /> 
-                <bk-error-note [errors]="nameErrors()" />                                                                               
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <bk-date-input name="startDate"  [storeDate]="startDate()" [locale]="locale()" [showHelper]=true  (changed)="onChange('startDate', $event)" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-time-input name="startTime" [value]="startTime()" [locale]="locale()"  (changed)="onChange('startTime', $event)" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-date-input name="endDate"  [storeDate]="endDate()" [showHelper]=true  (changed)="onChange('endDate', $event)" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-time-input name="endTime" [value]="endTime()" [locale]="locale()"  (changed)="onChange('endTime', $event)" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-cat name="periodicity" [value]="periodicity()" [categories]="periodicities"  (changed)="onChange('periodicity', $event)" />
-              </ion-col>
-              @if(periodicity() !== period.Once) {
-                <ion-col size="12" size-md="6">
-                  <bk-date-input name="repeatUntilDate" [storeDate]="repeatUntilDate()" [locale]="locale()" [mask]="chFutureDate" [showHelper]=true  (changed)="onChange('repeatUntilDate', $event)" />
-                </ion-col>
-              }
-            </ion-row>
-          
-          <ion-row>
-            <ion-col size="12">
-              <!-- tbd: locationKey is currently only a text field, should be [key]@[name], e.g.  qlöh1341hkqj@Stäfa -->
-              <bk-text-input name="locationKey" [value]="locationKey()"  (changed)="onChange('locationKey', $event)" />                                        
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-card-content>
-    </ion-card>
+          }
+        </ion-row>
+      
+      <ion-row>
+        <ion-col size="12">
+          <!-- tbd: locationKey is currently only a text field, should be [key]@[name], e.g.  qlöh1341hkqj@Stäfa -->
+          <bk-text-input name="locationKey" [value]="locationKey()"  (changed)="onChange('locationKey', $event)" />                                        
+        </ion-col>
+      </ion-row>
+    </ion-grid>
     
     <bk-avatars name="responsiblePersons" [avatars]="responsiblePersons()" (changed)="onChange('responsiblePersons', $event)" />
 
@@ -86,13 +80,16 @@ import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } fr
               description="@input.calendarName.description"
               addLabel="@input.calendarName.addLabel" />           
 
-    @if(isPrivileged()) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="calEventTags()"  (changed)="onChange('tags', $event)" />
-    }
-
-    @if(isAdmin()) {
-      <bk-notes name="description" [value]="description()" (changed)="onChange('description', $event)" />
-    }
+     <!---------------------------------------------------
+        TAG, NOTES 
+        --------------------------------------------------->
+        @if(hasRole('privileged')) {
+          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (changed)="onChange('tags', $event)" />
+        }
+    
+        @if(hasRole('admin')) {
+          <bk-notes name="description" [value]="description()" (changed)="onChange('description', $event)" />
+        }
   </form>
 `
 })
@@ -100,29 +97,29 @@ export class CalEventFormComponent {
   protected modalController = inject(ModalController);
 
   public vm = model.required<CalEventFormModel>();
-  public currentUser = input<UserModel>();
-  public isAdmin = input(false);
-  public isPrivileged = input(false);
-  public calEventTags = input.required<string>();
+  public currentUser = input<UserModel | undefined>();
+  public types = input.required<CategoryListModel>();
+  public periodicities = input.required<CategoryListModel>();
+  public allTags = input.required<string>();
   public locale = input.required<string>();
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
 
-  protected calEventType = computed(() => this.vm().type ?? CalEventType.SocialEvent);
-  protected name = computed(() => this.vm().name ?? '');
+  protected typeName = computed(() => this.vm().type ?? DEFAULT_CALEVENT_TYPE);
+  protected name = computed(() => this.vm().name ?? DEFAULT_NAME);
 
-  protected startDate = computed(() => this.vm().startDate ?? '');
-  protected startTime = computed(() => this.vm().startTime ?? '');
-  protected endDate = computed(() => this.vm().endDate ?? '');
-  protected endTime = computed(() => this.vm().endTime ?? '');
+  protected startDate = computed(() => this.vm().startDate ?? DEFAULT_DATE);
+  protected startTime = computed(() => this.vm().startTime ?? DEFAULT_TIME);
+  protected endDate = computed(() => this.vm().endDate ?? DEFAULT_DATE);
+  protected endTime = computed(() => this.vm().endTime ?? DEFAULT_TIME);
 
-  protected periodicity = computed(() => this.vm().periodicity ?? Periodicity.Once);
+  protected periodicity = computed(() => this.vm().periodicity ?? DEFAULT_PERIODICITY);
   protected repeatUntilDate = computed(() => convertDateFormatToString(this.vm().repeatUntilDate, DateFormat.StoreDate, DateFormat.ViewDate));
-  protected locationKey = computed(() => this.vm().locationKey ?? '');
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected description = computed(() => this.vm().description ?? '');
-  protected calendars = computed(() => this.vm().calendars ?? []);
+  protected locationKey = computed(() => this.vm().locationKey ?? DEFAULT_KEY);
+  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
+  protected description = computed(() => this.vm().description ?? DEFAULT_NOTES);
+  protected calendars = computed(() => this.vm().calendars ?? DEFAULT_CALENDARS);
   protected responsiblePersons = computed(() => this.vm().responsiblePersons ?? []);
 
   protected readonly suite = calEventFormValidations;
@@ -130,11 +127,6 @@ export class CalEventFormComponent {
   private readonly validationResult = computed(() => calEventFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
-  protected isChannelReadOnly = false;
-  public ET = CalEventType;
-  public calEventTypes = CalEventTypes;
-  protected period = Periodicity;
-  protected periodicities = PeriodicityTypes;
   protected chFutureDate = ChFutureDate;
   protected calendarMask = LowercaseWordMask;
   protected nameLength = NAME_LENGTH;
@@ -149,5 +141,9 @@ export class CalEventFormComponent {
     debugFormErrors('CalEventForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  }
+
+  protected hasRole(role: RoleName): boolean {
+    return hasRole(role, this.currentUser());
   }
 }

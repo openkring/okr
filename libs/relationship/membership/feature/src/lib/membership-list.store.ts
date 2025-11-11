@@ -2,12 +2,12 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { memberTypeMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, CategoryCollection, CategoryListModel, GenderType, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, OrgType, PersonCollection, PersonModel } from '@bk2/shared-models';
+import { CategoryCollection, CategoryListModel, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
 
@@ -20,8 +20,8 @@ export type MembershipListState = {
   selectedTag: string;
   selectedMembershipCategory: string;
   selectedYear: number;
-  selectedGender: GenderType | typeof AllCategories;
-  selectedOrgType: OrgType | typeof AllCategories;
+  selectedGender: string;
+  selectedOrgType: string;
   yearField: 'dateOfEntry' | 'dateOfExit';
 };
 
@@ -31,8 +31,8 @@ const initialState: MembershipListState = {
   selectedTag: '',
   selectedMembershipCategory: 'all',
   selectedYear: parseInt(getTodayStr(DateFormat.Year)),
-  selectedGender: AllCategories,
-  selectedOrgType: AllCategories,
+  selectedGender: 'all',
+  selectedOrgType: 'all',
   yearField: 'dateOfEntry',
 };
 
@@ -59,7 +59,10 @@ export const MembershipListStore = signalStore(
         orgId: store.orgId()
       }),  
       stream: ({params}) => {
-        const org$ = store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgId);
+        let org$: Observable<OrgModel | undefined> = of(undefined);
+        if (params.orgId && params?.orgId.length > 0) {
+          org$ = store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgId);
+        }
         debugItemLoaded('defaultOrg', org$, store.appStore.currentUser());
         return org$;
       }
@@ -74,40 +77,42 @@ export const MembershipListStore = signalStore(
       membershipCategoryKey: computed(() => 'mcat_' + state.orgId()),
       currentUser: computed(() => state.appStore.currentUser()),
       defaultOrgName: computed(() => state.defaultOrgResource.value()?.name ?? ''),
+      genders: computed(() => state.appStore.getCategory('gender')),
+      orgTypes: computed(() => state.appStore.getCategory('org_type')),
 
       // membership.list.header: avatar / name / entryExit (relLog | duration) / memberHeader (relLog | memberCategories)
       persons: computed(() => state.membershipsResource.value()?.filter((membership: MembershipModel) =>
         membership.orgKey === state.orgId() && 
-        membership.memberModelType === ModelType.Person &&
+        membership.memberModelType === 'person' &&
         isAfterDate(membership.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? []),
 
       orgs: computed(() => state.membershipsResource.value()?.filter((membership: MembershipModel) =>
         membership.orgKey === state.orgId() && 
-        membership.memberModelType === ModelType.Org &&
+        membership.memberModelType === 'org' &&
         isAfterDate(membership.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? []),
 
       applied: computed(() => state.membershipsResource.value()?.filter((membership: MembershipModel) => 
         membership.orgKey === state.orgId() && 
-        membership.memberModelType === ModelType.Person &&
+        membership.memberModelType === 'person' &&
         membership.membershipState === "applied" && 
         isAfterDate(membership.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? []),
 
       // membership.list.header: avatar / name / entryExit (relLog | duration) / memberHeader (relLog | memberCategories)
       active: computed(() => state.membershipsResource.value()?.filter((membership: MembershipModel) => 
         membership.orgKey === state.orgId() && 
-        membership.memberModelType === ModelType.Person &&
+        membership.memberModelType === 'person' &&
         membership.membershipState === "active" && 
         isAfterDate(membership.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? []),
 
       passive: computed(() => state.membershipsResource.value()?.filter((membership: MembershipModel) => 
         membership.orgKey === state.orgId() && 
-        membership.memberModelType === ModelType.Person &&
+        membership.memberModelType === 'person' &&
         membership.membershipState === "passive" && 
         isAfterDate(membership.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? []),
 
       cancelled: computed(() => state.membershipsResource.value()?.filter((membership: MembershipModel) => 
         membership.orgKey === state.orgId() && 
-        membership.memberModelType === ModelType.Person &&
+        membership.memberModelType === 'person' &&
         membership.relIsLast === true &&
         isAfterDate(getTodayStr(DateFormat.StoreDate), membership.dateOfExit) &&
         membership.membershipState === "cancelled") ?? []),
@@ -115,18 +120,18 @@ export const MembershipListStore = signalStore(
       // state = cancelled, dateOfExit < today
       deceased: computed(() => state.membershipsResource.value()?.filter((membership: MembershipModel) => 
         membership.orgKey === state.orgId() && 
-        membership.memberModelType === ModelType.Person &&
+        membership.memberModelType === 'person' &&
         membership.memberDateOfDeath.length > 0) ?? []),
 
       entries: computed(() => state.membershipsResource.value()?.filter((membership: MembershipModel) =>
         membership.orgKey === state.orgId() && 
-        membership.memberModelType === ModelType.Person &&
-        membership.priority === 1 && 
+        membership.memberModelType === 'person' &&
+        membership.order === 1 && 
         isAfterDate(state.selectedYear() + '1231', membership.dateOfEntry)) ?? []),
 
       exits: computed(() => state.membershipsResource.value()?.filter((membership: MembershipModel) =>
         membership.orgKey === state.orgId() &&
-        membership.memberModelType === ModelType.Person &&
+        membership.memberModelType === 'person' &&
         membership.relIsLast === true && 
         isAfterDate(state.selectedYear() + '1231', membership.dateOfExit)) ?? []),
     };
@@ -174,7 +179,7 @@ export const MembershipListStore = signalStore(
         return state.persons()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
           nameMatches(membership.membershipCategory, state.selectedMembershipCategory()) &&
-          memberTypeMatches(membership, state.selectedGender()) &&
+          nameMatches(membership.memberType, state.selectedGender()) &&
           chipMatches(membership.tags, state.selectedTag()))
       }
       ),
@@ -281,11 +286,11 @@ export const MembershipListStore = signalStore(
         patchState(store, { selectedYear });
       },
 
-      setSelectedGender(selectedGender: GenderType | typeof AllCategories) {
+      setSelectedGender(selectedGender: string) {
         patchState(store, { selectedGender });
       },
 
-      setSelectedOrgType(selectedOrgType: OrgType | typeof AllCategories) {
+      setSelectedOrgType(selectedOrgType: string) {
         patchState(store, { selectedOrgType });
       },
 
@@ -295,12 +300,12 @@ export const MembershipListStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Membership);
+        return store.appStore.getTags('membership');
       },
  
       /******************************** actions ******************************************* */
       async add(): Promise<void> {
-        await store.membershipModalsService.add(store.currentPerson(), store.defaultOrg(), ModelType.Person);
+        await store.membershipModalsService.add(store.currentPerson(), store.defaultOrg(), 'person');
         store.membershipsResource.reload();
       },
 

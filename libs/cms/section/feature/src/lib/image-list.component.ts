@@ -87,13 +87,13 @@ export class ImageListComponent {
 
   // call modal with input form to select an image and add metadata
   protected async addImage() {
-    const _sectionKey = this.vm().bkey;
-    if (_sectionKey) {
-      const _imageList = this.imageList();
-      const _image = await this.documentModalsService.pickAndUploadImage(_sectionKey);
-      if (_image) {
-        _imageList.push(this.patchImage(_image));
-        this.saveAndNotify(_imageList);    
+    const sectionKey = this.vm().bkey;
+    if (sectionKey) {
+      const imageList = this.imageList();
+      const image = await this.documentModalsService.pickAndUploadImage(sectionKey);
+      if (image) {
+        imageList.push(this.patchImage(image));
+        this.saveAndNotify(imageList);    
       }
     }
   }
@@ -111,27 +111,27 @@ export class ImageListComponent {
   protected async editImage(image: Image, index: number) {
     const _image = await this.sectionModalsService.editImage(image);
     if (_image) {
-      const _imageList = this.imageList();
-      _imageList[index] = _image;
-      this.saveAndNotify(_imageList);
+      const imageList = this.imageList();
+      imageList[index] = _image;
+      this.saveAndNotify(imageList);
     }
   }
 
   protected removeImage(image: Image) {
-    const _imageList = this.vm().properties?.imageList ?? [];
-    const index = _imageList.findIndex((img) => img.url === image.url);
+    const imageList = this.vm().properties?.imageList ?? [];
+    const index = imageList.findIndex((img) => img.url === image.url);
     if (index !== -1 && image.url) {
       deleteFileFromStorage(this.toastController, image.url);
-      _imageList.splice(index, 1);
-      this.saveAndNotify(_imageList);
+      imageList.splice(index, 1);
+      this.saveAndNotify(imageList);
     }
   }
 
   private saveAndNotify(imageList: Image[]) {
-    const _properties = this.vm().properties;
+    const properties = this.vm().properties;
     console.log(imageList);
-    if (_properties) {
-      _properties.imageList = imageList;
+    if (properties) {
+      properties.imageList = imageList;
     }
     this.changedProperties.emit({
       imageList
@@ -141,12 +141,12 @@ export class ImageListComponent {
   public async handleReorder(ev: CustomEvent<ItemReorderEventDetail>) {
     // The `from` and `to` properties contain the index of the item
     // when the drag started and ended, respectively
-    const _imageList = this.vm().properties?.imageList ?? [];
-    arrayMove(_imageList, ev.detail.from, ev.detail.to);
+    const imageList = this.vm().properties?.imageList ?? [];
+    arrayMove(imageList, ev.detail.from, ev.detail.to);
     // Finish the reorder and position the item in the DOM based on
     // where the gesture ended. This method can also be called directly
     // by the reorder group
     ev.detail.complete();
-    this.saveAndNotify(_imageList);
+    this.saveAndNotify(imageList);
   }
 }

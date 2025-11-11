@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, PersonModel, UserModel } from '@bk2/shared-models';
+import { PersonModel, UserModel } from '@bk2/shared-models';
 import { FullNamePipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
@@ -38,7 +38,7 @@ import { PersonSelectStore } from './person-select.store';
             <ion-list lines="none">
               <ion-item class="item" (click)="select(person)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ modelType.Person + '.' + person.bkey | avatar | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'person.' + person.bkey | avatar | async }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>
               </ion-item>
@@ -59,8 +59,6 @@ export class PersonSelectModalComponent {
   protected filteredPersons = computed(() => this.personSelectStore.filteredPersons() ?? []);
   protected selectedPersonsCount = computed(() => this.filteredPersons().length);
   protected isLoading = computed(() => this.personSelectStore.isLoading());
-
-  protected modelType = ModelType;
 
   constructor() {
     effect(() => {

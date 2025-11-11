@@ -1,3 +1,4 @@
+import { DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarUsage } from './enums/avatar-usage.enum';
 import { DeliveryType } from './enums/delivery-type.enum';
@@ -8,16 +9,16 @@ import { PrivacyUsage } from './enums/privacy-usage.enum';
 import { Roles } from './roles';
 
 export class UserModel implements BkModel, TaggedModel, SearchableModel {
-  public bkey = '';
-  public loginEmail = ''; // Firebase Auth Login Email
-  public personKey = ''; // PersonModel.bkey
-  public firstName = '';
-  public lastName = '';
-  public tenants: string[] = []; // user has always exactly one tenant
+  public bkey = DEFAULT_KEY;
+  public loginEmail = DEFAULT_EMAIL; // Firebase Auth Login Email
+  public personKey = DEFAULT_KEY; // PersonModel.bkey
+  public firstName = DEFAULT_NAME;
+  public lastName = DEFAULT_NAME;
+  public tenants = DEFAULT_TENANTS; // user has always exactly one tenant
   public isArchived = false;
-  public notes = '';
-  public index = '';
-  public tags = '';
+  public notes = DEFAULT_NOTES;
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS;
 
   // authorization
   public roles: Roles = {};
@@ -27,7 +28,7 @@ export class UserModel implements BkModel, TaggedModel, SearchableModel {
   public useFaceId = false;
   public userLanguage = DefaultLanguage;
   public avatarUsage = AvatarUsage.PhotoFirst; // PhotoFirst
-  public gravatarEmail = '';
+  public gravatarEmail = DEFAULT_EMAIL;
   public nameDisplay = NameDisplay.FirstLast; // FirstLast
   public useDisplayName = false;
   public personSortCriteria = PersonSortCriteria.Lastname; // Lastname

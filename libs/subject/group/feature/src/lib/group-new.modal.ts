@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, UserModel } from '@bk2/shared-models';
+import { UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
 import { GroupNewFormComponent } from '@bk2/subject-group-ui';
@@ -35,7 +35,7 @@ export class GroupNewModalComponent {
   public currentUser = input<UserModel | undefined>();
 
   public vm = linkedSignal(() => createNewGroupFormModel());
-  protected readonly groupTags = computed(() => this.appStore.getTags(ModelType.Group));
+  protected readonly groupTags = computed(() => this.appStore.getTags('group'));
 
   protected formIsValid = signal(false);
 

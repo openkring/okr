@@ -1,9 +1,9 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { MembershipModel, ModelType, RoleName } from '@bk2/shared-models';
+import { MembershipModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -13,7 +13,6 @@ import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { CategoryLogPipe, getMembershipName } from '@bk2/relationship-membership-util';
-import { addAllCategory, GenderTypes, OrgTypes } from '@bk2/shared-categories';
 import { MembershipListStore } from './membership-list.store';
 
 @Component({
@@ -23,8 +22,9 @@ import { MembershipListStore } from './membership-list.store';
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryLogPipe, AvatarPipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover
-  ],
+    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover,
+    IonBackdrop
+],
   providers: [MembershipListStore],
   template: `
     <ion-header>
@@ -51,17 +51,12 @@ import { MembershipListStore } from './membership-list.store';
     <!-- search and filters -->
     @if(membershipCategory(); as cat) {
       <bk-list-filter 
-        [tags]="membershipTags()"
-        [category]="cat"
-        [types]="types()"
-        [typeName]="typeName()"
-        [years]="years()"
-        [yearLabel]="yearLabel()" 
+        [tags]="tags()" (tagChanged)="onTagSelected($event)"
+        [category]="cat" (categoryChanged)="onCategorySelected($event)"
+        [type]="types()" (typeChanged)="onTypeSelected($event)"
+        [years]="years()" (yearChanged)="onYearSelected($event)"
         (searchTermChanged)="onSearchtermChange($event)"
-        (tagChanged)="onTagSelected($event)"
-        (categoryChanged)="onCategorySelected($event)" 
-        (typeChanged)="onTypeSelected($event)"
-        (yearChanged)="onYearSelected($event)" />
+      />
     }
 
     <!-- list header -->
@@ -78,6 +73,7 @@ import { MembershipListStore } from './membership-list.store';
   <ion-content #content>
     @if(isLoading()) {
       <bk-spinner />
+      <ion-backdrop />
     } @else {
       @if(filteredMemberships().length === 0) {
         <bk-empty-list message="@membership.field.empty" />
@@ -86,7 +82,7 @@ import { MembershipListStore } from './membership-list.store';
           @for(membership of filteredMemberships(); track $index) {
               <ion-item (click)="showActions(membership)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ modelType.Person + '.' + membership.memberKey | avatar | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'person.' + membership.memberKey | avatar | async }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{getMembershipName(membership)}}</ion-label>      
                 <ion-label>{{membership.relLog | duration:membership.dateOfExit}}</ion-label>      
@@ -108,19 +104,13 @@ export class MembershipListComponent {
   public contextMenuName = input.required<string>();
 
   protected membershipCategory = computed(() => this.membershipListStore.membershipCategory());
+  protected genders = computed(() => this.membershipListStore.genders());
+  protected orgTypes = computed(() => this.membershipListStore.orgTypes());
   protected popupId = computed(() => 'c_memberships_' + this.listId() + '_' + this.orgId());
   protected orgName = computed(() => this.membershipListStore.defaultOrgName());
-  protected membershipTags = computed(() => this.membershipListStore.getTags());
-
-  protected types = computed(() => {
-    return (this.listId() === 'orgs') ? addAllCategory(OrgTypes) : addAllCategory(GenderTypes);
-  });
-  protected typeName = computed(() => {
-    return (this.listId() === 'orgs') ? 'orgType' : 'gender';
-  });
-  protected years = computed(() => {
-    return (this.listId() === 'entries' || this.listId() === 'exits') ? getYearList() : undefined;
-  });
+  protected tags = computed(() => this.membershipListStore.getTags());
+  protected types = computed(() => this.listId() === 'orgs' ? this.orgTypes() : this.genders());
+  protected years = computed(() => this.listId() === 'entries' || this.listId() === 'exits' ? getYearList() : undefined);
 
   protected filteredMemberships = computed(() => {
     switch (this.listId()) {
@@ -167,7 +157,6 @@ export class MembershipListComponent {
   protected selectedMembershipsCount = computed(() => this.filteredMemberships().length);
   protected isLoading = computed(() => this.membershipListStore.isLoading());
 
-  protected modelType = ModelType;
   private imgixBaseUrl = this.membershipListStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
@@ -254,7 +243,7 @@ export class MembershipListComponent {
     this.membershipListStore.setSelectedMembershipCategory(cat);
   }
 
-  protected onTypeSelected(type: number): void {
+  protected onTypeSelected(type: string): void {
     if (this.listId() === 'orgs') {
       this.membershipListStore.setSelectedOrgType(type);
     } else {

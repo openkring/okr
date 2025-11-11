@@ -61,7 +61,7 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
 export class AvatarToolbarComponent {
   protected avatarToolbarStore = inject(AvatarToolbarStore);
 
-  public key = input.required<string>(); // = ModelType.ModelKey e.g. 1.1asdfölj
+  public key = input.required<string>(); // = ModelType.ModelKey e.g. person.1asdfölj
   public isEditable = input<boolean>(false);
   public alt = input('Avatar');
   public color = input<ColorIonic>(ColorIonic.Primary);

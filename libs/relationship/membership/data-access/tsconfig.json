@@ -22,6 +22,7 @@
     {"path": "../../../shared/util-angular/tsconfig.lib.json"},
     {"path": "../../../shared/util-core/tsconfig.lib.json"},
     {"path": "../../../category/util/tsconfig.lib.json"},
-    {"path": "../../../comment/util/tsconfig.lib.json"}
+    {"path": "../../../comment/util/tsconfig.lib.json"},
+    {"path": "../../../relationship/membership/util/tsconfig.lib.json"}
   ]
 }

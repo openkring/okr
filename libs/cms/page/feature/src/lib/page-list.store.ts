@@ -3,9 +3,8 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, ModelType, PageModel } from '@bk2/shared-models';
+import { PageModel } from '@bk2/shared-models';
 import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared-util-core';
 
 import { PageService } from '@bk2/cms-page-data-access';
@@ -15,13 +14,13 @@ import { PageEditModalComponent } from './page-edit.modal';
 export type PageList = {
   searchTerm: string;
   selectedTag: string;
-  selectedType: number;
+  selectedType: string;
 };
 
 export const initialState: PageList = {
   searchTerm: '',
   selectedTag: '',
-  selectedType: AllCategories
+  selectedType: 'all'
 };
 
 export const PageListStore = signalStore(
@@ -48,7 +47,7 @@ export const PageListStore = signalStore(
       filteredPages: computed(() => 
         state.pageResource.value()?.filter((page: PageModel) => 
           nameMatches(page.index, state.searchTerm()) &&
-          categoryMatches(page.type, state.selectedType()) &&
+          nameMatches(page.type, state.selectedType()) &&
           chipMatches(page.tags, state.selectedTag())
       )),   
       currentUser: computed(() => state.appStore.currentUser()),
@@ -67,13 +66,13 @@ export const PageListStore = signalStore(
         patchState(store, { selectedTag });
       },
 
-      setSelectedType(selectedType: number) {
+      setSelectedType(selectedType: string) {
         patchState(store, { selectedType });
       },
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Page);
+        return store.appStore.getTags('page');
       },
 
       /******************************** actions ******************************************* */

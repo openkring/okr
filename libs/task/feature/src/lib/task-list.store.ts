@@ -4,7 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, ModelType, Priority, TaskCollection, TaskModel, TaskState } from '@bk2/shared-models';
+import { TaskCollection, TaskModel } from '@bk2/shared-models';
 import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
 
 import { TaskService } from '@bk2/task-data-access';
@@ -15,16 +15,16 @@ export type TaskListState = {
   calendarName: string;
   searchTerm: string;
   selectedTag: string;
-  selectedState: TaskState | typeof AllCategories;
-  selectedPriority: Priority | typeof AllCategories;
+  selectedState: string;
+  selectedPriority: string;
 };
 
 export const initialTaskListState: TaskListState = {
   calendarName: '', 
   searchTerm: '',
   selectedTag: '',
-  selectedState: AllCategories,
-  selectedPriority: AllCategories,
+  selectedState: 'all',
+  selectedPriority: 'all',
 };
 
 export const TaskListStore = signalStore(
@@ -89,25 +89,25 @@ export const TaskListStore = signalStore(
         patchState(store, { selectedTag });
       },
 
-      setSelectedState(selectedState: TaskState | typeof AllCategories) {
+      setSelectedState(selectedState: string) {
         patchState(store, { selectedState });
       },
 
-      setSelectedPriority(selectedPriority: Priority | typeof AllCategories) {
+      setSelectedPriority(selectedPriority: string) {
         patchState(store, { selectedPriority });
       },
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Task);
+        return store.appStore.getTags('task');
       },
 
       /******************************* actions *************************************** */
       async add(): Promise<void> {
-        const _currentPerson = getAvatarInfoFromCurrentUser(store.currentUser());
-        if (!_currentPerson) return;
+        const currentPerson = getAvatarInfoFromCurrentUser(store.currentUser());
+        if (!currentPerson) return;
         console.log('TaskListStore.add: ', store.calendarName());
-        await store.taskModalsService.add(_currentPerson, store.calendarName());
+        await store.taskModalsService.add(currentPerson, store.calendarName());
         store.tasksResource.reload();
       },
 
@@ -134,10 +134,10 @@ export const TaskListStore = signalStore(
       async setCompleted(task: TaskModel): Promise<void> {
         if (task.completionDate) {
           task.completionDate = '';
-          task.state = TaskState.Planned;
+          task.state = 'planned';
         } else {
           task.completionDate = getTodayStr();
-          task.state = TaskState.Done;
+          task.state = 'done';
         }
         await store.taskService.update(task, store.currentUser());
         store.tasksResource.reload();

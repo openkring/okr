@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Camera, CameraSource } from '@capacitor/camera';
+import { Camera, CameraSource, Photo } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
-import { getModelSlug } from '@bk2/shared-categories';
-import { ModelType } from '@bk2/shared-models';
 import { checkUrlType, warn } from '@bk2/shared-util-core';
 import { readAsFile } from '@bk2/avatar-util';
 import { pickPhoto, getDocumentTitle, checkMimeType, getDocumentStoragePath, getStoragePath } from './document.util';
@@ -29,7 +27,6 @@ vi.mock('@bk2/avatar-util');
 describe('Document Utils', () => {
   const mockGetPhoto = vi.mocked(Camera.getPhoto);
   const mockReadAsFile = vi.mocked(readAsFile);
-  const mockGetModelSlug = vi.mocked(getModelSlug);
   const mockWarn = vi.mocked(warn);
   const mockCheckUrlType = vi.mocked(checkUrlType);
 
@@ -40,7 +37,7 @@ describe('Document Utils', () => {
   describe('pickPhoto', () => {
     it('should use CameraSource.Prompt on mobile platforms', async () => {
       const mockPlatform = { is: vi.fn().mockReturnValue(true) } as unknown as Platform;
-      mockGetPhoto.mockResolvedValue({ webPath: 'fake-path' } as unknown);
+      mockGetPhoto.mockResolvedValue({ webPath: 'fake-path' } as Photo);
       await pickPhoto(mockPlatform);
       expect(mockPlatform.is).toHaveBeenCalledWith('mobile');
       expect(mockGetPhoto).toHaveBeenCalledWith(expect.objectContaining({ source: CameraSource.Prompt }));
@@ -48,7 +45,7 @@ describe('Document Utils', () => {
 
     it('should use CameraSource.Photos on non-mobile platforms', async () => {
       const mockPlatform = { is: vi.fn().mockReturnValue(false) } as unknown as Platform;
-      mockGetPhoto.mockResolvedValue({ webPath: 'fake-path' } as unknown);
+      mockGetPhoto.mockResolvedValue({ webPath: 'fake-path' } as Photo);
       await pickPhoto(mockPlatform);
       expect(mockPlatform.is).toHaveBeenCalledWith('mobile');
       expect(mockGetPhoto).toHaveBeenCalledWith(expect.objectContaining({ source: CameraSource.Photos }));
@@ -56,7 +53,10 @@ describe('Document Utils', () => {
 
     it('should return a file after reading it', async () => {
       const mockPlatform = { is: vi.fn().mockReturnValue(false) } as unknown as Platform;
-      const mockPhoto = { webPath: 'fake-path' } as unknown;
+      const mockPhoto: Photo = {
+        webPath: 'fake-path', format: 'jpeg',
+        saved: false
+      };
       const mockFile = new File([], 'test.jpg');
       mockGetPhoto.mockResolvedValue(mockPhoto);
       mockReadAsFile.mockResolvedValue(mockFile);
@@ -97,56 +97,41 @@ describe('Document Utils', () => {
 
   describe('getDocumentStoragePath', () => {
     it('should return the correct path when all parameters are valid', () => {
-      mockGetModelSlug.mockReturnValue('people');
-      const path = getDocumentStoragePath('tenant-1', ModelType.Person, 'person-key');
-      expect(path).toBe('tenant-1/people/person-key/documents');
-      expect(mockGetModelSlug).toHaveBeenCalledWith(ModelType.Person);
-    });
-
-    it('should return undefined and warn if modelType is undefined', () => {
-      const path = getDocumentStoragePath('tenant-1', undefined as unknown, 'key');
-      expect(path).toBeUndefined();
-      expect(mockWarn).toHaveBeenCalledWith('document.util.getDocumentStoragePath -> modelType is undefined');
+      const path = getDocumentStoragePath('tenant-1', 'person', 'person-key');
+      expect(path).toBe('tenant-1/person/person-key/documents');
     });
 
     it('should return undefined and warn if key is undefined', () => {
-      const path = getDocumentStoragePath('tenant-1', ModelType.Person);
+      const path = getDocumentStoragePath('tenant-1', 'person');
       expect(path).toBeUndefined();
       expect(mockWarn).toHaveBeenCalledWith('document.util.getDocumentStoragePath -> key is undefined');
-    });
-
-    it('should return undefined and warn if tenant is undefined', () => {
-      const path = getDocumentStoragePath(undefined as unknown, ModelType.Person, 'key');
-      expect(path).toBeUndefined();
-      expect(mockWarn).toHaveBeenCalledWith('document.util.getDocumentStoragePath -> tenant is undefined');
     });
   });
 
   describe('getStoragePath', () => {
     it('should return undefined for a null or empty URL', () => {
-      expect(getStoragePath(undefined, ModelType.Person, 'tenant-1')).toBeUndefined();
-      expect(getStoragePath('', ModelType.Person, 'tenant-1')).toBeUndefined();
+      expect(getStoragePath(undefined, 'person', 'tenant-1')).toBeUndefined();
+      expect(getStoragePath('', 'person', 'tenant-1')).toBeUndefined();
     });
 
     it('should return the URL directly if its type is "storage"', () => {
       mockCheckUrlType.mockReturnValue('storage');
       const url = 'path/to/storage/file.jpg';
-      expect(getStoragePath(url, ModelType.Person, 'tenant-1')).toBe(url);
+      expect(getStoragePath(url, 'person', 'tenant-1')).toBe(url);
       expect(mockCheckUrlType).toHaveBeenCalledWith(url);
     });
 
     it('should generate a storage path if the URL type is "key"', () => {
       mockCheckUrlType.mockReturnValue('key');
-      mockGetModelSlug.mockReturnValue('people');
       const key = 'person-123';
-      const path = getStoragePath(key, ModelType.Person, 'tenant-1');
-      expect(path).toBe('tenant-1/people/person-123/documents');
+      const path = getStoragePath(key, 'person', 'tenant-1');
+      expect(path).toBe('tenant-1/person/person-123/documents');
     });
 
     it('should return undefined for other URL types like "http"', () => {
       mockCheckUrlType.mockReturnValue('http');
       const url = 'http://example.com/image.jpg';
-      expect(getStoragePath(url, ModelType.Person, 'tenant-1')).toBeUndefined();
+      expect(getStoragePath(url, 'person', 'tenant-1')).toBeUndefined();
     });
   });
 });

@@ -3,10 +3,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, DocumentCollection, DocumentModel, ModelType } from '@bk2/shared-models';
+import { CategoryCollection, CategoryListModel, DocumentCollection, DocumentModel } from '@bk2/shared-models';
 import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
 import { DocumentModalsService } from './document-modals.service';
@@ -14,13 +13,15 @@ import { DocumentModalsService } from './document-modals.service';
 export type DocumentListState = {
   searchTerm: string;
   selectedTag: string;
-  selectedType: number;
+  selectedType: string;
+  selectedSource: string;
 };
 
 export const initialDocumentListState: DocumentListState = {
   searchTerm: '',
   selectedTag: '',
-  selectedType: AllCategories,
+  selectedType: 'all',
+  selectedSource: 'all'
 };
 
 export const DocumentListStore = signalStore(
@@ -38,25 +39,38 @@ export const DocumentListStore = signalStore(
         debugListLoaded<DocumentModel>('DocumentListStore.tasks', documents$, store.appStore.currentUser());
         return documents$;
       }
+    }),
+    docTypesResource: rxResource({
+      stream: () => {
+        return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'document_type');            
+      }
+    }),
+    docSourcesResource: rxResource({
+      stream: () => {
+        return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'document_source');            
+      }
     })
   })),
 
  withComputed((state) => {
     return {
-      documents: computed(() => state.documentsResource.value()) ?? [],
+      allDocuments: computed(() => state.documentsResource.value()) ?? [],
+      docTypes: computed(() => state.docTypesResource.value()),
+      docSources: computed(() => state.docSourcesResource.value()),
       isLoading: computed(() => state.documentsResource.isLoading()),
     }
   }),
 
   withComputed((state) => {
     return {
-      documentsCount: computed(() => state.documents()?.length ?? 0),
+      allDocumentsCount: computed(() => state.allDocuments()?.length ?? 0),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
-      filteredDocuments: computed(() => 
-        state.documents()?.filter((document: DocumentModel) => 
+      documents: computed(() => 
+        state.allDocuments()?.filter((document: DocumentModel) => 
           nameMatches(document.index, state.searchTerm()) &&
-          categoryMatches(document.type, state.selectedType()) &&
+          nameMatches(document.type, state.selectedType()) &&
+          nameMatches(document.source, state.selectedSource()) &&
           chipMatches(document.tags, state.selectedTag()))
       )
     };
@@ -74,13 +88,17 @@ export const DocumentListStore = signalStore(
         patchState(store, { selectedTag });
       },
 
-      setSelectedType(selectedType: number) {
+      setSelectedType(selectedType: string) {
         patchState(store, { selectedType });
+      },
+
+      setSelectedSource(selectedSource: string) {
+        patchState(store, { selectedSource });
       },
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Task);
+        return store.appStore.getTags('document');
       },
 
       /******************************* actions *************************************** */

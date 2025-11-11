@@ -31,14 +31,18 @@ import { AvatarPipe } from '@bk2/avatar-ui';
         }
         @case(1) {
           @if(avatars[0].key && avatars[0].key.length > 0) {
-            <ion-chip>
+            @if(showName()) {
+              <ion-chip>
+                <ion-avatar>
+                  <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar | async }}" alt="Avatar of person or org" />
+                </ion-avatar>
+                  <ion-label><small>{{ avatars[0].name1 | fullName:avatars[0].name2 }}</small></ion-label>
+              </ion-chip>   
+            } @else {
               <ion-avatar>
                 <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar | async }}" alt="Avatar of person or org" />
               </ion-avatar>
-              @if(showName()) {
-                <ion-label><small>{{ avatars[0].name1 | fullName:avatars[0].name2 }}</small></ion-label>
-              }
-            </ion-chip>        
+            }
           } @else {
             <ion-label><small>{{ avatars[0].name1 | fullName:avatars[0].name2 }}</small></ion-label>
           }

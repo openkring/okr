@@ -69,8 +69,8 @@ export class UserModelFormComponent {
 
   protected bkey = computed(() => this.vm().bkey);
   protected tenants = computed(() => {
-    const _tenants = this.vm().tenants;
-    return Array.isArray(_tenants) ? _tenants.join(',') : _tenants;
+    const tenants = this.vm().tenants;
+    return Array.isArray(tenants) ? tenants.join(',') : tenants;
   });
   protected personKey = computed(() => this.vm().personKey);
   protected firstName = computed(() => this.vm().firstName);

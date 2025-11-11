@@ -73,9 +73,9 @@ export class FirestoreService {
     }
       
     // If bkey is not set, the document ID is automatically assigned, otherwise bkey is used as the document ID in Firestore.
-    const _key = model.bkey;
-    const _collection = (_key?.length === 0) ? collectionName : `${collectionName}/${_key}`;
-    const _ref = doc(this.firestore, _collection);
+    const key = model.bkey;
+    const collection = (key?.length === 0) ? collectionName : `${collectionName}/${key}`;
+    const ref = doc(this.firestore, collection);
 
     // we delete the bkey from the model because we don't want to store it in the database (_ref.id is available instead)
     const _storedModel = removeKeyFromBkModel(model);
@@ -83,21 +83,21 @@ export class FirestoreService {
 
     try {
       // we need to convert the custom object to a pure JavaScript object (e.g. arrays)
-      await setDoc(_ref, structuredClone(_storedModel));
+      await setDoc(ref, structuredClone(_storedModel));
       if (confirmMessage) {
         await showToast(this.toastController, confirmMessage + '.conf');
       }
       if (currentUser) {
-        debugMessage(`FirestoreService.createModel(${_collection}/${_ref.id}) -> OK`, currentUser);
-        const _comment = createComment(currentUser.bkey, getFullPersonName(currentUser.firstName, currentUser.lastName), '@comment.operation.initial.conf', collectionName, _ref.id, this.env.tenantId);
-        await this.saveComment(collectionName, _ref.id, _comment);
+        debugMessage(`FirestoreService.createModel(${collection}/${ref.id}) -> OK`, currentUser);
+        const comment = createComment(currentUser.bkey, getFullPersonName(currentUser.firstName, currentUser.lastName), '@comment.operation.initial.conf', collectionName, ref.id, this.env.tenantId);
+        await this.saveComment(collectionName, ref.id, comment);
       }
-      return Promise.resolve(_ref.id);
+      return Promise.resolve(ref.id);
     }
-    catch (_ex) {
-      console.error(`FirestoreService.createModel(${_collection}/${_ref.id}) -> ERROR:`, _ex);
-      const _msg = confirmMessage ? confirmMessage + '.error' : `Could not create model ${collectionName}/${_ref.id} in the database.`;      
-      return error(this.toastController, _msg);
+    catch (ex) {
+      console.error(`FirestoreService.createModel(${collection}/${ref.id}) -> ERROR:`, ex);
+      const message = confirmMessage ? confirmMessage + '.error' : `Could not create model ${collectionName}/${ref.id} in the database.`;      
+      return error(this.toastController, message);
     }
   }
 
@@ -126,20 +126,20 @@ export class FirestoreService {
     }
     // If key is not set, the document ID is automatically assigned, otherwise key is used as the document ID in Firestore.
     const _collection = (!key || key.length === 0) ? collectionName : `${collectionName}/${key}`;
-    const _ref = doc(collection(this.firestore, _collection));
+    const ref = doc(collection(this.firestore, _collection));
 
     try {
       // we need to convert the custom object to a pure JavaScript object (e.g. arrays)
-      await setDoc(_ref, JSON.parse(JSON.stringify(data)));
+      await setDoc(ref, JSON.parse(JSON.stringify(data)));
       if (confirmMessage) {
         await showToast(this.toastController, confirmMessage + '.conf');
       }
-      return Promise.resolve(_ref.id);
+      return Promise.resolve(ref.id);
     }
-    catch (_ex) {
-      console.error(`FirestoreService.createObject(${_collection}/${_ref.id}) -> ERROR:`, _ex);
-      const _msg = confirmMessage ? confirmMessage + '.error' : `Could not create object ${collectionName}/${_ref.id} in the database.`;      
-      return error(this.toastController, _msg);
+    catch (ex) {
+      console.error(`FirestoreService.createObject(${_collection}/${ref.id}) -> ERROR:`, ex);
+      const message = confirmMessage ? confirmMessage + '.error' : `Could not create object ${collectionName}/${ref.id} in the database.`;      
+      return error(this.toastController, message);
     }
   }
 
@@ -164,8 +164,8 @@ export class FirestoreService {
       // we need to add the firestore document id as bkey into the model
       return docData(doc(this.firestore, `${collectionName}/${key}`), { idField: 'bkey' }) as Observable<T>;
     }
-    catch (_ex) {
-      console.error(`FirestoreService.readModel(${collectionName}/${key}) -> ERROR: `, _ex);
+    catch (ex) {
+      console.error(`FirestoreService.readModel(${collectionName}/${key}) -> ERROR: `, ex);
       return of(error(this.toastController, `Could not read model ${collectionName}/${key} from the database.`));
     }
   }
@@ -190,8 +190,8 @@ export class FirestoreService {
     try {
       return docData(doc(this.firestore, `${collectionName}/${key}`)) as Observable<T>;
     }
-    catch (_ex) {
-      console.error(`FirestoreService.readObject(${collectionName}/${key}) -> ERROR: `, _ex);
+    catch (ex) {
+      console.error(`FirestoreService.readObject(${collectionName}/${key}) -> ERROR: `, ex);
       return of(error(this.toastController, `Could not read object ${collectionName}/${key} from the database.`));
     }
   }
@@ -226,34 +226,34 @@ export class FirestoreService {
     if (!model.tenants || model.tenants.length === 0) {
       return error(undefined, 'FirestoreService.updateModel: model.tenants is mandatory.', true);
     }
-    const _key = model.bkey;
-    if (!_key || _key.length === 0) {
+    const key = model.bkey;
+    if (!key || key.length === 0) {
       return error(undefined, 'FirestoreService.updateModel: model.bkey is mandatory.', true);
     }
 
     // we delete attribute bkey from the model because we don't want to store it in the database (_ref.id is available instead)
-    const _storedModel = removeKeyFromBkModel(structuredClone(model));
-    const _updateModel = removeUndefinedFields(_storedModel);
+    const storedModel = removeKeyFromBkModel(structuredClone(model));
+    const updateModel = removeUndefinedFields(storedModel);
     try {
       if (forceOverwrite) {
-        await setDoc(doc(this.firestore, `${collectionName}/${_key}`), structuredClone(_updateModel));
+        await setDoc(doc(this.firestore, `${collectionName}/${key}`), structuredClone(updateModel));
       } else {
-        await updateDoc(doc(this.firestore, `${collectionName}/${_key}`), structuredClone(_updateModel));
+        await updateDoc(doc(this.firestore, `${collectionName}/${key}`), structuredClone(updateModel));
       }
       if (confirmMessage) {
         await showToast(this.toastController, confirmMessage + '.conf');
       }
       if (currentUser) {
-        debugMessage(`FirestoreService.updateModel(${collectionName}/${_key}) -> OK`, currentUser);
-        const _comment = createComment(currentUser.bkey, getFullPersonName(currentUser.firstName, currentUser.lastName), '@comment.operation.update.conf', collectionName, _key, this.env.tenantId);
-        await this.saveComment(collectionName, _key, _comment);
+        debugMessage(`FirestoreService.updateModel(${collectionName}/${key}) -> OK`, currentUser);
+        const comment = createComment(currentUser.bkey, getFullPersonName(currentUser.firstName, currentUser.lastName), '@comment.operation.update.conf', collectionName, key, this.env.tenantId);
+        await this.saveComment(collectionName, key, comment);
       }
-      return Promise.resolve(_key);
+      return Promise.resolve(key);
     }
-    catch (_ex) {
-      console.error(`FirestoreService.updateModel(${collectionName}/${_key}) -> ERROR: `, _ex);
-      const _msg = confirmMessage ? confirmMessage + '.error' : `Could not update model ${collectionName}/${_key} in the database.`;      
-      return error(this.toastController, _msg);
+    catch (ex) {
+      console.error(`FirestoreService.updateModel(${collectionName}/${key}) -> ERROR: `, ex);
+      const message = confirmMessage ? confirmMessage + '.error' : `Could not update model ${collectionName}/${key} in the database.`;      
+      return error(this.toastController, message);
     }
   }
 
@@ -264,8 +264,8 @@ export class FirestoreService {
    * @param comment the comment to save
    */
   public async saveComment(parentCollection: string, parentKey: string, comment: CommentModel): Promise<void> {
-    const _commentRef = doc(collection(this.firestore, `${parentCollection}/${parentKey}/${CommentCollection}`));
-    await setDoc(_commentRef, structuredClone(comment));
+    const commentRef = doc(collection(this.firestore, `${parentCollection}/${parentKey}/${CommentCollection}`));
+    await setDoc(commentRef, structuredClone(comment));
   }
 
   /**
@@ -304,8 +304,8 @@ export class FirestoreService {
       }
       return Promise.resolve(key);
     }
-    catch (_ex) {
-      console.error(`FirestoreService.updateObject(${collectionName}/${key}) -> ERROR: `, _ex);
+    catch (ex) {
+      console.error(`FirestoreService.updateObject(${collectionName}/${key}) -> ERROR: `, ex);
       return error(this.toastController, `Could not update object ${collectionName}/${key}.`);
     }
   }
@@ -354,8 +354,8 @@ export class FirestoreService {
       }
       return Promise.resolve(key);
     }
-    catch (_ex) {
-      console.error(`FirestoreService.deleteObject(${collectionName}/${key}) -> ERROR: `, _ex);
+    catch (ex) {
+      console.error(`FirestoreService.deleteObject(${collectionName}/${key}) -> ERROR: `, ex);
       return error(this.toastController, `Could not delete object ${collectionName}/${key}.`);
     }
   }
@@ -433,12 +433,12 @@ export class FirestoreService {
     }
 
     try {
-      const _queries = getQuery(dbQuery, orderByParam, sortOrderParam); // Assume getQuery is defined
-      const _collectionRef = collection(this.firestore, collectionName);
-      const _queryRef = query(_collectionRef, ..._queries);
+      const queries = getQuery(dbQuery, orderByParam, sortOrderParam); // Assume getQuery is defined
+      const collectionRef = collection(this.firestore, collectionName);
+      const queryRef = query(collectionRef, ...queries);
       
       // Create Observable with shareReplay to cache results and share among subscribers
-      const data$ = collectionData(_queryRef, { idField: 'bkey' }).pipe(
+      const data$ = collectionData(queryRef, { idField: 'bkey' }).pipe(
         shareReplay({ bufferSize: 1, refCount: true })
       ) as Observable<T[]>;
 
@@ -462,10 +462,10 @@ export class FirestoreService {
    */
   private async getSnapshot<T>(collectionName: string, dbQuery: DbQuery[], orderByParam: string, sortOrderParam: string): Promise<T[]> {
     try {
-      const _queries = getQuery(dbQuery, orderByParam, sortOrderParam);
-      const _collectionRef = collection(this.firestore, collectionName);
-      const _queryRef = query(_collectionRef, ..._queries);
-      const snapshot = await getDocs(_queryRef);
+      const queries = getQuery(dbQuery, orderByParam, sortOrderParam);
+      const collectionRef = collection(this.firestore, collectionName);
+      const queryRef = query(collectionRef, ...queries);
+      const snapshot = await getDocs(queryRef);
       return snapshot.docs.map(doc => ({ ...doc.data(), bkey: doc.id } as T));
     } catch (error) {
       console.error(`FirestoreService.getSnapshot: Error for ${collectionName}:`, error);
@@ -488,9 +488,9 @@ export class FirestoreService {
   }
 
   public listAllObjects<T>(collectionName: string): Observable<T[]> {
-    const _collectionRef = collection(this.firestore, collectionName);
-    const _queryRef = query(_collectionRef);
-    return collectionData(_queryRef) as Observable<T[]>;
+    const collectionRef = collection(this.firestore, collectionName);
+    const queryRef = query(collectionRef);
+    return collectionData(queryRef) as Observable<T[]>;
   }
 
   // Optional: Clear cache for a specific query

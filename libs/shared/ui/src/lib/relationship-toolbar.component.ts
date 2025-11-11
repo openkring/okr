@@ -6,7 +6,7 @@ import { HashMap } from '@jsverse/transloco';
 
 import { ColorsIonic } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ColorIonic, ModelType } from '@bk2/shared-models';
+import { ColorIonic } from '@bk2/shared-models';
 import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 
@@ -70,7 +70,6 @@ export class RelationshipToolbarComponent {
   public titleArguments = input<HashMap>();
 
   protected colorsIonic = ColorsIonic;
-  protected modelType = ModelType;
 
   protected relationship = computed(() => this.safeReadProperty(this.titleArguments(), 'relationship'));
   protected subjectName = computed(() => this.safeReadProperty(this.titleArguments(), 'subjectName'));

@@ -13,6 +13,7 @@ import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { ResourceListStore } from './resource-list.store';
 import { ActionSheetController } from '@ionic/angular/standalone';
+import { DEFAULT_TAGS } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-key-list',
@@ -49,9 +50,8 @@ import { ActionSheetController } from '@ionic/angular/standalone';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="keyTags()"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
      />
 
     <!-- list header -->
@@ -96,7 +96,7 @@ export class KeyListComponent {
   protected keysCount = computed(() => this.resourceListStore.keysCount());
   protected selectedKeysCount = computed(() => this.filteredKeys().length);
   protected isLoading = computed(() => this.resourceListStore.isLoading());
-  protected keyTags = computed(() => this.resourceListStore.getKeyTags() ?? []);
+  protected tags = computed(() => this.resourceListStore.getKeyTags() ?? DEFAULT_TAGS);
   protected title = '@resource.key.plural'
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
 

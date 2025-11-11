@@ -5,7 +5,7 @@ import { IonContent, Platform } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, UserCollection } from '@bk2/shared-models';
+import { UserCollection } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
 import { debugFormModel, getFullPersonName } from '@bk2/shared-util-core';
 
@@ -59,7 +59,7 @@ export class UserPageComponent{
   protected readonly user = computed(() => this.userEditStore.user());
   protected readonly headerTitle = computed(() => this.user()?.bkey ? '@user.operation.update.label' : '@user.operation.create.label');
   protected readonly avatarTitle = computed(() => getFullPersonName(this.user().firstName, this.user().lastName));
-  protected readonly avatarKey = computed(() => `${ModelType.Person}.${this.user().bkey}`);
+  protected readonly avatarKey = computed(() => `person.${this.user().bkey}`);
   protected readonly userTags = computed(() => this.userEditStore.getTags());
   protected readonly currentUser = computed(() => this.userEditStore.currentUser());
 
@@ -85,12 +85,12 @@ export class UserPageComponent{
   /******************************* actions *************************************** */
   protected async save(): Promise<void> {
     this.formIsValid.set(false);
-    let _user = convertAuthFormToUser(this.userAuthVm(), this.user());
-    _user = convertDisplayFormToUser(this.userDisplayVm(), this.user());
-    _user = convertModelFormToUser(this.userModelVm(), this.user());
-    _user = convertNotificationFormToUser(this.userNotificationVm(), this.user());
-    _user = convertPrivacyFormToUser(this.userPrivacyVm(), this.user());
-    this.userEditStore.save(_user);
+    let user = convertAuthFormToUser(this.userAuthVm(), this.user());
+    user = convertDisplayFormToUser(this.userDisplayVm(), this.user());
+    user = convertModelFormToUser(this.userModelVm(), this.user());
+    user = convertNotificationFormToUser(this.userNotificationVm(), this.user());
+    user = convertPrivacyFormToUser(this.userPrivacyVm(), this.user());
+    this.userEditStore.save(user);
   }
 
  /**
@@ -98,14 +98,14 @@ export class UserPageComponent{
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   public async onImageSelected(photo: Photo): Promise<void> {
-    const _user = this.user();
-    if (!_user) return;
-    const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.tenantId], ModelType.User, _user.bkey, _file.name);
-    const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
+    const user = this.user();
+    if (!user) return;
+    const file = await readAsFile(photo, this.platform);
+    const avatar = newAvatarModel([this.env.tenantId], 'user', user.bkey, file.name);
+    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, '@document.operation.upload.avatar.title')
 
-    if (_downloadUrl) {
-      await this.avatarService.updateOrCreate(_avatar);
+    if (downloadUrl) {
+      await this.avatarService.updateOrCreate(avatar);
     }
   }
 

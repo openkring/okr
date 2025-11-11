@@ -8,8 +8,8 @@ import { Observable, of } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AddressCollection, AddressModel, AppConfig, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
-import { getSystemQuery } from '@bk2/shared-util-core';
+import { AddressCollection, AddressModel, AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { die, getSystemQuery } from '@bk2/shared-util-core';
 
 import { AppConfigService } from './app-config.service';
 
@@ -95,6 +95,11 @@ export const AppStore = signalStore(
         return store.firestoreService.searchData<TagModel>(TagCollection, getSystemQuery(store.tenantId()), 'tagModel', 'asc');
       }
     }),
+    categoriesResource: rxResource({
+      stream: () => {
+        return store.firestoreService.searchData<CategoryListModel>(CategoryCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
+      }
+    }),
     appConfigResource: rxResource({
       params: () => ({ 
         tenantId: store.tenantId()
@@ -113,6 +118,7 @@ export const AppStore = signalStore(
       allOrgs: computed(() => state.orgsResource.value() ?? []),
       allResources: computed(() => state.resourcesResource.value() ?? []),
       allTags: computed(() => state.tagsResource.value() ?? []),
+      allCategories: computed(() => state.categoriesResource.value() ?? []),
       appConfig: computed(() => state.appConfigResource.value() ?? new AppConfig(state.tenantId())),
     };
   }),
@@ -164,8 +170,8 @@ export const AppStore = signalStore(
       }),
       stream: ({params}) => {
         if (!params.person) return of([]);
-        const _ref = query(collection(store.firestore, `${PersonCollection}/${params.person.bkey}/${AddressCollection}`));
-        return collectionData(_ref, { idField: 'bkey' }) as Observable<AddressModel[]>;
+        const ref = query(collection(store.firestore, `${PersonCollection}/${params.person.bkey}/${AddressCollection}`));
+        return collectionData(ref, { idField: 'bkey' }) as Observable<AddressModel[]>;
       }
     })
   })),
@@ -197,10 +203,25 @@ export const AppStore = signalStore(
         if (!key) return undefined;
         return store.allResources()?.find(p => p.bkey === key);
       },
-      getTags(tagModel: number): string {
-        if (!tagModel) return '';
-        return store.allTags().filter((tag: TagModel) => tag.tagModel === tagModel + '')[0].tags;
+      getTags(modelType: string): string {
+        if (!modelType) return '';
+        return store.allTags().filter((tag: TagModel) => tag.tagModel === modelType)[0].tags;
       },
+      getCategory(name?: string): CategoryListModel {
+        // enforce that this function always returns the category (or it ends with an internal error)
+        if (!name) { die('AppStore.getCategory: category is mandatory.');
+        } else {
+          return store.allCategories()?.find(p => p.bkey === name) ?? die(`AppStore.getCategory: category ${name} not found.`);
+        }
+      },
+      getCategoryItem(categoryName?: string, itemName?: string): CategoryItemModel | undefined {
+        if (!categoryName || !itemName) return undefined;
+        const cat = this.getCategory(categoryName);
+        return cat ? cat.items.find(i => i.name === itemName) : undefined;
+      },
+      getCategoryIcon(categoryName?: string, itemName?: string): string {
+        return this.getCategoryItem(categoryName, itemName)?.icon ?? '';
+      }
     }
   }),
 

@@ -1,27 +1,27 @@
+import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { AddressableModel, BkModel, SearchableModel, TaggedModel } from './base.model';
-import { GenderType } from './enums/gender-type.enum';
 
 export class PersonModel implements BkModel, AddressableModel, SearchableModel, TaggedModel {
-  public bkey = '';
-  public tenants: string[] = [];
+  public bkey = DEFAULT_KEY;
+  public tenants = DEFAULT_TENANTS;
   public isArchived = false;
-  public index = '';
-  public tags = '';
-  public notes = '';
-  public firstName = '';
-  public lastName = '';
-  public gender = GenderType.Male;
-  public ssnId = ''; // social security number, in Switzerland: AHV Number
-  public dateOfBirth = '';
-  public dateOfDeath = '';
-  public fav_email = '';
-  public fav_phone = '';
-  public fav_street_name = '';
-  public fav_street_number = '';
-  public fav_zip_code = '';
-  public fav_city = '';
-  public fav_country_code = '';
-  public bexioId = '';
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS;
+  public notes = DEFAULT_NOTES;
+  public firstName = DEFAULT_NAME;
+  public lastName = DEFAULT_NAME;
+  public gender = DEFAULT_GENDER;
+  public ssnId = DEFAULT_ID; // social security number, in Switzerland: AHV Number
+  public dateOfBirth = DEFAULT_DATE;
+  public dateOfDeath = DEFAULT_DATE;
+  public favEmail = DEFAULT_EMAIL;
+  public favPhone = DEFAULT_PHONE;
+  public favStreetName = DEFAULT_NAME;
+  public favStreetNumber = '';
+  public favZipCode = '';
+  public favCity = '';
+  public favCountryCode = '';
+  public bexioId = DEFAULT_ID;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

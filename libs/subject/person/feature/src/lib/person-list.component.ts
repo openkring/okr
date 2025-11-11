@@ -2,9 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, GenderTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, ModelType, PersonModel, RoleName } from '@bk2/shared-models';
+import { PersonModel, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -50,12 +49,9 @@ import { PersonListStore } from './person-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="personTags()"
-      [types]="genders"
-      typeName="gender"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+      [type]="types()" (typeChanged)="onGenderSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
-      (typeChanged)="onGenderSelected($event)"
     />
 
     <!-- list header -->
@@ -88,20 +84,20 @@ import { PersonListStore } from './person-list.store';
           @for(person of filteredPersons(); track $index) {
             <ion-item (click)="showActions(person)">
               <ion-avatar slot="start">
-                <ion-img src="{{ modelType.Person + '.' + person.bkey | avatar | async }}" alt="Avatar Logo" />
+                <ion-img src="{{ 'person.' + person.bkey | avatar | async }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>      
               <ion-label>
-                @if(person.fav_phone) {
-                  <a href="tel:{{person.fav_phone}}" style="text-decoration:none;">
-                    <span>{{person.fav_phone }}</span>
+                @if(person.favPhone) {
+                  <a href="tel:{{person.favPhone}}" style="text-decoration:none;">
+                    <span>{{person.favPhone }}</span>
                   </a>
                 }
               </ion-label>
               <ion-label class="ion-hide-sm-down">
-                @if(person?.fav_email) {
-                  <a href="mailto:{{person.fav_email}}" style="text-decoration:none;">
-                    <span>{{person.fav_email }}</span>
+                @if(person?.favEmail) {
+                  <a href="mailto:{{person.favEmail}}" style="text-decoration:none;">
+                    <span>{{person.favEmail }}</span>
                   </a>
                 }
               </ion-label> 
@@ -124,11 +120,9 @@ export class PersonListComponent {
   protected personsCount = computed(() => this.personListStore.personsCount());
   protected selectedPersonsCount = computed(() => this.filteredPersons().length);
   protected isLoading = computed(() => this.personListStore.isLoading());
-  protected readonly personTags = computed(() => this.personListStore.getTags());
+  protected readonly tags = computed(() => this.personListStore.getTags());
+  protected readonly types = computed(() => this.personListStore.appStore.getCategory('gender'));
 
-  protected selectedCategory = AllCategories;
-  protected genders = addAllCategory(GenderTypes);
-  protected readonly modelType = ModelType;
   private imgixBaseUrl = this.personListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
@@ -140,7 +134,7 @@ export class PersonListComponent {
     this.personListStore.setSelectedTag($event);
   }
 
-  protected onGenderSelected($event: number): void {
+  protected onGenderSelected($event: string): void {
     this.personListStore.setSelectedGender($event);
   }
 

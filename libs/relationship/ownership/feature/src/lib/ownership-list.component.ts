@@ -2,10 +2,9 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, GenderTypes, ResourceTypes, RowingBoatTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { OwnershipModel, RoleName } from '@bk2/shared-models';
-import { CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
@@ -15,12 +14,13 @@ import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { getOwnerName } from '@bk2/relationship-ownership-util';
 import { OwnershipListStore } from './ownership-list.store';
+import { getCategoryIcon } from '@bk2/category-util';
 
 @Component({
   selector: 'bk-ownership-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryNamePipe, AvatarPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonBackdrop, IonAvatar, IonImg, IonList, IonPopover
@@ -49,12 +49,9 @@ import { OwnershipListStore } from './ownership-list.store';
 
     <!-- search and filters -->
     <bk-list-filter
-      [tags]="ownershipTags()"
-      [types]="types()"
-      [typeName]="typeName()"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+      [type]="types()" (typeChanged)="onTypeSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
-      (typeChanged)="onTypeSelected($event)"
     />
 
     <!-- list header -->
@@ -91,7 +88,7 @@ import { OwnershipListStore } from './ownership-list.store';
               <ion-item class="ion-text-wrap" (click)="showActions(ownership)">
                 <ion-icon slot="start" color="primary" src="{{ getIcon(ownership) | svgIcon }}" />
                 <ion-label>{{ ownership.resourceName }}</ion-label>
-                <ion-label>{{ ownership.resourceSubType | categoryName:boatTypes }}</ion-label>
+                <ion-label>{{ ownership.resourceSubType }}</ion-label>
                 <ion-label class="ion-hide-md-down">{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>
               </ion-item>
             }
@@ -148,31 +145,29 @@ export class OwnershipListComponent {
   protected types = computed(() => {
     switch (this.listId()) {
       case 'privateBoats':
-      case 'lockers': return addAllCategory(GenderTypes);
+      case 'lockers': return this.ownershipListStore.appStore.getCategory('gender');
       case 'keys': return undefined;
-      case 'scsBoats': return addAllCategory(RowingBoatTypes);
+      case 'scsBoats': return this.ownershipListStore.appStore.getCategory('rboat_type');
       case 'all':
-      default: return addAllCategory(ResourceTypes);
+      default: return this.ownershipListStore.appStore.getCategory('resource_type');
     }
   });
-  protected typeName = computed(() => {
+
+  // if the ownership resource has a subtype, use the subtype, otherwise use the resource type
+  protected resolvedTypes = computed(() => {
     switch (this.listId()) {
       case 'privateBoats':
-      case 'lockers': return 'gender';
-      case 'keys': return undefined;
-      case 'scsBoats': return 'rowingBoatType';
-      case 'all':
-      default: return 'resourceType';
+      case 'scsBoats': return this.ownershipListStore.appStore.getCategory('rboat_type');
+      default: return this.ownershipListStore.appStore.getCategory('resource_type');
     }
   });
   protected readonly years = getYearList();
 
   protected selectedOwnershipsCount = computed(() => this.filteredOwnerships().length);
   protected isLoading = computed(() => this.ownershipListStore.isLoading());
-  protected ownershipTags = computed(() => this.ownershipListStore.getTags());
+  protected tags = computed(() => this.ownershipListStore.getTags());
   protected popupId = computed(() => 'c_ownerships_' + this.listId());
 
-  protected boatTypes = RowingBoatTypes;
   private imgixBaseUrl = this.ownershipListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
@@ -246,7 +241,7 @@ export class OwnershipListComponent {
     this.ownershipListStore.setSelectedTag(tag);
   }
 
-  protected onTypeSelected(type: number): void {
+  protected onTypeSelected(type: string): void {
     switch (this.listId()) {
       case 'privateBoats':
       case 'lockers':
@@ -274,6 +269,6 @@ export class OwnershipListComponent {
   }
 
   protected getIcon(ownership: OwnershipModel): string {
-    return this.boatTypes[ownership.resourceSubType ?? 0].icon;
+    return getCategoryIcon(this.resolvedTypes(), ownership.resourceType === 'rboat' ? ownership.resourceSubType : ownership.resourceType);
   }
 }

@@ -49,9 +49,8 @@ import { AppStore } from '@bk2/shared-feature';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="categoryTags()"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
      />
 
     <!-- list header -->
@@ -81,7 +80,7 @@ import { AppStore } from '@bk2/shared-feature';
         <bk-empty-list message="@category.field.empty" />
       } @else {
         <ion-list lines="inset">
-          @for(cat of filteredCategories(); track $index) {
+          @for(cat of filteredCategories(); track cat.bkey) {
             <ion-item (click)="showActions(cat)">
               <ion-label>{{cat.name}}</ion-label>      
               <ion-label>{{cat.i18nBase}}</ion-label>      
@@ -107,7 +106,7 @@ export class CategoryListComponent {
   protected selectedCategoriesCount = computed(() => this.filteredCategories().length);
   protected isLoading = computed(() => this.categoryListStore.isLoading());
   protected popupId = computed(() => `c_category_${this.listId}`);
-  protected categoryTags = computed(() => this.categoryListStore.getTags());
+  protected tags = computed(() => this.categoryListStore.getTags());
   
   protected isYearly = false;
   private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;

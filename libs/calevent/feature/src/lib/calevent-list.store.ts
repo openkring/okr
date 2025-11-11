@@ -3,10 +3,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, CalEventCollection, CalEventModel, CalEventType, ModelType } from '@bk2/shared-models';
+import { CalEventCollection, CalEventModel } from '@bk2/shared-models';
 import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
 import { CalEventService } from '@bk2/calevent-data-access';
@@ -17,14 +16,14 @@ export type CalEventListState = {
   calendarName: string;
   searchTerm: string;
   selectedTag: string;
-  selectedCategory: CalEventType | typeof AllCategories;
+  selectedCategory: string;
 };
 
 export const initialState: CalEventListState = {
   calendarName: '',
   searchTerm: '',
   selectedTag: '',
-  selectedCategory: AllCategories,
+  selectedCategory: 'all',
 };
 
 export const CalEventListStore = signalStore(
@@ -65,7 +64,7 @@ export const CalEventListStore = signalStore(
       filteredCalEvents: computed(() => 
         state.calEvents()?.filter((calEvent: CalEventModel) => 
           nameMatches(calEvent.index, state.searchTerm()) && 
-          categoryMatches(calEvent.type, state.selectedCategory()) &&
+          nameMatches(calEvent.type, state.selectedCategory()) &&
           chipMatches(calEvent.tags, state.selectedTag()))
       )
     };
@@ -87,7 +86,7 @@ export const CalEventListStore = signalStore(
         patchState(store, { searchTerm });
       },
 
-      setSelectedCategory(selectedCategory: CalEventType | typeof AllCategories) {
+      setSelectedCategory(selectedCategory: string) {
         patchState(store, { selectedCategory });
       },
 
@@ -97,7 +96,7 @@ export const CalEventListStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.CalEvent);
+        return store.appStore.getTags('calevent');
       },
 
       /******************************* actions *************************************** */
@@ -106,9 +105,7 @@ export const CalEventListStore = signalStore(
         const _modal = await store.modalController.create({
           component: CalEventEditModalComponent,
           componentProps: {
-            event: _calEvent,
-            currentUser: store.currentUser(),
-            calEventTags: this.getTags()
+            event: _calEvent
           }
         });
         _modal.present();
@@ -124,9 +121,7 @@ export const CalEventListStore = signalStore(
         const _modal = await store.modalController.create({
           component: CalEventEditModalComponent,
           componentProps: {
-            event: calEvent,
-            currentUser: store.currentUser(),
-            calEventTags: this.getTags()
+            event: calEvent
           }
         });
         _modal.present();

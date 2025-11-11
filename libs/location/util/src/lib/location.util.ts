@@ -1,7 +1,8 @@
-import { LocationModel, LocationType } from '@bk2/shared-models';
+import { LocationModel } from '@bk2/shared-models';
 import { isType } from '@bk2/shared-util-core';
 
 import { LocationFormModel } from './location-form.model';
+import { DEFAULT_KEY, DEFAULT_LOCATION_TYPE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 export function getLocationTitle(locationKey: string | undefined): string {
   const _operation = !locationKey ? 'create' : 'update';
@@ -10,11 +11,11 @@ export function getLocationTitle(locationKey: string | undefined): string {
 
 export function newLocationFormModel(): LocationFormModel {
   return {
-    bkey: '',
-    name: '',
-    tags: '',
+    bkey: DEFAULT_KEY,
+    name: DEFAULT_NAME,
+    tags: DEFAULT_TAGS,
     address: '',
-    type: LocationType.Address,
+    type: DEFAULT_LOCATION_TYPE,
     latitude: '0',
     longitude: '0',
     placeId: '',
@@ -22,7 +23,7 @@ export function newLocationFormModel(): LocationFormModel {
     seaLevel: 0,
     speed: 0,
     direction: 0,
-    notes: '',
+    notes: DEFAULT_NOTES,
   };
 }
 
@@ -47,10 +48,10 @@ export function convertLocationToForm(location: LocationModel | undefined): Loca
 
 export function convertFormToLocation(location: LocationModel | undefined, vm: LocationFormModel, tenantId: string): LocationModel {
   location ??= new LocationModel(tenantId);
-  location.bkey = vm.bkey ?? '';
-  location.name = vm.name ?? '';
+  location.bkey = vm.bkey ?? DEFAULT_KEY;
+  location.name = vm.name ?? DEFAULT_NAME;
   location.address = vm.address ?? '';
-  location.type = vm.type ?? LocationType.Address;
+  location.type = vm.type ?? DEFAULT_LOCATION_TYPE;
   location.latitude = parseFloat(vm.latitude ?? '0');
   location.longitude = parseFloat(vm.longitude ?? '0');
   location.placeId = vm.placeId ?? '';
@@ -58,8 +59,8 @@ export function convertFormToLocation(location: LocationModel | undefined, vm: L
   location.seaLevel = vm.seaLevel ?? 0;
   location.speed = vm.speed ?? 0;
   location.direction = vm.direction ?? 0;
-  location.tags = vm.tags ?? '';
-  location.notes = vm.notes ?? '';
+  location.tags = vm.tags ?? DEFAULT_TAGS;
+  location.notes = vm.notes ?? DEFAULT_NOTES;
   return location;
 }
 

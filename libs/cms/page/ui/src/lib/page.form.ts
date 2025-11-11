@@ -5,15 +5,15 @@ import { Router } from '@angular/router';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { ContentStates, PageTypes } from '@bk2/shared-categories';
 import { CaseInsensitiveWordMask } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ContentState, PageType, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ButtonCopyComponent, CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent } from '@bk2/shared-ui';
+import { ButtonCopyComponent, CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
 import { PageFormModel, pageFormModelShape, pageFormValidations } from '@bk2/cms-page-util';
+import { DEFAULT_CONTENT_STATE, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 
 @Component({
@@ -23,7 +23,7 @@ import { PageFormModel, pageFormModelShape, pageFormValidations } from '@bk2/cms
     TranslatePipe, AsyncPipe, SvgIconPipe,
     vestForms, FormsModule,
     ChipsComponent, NotesInputComponent, TextInputComponent, StringsComponent, ButtonCopyComponent, 
-    ErrorNoteComponent, CategoryComponent,
+    ErrorNoteComponent, CategorySelectComponent,
     IonLabel, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonGrid, IonRow, IonCol
 ],
   template: `
@@ -62,10 +62,10 @@ import { PageFormModel, pageFormModelShape, pageFormValidations } from '@bk2/cms
                 <bk-error-note [errors]="titleErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="type" [value]="type()" [categories]="types" (changed)="onChange('type', $event)" />
+                <bk-cat-select [category]="types()!" [selectedItemName]="type()" [withAll]="false" (changed)="onChange('type', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="state" [value]="state()" [categories]="states" (changed)="onChange('state', $event)" />
+                <bk-cat-select [category]="states()!" [selectedItemName]="state()" [withAll]="false" (changed)="onChange('state', $event)" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -81,7 +81,7 @@ import { PageFormModel, pageFormModelShape, pageFormValidations } from '@bk2/cms
           addLabel="@content.section.operation.add.label" />
           
       @if(hasRole('privileged')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="pageTags()" (changed)="onChange('tags', $event)" />
+        <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (changed)="onChange('tags', $event)" />
       }
       @if(hasRole('admin')) {
         <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
@@ -95,16 +95,18 @@ export class PageFormComponent {
 
   public readonly vm = model.required<PageFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public readonly pageTags = input.required<string>();
+  public readonly allTags = input.required<string>();
+  public readonly types = input.required<CategoryListModel>();
+  public readonly states = input.required<CategoryListModel>();
   
   protected bkey = computed(() => this.vm().bkey ?? '');
   protected sections = linkedSignal(() => this.vm().sections ?? []);
   protected name = computed(() => this.vm().name ?? '');
   protected title = computed(() => this.vm().title ?? '');
-  protected type = computed(() => this.vm().type ?? PageType.Content);
-  protected state = computed(() => this.vm().state ?? ContentState.Draft);
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
+  protected type = computed(() => this.vm().type ?? DEFAULT_PAGE_TYPE);
+  protected state = computed(() => this.vm().state ?? DEFAULT_CONTENT_STATE);
+  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
@@ -116,8 +118,6 @@ export class PageFormComponent {
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
 
   protected mask = CaseInsensitiveWordMask;
-  protected types = PageTypes;
-  protected states = ContentStates;
 
   protected gotoPage(pageKey?: string): void {
     if (!pageKey)  return;

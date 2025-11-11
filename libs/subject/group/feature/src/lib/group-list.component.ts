@@ -3,7 +3,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupModel, ModelType, RoleName } from '@bk2/shared-models';
+import { GroupModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -51,9 +51,8 @@ import { GroupListStore } from './group-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="groupTags()"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
     />
 
       <!-- list header -->
@@ -80,7 +79,7 @@ import { GroupListStore } from './group-list.store';
           @for(group of filteredGroups(); track $index) {
             <ion-item (click)="showActions(group)">
               <ion-avatar slot="start">
-                <ion-img src="{{ modelType.Group + '.' + group.bkey | avatar | async }}" alt="Avatar Logo" />
+                <ion-img src="{{ 'group.' + group.bkey | avatar | async }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{group.name}}</ion-label>      
             </ion-item>
@@ -102,9 +101,8 @@ export class GroupListComponent {
   protected groupsCount = computed(() => this.groupListStore.groups()?.length ?? 0);
   protected selectedGroupsCount = computed(() => this.filteredGroups().length);
   protected isLoading = computed(() => this.groupListStore.isLoading());
-  protected groupTags = computed(() => this.groupListStore.getTags());
+  protected tags = computed(() => this.groupListStore.getTags());
 
-  protected modelType = ModelType;
   private imgixBaseUrl = this.groupListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
@@ -118,7 +116,6 @@ export class GroupListComponent {
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    console.log('GroupListComponent.onPopoverDismiss', $event);
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
       case 'add': await this.groupListStore.add(); break;

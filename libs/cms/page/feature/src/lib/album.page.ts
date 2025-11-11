@@ -2,7 +2,6 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonToolbar } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
-import { SectionType } from '@bk2/shared-models';
 import { HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { extractFirstPartOfOptionalTupel, getPartsOfTupel } from '@bk2/shared-util-core';
 
@@ -47,7 +46,7 @@ export class AlbumPageComponent {
   protected title = computed(() => extractFirstPartOfOptionalTupel(this.id(), '@'));
 
   protected section = computed(() => {
-    const _section = createSection(SectionType.Album, this.env.tenantId);
+    const _section = createSection('album', this.env.tenantId);
     const _id = this.id();
     if (_id.indexOf('@') === -1) {   // show the default album of the current tenant
       _section.properties.album = newAlbumConfig(this.env.tenantId, _id);

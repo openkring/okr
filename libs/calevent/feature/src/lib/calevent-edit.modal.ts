@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CalEventModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CalEventModel, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -27,12 +27,13 @@ import { convertCalEventToForm, convertFormToCalEvent } from '@bk2/calevent-util
     }
     <ion-content>
       <bk-calevent-form [(vm)]="vm" 
-        [isPrivileged]="hasRole('privileged')" 
         [currentUser]="currentUser()"
+        [types]="types()"
+        [periodicities]="periodicities()"
+        [allTags]="tags()" 
         [locale]="locale()"
-        [calEventTags]="calEventTags()" 
-        [isAdmin]="hasRole('admin')" 
-        (validChange)="formIsValid.set($event)" />
+        (validChange)="formIsValid.set($event)"
+      />
     </ion-content>
   `
 })
@@ -41,11 +42,14 @@ export class CalEventEditModalComponent {
   protected readonly appStore = inject(AppStore);
 
   public event = input.required<CalEventModel>();
-  public currentUser = input.required<UserModel | undefined>();
-  public calEventTags = input.required<string>();
+
+  protected currentUser = computed(() => this.appStore.currentUser());
+  protected types = computed(() => this.appStore.getCategory('calevent_type'));
+  protected periodicities = computed(() => this.appStore.getCategory('periodicity'));
+  protected tags = computed(() => this.appStore.getTags('calevent'));
+  protected locale = computed(() => this.appStore.appConfig().locale);
 
   public vm = linkedSignal(() => convertCalEventToForm(this.event()));
-  protected locale = computed(() => this.appStore.appConfig().locale);
   protected formIsValid = signal(false);
 
   public save(): Promise<boolean> {

@@ -109,16 +109,16 @@ export class GalleryModalComponent implements AfterViewInit {
   */
 
   ngAfterViewInit(): void {
-    const _swiper = this.mainSwiper();
-    if (_swiper) {
-      //  _swiper.initialSlide = this.initialSlide();
-      console.log('GalleryModalComponent -> mainSwiper: ', _swiper);
-      /*    if (_swiper.swiper) {
-        console.log('activeIndex: ', _swiper.swiper.activeIndex);
-        console.log('autoplay: ', _swiper.swiper.autoplay.running);  
-        _swiper.swiper.slideTo(this.initialSlide());
+    const swiper = this.mainSwiper();
+    if (swiper) {
+      //  _wiper.initialSlide = this.initialSlide();
+      console.log('GalleryModalComponent -> mainSwiper: ', swiper);
+      /*    if (swiper.swiper) {
+        console.log('activeIndex: ', swiper.swiper.activeIndex);
+        console.log('autoplay: ', swiper.swiper.autoplay.running);  
+        swiper.swiper.slideTo(this.initialSlide());
       }
-      _swiper.initialSlide = this.initialSlide(); */
+      swiper.initialSlide = this.initialSlide(); */
     }
   }
 
@@ -131,10 +131,10 @@ export class GalleryModalComponent implements AfterViewInit {
   protected getBackgroundStyle(image: Image) {
     if (!image.url) die('GalleryModalComponent: image url must be set');
     if (!image.width || !image.height) die('GalleryModalComponent: image width and height must be set');
-    const _params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
-    const _url = this.baseImgixUrl + '/' + image.url + '?' + _params;
+    const params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
+    const url = this.baseImgixUrl + '/' + image.url + '?' + params;
     return {
-      'background-image': `url(${_url})`,
+      'background-image': `url(${url})`,
       'min-height': '200px',
       'background-size': 'cover',
       'background-position': 'center',

@@ -1,7 +1,6 @@
 import { Component, inject, input, output } from '@angular/core';
 import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetail, ModalController } from '@ionic/angular/standalone';
 
-import { SectionTypes } from '@bk2/shared-categories';
 import { SectionModel } from '@bk2/shared-models';
 import { CategoryNamePipe } from '@bk2/shared-pipes';
 import { HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
@@ -40,7 +39,6 @@ import { arrayMove } from '@bk2/shared-util-core';
 export class PageSortModalComponent {
   private readonly modalController = inject(ModalController);
   public sections = input.required<SectionModel[]>();
-  protected STS = SectionTypes;
   public sectionsChanged = output<SectionModel[]>();
 
   public cancel(): Promise<boolean> {

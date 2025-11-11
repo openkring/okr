@@ -6,7 +6,7 @@ import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { MembershipModel, ModelType, RoleName } from '@bk2/shared-models';
+import { MembershipModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
 import { hasRole, isOngoing } from '@bk2/shared-util-core';
@@ -44,7 +44,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
           @for(member of members(); track $index) {
               <ion-item (click)="showActions(member)">
                 <ion-thumbnail slot="start">
-                  <ion-img src="{{ modelType.Person + '.' + member.memberKey | avatar | async}}" alt="membership avatar" />
+                  <ion-img src="{{ 'person.' + member.memberKey | avatar | async}}" alt="membership avatar" />
                 </ion-thumbnail>
                 <ion-label>{{member.memberName1 | fullName:member.memberName2}}</ion-label>      
                 <ion-label>{{ member.relLog | categoryLog }} / {{ member.dateOfEntry | duration:member.dateOfExit }}</ion-label>
@@ -66,7 +66,6 @@ export class MembersAccordionComponent {
 
   protected members = computed(() => this.membersStore.members());
 
-  protected modelType = ModelType;
   private imgixBaseUrl = this.membersStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {

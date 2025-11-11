@@ -4,16 +4,17 @@ import * as logger from 'firebase-functions/logger';
 
 import { AddressChannel, AddressModel } from '@bk2/shared-models';
 import { die } from '@bk2/shared-util-core';
+import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_PHONE, DEFAULT_URL } from '@bk2/shared-constants';
 
 export interface FavoriteAddressInfo {
-  fav_email: string;
-  fav_phone: string;
-  fav_street_name: string;
-  fav_street_number: string;
-  fav_zip_code: string;
-  fav_city: string;
-  fav_country_code: string;
-  fav_web: string;
+  favEmail: string;
+  favPhone: string;
+  favStreetName: string;
+  favStreetNumber: string;
+  favZipCode: string;
+  favCity: string;
+  favCountryCode: string;
+  favWeb: string;
 }
 
 /**
@@ -30,13 +31,13 @@ export async function updateFavoriteAddressInfo(firestore: Firestore, parentId: 
     const favoriteAddressInfo = await getFavoriteAddressInfo(firestore, parentId, parentCollection);
     logger.info(`Updating favorite address info for ${parentCollection}/${parentId}`, favoriteAddressInfo);
     await ref.update({
-      fav_email: favoriteAddressInfo.fav_email,
-      fav_phone: favoriteAddressInfo.fav_phone,
-      fav_street_name: favoriteAddressInfo.fav_street_name,
-      fav_street_number: favoriteAddressInfo.fav_street_number,
-      fav_zip_code: favoriteAddressInfo.fav_zip_code,
-      fav_city: favoriteAddressInfo.fav_city,
-      fav_country_code: favoriteAddressInfo.fav_country_code,
+      favEmail: favoriteAddressInfo.favEmail,
+      favPhone: favoriteAddressInfo.favPhone,
+      favStreetName: favoriteAddressInfo.favStreetName,
+      favStreetNumber: favoriteAddressInfo.favStreetNumber,
+      favZipCode: favoriteAddressInfo.favZipCode,
+      favCity: favoriteAddressInfo.favCity,
+      favCountryCode: favoriteAddressInfo.favCountryCode,
     });
     logger.info(`Successfully updated favorite address info for ${parentCollection}/${parentId}`);
   } catch (error) {
@@ -67,20 +68,20 @@ async function getFavoriteAddressInfo(firestore: Firestore, parentId: string, pa
     for (const favoriteAddress of favoriteAddresses) {
       switch (favoriteAddress.channelType) {
         case AddressChannel.Email:
-          favoriteAddressInfo.fav_email = favoriteAddress.email;
+          favoriteAddressInfo.favEmail = favoriteAddress.email;
           break;
         case AddressChannel.Phone:
-          favoriteAddressInfo.fav_phone = favoriteAddress.phone;
+          favoriteAddressInfo.favPhone = favoriteAddress.phone;
           break;
         case AddressChannel.Postal:
-          favoriteAddressInfo.fav_street_name = favoriteAddress.streetName;
-          favoriteAddressInfo.fav_street_number = favoriteAddress.streetNumber;
-          favoriteAddressInfo.fav_zip_code = favoriteAddress.zipCode;
-          favoriteAddressInfo.fav_city = favoriteAddress.city;
-          favoriteAddressInfo.fav_country_code = favoriteAddress.countryCode;
+          favoriteAddressInfo.favStreetName = favoriteAddress.streetName;
+          favoriteAddressInfo.favStreetNumber = favoriteAddress.streetNumber;
+          favoriteAddressInfo.favZipCode = favoriteAddress.zipCode;
+          favoriteAddressInfo.favCity = favoriteAddress.city;
+          favoriteAddressInfo.favCountryCode = favoriteAddress.countryCode;
           break;
         case AddressChannel.Web:
-          favoriteAddressInfo.fav_web = favoriteAddress.url;
+          favoriteAddressInfo.favWeb = favoriteAddress.url;
           break;
         default:
           die(`AddressUtil.getEmptyFavoriteAddressInfo: unknown channel type ${favoriteAddress.channelType}`);
@@ -92,13 +93,13 @@ async function getFavoriteAddressInfo(firestore: Firestore, parentId: string, pa
 
 function getEmptyFavoriteAddressInfo(): FavoriteAddressInfo {
   return {
-    fav_email: '',
-    fav_phone: '',
-    fav_street_name: '',
-    fav_street_number: '',
-    fav_zip_code: '',
-    fav_city: '',
-    fav_country_code: '',
-    fav_web: '',
+    favEmail: DEFAULT_EMAIL,
+    favPhone: DEFAULT_PHONE,
+    favStreetName: DEFAULT_NAME,
+    favStreetNumber: '',
+    favZipCode: '',
+    favCity: '',
+    favCountryCode: '',
+    favWeb: DEFAULT_URL,
   };
 }

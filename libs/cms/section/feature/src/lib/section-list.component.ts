@@ -2,12 +2,10 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, SectionTypes } from '@bk2/shared-categories';
-import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, RoleName, SectionModel, SectionType } from '@bk2/shared-models';
-import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { CategoryComponent, EmptyListComponent, SearchbarComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { RoleName, SectionModel } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { SectionListStore } from './section-list.store';
@@ -17,8 +15,8 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   selector: 'bk-section-all-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, CategoryNamePipe, SvgIconPipe,
-    SearchbarComponent, CategoryComponent, SpinnerComponent, EmptyListComponent,
+    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SpinnerComponent, EmptyListComponent, ListFilterComponent,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList
   ],
@@ -45,19 +43,11 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
       </ion-item>
     </ion-toolbar>
 
-   <!-- search and category -->
-    <ion-toolbar>
-      <ion-grid>
-        <ion-row>
-          <ion-col size="6">
-            <bk-searchbar placeholder="{{ '@general.operation.search.placeholder' | translate | async }}" (ionInput)="onSearchtermChange($event)" />
-          </ion-col>
-          <ion-col size="6">
-            <bk-cat name="sectionType" [(value)]="selectedCategory" [categories]="categories" (changed)="onCategoryChange($event)" />
-         </ion-col>
-        </ion-row>
-      </ion-grid>
-    </ion-toolbar>
+    <!-- search and filters -->
+    <bk-list-filter 
+      [type]="types()" (typeChanged)="onTypeChange($event)"
+      (searchTermChanged)="onSearchtermChange($event)"
+     />
 
     <!-- list header -->
     <ion-toolbar color="primary">
@@ -92,7 +82,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
             <ion-item (click)="showActions(section)">
               <ion-label class="ion-hide-md-down">{{ section.bkey }}</ion-label>
               <ion-label>{{ section.name }}</ion-label>
-              <ion-label>{{ section.type | categoryName:sectionTypes }}</ion-label>
+              <ion-label>{{ section.type }}</ion-label>
             </ion-item>
           }
         </ion-list>
@@ -102,7 +92,6 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   `
 })
 export class SectionAllListComponent {
-  protected appStore = inject(AppStore);
   protected sectionListStore = inject(SectionListStore);
   private actionSheetController = inject(ActionSheetController);
 
@@ -110,19 +99,17 @@ export class SectionAllListComponent {
   protected sectionsCount = computed(() => this.sectionListStore.sections()?.length ?? 0);
   protected selectedSectionsCount = computed(() => this.filteredSections().length);
   protected isLoading = computed(() => this.sectionListStore.isLoading());
+  protected types = computed(() => this.sectionListStore.appStore.getCategory('section_type'));
+  private currentUser = computed(() => this.sectionListStore.appStore.currentUser());
 
-  protected selectedCategory = AllCategories;
-  protected categories = addAllCategory(SectionTypes);
-  protected sectionTypes = SectionTypes;
-  protected ST = SectionType;
-  private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.sectionListStore.appStore.env.services.imgixBaseUrl;
 
-  protected onSearchtermChange($event: Event): void {
-    this.sectionListStore.setSearchTerm(($event.target as HTMLInputElement).value);
+  protected onSearchtermChange(searchTerm: string): void {
+    this.sectionListStore.setSearchTerm(searchTerm);
   }
 
-  protected onCategoryChange($event: number): void {
-    this.sectionListStore.setSelectedCategory($event);
+  protected onTypeChange(type: string): void {
+    this.sectionListStore.setSelectedCategory(type);
   }
 
   /**
@@ -141,7 +128,7 @@ export class SectionAllListComponent {
    * @param section 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
-    if (hasRole('contentAdmin', this.appStore.currentUser())) {
+    if (hasRole('contentAdmin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
@@ -178,6 +165,6 @@ export class SectionAllListComponent {
   }
 
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.appStore.currentUser());
+    return hasRole(role, this.currentUser());
   }
 }

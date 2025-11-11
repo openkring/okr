@@ -1,4 +1,3 @@
-import { GenderType } from '@bk2/shared-models';
 import { getAge } from '@bk2/shared-util-core';
 
 // -------------------------------------------------------------------
@@ -29,20 +28,20 @@ export function initializeAgeByGenderStatistics(): GenderRow[] {
   ];
 }
 
-export function updateAgeByGenderStats(ageByGenderStats: GenderRow[], gender: number, dateOfBirth: string | undefined): void {
+export function updateAgeByGenderStats(ageByGenderStats: GenderRow[], gender: string, dateOfBirth: string | undefined): void {
   if (dateOfBirth === undefined) return;
   const _index = getAge(dateOfBirth, true);
   if (_index === -1) return;
   switch (gender) {
-    case GenderType.Male:
+    case 'male':
       ageByGenderStats[_index].m++;
       ageByGenderStats[ageByGenderStats.length - 1].m++; // total
       break;
-    case GenderType.Female:
+    case 'female':
       ageByGenderStats[_index].f++;
       ageByGenderStats[ageByGenderStats.length - 1].f++; // total
       break;
-    case GenderType.Other:
+    case 'other':
       ageByGenderStats[_index].d++;
       ageByGenderStats[ageByGenderStats.length - 1].d++; // total
       break;
@@ -67,8 +66,8 @@ export function initializeCategoryByGenderStatistics(): GenderRow[] {
   ];
 }
 
-function updateSingleCategory(categoryByGenderStats: GenderRow[], gender: number, index: number): void {
-  if (gender === GenderType.Male) {
+function updateSingleCategory(categoryByGenderStats: GenderRow[], gender: string, index: number): void {
+  if (gender === 'male') {
     categoryByGenderStats[index].m++;
     categoryByGenderStats[categoryByGenderStats.length - 1].m++; // total
   } else {

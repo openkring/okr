@@ -6,7 +6,7 @@ import { IonAccordion, IonAccordionGroup, IonIcon, IonItem, IonItemDivider, IonL
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { MenuAction, MenuItemModel, RoleName } from '@bk2/shared-models';
+import { MenuItemModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { SpinnerComponent } from '@bk2/shared-ui';
 import { AppNavigationService, isInSplitPane, navigateByUrl } from '@bk2/shared-util-angular';
@@ -16,6 +16,7 @@ import { AuthService } from '@bk2/auth-data-access';
 import { getTarget } from '@bk2/cms-menu-util';
 
 import { MenuStore } from './menu.component.store';
+import { DEFAULT_MENU_ACTION } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-menu',
@@ -33,19 +34,19 @@ import { MenuStore } from './menu.component.store';
       @if (isVisible()) {
         @if(menuItem(); as menuItem) {
           @switch(action()) {
-            @case(MA.Navigate) {
+            @case('navigate') {
               <ion-item button (click)="select(menuItem)">
                 <ion-icon slot="start" src="{{icon() | svgIcon }}" color="primary" />
                 <ion-label>{{ label() | translate | async }}</ion-label>
               </ion-item>
             }
-            @case(MA.Browse) {
+            @case('browse') {
               <ion-item button (click)="select(menuItem)">
                 <ion-icon slot="start" src="{{icon() | svgIcon }}" color="primary" />
                 <ion-label>{{ label() | translate | async }}</ion-label>
               </ion-item>
             }
-            @case(MA.SubMenu) {
+            @case('sub') {
               <ion-accordion-group>
                 <ion-accordion [value]="menuItem.name" toggle-icon-slot="start" >
                   <ion-item slot="header" color="primary">
@@ -59,26 +60,26 @@ import { MenuStore } from './menu.component.store';
                 </ion-accordion>
               </ion-accordion-group>
             }
-            @case(MA.Divider) {
+            @case('divider') {
               <ion-item-divider color="light">
                 <ion-label>{{ label() | translate | async }}</ion-label>
               </ion-item-divider>
             }
-            @case(MA.MainMenu) {
+            @case('main') {
               <ion-list>
                 @for(menuItemName of menuItem.menuItems; track menuItemName) {
                   <bk-menu [menuName]="menuItemName" />
                 }
               </ion-list>
             }
-            @case(MA.ContextMenu) {
+            @case('context') {
               <ion-list>
                 @for(menuItemName of menuItem.menuItems; track menuItemName) {
                   <bk-menu [menuName]="menuItemName" />
                 }
               </ion-list>
             }
-            @case(MA.CallFunction) {
+            @case('call') {
               <ion-item button (click)="select(menuItem)">
                 <ion-icon slot="start" src="{{icon() | svgIcon }}" color="primary" />
                 <ion-label>{{ label() | translate | async }}</ion-label>
@@ -107,10 +108,10 @@ export class MenuComponent {
   public menuName = input.required<string>();
 
   protected menuItem = computed(() => this.menuStore.menu());
-  protected roleNeeded = computed(() => this.menuStore.menu()?.roleNeeded);
-  protected action = computed(() => this.menuStore.menu()?.action ?? MenuAction.Navigate);
-  protected icon = computed(() => this.menuStore.menu()?.icon ?? 'help-circle');
-  protected label = computed(() => this.menuStore.menu()?.label ?? 'LABEL_UNDEFINED');
+  protected roleNeeded = computed(() => this.menuItem()?.roleNeeded);
+  protected action = computed(() => this.menuItem()?.action ?? DEFAULT_MENU_ACTION);
+  protected icon = computed(() => this.menuItem()?.icon ?? 'help-circle');
+  protected label = computed(() => this.menuItem()?.label ?? 'LABEL_UNDEFINED');
   protected readonly isVisible = computed(() => this.hasRole(this.roleNeeded()));
 
   constructor() {
@@ -121,8 +122,6 @@ export class MenuComponent {
       this.menuStore.setMenuName(this.menuName());
     });
   }
-
-  protected MA = MenuAction;
 
   public async select(menuItem: MenuItemModel): Promise<void> {
     try {
@@ -160,13 +159,13 @@ export class MenuComponent {
 
   private async selectMenuItem(router: Router, menuItem: MenuItemModel): Promise<void> {
     switch (menuItem.action) {
-      case MenuAction.Browse:
+      case 'browse':
         await Browser.open({ url: menuItem.url, windowName: getTarget(menuItem) });
         break;
-      case MenuAction.Navigate:
+      case 'navigate':
         await navigateByUrl(router, menuItem.url, menuItem.data);
         break;
-      case MenuAction.CallFunction:
+      case 'callFunction':
         this.popoverController.dismiss(menuItem.url);
         break;
       default:

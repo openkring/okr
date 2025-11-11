@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, SectionModel } from '@bk2/shared-models';
+import { SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ChangeConfirmationComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { AppNavigationService } from '@bk2/shared-util-angular';
@@ -66,16 +66,16 @@ export class SectionPageComponent {
   });
   public section = computed(() => this.sectionRef.value());
   public vm = linkedSignal(() => convertSectionToForm(this.section() ?? new SectionModel(this.appStore.tenantId())));
-  protected sectionTags = computed(() => this.appStore.getTags(ModelType.Section));
+  protected sectionTags = computed(() => this.appStore.getTags('section'));
   protected formIsValid = signal(false);
 
   /**
    * Save the changes to the section into the database.
    */
   public async save(): Promise<void> {
-    const _originalSection = await firstValueFrom(this.sectionService.read(this.id()));
-    const _section = convertFormToSection(_originalSection, this.vm(), this.appStore.tenantId());
-    await this.sectionService.update(_section, this.appStore.currentUser());
+    const originalSection = await firstValueFrom(this.sectionService.read(this.id()));
+    const section = convertFormToSection(originalSection, this.vm(), this.appStore.tenantId());
+    await this.sectionService.update(section, this.appStore.currentUser());
     this.formIsValid.set(false);
     this.appNavigationService.back();
   }
@@ -85,15 +85,15 @@ export class SectionPageComponent {
   }
 
   public async previewSection(): Promise<void> {
-    const _originalSection = await firstValueFrom(this.sectionService.read(this.id()));
-    const _modal = await this.modalController.create({
+    const originalSection = await firstValueFrom(this.sectionService.read(this.id()));
+    const modal = await this.modalController.create({
       component: PreviewModalComponent,
       cssClass: 'full-modal',
       componentProps: {
-        section: convertFormToSection(_originalSection, this.vm() as SectionFormModel, this.appStore.tenantId()),
+        section: convertFormToSection(originalSection, this.vm() as SectionFormModel, this.appStore.tenantId()),
       },
     });
-    _modal.present();
-    await _modal.onWillDismiss();
+    modal.present();
+    await modal.onWillDismiss();
   }
 }

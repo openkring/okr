@@ -1,7 +1,7 @@
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { ColorIonic, RoleEnum } from '@bk2/shared-models';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { ColorIonic } from '@bk2/shared-models';
 import { categoryValidations, stringValidations } from '@bk2/shared-util-core';
 
 import { SectionFormModel } from './section-form.model';
@@ -13,7 +13,7 @@ export const sectionFormValidations = staticSuite((model: SectionFormModel, fiel
   stringValidations('name', model.bkey, SHORT_NAME_LENGTH);
   //tagValidations('tags', model.tags);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
-  categoryValidations('roleNeeded', model.roleNeeded, RoleEnum);
+  stringValidations('roleNeeded', model.roleNeeded, WORD_LENGTH);
   categoryValidations('color', model.color, ColorIonic);
   stringValidations('title', model.bkey, SHORT_NAME_LENGTH);
   stringValidations('subTitle', model.bkey, SHORT_NAME_LENGTH);

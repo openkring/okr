@@ -2,10 +2,9 @@ import { Component, computed, input, model, output, signal } from '@angular/core
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { Importances, Priorities, TaskStates } from '@bk2/shared-categories';
 import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
-import { UserModel } from '@bk2/shared-models';
-import { CategoryComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategoryListModel, UserModel } from '@bk2/shared-models';
+import { CategorySelectComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors } from '@bk2/shared-util-core';
 
 import { TaskFormModel, taskFormModelShape, taskFormValidations } from '@bk2/task-util';
@@ -15,7 +14,7 @@ import { TaskFormModel, taskFormModelShape, taskFormValidations } from '@bk2/tas
   standalone: true,
   imports: [
     vestForms,
-    DateInputComponent, CategoryComponent,
+    DateInputComponent, CategorySelectComponent,
     TextInputComponent, ErrorNoteComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
 ],
@@ -44,15 +43,15 @@ import { TaskFormModel, taskFormModelShape, taskFormValidations } from '@bk2/tas
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat name="taskState" [value]="taskState()" [categories]="taskStates" (changed)="onChange('taskState', $event)" />
+              <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" (changed)="onChange('taskState', $event)" />
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat name="priority" [value]="priority()" [categories]="priorities" (changed)="onChange('priority', $event)"/>
+              <bk-cat-select [category]="priorities()!" selectedItemName="priority()" [withAll]="false" (changed)="onChange('priority', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat name="importance" [value]="importance()" [categories]="importances" (changed)="onChange('importance', $event)" />
+              <bk-cat-select [category]="importances()!" selectedItemName="importance()" [withAll]="false" (changed)="onChange('importance', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -64,7 +63,9 @@ import { TaskFormModel, taskFormModelShape, taskFormValidations } from '@bk2/tas
 export class TaskFormComponent {
   public vm = model.required<TaskFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public readonly taskTags = input.required<string>();
+  public readonly states = input.required<CategoryListModel>();
+  public readonly priorities = input.required<CategoryListModel>();
+  public readonly importances = input.required<CategoryListModel>();
   
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
@@ -75,15 +76,12 @@ export class TaskFormComponent {
   protected name = computed(() => this.vm().name);
   protected dueDate = computed(() => this.vm().dueDate);
   protected completionDate = computed(() => this.vm().completionDate);
-  protected taskState = computed(() => this.vm().state);
+  protected state = computed(() => this.vm().state);
   protected priority = computed(() => this.vm().priority);
   protected importance = computed(() => this.vm().importance);
   private readonly validationResult = computed(() => taskFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
-  protected taskStates = TaskStates;
-  protected priorities = Priorities;
-  protected importances = Importances;
   protected nameLength = LONG_NAME_LENGTH;
 
   protected onValueChange(value: TaskFormModel): void {

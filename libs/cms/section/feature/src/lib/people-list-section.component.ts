@@ -1,7 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { ModelType, NameDisplay, SectionModel, ViewPosition } from "@bk2/shared-models";
+import { SectionModel, ViewPosition } from "@bk2/shared-models";
 import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from "@bk2/shared-ui";
 
 import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
@@ -86,10 +86,7 @@ export class PeopleListSectionComponent {
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
 
-  public ND = NameDisplay;
-  public MT = ModelType;
   public VP = ViewPosition;
-
 
   protected onContentChange(content: string): void {
     this.contentChange.emit(content);

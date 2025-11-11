@@ -1,7 +1,6 @@
 
+import { DEFAULT_KEY, DEFAULT_LOCATION_TYPE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
-import { LocationType } from '@bk2/shared-models';
 
 export type LocationFormModel = DeepPartial<{
   bkey: string,
@@ -11,7 +10,7 @@ export type LocationFormModel = DeepPartial<{
   name: string,
   tags: string,
   address: string,
-  type: LocationType,
+  type: string,
   latitude: string,
   longitude: string,
   placeId: string,
@@ -23,11 +22,11 @@ export type LocationFormModel = DeepPartial<{
 }>;
 
 export const locationFormModelShape: DeepRequired<LocationFormModel> = {
-  bkey: '',
-  name: '',
-  tags: '',
+  bkey: DEFAULT_KEY,
+  name: DEFAULT_NAME,
+  tags: DEFAULT_TAGS,
   address: '',
-  type: LocationType.Address,
+  type: DEFAULT_LOCATION_TYPE,
   latitude: '',
   longitude: '',
   placeId: '',
@@ -35,5 +34,5 @@ export const locationFormModelShape: DeepRequired<LocationFormModel> = {
   seaLevel: 0,
   speed: 0,
   direction: 0,
-  notes: '',
+  notes: DEFAULT_NOTES,
 };

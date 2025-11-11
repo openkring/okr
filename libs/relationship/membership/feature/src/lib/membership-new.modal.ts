@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { convertMemberAndOrgToNewForm } from '@bk2/relationship-membership-util';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, OrgModel, PersonModel, RoleName, UserModel } from '@bk2/shared-models';
+import { OrgModel, PersonModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { MembershipNewFormComponent } from './membership-new.form';
@@ -39,7 +39,7 @@ export class MembershipNewModalComponent implements OnInit {
   public member = input.required<PersonModel | OrgModel>();
   public org = input.required<OrgModel>(); 
   public currentUser = input<UserModel | undefined>();
-  public modelType = input.required<ModelType>();
+  public modelType = input.required<'person' | 'org' | 'group'>();
 
   public vm = linkedSignal(() => convertMemberAndOrgToNewForm(this.member(), this.org(), this.membershipNewStore.currentUser(), this.modelType()));
 

@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel, RoleName } from '@bk2/shared-models';
+import { OrgModel, PersonModel, ReservationModel, ResourceModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
 import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared-util-core';
@@ -63,11 +63,10 @@ export class ReservationsAccordionComponent {
   public title = input('@reservation.plural');
 
   public reserver = input.required<PersonModel | OrgModel>();
-  public reserverModelType = input<ModelType>(ModelType.Person);
+  public reserverModelType = input<'person' | 'org'>('person');
   public defaultResource = input<ResourceModel>();
   protected reservations = computed(() => this.reservationsStore.reservations());
 
-  protected modelType = ModelType;
   private imgixBaseUrl = this.reservationsStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {

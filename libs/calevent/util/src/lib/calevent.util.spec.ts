@@ -1,4 +1,4 @@
-import { CalEventModel, CalEventType, Periodicity, ModelType } from '@bk2/shared-models';
+import { CalEventModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CalEventFormModel } from './calevent-form.model';
@@ -23,11 +23,13 @@ describe('CalEvent Utils', () => {
   const tenantId = 'tenant-1';
   let baseCalEvent: CalEventModel;
 
+  const modelType: 'person' | 'org' = 'person';
+
   const TestAvatar = {
     key: 'avatar-1',
     name1: 'Name One',
     name2: 'Name Two',
-    modelType: ModelType.Person,
+    modelType: modelType,
     label: 'Test Avatar',
   };
 
@@ -38,7 +40,7 @@ describe('CalEvent Utils', () => {
     baseCalEvent = new CalEventModel(tenantId);
     baseCalEvent.bkey = 'event-1';
     baseCalEvent.name = 'Test Event';
-    baseCalEvent.type = CalEventType.SocialEvent;
+    baseCalEvent.type = 'socialEvent';
     baseCalEvent.startDate = '20251010';
     baseCalEvent.startTime = '10:00';
     baseCalEvent.endDate = '20251010';
@@ -61,7 +63,7 @@ describe('CalEvent Utils', () => {
       const formModel = convertCalEventToForm(partialEvent);
       expect(formModel.startDate).toBe('');
       expect(formModel.endDate).toBe('');
-      expect(formModel.periodicity).toBe(Periodicity.Once);
+      expect(formModel.periodicity).toBe('once');
     });
   });
 
@@ -73,14 +75,14 @@ describe('CalEvent Utils', () => {
         bkey: 'event-1',
         tenants: [tenantId],
         name: 'Updated Event',
-        type: CalEventType.Training,
+        type: 'training',
         startDate: '20251111',
         startTime: '14:00',
         endDate: '20251111',
         endTime: '15:00',
         locationKey: 'loc-1',
         calendars: ['cal-1'],
-        periodicity: Periodicity.Daily,
+        periodicity: 'daily',
         repeatUntilDate: '20251231',
         responsiblePersons: [TestAvatar],
         url: 'http://example.com',
@@ -92,7 +94,7 @@ describe('CalEvent Utils', () => {
     it('should update an existing CalEventModel from a form model', () => {
       const updatedEvent = convertFormToCalEvent(baseCalEvent, formModel, tenantId);
       expect(updatedEvent.name).toBe('Updated Event');
-      expect(updatedEvent.type).toBe(CalEventType.Training);
+      expect(updatedEvent.type).toBe('training');
       expect(updatedEvent.startDate).toBe('20251111');
     });
 
@@ -107,8 +109,8 @@ describe('CalEvent Utils', () => {
       const partialForm: CalEventFormModel = { bkey: 'form-1', name: 'Partial' } as CalEventFormModel;
       const newEvent = convertFormToCalEvent(undefined, partialForm, tenantId);
       expect(newEvent.startDate).toBe('20250903'); // from mockGetTodayStr
-      expect(newEvent.type).toBe(CalEventType.SocialEvent);
-      expect(newEvent.periodicity).toBe(Periodicity.Once);
+      expect(newEvent.type).toBe('social');
+      expect(newEvent.periodicity).toBe('once');
     });
   });
 

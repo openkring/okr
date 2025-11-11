@@ -2,7 +2,6 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, PageTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { PageModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -56,8 +55,7 @@ import { PageListStore } from './page-list.store';
   <!-- search and filters -->
   <bk-list-filter 
       [tags]="pageTags()"
-      [types]="pageTypes"
-      typeName="pageType"
+      [type]="pageTypes()"
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)"
       (typeChanged)="onTypeSelected($event)"
@@ -115,8 +113,8 @@ export class PageAllListComponent {
   protected selectedPagesCount = computed(() => this.filteredPages().length);
   protected isLoading = computed(() => this.pageListStore.isLoading());
   protected pageTags = computed(() => this.pageListStore.getTags());
+  protected pageTypes = computed(() => this.pageListStore.appStore.getCategory('page_type'));
 
-  protected pageTypes = addAllCategory(PageTypes);
   private imgixBaseUrl = this.pageListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* change notifications *************************************** */
@@ -128,7 +126,7 @@ export class PageAllListComponent {
     this.pageListStore.setSelectedTag(tag);
   }
 
-  protected onTypeSelected(type: number): void {
+  protected onTypeSelected(type: string): void {
     this.pageListStore.setSelectedType(type);
   }
 

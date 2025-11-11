@@ -1,9 +1,9 @@
 import { isPlatformBrowser } from '@angular/common';
-import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
+import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, inject, input } from '@angular/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import { GoogleMap, MapType } from '@capacitor/google-maps';
 import { Capacitor } from '@capacitor/core';
-import { AlertController, IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { LocationCollection, LocationModel, SectionModel } from '@bk2/shared-models';

@@ -114,9 +114,9 @@ export class TrackerSectionComponent {
 
   constructor() {
     effect(() => {
-      const _section = this.section();
-      if (_section) {
-        this.trackerStore.setSection(_section);
+      const section = this.section();
+      if (section) {
+        this.trackerStore.setSection(section);
       }
     });
   }

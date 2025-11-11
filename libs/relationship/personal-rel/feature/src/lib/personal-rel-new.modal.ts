@@ -6,7 +6,7 @@ import { PersonalRelNewFormComponent } from '@bk2/relationship-personal-rel-ui';
 import { convertPersonsToNewForm } from '@bk2/relationship-personal-rel-util';
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, PersonModel, RoleName, UserModel } from '@bk2/shared-models';
+import {  PersonModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { PersonalRelModalsService } from './personal-rel-modals.service';
@@ -27,7 +27,8 @@ import { PersonalRelModalsService } from './personal-rel-modals.service';
     }
     <ion-content>
       <bk-personal-rel-new-form [(vm)]="vm" [currentUser]="currentUser()" 
-      [personalRelTags]="personalRelTags()" 
+      [types]="types()"
+      [allTags]="allTags()" 
       (selectPerson)="selectPerson($event)"
       (validChange)="formIsValid.set($event)" />
     </ion-content>
@@ -43,7 +44,8 @@ export class PersonalRelNewModalComponent {
   public currentUser = input<UserModel | undefined>();
 
   public vm = linkedSignal(() => convertPersonsToNewForm(this.subject(), this.object(), this.currentUser()));
-  protected personalRelTags = computed(() => this.appStore.getTags(ModelType.PersonalRel));
+  protected allTags = computed(() => this.appStore.getTags('personalrel'));
+  protected types = computed(() => this.appStore.getCategory('personalrel_type'));
 
   // as we prepared everything with defaultMember and defaultOrg, we already have a valid form, so we need to signal this here.
   protected formIsValid = signal(true);

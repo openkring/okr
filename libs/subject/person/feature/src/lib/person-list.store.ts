@@ -5,10 +5,9 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { categoryMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, AllCategories, GenderType, MembershipCollection, MembershipModel, ModelType, PersonModel } from '@bk2/shared-models';
+import { AddressModel, MembershipCollection, MembershipModel, PersonModel } from '@bk2/shared-models';
 import { AppNavigationService, confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugListLoaded, hasRole, nameMatches } from '@bk2/shared-util-core';
 
@@ -23,14 +22,14 @@ export type PersonListState = {
   orgId: string;
   searchTerm: string;
   selectedTag: string;
-  selectedGender: GenderType | typeof AllCategories;
+  selectedGender: string;
 };
 
 export const initialState: PersonListState = {
   orgId: '',
   searchTerm: '',
   selectedTag: '',
-  selectedGender: AllCategories,
+  selectedGender: 'all',
 };
 
 export const PersonListStore = signalStore(
@@ -86,7 +85,7 @@ export const PersonListStore = signalStore(
       filteredPersons: computed(() => 
         state.personsResource.value()?.filter((person: PersonModel) => 
           nameMatches(person.index, state.searchTerm()) &&
-          categoryMatches(person.gender, state.selectedGender()) &&
+          nameMatches(person.gender, state.selectedGender(), true) &&
           chipMatches(person.tags, state.selectedTag())) ?? []
       ),
       
@@ -95,7 +94,7 @@ export const PersonListStore = signalStore(
       filteredDeceased: computed(() => 
         state.deceased()?.filter((person: PersonModel) => 
           nameMatches(person.index, state.searchTerm()) &&
-          categoryMatches(person.gender, state.selectedGender()) &&
+          nameMatches(person.gender, state.selectedGender(), true) &&
           chipMatches(person.tags, state.selectedTag())) ?? []
       ),
       membershipCategory: computed(() => state.mcatResource.value() ?? undefined),
@@ -119,7 +118,7 @@ export const PersonListStore = signalStore(
         patchState(store, { searchTerm });
       },
 
-      setSelectedGender(selectedGender: GenderType | typeof AllCategories) {
+      setSelectedGender(selectedGender: string) {
         patchState(store, { selectedGender });
       },
 
@@ -129,7 +128,7 @@ export const PersonListStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Person);
+        return store.appStore.getTags('person');
       },
 
       /******************************* actions *************************************** */
@@ -147,7 +146,7 @@ export const PersonListStore = signalStore(
           }
 
           const _personKey = await store.personService.create(convertFormToNewPerson(_vm, store.tenantId()), store.currentUser());
-          const _avatarKey = ModelType.Person + '.' + _personKey;
+          const _avatarKey = `person.${_personKey}`;
           if ((_vm.email ?? '').length > 0) {
             this.saveAddress(convertNewPersonFormToEmailAddress(_vm, store.tenantId()), _avatarKey);
           }
@@ -206,7 +205,7 @@ export const PersonListStore = signalStore(
       },
 
       async copyEmailAddresses(): Promise<void> {
-        const _allEmails = store.filteredPersons().map(_person => _person.fav_email);
+        const _allEmails = store.filteredPersons().map(_person => _person.favEmail);
         const _emails = _allEmails.filter(e => e); // this filters all empty emails, because '' is a falsy value
         await copyToClipboardWithConfirmation(store.toastController, _emails.toString() ?? '', '@subject.address.operation.emailCopy.conf');
       }

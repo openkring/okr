@@ -1,29 +1,30 @@
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
-import { ColorIonic, RoleEnum, SectionProperties, SectionType } from '@bk2/shared-models';
+import { ColorIonic, SectionProperties } from '@bk2/shared-models';
+import { DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@bk2/shared-constants';
 
 export type SectionFormModel = DeepPartial<{
   bkey: string;
   name: string;
   tags: string;
   description: string;
-  roleNeeded: RoleEnum;
+  roleNeeded: string;
   color: ColorIonic;
   title: string;
   subTitle: string;
-  type: number;
+  type: string;
   properties?: SectionProperties;
 }>;
 
 export const sectionFormModelShape: DeepRequired<SectionFormModel> = {
-  bkey: '',
-  name: '',
-  tags: '',
-  description: '',
-  roleNeeded: RoleEnum.Privileged,
+  bkey: DEFAULT_KEY,
+  name: DEFAULT_NAME,
+  tags: DEFAULT_TAGS,
+  description: DEFAULT_NOTES,
+  roleNeeded: DEFAULT_ROLE,
   color: ColorIonic.Primary,
-  title: '',
-  subTitle: '',
-  type: SectionType.Article,
+  title: DEFAULT_TITLE,
+  subTitle: DEFAULT_TITLE,
+  type: DEFAULT_SECTION_TYPE,
   properties: {},
 };

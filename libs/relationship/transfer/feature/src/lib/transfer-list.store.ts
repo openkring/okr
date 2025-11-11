@@ -3,10 +3,10 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches, yearMatches } from '@bk2/shared-categories';
+import { yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, ModelType, TransferCollection, TransferModel, TransferType } from '@bk2/shared-models';
+import { TransferCollection, TransferModel } from '@bk2/shared-models';
 import { chipMatches, getSystemQuery, getYear, nameMatches } from '@bk2/shared-util-core';
 
 import { TransferService } from '@bk2/relationship-transfer-data-access';
@@ -16,17 +16,17 @@ import { TransferModalsService } from './transfer-modals.service';
 export type TransferListState = {
   searchTerm: string;
   selectedTag: string;
-  selectedType: TransferType | typeof AllCategories;
+  selectedType: string;
   selectedYear: number;
-  selectedState: number;
+  selectedState: string;
 };
 
 export const initialTransferListState: TransferListState = {
   searchTerm: '',
   selectedTag: '',
-  selectedType: AllCategories,
+  selectedType: 'all',
   selectedYear: getYear(),
-  selectedState: AllCategories,
+  selectedState: 'all',
 };
 
 export const TransferListStore = signalStore(
@@ -57,8 +57,8 @@ export const TransferListStore = signalStore(
         state.transfersResource.value()?.filter((transfer: TransferModel) => 
           nameMatches(transfer.index, state.searchTerm()) &&
           yearMatches(transfer.dateOfTransfer, state.selectedYear() + '') &&
-          categoryMatches(transfer.type, state.selectedType()) &&
-          categoryMatches(transfer.state, state.selectedState()) &&
+          nameMatches(transfer.type, state.selectedType()) &&
+          nameMatches(transfer.state, state.selectedState()) &&
           chipMatches(transfer.tags, state.selectedTag()))
       ),
       isLoading: computed(() => state.transfersResource.isLoading()),
@@ -73,7 +73,7 @@ export const TransferListStore = signalStore(
         patchState(store, { searchTerm });
       },
 
-      setSelectedType(selectedType: TransferType | typeof AllCategories) {
+      setSelectedType(selectedType: string) {
         patchState(store, { selectedType });
       },
 
@@ -85,13 +85,13 @@ export const TransferListStore = signalStore(
         patchState(store, { selectedYear });
       },
 
-      setSelectedState(selectedState: number) {
+      setSelectedState(selectedState: string) {
         patchState(store, { selectedState });
       },
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Transfer);
+        return store.appStore.getTags('transfer');
       },
 
       /******************************** actions ******************************************* */
@@ -99,7 +99,7 @@ export const TransferListStore = signalStore(
         const _currentPerson = store.currentPerson();
         const _defaultResource = store.defaultResource();
         if (!_currentPerson || !_defaultResource) return;
-        await store.transferModalsService.add(_currentPerson, ModelType.Person, _currentPerson, ModelType.Person, _defaultResource);
+        await store.transferModalsService.add(_currentPerson, 'person', _currentPerson, 'person', _defaultResource);
         store.transfersResource.reload();
       },
 

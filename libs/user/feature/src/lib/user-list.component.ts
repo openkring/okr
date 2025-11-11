@@ -107,11 +107,11 @@ export class UserListComponent {
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch(_selectedMethod) {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
       case 'add':  await this.userListStore.add(); break;
       case 'exportRaw': await this.userListStore.export('raw'); break;
-      default: error(undefined, `UserListComponent.onPopoverDismiss: unknown method ${_selectedMethod}`);
+      default: error(undefined, `UserListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 

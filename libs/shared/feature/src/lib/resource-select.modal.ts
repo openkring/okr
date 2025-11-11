@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, ResourceModel, UserModel } from '@bk2/shared-models';
+import { ResourceModel, UserModel } from '@bk2/shared-models';
 import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { getAvatarKey } from '@bk2/shared-util-core';
 
@@ -61,8 +61,6 @@ export class ResourceSelectModalComponent {
   protected selectedResourcesCount = computed(() => this.resources().length);
   protected isLoading = computed(() => this.resourceSelectStore.isLoading());
 
-  protected modelType = ModelType;
-
   constructor() {
     effect(() => {
       this.resourceSelectStore.setSelectedTag(this.selectedTag());
@@ -82,6 +80,6 @@ export class ResourceSelectModalComponent {
 
   // 20.0:key for a rowing boat, 20.4:key for a locker
   protected getAvatarKey(resource: ResourceModel): string {
-    return getAvatarKey(ModelType.Resource, resource.bkey, resource.type, resource.subType);
+    return getAvatarKey('resource', resource.bkey, resource.type, resource.subType);
   }
 }

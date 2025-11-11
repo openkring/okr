@@ -1,8 +1,8 @@
 
-import { LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { AvatarInfo, BkModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, ModelType } from '@bk2/shared-models';
+import { LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { AvatarInfo, BkModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel } from '@bk2/shared-models';
 import { only, staticSuite } from 'vest';
-import { booleanValidations, categoryValidations, stringValidations } from './vest.util';
+import { booleanValidations, stringValidations } from './vest.util';
 
 /**
  * Validates BkModel attributes:
@@ -31,13 +31,13 @@ export const baseValidations = staticSuite((model: BkModel, field?: string) => {
     stringValidations('index', model.index, LONG_NAME_LENGTH);
   }
   if (isAddressableModel(model)) {
-    stringValidations('fav_email', model.fav_email, SHORT_NAME_LENGTH);
-    stringValidations('fav_phone', model.fav_phone, SHORT_NAME_LENGTH);
-    stringValidations('fav_street_name', model.fav_street_name, NAME_LENGTH);
-    stringValidations('fav_street_number', model.fav_street_number, NUMBER_LENGTH);
-    stringValidations('fav_zip_code', model.fav_zip_code, SHORT_NAME_LENGTH);
-    stringValidations('fav_city', model.fav_city, SHORT_NAME_LENGTH);
-    stringValidations('fav_country_code', model.fav_country_code, SHORT_NAME_LENGTH);
+    stringValidations('fav_email', model.favEmail, SHORT_NAME_LENGTH);
+    stringValidations('fav_phone', model.favPhone, SHORT_NAME_LENGTH);
+    stringValidations('fav_street_name', model.favStreetName, NAME_LENGTH);
+    stringValidations('fav_street_number', model.favStreetNumber, NUMBER_LENGTH);
+    stringValidations('fav_zip_code', model.favZipCode, SHORT_NAME_LENGTH);
+    stringValidations('fav_city', model.favCity, SHORT_NAME_LENGTH);
+    stringValidations('fav_country_code', model.favCountryCode, SHORT_NAME_LENGTH);
   }
   if (isPersistedModel(model)) {  
    // tenantValidations(model.tenants);
@@ -56,7 +56,7 @@ export const avatarInfoValidations = staticSuite((name: string, model?: AvatarIn
     stringValidations(name + '.key', model.key, SHORT_NAME_LENGTH);
     stringValidations(name + 'name1', model.name1, NAME_LENGTH);
     stringValidations(name + 'name2', model.name2, NAME_LENGTH);
-    categoryValidations(name + 'modelType', model.modelType, ModelType);
+    stringValidations(name + 'modelType', model.modelType, WORD_LENGTH);
     stringValidations(name + 'label', model.key, SHORT_NAME_LENGTH);
   }
 });

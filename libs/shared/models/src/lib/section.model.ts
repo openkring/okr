@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE } from '@bk2/shared-constants';
 import { AvatarInfo } from './avatar-info';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 import { AlbumStyle } from './enums/album-style.enum';
@@ -8,7 +9,6 @@ import { GalleryEffect } from './enums/gallery-effect.enum';
 import { HorizontalPosition } from './enums/horizontal-position.enum';
 import { ImageAction } from './enums/image-action.enum';
 import { ImageType } from './enums/image-type.enum';
-import { SectionType } from './enums/section-type.enum';
 import { ViewPosition } from './enums/view-position.enum';
 
 export type Slot = 'start' | 'end' | 'icon-only' | 'none';
@@ -155,7 +155,7 @@ export interface MapInfo {
 // the configuration of any BOM
 export interface ModelInfo {
   bkey?: string;
-  modelType?: number; // ModelType
+  modelType?: string;
   visibleAttributes?: string[];
 }
 
@@ -226,18 +226,18 @@ export interface SectionProperties {
 }
 
 export class SectionModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = '';
-  public tenants: string[] = [];
+  public bkey = DEFAULT_KEY;
+  public tenants = DEFAULT_TENANTS;
   public isArchived = false;
-  public name = ''; // a meaningful name of the section
-  public index = '';
-  public tags = '';
-  public description = ''; // a detailed description of the section
+  public name = DEFAULT_NAME; // a meaningful name of the section
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS;
+  public description = DEFAULT_NOTES; // a detailed description of the section
   public roleNeeded = 'privileged'; // RoleName
   public color: ColorIonic | undefined = undefined;
-  public title: string | undefined = undefined;
-  public subTitle: string | undefined = undefined;
-  public type = SectionType.Article;
+  public title = DEFAULT_TITLE;
+  public subTitle = DEFAULT_TITLE;
+  public type = DEFAULT_SECTION_TYPE;
   public properties: SectionProperties = {};
 
   constructor(tenantId: string) {

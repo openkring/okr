@@ -34,7 +34,7 @@
     {"path": "../../../relationship/ownership/feature/tsconfig.lib.json"},
     {"path": "../../../relationship/personal-rel/feature/tsconfig.lib.json"},
     {"path": "../../../relationship/reservation/feature/tsconfig.lib.json"},
-    {"path": "../../../relationship/working-rel/feature/tsconfig.lib.json"},
+    {"path": "../../../relationship/workrel/feature/tsconfig.lib.json"},
     {"path": "../../../subject/address/feature/tsconfig.lib.json"},
     {"path": "../../../subject/address/data-access/tsconfig.lib.json"},
     {"path": "../../../subject/person/data-access/tsconfig.lib.json"},

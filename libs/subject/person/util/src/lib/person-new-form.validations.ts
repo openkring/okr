@@ -1,8 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
-import { GenderType } from '@bk2/shared-models';
-import { categoryValidations, dateValidations, isAfterDate, isFutureDate, stringValidations } from '@bk2/shared-util-core';
+import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
+import { dateValidations, isAfterDate, isFutureDate, stringValidations } from '@bk2/shared-util-core';
 
 import { PersonNewFormModel } from './person-new-form.model';
 import { ssnValidations } from './ssn.validations';
@@ -12,7 +11,7 @@ export const personNewFormValidations = staticSuite((model: PersonNewFormModel, 
 
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH, 4, true);
-  categoryValidations('gender', model.gender, GenderType);
+  stringValidations('gender', model.gender, WORD_LENGTH);
   dateValidations('dateOfBirth', model.dateOfBirth);
   dateValidations('dateOfDeath', model.dateOfDeath);
   ssnValidations('ssn', model.ssnId);

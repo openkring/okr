@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, OrgModel, PersonModel, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
+import { OrgModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -27,7 +27,7 @@ import { ReservationNewFormComponent } from './reservation-new.form';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-reservation-new-form [(vm)]="vm" [currentUser]="currentUser()" [reservationTags]="reservationTags()" (validChange)="onValidChange($event)" />
+      <bk-reservation-new-form [(vm)]="vm" (validChange)="onValidChange($event)" />
     </ion-content>
   `
 })
@@ -37,11 +37,11 @@ export class ReservationNewModalComponent implements OnInit {
 
   public reserver = input.required<PersonModel | OrgModel>();
   public resource = input.required<ResourceModel>(); 
-  public currentUser = input<UserModel | undefined>();
-  public modelType = input.required<ModelType>();
+  public modelType = input.required<string>();
 
   public vm = linkedSignal(() => convertReserverAndResourceToNewForm(this.reserver(), this.resource(), this.currentUser(), this.modelType()));
-  protected reservationTags = computed(() => this.appStore.getTags(ModelType.Reservation));
+
+  public currentUser = computed(() => this.appStore.currentUser());
 
   protected formIsValid = signal(false);
 

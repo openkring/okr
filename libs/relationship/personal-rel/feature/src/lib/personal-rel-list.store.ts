@@ -3,9 +3,8 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, ModelType, PersonalRelModel, PersonalRelType } from '@bk2/shared-models';
+import { PersonalRelModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, isPersonalRel, nameMatches } from '@bk2/shared-util-core';
 
@@ -19,13 +18,13 @@ import { PersonalRelNewModalComponent } from './personal-rel-new.modal';
 export type PersonalRelListState = {
   searchTerm: string;
   selectedTag: string;
-  selectedPersonalRelType: PersonalRelType | typeof AllCategories;
+  selectedPersonalRelType: string;
 };
 
 const initialState: PersonalRelListState = {
   searchTerm: '',
   selectedTag: '',
-  selectedPersonalRelType: AllCategories,
+  selectedPersonalRelType: 'all',
 };
 
 export const PersonalRelListStore = signalStore(
@@ -55,7 +54,7 @@ export const PersonalRelListStore = signalStore(
       filteredPersonalRels: computed(() => {
         return state.personalRelsResource.value()?.filter((personalRel: PersonalRelModel) => 
           nameMatches(personalRel.index, state.searchTerm()) &&
-          categoryMatches(personalRel.type, state.selectedPersonalRelType()) &&
+          nameMatches(personalRel.type, state.selectedPersonalRelType()) &&
           chipMatches(personalRel.tags, state.selectedTag()))
       }),
       isLoading: computed(() => state.personalRelsResource.isLoading()),
@@ -75,13 +74,13 @@ export const PersonalRelListStore = signalStore(
         patchState(store, { selectedTag });
       },      
 
-      setSelectedPersonalRelType(selectedPersonalRelType: number) {
+      setSelectedPersonalRelType(selectedPersonalRelType: string) {
         patchState(store, { selectedPersonalRelType });
       },
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.PersonalRel);
+        return store.appStore.getTags('personalrel');
       },
 
       /******************************** actions ******************************************* */

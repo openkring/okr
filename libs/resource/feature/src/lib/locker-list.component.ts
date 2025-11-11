@@ -2,9 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, GenderTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, GenderType, ResourceModel, RoleName } from '@bk2/shared-models';
+import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -49,12 +48,9 @@ import { ResourceListStore } from './resource-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="lockerTags()"
-      [types]="allGenders"
-      typeName="gender"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+      [type]="types()" (typeChanged)="onTypeSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
-      (typeChanged)="onTypeSelected($event)"
      />
 
     <!-- list header -->
@@ -99,11 +95,10 @@ export class LockerListComponent {
   protected lockersCount = computed(() => this.resourceListStore.lockersCount());
   protected selectedLockersCount = computed(() => this.filteredLockers().length);
   protected isLoading = computed(() => this.resourceListStore.isLoading());
-  protected lockerTags = computed(() => this.resourceListStore.getLockerTags());
+  protected tags = computed(() => this.resourceListStore.getLockerTags());
+  protected types = computed(() => this.resourceListStore.appStore.getCategory('gender'));
   protected title = '@resource.locker.plural';
   
-  protected selectedCategory = AllCategories;
-  protected allGenders = addAllCategory(GenderTypes);
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
@@ -115,16 +110,16 @@ export class LockerListComponent {
     this.resourceListStore.setSelectedTag($event);
   }
 
-  protected onTypeSelected(gender: number): void {
+  protected onTypeSelected(gender: string): void {
     this.resourceListStore.setSelectedGender(gender);
   }
 
   /******************************** getters ******************************************* */
   protected getIcon(resource: ResourceModel): string {
     switch(resource.subType) {
-      case GenderType.Male: return 'gender_male';
-      case GenderType.Female: return 'gender_female';
-      case GenderType.Other: return 'gender_diverse';
+      case 'male': return 'gender_male';
+      case 'female': return 'gender_female';
+      case 'other': return 'gender_diverse';
       default: return 'help';
     }
   }

@@ -6,7 +6,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, UserModel } from '@bk2/shared-models';
+import { UserModel } from '@bk2/shared-models';
 import { DateInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, getAvatarKey, getFullPersonName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
 
@@ -105,8 +105,6 @@ export class OwnershipNewFormComponent {
   protected readonly shape = ownershipNewFormModelShape;
   private readonly validationResult = computed(() => ownershipNewFormValidations(this.vm()));
 
-  protected modelType = ModelType;
-
   protected onValueChange(value: OwnershipFormModel): void {
     this.vm.update((_vm) => ({ ..._vm, ...value }));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
@@ -120,7 +118,7 @@ export class OwnershipNewFormComponent {
   }
 
   protected async selectOwner(): Promise<void> {
-    if (this.ownerModelType() === ModelType.Person) {
+    if (this.ownerModelType() === 'person') {
       this.selectPerson();
     } else {
       this.selectOrg();
@@ -145,7 +143,7 @@ export class OwnershipNewFormComponent {
           ownerKey: data.bkey,
           ownerName1: data.firstName,
           ownerName2: data.lastName,
-          ownerModelType: ModelType.Person,
+          ownerModelType: 'person',
           ownerType: data.gender,
         }));
         debugFormErrors('OwnershipNewForm (Person)', this.validationResult().errors, this.currentUser());
@@ -173,7 +171,7 @@ export class OwnershipNewFormComponent {
           ownerKey: data.bkey,
           ownerName1: '',
           ownerName2: data.name,
-          ownerModelType: ModelType.Org,
+          ownerModelType: 'org',
           ownerType: data.type,
         }));
         debugFormErrors('OwnershipNewForm (Org)', this.validationResult().errors, this.currentUser());
@@ -199,7 +197,7 @@ export class OwnershipNewFormComponent {
         this.vm.update((_vm) => ({
           ..._vm,
           resourceKey: data.bkey,
-          resourceModelType: ModelType.Resource,
+          resourceModelType: 'resource',
           resourceType: data.type,
           resourceSubType: data.subType,
           resourceName: data.name,
@@ -218,6 +216,6 @@ export class OwnershipNewFormComponent {
     if (_ownership.resourceModelType !== undefined && _ownership.resourceKey) {
       return getAvatarKey(_ownership.resourceModelType, _ownership.resourceKey, _ownership.resourceType, _ownership.resourceSubType);
     }
-    return ModelType.Resource + '.' + this.appStore.defaultResource()?.bkey; // default avatar
+    return 'resource.' + this.appStore.defaultResource()?.bkey; // default avatar
   }
 }

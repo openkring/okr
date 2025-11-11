@@ -4,9 +4,8 @@ import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, GenderType, ModelType, ResourceCollection, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared-models';
+import { ResourceCollection, ResourceModel } from '@bk2/shared-models';
 import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, getSystemQuery, isResource, nameMatches } from '@bk2/shared-util-core';
 
@@ -18,17 +17,17 @@ import { ResourceEditModalComponent } from './resource-edit.modal';
 export type ResourceListState = {
   searchTerm: string;
   selectedTag: string;
-  selectedResourceType: ResourceType | typeof AllCategories;
-  selectedBoatType: RowingBoatType| typeof AllCategories;
-  selectedGender: GenderType | typeof AllCategories;
+  selectedResourceType: string;
+  selectedBoatType: string;
+  selectedGender: string;
 };
 
 const initialState: ResourceListState = {
   searchTerm: '',
   selectedTag: '',
-  selectedResourceType: AllCategories,
-  selectedBoatType: AllCategories,
-  selectedGender: AllCategories,
+  selectedResourceType: 'all',
+  selectedBoatType: 'all',
+  selectedGender: 'all',
 };
 
 export const ResourceListStore = signalStore(
@@ -56,12 +55,12 @@ export const ResourceListStore = signalStore(
       filteredResources: computed(() => 
         state.resourceResource.value()?.filter((resource: ResourceModel) => 
           nameMatches(resource.index, state.searchTerm()) &&
-          categoryMatches(resource.type, state.selectedResourceType()) &&
+          nameMatches(resource.type, state.selectedResourceType()) &&
           chipMatches(resource.tags, state.selectedTag()))
       ),
-      boats: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === ResourceType.RowingBoat) ?? []),
-      lockers: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === ResourceType.Locker) ?? []),
-      keys: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === ResourceType.Key) ?? []),
+      boats: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'rboat') ?? []),
+      lockers: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'locker') ?? []),
+      keys: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'key') ?? []),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
       isLoading: computed(() => state.resourceResource.isLoading()),
@@ -73,14 +72,14 @@ export const ResourceListStore = signalStore(
       filteredBoats: computed(() => 
         state.boats()?.filter((resource: ResourceModel) => 
           nameMatches(resource.index, state.searchTerm()) &&
-          categoryMatches(resource.subType, state.selectedBoatType()) &&
+          nameMatches(resource.subType, state.selectedBoatType()) &&
           chipMatches(resource.tags, state.selectedTag()))
       ),
       lockersCount: computed(() => state.lockers().length ?? 0),
       filteredLockers: computed(() =>
         state.lockers()?.filter((resource: ResourceModel) =>
           nameMatches(resource.index, state.searchTerm()) &&
-          categoryMatches(resource.subType, state.selectedGender()) &&
+          nameMatches(resource.subType, state.selectedGender()) &&
           chipMatches(resource.tags, state.selectedTag()))
       ),
       keysCount: computed(() => state.keys().length ?? 0),
@@ -99,15 +98,15 @@ export const ResourceListStore = signalStore(
         patchState(store, { searchTerm });
       },
 
-      setSelectedResourceType(selectedResourceType: ResourceType | typeof AllCategories) {
+      setSelectedResourceType(selectedResourceType: string) {
         patchState(store, { selectedResourceType });
       },
 
-      setSelectedBoatType(selectedBoatType: RowingBoatType | typeof AllCategories) {
+      setSelectedBoatType(selectedBoatType: string) {
         patchState(store, { selectedBoatType });
       },
 
-      setSelectedGender(selectedGender: GenderType | typeof AllCategories) {
+      setSelectedGender(selectedGender: string) {
         patchState(store, { selectedGender });
       },
 
@@ -117,33 +116,33 @@ export const ResourceListStore = signalStore(
 
       /******************************** getters ******************************************* */
       getResourceTags(): string {
-        return store.appStore.getTags(ModelType.Resource);
+        return store.appStore.getTags('resource');
       },
 
       getLockerTags(): string {
-        return store.appStore.getTags(parseInt(ModelType.Resource + '.' + ResourceType.Locker));
+        return store.appStore.getTags('resource.locker');
       },
 
       getKeyTags(): string {
-        return store.appStore.getTags(parseInt(ModelType.Resource + '.' + ResourceType.Key));
+        return store.appStore.getTags('resource.key');
       },
       
       getRowingBoatTags(): string {
-        return store.appStore.getTags(parseInt(ModelType.Resource + '.' + ResourceType.RowingBoat));
+        return store.appStore.getTags('resource.rboat');
       },
 
       /******************************** actions ******************************************* */
       async add(isTypeEditable = false): Promise<void> {
-        const _resource = new ResourceModel(store.tenantId());
-        const _modal = await store.modalController.create({
+        const resource = new ResourceModel(store.tenantId());
+        const modal = await store.modalController.create({
           component: ResourceEditModalComponent,
           componentProps: {
-            resource: _resource,
+            resource: resource,
             isTypeEditable: isTypeEditable
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onDidDismiss();
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm') {
           if (isResource(data, store.tenantId())) {
             await (!data.bkey ? 

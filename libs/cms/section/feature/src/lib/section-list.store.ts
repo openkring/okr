@@ -4,9 +4,8 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 
-import { categoryMatches, SectionTypes } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, SectionModel, SectionType } from '@bk2/shared-models';
+import { SectionModel } from '@bk2/shared-models';
 import { CardSelectModalComponent } from '@bk2/shared-ui';
 import { nameMatches } from '@bk2/shared-util-core';
 
@@ -17,12 +16,12 @@ import { SectionEditModalComponent } from './section-edit.modal';
 
 export type SectionListState = {
   searchTerm: string;
-  selectedCategory: SectionType | typeof AllCategories;
+  selectedCategory: string;
 };
 
 export const initialState: SectionListState = {
   searchTerm: '',
-  selectedCategory: AllCategories
+  selectedCategory: 'all'
 };
 
 export const SectionListStore = signalStore(
@@ -46,9 +45,11 @@ export const SectionListStore = signalStore(
       sectionsCount: computed(() => state.sectionsResource.value()?.length ?? 0),
       filteredSections: computed(() => 
         state.sectionsResource.value()?.filter((section: SectionModel) => 
-          nameMatches(section.index, state.searchTerm()) && categoryMatches(section.type, state.selectedCategory())   
+          nameMatches(section.index, state.searchTerm()) && 
+          nameMatches(section.type, state.selectedCategory())   
         )),
       isLoading: computed(() => state.sectionsResource.isLoading()),
+      sectionTypes: computed(() => state.appStore.getCategory('section_type'))
       }
   }),
 
@@ -63,7 +64,7 @@ export const SectionListStore = signalStore(
         patchState(store, { searchTerm });
       },
 
-      setSelectedCategory(selectedCategory: SectionType | typeof AllCategories) {
+      setSelectedCategory(selectedCategory: string) {
         patchState(store, { selectedCategory });
       },
 
@@ -73,35 +74,35 @@ export const SectionListStore = signalStore(
       },
 
       async add() {
-        const _modal = await store.modalController.create({
+        const modal = await store.modalController.create({
           component: CardSelectModalComponent,
           cssClass: 'full-modal',
           componentProps: {
-            categories: SectionTypes,
+            categories: store.sectionTypes(),
             slug: 'section'
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onWillDismiss();
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm') { // data = selected Category
-          const _section = createSection(data, store.appStore.tenantId());
-          this.edit(await store.sectionService.create(_section));
+          const section = createSection(data, store.appStore.tenantId());
+          this.edit(await store.sectionService.create(section));
         }
         this.reset();
       },
 
       async edit(sectionKey?: string): Promise<void> {
         if (sectionKey) {
-          const _section = await firstValueFrom(store.sectionService.read(sectionKey));
-          if (_section) {
-            const _modal = await store.modalController.create({
+          const section = await firstValueFrom(store.sectionService.read(sectionKey));
+          if (section) {
+            const modal = await store.modalController.create({
               component: SectionEditModalComponent,
               componentProps: {
-                section: _section
+                section: section
               }
             });
-            _modal.present();
-            const { data, role } = await _modal.onWillDismiss();
+            modal.present();
+            const { data, role } = await modal.onWillDismiss();
             if (role === 'confirm') {
               if (isSection(data, store.appStore.tenantId())) {
                 store.sectionService.update(data, store.appStore.currentUser());

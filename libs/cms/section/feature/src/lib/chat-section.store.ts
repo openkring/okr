@@ -8,7 +8,7 @@ import { catchError, from, map, Observable, of } from 'rxjs';
 import { ChannelService, ChatClientService, StreamI18nService } from 'stream-chat-angular';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ChatConfig, DefaultLanguage, ModelType } from '@bk2/shared-models';
+import { ChatConfig, DefaultLanguage } from '@bk2/shared-models';
 import { debugData, debugItemLoaded, debugMessage, die } from '@bk2/shared-util-core';
 
 import { AvatarService } from '@bk2/avatar-data-access';
@@ -59,9 +59,9 @@ export const ChatSectionStore = signalStore(
           debugMessage(`ChatSectionStore.imageUrlResource: No user, can't load image.`);
           return of(undefined);
         }
-        const _url$ = store.avatarService.getAvatarImgixUrl(ModelType.Person + '.' + params.currentUser.personKey)
-        debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${params.currentUser.personKey}`, _url$, store.currentUser());
-        return _url$;
+        const url$ = store.avatarService.getAvatarImgixUrl(`person.${params.currentUser.personKey}`)
+        debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${params.currentUser.personKey}`, url$, store.currentUser());
+        return url$;
       }
     }),
 
@@ -126,13 +126,13 @@ export const ChatSectionStore = signalStore(
       isLoading: computed(() => state.imageUrlResource.isLoading()),
       error: computed(() => state.imageUrlResource.error()),
       chatUser: computed((): ChatUser | undefined => {
-        const _user = state.currentUser();
-        const _url = state.imageUrl();
-        if (!_user || !_url) return undefined;
+        const user = state.currentUser();
+        const url = state.imageUrl();
+        if (!user || !url) return undefined;
         return {
-          id: _user.bkey,
-          name: _user.firstName,
-          imageUrl: _url
+          id: user.bkey,
+          name: user.firstName,
+          imageUrl: url
         };
       })
     }
@@ -163,25 +163,25 @@ export const ChatSectionStore = signalStore(
         patchState(store, { isChatInitialized: true }); // Mark as initialized
 
         try {
-          const _langCode = store.currentUser()?.userLanguage || DefaultLanguage;
-          const _lang = Languages[_langCode].abbreviation;
-          await store.streamI18nService.setTranslation(_lang);
-          console.log(`ChatSectionStore.initializeChat: Setting chat language to ${_lang} (${_langCode})`);
+          const langCode = store.currentUser()?.userLanguage || DefaultLanguage;
+          const lang = Languages[langCode].abbreviation;
+          await store.streamI18nService.setTranslation(lang);
+          console.log(`ChatSectionStore.initializeChat: Setting chat language to ${lang} (${langCode})`);
         } catch (error) {
           console.error(`ChatSectionStore.initializeChat: Failed to set German translation:`, error);
           // Fallback: proceed without translation or use default
         }
 
-        const _config = store.config() ?? die('ChatSectionStore.initializeChat: No config found.');
-        const channel = store.chatService.chatClient.channel(_config.channelType ?? 'messaging', _config.channelId, {
-          image: _config.channelImageUrl ?? '',
-          name: _config.channelName ?? '',
+        const config = store.config() ?? die('ChatSectionStore.initializeChat: No config found.');
+        const channel = store.chatService.chatClient.channel(config.channelType ?? 'messaging', config.channelId, {
+          image: config.channelImageUrl ?? '',
+          name: config.channelName ?? '',
         } as any);
-        const _state = await channel.watch();
+        await channel.watch();
 
         store.channelService.init({
-          type: _config.channelType ?? 'messaging',
-          id: { $eq: _config.channelId ?? 'chat' },
+          type: config.channelType ?? 'messaging',
+          id: { $eq: config.channelId ?? 'chat' },
         });
         debugMessage(`ChatSectionStore.initializeChat: Chat initialized for user ${chatUser.id}`);
       }

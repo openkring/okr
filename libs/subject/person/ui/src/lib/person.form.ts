@@ -1,14 +1,14 @@
-import { Component, computed, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { GenderTypes } from '@bk2/shared-categories';
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
-import { GenderType, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
-import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
+import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
 import { PersonFormModel, personFormModelShape, personFormValidations } from '@bk2/subject-person-util';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-person-form',
@@ -16,7 +16,7 @@ import { PersonFormModel, personFormModelShape, personFormValidations } from '@b
   imports: [
     vestForms,
     FormsModule,
-    TextInputComponent, DateInputComponent, CategoryComponent, ChipsComponent, NotesInputComponent,
+    TextInputComponent, DateInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardTitle, IonCardHeader, IonCardContent
   ],  
   template: `
@@ -63,7 +63,7 @@ import { PersonFormModel, personFormModelShape, personFormValidations } from '@b
               <ion-row>
                 @if(isVisibleToUser(priv().showGender)) {
                   <ion-col size="12" size-md="6">
-                    <bk-cat name="gender" [value]="gender()" [categories]="genderTypes" [readOnly]="readOnly()" (changed)="onChange('gender', $event)" />
+                    <bk-cat-select [category]="genders()!" [selectedItemName]="gender()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('gender', $event)" />
                   </ion-col>
                 }
         
@@ -83,7 +83,7 @@ import { PersonFormModel, personFormModelShape, personFormValidations } from '@b
         </ion-card>
 
         @if(isVisibleToUser(priv().showTags)) {
-          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="personTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
         }
         
         @if(isVisibleToUser(priv().showNotes)) {
@@ -95,30 +95,29 @@ import { PersonFormModel, personFormModelShape, personFormValidations } from '@b
 export class PersonFormComponent {  
   public vm = model.required<PersonFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public personTags = input.required<string>();
+  public allTags = input.required<string>();
   public priv = input.required<PrivacySettings>();
+  public genders = input.required<CategoryListModel>();
   
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
 
   public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
-  protected firstName = computed(() => this.vm().firstName ?? '');
-  protected lastName = computed(() => this.vm().lastName ?? '');
-  protected dateOfBirth = computed(() => this.vm().dateOfBirth ?? '');
-  protected dateOfDeath = computed(() => this.vm().dateOfDeath ?? '');
-  protected gender = computed(() => this.vm().gender ?? GenderType.Male);
-  protected ssnId = computed(() => this.vm().ssnId ?? '');
-  protected bexioId = computed(() => this.vm().bexioId ?? '');
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
+  protected firstName = computed(() => this.vm().firstName ?? DEFAULT_NAME);
+  protected lastName = computed(() => this.vm().lastName ?? DEFAULT_NAME);
+  protected dateOfBirth = computed(() => this.vm().dateOfBirth ?? DEFAULT_DATE);
+  protected dateOfDeath = computed(() => this.vm().dateOfDeath ?? DEFAULT_DATE);
+  protected gender = computed(() => this.vm().gender ?? DEFAULT_GENDER);
+  protected ssnId = computed(() => this.vm().ssnId ?? DEFAULT_ID);
+  protected bexioId = computed(() => this.vm().bexioId ?? DEFAULT_ID);
+  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES);
 
   protected readonly suite = personFormValidations;
   protected readonly shape = personFormModelShape;
   private readonly validationResult = computed(() => personFormValidations(this.vm()));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
 
-  protected GT = GenderType;
-  protected genderTypes = GenderTypes;
   protected bexioMask = BexioIdMask;
   protected ssnMask = ChSsnMask;
 

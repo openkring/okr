@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MenuItemModel, MenuAction, RoleEnum } from '@bk2/shared-models';
+import { MenuItemModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 import { isMenuItem, convertMenuItemToForm, convertFormToMenuItem } from './menu.util';
 import { MenuItemFormModel } from './menu-item-form.model';
@@ -34,7 +34,7 @@ describe('Menu Utils', () => {
     rootMenuItem.bkey = 'root-1';
     rootMenuItem.name = 'Main Menu';
     rootMenuItem.label = '@menu.main';
-    rootMenuItem.action = MenuAction.Navigate;
+    rootMenuItem.action = 'navigate';
     rootMenuItem.url = '/home';
     rootMenuItem.menuItems = ['child-1'];
 
@@ -42,7 +42,7 @@ describe('Menu Utils', () => {
     childMenuItem.bkey = 'child-1';
     childMenuItem.name = 'Sub Menu';
     childMenuItem.label = '@menu.sub';
-    childMenuItem.action = MenuAction.Navigate;
+    childMenuItem.action = 'navigate';
     childMenuItem.url = '/about';
     childMenuItem.menuItems = [];
 
@@ -82,7 +82,7 @@ describe('Menu Utils', () => {
         name: 'Updated Menu',
         label: '@menu.updated',
         url: '/updated',
-        roleNeeded: RoleEnum.Admin,
+        roleNeeded: 'admin',
         menuItems: ['child-1', 'child-2'],
         tenants: [tenantId],
       };

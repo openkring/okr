@@ -1,8 +1,8 @@
-import { ResourceTypes } from '@bk2/shared-categories';
-import { ResourceModel, ResourceType, RowingBoatUsage } from '@bk2/shared-models';
-import { doubleNumber2name, extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@bk2/shared-util-core';
+import { ResourceModel } from '@bk2/shared-models';
+import { extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@bk2/shared-util-core';
 
 import { ResourceFormModel } from './resource-form.model';
+import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 /* ----------------------------- */
 export function convertResourceToForm(resource: ResourceModel | undefined): ResourceFormModel {
@@ -19,9 +19,7 @@ export function convertResourceToForm(resource: ResourceModel | undefined): Reso
     keyNr: getKeyNr(resource),
     lockerNr: getLockerNr(resource),
     type: resource.type,
-    gender: getGender(resource),
-    rowingBoatType: getRowingBoatType(resource),
-    carType: getCarType(resource),
+    subType: resource.subType, // carType, rowingBoatType, boatType, gender (Locker) etc.
     usage: resource.usage,
     currentValue: resource.currentValue,
     weight: resource.weight,
@@ -41,7 +39,7 @@ export function convertResourceToForm(resource: ResourceModel | undefined): Reso
 }
 
 function getKeyNr(resource: ResourceModel): number {
-  if (resource.type === ResourceType.Locker) {
+  if (resource.type === 'locker') {
     return parseInt(extractSecondPartOfOptionalTupel(resource.name, '/'));
   } else {
     return 0;
@@ -49,71 +47,52 @@ function getKeyNr(resource: ResourceModel): number {
 }
 
 function getLockerNr(resource: ResourceModel): number {
-  return resource.type === ResourceType.Locker ? parseInt(extractFirstPartOfOptionalTupel(resource.name, '/')) : 0;
-}
-
-function getGender(resource: ResourceModel): number {
-  return resource.type === ResourceType.Locker ? resource.subType : 0;
-}
-
-function getRowingBoatType(resource: ResourceModel): number {
-  return resource.type === ResourceType.RowingBoat ? resource.subType : 0;
-}
-
-function getCarType(resource: ResourceModel): number {
-  return resource.type === ResourceType.Car ? resource.subType : 0;
+  return resource.type === 'locker' ? parseInt(extractFirstPartOfOptionalTupel(resource.name, '/')) : 0;
 }
 
 export function convertFormToResource(resource: ResourceModel | undefined, vm: ResourceFormModel, tenantId: string): ResourceModel {
   resource ??= new ResourceModel(tenantId);
 
-  resource.bkey = vm.bkey ?? '';
-  switch (vm.type) {
-    case ResourceType.RowingBoat:
-      resource.name = vm.name ?? '';
-      resource.subType = vm.rowingBoatType ?? 0;
-      break;
-    case ResourceType.Locker:
-      resource.name = doubleNumber2name(vm.lockerNr, vm.keyNr, '/', 2);
-      resource.subType = vm.gender ?? 0;
-      break;
-    case ResourceType.Car:
-      resource.name = vm.name ?? '';
-      resource.subType = vm.carType ?? 0;
-      break;
-    case ResourceType.Key:
-    default:
-      resource.name = vm.name ?? '';
-      resource.subType = 0;
-      break;
-  }
-  resource.type = vm.type ?? ResourceType.RowingBoat;
-  resource.usage = vm.usage ?? RowingBoatUsage.Breitensport;
+  resource.bkey = vm.bkey ?? DEFAULT_KEY;
+  resource.name = vm.name ?? DEFAULT_NAME;
+  resource.type = vm.type ?? DEFAULT_RESOURCE_TYPE;
+  resource.subType = getDefaultForResourceType(resource.type);
+  resource.usage = vm.usage ?? DEFAULT_RBOAT_USAGE;
   resource.currentValue = parseInt(vm.currentValue + ''); // make sure it's a number (input returns string)
   resource.weight = parseInt(vm.weight + ''); // make sure it's a number (input returns string)
   resource.load = vm.load ?? '';
   resource.color = vm.hexColor ?? '';
-  resource.description = vm.description ?? '';
-  resource.tags = vm.tags ?? '';
+  resource.description = vm.description ?? DEFAULT_NOTES;
+  resource.tags = vm.tags ?? DEFAULT_TAGS;
 
   return resource;
 }
 
-export function isReservable(resourceType: ResourceType): boolean {
+export function getDefaultForResourceType(resourceType?: string): string {
+  if (!resourceType) return '';
   switch (resourceType) {
-    case ResourceType.RowingBoat:
+    case 'rboat': return DEFAULT_RBOAT_TYPE;
+    case 'locker': return DEFAULT_GENDER;
+    case 'car': return DEFAULT_CAR_TYPE;
+    default: return '';
+  }
+}
+
+export function isReservable(resourceType: string): boolean {
+  switch (resourceType) {
+    case 'rboat':
       return true;
-    case ResourceType.Boat:
+    case 'boat':
       return true;
-    case ResourceType.Car:
+    case 'car':
       return true;
-    case ResourceType.Locker:
+    case 'locker':
       return false;
-    case ResourceType.Key:
+    case 'key':
       return false;
-    case ResourceType.RealEstate:
+    case 'realestate':
       return true;
-    case ResourceType.Other:
+    case 'other':
       return true;
     default:
       return false;
@@ -121,16 +100,7 @@ export function isReservable(resourceType: ResourceType): boolean {
 }
 
 /* ---------------------- Getters -------------------------*/
-export function getResourceLogo(resourceType: ResourceType): string {
-  return ResourceTypes[resourceType].icon;
-}
-
-export function getResourceSlug(resourceType: ResourceType): string {
-  return ResourceTypes[resourceType].name;
-}
-
-export function getResourceTitle(resourceType: ResourceType, operation: string | undefined, isResourceAdmin: boolean): string {
+export function getResourceTitle(resourceType: string, operation: string | undefined, isResourceAdmin: boolean): string {
   const _operation = operation || isResourceAdmin ? 'update' : 'view';
-  const _slug = getResourceSlug(resourceType);
-  return `@resource.${_slug}.operation.${_operation}.label`;
+  return `@resource.${resourceType}.operation.${_operation}.label`;
 }

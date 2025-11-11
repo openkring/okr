@@ -41,25 +41,28 @@ export class ColorComponent {
   public hexColor = model<string | undefined>('#ffffcc');
   public label = input('@input.color.label');
   public changed = output<string>();
+  public readOnly = input(false);
 
   public async selectColor(): Promise<void> {
-    const _modal = await this.modalController.create({
-      component: ColorSelectModalComponent,
-      cssClass: 'color-modal',
-      componentProps: {
-        hexColor: this.hexColor()
+    if (this.readOnly() === false) {
+      const _modal = await this.modalController.create({
+        component: ColorSelectModalComponent,
+        cssClass: 'color-modal',
+        componentProps: {
+          hexColor: this.hexColor()
+        }
+      });
+      _modal.present();
+      try {
+        const { data, role} = await _modal.onWillDismiss();
+        if (role === 'confirm') {
+          this.hexColor.set(data);
+          this.changed.emit(data);
+        }
       }
-    });
-    _modal.present();
-    try {
-      const { data, role} = await _modal.onWillDismiss();
-      if (role === 'confirm') {
-        this.hexColor.set(data);
-        this.changed.emit(data);
+      catch (_ex) {
+        error(undefined, 'BkColorComponent.selectColor -> ERROR: ' + JSON.stringify(_ex));
       }
-    }
-    catch (_ex) {
-      error(undefined, 'BkColorComponent.selectColor -> ERROR: ' + JSON.stringify(_ex));
     }
   }
 }

@@ -1,8 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { GenderType } from '@bk2/shared-models';
-import { categoryValidations, dateValidations, isAfterDate, isFutureDate, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { dateValidations, isAfterDate, isFutureDate, stringValidations } from '@bk2/shared-util-core';
 
 import { PersonFormModel } from './person-form.model';
 import { ssnValidations } from './ssn.validations';
@@ -13,7 +12,7 @@ export const personFormValidations = staticSuite((model: PersonFormModel, field?
   stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);
-  categoryValidations('gender', model.gender, GenderType);
+  stringValidations('gender', model.gender, WORD_LENGTH);
   dateValidations('dateOfBirth', model.dateOfBirth);
   dateValidations('dateOfDeath', model.dateOfDeath);
   ssnValidations('ssn', model.ssnId);

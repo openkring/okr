@@ -2,9 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
-import { ResourceTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
+import { OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
 import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared-util-core';
@@ -59,15 +58,13 @@ export class OwnershipAccordionComponent {
   private actionSheetController = inject(ActionSheetController);
 
   public owner = input.required<PersonModel | OrgModel>();
-  public ownerModelType = input<ModelType>(ModelType.Person);
+  public ownerModelType = input<'person' | 'org'>('person');
   public defaultResource = input<ResourceModel>();
   public color = input('light');
   public title = input('@ownership.plural');
 
   protected ownerships = computed(() => this.ownershipStore.ownerships());
 
-  protected modelType = ModelType;
-  protected resourceTypes = ResourceTypes;
   private imgixBaseUrl = this.ownershipStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {

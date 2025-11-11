@@ -1,8 +1,7 @@
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
-import { getModelSlug } from '@bk2/shared-categories';
-import { DOCUMENT_DIR, ModelType } from '@bk2/shared-models';
+import { DOCUMENT_DIR } from '@bk2/shared-models';
 import { checkUrlType, warn } from '@bk2/shared-util-core';
 
 import { readAsFile } from '@bk2/avatar-util';
@@ -13,13 +12,13 @@ import { readAsFile } from '@bk2/avatar-util';
  * @returns the image taken or selected
  */
 export async function pickPhoto(platform: Platform): Promise<File | undefined> {
-  const _photo = await Camera.getPhoto({
+  const photo = await Camera.getPhoto({
     quality: 90,
     allowEditing: false,
     resultType: CameraResultType.Uri,
     source: platform.is('mobile') ? CameraSource.Prompt : CameraSource.Photos,
   });
-  return await readAsFile(_photo, platform);
+  return await readAsFile(photo, platform);
 }
 
 /* ---------------------- Helpers -------------------------*/
@@ -43,7 +42,7 @@ export function checkMimeType(mimeType: string, imagesOnly = false): boolean {
   return false;
 }
 
-export function getDocumentStoragePath(tenant: string, modelType: ModelType, key?: string): string | undefined {
+export function getDocumentStoragePath(tenant: string, modelType: string, key?: string): string | undefined {
   if (modelType === undefined) {
     warn('document.util.getDocumentStoragePath -> modelType is undefined');
     return undefined;
@@ -56,8 +55,7 @@ export function getDocumentStoragePath(tenant: string, modelType: ModelType, key
     warn('document.util.getDocumentStoragePath -> tenant is undefined');
     return undefined;
   }
-  const _slug = getModelSlug(modelType);
-  return `${tenant}/${_slug}/${key}/${DOCUMENT_DIR}`;
+  return `${tenant}/${modelType}/${key}/${DOCUMENT_DIR}`;
 }
 
 /**
@@ -70,11 +68,11 @@ export function getDocumentStoragePath(tenant: string, modelType: ModelType, key
  * @param modelType the model type of the model
  * @param tenant the tenant of the model
  */
-export function getStoragePath(url: string | undefined, modelType: ModelType, tenant: string): string | undefined {
+export function getStoragePath(url: string | undefined, modelType: string, tenant: string): string | undefined {
   if (!url || url.length === 0) return undefined;
-  const _urlType = checkUrlType(url);
-  if (_urlType === 'storage') return url;
-  if (_urlType === 'key') {
+  const urlType = checkUrlType(url);
+  if (urlType === 'storage') return url;
+  if (urlType === 'key') {
     return getDocumentStoragePath(tenant, modelType, url);
   }
   return undefined;

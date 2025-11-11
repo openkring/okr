@@ -1,14 +1,15 @@
-import { DefaultResourceInfo, ModelType, OrgModel, Periodicity, PersonModel, ResourceInfo, ResourceModel, TransferModel, TransferState, TransferType } from '@bk2/shared-models';
+import { DefaultResourceInfo, OrgModel, PersonModel, ResourceInfo, ResourceModel, TransferModel } from '@bk2/shared-models';
 import { addIndexElement, getAvatarInfoArray, getAvatarKeys, getAvatarNames, getTodayStr, isType } from '@bk2/shared-util-core';
 
 import { TransferFormModel } from './transfer-form.model';
+import { DEFAULT_CURRENCY, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TASK_STATE, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE } from '@bk2/shared-constants';
 
-export function newTransferFormModel(subject?: PersonModel | OrgModel, subjectModelType?: ModelType, object?: PersonModel | OrgModel, objectModelType?: ModelType, resource?: ResourceModel): TransferFormModel {
+export function newTransferFormModel(subject?: PersonModel | OrgModel, subjectModelType?: string, object?: PersonModel | OrgModel, objectModelType?: string, resource?: ResourceModel): TransferFormModel {
   return {
-    bkey: '',
-    name: '',
-    tags: '',
-    notes: '',
+    bkey: DEFAULT_KEY,
+    name: DEFAULT_NAME,
+    tags: DEFAULT_TAGS,
+    notes: DEFAULT_NOTES,
 
     subjects: getAvatarInfoArray(subject, subjectModelType),
     objects: getAvatarInfoArray(object, objectModelType),
@@ -16,14 +17,14 @@ export function newTransferFormModel(subject?: PersonModel | OrgModel, subjectMo
 
     // transfer
     dateOfTransfer: getTodayStr(),
-    type: TransferType.Purchase,
-    state: TransferState.Initial,
-    label: '', // a label for a custom transfer type
+    type: DEFAULT_TRANSFER_TYPE,
+    state: DEFAULT_TASK_STATE,
+    label: DEFAULT_LABEL, // a label for a custom transfer type
 
     // price
-    price: 0,
-    currency: 'CHF',
-    periodicity: Periodicity.Once,
+    price: DEFAULT_PRICE,
+    currency: DEFAULT_CURRENCY,
+    periodicity: DEFAULT_PERIODICITY,
   };
 }
 
@@ -40,10 +41,10 @@ function getResourceInfo(resource?: ResourceModel): ResourceInfo {
 export function convertTransferToForm(transfer: TransferModel | undefined): TransferFormModel {
   if (!transfer) return newTransferFormModel();
   return {
-    bkey: transfer.bkey ?? '',
-    name: transfer.name ?? '',
-    tags: transfer.tags ?? '',
-    notes: transfer.notes ?? '',
+    bkey: transfer.bkey ?? DEFAULT_KEY,
+    name: transfer.name ?? DEFAULT_NAME,
+    tags: transfer.tags ?? DEFAULT_TAGS,
+    notes: transfer.notes ?? DEFAULT_NOTES,
 
     subjects: transfer.subjects ?? [],
     objects: transfer.objects ?? [],
@@ -51,25 +52,25 @@ export function convertTransferToForm(transfer: TransferModel | undefined): Tran
 
     // transfer
     dateOfTransfer: transfer.dateOfTransfer ?? getTodayStr(),
-    type: transfer.type ?? TransferType.Purchase,
-    state: transfer.state ?? TransferState.Initial,
-    label: transfer.label ?? '',
+    type: transfer.type ?? DEFAULT_TRANSFER_TYPE,
+    state: transfer.state ?? DEFAULT_TRANSFER_STATE,
+    label: transfer.label ?? DEFAULT_LABEL,
 
     // price
-    price: transfer.price ?? 0,
-    currency: transfer.currency ?? 'CHF',
-    periodicity: transfer.periodicity ?? Periodicity.Once,
+    price: transfer.price ?? DEFAULT_PRICE,
+    currency: transfer.currency ?? DEFAULT_CURRENCY,
+    periodicity: transfer.periodicity ?? DEFAULT_PERIODICITY,
   };
 }
 
 export function convertFormToTransfer(transfer: TransferModel | undefined, vm: TransferFormModel, tenantId: string): TransferModel {
   if (!transfer) {
     transfer = new TransferModel(tenantId);
-    transfer.bkey = vm.bkey ?? '';
+    transfer.bkey = vm.bkey ?? DEFAULT_KEY;
   }
-  transfer.tags = vm.tags ?? '';
-  transfer.notes = vm.notes ?? '';
-  transfer.name = vm.name ?? '';
+  transfer.tags = vm.tags ?? DEFAULT_TAGS;
+  transfer.notes = vm.notes ?? DEFAULT_NOTES;
+  transfer.name = vm.name ?? DEFAULT_NAME;
 
   transfer.subjects = vm.subjects ?? [];
   transfer.objects = vm.objects ?? [];
@@ -77,14 +78,14 @@ export function convertFormToTransfer(transfer: TransferModel | undefined, vm: T
 
   // transfer
   transfer.dateOfTransfer = vm.dateOfTransfer ?? getTodayStr();
-  transfer.type = vm.type ?? TransferType.Purchase;
-  transfer.state = vm.state ?? TransferState.Initial;
-  transfer.label = vm.label ?? '';
+  transfer.type = vm.type ?? DEFAULT_TRANSFER_TYPE;
+  transfer.state = vm.state ?? DEFAULT_TRANSFER_STATE;
+  transfer.label = vm.label ?? DEFAULT_LABEL;
 
   // price
-  transfer.price = vm.price ?? 0;
-  transfer.currency = vm.currency ?? 'CHF';
-  transfer.periodicity = vm.periodicity ?? Periodicity.Once;
+  transfer.price = vm.price ?? DEFAULT_PRICE;
+  transfer.currency = vm.currency ?? DEFAULT_CURRENCY;
+  transfer.periodicity = vm.periodicity ?? DEFAULT_PERIODICITY;
 
   return transfer;
 }
@@ -94,9 +95,9 @@ export function isTransfer(transfer: unknown, tenantId: string): transfer is Tra
 }
 
 /************************************************* Search Index ********************************************************** */
-export function getName(modelType: ModelType, name1: string, name2: string): string {
+export function getName(modelType: 'person' | 'org', name1: string, name2: string): string {
   // tbd: consider NameDisplay
-  if (modelType === ModelType.Person) {
+  if (modelType === 'person') {
     return `${name1} ${name2}`;
   } else {
     return name2;

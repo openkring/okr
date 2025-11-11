@@ -7,9 +7,11 @@ import { AvatarService } from '@bk2/avatar-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { ImageAction, newImage } from '@bk2/shared-models';
 import { getImageDimensionsFromMetadata, updateImageDimensions, UploadService } from '@bk2/shared-ui';
+import { Observable, of } from 'rxjs';
+import { getModelAndKey } from '@bk2/shared-util-core';
 
 export interface AvatarToolbarState {
-  key: string; // = ModelType.ModelKey e.g. 1.lasdfölj
+  key: string; // = ModelType.ModelKey e.g. person.lasdfölj
 }
 
 export const initialState: AvatarToolbarState = {
@@ -29,7 +31,13 @@ export const AvatarToolbarStore = signalStore(
         key: store.key(),
         currentUser: store.appStore.currentUser(),
       }),
-      stream: ({ params }) => store.avatarService.getRelStorageUrl(params.key),
+      stream: ({ params }) => {
+        let url$: Observable<string | undefined> = of(undefined);
+        if (params.key) {
+          url$ = store.avatarService.getRelStorageUrl(params.key)
+        }
+        return url$;
+      },
     }),
   })),
 
@@ -38,6 +46,11 @@ export const AvatarToolbarStore = signalStore(
       isLoading: computed(() => state.urlResource.isLoading()),
       imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
       relStorageUrl: computed(() => state.urlResource.value() ?? ''),
+      currentUser: computed(() => state.appStore.currentUser()),
+      modelType: computed(() => {
+        const [modelType, key] = getModelAndKey(state.key());
+        return state.appStore.getCategoryItem('model_type', modelType);
+      })
     };
   }),
 
@@ -60,7 +73,7 @@ export const AvatarToolbarStore = signalStore(
 
           // if we can not read the dimensions from the image meta data, calculate them from the image file and upload as metadata to firebase storage
           if (!dimensions) {
-            dimensions = await updateImageDimensions(path, store.appStore.currentUser());
+            dimensions = await updateImageDimensions(path, store.currentUser());
           }
           
           // if we have valid dimensions, show the zoomed image in a modal

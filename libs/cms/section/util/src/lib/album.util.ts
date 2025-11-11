@@ -11,43 +11,43 @@ export async function listAllFilesFromDirectory(
   config: AlbumConfig,
   imgixBaseUrl: string,
   directory: string): Promise<Image[]> {
-  const _images: Image[] = [];
+  const images: Image[] = [];
   try {
-    const _listRef = ref(storage, directory);
+    const listRef = ref(storage, directory);
 
     // listAll returns prefixes (= subdirectories) and items (= files)
-    const _result = await listAll(_listRef);
+    const result = await listAll(listRef);
 
     // list all subdirectories in the directory
-    _result.prefixes.forEach((_dir) => {
-      _images.push(getImage(imgixBaseUrl, directory, _dir, ImageType.Dir));
+    result.prefixes.forEach((_dir) => {
+      images.push(getImage(imgixBaseUrl, directory, _dir, ImageType.Dir));
     });
 
     // list all files in the directory
-    _result.items.forEach((_file) => {
-      const _imageType = getImageType(_file.name);
-      switch (_imageType) {
+    result.items.forEach((_file) => {
+      const imageType = getImageType(_file.name);
+      switch (imageType) {
         case ImageType.Image:
-          _images.push(getImage(imgixBaseUrl, directory, _file, _imageType));
+          images.push(getImage(imgixBaseUrl, directory, _file, imageType));
           break;
         case ImageType.Video:
           if (config.showVideos) {
-            _images.push(getImage(imgixBaseUrl, directory, _file, _imageType));
+            images.push(getImage(imgixBaseUrl, directory, _file, imageType));
           }
           break;
         case ImageType.StreamingVideo:
           if (config.showStreamingVideos) {
-            _images.push(getImage(imgixBaseUrl, directory, _file, _imageType));
+            images.push(getImage(imgixBaseUrl, directory, _file, imageType));
           }
           break;
         case ImageType.Pdf:
           if (config.showPdfs) {
-            _images.push(getImage(imgixBaseUrl, directory, _file, _imageType));
+            images.push(getImage(imgixBaseUrl, directory, _file, imageType));
           }
           break;
         case ImageType.Doc:
           if (config.showDocs) {
-            _images.push(getImage(imgixBaseUrl, directory, _file, _imageType));
+            images.push(getImage(imgixBaseUrl, directory, _file, imageType));
           }
           break;
         case ImageType.Audio:
@@ -56,10 +56,10 @@ export async function listAllFilesFromDirectory(
       }
     });
   }
-  catch (_ex) {
-    console.error('AlbumlistAllFilesFromCurrentDirectory -> error: ', _ex);
+  catch (ex) {
+    console.error('AlbumlistAllFilesFromCurrentDirectory -> error: ', ex);
   }
-  return _images;
+  return images;
 }
 
 /**
@@ -109,12 +109,12 @@ export function getUrl(imgixBaseUrl: string, directory: string, imageType: Image
 }
 
 export function getActionUrl(imgixBaseUrl: string, directory: string, imageType: ImageType, fileName: string): string {
-  const _downloadUrl = `${imgixBaseUrl}/${directory}/${fileName}`;
+  const downloadUrl = `${imgixBaseUrl}/${directory}/${fileName}`;
   switch (imageType) {
     case ImageType.Video:
     case ImageType.Audio:
     case ImageType.Doc:
-    case ImageType.Pdf: return _downloadUrl;
+    case ImageType.Pdf: return downloadUrl;
     case ImageType.Dir: return `${directory}/${fileName}`;
     default: return '';
   }
@@ -144,10 +144,10 @@ export function convertThumbnailToFullImage(image: Image, width: number, height:
 
 export function getBackgroundStyle(imgixBaseUrl: string, image: Image): { [key: string]: string } {
   if (!image.width || !image.height) die('album.util: image width and height must be set');
-  const _params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
-  const _url = `${imgixBaseUrl}/${image.url}?${_params}`;
+  const params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
+  const url = `${imgixBaseUrl}/${image.url}?${params}`;
   return {
-    'background-image': `url(${_url})`,
+    'background-image': `url(${url})`,
     'min-height': '200px',
     'background-size': 'cover',
     'background-position': 'center',
@@ -167,28 +167,28 @@ interface ImageMetaDataResponse {
 export async function getImageMetaData(httpClient: HttpClient, imgixBaseUrl: string, image?: Image): Promise<ImageMetaData | undefined> {
   if (!image) die('album.util.getMetaData -> image is mandatory')
   if (!image.url) die('album.util.getMetaData -> image url is not set');
-  const _url = getImgixJsonUrl(image.url, imgixBaseUrl);
-  const _data = await firstValueFrom(httpClient.get<ImageMetaDataResponse>(_url));
-  debugData('album.util.getMetaData -> data: ', _data);
-  const _metaData: ImageMetaData = {
-    altitude: _data.GPS?.Altitude,
-    latitude: _data.GPS?.Latitude,
-    longitude: _data.GPS?.Longitude,
-    speed: _data.GPS?.Speed,
-    direction: _data.GPS?.ImgDirection,
-    size: _data['Content-Length'],
-    height: _data.PixelHeight,
-    width: _data.PixelWidth,
-    cameraMake: _data.TIFF?.Make,
-    cameraModel: _data.TIFF?.Model,
-    software: _data.TIFF?.Software,
-    focalLength: _data.Exif?.FocalLength,
-    focalLengthIn35mmFilm: _data.Exif?.FocalLengthIn35mmFilm,
-    aperture: _data.Exif?.FNumber,
-    exposureTime: _data.Exif?.ExposureTime,
-    iso: _data.Exif?.ISOSpeedRatings,
-    lensModel: _data.Exif?.LensModel
+  const url = getImgixJsonUrl(image.url, imgixBaseUrl);
+  const data = await firstValueFrom(httpClient.get<ImageMetaDataResponse>(url));
+  debugData('album.util.getMetaData -> data: ', data);
+  const metaData: ImageMetaData = {
+    altitude: data.GPS?.Altitude,
+    latitude: data.GPS?.Latitude,
+    longitude: data.GPS?.Longitude,
+    speed: data.GPS?.Speed,
+    direction: data.GPS?.ImgDirection,
+    size: data['Content-Length'],
+    height: data.PixelHeight,
+    width: data.PixelWidth,
+    cameraMake: data.TIFF?.Make,
+    cameraModel: data.TIFF?.Model,
+    software: data.TIFF?.Software,
+    focalLength: data.Exif?.FocalLength,
+    focalLengthIn35mmFilm: data.Exif?.FocalLengthIn35mmFilm,
+    aperture: data.Exif?.FNumber,
+    exposureTime: data.Exif?.ExposureTime,
+    iso: data.Exif?.ISOSpeedRatings,
+    lensModel: data.Exif?.LensModel
   };
-  debugData('album.util.getMetaData -> metaData: ', _metaData);
-  return _metaData;
+  debugData('album.util.getMetaData -> metaData: ', metaData);
+  return metaData;
 }

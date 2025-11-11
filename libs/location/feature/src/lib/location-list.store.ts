@@ -3,9 +3,8 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, LocationModel, LocationType, ModelType } from '@bk2/shared-models';
+import { LocationModel } from '@bk2/shared-models';
 import { chipMatches, nameMatches } from '@bk2/shared-util-core';
 
 import { LocationService } from '@bk2/location-data-access';
@@ -16,13 +15,13 @@ import { LocationEditModalComponent } from './location-edit.modal';
 export type LocationListState = {
   searchTerm: string;
   selectedTag: string;
-  selectedCategory: LocationType | typeof AllCategories;
+  selectedCategory: string;
 };
 
 export const initialState: LocationListState = {
   searchTerm: '',
   selectedTag: '',
-  selectedCategory: AllCategories,
+  selectedCategory: 'all',
 };
 
 export const LocationListStore = signalStore(
@@ -47,7 +46,7 @@ export const LocationListStore = signalStore(
       filteredLocations: computed(() => 
         state.locationsResource.value()?.filter((location: LocationModel) => 
           nameMatches(location.index, state.searchTerm()) &&
-          categoryMatches(location.type, state.selectedCategory()) &&
+          nameMatches(location.type, state.selectedCategory()) &&
           chipMatches(location.tags, state.selectedTag()))
       ), 
       currentUser: computed(() => state.appStore.currentUser()),
@@ -67,7 +66,7 @@ export const LocationListStore = signalStore(
         patchState(store, { searchTerm });
       },
 
-      setSelectedCategory(selectedCategory: LocationType | typeof AllCategories) {
+      setSelectedCategory(selectedCategory: string) {
         patchState(store, { selectedCategory });
       },
 
@@ -77,7 +76,7 @@ export const LocationListStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Location);
+        return store.appStore.getTags('location');
       },
 
       /******************************* actions *************************************** */

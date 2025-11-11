@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/s
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, PersonalRelCollection, PersonalRelModel, RoleName, UserModel } from '@bk2/shared-models';
+import { PersonalRelCollection, PersonalRelModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { getFullPersonName, hasRole } from '@bk2/shared-util-core';
 
@@ -29,7 +29,8 @@ import { PersonalRelModalsService } from './personal-rel-modals.service';
     }
     <ion-content>
       <bk-personal-rel-form [(vm)]="vm" [currentUser]="currentUser()" 
-      [personalRelTags]="personalRelTags()"
+      [types]="types()"
+      [allTags]="tags()"
       (selectPerson)="selectPerson($event)"
       (validChange)="formIsValid.set($event)" />
 
@@ -50,7 +51,8 @@ export class PersonalRelEditModalComponent {
   public currentUser = input<UserModel | undefined>();
 
   public vm = linkedSignal(() => convertPersonalRelToForm(this.personalRel()));
-  protected personalRelTags = computed(() => this.appStore.getTags(ModelType.PersonalRel));
+  protected tags = computed(() => this.appStore.getTags('personalrel'));
+  protected types = computed(() => this.appStore.getCategory('personalrel_type'));
 
   protected readonly personalRelKey = computed(() => this.personalRel().bkey ?? '');
   protected readonly subjectUrl = computed(() => `/person/${this.vm().subjectKey}`);

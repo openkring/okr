@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared-models';
+import { CategoryCollection, CategoryListModel, MembershipModel, OrgCollection, OrgModel } from '@bk2/shared-models';
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
@@ -75,7 +75,7 @@ export const MembershipEditStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Membership);
+        return store.appStore.getTags('membership');
       },
     };
   }),

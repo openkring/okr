@@ -2,9 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, ResourceTypes, RowingBoatTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, ModelType, ResourceModel, ResourceType, RoleName } from '@bk2/shared-models';
+import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -31,7 +30,7 @@ import { ResourceListStore } from './resource-list.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedResourcesCount()}}/{{resourcesCount() }} {{ title | translate | async}}</ion-title>
+      <ion-title>{{selectedResourcesCount()}}/{{resourcesCount() }} {{ '@resource.plural' | translate | async}}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c_resource">
@@ -50,12 +49,9 @@ import { ResourceListStore } from './resource-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="resourceTags()"
-      [types]="types"
-      typeName="resourceType"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+      [type]="types()" (typeChanged)="onTypeSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
-      (typeChanged)="onTypeSelected($event)"
      />
 
   <!-- list header -->
@@ -103,14 +99,9 @@ export class ResourceListComponent {
   protected resourcesCount = computed(() => this.resourceListStore.resourcesCount());
   protected selectedResourcesCount = computed(() => this.filteredResources().length);
   protected isLoading = computed(() => this.resourceListStore.isLoading());
-  protected readonly resourceTags = computed(() => this.resourceListStore.getResourceTags());
-  protected title = '@resource.plural'
+  protected readonly tags = computed(() => this.resourceListStore.getResourceTags());
+  protected readonly types = computed(() => this.resourceListStore.appStore.getCategory('resource_type'));
   
-  protected boatTypes = RowingBoatTypes;
-  protected selectedCategory = AllCategories;
-  protected types = addAllCategory(ResourceTypes);
-  protected modelType = ModelType;
-  protected resourceTypes = ResourceTypes;
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
@@ -122,16 +113,16 @@ export class ResourceListComponent {
     this.resourceListStore.setSelectedTag($event);
   }
 
-  protected onTypeSelected($event: number): void {
+  protected onTypeSelected($event: string): void {
     this.resourceListStore.setSelectedResourceType($event);
   }
 
   /******************************** getters ******************************************* */
-  protected getIcon(resource: ResourceModel): string {
-    if (resource.type === ResourceType.RowingBoat) 
-      return this.boatTypes[resource.subType].icon;
+  protected getIcon(resource: ResourceModel): string | undefined {
+    if (resource.type === 'rboat')
+      return this.resourceListStore.appStore.getCategoryItem('rboat_type', resource.subType)?.icon
     else
-    return this.resourceTypes[resource.type].icon;
+      return this.resourceListStore.appStore.getCategoryItem('resource_type', resource.type)?.icon
   }
 
   /******************************** actions ******************************************* */

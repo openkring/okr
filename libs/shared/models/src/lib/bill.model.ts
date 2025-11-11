@@ -1,44 +1,42 @@
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@bk2/shared-constants';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
-import { GenderType } from './enums/gender-type.enum';
-import { ModelType } from './enums/model-type.enum';
-import { OrgType } from './enums/org-type.enum';
 
 /**
  * Bill = Lieferantenrechnung (Kreditor) in Bexio
  */
 export class BillModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = '';
-  public tenants: string[] = [];
+  public bkey = DEFAULT_KEY;
+  public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
-  public index = '';
-  public tags = '';
-  public description = ''; // a detailed description of the trip
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS;
+  public description = DEFAULT_NOTES; // a detailed description of the trip
 
-  public name = ''; // title
-  public billId = ''; // Rechnungsnummer
-  public billDate = ''; // Rechnungsdatum
-  public dueDate = ''; // Gültig bis
+  public name = DEFAULT_NAME; // title
+  public billId = DEFAULT_ID; // Rechnungsnummer
+  public billDate = DEFAULT_DATE; // Rechnungsdatum
+  public dueDate = DEFAULT_DATE; // Gültig bis
 
-  public amount = 0; // total amount
-  public currency = 'CHF';
-  public taxes = 0; // total taxes
+  public amount = DEFAULT_PRICE; // total amount
+  public currency = DEFAULT_CURRENCY;
+  public taxes = DEFAULT_PRICE; // total taxes
   public taxRate = 0; // tax rate in percent
   public isPaid = false; // is the invoice paid
-  public paymentDate = ''; // Datum der Zahlung
-  public bexioUrl = ''; // URL to bexio invoice
-  public bookingAccountId = ''; // Bexio ID of the booking account
+  public paymentDate = DEFAULT_DATE; // Datum der Zahlung
+  public bexioUrl = DEFAULT_URL; // URL to bexio invoice
+  public bookingAccountId = DEFAULT_ID; // Bexio ID of the booking account
 
   // subject = invoice receiver (Person or Org) Rechnungsempfänger (ich oder meine Org)
-  public subjectKey = '';
-  public subjectModelType? = ModelType.Person | ModelType.Org;
-  public subjectBexioId = ''; // Bexio ID of the subject
+  public subjectKey = DEFAULT_KEY;
+  public subjectModelType: 'person' | 'org' = 'person';
+  public subjectBexioId = DEFAULT_ID; // Bexio ID of the subject
 
   // object = invoice sender (Person or Org) Rechnungssteller / Lieferant
-  public objectKey = '';
-  public objectName = '';
-  public objectModelType? = ModelType.Person | ModelType.Org;
-  public objectType?: GenderType | OrgType;
-  public objectBexioId = ''; // Bexio ID of the object
+  public objectKey = DEFAULT_KEY;
+  public objectName = DEFAULT_NAME;
+  public objectModelType: 'person' | 'org' = 'person';
+  public objectType = DEFAULT_GENDER;
+  public objectBexioId = DEFAULT_ID; // Bexio ID of the object
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

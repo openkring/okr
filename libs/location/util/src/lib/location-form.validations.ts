@@ -1,9 +1,8 @@
 
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { LocationType } from '@bk2/shared-models';
-import { categoryValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { numberValidations, stringValidations } from '@bk2/shared-util-core';
 
 import { LocationFormModel } from './location-form.model';
 
@@ -14,7 +13,7 @@ export const locationFormValidations = staticSuite((model: LocationFormModel, fi
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
   //tagValidations('tags', model.tags);
   stringValidations('address', model.address, SHORT_NAME_LENGTH);
-  categoryValidations('locationType', model.type, LocationType);
+  stringValidations('locationType', model.type, WORD_LENGTH);
   numberValidations('latitude', parseFloat(model.latitude ?? '0'), false, -90, 90);
   numberValidations('longitude', parseFloat(model.longitude ?? '0'), false, -180, 180);
   stringValidations('placeId', model.placeId, SHORT_NAME_LENGTH);

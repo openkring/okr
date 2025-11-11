@@ -2,10 +2,9 @@ import { Component, computed, inject, input, model, output, signal } from '@angu
 import { IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { LocationTypes } from '@bk2/shared-categories';
 import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@bk2/shared-config';
-import { LocationType, RoleName, UserModel } from '@bk2/shared-models';
-import { CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
 import { LocationFormModel, locationFormModelShape, locationFormValidations } from '@bk2/location-util';
@@ -15,7 +14,7 @@ import { LocationFormModel, locationFormModelShape, locationFormValidations } fr
   standalone: true,
   imports: [
     vestForms,
-    CategoryComponent, TextInputComponent, NumberInputComponent, ChipsComponent, 
+    CategorySelectComponent, TextInputComponent, NumberInputComponent, ChipsComponent, 
     NotesInputComponent, ErrorNoteComponent,
     IonGrid, IonRow, IonCol
   ],
@@ -37,7 +36,7 @@ import { LocationFormModel, locationFormModelShape, locationFormValidations } fr
           <bk-error-note [errors]="nameErrors()" />                                                                                                                     
         </ion-col>
         <ion-col size="12" size-md="6">
-          <bk-cat name="locationType" [value]="locationType()" [categories]="locationTypes" (changed)="onChange('locationType', $event)" />                                                   
+          <bk-cat-select [category]="types()!" selectedItemName="locationType()" [withAll]=false (changed)="onChange('locationType', $event)" />
         </ion-col>
         <ion-col size="12" size-md="6">
           <bk-text-input name="latitude" [value]="latitude()" [mask]="latitudeMask" (changed)="onChange('latitude', $event)" />                                        
@@ -68,7 +67,7 @@ import { LocationFormModel, locationFormModelShape, locationFormValidations } fr
       @if(hasRole('privileged')) {
         <ion-row> 
           <ion-col>
-            <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="locationTags()" (changed)="onChange('tags', $event)" />
+            <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (changed)="onChange('tags', $event)" />
           </ion-col>
         </ion-row>
       }
@@ -88,13 +87,14 @@ export class LocationFormComponent {
   protected modalController = inject(ModalController);
   public vm = model.required<LocationFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public locationTags = input.required<string>();
+  public types = input.required<CategoryListModel>();
+  public allTags = input.required<string>();
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
 
   protected name = computed(() => this.vm().name ?? '');
-  protected locationType = computed(() => this.vm().type ?? LocationType.Geomarker);
+  protected locationType = computed(() => this.vm().type ?? 'geomarker');
   protected latitude = computed(() => this.vm().latitude + '');
   protected longitude = computed(() => this.vm().longitude + '');
   protected placeId = computed(() => this.vm().placeId ?? '');
@@ -114,7 +114,6 @@ export class LocationFormComponent {
   protected longitudeMask = LongitudeMask;
   protected latitudeMask = LatitudeMask;
   protected caseInsensitiveWordMask = CaseInsensitiveWordMask;
-  protected locationTypes = LocationTypes;
 
   protected onValueChange(value: LocationFormModel): void {
     this.vm.update((_vm) => ({..._vm, ...value}));
@@ -123,7 +122,7 @@ export class LocationFormComponent {
 
   protected onChange(fieldName: string, $event: string | string[] | number): void {
     if (fieldName === 'longitude' || fieldName === 'latitude') {
-      this.vm.update((vm) => ({ ...vm, type: parseFloat($event + '') }));
+      this.vm.update((vm) => ({ ...vm, type: $event + '' }));
     } else {
       this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
     }

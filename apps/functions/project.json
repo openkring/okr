@@ -4,6 +4,12 @@
   "sourceRoot": "apps/functions/src",
   "projectType": "application",
   "tags": ["type:app", "scope:functions", "platform:node"],
+  "implicitDependencies": [
+    "shared-constants",
+    "shared-models",
+    "shared-util-core",
+    "shared-util-functions"
+  ],
   "targets": {
     "format": {
       "executor": "nx:run-commands",

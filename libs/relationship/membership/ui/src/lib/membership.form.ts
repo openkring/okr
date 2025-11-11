@@ -3,11 +3,10 @@ import { Component, computed, input, model, output, signal } from '@angular/core
 import { IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { OrgTypes } from '@bk2/shared-categories';
 import { BexioIdMask } from '@bk2/shared-config';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryListModel, GenderType, ModelType, OrgType, Periodicity, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, getItemLabel, hasRole } from '@bk2/shared-util-core';
 
@@ -121,31 +120,31 @@ export class MembershipFormComponent {
   public membershipTags = input.required<string>();
 
   public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser())); 
-  protected memberName1 = computed(() => this.vm().memberName1 ?? ''); 
-  protected memberName2 = computed(() => this.vm().memberName2 ?? ''); 
-  protected memberModelType = computed(() => this.vm().memberModelType ?? ModelType.Person);
-  protected memberGender = computed(() => this.vm().memberType as GenderType ?? GenderType.Male);
-  protected memberOrgType = computed(() => this.vm().memberType as OrgType ?? OrgType.Association);
-  protected memberNickName = computed(() => this.vm().memberNickName ?? '');
+  protected memberName1 = computed(() => this.vm().memberName1 ?? DEFAULT_NAME); 
+  protected memberName2 = computed(() => this.vm().memberName2 ?? DEFAULT_NAME); 
+  protected memberModelType = computed(() => this.vm().memberModelType ?? 'person');
+  protected memberGender = computed(() => this.vm().memberType ?? DEFAULT_GENDER);
+  protected memberOrgType = computed(() => this.vm().memberType ?? DEFAULT_ORG_TYPE);
+  protected memberNickName = computed(() => this.vm().memberNickName ?? DEFAULT_NAME);
   protected memberAbbreviation = computed(() => this.vm().memberAbbreviation ?? '');
-  protected memberDateOfBirth = computed(() => this.vm().memberDateOfBirth ?? '');
+  protected memberDateOfBirth = computed(() => this.vm().memberDateOfBirth ?? DEFAULT_DATE);
   protected memberZipCode = computed(() => this.vm().memberZipCode ?? '');
   protected memberBexioId = computed(() => this.vm().memberBexioId ?? '');
-  protected orgKey = computed(() => this.vm().orgKey ?? '');
-  protected memberId = computed(() => this.vm().memberId ?? '');
-  protected dateOfEntry = computed(() => this.vm().dateOfEntry ?? '');
-  protected dateOfExit = computed(() => this.vm().dateOfExit ?? '');
+  protected orgKey = computed(() => this.vm().orgKey ?? DEFAULT_KEY);
+  protected memberId = computed(() => this.vm().memberId ?? DEFAULT_ID);
+  protected dateOfEntry = computed(() => this.vm().dateOfEntry ?? DEFAULT_DATE);
+  protected dateOfExit = computed(() => this.vm().dateOfExit ?? DEFAULT_DATE);
   protected membershipCategory = computed(() => getItemLabel(this.membershipCategories(), this.vm().membershipCategory));
   protected orgFunction = computed(() => this.vm().orgFunction ?? '');
-  protected priority = computed(() => this.vm().priority ?? 0);
+  protected order = computed(() => this.vm().order ?? 0);
   protected relLog = computed(() => this.vm().relLog ?? '');
   protected relIsLast = computed(() => this.vm().relIsLast ?? true);
   protected price = computed(() => this.vm().price ?? 0);
-  protected currency = computed(() => this.vm().currency ?? 'CHF');
-  protected periodicity = computed(() => this.vm().periodicity ?? Periodicity.Yearly);
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
-  protected membershipState = computed(() => this.vm().membershipCategory ?? 'active');
+  protected currency = computed(() => this.vm().currency ?? DEFAULT_CURRENCY);
+  protected periodicity = computed(() => this.vm().periodicity ?? 'yearly');
+  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES);
+  protected membershipState = computed(() => this.vm().membershipCategory ?? DEFAULT_MSTATE);
   protected i18nBase = computed(() => this.membershipCategories().i18nBase);
   protected name = computed(() => this.membershipCategories().name);
   public validChange = output<boolean>();
@@ -155,8 +154,6 @@ export class MembershipFormComponent {
   protected readonly shape = membershipFormModelShape;
   private readonly validationResult = computed(() => membershipFormValidations(this.vm()));
   
-  protected modelType = ModelType;
-  protected orgTypes = OrgTypes;
   protected bexioMask = BexioIdMask;
   protected endFutureDate = END_FUTURE_DATE_STR;
 

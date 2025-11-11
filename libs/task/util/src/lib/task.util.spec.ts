@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AvatarInfo, Importance, Priority, ModelType, TaskModel, TaskState } from '@bk2/shared-models';
+import { AvatarInfo, TaskModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 import { newTaskFormModel, convertTaskToForm, convertFormToTask, isTask } from './task.util';
 import { TaskFormModel } from './task-form.model';
@@ -23,8 +23,8 @@ describe('Task Utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    author = { key: 'author-1', name1: 'Author Name', name2: '', modelType: ModelType.Person, label: '' };
-    assignee = { key: 'assignee-1', name1: 'Assignee Name', name2: '', modelType: ModelType.Person, label: '' };
+    author = { key: 'author-1', name1: 'Author Name', name2: '', modelType: 'person', label: '' };
+    assignee = { key: 'assignee-1', name1: 'Assignee Name', name2: '', modelType: 'person', label: '' };
 
     task = new TaskModel(tenantId);
     task.bkey = 'task-1';
@@ -33,11 +33,11 @@ describe('Task Utils', () => {
     task.tags = 'test,task';
     task.author = author;
     task.assignee = assignee;
-    task.state = TaskState.Planned;
+    task.state = 'planned';
     task.dueDate = '20251224';
     task.completionDate = '';
-    task.priority = Priority.High;
-    task.importance = Importance.High;
+    task.priority = 'high';
+    task.importance = 'high';
     task.calendars = ['cal-1'];
   });
 
@@ -46,9 +46,9 @@ describe('Task Utils', () => {
       const formModel = newTaskFormModel();
       expect(formModel.bkey).toBe('');
       expect(formModel.name).toBe('');
-      expect(formModel.state).toBe(TaskState.Initial);
-      expect(formModel.priority).toBe(Priority.Medium);
-      expect(formModel.importance).toBe(Importance.Medium);
+      expect(formModel.state).toBe('initial');
+      expect(formModel.priority).toBe('medium');
+      expect(formModel.importance).toBe('medium');
       expect(formModel.author).toBeUndefined();
       expect(formModel.assignee).toBeUndefined();
     });
@@ -66,8 +66,8 @@ describe('Task Utils', () => {
       expect(formModel.bkey).toBe('task-1');
       expect(formModel.name).toBe('Test Task');
       expect(formModel.author).toEqual(author);
-      expect(formModel.state).toBe(TaskState.Planned);
-      expect(formModel.priority).toBe(Priority.High);
+      expect(formModel.state).toBe('planned');
+      expect(formModel.priority).toBe('high');
     });
   });
 
@@ -83,11 +83,11 @@ describe('Task Utils', () => {
         author: author,
         scope: author,
         assignee: assignee,
-        state: TaskState.Done,
+        state: 'done',
         dueDate: '20251231',
         completionDate: '20251230',
-        priority: Priority.Low,
-        importance: Importance.Low,
+        priority: 'low',
+        importance: 'low',
         calendars: ['cal-2'],
       };
     });
@@ -95,8 +95,8 @@ describe('Task Utils', () => {
     it('should update an existing TaskModel from a form model', () => {
       const updatedTask = convertFormToTask(task, formModel, tenantId);
       expect(updatedTask.name).toBe('Updated Task');
-      expect(updatedTask.state).toBe(TaskState.Done);
-      expect(updatedTask.priority).toBe(Priority.Low);
+      expect(updatedTask.state).toBe('done');
+      expect(updatedTask.priority).toBe('low');
       expect(updatedTask.bkey).toBe('task-1'); // Should not be changed
     });
 
@@ -112,8 +112,8 @@ describe('Task Utils', () => {
       const newTask = convertFormToTask(undefined, partialForm, tenantId);
       expect(newTask.name).toBe('Partial Task');
       expect(newTask.notes).toBe('');
-      expect(newTask.state).toBe(TaskState.Initial);
-      expect(newTask.priority).toBe(Priority.Medium);
+      expect(newTask.state).toBe('initial');
+      expect(newTask.priority).toBe('medium');
       expect(newTask.calendars).toEqual([]);
     });
   });

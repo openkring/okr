@@ -1,8 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { CalEventType, Periodicity } from '@bk2/shared-models';
-import { categoryValidations, dateValidations, isAfterDate, isAfterOrEqualDate, stringValidations, urlValidations } from '@bk2/shared-util-core';
+import { SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { dateValidations, isAfterDate, isAfterOrEqualDate, stringValidations, urlValidations } from '@bk2/shared-util-core';
 
 import { CalEventFormModel } from './calevent-form.model';
 
@@ -11,11 +10,11 @@ export const calEventFormValidations = staticSuite((model: CalEventFormModel, fi
 
   stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
-  categoryValidations('type', model.type, CalEventType);
+  stringValidations('type', model.type, WORD_LENGTH);
   dateValidations('startDate', model.startDate);
   dateValidations('endDate', model.endDate);
   stringValidations('locationKey', model.locationKey, SHORT_NAME_LENGTH);
-  categoryValidations('periodicity', model.periodicity, Periodicity);
+  stringValidations('periodicity', model.periodicity, WORD_LENGTH);
   dateValidations('repeatUntilDate', model.repeatUntilDate);
   urlValidations('url', model.url);
 // tbd: responsiblePersons: AvatarInfo[] - not yet implemented

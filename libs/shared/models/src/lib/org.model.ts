@@ -1,5 +1,5 @@
+import { DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { AddressableModel, BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
-import { OrgType } from './enums/org-type.enum';
 
 /**
  * An organization or company.
@@ -7,29 +7,29 @@ import { OrgType } from './enums/org-type.enum';
  * Hierarchies or orgcharts can be built using memberships.
  */
 export class OrgModel implements BkModel, NamedModel, AddressableModel, SearchableModel, TaggedModel {
-  public bkey = '';
-  public name = '';
-  public type = OrgType.Association;
-  public dateOfFoundation = '';
-  public dateOfLiquidation = '';
+  public bkey = DEFAULT_KEY;
+  public name = DEFAULT_NAME;
+  public type = DEFAULT_ORG_TYPE;
+  public dateOfFoundation = DEFAULT_DATE;
+  public dateOfLiquidation = DEFAULT_DATE;
 
-  public taxId = '';
-  public notes = '';
-  public tags = '';
-  public bexioId = '';
+  public taxId = DEFAULT_ID;
+  public notes = DEFAULT_NOTES;
+  public tags = DEFAULT_TAGS;
+  public bexioId = DEFAULT_ID;
   public membershipCategoryKey = 'mcat_default';
 
-  public tenants: string[] = [];
+  public tenants = DEFAULT_TENANTS;
   public isArchived = false;
-  public index = '';
+  public index = DEFAULT_INDEX;
 
-  public fav_email = '';
-  public fav_phone = '';
-  public fav_street_name = '';
-  public fav_street_number = '';
-  public fav_zip_code = '';
-  public fav_city = '';
-  public fav_country_code = '';
+  public favEmail = '';
+  public favPhone = '';
+  public favStreetName = '';
+  public favStreetNumber = '';
+  public favZipCode = '';
+  public favCity = '';
+  public favCountryCode = '';
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

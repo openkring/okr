@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryListModel, ModelType, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
 import { CategoryListFormComponent } from '@bk2/category-ui';
@@ -38,7 +38,7 @@ export class CategoryEditModalComponent {
   public vm = linkedSignal(() => convertCategoryListToForm(this.category()));
   protected formIsValid = signal(false);
 
-  protected categoryTags = computed(() => this.appStore.getTags(ModelType.Category));
+  protected categoryTags = computed(() => this.appStore.getTags('category'));
 
   public save(): Promise<boolean> {
     return this.modalController.dismiss(convertFormToCategoryList(this.category(), this.vm(), this.appStore.env.tenantId), 'confirm');

@@ -5,11 +5,11 @@ import { Observable, of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { BkModel, LogInfo, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
+import { BkModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { compareDate, getAge, getEndOfYear, getFullPersonName, getSystemQuery, getYear, isMembership } from '@bk2/shared-util-core';
 
 export type AocAdminOpsState = {
-  modelType: ModelType | undefined;
+  modelType: string | undefined;
   log: LogInfo[];
   logTitle: string;
 };
@@ -33,11 +33,11 @@ export const AocAdminOpsStore = signalStore(
       }),
       stream: ({ params }): Observable<BkModel[] | undefined> => {
         switch (params.modelType) {
-          case ModelType.Person:
+          case 'person':
             return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
-          case ModelType.Org:
+          case 'org':
             return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc');
-          case ModelType.Membership:
+          case 'membership':
             return store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.env.tenantId), 'memberName2', 'asc');
           default:
             return of(undefined);
@@ -57,16 +57,16 @@ export const AocAdminOpsStore = signalStore(
   withMethods(store => {
     return {
       /******************************** setters (filter) ******************************************* */
-      setModelType(modelType: ModelType | undefined): void {
+      setModelType(modelType: string | undefined): void {
         patchState(store, { modelType, log: [], logTitle: '' });
       },
 
-      listIban(modelType = ModelType.Person): void {
+      listIban(modelType = 'person'): void {
         console.log('AocAdminOpsStore.listIban: not yet implemented', modelType);
       },
 
       listJuniorsOlderThan(age = 18, orgKey = 'scs', refYear = getYear()): void {
-        if (store.modelType() === ModelType.Membership) {
+        if (store.modelType() === 'membership') {
           const _log = store
             .data()
             .filter(model => {

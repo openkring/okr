@@ -1,4 +1,4 @@
-import { AvatarInfo, ModelType, NameDisplay, OrgModel, PersonModel, UserModel } from '@bk2/shared-models';
+import { AvatarInfo, NameDisplay, OrgModel, PersonModel, UserModel } from '@bk2/shared-models';
 import { die, warn } from './log.util';
 
 /*-------------------------------------------- STRING ----------------------------------------------------- */
@@ -143,14 +143,14 @@ export function removeElementFromStringArray(stringArray: string[], element: str
 export function string2stringArray(val: string, separator = ','): string[] {
     const _stringArray = val.split(separator);
     // remove all empty strings
-    const _result: string[] = [];
+    const result: string[] = [];
     for (const element of _stringArray) {
       const _str = element.trim();
       if (_str.length > 0) {
-        _result.push(_str);
+        result.push(_str);
       }
     }
-    return _result;
+    return result;
 }
 
 /**
@@ -159,11 +159,11 @@ export function string2stringArray(val: string, separator = ','): string[] {
  * @returns a json object with a property { name: element } per array element
  */
 export function stringArray2ObjectArray(words: string[]): NameObject[] {
-    const _result: NameObject[] = [];
+    const result: NameObject[] = [];
     for (const word of words) {
-        _result.push({ name: word});
+        result.push({ name: word});
     }
-    return _result;
+    return result;
 }
 
 /**
@@ -262,7 +262,7 @@ export function getAvatarKeys(avatars: AvatarInfo[]): string {
   return keys;
 }
 
-export function newAvatarInfo(name1: string, name2: string, modelType = ModelType.Person): AvatarInfo {
+export function newAvatarInfo(name1: string, name2: string, modelType: 'person' | 'org' = 'person'): AvatarInfo {
   return {
     key: '',
     name1: name1,
@@ -272,15 +272,15 @@ export function newAvatarInfo(name1: string, name2: string, modelType = ModelTyp
   };
 }
 
-export function getAvatarInfo(model?: PersonModel | OrgModel, modelType?: ModelType): AvatarInfo | undefined {
+export function getAvatarInfo(model?: PersonModel | OrgModel, modelType?: string): AvatarInfo | undefined {
   if (!model || modelType === undefined) return undefined;
-  if (modelType === ModelType.Person) {
+  if (modelType === 'person') {
     const _person = model as PersonModel;
     return {
       key: _person.bkey,
       name1: _person.firstName,
       name2: _person.lastName,
-      modelType: ModelType.Person,
+      modelType: 'person',
       label: ''
     };
   } else {
@@ -289,13 +289,13 @@ export function getAvatarInfo(model?: PersonModel | OrgModel, modelType?: ModelT
       key: _org.bkey,
       name1: '',
       name2: _org.name,
-      modelType: ModelType.Org,
+      modelType: 'org',
       label: ''
     };
   }
 }
 
-export function getAvatarInfoArray(model?: PersonModel | OrgModel, modelType?: ModelType): AvatarInfo[] {
+export function getAvatarInfoArray(model?: PersonModel | OrgModel, modelType?: string): AvatarInfo[] {
   const _avatarInfo = getAvatarInfo(model, modelType);
   return _avatarInfo ? [_avatarInfo] : [];
 }
@@ -306,7 +306,7 @@ export function getAvatarInfoFromCurrentUser(currentUser?: UserModel): AvatarInf
       key: currentUser.personKey,
       name1: currentUser.firstName,
       name2: currentUser.lastName,
-      modelType: ModelType.Person,
+      modelType: 'person',
       label: ''
     };
   }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { GenderType, ModelType, OrgModel, Periodicity, PersonModel, ReservationModel, ReservationReason, ReservationState, ResourceModel, ResourceType, RowingBoatType, UserModel } from '@bk2/shared-models';
+import { OrgModel, PersonModel, ReservationModel, ResourceModel, UserModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 
 import { newReservationFormModel, convertReservationToForm, convertFormToReservation, convertReserverAndResourceToNewForm, convertFormToNewReservation, getReserverName, isReservation, getReservationSearchIndex, getReservationSearchIndexInfo } from './reservation.util';
@@ -44,7 +44,7 @@ describe('Reservation Utils', () => {
     reservation.reserverKey = 'person-1';
     reservation.reserverName = 'John';
     reservation.reserverName2 = 'Doe';
-    reservation.reserverModelType = ModelType.Person;
+    reservation.reserverModelType = 'person';
     reservation.resourceKey = 'resource-1';
     reservation.resourceName = 'Boat A';
     reservation.startDate = '20251010';
@@ -53,7 +53,7 @@ describe('Reservation Utils', () => {
     person.bkey = 'person-1';
     person.firstName = 'Jane';
     person.lastName = 'Doe';
-    person.gender = GenderType.Female;
+    person.gender = 'female';
 
     org = new OrgModel(tenantId);
     org.bkey = 'org-1';
@@ -62,8 +62,8 @@ describe('Reservation Utils', () => {
     resource = new ResourceModel(tenantId);
     resource.bkey = 'resource-1';
     resource.name = 'Single Scull';
-    resource.type = ResourceType.RowingBoat;
-    resource.subType = RowingBoatType.b1x;
+    resource.type = 'rboat';
+    resource.subType = 'b1x';
 
     currentUser = new UserModel(tenantId);
     currentUser.bkey = 'user-1';
@@ -75,7 +75,7 @@ describe('Reservation Utils', () => {
       expect(formModel.bkey).toBe('');
       expect(formModel.startDate).toBe('20250904');
       expect(formModel.endDate).toBe(END_FUTURE_DATE_STR);
-      expect(formModel.reservationState).toBe(ReservationState.Active);
+      expect(formModel.reservationState).toBe('active');
     });
   });
 
@@ -98,14 +98,14 @@ describe('Reservation Utils', () => {
     const formModel: ReservationFormModel = {
       name: 'New Event',
       startDate: '20260101',
-      reservationState: ReservationState.Cancelled,
+      reservationState: 'cancelled',
     } as ReservationFormModel;
 
     it('should update an existing reservation model', () => {
       const updated = convertFormToReservation(reservation, formModel, tenantId);
       expect(updated.name).toBe('New Event');
       expect(updated.startDate).toBe('20260101');
-      expect(updated.reservationState).toBe(ReservationState.Cancelled);
+      expect(updated.reservationState).toBe('cancelled');
     });
 
     it('should create a new reservation model if one is not provided', () => {
@@ -117,23 +117,23 @@ describe('Reservation Utils', () => {
 
   describe('convertReserverAndResourceToNewForm', () => {
     it('should create a new form for a Person reserver', () => {
-      const form = convertReserverAndResourceToNewForm(person, resource, currentUser, ModelType.Person);
+      const form = convertReserverAndResourceToNewForm(person, resource, currentUser, 'person');
       expect(form.reserverKey).toBe('person-1');
       expect(form.reserverName).toBe('Jane');
       expect(form.reserverName2).toBe('Doe');
-      expect(form.reserverModelType).toBe(ModelType.Person);
+      expect(form.reserverModelType).toBe('person');
       expect(form.resourceKey).toBe('resource-1');
     });
 
     it('should create a new form for an Org reserver', () => {
-      const form = convertReserverAndResourceToNewForm(org, resource, currentUser, ModelType.Org);
+      const form = convertReserverAndResourceToNewForm(org, resource, currentUser, 'org');
       expect(form.reserverKey).toBe('org-1');
       expect(form.reserverName2).toBe('Rowing Club');
-      expect(form.reserverModelType).toBe(ModelType.Org);
+      expect(form.reserverModelType).toBe('org');
     });
 
     it('should call die if currentUser or modelType are missing', () => {
-      convertReserverAndResourceToNewForm(person, resource, undefined, ModelType.Person);
+      convertReserverAndResourceToNewForm(person, resource, undefined, 'person');
       expect(mockDie).toHaveBeenCalledWith('reservation.util.convertReserverAndResourceToNewForm: currentUser is mandatory');
 
       convertReserverAndResourceToNewForm(person, resource, currentUser, undefined);
@@ -157,14 +157,14 @@ describe('Reservation Utils', () => {
 
   describe('getReserverName', () => {
     it('should return "firstName lastName" for a person', () => {
-      reservation.reserverModelType = ModelType.Person;
+      reservation.reserverModelType = 'person';
       reservation.reserverName = 'John';
       reservation.reserverName2 = 'Doe';
       expect(getReserverName(reservation)).toBe('John Doe');
     });
 
     it('should return "name" for an org', () => {
-      reservation.reserverModelType = ModelType.Org;
+      reservation.reserverModelType = 'org';
       reservation.reserverName2 = 'The Big Club';
       expect(getReserverName(reservation)).toBe('The Big Club');
     });

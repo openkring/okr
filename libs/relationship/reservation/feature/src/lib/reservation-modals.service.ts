@@ -2,7 +2,7 @@ import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
 import { AppStore } from "@bk2/shared-feature";
-import { ModelType, OrgModel, PersonModel, ReservationModel, ResourceModel } from "@bk2/shared-models";
+import { OrgModel, PersonModel, ReservationModel, ResourceModel } from "@bk2/shared-models";
 
 import { ReservationService } from "@bk2/relationship-reservation-data-access";
 import { convertFormToNewReservation, isReservation, ReservationNewFormModel } from "@bk2/relationship-reservation-util";
@@ -26,15 +26,14 @@ export class ReservationModalsService {
    * @param resource the resource to be reserved
    * @param modelType the type of the reserver (Person or Org)
    */
-  public async add(reserver: PersonModel | OrgModel, modelType: ModelType, resource: ResourceModel): Promise<void> {
+  public async add(reserver: PersonModel | OrgModel, modelType: 'person' | 'org', resource: ResourceModel): Promise<void> {
     const _modal = await this.modalController.create({
       component: ReservationNewModalComponent,
       cssClass: 'small-modal',
       componentProps: {
         reserver: reserver,
         resource: resource,
-        modelType: modelType,
-        currentUser: this.appStore.currentUser()
+        modelType: modelType
       }
     });
     _modal.present();

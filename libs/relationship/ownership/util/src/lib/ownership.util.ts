@@ -1,71 +1,71 @@
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { AccountModel, AccountType, GenderType, ModelType, OrgModel, OwnershipModel, Periodicity, PersonModel, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared-models';
+import { DEFAULT_COUNT, DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_OCAT, DEFAULT_OSTATE, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { AccountModel, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared-models';
 import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from '@bk2/shared-util-core';
 
 import { OwnershipFormModel } from './ownership-form.model';
 
 export function newOwnershipFormModel(): OwnershipFormModel {
   return {
-    bkey: '',
-    tags: '',
-    notes: '',
+    bkey: DEFAULT_KEY,
+    tags: DEFAULT_TAGS,
+    notes: DEFAULT_NOTES,
 
-    ownerKey: '',
-    ownerName1: '',
-    ownerName2: '',
-    ownerModelType: ModelType.Person,
-    ownerType: GenderType.Male,
+    ownerKey: DEFAULT_KEY,
+    ownerName1: DEFAULT_NAME,
+    ownerName2: DEFAULT_NAME,
+    ownerModelType: 'person',
+    ownerType: DEFAULT_GENDER,
 
-    resourceKey: '',
-    resourceName: '',
-    resourceModelType: ModelType.Resource,
-    resourceType: ResourceType.Key,
-    resourceSubType: RowingBoatType.b1x,
+    resourceKey: DEFAULT_KEY,
+    resourceName: DEFAULT_NAME,
+    resourceModelType: 'resource',
+    resourceType: DEFAULT_RESOURCE_TYPE,
+    resourceSubType: DEFAULT_RBOAT_TYPE,
 
     validFrom: getTodayStr(),
     validTo: END_FUTURE_DATE_STR,
-    ownershipCategory: 'use',
-    ownershipState: 'active',
+    ownershipCategory: DEFAULT_OCAT,
+    ownershipState: DEFAULT_OSTATE,
 
-    count: '1',
-    priority: 0,
+    count: DEFAULT_COUNT,
+    order: 1,
 
-    price: 0,
-    currency: 'CHF',
-    periodicity: Periodicity.Yearly,
+    price: DEFAULT_PRICE,
+    currency: DEFAULT_CURRENCY,
+    periodicity: 'yearly',
   };
 }
 
 export function convertOwnershipToForm(ownership: OwnershipModel | undefined): OwnershipFormModel {
   if (!ownership) return newOwnershipFormModel();
   return {
-    bkey: ownership.bkey ?? '',
-    tags: ownership.tags ?? '',
-    notes: ownership.notes ?? '',
+    bkey: ownership.bkey ?? DEFAULT_KEY,
+    tags: ownership.tags ?? DEFAULT_TAGS,
+    notes: ownership.notes ?? DEFAULT_NOTES,
 
-    ownerKey: ownership.ownerKey ?? '',
-    ownerName1: ownership.ownerName1 ?? '',
-    ownerName2: ownership.ownerName2 ?? '',
-    ownerModelType: ownership.ownerModelType ?? ModelType.Person,
-    ownerType: ownership.ownerType ?? GenderType.Male,
+    ownerKey: ownership.ownerKey ?? DEFAULT_KEY,
+    ownerName1: ownership.ownerName1 ?? DEFAULT_NAME,
+    ownerName2: ownership.ownerName2 ?? DEFAULT_NAME,
+    ownerModelType: ownership.ownerModelType ?? 'person',
+    ownerType: ownership.ownerType ?? DEFAULT_GENDER,
 
-    resourceKey: ownership.resourceKey ?? '',
-    resourceName: ownership.resourceName ?? '',
-    resourceModelType: ownership.resourceModelType ?? ModelType.Resource,
-    resourceType: ownership.resourceType ?? ResourceType.Key,
-    resourceSubType: ownership.resourceSubType ?? RowingBoatType.b1x,
+    resourceKey: ownership.resourceKey ?? DEFAULT_KEY,
+    resourceName: ownership.resourceName ?? DEFAULT_NAME,
+    resourceModelType: ownership.resourceModelType ?? 'resource',
+    resourceType: ownership.resourceType ?? DEFAULT_RESOURCE_TYPE,
+    resourceSubType: ownership.resourceSubType ?? DEFAULT_RBOAT_TYPE,
 
     validFrom: ownership.validFrom ?? getTodayStr(),
     validTo: ownership.validTo ?? END_FUTURE_DATE_STR,
-    ownershipCategory: ownership.ownershipCategory ?? 'use',
-    ownershipState: ownership.ownershipState ?? 'active',
+    ownershipCategory: ownership.ownershipCategory ?? DEFAULT_OCAT,
+    ownershipState: ownership.ownershipState ?? DEFAULT_OSTATE,
 
-    count: ownership.count ?? '1',
-    priority: ownership.priority ?? 0,
+    count: ownership.count ?? DEFAULT_COUNT,
+    order: ownership.order ?? 1,
 
-    price: ownership.price ?? 0,
-    currency: ownership.currency ?? 'CHF',
-    periodicity: ownership.periodicity ?? Periodicity.Yearly,
+    price: ownership.price ?? DEFAULT_PRICE,
+    currency: ownership.currency ?? DEFAULT_CURRENCY,
+    periodicity: ownership.periodicity ?? 'yearly',
   };
 }
 
@@ -80,21 +80,21 @@ export function convertFormToOwnership(ownership?: OwnershipModel, vm?: Ownershi
   if (!vm) return ownership ?? new OwnershipModel(tenantId);
   if (!ownership) {
     ownership = new OwnershipModel(tenantId);
-    ownership.bkey = vm.bkey ?? '';
+    ownership.bkey = vm.bkey ?? DEFAULT_KEY;
   }
 
-  ownership.validFrom = vm.validFrom ?? '';
-  ownership.validTo = vm.validTo ?? '';
+  ownership.validFrom = vm.validFrom ?? DEFAULT_DATE;
+  ownership.validTo = vm.validTo ?? DEFAULT_DATE;
 
-  ownership.price = vm.price ?? 0;
-  ownership.currency = vm.currency ?? 'CHF';
-  ownership.periodicity = vm.periodicity ?? Periodicity.Yearly;
-  ownership.count = vm.count ?? '1';
-  ownership.priority = vm.priority ?? 0;
-  ownership.ownershipState = vm.ownershipState ?? 'active';
-  ownership.ownershipCategory = vm.ownershipCategory ?? 'use';
-  ownership.notes = vm.notes ?? '';
-  ownership.tags = vm.tags ?? '';
+  ownership.price = vm.price ?? DEFAULT_PRICE;
+  ownership.currency = vm.currency ?? DEFAULT_CURRENCY;
+  ownership.periodicity = vm.periodicity ?? 'yearly';
+  ownership.count = vm.count ?? DEFAULT_COUNT;
+  ownership.order = vm.order ?? 0;
+  ownership.ownershipState = vm.ownershipState ?? DEFAULT_OSTATE;
+  ownership.ownershipCategory = vm.ownershipCategory ?? DEFAULT_OCAT;
+  ownership.notes = vm.notes ?? DEFAULT_NOTES;
+  ownership.tags = vm.tags ?? DEFAULT_TAGS;
   return ownership;
 }
 
@@ -116,12 +116,12 @@ export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceMo
 
   _ownership.ownerKey = owner.bkey;
   if (isPerson(owner, tenantId)) {
-    _ownership.ownerModelType = ModelType.Person;
+    _ownership.ownerModelType = 'person';
     _ownership.ownerName1 = owner.firstName;
     _ownership.ownerName2 = owner.lastName;
     _ownership.ownerType = owner.gender;
   } else {
-    _ownership.ownerModelType = ModelType.Org;
+    _ownership.ownerModelType = 'org';
     _ownership.ownerName1 = '';
     _ownership.ownerName2 = owner.name;
     _ownership.ownerType = owner.type;
@@ -130,20 +130,20 @@ export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceMo
   _ownership.resourceKey = resource.bkey;
   _ownership.resourceName = resource.name;
   if (isResource(resource, tenantId)) {
-    _ownership.resourceModelType = ModelType.Resource;
-    _ownership.resourceType = resource.type as ResourceType;
+    _ownership.resourceModelType = 'resource';
+    _ownership.resourceType = resource.type;
     _ownership.resourceSubType = resource.subType;
   } else {
-    _ownership.resourceModelType = ModelType.Account;
-    _ownership.resourceType = resource.type as AccountType;
-    _ownership.resourceSubType = undefined;
+    _ownership.resourceModelType = 'account';
+    _ownership.resourceType = resource.type;
+    _ownership.resourceSubType = '';
   }
   return _ownership;
 }
 
 export function getOwnerName(ownership: OwnershipModel): string {
   // tbd: consider NameDisplay
-  if (ownership.ownerModelType === ModelType.Person) {
+  if (ownership.ownerModelType === 'person') {
     return `${ownership.ownerName1} ${ownership.ownerName2}`;
   } else {
     return ownership.ownerName2;

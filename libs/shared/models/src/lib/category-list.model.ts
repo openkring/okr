@@ -1,3 +1,4 @@
+import { DEFAULT_CURRENCY, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from './base.model';
 
 /**
@@ -12,16 +13,16 @@ import { BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } fro
  * Otherwise, '@${i18nBase}.${name}.label' is translated and shown as the label.
  */
 export class CategoryListModel implements BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel {
-  bkey = '';
-  name = '';
-  tags = '';
+  bkey = DEFAULT_KEY;
+  name = DEFAULT_NAME;
+  tags = DEFAULT_TAGS;
   isArchived = false;
-  tenants: string[] = [];
-  index = '';
+  tenants: string[] = DEFAULT_TENANTS;
+  index = DEFAULT_INDEX;
 
   i18nBase = '';
   translateItems = false;
-  notes = '';
+  notes = DEFAULT_NOTES;
   items: CategoryItemModel[] = [];
 
   constructor(tenantId: string) {
@@ -30,15 +31,15 @@ export class CategoryListModel implements BkModel, NamedModel, PersistedModel, S
 }
 
 export class CategoryItemModel {
-  name = '';
+  name = DEFAULT_NAME;
   abbreviation = '';
   icon = '';
-  state = 'active';
-  price = 0;
-  currency = 'CHF';
-  periodicity = 'yearly';
+  state? = DEFAULT_MSTATE;
+  price? = DEFAULT_PRICE;
+  currency? = DEFAULT_CURRENCY;
+  periodicity? = DEFAULT_PERIODICITY;
 
-  constructor(name: string, abbreviation: string, icon: string, state = 'active', price = 0, currency = 'CHF', periodicity = 'yearly') {
+  constructor(name: string, abbreviation: string, icon: string, state?: string, price?: number, currency?: string, periodicity?: string) {
     this.name = name;
     this.abbreviation = abbreviation;
     this.icon = icon;
@@ -52,12 +53,15 @@ export class CategoryItemModel {
 export const CategoryCollection = 'categories';
 
 export function getDefaultMembershipCategory(tenantId: string): CategoryListModel {
-  const _cat = new CategoryListModel(tenantId);
-  _cat.name = 'mcat_default';
-  _cat.tags = '';
-  _cat.i18nBase = 'membership.category';
-  _cat.translateItems = true;
-  _cat.notes = 'Default membership categories';
-  _cat.items = [new CategoryItemModel('active', 'A', 'member_active', 'active', 30, 'CHF', 'yearly'), new CategoryItemModel('junior', 'J', 'member_junior', 'active', 10, 'CHF', 'yearly'), new CategoryItemModel('passive', 'P', 'member_passive', 'passive', 20, 'CHF', 'yearly')];
-  return _cat;
+  const cat = new CategoryListModel(tenantId);
+  cat.name = 'mcat_default';
+  cat.tags = DEFAULT_TAGS;
+  cat.i18nBase = 'membership.category';
+  cat.translateItems = true;
+  cat.notes = 'Default membership categories';
+  cat.items = [
+    new CategoryItemModel('active', 'A', 'member_active', 'active', 30, 'CHF', 'yearly'), 
+    new CategoryItemModel('junior', 'J', 'member_junior', 'active', 10, 'CHF', 'yearly'), 
+    new CategoryItemModel('passive', 'P', 'member_passive', 'passive', 20, 'CHF', 'yearly')];
+  return cat;
 }

@@ -4,18 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { GenderTypes } from '@bk2/shared-categories';
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
 import { AppStore, OrgSelectModalComponent } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryListModel, GenderType, ModelType, PrivacyAccessor, PrivacySettings, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
-import { CategoryComponent, CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
+import { CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, debugFormModel, getTodayStr, hasRole, isOrg, isVisibleToUser } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
 
 import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations } from '@bk2/subject-person-util';
+import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-person-new-form',
@@ -24,7 +24,7 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
     vestForms,
     FormsModule,
     AvatarPipe, AsyncPipe, TranslatePipe,
-    TextInputComponent, DateInputComponent, CategoryComponent, ChipsComponent, NotesInputComponent,
+    TextInputComponent, DateInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
     ErrorNoteComponent, PhoneInputComponent, EmailInputComponent, CategorySelectComponent, CheckboxComponent,
     SwissCitySearchComponent,
     IonGrid, IonRow, IonCol, IonItem, IonAvatar, IonImg, IonButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent
@@ -59,7 +59,7 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
           @if(isVisibleToUser(priv().showGender)) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat name="gender" [value]="gender()" [categories]="genderTypes" (changed)="onChange('gender', $event)" />
+                <bk-cat-select [category]="genders()!" selectedItemName="gender()" (changed)="onChange('gender', $event)" />
               </ion-col>
             </ion-row>
           }
@@ -179,7 +179,7 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
               <ion-col size="9">
                 <ion-item lines="none">
                   <ion-avatar slot="start">
-                    <ion-img src="{{ modelType.Org + '.' + orgKey() | avatar | async }}" alt="Avatar Logo of Organization" />
+                    <ion-img src="{{ 'org.' + orgKey() | avatar | async }}" alt="Avatar Logo of Organization" />
                   </ion-avatar>
                   <ion-label>{{ orgName() }}</ion-label>
                 </ion-item>
@@ -192,7 +192,7 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
             </ion-row>
             <ion-row>
               <ion-col size="12">
-                <bk-cat-select [category]="membershipCategories()" popoverId="mcat-new" [selectedItemName]="currentMembershipCategoryItem()" (changed)="onCatChanged($event)" />
+                <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (changed)="onCatChanged($event)" />
               </ion-col>
               <ion-col size="12"> 
                 <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [showHelper]=true (changed)="onChange('dateOfEntry', $event)" />
@@ -204,7 +204,7 @@ import { PersonNewFormModel, personNewFormModelShape, personNewFormValidations }
     </ion-card>
     
     @if(isVisibleToUser(priv().showTags)) {
-          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="personTags()" (changed)="onChange('tags', $event)" />
+          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (changed)="onChange('tags', $event)" />
     }
 
     @if(isVisibleToUser(priv().showNotes)) {
@@ -218,39 +218,41 @@ export class PersonNewFormComponent {
   protected readonly appStore = inject(AppStore);
 
   public vm = model.required<PersonNewFormModel>();
-  public currentUser = input<UserModel | undefined>();
   public membershipCategories = input.required<CategoryListModel>();
-  public personTags = input.required<string>();
   public priv = input.required<PrivacySettings>();
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
 
-  protected firstName = computed(() => this.vm().firstName ?? '');
-  protected lastName = computed(() => this.vm().lastName ?? '');
-  protected dateOfBirth = computed(() => this.vm().dateOfBirth ?? '');
-  protected dateOfDeath = computed(() => this.vm().dateOfDeath ?? '');
-  protected gender = computed(() => this.vm().gender ?? GenderType.Male);
-  protected ssnId = computed(() => this.vm().ssnId ?? '');
-  protected bexioId = computed(() => this.vm().bexioId ?? '');
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
+  protected allTags = computed(() => this.appStore.getTags('person'));
+  protected genders = computed(() => this.appStore.getCategory('gender'));
+  protected currentUser = computed(() => this.appStore.currentUser());
+
+  protected firstName = computed(() => this.vm().firstName ?? DEFAULT_NAME);
+  protected lastName = computed(() => this.vm().lastName ?? DEFAULT_NAME);
+  protected dateOfBirth = computed(() => this.vm().dateOfBirth ?? DEFAULT_DATE);
+  protected dateOfDeath = computed(() => this.vm().dateOfDeath ?? DEFAULT_DATE);
+  protected gender = computed(() => this.vm().gender ?? DEFAULT_GENDER);
+  protected ssnId = computed(() => this.vm().ssnId ?? DEFAULT_ID);
+  protected bexioId = computed(() => this.vm().bexioId ?? DEFAULT_ID);
+  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES);
   protected shouldAddMembership = computed(() => this.vm().shouldAddMembership ?? false);
   protected readonly locale = computed(() => this.appStore.appConfig().locale);
 
   // address
-  protected streetName = computed(() => this.vm().streetName ?? '');
+  protected streetName = computed(() => this.vm().streetName ?? DEFAULT_NAME);
   protected streetNumber = computed(() => this.vm().streetNumber ?? '');
   protected zipCode = computed(() => this.vm().zipCode ?? '');
   protected city = computed(() => this.vm().city ?? '');
   protected countryCode = computed(() => this.vm().countryCode ?? '');
-  protected phone = computed(() => this.vm().phone ?? '');
-  protected email = computed(() => this.vm().email ?? '');
-  protected web = computed(() => this.vm().web ?? '');
+  protected phone = computed(() => this.vm().phone ?? DEFAULT_PHONE);
+  protected email = computed(() => this.vm().email ?? DEFAULT_EMAIL);
+  protected web = computed(() => this.vm().web ?? DEFAULT_URL);
 
   // membership
-  protected orgKey = computed(() => this.vm().orgKey ?? '');
-  protected orgName = computed(() => this.vm().orgName ?? '');
+  protected orgKey = computed(() => this.vm().orgKey ?? DEFAULT_KEY);
+  protected orgName = computed(() => this.vm().orgName ?? DEFAULT_NAME);
   protected currentMembershipCategoryItem = computed(() => this.vm().membershipCategory ?? '');
   protected dateOfEntry = computed(() => this.vm().dateOfEntry ?? getTodayStr());
 
@@ -265,9 +267,6 @@ export class PersonNewFormComponent {
   protected emailErrors = computed(() => this.validationResult().getErrors('email'));
   protected webErrors = computed(() => this.validationResult().getErrors('web'));
 
-  protected GT = GenderType;
-  protected genderTypes = GenderTypes;
-  protected modelType = ModelType;
   protected bexioMask = BexioIdMask;
   protected ssnMask = ChSsnMask;
 

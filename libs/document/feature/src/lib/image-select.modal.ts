@@ -4,7 +4,7 @@ import { IonButton, IonContent, IonIcon, ModalController, Platform } from '@ioni
 
 import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, newImage, UserModel } from '@bk2/shared-models';
+import { newImage, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
@@ -44,7 +44,7 @@ export class ImageSelectModalComponent {
   private readonly env = inject(ENV);
 
   public key = input.required<string>();     // usually the key of a section
-  public modelType = input(ModelType.Section); // the model type of the key
+  public modelType = input('section'); // the model type of the key
   public currentUser = input<UserModel | undefined>(); // the current user
 
   protected vm = signal(newImage());
@@ -52,17 +52,17 @@ export class ImageSelectModalComponent {
 
   // select a photo from the camera or the photo library and upload it to the storage
   protected async pickImage(): Promise<void> {
-    const _file = await pickPhoto(this.platform);
-    const _key = this.key();
-    if (_file && _key) {
-      const _storageLocation = getDocumentStoragePath(this.env.tenantId, this.modelType(), _key);
-      if (_storageLocation) {
-        const _path = _storageLocation + '/' + _file.name;
-        await this.uploadService.uploadFile(_file, _path, '@document.operation.upload.single.title');
+    const file = await pickPhoto(this.platform);
+    const key = this.key();
+    if (file && key) {
+      const storageLocation = getDocumentStoragePath(this.env.tenantId, this.modelType(), key);
+      if (storageLocation) {
+        const path = storageLocation + '/' + file.name;
+        await this.uploadService.uploadFile(file, path, '@document.operation.upload.single.title');
         this.vm.update((vm) => ({
           ...vm,
-          url: _path,
-          actionUrl: getImgixUrlWithAutoParams(_path)
+          url: path,
+          actionUrl: getImgixUrlWithAutoParams(path)
         }));
       }
     }

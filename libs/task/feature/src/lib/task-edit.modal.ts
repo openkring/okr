@@ -30,11 +30,12 @@ import { TaskEditStore } from './task-edit.store';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-task-form [(vm)]="vm" 
+      <bk-task-form [(vm)]="vm"
         [currentUser]="taskEditStore.currentUser()" 
-        [taskTags]="taskTags()" 
+        [states]="states()"
+        [priorities]="priorities()"
+        [importances]="importances()"
         (validChange)="formIsValid.set($event)" />
-
       <!-- <bk-editor [(content)]="notes" [readOnly]="false" /> -->
 
       <bk-avatar-select title="@task.field.author" [avatarUrl]="authorUrl()" [name]="authorName()" [readOnly]="true" />
@@ -71,6 +72,9 @@ export class TaskEditModalComponent {
   protected calendars = computed(() => this.vm().calendars);
   protected tags = computed(() => this.vm().tags);
   protected notes = linkedSignal(() => this.vm().notes);
+  protected states = computed(() => this.taskEditStore.appStore.getCategory('task_state'));
+  protected priorities = computed(() => this.taskEditStore.appStore.getCategory('priority'));
+  protected importances = computed(() => this.taskEditStore.appStore.getCategory('importance'));
 
   protected taskTags = computed(() => this.taskEditStore.tags());
   protected currentUser = computed(() => this.taskEditStore.currentUser());

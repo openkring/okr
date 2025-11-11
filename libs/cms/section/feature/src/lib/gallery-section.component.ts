@@ -89,7 +89,7 @@ export class GallerySectionComponent {
   private getImgixUrlFromImage(image: Image): string {
     if (!image.url) die('GallerySectionComponent.getImgixUrlFromImage: image url must be set');
     if (!image.width || !image.height) die('GallerySectionComponent.getImgixUrlFromImage: image width and height must be set');
-    const _params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
-    return this.appStore.services.imgixBaseUrl() + '/' + image.url + '?' + _params;
+    const params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
+    return this.appStore.services.imgixBaseUrl() + '/' + image.url + '?' + params;
   }
 }

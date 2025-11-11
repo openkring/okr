@@ -1,15 +1,15 @@
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
-import { GenderType, ModelType, OrgType } from '@bk2/shared-models';
 import { getTodayStr } from '@bk2/shared-util-core';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME } from '@bk2/shared-constants';
 
 export type MembershipNewFormModel = DeepPartial<{
   memberKey: string,
   memberName1: string,    // firstName (not visible)
   memberName2: string,    // lastName (not visible)
   memberName: string,    // firstName lastName or orgName
-  memberModelType: ModelType,
-  memberType?: GenderType | OrgType,
+  memberModelType: 'person' | 'org' | 'group',
+  memberType: string,
   memberDateOfBirth: string,
   memberDateOfDeath: string,
   memberZipCode: string,
@@ -22,18 +22,18 @@ export type MembershipNewFormModel = DeepPartial<{
 }>;
 
 export const membershipNewFormModelShape: DeepRequired<MembershipNewFormModel> = {
-  memberKey: '',
-  memberName1: '',
-  memberName2: '',
-  memberName: '',
-  memberModelType: ModelType.Person,
-  memberType: GenderType.Male,
-  memberDateOfBirth: '',
-  memberDateOfDeath: '',
+  memberKey: DEFAULT_KEY,
+  memberName1: DEFAULT_NAME,
+  memberName2: DEFAULT_NAME,
+  memberName: DEFAULT_NAME,
+  memberModelType: 'person',
+  memberType: DEFAULT_GENDER,
+  memberDateOfBirth: DEFAULT_DATE,
+  memberDateOfDeath: DEFAULT_DATE,
   memberZipCode: '',
-  memberBexioId: '',
-  orgKey: '',
-  orgName: '',
+  memberBexioId: DEFAULT_ID,
+  orgKey: DEFAULT_KEY,
+  orgName: DEFAULT_NAME,
   dateOfEntry: getTodayStr(),
   membershipCategory: 'active',
   membershipCategoryAbbreviation: 'A'

@@ -1,4 +1,4 @@
-import { BaseProperty, BaseType, BkModel, MembershipModel, MetaTag, ModelType, OrgModel, PersistedModel, PersonalRelModel, PersonModel, ResourceModel, RoleEnum } from '@bk2/shared-models';
+import { BaseProperty, BaseType, BkModel, MembershipModel, MetaTag, OrgModel, PersistedModel, PersonalRelModel, PersonModel, ResourceModel } from '@bk2/shared-models';
 import { die, warn } from './log.util';
 
 /************************************************* Tupel ********************************************************** */
@@ -14,10 +14,9 @@ export function getPartsOfTupel(tupel: string, separator = '.'): [string, string
   return [parts[0], parts[1]];
 }
 
-// converts the first part to the ModelType.
-export function getModelAndKey(tupel: string): [ModelType, string] {
-  const [modelType, modelKey] = getPartsOfTupel(tupel);
-  return [parseInt(modelType) as ModelType, modelKey];
+// converts the first part to the ModelType, ie. splits ModelType.key into ModelType and key.
+export function getModelAndKey(tupel: string): [string, string] {
+  return getPartsOfTupel(tupel);
 }
 
 export function extractFirstPartOfOptionalTupel(composite: string, separator = '.'): string {
@@ -171,9 +170,12 @@ export function getIndexOfMetaTag(metaTagList: MetaTag[], name: string): number 
  * It returns true if the searchTerm is either empty or matches the nameProperty.
  * @param nameProperty 
  * @param searchTerm 
+ * @param exact default (exact = false) is to check whether the nameProperty is contained within the searchTerm.
+ *  an exact check compares the two strings for equality (e.g. female and male is detected as two different results when checking for male)
  */
-export function nameMatches(nameProperty: string, searchTerm: string | null | undefined): boolean {
+export function nameMatches(nameProperty: string, searchTerm: string | null | undefined, exact = false): boolean {
   if (!searchTerm || searchTerm.length === 0 || searchTerm === 'all') return true;
+  if (exact === true) return nameProperty.toLowerCase() === searchTerm.toLowerCase();
   return compareName(nameProperty, searchTerm);
 }
 
@@ -261,10 +263,6 @@ export function isMembership(membership: unknown, tenantId: string): membership 
     }
   }
   return false;
-}
-
-export function isRole(role: unknown): role is RoleEnum {
-  return (isType<typeof RoleEnum>(role, RoleEnum));
 }
 
 /************************************************* General Type Checks ********************************************************** */

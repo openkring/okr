@@ -1,20 +1,19 @@
+import { DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_SECTIONS, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE } from '@bk2/shared-constants';
 import { BkModel, MetaTag, NamedModel, SearchableModel, TaggedModel } from './base.model';
-import { ContentState } from './enums/content-state.enum';
-import { PageType } from './enums/page-type.enum';
 
 export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = '';
-  public tenants: string[] = [];
+  public bkey = DEFAULT_KEY;
+  public tenants = DEFAULT_TENANTS;
   public isArchived = false;
-  public name = ''; // a meaningful name for the trip
-  public index = '';
-  public tags = '';
-  public title = ''; // used for SEO
+  public name = DEFAULT_NAME; // a meaningful name for the trip
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS;
+  public title = DEFAULT_TITLE; // used for SEO
   public meta?: MetaTag[] = []; // meta tags for SEO
-  public type = PageType.Content;
-  public state = ContentState.Draft; // the state of the page
-  public notes = ''; // a detailed description of the trip
-  public sections: string[] = []; // section.bkey, section.name
+  public type = DEFAULT_PAGE_TYPE;
+  public state = DEFAULT_CONTENT_STATE; // the state of the page
+  public notes = DEFAULT_NOTES; // a detailed description of the trip
+  public sections = DEFAULT_SECTIONS; // section.bkey, section.name
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];
@@ -22,5 +21,3 @@ export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedMo
 }
 
 export const PageCollection = 'pages2';
-
-// tbd: maybe add state for staging: draft, review, published, archived

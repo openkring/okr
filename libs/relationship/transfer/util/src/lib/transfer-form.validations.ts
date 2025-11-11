@@ -1,8 +1,7 @@
 import { only, staticSuite } from 'vest';
 
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { Periodicity, TransferType } from '@bk2/shared-models';
-import { categoryValidations, dateValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { dateValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
 import { TransferFormModel } from './transfer-form.model';
 
@@ -16,14 +15,14 @@ export const transferFormValidations = staticSuite((model: TransferFormModel, fi
 
   // transfer
   dateValidations('dateOfTransfer', model.dateOfTransfer);
-  categoryValidations('type', model.type, TransferType);
+  stringValidations('type', model.type, WORD_LENGTH);
   stringValidations('label', model.label, SHORT_NAME_LENGTH);
   // tbd: check that label is set, when type === custom
 
   // price
   numberValidations('price', model.price, false, 0, 1000000);
   stringValidations('currency', model.currency, CURRENCY_LENGTH);
-  categoryValidations('periodicity', model.periodicity, Periodicity);
+  stringValidations('periodicity', model.periodicity, WORD_LENGTH);
 });
 
 

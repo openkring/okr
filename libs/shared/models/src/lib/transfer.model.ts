@@ -1,10 +1,6 @@
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE } from '@bk2/shared-constants';
 import { AvatarInfo } from './avatar-info';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
-import { Periodicity } from './enums/periodicity.enum';
-import { ResourceType } from './enums/resource-type.enum';
-import { RowingBoatType } from './enums/rowing-boat-type.enum';
-import { TransferState } from './enums/transfer-state.enum';
-import { TransferType } from './enums/transfer-type.enum';
 import { ResourceInfo } from './resource.model';
 
 /**
@@ -21,28 +17,28 @@ import { ResourceInfo } from './resource.model';
  * - withdrawal/deposit from/to bank account
  */
 export class TransferModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = '';
-  public tenants: string[] = [];
+  public bkey = DEFAULT_KEY;
+  public tenants = DEFAULT_TENANTS;
   public isArchived = false;
-  public name = ''; // e.g. the reason for the transfer, e.g. "xmas" for a gift
-  public index = '';
-  public tags = '';
-  public notes = '';
+  public name = DEFAULT_NAME; // e.g. the reason for the transfer, e.g. "xmas" for a gift
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS;
+  public notes = DEFAULT_NOTES;
 
   public subjects: AvatarInfo[] = []; // list of subjects, e.g. person or org or account
   public objects: AvatarInfo[] = []; // list of objects, e.g. person or org or account
-  public resource: ResourceInfo = { key: '', name: '', type: ResourceType.RowingBoat, subType: RowingBoatType.b1x }; // the resource that is transferred
+  public resource: ResourceInfo = { key: '', name: '', type: DEFAULT_RESOURCE_TYPE, subType: DEFAULT_RBOAT_TYPE }; // the resource that is transferred
 
   // transfer
-  public dateOfTransfer = '';
-  public type?: TransferType;
-  public state?: TransferState; // e.g. active, pending, cancelled
-  public label = ''; // a label for a custom transfer type
+  public dateOfTransfer = DEFAULT_DATE;
+  public type = DEFAULT_TRANSFER_TYPE;
+  public state = DEFAULT_TRANSFER_STATE; // e.g. active, pending, cancelled
+  public label = DEFAULT_LABEL; // a label for a custom transfer type
 
   // price
-  public price = 0;
-  public currency = 'CHF';
-  public periodicity = Periodicity.Once;
+  public price = DEFAULT_PRICE;
+  public currency = DEFAULT_CURRENCY;
+  public periodicity = DEFAULT_PERIODICITY;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

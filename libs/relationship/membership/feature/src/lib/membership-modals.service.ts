@@ -2,7 +2,7 @@ import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
 import { AppStore } from "@bk2/shared-feature";
-import { CategoryItemModel, CategoryListModel, MembershipModel, ModelType, OrgModel, PersonModel } from "@bk2/shared-models";
+import { CategoryItemModel, CategoryListModel, MembershipModel, OrgModel, PersonModel } from "@bk2/shared-models";
 import { selectDate } from "@bk2/shared-ui";
 import { convertDateFormatToString, DateFormat, isMembership } from "@bk2/shared-util-core";
 
@@ -29,7 +29,7 @@ export class MembershipModalsService {
    * @param org the organization to add a membership to
    * @param modelType the type of the member (Person or Org)
    */
-  public async add(member?: PersonModel | OrgModel, org?: OrgModel, modelType?: ModelType): Promise<void> {
+  public async add(member?: PersonModel | OrgModel, org?: OrgModel, modelType?: 'person' | 'org'): Promise<void> {
     if (org && member && modelType) {
       const _modal = await this.modalController.create({
         component: MembershipNewModalComponent,

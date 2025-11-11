@@ -4,7 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { AvatarService } from '@bk2/avatar-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AvatarInfo, ModelType } from '@bk2/shared-models';
+import { AvatarInfo } from '@bk2/shared-models';
 import { createFullName, debugItemLoaded } from '@bk2/shared-util-core';
 
 export type TaskEditState = {
@@ -32,8 +32,8 @@ export const TaskEditStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),  
       stream: ({params}) => {
-        const _key = params.author?.key + '.' + params.author?.modelType;
-        const author$ = store.avatarService.getAvatarImgixUrl(_key);
+        const key = params.author?.key + '.' + params.author?.modelType;
+        const author$ = store.avatarService.getAvatarImgixUrl(key);
         debugItemLoaded<string>(`authorUrl `, author$, params.currentUser);
         return author$;
       }
@@ -45,8 +45,8 @@ export const TaskEditStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),  
       stream: ({params}) => {
-        const _key = params.assignee?.key + '.' + params.assignee?.modelType;
-        const assignee$ = store.avatarService.getAvatarImgixUrl(_key);
+        const key = params.assignee?.key + '.' + params.assignee?.modelType;
+        const assignee$ = store.avatarService.getAvatarImgixUrl(key);
         debugItemLoaded<string>(`assigneeUrl `, assignee$, params.currentUser);
         return assignee$;
       }
@@ -58,8 +58,8 @@ export const TaskEditStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),  
       stream: ({params}) => {
-        const _key = params.scope?.key + '.' + params.scope?.modelType;
-        const scope$ = store.avatarService.getAvatarImgixUrl(_key);
+        const key = params.scope?.key + '.' + params.scope?.modelType;
+        const scope$ = store.avatarService.getAvatarImgixUrl(key);
         debugItemLoaded<string>(`scopeUrl `, scope$, params.currentUser);
         return scope$;
       }
@@ -76,7 +76,7 @@ export const TaskEditStore = signalStore(
       scopeName: computed(() => createFullName(state.scope()?.name1 ?? '', state.scope()?.name2 ?? '')),
       isLoading: computed(() => state.authorResource.isLoading() || state.assigneeResource.isLoading() || state.scopeResource.isLoading()),
 
-      tags: computed(() => state.appStore.getTags(ModelType.Task)),
+      tags: computed(() => state.appStore.getTags('task')),
       tenantId: computed(() => state.appStore.tenantId()),
       currentUser: computed(() => state.appStore.currentUser()),
     };

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { AccountModel, AccountType, GenderType, ModelType, OrgModel, OwnershipModel, Periodicity, PersonModel, ResourceModel, ResourceType, RowingBoatType } from '@bk2/shared-models';
+import { AccountModel, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 
 import { newOwnershipFormModel, convertOwnershipToForm, convertFormToOwnership, newOwnership, getOwnerName, isOwnership, getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from './ownership.util';
@@ -46,33 +46,33 @@ describe('Ownership Utils', () => {
     ownership.ownerKey = 'person-1';
     ownership.ownerName1 = 'John';
     ownership.ownerName2 = 'Doe';
-    ownership.ownerModelType = ModelType.Person;
+    ownership.ownerModelType = 'person';
     ownership.resourceKey = 'resource-1';
     ownership.resourceName = 'Boat';
-    ownership.resourceModelType = ModelType.Resource;
+    ownership.resourceModelType = 'resource';
     ownership.validFrom = '20230101';
 
     person = new PersonModel(tenantId);
     person.bkey = 'person-1';
     person.firstName = 'Jane';
     person.lastName = 'Doe';
-    person.gender = GenderType.Female;
+    person.gender = 'female';
 
     org = new OrgModel(tenantId);
     org.bkey = 'org-1';
     org.name = 'Rowing Club';
-    org.type = 'Club';
+    org.type = 'association';
 
     resource = new ResourceModel(tenantId);
     resource.bkey = 'resource-1';
     resource.name = 'Single Scull';
-    resource.type = ResourceType.RowingBoat;
-    resource.subType = RowingBoatType.b1x;
+    resource.type = 'rboat';
+    resource.subType = 'b1x';
 
     account = new AccountModel(tenantId);
     account.bkey = 'account-1';
     account.name = 'Club Fees';
-    account.type = AccountType.Asset;
+    account.type = 'asset';
   });
 
   describe('newOwnershipFormModel', () => {
@@ -81,7 +81,7 @@ describe('Ownership Utils', () => {
       expect(formModel.bkey).toBe('');
       expect(formModel.validFrom).toBe('20250904');
       expect(formModel.validTo).toBe(END_FUTURE_DATE_STR);
-      expect(formModel.ownerModelType).toBe(ModelType.Person);
+      expect(formModel.ownerModelType).toBe('person');
       expect(formModel.price).toBe(0);
     });
   });
@@ -106,7 +106,7 @@ describe('Ownership Utils', () => {
       validFrom: '20240101',
       validTo: '20241231',
       price: 150,
-      periodicity: Periodicity.Monthly,
+      periodicity: 'monthly',
       notes: 'New notes',
     } as OwnershipFormModel;
 
@@ -135,11 +135,11 @@ describe('Ownership Utils', () => {
       mockIsResource.mockReturnValue(true);
       const result = newOwnership(person, resource, tenantId);
       expect(result.ownerKey).toBe('person-1');
-      expect(result.ownerModelType).toBe(ModelType.Person);
+      expect(result.ownerModelType).toBe('person');
       expect(result.ownerName1).toBe('Jane');
       expect(result.resourceKey).toBe('resource-1');
-      expect(result.resourceModelType).toBe(ModelType.Resource);
-      expect(result.resourceType).toBe(ResourceType.RowingBoat);
+      expect(result.resourceModelType).toBe('resource');
+      expect(result.resourceType).toBe('rboat');
     });
 
     it('should create a new ownership for an Org and an Account', () => {
@@ -147,11 +147,11 @@ describe('Ownership Utils', () => {
       mockIsResource.mockReturnValue(false);
       const result = newOwnership(org, account, tenantId);
       expect(result.ownerKey).toBe('org-1');
-      expect(result.ownerModelType).toBe(ModelType.Org);
+      expect(result.ownerModelType).toBe('org');
       expect(result.ownerName2).toBe('Rowing Club');
       expect(result.resourceKey).toBe('account-1');
-      expect(result.resourceModelType).toBe(ModelType.Account);
-      expect(result.resourceType).toBe(AccountType.Asset);
+      expect(result.resourceModelType).toBe('account');
+      expect(result.resourceType).toBe('asset');
     });
 
     it('should call die if owner bkey is missing', () => {
@@ -163,14 +163,14 @@ describe('Ownership Utils', () => {
 
   describe('getOwnerName', () => {
     it('should return "firstName lastName" for a person', () => {
-      ownership.ownerModelType = ModelType.Person;
+      ownership.ownerModelType = 'person';
       ownership.ownerName1 = 'John';
       ownership.ownerName2 = 'Doe';
       expect(getOwnerName(ownership)).toBe('John Doe');
     });
 
     it('should return "name" for an org', () => {
-      ownership.ownerModelType = ModelType.Org;
+      ownership.ownerModelType = 'org';
       ownership.ownerName2 = 'The Big Company';
       expect(getOwnerName(ownership)).toBe('The Big Company');
     });

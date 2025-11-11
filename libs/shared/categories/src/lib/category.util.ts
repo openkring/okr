@@ -1,4 +1,4 @@
-import { AccountType, AllCategories, CategoryModel, GenderType, MembershipModel, ModelType, OrgType, OwnershipModel, ResourceType } from '@bk2/shared-models';
+import { AllCategories, CategoryModel, MembershipModel, OwnershipModel } from '@bk2/shared-models';
 
 /**
  * Return a Category based on its id.
@@ -42,21 +42,21 @@ export function countCategories(categories: CategoryModel[]): number {
 }
 
 export function getCategoryField(categories: CategoryModel[], categoryId: number, fieldName: string): string | number {
-  const _cat = readCategory(categories, categoryId);
-  const _key = fieldName as keyof CategoryModel;
-  return _cat[_key];
+  const cat = readCategory(categories, categoryId);
+  const key = fieldName as keyof CategoryModel;
+  return cat[key];
 }
 
 export function getCategoryStringField(categories: CategoryModel[], categoryId: number, fieldName: string): string {
-  const _field = getCategoryField(categories, categoryId, fieldName);
-  if (typeof _field !== 'string') throw new Error(`category.util/getStringField(): type of field ${fieldName} must be string.`);
-  return _field;
+  const field = getCategoryField(categories, categoryId, fieldName);
+  if (typeof field !== 'string') throw new Error(`category.util/getStringField(): type of field ${fieldName} must be string.`);
+  return field;
 }
 
 export function getCategoryNumberField(categories: CategoryModel[], categoryId: number, fieldName: string): number {
-  const _field = getCategoryField(categories, categoryId, fieldName);
-  if (typeof _field !== 'number') throw new Error(`category.util/getNumberField(): type of field ${fieldName} must be number.`);
-  return _field;
+  const field = getCategoryField(categories, categoryId, fieldName);
+  if (typeof field !== 'number') throw new Error(`category.util/getNumberField(): type of field ${fieldName} must be number.`);
+  return field;
 }
 
 export function getCategoryFullName(categories: CategoryModel[], categoryId: number): string {
@@ -127,38 +127,22 @@ export function categoryMatches(catProperty: number | undefined, catFilter: numb
 }
 
 // memberships
-export function memberTypeMatches(membership: MembershipModel, memberType?: GenderType | OrgType | typeof AllCategories): boolean {
-  if (!memberType || memberType === AllCategories) return true;
-  if (membership.memberModelType === ModelType.Person) {
-    return (membership.memberType as GenderType) === memberType;
-  } else {
-    // org
-    return (membership.memberType as OrgType) === memberType;
-  }
-}
-
-// resources
-export function resourceTypeMatches(ownership: OwnershipModel, resourceType?: ResourceType | AccountType | typeof AllCategories): boolean {
-  if (!resourceType || resourceType === AllCategories) return true;
-  if (ownership.resourceModelType === ModelType.Resource) {
-    return (ownership.resourceType as ResourceType) === resourceType;
-  } else {
-    // account
-    return (ownership.resourceType as AccountType) === resourceType;
-  }
+export function memberTypeMatches(membership: MembershipModel, memberType?: string): boolean {
+  if (!memberType || memberType === 'all') return true;
+  return membership.memberType === memberType;
 }
 
 // ownerships
-export function ownerTypeMatches(ownership: OwnershipModel, selectedModelType: ModelType | typeof AllCategories, selectedGender: GenderType | typeof AllCategories, selectedOrgType: OrgType | typeof AllCategories): boolean {
-  if (selectedModelType === AllCategories) return true;
-  if (selectedModelType === ModelType.Person) {
-    if (ownership.ownerModelType !== ModelType.Person) return false;
-    if (selectedGender === AllCategories) return true;
+export function ownerTypeMatches(ownership: OwnershipModel, selectedModelType: string, selectedGender: string, selectedOrgType: string): boolean {
+  if (selectedModelType === 'all') return true;
+  if (selectedModelType === 'person') {
+    if (ownership.ownerModelType !== 'person') return false;
+    if (selectedGender === 'all') return true;
     return ownership.ownerType === selectedGender;
   } else {
     // org
-    if (ownership.ownerModelType !== ModelType.Org) return false;
-    if (selectedOrgType === AllCategories) return true;
+    if (ownership.ownerModelType !== 'org') return false;
+    if (selectedOrgType === 'all') return true;
     return ownership.ownerType === selectedOrgType;
   }
 }

@@ -16,6 +16,7 @@
   "exclude": ["dist/**/*"],
   "references": [
     {"path": "../../shared/models/tsconfig.lib.json"},
+    {"path": "../../shared/feature/tsconfig.lib.json"},
     {"path": "../../shared/constants/tsconfig.lib.json"},
     {"path": "../../shared/categories/tsconfig.lib.json"},
     {"path": "../../shared/config/tsconfig.lib.json"},

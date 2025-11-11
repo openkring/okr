@@ -1,8 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { GenderType, PersonalRelType } from '@bk2/shared-models';
-import { categoryValidations, dateValidations, isAfterOrEqualDate, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { dateValidations, isAfterOrEqualDate, stringValidations } from '@bk2/shared-util-core';
 
 import { PersonalRelNewFormModel } from './personal-rel-new-form.model';
 
@@ -16,15 +15,15 @@ export const personalRelNewFormValidations = staticSuite((model: PersonalRelNewF
   stringValidations('subjectKey', model.subjectKey, SHORT_NAME_LENGTH);
   stringValidations('subjectFirstName', model.subjectFirstName, SHORT_NAME_LENGTH);
   stringValidations('subjectLastName', model.subjectLastName, SHORT_NAME_LENGTH);
-  categoryValidations('subjectGender', model.subjectGender, GenderType);
+  stringValidations('subjectGender', model.subjectGender, WORD_LENGTH);
 
   // object
   stringValidations('objectKey', model.objectKey, SHORT_NAME_LENGTH);
   stringValidations('objectFirstName', model.objectFirstName, SHORT_NAME_LENGTH);
   stringValidations('objectLastName', model.objectLastName, SHORT_NAME_LENGTH);
-  categoryValidations('objectGender', model.objectGender, GenderType);
+  stringValidations('objectGender', model.objectGender, WORD_LENGTH);
   
-  categoryValidations('type', model.type, PersonalRelType);
+  stringValidations('type', model.type, WORD_LENGTH); // personalrel type
   dateValidations('validFrom', model.validFrom);
   dateValidations('validTo', model.validTo);
 

@@ -6,7 +6,7 @@ import { firstValueFrom, of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgCollection, OrgModel } from '@bk2/shared-models';
+import { CategoryCollection, CategoryListModel, MembershipModel, OrgCollection, OrgModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { confirm } from '@bk2/shared-util-angular';
 import { convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, isValidAt } from '@bk2/shared-util-core';
@@ -88,7 +88,7 @@ export const MembersAccordionStore = signalStore(
 
       /******************************** actions ******************************************* */
       async addMember(): Promise<void> {
-        await store.membershipModalsService.add(store.currentPerson(), store.currentOrg(), ModelType.Person);
+        await store.membershipModalsService.add(store.currentPerson(), store.currentOrg(), 'person');
         store.membersResource.reload();
       },
 

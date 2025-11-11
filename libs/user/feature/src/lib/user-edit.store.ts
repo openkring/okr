@@ -4,7 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ModelType, UserModel } from '@bk2/shared-models';
+import { UserModel } from '@bk2/shared-models';
 import { AppNavigationService } from '@bk2/shared-util-angular';
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
@@ -33,9 +33,9 @@ export const UserEditStore = signalStore(
       }),
       stream: ({params}) => {
         if (!params.userKey) return of(undefined);
-        const _user$ = store.userService.read(params.userKey);
-        debugItemLoaded('UserEditStore.user', _user$, store.appStore.currentUser());
-        return _user$;
+        const user$ = store.userService.read(params.userKey);
+        debugItemLoaded('UserEditStore.user', user$, store.appStore.currentUser());
+        return user$;
       }
     })
   })),
@@ -58,7 +58,7 @@ export const UserEditStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.User);
+        return store.appStore.getTags('user');
       },
 
       /************************************ ACTIONS ************************************* */

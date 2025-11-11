@@ -42,6 +42,7 @@
   "eslint.workingDirectories": ["."],
   // Disable unnecessary extension features
   "eslint.probe": ["javascript", "typescript", "html"], // Limit ESLint to relevant file types
+  "eslint.enable": false,
 
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": false,

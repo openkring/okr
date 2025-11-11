@@ -2,9 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
 
-import { PersonalRelTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, PersonalRelModel, RoleName } from '@bk2/shared-models';
+import { PersonalRelModel, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
 import { hasRole, isOngoing } from '@bk2/shared-util-core';
@@ -48,7 +47,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start" class="list-avatar">
-                      <ion-img src="{{ modelType.Person + '.' + personalRel.subjectKey | avatar | async}}" alt="avatar of first person" />
+                      <ion-img src="{{ 'person.' + personalRel.subjectKey | avatar | async}}" alt="avatar of first person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
                   </ion-item>
@@ -61,7 +60,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start" class="list-avatar">
-                      <ion-img src="{{ modelType.Person + '.' + personalRel.objectKey | avatar | async}}" alt="avatar of second person" />
+                      <ion-img src="{{ 'person.' + personalRel.objectKey | avatar | async}}" alt="avatar of second person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
                   </ion-item> 
@@ -86,8 +85,6 @@ export class PersonalRelAccordionComponent {
   protected personalRels = computed(() => this.personalRelStore.allPersonalRels());  // tbd: better define: a) all, b) open c) current year ...
   protected relsCount = computed(() => this.personalRels().length);
 
-  protected modelType = ModelType;
-  protected personalRelTypes = PersonalRelTypes;
   private imgixBaseUrl = this.personalRelStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {

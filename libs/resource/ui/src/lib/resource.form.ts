@@ -2,9 +2,8 @@ import { Component, computed, input, model, output, signal } from '@angular/core
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { ResourceTypes } from '@bk2/shared-categories';
-import { BaseProperty, ResourceType, RoleName, RowingBoatUsage, UserModel } from '@bk2/shared-models';
-import { CategoryComponent, ChipsComponent, NotesInputComponent, PropertyListComponent } from '@bk2/shared-ui';
+import { BaseProperty, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ChipsComponent, NotesInputComponent, PropertyListComponent } from '@bk2/shared-ui';
 import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
 import { ResourceFormModel, resourceFormShape, resourceFormValidations } from '@bk2/resource-util';
@@ -16,16 +15,16 @@ import { LockerComponent } from './locker.component';
 import { OtherResourceComponent } from './other-resource.component';
 import { RealEstateComponent } from './real-estate.component';
 import { RowingBoatComponent } from "./rowing-boat.component";
+import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_RBOAT_USAGE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-resource-form',
   standalone: true,
   imports: [
     vestForms,
-    CategoryComponent, ChipsComponent, NotesInputComponent,
+    ChipsComponent, NotesInputComponent,
     PropertyListComponent, RowingBoatComponent, BoatComponent, CarComponent, LockerComponent, 
-    KeyComponent, RealEstateComponent, OtherResourceComponent,
-    IonGrid, IonRow, IonCol
+    KeyComponent, RealEstateComponent, OtherResourceComponent
 ],
   template: `
   <form scVestForm
@@ -35,32 +34,23 @@ import { RowingBoatComponent } from "./rowing-boat.component";
     (dirtyChange)="dirtyChange.set($event)"
     (formValueChange)="onValueChange($event)">
  
-    @if(isTypeEditable() === true) {
-      <ion-grid>
-        <ion-row>
-          <ion-col size="12" size-md="6">
-            <bk-cat name="type" [value]="type()" [categories]="resourceTypes" (changed)="onChange('type', $event)" [readOnly]="readOnly()" />
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    }
     @switch(vm().type) {
-      @case(resourceType.RowingBoat) {
-        <bk-rowing-boat [vm]="vm()" [currentUser]="currentUser()" />
+      @case('rboat') {
+        <bk-rowing-boat [vm]="vm()" [subTypes]="subTypes()" [usages]="usages()" [currentUser]="currentUser()" />
       }
-      @case(resourceType.Boat) {
-        <bk-boat [vm]="vm()" [currentUser]="currentUser()" />
+      @case('boat') {
+        <bk-boat [vm]="vm()" [subTypes]="subTypes()" [currentUser]="currentUser()" />
       }
-      @case(resourceType.Car) {
-        <bk-car [vm]="vm()" [currentUser]="currentUser()" />
+      @case('car') {
+        <bk-car [vm]="vm()" [subTypes]="subTypes()" [currentUser]="currentUser()" />
       }
-      @case(resourceType.Locker) {
-        <bk-locker [vm]="vm()" [currentUser]="currentUser()" />
+      @case('locker') {
+        <bk-locker [vm]="vm()" [subTypes]="subTypes()" [currentUser]="currentUser()" />
       }
-      @case(resourceType.Key) {
+      @case('key') {
         <bk-key [vm]="vm()" [currentUser]="currentUser()" />
       }
-      @case(resourceType.RealEstate) {
+      @case('realestate') {
         <bk-real-estate [vm]="vm()" [currentUser]="currentUser()" />
       }
       @default {
@@ -71,7 +61,7 @@ import { RowingBoatComponent } from "./rowing-boat.component";
     <bk-property-list [propertyList]="data()" name="resourceData" (changed)="onChange('propertyList', $event)" />
 
     @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="resourceTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
     }
   
     @if(hasRole('admin')) {
@@ -82,26 +72,28 @@ import { RowingBoatComponent } from "./rowing-boat.component";
 })
 export class ResourceFormComponent {
   public vm = model.required<ResourceFormModel>();
-  public isTypeEditable = input(false);
-  public resourceTags = input.required<string>();
   public currentUser = input<UserModel | undefined>();
+  public allTags = input.required<string>();
+  public types = input<CategoryListModel | undefined>();
+  public subTypes = input<CategoryListModel | undefined>();
+  public usages = input<CategoryListModel | undefined>();
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
 
   public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected isNew = computed(() => this.vm().bkey === undefined || this.vm().bkey === '');
-  protected type = computed(() => this.vm().type ?? ResourceType.Other);
-  protected name = computed(() => this.vm().name ?? '');
-  protected usage = computed(() => this.vm().usage ?? RowingBoatUsage.Breitensport);
+  protected typeName = computed(() => this.vm().type ?? DEFAULT_RESOURCE_TYPE);
+  protected name = computed(() => this.vm().name ?? DEFAULT_NAME);
+  protected usage = computed(() => this.vm().usage ?? DEFAULT_RBOAT_USAGE);
   protected load = computed(() => this.vm().load ?? '');
-  protected currentValue = computed(() => this.vm().currentValue ?? 0);
+  protected currentValue = computed(() => this.vm().currentValue ?? DEFAULT_PRICE);
   protected hexColor = computed(() => this.vm().hexColor ?? '');
   protected keyNr = computed(() => this.vm().keyNr ?? 0);
   protected lockerNr = computed(() => this.vm().lockerNr ?? 0);
   protected data = computed(() => this.vm().data ?? []);
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected description = computed(() => this.vm().description ?? '');
+  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
+  protected description = computed(() => this.vm().description ?? DEFAULT_NOTES);
 
   protected readonly suite = resourceFormValidations;
   protected readonly shape = resourceFormShape;
@@ -114,9 +106,6 @@ export class ResourceFormComponent {
   protected keyNrErrors = computed(() => this.validationResult().getErrors('keyNr'));
   protected lockerNrErrors = computed(() => this.validationResult().getErrors('lockerNr'));
   protected errors = computed(() => this.validationResult().getErrors());
-
-  protected resourceType = ResourceType;
-  protected resourceTypes = ResourceTypes;
 
   protected onValueChange(value: ResourceFormModel): void {
     this.vm.update((_vm) => ({..._vm, ...value}));

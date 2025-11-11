@@ -13,7 +13,7 @@ export class SortDirectionPipe implements PipeTransform {
       if (sortDirection === null) return '?';
       // prior isSortedPipe already checked for undefined
 
-      const _iconName = sortDirection === SortDirection.Ascending ? 'arrow-up' : 'arrow-down';
-      return `${this.env.services.imgixBaseUrl}/logo/ionic/${_iconName}.svg`;
+      const iconName = sortDirection === SortDirection.Ascending ? 'arrow-up' : 'arrow-down';
+      return `${this.env.services.imgixBaseUrl}/logo/ionic/${iconName}.svg`;
   }
 }

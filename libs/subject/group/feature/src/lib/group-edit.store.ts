@@ -5,9 +5,9 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { DEFAULT_KEY, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { MembershipModel, ModelType } from '@bk2/shared-models';
+import { MembershipModel } from '@bk2/shared-models';
 import { AppNavigationService } from '@bk2/shared-util-angular';
 import { debugData, debugItemLoaded, getTodayStr, isPerson } from '@bk2/shared-util-core';
 
@@ -73,7 +73,7 @@ export const GroupEditStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Group);
+        return store.appStore.getTags('group');
       },
       
       /************************************ ACTIONS ************************************* */
@@ -123,18 +123,18 @@ export const GroupEditStore = signalStore(
             membership.memberKey = data.bkey;
             membership.memberName1 = data.firstName;
             membership.memberName2 = data.lastName;
-            membership.memberModelType = ModelType.Person;
+            membership.memberModelType = 'person';
             membership.memberType = data.gender;
             membership.memberDateOfBirth = data.dateOfBirth;
             membership.memberDateOfDeath = data.dateOfDeath;
-            membership.memberZipCode = data.fav_zip_code;
+            membership.memberZipCode = data.favZipCode;
             membership.memberBexioId = data.bexioId;
-            membership.orgKey = store.groupKey() ?? '';
-            membership.orgName = store.group()?.name ?? '';
+            membership.orgKey = store.groupKey() ?? DEFAULT_KEY;
+            membership.orgName = store.group()?.name ?? DEFAULT_NAME;
             membership.dateOfEntry = getTodayStr();
             membership.dateOfExit = END_FUTURE_DATE_STR;
             membership.index = store.membershipService.getSearchIndex(membership);
-            membership.priority = 1; // default priority for the first membership
+            membership.order = 1; // default priority for the first membership
             membership.relIsLast = true; // this is the last membership of this person in
             debugData(`GroupEditStore.addMember: new membership: `, membership, store.currentUser());
             store.membershipService.create(membership, store.appStore.currentUser());

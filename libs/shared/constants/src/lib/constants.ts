@@ -43,6 +43,71 @@ export const START_PAST_DATE_STR = '19000101';
 export const MIN_YEAR = 1900;
 export const MAX_YEAR = 2100;
 
+//-----------------------------------------------
+// default types
+//-----------------------------------------------
+export const DEFAULT_ACCOUNT_NAME = 'bank';
+export const DEFAULT_CALEVENT_TYPE = 'social';
+export const DEFAULT_CAR_TYPE = 'hatchback';
+export const DEFAULT_COMPETITION_LEVEL = 'masters';
+export const DEFAULT_CONTENT_STATE = 'draft';
+export const DEFAULT_DOCUMENT_TYPE = 'info';
+export const DEFAULT_DOCUMENT_SOURCE = 'storage';
+export const DEFAULT_GENDER = 'male';
+export const DEFAULT_IMPORTANCE = 'medium';
+export const DEFAULT_INVOICE_POSITION_TYPE = 'fix';
+export const DEFAULT_INVOICE_POSITION_USAGE = 'membershipFee';
+export const DEFAULT_LOCATION_TYPE = 'address';
+export const DEFAULT_MCAT = 'active';
+export const DEFAULT_MSTATE = 'active';
+export const DEFAULT_MENU_ACTION = 'browse';
+export const DEFAULT_OCAT = 'use';
+export const DEFAULT_ORG_TYPE = 'association';
+export const DEFAULT_OSTATE = 'active';
+export const DEFAULT_PAGE_TYPE = 'content';
+export const DEFAULT_PERIODICITY = 'once';
+export const DEFAULT_PERSONAL_REL = 'parentChild';
+export const DEFAULT_PRIORITY = 'medium';
+export const DEFAULT_RBOAT_TYPE = 'b1x';
+export const DEFAULT_RBOAT_USAGE = 'breitensport';
+export const DEFAULT_RESOURCE_TYPE = 'rboat';
+export const DEFAULT_RES_REASON = 'social';
+export const DEFAULT_RES_STATE = 'initial';
+export const DEFAULT_SECTION_TYPE = 'article';
+export const DEFAULT_TASK_STATE = 'initial';
+export const DEFAULT_TRANSFER_TYPE = 'purchase';
+export const DEFAULT_TRANSFER_STATE = 'initial';
+export const DEFAULT_WORKREL_TYPE = 'employee';
+export const DEFAULT_WORKREL_STATE = 'active';
+export const DEFAULT_ROLE = 'registered';
+
+//-----------------------------------------------
+// other defaults
+//-----------------------------------------------
+export const DEFAULT_CURRENCY = 'CHF';
+export const DEFAULT_SALARY = 6000;
+export const DEFAULT_KEY = '';
+export const DEFAULT_NAME = '';
+export const DEFAULT_NOTES = '';
+export const DEFAULT_TAGS = '';
+export const DEFAULT_PRICE = 0;
+export const DEFAULT_COUNT = '1';
+export const DEFAULT_TITLE = '';
+export const DEFAULT_SECTIONS: string[] = [];
+export const DEFAULT_TENANTS: string[] = [];
+export const DEFAULT_DATE = '';
+export const DEFAULT_TIME = '';
+export const DEFAULT_ID = '';
+export const DEFAULT_INDEX = '';
+export const DEFAULT_LABEL = '';
+export const DEFAULT_CALENDARS: string[] = [];
+export const DEFAULT_MENUITEMS: string[] = [];
+export const DEFAULT_URL = '';
+export const DEFAULT_PATH = '';
+export const DEFAULT_EMAIL = '';
+export const DEFAULT_PHONE = '';
+export const DEFAULT_ORDER = 1;
+
 /**-------------------------------------------------------------------------
  * Styling
 ---------------------------------------------------------------------------*/

@@ -1,8 +1,8 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { GenderType, PersonModel } from '@bk2/shared-models';
-import { baseValidations, categoryValidations, dateValidations, isAfterDate, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { PersonModel } from '@bk2/shared-models';
+import { baseValidations, dateValidations, isAfterDate, stringValidations } from '@bk2/shared-util-core';
 
 export const personValidations = staticSuite((model: PersonModel, field?: string) => {
   if (field) only(field);
@@ -11,7 +11,7 @@ export const personValidations = staticSuite((model: PersonModel, field?: string
   stringValidations('index', model.index, SHORT_NAME_LENGTH);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);
-  categoryValidations('gender', model.gender, GenderType);
+  stringValidations('gender', model.gender, WORD_LENGTH);
   stringValidations('ssnId', model.ssnId);
   dateValidations('dateOfBirth', model.dateOfBirth);
   dateValidations('dateOfDeath', model.dateOfDeath);

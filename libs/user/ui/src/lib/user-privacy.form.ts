@@ -5,7 +5,7 @@ import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { PrivacyUsages } from "@bk2/shared-categories";
 import { TranslatePipe } from "@bk2/shared-i18n";
-import { FieldDescription, PrivacyUsage, UserModel } from "@bk2/shared-models";
+import { PrivacyUsage, UserModel } from "@bk2/shared-models";
 import { CategoryComponent, CheckboxComponent } from "@bk2/shared-ui";
 import { debugFormErrors } from "@bk2/shared-util-core";
 

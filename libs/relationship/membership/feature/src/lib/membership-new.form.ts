@@ -6,7 +6,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryListModel, ModelType, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, DateInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, getFullPersonName, getTodayStr, isOrg, isPerson } from '@bk2/shared-util-core';
 
@@ -57,7 +57,7 @@ import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShap
           <ion-col size="9">
             <ion-item lines="none">
               <ion-avatar slot="start">
-                <ion-img src="{{ modelType.Org + '.' + orgKey() | avatar | async }}" alt="Avatar Logo of Organization" />
+                <ion-img src="{{ 'org.' + orgKey() | avatar | async }}" alt="Avatar Logo of Organization" />
               </ion-avatar>
               <ion-label>{{ orgName() }}</ion-label>
             </ion-item>
@@ -70,7 +70,7 @@ import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShap
         </ion-row>
         <ion-row>
           <ion-col size="12">
-            <bk-cat-select [category]="membershipCategories()" popoverId="mcat-new" [selectedItemName]="currentMembershipCategoryItem()" (changed)="onCatChanged($event)" />
+            <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (changed)="onCatChanged($event)" />
           </ion-col>
           <ion-col size="12"> 
             <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [locale]="locale()" [showHelper]=true (changed)="onChange('dateOfEntry', $event)" />
@@ -104,8 +104,6 @@ export class MembershipNewFormComponent {
   protected readonly shape = membershipNewFormModelShape;
   private readonly validationResult = computed(() => membershipNewFormValidations(this.vm()));
 
-  protected modelType = ModelType;
-
   protected onValueChange(value: MembershipFormModel): void {
     this.vm.update((_vm) => ({ ..._vm, ...value }));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
@@ -127,7 +125,7 @@ export class MembershipNewFormComponent {
   }
 
   protected async selectMember(): Promise<void> {
-    if (this.memberModelType() === ModelType.Person) {
+    if (this.memberModelType() === 'person') {
       this.selectPerson();
     } else {
       this.selectOrg();
@@ -153,11 +151,11 @@ export class MembershipNewFormComponent {
           memberName1: data.firstName,
           memberName2: data.lastName,
           memberName: getFullPersonName(data.firstName, data.lastName),
-          memberModelType: ModelType.Person,
+          memberModelType: 'person',
           memberType: data.gender,
           memberDateOfBirth: data.dateOfBirth,
           memberDateOfDeath: data.dateOfDeath,
-          memberZipCode: data.fav_zip_code,
+          memberZipCode: data.favZipCode,
           memberBexioId: data.bexioId
         }));
         debugFormErrors('MembershipNewForm (Person)', this.validationResult().errors, this.currentUser());

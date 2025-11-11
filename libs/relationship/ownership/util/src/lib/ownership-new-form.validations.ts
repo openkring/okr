@@ -1,8 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { ABBREVIATION_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { AccountType, GenderType, ModelType, OrgType, Periodicity, ResourceType, RowingBoatType } from '@bk2/shared-models';
-import { categoryValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { ABBREVIATION_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
 import { OwnershipNewFormModel } from './ownership-new-form.model';
 
@@ -14,27 +13,19 @@ export const ownershipNewFormValidations = staticSuite((model: OwnershipNewFormM
   stringValidations('ownerName2', model.ownerName2, SHORT_NAME_LENGTH);
 
   // tbd: test ownerModelType to be either Person or Org
-  omitWhen(model.ownerModelType !== ModelType.Person, () => {
-    categoryValidations('ownerType', model.ownerType, GenderType); 
-  });
-  omitWhen(model.ownerModelType !== ModelType.Org, () => {
-    categoryValidations('ownerType', model.ownerType, OrgType); 
-  });
+  stringValidations('ownerType', model.ownerType, WORD_LENGTH); 
+  // tbd: test the values of ownerType
     
   stringValidations('resourceKey', model.resourceKey, SHORT_NAME_LENGTH);
   stringValidations('resourceName', model.resourceName, SHORT_NAME_LENGTH);
   // tbd: test resourceModelType to be either Resource or Account
 
-  omitWhen(model.resourceModelType !== ModelType.Account, () => {
-    categoryValidations('resourceType', model.resourceType, AccountType); 
-  });
-  omitWhen(model.resourceModelType !== ModelType.Resource, () => {
-    categoryValidations('resourceType', model.resourceType, ResourceType); 
-  });
-  omitWhen(model.resourceType !== ResourceType.RowingBoat, () => {
-    categoryValidations('resourceSubType', model.resourceSubType, RowingBoatType); 
-  });
-
+  stringValidations('resourceType', model.resourceType, WORD_LENGTH);
+    // tbd: test resourceType to be either Resource or Account
+  
+  stringValidations('resourceSubType', model.resourceSubType, WORD_LENGTH);
+  // tbd: test resourceSubType to be either a ResourceType or AccountType based on resourceType
+    
   dateValidations('validFrom', model.validFrom);
   dateValidations('validTo', model.validTo);
 
@@ -49,9 +40,9 @@ export const ownershipNewFormValidations = staticSuite((model: OwnershipNewFormM
   stringValidations('ownershipState', model.ownershipState, SHORT_NAME_LENGTH, 3, true);
 
   stringValidations('count', model.count, ABBREVIATION_LENGTH);
-  numberValidations('priority', model.priority, true, 0, 100);
+  numberValidations('order', model.order, true, 0, 100);
 
   numberValidations('price', model.price);
   stringValidations('currency', model.currency, CURRENCY_LENGTH);
-  categoryValidations('periodicity', model.periodicity, Periodicity);
+  stringValidations('periodicity', model.periodicity, WORD_LENGTH);
 });

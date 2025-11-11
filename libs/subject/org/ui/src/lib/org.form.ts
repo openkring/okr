@@ -2,10 +2,9 @@ import { Component, computed, input, model, output, signal } from '@angular/core
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { OrgTypes } from '@bk2/shared-categories';
 import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
-import { OrgType, RoleName, UserModel } from '@bk2/shared-models';
-import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
 import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subject-org-util';
 
@@ -14,7 +13,7 @@ import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subjec
   standalone: true,
   imports: [
     vestForms,
-    CategoryComponent, DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent,
+    CategorySelectComponent, DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   template: `
@@ -30,7 +29,7 @@ import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subjec
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat name="orgType" [value]="orgType()" [categories]="orgTypes" [readOnly]="true" (changed)="onChange('orgType', $event)" />
+              <bk-cat-select [category]="types()!" selectedItemName="orgType()"  (changed)="onChange('orgType', $event)" />
             </ion-col>
           </ion-row>
           <ion-row> 
@@ -61,7 +60,7 @@ import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subjec
       </ion-card-content>
     </ion-card>
 
-    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="orgTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
 
     @if(hasRole('admin')) { 
       <bk-notes name="notes" [value]="notes()" />
@@ -72,7 +71,8 @@ import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subjec
 export class OrgFormComponent {
   public vm = model.required<OrgFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public readonly orgTags = input.required<string>();
+  public readonly allTags = input.required<string>();
+  public readonly types = input.required<CategoryListModel>();
 
   // protected orgName = computed(() => getOrgNameByOrgType(this.vm().type)); tbd: typed orgName collides with validations
   public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));  
@@ -83,7 +83,7 @@ export class OrgFormComponent {
   protected readonly suite = orgFormValidations;
   protected readonly shape = orgFormModelShape;
 
-  protected orgType = computed(() => this.vm().type ?? OrgType.Association);
+  protected orgType = computed(() => this.vm().type ?? 'association');
   protected orgName = computed(() => this.vm().orgName ?? '');
   protected dateOfFoundation = computed(() => this.vm().dateOfFoundation ?? '');
   protected dateOfLiquidation = computed(() => this.vm().dateOfLiquidation ?? '');
@@ -95,8 +95,6 @@ export class OrgFormComponent {
   private readonly validationResult = computed(() => orgFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('orgName'));
 
-  public orgTypeEnum = OrgType;
-  public orgTypes = OrgTypes;
   protected bexioMask = BexioIdMask;
   protected vatMask = ChVatMask;
 

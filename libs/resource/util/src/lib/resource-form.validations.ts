@@ -1,8 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { CarType, GenderType, ResourceType, RowingBoatType, RowingBoatUsage } from '@bk2/shared-models';
-import { categoryValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { isArrayOfBaseProperties, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
 import { ResourceFormModel } from './resource-form.model';
 
@@ -13,11 +12,9 @@ export const resourceFormValidations = staticSuite((model: ResourceFormModel, fi
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 1, true);
   numberValidations('keyNr', model.keyNr, true, 0, 100000);
   numberValidations('lockerNr', model.lockerNr, true, 0, 120);  
-  categoryValidations('type', model.type, ResourceType);
-  categoryValidations('gender', model.gender, GenderType);
-  categoryValidations('rowingBoatType', model.rowingBoatType, RowingBoatType);
-  categoryValidations('carType', model.carType, CarType);
-  categoryValidations('usage', model.usage, RowingBoatUsage);
+  stringValidations('type', model.type, WORD_LENGTH);
+  stringValidations('subType', model.subType, WORD_LENGTH);
+  stringValidations('usage', model.usage, WORD_LENGTH);
   numberValidations('currentValue', model.currentValue, true, 0, 100000);
   numberValidations('weight', model.weight, true, 0, 10000);
   stringValidations('load', model.load, SHORT_NAME_LENGTH);

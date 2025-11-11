@@ -36,13 +36,13 @@ export interface SearchableModel {
 }
 
 export interface AddressableModel {
-  fav_email: string;
-  fav_phone: string;
-  fav_street_name: string;
-  fav_street_number: string;
-  fav_zip_code: string;
-  fav_city: string;
-  fav_country_code: string;
+  favEmail: string;
+  favPhone: string;
+  favStreetName: string;
+  favStreetNumber: string;
+  favZipCode: string;
+  favCity: string;
+  favCountryCode: string;
 }
 
 export type BaseType = string | number | boolean;

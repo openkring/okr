@@ -4,10 +4,9 @@ import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, AllCategories, ModelType, OrgCollection, OrgModel, OrgType } from '@bk2/shared-models';
+import { AddressModel, OrgCollection, OrgModel } from '@bk2/shared-models';
 import { AppNavigationService, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
@@ -20,12 +19,12 @@ import { OrgNewModalComponent } from './org-new.modal';
 export type OrgListState = {
   searchTerm: string;
   selectedTag: string;
-  selectedType: OrgType | typeof AllCategories;
+  selectedType: string;
 };
 export const initialState: OrgListState = {
   searchTerm: '',
   selectedTag: '',
-  selectedType: AllCategories,
+  selectedType: 'all',
 };
 
 export const OrgListStore = signalStore(
@@ -59,7 +58,7 @@ export const OrgListStore = signalStore(
     filteredOrgs: computed(() =>
       state.orgsResource.value()?.filter((org: OrgModel) =>
         nameMatches(org.index, state.searchTerm()) &&
-        categoryMatches(org.type, state.selectedType()) &&
+        nameMatches(org.type, state.selectedType()) &&
         chipMatches(org.tags, state.selectedTag())
       ) ?? []
     ),
@@ -90,14 +89,14 @@ export const OrgListStore = signalStore(
     setSearchTerm(searchTerm: string) {
       patchState(store, { searchTerm });
     },
-    setSelectedType(selectedType: OrgType | typeof AllCategories) {
+    setSelectedType(selectedType: string) {
       patchState(store, { selectedType });
     },
     setSelectedTag(selectedTag: string) {
       patchState(store, { selectedTag });
     },
     getOrgTags(): string {
-      return store.appStore.getTags(ModelType.Org);
+      return store.appStore.getTags('org');
     },
     async export(type: string): Promise<void> {
       console.log(`OrgListStore.export(${type}) is not yet implemented.`);
@@ -113,7 +112,7 @@ export const OrgListStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm') {
         const vm = data as OrgNewFormModel;
-        const key = ModelType.Org + '.' + await store.orgService.create(convertFormToNewOrg(vm, store.tenantId()), store.currentUser());
+        const key = `org.${await store.orgService.create(convertFormToNewOrg(vm, store.tenantId()), store.currentUser())}`;
         if ((vm.email ?? '').length > 0) {
           this.saveAddress(convertNewOrgFormToEmailAddress(vm, store.tenantId()), key);
         }
@@ -159,7 +158,7 @@ export const OrgListStore = signalStore(
       this.reset();
     },
     async copyEmailAddresses(): Promise<void> {
-      const allEmails = store.filteredOrgs().map((org) => org.fav_email);
+      const allEmails = store.filteredOrgs().map((org) => org.favEmail);
       const emails = allEmails.filter((e) => e);
       await copyToClipboardWithConfirmation(
         store.toastController,

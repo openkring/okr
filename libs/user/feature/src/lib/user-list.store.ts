@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { ModelType, UserCollection, UserModel } from '@bk2/shared-models';
+import { UserCollection, UserModel } from '@bk2/shared-models';
 import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
@@ -70,7 +70,7 @@ export const UserListStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.User);
+        return store.appStore.getTags('user');
       },
 
       /******************************* actions *************************************** */

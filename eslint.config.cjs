@@ -35,7 +35,7 @@ module.exports = [
             { sourceTag: 'type:ui', onlyDependOnLibsWithTags: ['type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
             { sourceTag: 'type:data-access', onlyDependOnLibsWithTags: ['type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
             { sourceTag: 'type:util', onlyDependOnLibsWithTags: ['type:util', 'type:model', 'type:constants', 'type:config'] },
-            { sourceTag: 'type:model', onlyDependOnLibsWithTags: [] },
+            { sourceTag: 'type:model', onlyDependOnLibsWithTags: ['type:constants'] },
             { sourceTag: 'type:constants', onlyDependOnLibsWithTags: [] },
             { sourceTag: 'type:config', onlyDependOnLibsWithTags: [] },
             { sourceTag: 'type:api', onlyDependOnLibsWithTags: ['type:util', 'type:model', 'type:constants', 'platform:node'] },

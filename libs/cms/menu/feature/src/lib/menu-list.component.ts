@@ -2,11 +2,10 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, MenuActions } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, MenuAction, MenuItemModel, RoleName } from '@bk2/shared-models';
-import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { CategoryComponent, EmptyListComponent, SearchbarComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { MenuItemModel, RoleName } from '@bk2/shared-models';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { CategorySelectComponent, EmptyListComponent, SearchbarComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuItemListStore } from './menu-list.store';
@@ -18,8 +17,8 @@ import { ActionSheetController } from '@ionic/angular';
   selector: 'bk-menu-item-all-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, CategoryNamePipe,
-    SearchbarComponent, CategoryComponent, SpinnerComponent, EmptyListComponent,
+    TranslatePipe, AsyncPipe, SvgIconPipe,
+    SearchbarComponent, CategorySelectComponent, SpinnerComponent, EmptyListComponent,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList
   ],
@@ -54,7 +53,7 @@ import { ActionSheetController } from '@ionic/angular';
               <bk-searchbar placeholder="{{ '@general.operation.search.placeholder' | translate | async }}" (ionInput)="onSearchtermChange($event)" />
             </ion-col>
             <ion-col size="6">
-              <bk-cat name="menuAction" [value]="selectedCategory" [categories]="categories" (changed)="onCategoryChange($event)" />
+              <bk-cat-select [category]="menuActions()!" selectedItemName="all" [withAll]="true" (changed)="onCategoryChange($event)" />
           </ion-col>
           </ion-row>
         </ion-grid>
@@ -92,13 +91,13 @@ import { ActionSheetController } from '@ionic/angular';
             @for(menuItem of filteredMenuItems(); track menuItem.bkey) {
                 <ion-item (click)="showActions(menuItem)">
                   <ion-label>{{ menuItem.name }}</ion-label>
-                  @if(menuItem.action === MA.SubMenu) {
+                  @if(menuItem.action === 'sub') {
                     <ion-label class="ion-hide-md-down">{{ menuItem.menuItems }}</ion-label>
                   }
                   @else {
                     <ion-label class="ion-hide-md-down">{{ menuItem.url }}</ion-label>
                   }
-                  <ion-label>{{ menuItem.action | categoryName:menuActions }}</ion-label>
+                  <ion-label>{{ menuItem.action }}</ion-label>
                 </ion-item>
             }
           </ion-list>
@@ -116,18 +115,15 @@ export class MenuListComponent {
   protected menuItemsCount = computed(() => this.menuItemListStore.menuItemsCount());
   protected selectedMenuItemsCount = computed(() => this.filteredMenuItems().length);
   protected isLoading = computed(() => this.menuItemListStore.isLoading());
+  protected menuActions = computed(() => this.menuItemListStore.appStore.getCategory('menu_action'));
 
-  protected selectedCategory = AllCategories;
-  protected categories = addAllCategory(MenuActions);
-  protected menuActions = MenuActions;
-  protected MA = MenuAction;
   private imgixBaseUrl = this.menuStore.appStore.env.services.imgixBaseUrl;
 
   protected onSearchtermChange($event: Event): void {
     this.menuItemListStore.setSearchTerm(($event.target as HTMLInputElement).value);
   }
 
-  protected onCategoryChange($event: number): void {
+  protected onCategoryChange($event: string): void {
     this.menuItemListStore.setSelectedCategory($event);
   }
 

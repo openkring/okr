@@ -1,8 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { AccountType, GenderType, ModelType, OrgType, Periodicity, ReservationReason, ReservationState, ResourceType } from '@bk2/shared-models';
-import { categoryValidations, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations, timeValidations } from '@bk2/shared-util-core';
+import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { dateValidations, isAfterOrEqualDate, numberValidations, stringValidations, timeValidations } from '@bk2/shared-util-core';
 
 import { ReservationNewFormModel } from './reservation-new-form.model';
 
@@ -18,23 +17,23 @@ export const reservationNewFormValidations = staticSuite((model: ReservationNewF
   stringValidations('reserverKey', model.reserverKey, SHORT_NAME_LENGTH);
   stringValidations('reserverName', model.reserverName, SHORT_NAME_LENGTH);
   stringValidations('reserverName2', model.reserverName2, SHORT_NAME_LENGTH);
-  categoryValidations('reserverModelType', model.reserverModelType, ModelType); // tbd: if Person: gender, else orgType
-  omitWhen(model.reserverModelType !== ModelType.Person, () => {
-    categoryValidations('reserverType', model.reserverType, GenderType);
+  stringValidations('reserverModelType', model.reserverModelType, WORD_LENGTH); // tbd: if Person: gender, else orgType
+  omitWhen(model.reserverModelType !== 'person', () => {
+    stringValidations('reserverType', model.reserverType, WORD_LENGTH); // gender
   });
-  omitWhen(model.reserverModelType !== ModelType.Org, () => {
-    categoryValidations('reserverType', model.reserverType, OrgType);
+  omitWhen(model.reserverModelType !== 'org', () => {
+    stringValidations('reserverType', model.reserverType, WORD_LENGTH); // org type
   });
 
   // resource
   stringValidations('resourceKey', model.resourceKey, SHORT_NAME_LENGTH);
   stringValidations('resourceName', model.resourceName, SHORT_NAME_LENGTH);
-  categoryValidations('resourceModelType', model.resourceModelType, ModelType); // Resource or Account
-  omitWhen(model.resourceModelType !== ModelType.Resource, () => {
-    categoryValidations('resourceType', model.resourceType, ResourceType);
+  stringValidations('resourceModelType', model.resourceModelType, WORD_LENGTH); // Resource or Account
+  omitWhen(model.resourceModelType !== 'resource', () => {
+    stringValidations('resourceType', model.resourceType, WORD_LENGTH);
   });
-  omitWhen(model.resourceModelType !== ModelType.Account, () => {
-    categoryValidations('resourceType', model.resourceType, AccountType);
+  omitWhen(model.resourceModelType !== 'account', () => {
+    stringValidations('resourceType', model.resourceType, WORD_LENGTH);
   });
 
   dateValidations('startDate', model.startDate);
@@ -45,13 +44,13 @@ export const reservationNewFormValidations = staticSuite((model: ReservationNewF
   stringValidations('numberOfParticipants', model.numberOfParticipants, SHORT_NAME_LENGTH);
   stringValidations('area', model.area, SHORT_NAME_LENGTH);
   stringValidations('reservationRef', model.reservationRef, SHORT_NAME_LENGTH);
-  categoryValidations('reservationState', model.reservationState, ReservationState);
-  categoryValidations('reservationReason', model.reservationReason, ReservationReason);
-  numberValidations('priority', model.priority, true, 0, 10);
+  stringValidations('reservationState', model.reservationState, WORD_LENGTH);
+  stringValidations('reservationReason', model.reservationReason, WORD_LENGTH);
+  numberValidations('order', model.order, true, 0, 10);
 
   numberValidations('price', model.price, false, 0, 1000000);
   stringValidations('currency', model.currency, CURRENCY_LENGTH);
-  categoryValidations('periodicity', model.periodicity, Periodicity);
+  stringValidations('periodicity', model.periodicity, WORD_LENGTH);
 
    // cross field validations
   omitWhen(model.startDate === '' || model.endDate === '', () => {

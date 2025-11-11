@@ -3,7 +3,7 @@ import { Component, computed, input, model, output } from '@angular/core';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { getItemLabel } from '@bk2/shared-util-core';
@@ -33,17 +33,17 @@ let id = 0;
   viewProviders: [vestFormsViewProviders],
   styles: [`
     .helper { --color: var(--ion-color-medium);}
-    :host { .item { &:hover { --background-hover: #000000 #bfe8f4  }
-    .popover.active {
-    opacity: 1;
-}
-  }
-}
+    .popover.active { opacity: 1;}
   `],
   template: `
   <ion-button fill="clear" id="{{popoverId}}">
-    <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
+    @if(showIcons() === true && selectedItem().icon.length > 0) {
+      <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
+    }
     {{ getItemLabel(selectedItem()) | translate | async}}
+    @if(readOnly() === false) {
+      <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
+    }
   </ion-button>
   @if(!readOnly()) {
     <ion-popover trigger="{{popoverId}}" [showBackdrop]="true" [dismissOnSelect]="true">
@@ -51,9 +51,16 @@ let id = 0;
         <ion-content>
           <ion-list lines="inset">
             @for(item of items(); track $index) {
-              <ion-item button (click)="select(item)" class="item">
+              <ion-item button (click)="select(item)"
+                [class.active]="selectedItemName() === item.name"
+                (mouseenter)="hovered = item.name"
+                (mouseleave)="hovered = ''"
+                [class.hover]="hovered === item.name"
+              >
+              @if(showIcons() === true) {
                 <ion-icon slot="start" src="{{ item.icon| svgIcon }}" />
-                <ion-label class="ion-text-wrap">{{ getItemLabel(item) | translate | async }}</ion-label>
+              }
+              <ion-label class="ion-text-wrap">{{ getItemLabel(item) | translate | async }}</ion-label>
             </ion-item>
             }
           </ion-list>
@@ -62,34 +69,10 @@ let id = 0;
     </ion-popover>
   }
   @if(showHelper()) {
-    <ion-item lines="none" class="helper">
+    <ion-item lines="none">
       <ion-note>{{helper() | translate | async}}</ion-note>
     </ion-item>
   }
-<!--     <ion-item lines="none">
-      <ion-select [name]="name()" (ionChange)="onChange($event)"
-        label="{{ this.label() | translate | async }}"
-        [disabled]="readOnly()"
-        label-placement="floating"
-        interface="popover"
-        [value]="this.selectedItem()"
-        [compareWith]="compareWith">
-        @for (item of this.items(); track $index) {
-          <ion-select-option [value]="item"> -->
-<!--       
-          unfortunately, Ionic is not supporting icons within ion-select-option   
-          <ion-icon slot="start" src="{{ cat.icon| svgIcon }}" />
- -->            
-<!--             {{ getItemLabel(item) | translate | async }}
-          </ion-select-option>
-        }
-      </ion-select>
-    </ion-item>
-    @if(showHelper()) {
-    <ion-item lines="none" class="helper">
-      <ion-note>{{helper() | translate | async}}</ion-note>
-    </ion-item>
-  } -->
   `
 })
 export class CategorySelectComponent {
@@ -97,14 +80,19 @@ export class CategorySelectComponent {
   public selectedItemName = model.required<string>(); // mandatory view model
   public withAll = input(false); // if true, the first item in the list is 'All' and the user can select it. This is useful for filtering.
   public labelName = input('label'); // the name of the label in the i18n file
+  public readOnly = input(false); // if true, the selected category is shown as a ready-only text
+  public showHelper = input(false);
+  public showIcons = input(true);
 
   protected name = computed(() => this.category().name); // category name, determines the label
   protected label = computed(() => `@${this.category().i18nBase}.${this.labelName()}`);
   protected helper = computed(() => `@input.${this.name()}.helper`);
 
+  protected hovered = '';
+
   protected items = computed(() => {
     if (this.withAll()) {
-      const _item = new CategoryItemModel('all', 'all', 'membership');
+      const _item = new CategoryItemModel('all', 'all', '');
       return [_item, ...this.category().items];
     }
     return this.category().items;
@@ -112,8 +100,6 @@ export class CategorySelectComponent {
 
   protected popoverId = `select-cat-${id++}`;
   protected selectedItem = computed(() => this.items().find(item => item.name === this.selectedItemName()) ?? this.items()[0]);
-  public readOnly = input(false); // if true, the selected category is shown as a ready-only text
-  public showHelper = input(false);
 
   protected changed = output<string>();   // we need this notification when selecting a category in the toolbar
 

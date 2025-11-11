@@ -59,9 +59,9 @@ export function convertDateFormatToString(value: string | undefined, fromFormat:
       return '';
     }
   }
-  const _result = convertDateFormat(value, fromFormat, toFormat, isStrict);
-  if (typeof _result !== 'string') die('date.util.convertDateFormatToString: ERROR not a string');
-  return _result;
+  const result = convertDateFormat(value, fromFormat, toFormat, isStrict);
+  if (typeof result !== 'string') die('date.util.convertDateFormatToString: ERROR not a string');
+  return result;
 }
 
 export function convertStoreDateToIsoWithDefaultToday(storeDate: string | undefined): string {

@@ -13,15 +13,15 @@ import { UserPrivacyFormModel } from './user-privacy-form.model';
  * @returns  'admin,registered'
  */
 export function flattenRoles(roles: Roles): string {
-  const _flattenedRoles = Object.keys(roles);
-  console.log('role keys (string[])=', _flattenedRoles);
-  const _filteredRoles = _flattenedRoles.filter(_role => {
-    console.log('role.' + _role + ' = ' + roles[_role as keyof Roles]);
-    return roles[_role as keyof Roles] === true;
+  const flattenedRoles = Object.keys(roles);
+  console.log('role keys (string[])=', flattenedRoles);
+  const filteredRoles = flattenedRoles.filter(role => {
+    console.log('role.' + role + ' = ' + roles[role as keyof Roles]);
+    return roles[role as keyof Roles] === true;
   });
-  console.log('filtered roles (string[])=', _filteredRoles);
-  console.log('joined roles (string)=', _filteredRoles.join(','));
-  return _filteredRoles.join(',');
+  console.log('filtered roles (string[])=', filteredRoles);
+  console.log('joined roles (string)=', filteredRoles.join(','));
+  return filteredRoles.join(',');
 }
 
 /**
@@ -30,11 +30,11 @@ export function flattenRoles(roles: Roles): string {
  * @returns Roles object, e.g. { 'admin': true, 'registered': true }
  */
 export function structureRoles(roles: string): Roles {
-  const _structuredRoles = roles.split(',').reduce((acc, role) => {
+  const structuredRoles = roles.split(',').reduce((acc, role) => {
     acc[role as keyof Roles] = true;
     return acc;
   }, {} as Roles);
-  return _structuredRoles;
+  return structuredRoles;
 }
 
 export function convertUserToAuthForm(user: UserModel): UserAuthFormModel {

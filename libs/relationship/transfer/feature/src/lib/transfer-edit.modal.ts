@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/s
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, RoleName, TransferCollection, TransferModel } from '@bk2/shared-models';
+import { RoleName, TransferCollection, TransferModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -23,7 +23,7 @@ import { TransferFormComponent } from './transfer.form';
     <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-transfer-form [(vm)]="vm" [currentUser]="appStore.currentUser()" transferTags="test" (validChange)="formIsValid.set($event)" />
+      <bk-transfer-form [(vm)]="vm" (validChange)="formIsValid.set($event)" />
 
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
       <ion-accordion-group value="comments">
@@ -41,11 +41,8 @@ export class TransferEditModalComponent {
 
   public vm = linkedSignal(() => convertTransferToForm(this.transfer()));
   protected readonly transferKey = computed(() => this.transfer().bkey ?? '');
-  protected transferTags = computed(() => this.appStore.getTags(ModelType.Transfer));
 
   protected formIsValid = signal(false);
-
-  protected modelType = ModelType;
   protected transferCollection = TransferCollection;
 
   public save(): Promise<boolean> {

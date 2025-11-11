@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ContentState, SectionModel, SectionType } from '@bk2/shared-models';
+import { SectionModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 import { isSection, convertSectionToForm, convertFormToSection } from './section.util';
 import { SectionFormModel } from './section-form.model';
@@ -35,7 +35,7 @@ describe('Section Utils', () => {
     section.tags = 'intro,main';
     section.title = 'Section Title';
     section.subTitle = 'Section Subtitle';
-    section.type = SectionType.Calendar;
+    section.type = 'calendar';
     section.description = 'Some notes';
   });
 
@@ -56,7 +56,7 @@ describe('Section Utils', () => {
       expect(formModel.bkey).toBe('section-1');
       expect(formModel.name).toBe('Introduction');
       expect(formModel.title).toBe('Section Title');
-      expect(formModel.type).toBe(SectionType.Calendar);
+      expect(formModel.type).toBe('calendar');
     });
 
     it('should handle default values for optional fields', () => {
@@ -64,7 +64,7 @@ describe('Section Utils', () => {
       minimalSection.bkey = 'min-section';
       minimalSection.name = 'Minimal';
       const formModel = convertSectionToForm(minimalSection);
-      expect(formModel.type).toBe(SectionType.Article);
+      expect(formModel.type).toBe('article');
     });
   });
 
@@ -76,10 +76,9 @@ describe('Section Utils', () => {
         bkey: 'section-1',
         name: 'Updated Section',
         tags: 'updated,tags',
-        tenants: [tenantId],
         title: 'Updated Title',
         subTitle: 'Updated Subtitle',
-        type: SectionType.Button,
+        type: 'button',
         description: 'Updated notes',
       };
     });
@@ -88,7 +87,7 @@ describe('Section Utils', () => {
       const updatedSection = convertFormToSection(section, formModel, tenantId);
       expect(updatedSection.name).toBe('Updated Section');
       expect(updatedSection.title).toBe('Updated Title');
-      expect(updatedSection.type).toBe(SectionType.Button);
+      expect(updatedSection.type).toBe('button');
       expect(updatedSection.description).toBe('Updated notes');
       expect(updatedSection.bkey).toBe('section-1'); // Should not be changed
     });
@@ -112,7 +111,7 @@ describe('Section Utils', () => {
       const newSection = convertFormToSection(undefined, partialForm, tenantId);
       expect(newSection.name).toBe('Partial Section');
       expect(newSection.title).toBe('');
-      expect(newSection.type).toBe(SectionType.Article);
+      expect(newSection.type).toBe('article');
       expect(newSection.description).toBe('');
     });
   });

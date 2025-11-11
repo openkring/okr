@@ -1,8 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-import { getCategoryLabel, TransferTypes } from '@bk2/shared-categories';
 import { bkTranslate } from '@bk2/shared-i18n';
-import { TransferType } from '@bk2/shared-models';
+import { CategoryListModel, TransferModel } from '@bk2/shared-models';
+import { getItemLabel } from '@bk2/shared-util-core';
 
 /**
  * Returns the translated i18n label for a personal-rel considering the custom type.
@@ -12,9 +12,9 @@ import { TransferType } from '@bk2/shared-models';
   standalone: true
 })
 export class TransferNamePipe implements PipeTransform {
-  transform(transferType?: TransferType, label?: string): string {
-    if (transferType === undefined) return '';
-    const _name = transferType === TransferType.Custom ? label ?? '' : getCategoryLabel(TransferTypes, transferType);
+  transform(transfer?: TransferModel, transferTypes?: CategoryListModel): string {
+    if (!transfer || !transferTypes) return '';
+    const _name = transfer.type === 'custom' ? transfer.label ?? '' : getItemLabel(transferTypes, transfer.type);
     return bkTranslate(_name);
   }
 }

@@ -17,8 +17,8 @@ export class I18nService {
   }
 
   public setActiveLang(language: string, defaultLanguage: string) {
-  const _selectedLanguage = selectLanguage(AvailableLanguages, defaultLanguage, language);
-  this.translocoService.setActiveLang(_selectedLanguage);
+  const selectedLanguage = selectLanguage(AvailableLanguages, defaultLanguage, language);
+  this.translocoService.setActiveLang(selectedLanguage);
   }
 
   public getActiveLang(): string {

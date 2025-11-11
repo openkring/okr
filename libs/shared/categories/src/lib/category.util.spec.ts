@@ -1,6 +1,6 @@
-import { AllCategories } from '@bk2/shared-models';
 import { describe, expect, it } from 'vitest';
 import { addAllCategory, checkCategoryValue, checkNumericEnum, containsCategory, countCategories, getCategoryAbbreviation, getCategoryDescription, getCategoryField, getCategoryFullName, getCategoryIcon, getCategoryName, getCategoryNumberField, getCategoryStringField, isSystemCategory, newCategoryAll, readCategory } from './category.util';
+import { AllCategories } from '@bk2/shared-models';
 
 /* ------------------------ read category ------------------------ */
 describe('readCategory', () => {

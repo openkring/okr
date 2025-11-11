@@ -31,6 +31,10 @@
     {"path": "../../../cms/section/util/tsconfig.lib.json"},
     {"path": "../../../cms/section/ui/tsconfig.lib.json"},
     {"path": "../../../cms/section/data-access/tsconfig.lib.json"},
-    {"path": "../../../document/feature/tsconfig.lib.json"}
+    {"path": "../../../document/feature/tsconfig.lib.json"},
+    {"path": "../../../document/ui/tsconfig.lib.json"},
+    {"path": "../../../calevent/data-access/tsconfig.lib.json"},
+    {"path": "../../../calevent/util/tsconfig.lib.json"},
+    
   ]
 }

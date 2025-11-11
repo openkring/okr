@@ -1,7 +1,6 @@
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
-import { END_FUTURE_DATE_STR } from "@bk2/shared-constants";
-import { GenderType, PersonalRelType } from "@bk2/shared-models";
+import { DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS, END_FUTURE_DATE_STR } from "@bk2/shared-constants";
 import { getTodayStr } from "@bk2/shared-util-core";
 
 export type PersonalRelNewFormModel = DeepPartial<{
@@ -11,35 +10,35 @@ export type PersonalRelNewFormModel = DeepPartial<{
   subjectKey: string,
   subjectFirstName: string,
   subjectLastName: string,
-  subjectGender: GenderType,
+  subjectGender: string,
 
   objectKey: string,
   objectFirstName: string,
   objectLastName: string,
-  objectGender: GenderType,
+  objectGender: string,
 
-  type: PersonalRelType,
+  type: string,
   label: string,
   validFrom: string,
   validTo: string,
 }>;
 
 export const personalRelNewFormModelShape: DeepRequired<PersonalRelNewFormModel> = {
-  tags: '',
-  notes: '',
+  tags: DEFAULT_TAGS,
+  notes: DEFAULT_NOTES,
 
-  subjectKey: '',
-  subjectFirstName: '',
-  subjectLastName: '',
-  subjectGender: GenderType.Male,
+  subjectKey: DEFAULT_KEY,
+  subjectFirstName: DEFAULT_NAME,
+  subjectLastName: DEFAULT_NAME,
+  subjectGender: DEFAULT_GENDER,
 
-  objectKey: '',
-  objectFirstName: '',
-  objectLastName: '',
-  objectGender: GenderType.Male,
+  objectKey: DEFAULT_KEY,
+  objectFirstName: DEFAULT_NAME,
+  objectLastName: DEFAULT_NAME,
+  objectGender: DEFAULT_GENDER,
 
-  type: PersonalRelType.Partner,
-  label: '',
+  type: DEFAULT_PERSONAL_REL,
+  label: DEFAULT_LABEL,
   validFrom: getTodayStr(),
   validTo: END_FUTURE_DATE_STR,
 };

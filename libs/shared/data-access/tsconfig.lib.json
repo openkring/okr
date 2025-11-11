@@ -1,14 +1,10 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc/libs/shared/data-access",
-    "rootDir": "./src",
-    "declaration": true,
-    "composite": true,
-    "module": "es2020",
-    "target": "es2020",
-    "types": [],
+    "outDir": "../../../dist/out-tsc",
+    "rootDir": "src",
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-data-access.tsbuildinfo"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts", "vite.config.ts"]
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]
 }

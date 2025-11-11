@@ -63,15 +63,15 @@ export class CalendarSectionComponent implements OnInit {
   protected readonly subTitle = computed(() => this.section()?.subTitle);
   protected readonly calendarName = computed(() => this.section()?.name);
   protected readonly calendarOptions = computed(() => {
-    const _options = (this.section()?.properties.calendarOptions as CalendarOptions) ?? die('CalendarSectionComponent.calendarOptions: missing calendarOptions');
-    _options.plugins = [dayGridPlugin, interactionPlugin, timeGridPlugin];
-    _options.dateClick = arg => {
+    const options = (this.section()?.properties.calendarOptions as CalendarOptions) ?? die('CalendarSectionComponent.calendarOptions: missing calendarOptions');
+    options.plugins = [dayGridPlugin, interactionPlugin, timeGridPlugin];
+    options.dateClick = arg => {
       this.onDateClick(arg);
     };
-    _options.eventClick = arg => {
+    options.eventClick = arg => {
       this.onEventClick(arg);
     };
-    return _options;
+    return options;
   });
   protected isLoading = computed(() => this.calendarStore.isLoading());
   protected filteredEvents = computed(() => this.calendarStore.filteredEvents());
@@ -79,8 +79,8 @@ export class CalendarSectionComponent implements OnInit {
   constructor() {
     effect(() => {
       this.calendarStore.setCalendarName(this.section()?.name);
-      const _calName = this.section()?.name ?? 'undefined';
-      debugMessage(`CalendarSection(): calendarName=${_calName}`, this.calendarStore.currentUser());
+      const calName = this.section()?.name ?? 'undefined';
+      debugMessage(`CalendarSection(): calendarName=${calName}`, this.calendarStore.currentUser());
     });
     effect(() => {
       debugData<EventInput[]>('CalendarSection(): events: ', this.filteredEvents());
@@ -111,13 +111,13 @@ export class CalendarSectionComponent implements OnInit {
     debugData<string>('event: ', arg);
     debugData<string>('title: ', arg.event.title);
     debugData<string>('start: ', arg.event.startStr);
-    const _eventKey = arg.event.extendedProps.eventKey;
-    debugData<unknown>('event selected: ', _eventKey);
-    /* const _event = await firstValueFrom(this.eventService.readEvent(_eventKey));
-    if (!_event) {
-      warn('CalendarSectionComponent.onEventClick: event ' + _eventKey + ' not found');
+    const eventKey = arg.event.extendedProps.eventKey;
+    debugData<unknown>('event selected: ', eventKey);
+    /* const event = await firstValueFrom(this.eventService.readEvent(eventKey));
+    if (!event) {
+      warn('CalendarSectionComponent.onEventClick: event ' + eventKey + ' not found');
     } else {
-      await this.eventService.editEvent(_event);
+      await this.eventService.editEvent(event);
     } */
   }
 }

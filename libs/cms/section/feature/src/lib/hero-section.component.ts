@@ -42,23 +42,23 @@ import { die } from '@bk2/shared-util-core';
 export class HeroSectionComponent {
   public section = input<SectionModel>();
   protected heroImage = computed(() => {
-    const _imageList = this.section()?.properties.imageList ?? [];
-    if (_imageList.length !== 2) die('HeroSection.heroImage: Hero section must have 2 images');
-    _imageList[0].hasPriority = true;
-    _imageList[0].imageAction = ImageAction.None;
-    _imageList[0].isThumbnail = false;
-    _imageList[0].fill = true;
-    _imageList[0].altText = 'hero image';
-    return _imageList[0];
+    const imageList = this.section()?.properties.imageList ?? [];
+    if (imageList.length !== 2) die('HeroSection.heroImage: Hero section must have 2 images');
+    imageList[0].hasPriority = true;
+    imageList[0].imageAction = ImageAction.None;
+    imageList[0].isThumbnail = false;
+    imageList[0].fill = true;
+    imageList[0].altText = 'hero image';
+    return imageList[0];
   });
   protected logoImage = computed(() => {
-    const _imageList = this.section()?.properties.imageList ?? [];
-    if (_imageList.length !== 2) die('HeroSection.logoImage: Hero section must have 2 images');
-    _imageList[1].hasPriority = false;
-    _imageList[1].imageAction = ImageAction.None;
-    _imageList[1].isThumbnail = false;
-    _imageList[1].fill = true;
-    _imageList[1].altText = 'logo image';
-    return _imageList[1];
+    const imageList = this.section()?.properties.imageList ?? [];
+    if (imageList.length !== 2) die('HeroSection.logoImage: Hero section must have 2 images');
+    imageList[1].hasPriority = false;
+    imageList[1].imageAction = ImageAction.None;
+    imageList[1].isThumbnail = false;
+    imageList[1].fill = true;
+    imageList[1].altText = 'logo image';
+    return imageList[1];
   });
 }

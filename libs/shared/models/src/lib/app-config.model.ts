@@ -4,6 +4,8 @@
    tenantId is used as the key to query the correct app-specific configuration document from the database
 */
 
+import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_TITLE, DEFAULT_URL } from "@bk2/shared-constants";
+
 export type PrivacyAccessor = 'admin' | 'privileged' | 'registered' | 'public';
 
 export interface PrivacySettings {
@@ -30,15 +32,15 @@ export class AppConfig {
   public description = '';
 
   // application information
-  public appName = ''; // name of the application
-  public appTitle = ''; // title of the application on Welcome Screen
-  public appSubtitle = ''; // subtitle of the application on Welcome Screen
+  public appName = DEFAULT_NAME; // name of the application
+  public appTitle = DEFAULT_TITLE; // title of the application on Welcome Screen
+  public appSubtitle = DEFAULT_TITLE; // subtitle of the application on Welcome Screen
   public appVersion = ''; // version of the application
   public appDomain = ''; // domain of the application, e.g. example.com
   public rootUrl = '/public/welcome';
-  public logoUrl = '';
-  public welcomeBannerUrl = '';
-  public notfoundBannerUrl = '';
+  public logoUrl = DEFAULT_URL;
+  public welcomeBannerUrl = DEFAULT_URL;
+  public notfoundBannerUrl = DEFAULT_URL;
   public osiLogoUrl = 'logo/general/osi.svg';
 
   // authentication URLs
@@ -49,18 +51,18 @@ export class AppConfig {
   public locale = 'de-ch'; // default locale for the application
 
   // git repository information
-  public gitRepo = ''; //  git repository name
-  public gitOrg = ''; // git organization name
-  public issueUrl = ''; // URL for issues in the git repository
+  public gitRepo = DEFAULT_NAME; //  git repository name
+  public gitOrg = DEFAULT_NAME; // git organization name
+  public issueUrl = DEFAULT_URL; // URL for issues in the git repository
 
   // operator information
-  public opName = ''; // name of operator
-  public opEmail = ''; // email address of operator
+  public opName = DEFAULT_NAME; // name of operator
+  public opEmail = DEFAULT_EMAIL; // email address of operator
   public opZipCode = ''; // zip code of operator
   public opCity = ''; // city of operator
   public opStreet = ''; // street of operator
   public opCountryCode = ''; // country of operator
-  public opWebUrl = ''; // website URL of operator
+  public opWebUrl = DEFAULT_URL; // website URL of operator
 
   // owner and default models
   public ownerUserId = ''; // user ID of the owner of the application
@@ -69,8 +71,8 @@ export class AppConfig {
   public defaultResourceId = ''; // default resource ID for the application
 
   // privacy settings
-  public dpoEmail = ''; // email address for DPO contact
-  public dpoName = ''; // name of the DPO
+  public dpoEmail = DEFAULT_EMAIL; // email address for DPO contact
+  public dpoName = DEFAULT_NAME; // name of the DPO
   public showName: PrivacyAccessor = 'public';
   public showDateOfBirth: PrivacyAccessor = 'registered';
   public showDateOfDeath: PrivacyAccessor = 'privileged';

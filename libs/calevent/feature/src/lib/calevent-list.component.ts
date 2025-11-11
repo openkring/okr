@@ -2,9 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, CalEventTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, CalEventModel, RoleName } from '@bk2/shared-models';
+import { CalEventModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -14,8 +13,6 @@ import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { CalEventDurationPipe } from '@bk2/calevent-util';
 import { CalEventListStore } from './calevent-list.store';
-import { AppStore } from '@bk2/shared-feature';
-
 @Component({
     selector: 'bk-calevent-list',
     standalone: true,
@@ -51,8 +48,7 @@ import { AppStore } from '@bk2/shared-feature';
     <!-- search and filters -->
     <bk-list-filter 
       [tags]="calEventTags()"
-      [types]="calEventTypes"
-      typeName="calEventType"
+      [type]="calEventTypes()"
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)"
       (typeChanged)="onTypeChange($event)"
@@ -97,7 +93,6 @@ import { AppStore } from '@bk2/shared-feature';
 export class CalEventListComponent {
   protected calEventListStore = inject(CalEventListStore);
   private actionSheetController = inject(ActionSheetController);
-  private readonly appStore = inject(AppStore);
 
   public listId = input.required<string>();     // calendar name
   public contextMenuName = input.required<string>();
@@ -108,10 +103,10 @@ export class CalEventListComponent {
   protected isLoading = computed(() => this.calEventListStore.isLoading());
   protected calEventTags = computed(() => this.calEventListStore.getTags());
   protected popupId = computed(() => `c_calevent_${this.listId}`);
+  protected calEventTypes = computed(() => this.calEventListStore.appStore.getCategory('calevent_type'));
+  private currentUser = computed(() => this.calEventListStore.appStore.currentUser());
 
-  protected selectedCategory = AllCategories;
-  protected calEventTypes = addAllCategory(CalEventTypes);
-  private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.calEventListStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => this.calEventListStore.setCalendarName(this.listId()));
@@ -143,7 +138,7 @@ export class CalEventListComponent {
    * @param calEvent 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): void {
-    if (hasRole('privileged', this.appStore.currentUser()) || hasRole('eventAdmin', this.appStore.currentUser())) {
+    if (hasRole('privileged', this.currentUser()) || hasRole('eventAdmin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
@@ -180,7 +175,7 @@ export class CalEventListComponent {
     this.calEventListStore.setSelectedTag(tag);
   }
 
-  protected onTypeChange(calEventType: number): void {
+  protected onTypeChange(calEventType: string): void {
     this.calEventListStore.setSelectedCategory(calEventType);
   }
 

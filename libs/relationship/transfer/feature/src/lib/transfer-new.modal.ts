@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, OrgModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
+import { OrgModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -26,7 +26,7 @@ import { TransferFormComponent } from './transfer.form';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-transfer-form [(vm)]="vm" [currentUser]="appStore.currentUser()" [transferTags]="transferTags()" (validChange)="formIsValid.set($event)" />
+      <bk-transfer-form [(vm)]="vm" (validChange)="formIsValid.set($event)" />
     </ion-content>
   `
 })
@@ -35,13 +35,12 @@ export class TransferNewModalComponent {
   protected readonly appStore = inject(AppStore);
 
   public subject = input.required<PersonModel | OrgModel>();
-  public subjectModelType = input.required<ModelType>();
+  public subjectModelType = input.required<'person' | 'org'>();
   public object = input.required<PersonModel | OrgModel>();
-  public objectModelType = input.required<ModelType>();
+  public objectModelType = input.required<'person' | 'org'>();
   public resource = input.required<ResourceModel>();
 
   public vm = linkedSignal(() => newTransferFormModel(this.subject(), this.subjectModelType(), this.object(), this.objectModelType(), this.resource()));
-  protected transferTags = computed(() => this.appStore.getTags(ModelType.Transfer));
 
   // as we prepared everything with currentPerson and defaultResource, we already have a valid form, so we need to signal this here.
   protected formIsValid = signal(true);

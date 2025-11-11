@@ -2,13 +2,12 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, TransferStates, TransferTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TransferModel } from '@bk2/shared-models';
-import { CategoryNamePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { AvatarDisplayComponent, EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { getYearList, hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
@@ -18,7 +17,7 @@ import { TransferListStore } from './transfer-list.store';
   selector: 'bk-transfer-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe, CategoryNamePipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe,
     EmptyListComponent, ListFilterComponent, AvatarDisplayComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonList, IonPopover
@@ -49,17 +48,11 @@ import { TransferListStore } from './transfer-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="transferTags()"
-      [types]="allTransferTypes"
-      typeName="transferType"
-      [years]="years"
-      [states]="allTransferStates"
-      stateName="transferState"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+      [type]="types()" (typeChanged)="onTypeChange($event)"
+      [state]="states()" (stateChanged)="onStateChange($event)"
+      [years]="years" (yearChanged)="onYearChange($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
-      (typeChanged)="onTypeChange($event)"
-      (stateChanged)="onStateChange($event)"
-      (yearChanged)="onYearChange($event)"
     />
 
     <!-- list header -->
@@ -88,7 +81,7 @@ import { TransferListStore } from './transfer-list.store';
             <ion-label><bk-avatar-display [avatars]="transfer.objects" /></ion-label>
             <ion-label>{{transfer.resource.name}}</ion-label>
             <ion-label class="ion-hide-lg-down">{{transfer.name}}</ion-label>
-            <ion-label class="ion-hide-lg-down">{{transfer.state | categoryName:transferStates}}</ion-label>
+            <ion-label class="ion-hide-lg-down">{{transfer.state }}</ion-label>
           </ion-item>
         }
       </ion-list>
@@ -107,13 +100,12 @@ export class TransferListComponent {
   protected transfersCount = computed(() => this.transferListStore.transfersCount());
   protected selectedTransfersCount = computed(() => this.filteredTransfers().length);
   protected isLoading = computed(() => this.transferListStore.isLoading());
-  protected transferTags = computed(() => this.transferListStore.getTags());
-  
-  protected allTransferTypes = addAllCategory(TransferTypes);
-  protected transferStates = TransferStates;
-  protected allTransferStates = addAllCategory(TransferStates);
+  protected tags = computed(() => this.transferListStore.getTags());
+  protected types = computed(() => this.transferListStore.appStore.getCategory('transfer_type'));
+  protected states = computed(() => this.transferListStore.appStore.getCategory('transfer_state'));
+
   protected years = getYearList();
-    private imgixBaseUrl = this.transferListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.transferListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
@@ -180,16 +172,15 @@ export class TransferListComponent {
     this.transferListStore.setSelectedTag($event);
   }
 
-  protected onStateChange(state: number): void {
+  protected onStateChange(state: string): void {
     this.transferListStore.setSelectedState(state);
   }
 
   protected onYearChange(year: number): void {
-    console.log('onYearChange', year);
     this.transferListStore.setSelectedYear(year);
   }
 
-  protected onTypeChange(transferType: number): void {
+  protected onTypeChange(transferType: string): void {
     this.transferListStore.setSelectedType(transferType);
   }
 

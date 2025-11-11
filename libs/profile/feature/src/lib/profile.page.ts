@@ -6,7 +6,6 @@ import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
 import { debugFormModel } from '@bk2/shared-util-core';
 
@@ -40,9 +39,13 @@ import { convertPersonalDataFormToPerson, convertPersonToDataForm, convertPrivac
         <ion-label><div [innerHTML]="introHtml() | async"></div></ion-label>    
       </ion-item>
       <ion-accordion-group value="addresses" [multiple]="true">
-        <bk-profile-data-accordion [(vm)]="personalData" [currentUser]="currentUser()" (validChange)="formIsValid.set($event)"/>
+        <bk-profile-data-accordion [(vm)]="personalData"
+          [currentUser]="currentUser()"
+          [genders]="genders()"
+          (validChange)="formIsValid.set($event)"
+        />
         @if(personKey(); as personKey) {
-          <bk-addresses-accordion [parentKey]="personKey" [readOnly]="false" [parentModelType]="modelType.Person" [addresses]="addresses()" />
+          <bk-addresses-accordion [parentKey]="personKey" [readOnly]="false" parentModelType="person" [addresses]="addresses()" />
         }
         <bk-profile-settings-accordion [(vm)]="settings" [currentUser]="currentUser()" (validChange)="formIsValid.set($event) "/>
         <bk-profile-privacy-accordion [(vm)]="privacy" [currentUser]="currentUser()" (validChange)="formIsValid.set($event)" />
@@ -61,6 +64,7 @@ export class ProfilePageComponent {
   protected formIsValid = signal(false);
 
   protected currentUser = computed(() => this.appStore.currentUser());
+  protected genders = computed(() => this.appStore.getCategory('gender'));
   protected currentPerson = computed(() => this.appStore.currentPerson());
   protected personKey = computed(() => this.currentPerson()?.bkey);
   protected addresses = computed(() => this.appStore.addresses());
@@ -68,14 +72,12 @@ export class ProfilePageComponent {
   protected personalData = linkedSignal(() => convertPersonToDataForm(this.currentPerson()));
   protected settings = linkedSignal(() => convertUserToSettingsForm(this.currentUser()));
   protected privacy = linkedSignal(() => convertUserToPrivacyForm(this.currentUser()));
-  protected avatarKey = computed(() => ModelType.Person + '.' + this.personKey());
+  protected avatarKey = computed(() => 'person.' + this.personKey());
   protected title = computed(() => this.currentPerson()?.firstName + ' ' + this.currentPerson()?.lastName);
   protected introHtml = computed(async () => {
-    const _intro = await firstValueFrom(this.i18nService.translate('@profile.intro'));
-    return _intro + ' <a href=mailto:"' + this.appStore.appConfig().opEmail + '">Website Admin</a>.';
+    const intro = await firstValueFrom(this.i18nService.translate('@profile.intro'));
+    return intro + ' <a href=mailto:"' + this.appStore.appConfig().opEmail + '">Website Admin</a>.';
   });
-
-  public modelType = ModelType;
 
   constructor() {
     effect(() => { debugFormModel<PersonalDataFormModel>('personalData', this.personalData(), this.appStore.currentUser()); });
@@ -88,22 +90,22 @@ export class ProfilePageComponent {
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   public async onImageSelected(photo: Photo): Promise<void> {
-    const _personKey = this.personKey();
-    if (!_personKey) return;
-    const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.appStore.tenantId()], ModelType.Person, _personKey, _file.name);
-    const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
+    const personKey = this.personKey();
+    if (!personKey) return;
+    const file = await readAsFile(photo, this.platform);
+    const avatar = newAvatarModel([this.appStore.tenantId()], 'person', personKey, file.name);
+    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, '@document.operation.upload.avatar.title')
 
-    if (_downloadUrl) {
-      await this.avatarService.updateOrCreate(_avatar);
+    if (downloadUrl) {
+      await this.avatarService.updateOrCreate(avatar);
     }
   }
 
   public async save(): Promise<void> {
     this.formIsValid.set(false);
-    const _person = convertPersonalDataFormToPerson(this.personalData(), this.currentPerson());
-    let _user = convertSettingsFormToUser(this.settings(), this.currentUser());
-    _user = convertPrivacyFormToUser(this.privacy(), _user);
-    await this.profileService.update(_person, _user, this.currentUser());
+    const person = convertPersonalDataFormToPerson(this.personalData(), this.currentPerson());
+    let user = convertSettingsFormToUser(this.settings(), this.currentUser());
+    user = convertPrivacyFormToUser(this.privacy(), user);
+    await this.profileService.update(person, user, this.currentUser());
   }
 }

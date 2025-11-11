@@ -50,8 +50,12 @@ describe('Category Utils', () => {
 
     it('convertFormToCategoryList should update an existing model', () => {
       const formModel: CategoryListFormModel = {
+        bkey: '',
         name: 'Updated Name',
         tags: 'updated-tag',
+        isArchived: false,
+        tenants: ['test'],
+        index: 'n:Updated Name',
         i18nBase: 'updated.base',
         translateItems: false,
         notes: 'updated notes',

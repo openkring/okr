@@ -1,7 +1,6 @@
 import { Injectable, inject } from "@angular/core";
 import { Observable, first, forkJoin, map, of } from "rxjs";
 
-import { SectionTypes, getCategoryName } from "@bk2/shared-categories";
 import { ENV } from "@bk2/shared-config";
 import { FirestoreService } from "@bk2/shared-data-access";
 import { DbQuery, SectionCollection, SectionModel, UserModel } from "@bk2/shared-models";
@@ -86,11 +85,11 @@ export class SectionService {
   }
 
   public getSearchIndex(item: SectionModel): string {
-    return 'n:' + item.name + ' cn:' + getCategoryName(SectionTypes, item.type);
+    return 'n:' + item.name + ' t:' + item.type;
   }
 
   public getSearchIndexInfo(): string {
-    return 'n:ame cn:categoryName';
+    return 'n:ame t:ype';
   }
 }
 

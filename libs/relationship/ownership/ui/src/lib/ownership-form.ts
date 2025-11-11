@@ -3,7 +3,7 @@ import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { OwnershipFormModel, ownershipFormModelShape, ownershipFormValidations } from '@bk2/relationship-ownership-util';
-import { ModelType, RoleName, UserModel } from '@bk2/shared-models';
+import { RoleName, UserModel } from '@bk2/shared-models';
 import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -28,7 +28,7 @@ import { hasRole } from '@bk2/shared-util-core';
         <!---------------------------------------------------
         OWNER: PERSON or ORGANISATION 
         --------------------------------------------------->
-          @if(ownerModelType() === modelType.Person) {
+          @if(ownerModelType() === 'person') {
             <ion-col size="12" size-md="6">
               <bk-text-input name="ownerName1" [value]="ownerName1()" [readOnly]="true" />                                        
             </ion-col>
@@ -90,7 +90,7 @@ export class OwnershipFormComponent {
   public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected ownerName1 = computed(() => this.vm().ownerName1 ?? ''); 
   protected ownerName2 = computed(() => this.vm().ownerName2 ?? ''); 
-  protected ownerModelType = computed(() => this.vm().ownerModelType ?? ModelType.Person);
+  protected ownerModelType = computed(() => this.vm().ownerModelType ?? 'person');
   protected validFrom = computed(() => this.vm().validFrom ?? '');
   protected validTo = computed(() => this.vm().validTo ?? '');
   protected price = computed(() => this.vm().price ?? 0);
@@ -106,8 +106,6 @@ export class OwnershipFormComponent {
   protected dirtyChange = signal(false);
   private readonly validationResult = computed(() => ownershipFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
-
-  protected modelType = ModelType;
 
   protected onValueChange(value: OwnershipFormModel): void {
     this.vm.update((_vm) => ({..._vm, ...value}));

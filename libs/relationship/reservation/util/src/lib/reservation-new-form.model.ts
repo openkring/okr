@@ -1,7 +1,6 @@
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
-import { END_FUTURE_DATE_STR } from "@bk2/shared-constants";
-import { AccountType, DocumentType, GenderType, ModelType, OrgType, Periodicity, ReservationReason, ReservationState, ResourceType } from "@bk2/shared-models";
+import { DEFAULT_CURRENCY, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_RBOAT_TYPE, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TIME, END_FUTURE_DATE_STR } from "@bk2/shared-constants";
 import { getTodayStr } from "@bk2/shared-util-core";
 
 export type ReservationNewFormModel = DeepPartial<{
@@ -12,14 +11,14 @@ export type ReservationNewFormModel = DeepPartial<{
   reserverKey: string,      // bkey
   reserverName: string,    // firstName
   reserverName2: string,    // lastName
-  reserverModelType: ModelType,  // Person or Org
-  reserverType: GenderType | OrgType,
+  reserverModelType: 'person' | 'org',
+  reserverType: string,
 
   resourceKey: string,
   resourceName: string,    // firstName
-  resourceModelType: ModelType,   // Resource or Account
-  resourceType: ResourceType | AccountType,
-  resourceSubType: GenderType | DocumentType,
+  resourceModelType: 'resource' | 'account',
+  resourceType: string,
+  resourceSubType: string,
 
   startDate: string,
   startTime: string,
@@ -28,44 +27,44 @@ export type ReservationNewFormModel = DeepPartial<{
   numberOfParticipants: string,
   area: string,
   reservationRef: string,
-  reservationState: ReservationState,
-  reservationReason: ReservationReason,
-  priority: number,
+  reservationState: string,
+  reservationReason: string,
+  order: number,
 
   price: number,
   currency: string,
-  periodicity: Periodicity
+  periodicity: string
 }>;
 
 export const reservationNewFormModelShape: DeepRequired<ReservationNewFormModel> = {
-  tags: '',
-  notes: '',
-  name: '',
+  tags: DEFAULT_TAGS,
+  notes: DEFAULT_NOTES,
+  name: DEFAULT_NAME,
 
-  reserverKey: '',
-  reserverName: '',
-  reserverName2: '',
-  reserverModelType: ModelType.Person,
-  reserverType: GenderType.Male,
+  reserverKey: DEFAULT_KEY,
+  reserverName: DEFAULT_NAME,
+  reserverName2: DEFAULT_NAME,
+  reserverModelType: 'person',
+  reserverType: DEFAULT_GENDER,
 
-  resourceKey: '',
-  resourceName: '',
-  resourceModelType: ModelType.Resource,
-  resourceType: ResourceType.RowingBoat,
-  resourceSubType: GenderType.Male,
+  resourceKey: DEFAULT_KEY,
+  resourceName: DEFAULT_NAME,
+  resourceModelType: 'resource',
+  resourceType: DEFAULT_RESOURCE_TYPE,
+  resourceSubType: DEFAULT_RBOAT_TYPE,
 
   startDate: getTodayStr(),
-  startTime: '',
+  startTime: DEFAULT_TIME,
   endDate: END_FUTURE_DATE_STR,
-  endTime: '',
+  endTime: DEFAULT_TIME,
   numberOfParticipants: '',
   area: '',
   reservationRef: '',
-  reservationState: ReservationState.Active,
-  reservationReason: ReservationReason.SocialEvent,
-  priority: 0,
+  reservationState: DEFAULT_RES_STATE,
+  reservationReason: DEFAULT_RES_REASON,
+  order: DEFAULT_ORDER,
 
-  price: 0,
-  currency: 'CHF',
-  periodicity: Periodicity.Once
+  price: DEFAULT_PRICE,
+  currency: DEFAULT_CURRENCY,
+  periodicity: DEFAULT_PERIODICITY
 };

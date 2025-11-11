@@ -1,26 +1,24 @@
+import { DEFAULT_DATE, DEFAULT_IMPORTANCE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRIORITY, DEFAULT_TAGS, DEFAULT_TASK_STATE, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { AvatarInfo } from './avatar-info';
 import { BkModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from './base.model';
-import { Importance } from './enums/importance.enum';
-import { Priority } from './enums/priority.enum';
-import { TaskState } from './enums/task-state.enum';
 
 export class TaskModel implements BkModel, PersistedModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = '';
-  public tenants: string[] = [];
+  public bkey = DEFAULT_KEY;
+  public tenants = DEFAULT_TENANTS;
   public isArchived = false;
-  public name = '';
-  public index = '';
-  public tags = ''; // topics used to categorize the tasks (input with tag::name)
-  public notes = '';
+  public name = DEFAULT_NAME;
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS; // topics used to categorize the tasks (input with tag::name)
+  public notes = DEFAULT_NOTES;
 
   public author: AvatarInfo | undefined; // person.bkey: the person who created the task
   public assignee: AvatarInfo | undefined; // person.bkey: the person responsible for execution
 
-  public state: TaskState = TaskState.Initial;
-  public dueDate = ''; // date when the task should be completed
-  public completionDate = ''; // date when the task should be completed
-  public priority = Priority.Medium; // Priority: 0: low, 1: medium, 2: high
-  public importance = Importance.Medium; // Importance: 0: low, 1: medium, 2: high
+  public state = DEFAULT_TASK_STATE;
+  public dueDate = DEFAULT_DATE; // date when the task should be completed
+  public completionDate = DEFAULT_DATE; // date when the task should be completed
+  public priority = DEFAULT_PRIORITY; // Priority: 0: low, 1: medium, 2: high
+  public importance = DEFAULT_IMPORTANCE; // Importance: 0: low, 1: medium, 2: high
 
   // a task is visible to the author, the assignee, and privileged Users by default
   // the visibility can be extended to the groups it belongs to

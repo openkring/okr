@@ -3,14 +3,13 @@ import { Component, computed, inject, input, model, output, signal } from '@angu
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { PeriodicityTypes, ReservationReasons, ReservationStates } from '@bk2/shared-categories';
 import { ChTimeMask } from '@bk2/shared-config';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_PRICE, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TIME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GenderType, ModelType, OrgType, Periodicity, ReservationReason, ReservationState, ResourceType, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe } from '@bk2/shared-pipes';
-import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, die, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -25,7 +24,7 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
     vestForms,
     AvatarPipe, AsyncPipe, TranslatePipe,
     TextInputComponent, DateInputComponent, FullNamePipe,
-    NumberInputComponent, ChipsComponent, NotesInputComponent, CategoryComponent,
+    NumberInputComponent, ChipsComponent, NotesInputComponent, CategorySelectComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonButton, IonImg, IonAvatar, IonLabel
   ],
   template: `
@@ -65,7 +64,7 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
             <ion-col size="9">
               <ion-item lines="none">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ modelType.Resource + '.' + resourceType() + ':' + resourceKey() | avatar | async }}" alt="Avatar Logo of Resource" />
+                  <ion-img src="{{ 'resource.' + resourceType() + ':' + resourceKey() | avatar | async }}" alt="Avatar Logo of Resource" />
                 </ion-avatar>
                 <ion-label>{{ resourceName() }}</ion-label>
               </ion-item>
@@ -112,7 +111,7 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat name="reservationReason" [value]="reservationReason()" [categories]="reservationReasons" (changed)="onChange('reservationReason', $event)" />
+              <bk-cat-select [category]="reasons()!" [selectedItemName]="reservationReason()" [withAll]="false" (changed)="onChange('reservationReason', $event)" />
             </ion-col>
 
             <ion-col size="12" size-md="6">
@@ -139,7 +138,7 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat name="reservationState" [value]="reservationState()" [categories]="reservationStates" (changed)="onChange('reservationState', $event)" />
+              <bk-cat-select [category]="states()!" [selectedItemName]="reservationState()" [withAll]="false" (changed)="onChange('reservationState', $event)" />
             </ion-col>
 
             <ion-col size="12" size-md="6">
@@ -151,7 +150,7 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
             </ion-col>
 
             <ion-col size="12" size-md="6"> 
-                <bk-cat name="periodicity" [value]="periodicity()" [categories]="periodicities" (changed)="onChange('periodicity', $event)" />
+              <bk-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" [withAll]="false" (changed)="onChange('periodicity', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -159,7 +158,7 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
     </ion-card>
 
     @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="reservationTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
     }
   
     @if(hasRole('admin')) {
@@ -173,34 +172,38 @@ export class ReservationNewFormComponent {
   private readonly appStore = inject(AppStore);
 
   public vm = model.required<ReservationNewFormModel>();
-  public currentUser = input<UserModel | undefined>();
+
+  protected readonly currentUser = computed(() => this.appStore.currentUser());
+  protected readonly reasons = computed(() => this.appStore.getCategory('reservation_reason'));
+  protected readonly states = computed(() => this.appStore.getCategory('reservation_state'));
+  protected readonly periodicities = computed(() => this.appStore.getCategory('periodicity'));
+  protected readonly allTags = computed(() => this.appStore.getTags('reservation'));
 
   public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
-  protected reserverKey = computed(() => this.vm().reserverKey ?? '');
-  protected reserverName = computed(() => this.vm().reserverName ?? '');
-  protected reserverName2 = computed(() => this.vm().reserverName2 ?? '');
-  protected reserverModelType = computed(() => this.vm().reserverModelType ?? ModelType.Person);
-  protected reserverGender = computed(() => this.vm().reserverType as GenderType ?? GenderType.Male);
-  protected reserverOrgType = computed(() => this.vm().reserverType as OrgType ?? OrgType.Association);
-  protected resourceKey = computed(() => this.vm().resourceKey ?? '');
-  protected resourceName = computed(() => this.vm().resourceName ?? '');
-  protected resourceType = computed(() => this.vm().resourceType as ResourceType ?? ResourceType.RowingBoat);
-  protected startDate = computed(() => this.vm().startDate ?? '');
-  protected startTime = computed(() => this.vm().startTime ?? '');
-  protected endDate = computed(() => this.vm().endDate ?? '');
-  protected endTime = computed(() => this.vm().endTime ?? '');
+  protected reserverKey = computed(() => this.vm().reserverKey ?? DEFAULT_KEY);
+  protected reserverName = computed(() => this.vm().reserverName ?? DEFAULT_NAME);
+  protected reserverName2 = computed(() => this.vm().reserverName2 ?? DEFAULT_NAME);
+  protected reserverModelType = computed(() => this.vm().reserverModelType ?? 'person');
+  protected reserverType = computed(() => this.vm().reserverType ?? DEFAULT_GENDER);
+  protected resourceKey = computed(() => this.vm().resourceKey ?? DEFAULT_KEY);
+  protected resourceName = computed(() => this.vm().resourceName ?? DEFAULT_NAME);
+  protected resourceType = computed(() => this.vm().resourceType ?? DEFAULT_RESOURCE_TYPE);
+  protected startDate = computed(() => this.vm().startDate ?? DEFAULT_DATE);
+  protected startTime = computed(() => this.vm().startTime ?? DEFAULT_TIME);
+  protected endDate = computed(() => this.vm().endDate ?? DEFAULT_DATE);
+  protected endTime = computed(() => this.vm().endTime ?? DEFAULT_TIME);
   protected numberOfParticipants = computed(() => this.vm().numberOfParticipants ?? '');
   protected area = computed(() => this.vm().area ?? '');
   protected reservationRef = computed(() => this.vm().reservationRef ?? '');
-  protected reservationState = computed(() => this.vm().reservationState ?? ReservationState.Active);
-  protected reservationReason = computed(() => this.vm().reservationReason ?? ReservationReason.SocialEvent);
-  protected priority = computed(() => this.vm().priority ?? 0);
-  protected price = computed(() => this.vm().price ?? 0);
-  protected currency = computed(() => this.vm().currency ?? 'CHF');
-  protected periodicity = computed(() => this.vm().periodicity ?? Periodicity.Yearly);
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
-  protected name = computed(() => this.vm().name ?? '');
+  protected reservationState = computed(() => this.vm().reservationState ?? DEFAULT_RES_STATE);
+  protected reservationReason = computed(() => this.vm().reservationReason ?? DEFAULT_RES_REASON);
+  protected order = computed(() => this.vm().order ?? DEFAULT_ORDER);
+  protected price = computed(() => this.vm().price ?? DEFAULT_PRICE);
+  protected currency = computed(() => this.vm().currency ?? DEFAULT_CURRENCY);
+  protected periodicity = computed(() => this.vm().periodicity ?? 'yearly');
+  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES);
+  protected name = computed(() => this.vm().name ?? DEFAULT_NAME);
   protected locale = computed(() => this.appStore.appConfig().locale);
 
   public validChange = output<boolean>();
@@ -209,12 +212,7 @@ export class ReservationNewFormComponent {
   protected readonly suite = reservationNewFormValidations;
   protected readonly shape = reservationNewFormModelShape;
   private readonly validationResult = computed(() => reservationNewFormValidations(this.vm()));
-  public reservationTags = input.required<string>();
 
-  protected modelType = ModelType;
-  protected reservationStates = ReservationStates;
-  protected reservationReasons = ReservationReasons;
-  protected periodicities = PeriodicityTypes;
   protected timeMask = ChTimeMask;
   protected endFutureDate = END_FUTURE_DATE_STR;
 
@@ -235,7 +233,7 @@ export class ReservationNewFormComponent {
   }
 
   protected async selectReserver(): Promise<void> {
-    if (this.reserverModelType() === ModelType.Person) {
+    if (this.reserverModelType() === 'person') {
       const _person = await this.reservationSelectorsService.selectPerson();
       if (_person) {
         this.vm.update((_vm) => ({
@@ -243,7 +241,7 @@ export class ReservationNewFormComponent {
           reserverKey: _person.bkey,
           reserverName: _person.firstName,
           reserverName2: _person.lastName,
-          reserverModelType: ModelType.Person,
+          reserverModelType: 'person',
           reserverType: _person.gender,
         }));
         debugFormErrors('ReservationNewForm (Person)', this.validationResult().errors, this.currentUser());
@@ -262,7 +260,7 @@ export class ReservationNewFormComponent {
         ..._vm,
         resourceKey: _resource.bkey,
         resourceName: _resource.name,
-        resourceModelType: ModelType.Resource,
+        resourceModelType: 'resource',
         resourceType: _resource.type,
         resourceSubType: _resource.subType,
       }));

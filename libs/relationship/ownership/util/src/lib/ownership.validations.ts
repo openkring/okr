@@ -1,8 +1,8 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { ABBREVIATION_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { AccountType, GenderType, ModelType, OrgType, OwnershipModel, Periodicity, ResourceType, RowingBoatType } from '@bk2/shared-models';
-import { baseValidations, categoryValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { ABBREVIATION_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { OwnershipModel } from '@bk2/shared-models';
+import { baseValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
 export const ownershipValidations = staticSuite((model: OwnershipModel, field?: string) => {
   if (field) only(field);
@@ -15,11 +15,11 @@ export const ownershipValidations = staticSuite((model: OwnershipModel, field?: 
   stringValidations('ownerName1', model.ownerName1, SHORT_NAME_LENGTH);
   stringValidations('ownerName2', model.ownerName2, SHORT_NAME_LENGTH);
   // tbd: test ownerModelType to be either Person or Org
-  omitWhen(model.ownerModelType !== ModelType.Person, () => {
-    categoryValidations('ownerType', model.ownerType, GenderType); 
+  omitWhen(model.ownerModelType !== 'person', () => {
+    stringValidations('ownerType', model.ownerType, WORD_LENGTH);   // gender
   });
-  omitWhen(model.ownerModelType !== ModelType.Org, () => {
-    categoryValidations('ownerType', model.ownerType, OrgType); 
+  omitWhen(model.ownerModelType !== 'org', () => {
+    stringValidations('ownerType', model.ownerType, WORD_LENGTH);   // org type
   });
 
   // resource
@@ -27,14 +27,14 @@ export const ownershipValidations = staticSuite((model: OwnershipModel, field?: 
   stringValidations('resourceName', model.resourceName, SHORT_NAME_LENGTH);
 
   // tbd: test resourceModelType to be either Resource or Account
-  omitWhen(model.resourceModelType !== ModelType.Account, () => {
-    categoryValidations('resourceType', model.resourceType, AccountType); 
+  omitWhen(model.resourceModelType !== 'account', () => {
+    stringValidations('resourceType', model.resourceType, WORD_LENGTH);     // accountType
   });
-  omitWhen(model.resourceModelType !== ModelType.Resource, () => {
-    categoryValidations('resourceType', model.resourceType, ResourceType); 
+  omitWhen(model.resourceModelType !== 'resource', () => {
+    stringValidations('resourceType', model.resourceType, WORD_LENGTH);   // resourceType
   });
-  omitWhen(model.resourceType !== ResourceType.RowingBoat, () => {
-    categoryValidations('resourceSubType', model.resourceSubType, RowingBoatType); 
+  omitWhen(model.resourceType !== 'rboat', () => {
+    stringValidations('resourceSubType', model.resourceSubType, WORD_LENGTH);   
   });
 
   // ownership
@@ -50,10 +50,10 @@ export const ownershipValidations = staticSuite((model: OwnershipModel, field?: 
   stringValidations('ownershipState', model.ownershipState, SHORT_NAME_LENGTH, 3, true);
 
   stringValidations('count', model.count, ABBREVIATION_LENGTH);
-  numberValidations('priority', model.priority, true, 0, 100);
+  numberValidations('order', model.order, true, 0, 100);
 
   numberValidations('price', model.price);
   stringValidations('currency', model.currency, CURRENCY_LENGTH);
-  categoryValidations('periodicity', model.periodicity, Periodicity);
+  stringValidations('periodicity', model.periodicity, WORD_LENGTH);
 });
 

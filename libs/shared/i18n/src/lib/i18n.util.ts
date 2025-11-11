@@ -22,12 +22,12 @@ export function bkTranslate(key: string | null | undefined, argument?: HashMap):
  * @returns the selected language code (one of app.config.provideTransloco.config.availableLangs)
  */
 export function selectLanguage(availableLanguages: string[], defaultLanguage: string, configuredLanguage?: string): string {
-  const _browserLanguage = getBrowserLang();
-  if (!_browserLanguage) throw new Error('i18n.util.getSystemLang(): ERROR: browser language can not be determined.');
-  const _selectedLanguage = configuredLanguage ?? _browserLanguage;
+  const browserLanguage = getBrowserLang();
+  if (!browserLanguage) throw new Error('i18n.util.getSystemLang(): ERROR: browser language can not be determined.');
+  const selectedLanguage = configuredLanguage ?? browserLanguage;
 
   // if this language is not supported, choose the default language instead
-  return (availableLanguages.indexOf(_selectedLanguage) < 0) ? defaultLanguage : _selectedLanguage;
+  return (availableLanguages.indexOf(selectedLanguage) < 0) ? defaultLanguage : selectedLanguage;
 }
 
 export function getLabel(label: string): string {

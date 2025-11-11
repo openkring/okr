@@ -3,10 +3,9 @@ import { Component, computed, input, output } from '@angular/core';
 import { IonCol, IonGrid, IonRow, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, CategoryListModel, CategoryModel } from '@bk2/shared-models';
+import { CategoryListModel } from '@bk2/shared-models';
 
 import { CategorySelectComponent } from './category-select.component';
-import { CategoryComponent } from './category.component';
 import { SearchbarComponent } from './searchbar.component';
 import { SingleTagComponent } from './single-tag.component';
 import { YearSelectComponent } from './year-select.component';
@@ -28,7 +27,7 @@ import { YearSelectComponent } from './year-select.component';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    SearchbarComponent, SingleTagComponent, CategorySelectComponent, CategoryComponent, YearSelectComponent,
+    SearchbarComponent, SingleTagComponent, CategorySelectComponent, YearSelectComponent,
     IonToolbar, IonGrid, IonRow, IonCol
   ],
   template: `
@@ -47,12 +46,12 @@ import { YearSelectComponent } from './year-select.component';
           }
           @if(showCategory()) {
             <ion-col size="6" size-md="3">
-              <bk-cat-select [category]="category()!" selectedItemName="all" popoverId="catName()" [withAll]="true" (changed)="categoryChanged.emit($event)" />
+              <bk-cat-select [category]="category()!" selectedItemName="all" [withAll]="true" (changed)="categoryChanged.emit($event)" [showIcons]="showIcons()" />
             </ion-col>
           }
           @if(showType()) {
             <ion-col size="6" size-md="3">
-              <bk-cat [name]="typeName()!" [value]="allCategory" [categories]="types()!" (changed)="typeChanged.emit($event)" /> 
+              <bk-cat-select [category]="type()!" selectedItemName="all" [withAll]="true" (changed)="typeChanged.emit($event)" [showIcons]="showIcons()" />
             </ion-col>
           }                                                  
           @if(showYear()) {
@@ -62,7 +61,7 @@ import { YearSelectComponent } from './year-select.component';
           }
           @if(showState()) {
             <ion-col size="6" size-md="2">
-              <bk-cat [name]="stateName()!" [value]="allCategory" [categories]="states()!" (changed)="stateChanged.emit($event)" />
+              <bk-cat-select [category]="state()!" selectedItemName="all" [withAll]="true" (changed)="stateChanged.emit($event)" [showIcons]="showIcons()" />
             </ion-col>
           }
         </ion-row>
@@ -76,34 +75,34 @@ export class ListFilterComponent {
   public showSearch = input(true);
   public tags = input<string>();
   public category = input<CategoryListModel>();
-  public types = input<CategoryModel[]>();
+  public type = input<CategoryListModel>();
   public years = input<number[]>();
-  public states = input<CategoryModel[]>();
+  public state = input<CategoryListModel>();
+  public showIcons = input(true);
 
-  // name inputs per filter (optional, if undefined, the filter is not shown)
-  public typeName = input<string>();
+  // name the popups per filter name
+  protected catName = computed(() => this.category()?.name);
+  protected typeName = computed(() => this.type()?.name);
+  protected stateName = computed(() => this.state()?.name);
   public yearLabel = input<string>();
-  public stateName = input<string>();
 
  // filter definitions
   protected showTags = computed(()     => this.tags() !== undefined);
   protected showCategory = computed(() => this.category() !== undefined);
-  protected showType = computed(()     => this.types() !== undefined && this.typeName);
+  protected showType = computed(()     => this.type() !== undefined);
   protected showYear = computed(()     => this.years() !== undefined && this.yearLabel);
-  protected showState = computed(()    => this.states() !== undefined && this.stateName);
+  protected showState = computed(()    => this.state() !== undefined && this.stateName);
 
   // outputs
   public searchTermChanged = output<string>();
   public tagChanged = output<string>();
   public categoryChanged = output<string>();
-  public typeChanged = output<number>();
+  public typeChanged = output<string>();
   public yearChanged = output<number>();
-  public stateChanged = output<number>();
-
-  protected allCategory = AllCategories;
+  public stateChanged = output<string>();
 
   protected onSearchTermChange($event: Event): void {
-    const _searchTerm = ($event.target as HTMLInputElement).value;
-    this.searchTermChanged.emit(_searchTerm);
+    const searchTerm = ($event.target as HTMLInputElement).value;
+    this.searchTermChanged.emit(searchTerm);
   }
 }

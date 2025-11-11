@@ -44,9 +44,9 @@ export const SectionDetailStore = signalStore(
         if (!params.sectionId || params.sectionId.length === 0) {
           return of(undefined);
         }
-        const _section$ = store.sectionService.read(params.sectionId);
-        debugItemLoaded<SectionModel>(`SectionDetailStore.sectionResource`, _section$, store.currentUser());
-        return _section$;
+        const section$ = store.sectionService.read(params.sectionId);
+        debugItemLoaded<SectionModel>(`SectionDetailStore.sectionResource`, section$, store.currentUser());
+        return section$;
       }
     })
   })),

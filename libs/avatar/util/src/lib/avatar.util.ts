@@ -2,17 +2,15 @@ import { Photo } from '@capacitor/camera';
 import { Filesystem } from '@capacitor/filesystem';
 import { Platform } from '@ionic/angular';
 
-import { getModelSlug } from '@bk2/shared-categories';
-import { AvatarDirectory, AvatarModel, ModelType } from '@bk2/shared-models';
+import { AvatarDirectory, AvatarModel } from '@bk2/shared-models';
 import { blobToFile, die, getPartsOfTupel } from '@bk2/shared-util-core';
 
-export function newAvatarModel(tenantIds: string[], modelType: ModelType, key: string, fileName: string): AvatarModel {
-  const [_fn, _ext] = getPartsOfTupel(fileName);
-  const _slug = getModelSlug(modelType);
+export function newAvatarModel(tenantIds: string[], modelType: string, key: string, fileName: string): AvatarModel {
+  const [fn, ext] = getPartsOfTupel(fileName);
   return {
     bkey: modelType + '.' + key,
     tenants: tenantIds,
-    storagePath: `tenant/${tenantIds[0]}/${_slug}/${key}/${AvatarDirectory}/${_fn}.${_ext}`,
+    storagePath: `tenant/${tenantIds[0]}/modelType/${key}/${AvatarDirectory}/${fn}.${ext}`,
     isArchived: false,
   };
 }

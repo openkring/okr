@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/s
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, ReservationCollection, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
+import { ReservationCollection, ReservationModel, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -28,7 +28,14 @@ import { convertFormToReservation, convertReservationToForm, getReserverName } f
     }
     <ion-content>
       <bk-relationship-toolbar title="@reservation.reldesc" [titleArguments]="titleArguments()" icon="reservation" relLabel="Reservation" />
-      <bk-reservation-form [(vm)]="vm" [currentUser]="currentUser()" [reservationTags]="reservationTags()"  (validChange)="formIsValid.set($event)" />
+      <bk-reservation-form [(vm)]="vm"
+        [currentUser]="currentUser()"
+        [allTags]="tags()"
+        [reasons]="reasons()"
+        [states]="states()"
+        [periodicities]="periodicities()"
+        (validChange)="formIsValid.set($event)"
+      />
 
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-accordion-group value="comments">
@@ -43,15 +50,19 @@ export class ReservationEditModalComponent {
   private readonly appStore = inject(AppStore);
 
   public reservation = input.required<ReservationModel>();
-  public currentUser = input<UserModel | undefined>();
+
+  public currentUser = computed(() => this.appStore.currentUser());
+  protected tags = computed(() => this.appStore.getTags('reservation'));
+  protected reasons = computed(() => this.appStore.getCategory('reservation_reason'));
+  protected states = computed(() => this.appStore.getCategory('reservation_state'));
+  protected periodicities = computed(() => this.appStore.getCategory('periodicity'));
 
   public vm = linkedSignal(() => convertReservationToForm(this.reservation()));
-  protected reservationTags = computed(() => this.appStore.getTags(ModelType.Reservation));
 
   protected readonly reservationKey = computed(() => this.reservation().bkey ?? '');
   protected readonly name = computed(() => getReserverName(this.reservation()) ?? '');
-  private readonly subjectIcon = computed(() => this.vm().reserverModelType === ModelType.Person ? 'person' : 'org');
-  private readonly subjectUrl = computed(() => this.vm().reserverModelType === ModelType.Person ? `/person/${this.vm().reserverKey}` : `/org/${this.vm().reserverKey}`);
+  private readonly subjectIcon = computed(() => this.vm().reserverModelType === 'person' ? 'person' : 'org');
+  private readonly subjectUrl = computed(() => this.vm().reserverModelType === 'person' ? `/person/${this.vm().reserverKey}` : `/org/${this.vm().reserverKey}`);
   private readonly objectUrl = computed(() => `/resource/${this.vm().resourceKey}`);
   private readonly objectName = computed(() => this.vm().resourceName ?? '');
   protected readonly modalTitle = computed(() => `@reservation.operation.${hasRole('resourceAdmin', this.currentUser()) ? 'update' : 'view'}.label`);

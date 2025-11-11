@@ -14,8 +14,7 @@ export type CategoryListFormModel = {
   i18nBase: string,
   translateItems: boolean,
   notes: string,
-  items: CategoryItemModel[],
-
+  items: CategoryItemModel[]
 };
 
 export const categoryListFormModelShape: DeepRequired<CategoryListFormModel> = {

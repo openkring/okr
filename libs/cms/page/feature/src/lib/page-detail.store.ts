@@ -4,7 +4,6 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, of } from 'rxjs';
 
-import { SectionTypes } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
 import { PageModel, SectionModel } from '@bk2/shared-models';
 import { CardSelectModalComponent } from '@bk2/shared-ui';
@@ -63,7 +62,8 @@ export const PageDetailStore = signalStore(
       meta: computed(() => state.pageResource.value()?.meta),
       sections: computed(() => state.pageResource.value()?.sections ?? []),
       isEmptyPage: computed(() => state.pageResource.value()?.sections === undefined || state.pageResource.value()?.sections.length === 0),
-      isLoading: computed(() => state.pageResource.isLoading())
+      isLoading: computed(() => state.pageResource.isLoading()),
+      sectionTypes: computed(() => state.appStore.getCategory('section_type')?.items ?? [])
     };
   }),
 
@@ -122,7 +122,7 @@ export const PageDetailStore = signalStore(
           component: CardSelectModalComponent,
           cssClass: 'full-modal',
           componentProps: {
-            categories: SectionTypes,
+            categories: store.sectionTypes(),
             slug: 'section'
           }
         });

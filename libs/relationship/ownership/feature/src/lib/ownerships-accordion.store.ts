@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ModelType, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared-models';
+import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { confirm } from '@bk2/shared-util-angular';
 import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared-util-core';
@@ -16,13 +16,13 @@ import { OwnershipModalsService } from './ownership-modals.service';
 
 export type OwnershipAccordionState = {
   owner: PersonModel | OrgModel |  undefined;
-  ownerModelType: ModelType;
+  ownerModelType: 'person' | 'org';
   showOnlyCurrent: boolean;
 };
 
 const initialState: OwnershipAccordionState = {
   owner: undefined,
-  ownerModelType: ModelType.Person,
+  ownerModelType: 'person',
   showOnlyCurrent: false,
 };
 
@@ -62,7 +62,7 @@ export const OwnershipAccordionStore = signalStore(
   withMethods((store) => {
     return {
       /******************************** setters ******************************************* */
-      setOwner(owner: PersonModel | OrgModel, ownerModelType: ModelType): void {
+      setOwner(owner: PersonModel | OrgModel, ownerModelType: 'person' | 'org'): void {
         patchState(store, { owner, ownerModelType });
         store.ownershipsResource.reload();
       },      
@@ -76,7 +76,7 @@ export const OwnershipAccordionStore = signalStore(
         console.log('OwnershipsAccordionStore.export() is not yet implemented.');
       },
 
-      async add(owner: PersonModel | OrgModel, ownerModelType: ModelType, defaultResource: ResourceModel): Promise<void> {
+      async add(owner: PersonModel | OrgModel, ownerModelType: 'person' | 'org', defaultResource: ResourceModel): Promise<void> {
         if (defaultResource.bkey.length > 0) {    // check if resource is valid
           await store.ownershipModalsService.add(owner, ownerModelType, defaultResource);
           store.ownershipsResource.reload();

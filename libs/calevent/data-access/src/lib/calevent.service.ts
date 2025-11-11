@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { EventInput } from '@fullcalendar/core';
 import { Observable } from 'rxjs';
 
-import { CalEventTypes, getCategoryAbbreviation } from '@bk2/shared-categories';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { CalEventCollection, CalEventModel, UserModel } from '@bk2/shared-models';
@@ -76,13 +75,12 @@ export class CalEventService {
    * @returns the index string
    */
   public getSearchIndex(calEvent: CalEventModel): string {
-    let _index = '';
-    _index = addIndexElement(_index, 'n', calEvent.name);
-    _index = addIndexElement(_index, 'sd', calEvent.startDate);
+    let index = '';
+    index = addIndexElement(index, 'n', calEvent.name);
+    index = addIndexElement(index, 'sd', calEvent.startDate);
     // tbd: calendar name
-    const _type = calEvent.type ? getCategoryAbbreviation(CalEventTypes, calEvent.type) : 'UNDEF';
-    _index = addIndexElement(_index, 'et', _type);
-    return _index;
+    index = addIndexElement(index, 'et', calEvent.type);
+    return index;
   }
 
   /**

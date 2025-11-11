@@ -1,7 +1,8 @@
 import { DeepRequired } from 'ngx-vest-forms';
 
-import { AvatarInfo, DefaultResourceInfo, Periodicity, ResourceInfo, TransferState, TransferType } from '@bk2/shared-models';
+import { AvatarInfo, DefaultResourceInfo, ResourceInfo } from '@bk2/shared-models';
 import { getTodayStr } from '@bk2/shared-util-core';
+import { DEFAULT_CURRENCY, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE } from '@bk2/shared-constants';
 
 export type TransferFormModel = {
   bkey: string,
@@ -15,33 +16,33 @@ export type TransferFormModel = {
 
   // transfer
   dateOfTransfer: string,
-  type: TransferType,
-  state: TransferState,
+  type: string,
+  state: string,
   label: string, // a label for a custom transfer type
 
   // price
   price: number,
   currency: string,
-  periodicity: Periodicity
+  periodicity: string
 };
 
 export const transferFormModelShape: DeepRequired<TransferFormModel> = {
-  bkey: '',
-  name: '',
-  tags: '',
-  notes: '',
+  bkey: DEFAULT_KEY,
+  name: DEFAULT_NAME,
+  tags: DEFAULT_TAGS,
+  notes: DEFAULT_NOTES,
   subjects: [],
   objects: [], 
   resource: DefaultResourceInfo,
 
   // transfer
   dateOfTransfer: getTodayStr(),
-  type: TransferType.Purchase,
-  state: TransferState.Initial,
-  label: '',
+  type: DEFAULT_TRANSFER_TYPE,
+  state: DEFAULT_TRANSFER_STATE,
+  label: DEFAULT_LABEL,
   
   // price
-  price: 0,
-  currency: 'CHF',
-  periodicity: Periodicity.Once
+  price: DEFAULT_PRICE,
+  currency: DEFAULT_CURRENCY,
+  periodicity: DEFAULT_PERIODICITY
 };

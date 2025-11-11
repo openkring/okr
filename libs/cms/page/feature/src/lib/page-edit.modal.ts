@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, PageModel, RoleName, UserModel } from '@bk2/shared-models';
+import { PageModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -21,7 +21,13 @@ import { convertFormToPage, convertPageToForm } from '@bk2/cms-page-util';
     <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-page-form [(vm)]="vm" [currentUser]="currentUser()" [pageTags]="pageTags()" (validChange)="formIsValid.set($event)" />
+      <bk-page-form [(vm)]="vm"
+        [currentUser]="currentUser()"
+        [types]="types()"
+        [states]="states()"
+        [allTags]="tags()"
+        (validChange)="formIsValid.set($event)"
+      />
     </ion-content>
   `,
 })
@@ -33,7 +39,10 @@ export class PageEditModalComponent {
   public currentUser = input.required<UserModel>();
 
   protected vm = linkedSignal(() => convertPageToForm(this.page()));
-  protected pageTags = computed(() => this.appStore.getTags(ModelType.Page));
+  protected readonly tags = computed(() => this.appStore.getTags('page'));
+  protected readonly types = computed(() => this.appStore.getCategory('page_type'));
+  protected readonly states = computed(() => this.appStore.getCategory('content_state'));
+
   protected formIsValid = signal(false);
 
   public save(): Promise<boolean> {

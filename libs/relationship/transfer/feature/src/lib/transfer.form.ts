@@ -3,12 +3,11 @@ import { Component, computed, inject, input, linkedSignal, model, output, signal
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { PeriodicityTypes, TransferStates, TransferTypes } from '@bk2/shared-categories';
-import { NAME_LENGTH } from '@bk2/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, NAME_LENGTH } from '@bk2/shared-constants';
 import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AvatarInfo, DefaultResourceInfo, ModelType, Periodicity, ResourceInfo, RoleName, TransferState, TransferType, UserModel } from '@bk2/shared-models';
-import { AvatarsComponent, CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { AvatarInfo, DefaultResourceInfo, ResourceInfo, RoleName, UserModel } from '@bk2/shared-models';
+import { AvatarsComponent, CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, getTodayStr, hasRole, isPerson, isResource } from '@bk2/shared-util-core';
 
 import { TransferFormModel, transferFormModelShape, transferFormValidations } from '@bk2/relationship-transfer-util';
@@ -16,7 +15,13 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
 @Component({
   selector: 'bk-transfer-form',
   standalone: true,
-  imports: [vestForms, TranslatePipe, AsyncPipe, CategoryComponent, DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent, NumberInputComponent, AvatarsComponent, IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonInput, IonButton],
+  imports: [
+    vestForms,
+    TranslatePipe, AsyncPipe,
+    DateInputComponent, TextInputComponent, NotesInputComponent, NumberInputComponent,
+    AvatarsComponent, CategorySelectComponent, ChipsComponent,
+    IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonInput, IonButton
+  ],
   template: `
     <form scVestForm [formShape]="shape" [formValue]="vm()" [suite]="suite" (dirtyChange)="dirtyChange.set($event)" (formValueChange)="onValueChange($event)">
       <!-- subjects -->
@@ -50,17 +55,17 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-cat name="type" [value]="type()" [categories]="transferTypes" (changed)="onChange('type', $event)" />
+                <bk-cat-select [category]="types()!" selectedItemName="type()" [withAll]="false" (changed)="onChange('type', $event)" />
               </ion-col>
 
-              @if(type() === transferType.Custom) {
+              @if(type() === 'custom') {
               <ion-col size="12" size-md="6">
                 <bk-text-input name="label" [value]="label()" [maxLength]="nameLength" [readOnly]="readOnly()" (changed)="onChange('label', $event)" />
               </ion-col>
               }
 
               <ion-col size="12" size-md="6">
-                <bk-cat name="state" [value]="state()" [categories]="transferStates" (changed)="onChange('state', $event)" />
+                <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" (changed)="onChange('state', $event)" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
@@ -87,7 +92,7 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-cat name="periodicity" [value]="periodicity()" [categories]="periodicities" (changed)="onChange('periodicity', $event)" />
+                <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" (changed)="onChange('periodicity', $event)" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -95,7 +100,7 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
       </ion-card>
 
       @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="transferTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
       } @if(hasRole('admin')) {
       <bk-notes name="notes" [value]="notes()" (changed)="onChange('notes', $event)" />
       }
@@ -107,25 +112,29 @@ export class TransferFormComponent {
   private readonly appStore = inject(AppStore);
 
   public vm = model.required<TransferFormModel>();
-  public currentUser = input<UserModel | undefined>();
-  public transferTags = input.required<string>();
+
+  protected readonly currentUser = computed(() => this.appStore.currentUser());
+  protected readonly allTags = computed(() => this.appStore.getTags('transfer'));
+  protected readonly types = computed(() => this.appStore.getCategory('transfer_type'));
+  protected readonly states = computed(() => this.appStore.getCategory('transfer_state'));
+  protected readonly periodicities = computed(() => this.appStore.getCategory('periodicity'));
 
   public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
-  protected name = computed(() => this.vm().name ?? '');
+  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES);
+  protected name = computed(() => this.vm().name ?? DEFAULT_NAME);
 
   protected subjects = linkedSignal(() => this.vm().subjects ?? []);
   protected objects = linkedSignal(() => this.vm().objects ?? []);
 
   protected dateOfTransfer = computed(() => this.vm().dateOfTransfer ?? getTodayStr());
-  protected resourceName = computed(() => this.vm().resource?.name ?? '');
-  protected type = computed(() => this.vm().type ?? TransferType.Purchase);
-  protected state = computed(() => this.vm().state ?? TransferState.Initial);
-  protected label = computed(() => this.vm().label ?? '');
-  protected price = computed(() => this.vm().price ?? 0);
-  protected currency = computed(() => this.vm().currency ?? 'CHF');
-  protected periodicity = computed(() => this.vm().periodicity ?? Periodicity.Yearly);
+  protected resourceName = computed(() => this.vm().resource?.name ?? DEFAULT_NAME);
+  protected type = computed(() => this.vm().type ?? DEFAULT_TRANSFER_TYPE);
+  protected state = computed(() => this.vm().state ?? DEFAULT_TRANSFER_STATE);
+  protected label = computed(() => this.vm().label ?? DEFAULT_LABEL);
+  protected price = computed(() => this.vm().price ?? DEFAULT_PRICE);
+  protected currency = computed(() => this.vm().currency ?? DEFAULT_CURRENCY);
+  protected periodicity = computed(() => this.vm().periodicity ?? 'yearly');
   protected readonly locale = computed(() => this.appStore.appConfig().locale);
 
   public validChange = output<boolean>();
@@ -136,10 +145,6 @@ export class TransferFormComponent {
   private readonly validationResult = computed(() => transferFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
-  protected periodicities = PeriodicityTypes;
-  protected transferStates = TransferStates;
-  protected transferType = TransferType;
-  protected transferTypes = TransferTypes;
   protected nameLength = NAME_LENGTH;
 
   protected onResourceNameChange($event: Event): void {
@@ -167,7 +172,7 @@ export class TransferFormComponent {
   }
 
   public async selectPerson(name: string): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: PersonSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -175,8 +180,8 @@ export class TransferFormComponent {
         currentUser: this.appStore.currentUser(),
       },
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isPerson(data, this.appStore.env.tenantId)) {
         if (name === 'subjects') {
@@ -185,8 +190,8 @@ export class TransferFormComponent {
             key: data.bkey,
             name1: data.firstName,
             name2: data.lastName,
-            label: '',
-            modelType: ModelType.Person,
+            label: DEFAULT_LABEL,
+            modelType: 'person',
           });
           this.onChange(name, subjects);
         } else {
@@ -195,8 +200,8 @@ export class TransferFormComponent {
             key: data.bkey,
             name1: data.firstName,
             name2: data.lastName,
-            label: '',
-            modelType: ModelType.Person,
+            label: DEFAULT_LABEL,
+            modelType: 'person',
           });
           this.onChange(name, objects);
         }
@@ -205,7 +210,7 @@ export class TransferFormComponent {
   }
 
   protected async selectResource(): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: ResourceSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -213,8 +218,8 @@ export class TransferFormComponent {
         currentUser: this.currentUser(),
       },
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isResource(data, this.appStore.env.tenantId)) {
         const resource = {

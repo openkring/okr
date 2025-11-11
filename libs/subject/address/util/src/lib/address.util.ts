@@ -2,7 +2,7 @@ import { Browser } from '@capacitor/browser';
 import { ToastController } from '@ionic/angular';
 
 import { bkTranslate } from '@bk2/shared-i18n';
-import { AddressChannel, AddressCollection, AddressModel, AddressUsage, ModelType, OrgCollection, PersonCollection } from '@bk2/shared-models';
+import { AddressChannel, AddressCollection, AddressModel, AddressUsage, OrgCollection, PersonCollection } from '@bk2/shared-models';
 import { copyToClipboard, formatIban, IbanFormat, showToast } from '@bk2/shared-util-angular';
 import { die, getCountryName, getModelAndKey } from '@bk2/shared-util-core';
 
@@ -21,7 +21,7 @@ export function getAddressCollection(parentId: string): string {
   if (parentId?.length === 0) die('AddressService.read: parentId is mandatory');
   if (parentId.indexOf('.') === -1) die(`AddressService.read: invalid key ${parentId} (expected Modeltype.key)`);
   const [parentModelType, parentKey] = getModelAndKey(parentId);
-  const parentCollection = parentModelType === ModelType.Org ? OrgCollection : PersonCollection;
+  const parentCollection = parentModelType === 'org' ? OrgCollection : PersonCollection;
   return `${parentCollection}/${parentKey}/${AddressCollection}`;
 }
 

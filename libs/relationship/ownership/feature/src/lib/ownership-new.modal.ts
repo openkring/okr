@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AccountModel, ModelType, OrgModel, PersonModel, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
+import { AccountModel, OrgModel, PersonModel, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -37,7 +37,6 @@ export class OwnershipNewModalComponent implements OnInit {
   public owner = input.required<PersonModel | OrgModel>();
   public resource = input.required<ResourceModel | AccountModel>(); 
   public currentUser = input<UserModel | undefined>();
-  public modelType = input.required<ModelType>();
 
   public vm = linkedSignal(() => newOwnership(this.owner(), this.resource(), this.appStore.tenantId()));
   protected formIsValid = signal(false);

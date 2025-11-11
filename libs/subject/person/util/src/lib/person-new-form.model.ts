@@ -1,12 +1,11 @@
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
-import { GenderType } from '@bk2/shared-models';
 import { getTodayStr } from '@bk2/shared-util-core';
 
 export type PersonNewFormModel = DeepPartial<{
   firstName: string,
   lastName: string,
-  gender: GenderType,
+  gender: string,
   dateOfBirth: string,
   dateOfDeath: string,
   ssnId: string,
@@ -36,7 +35,7 @@ export type PersonNewFormModel = DeepPartial<{
 export const personNewFormModelShape: DeepRequired<PersonNewFormModel> = {
   firstName: '',
   lastName: '',
-  gender: GenderType.Male,
+  gender: 'male',
   dateOfBirth: '',
   dateOfDeath: '',
   ssnId: '',

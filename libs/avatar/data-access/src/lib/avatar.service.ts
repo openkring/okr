@@ -1,12 +1,12 @@
-import { Inject, Injectable } from '@angular/core';
+import { inject, Inject, Injectable } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 
-import { getCategoryIcon, ModelTypes, ResourceTypes, RowingBoatTypes } from '@bk2/shared-categories';
 import { BkEnvironment, ENV } from '@bk2/shared-config';
 import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AvatarCollection, AvatarModel, ModelType, ResourceType } from '@bk2/shared-models';
-import { addImgixParams, getModelAndKey } from '@bk2/shared-util-core';
+import { AvatarCollection, AvatarModel } from '@bk2/shared-models';
+import { addImgixParams, getCategoryIcon, getModelAndKey } from '@bk2/shared-util-core';
+import { AppStore } from '@bk2/shared-feature';
 
 export interface UserPhoto {
   filepath: string;
@@ -17,6 +17,8 @@ export interface UserPhoto {
   providedIn: 'root',
 })
 export class AvatarService {
+  private appStore = inject(AppStore);
+
   // classic DI to enable mocks for testing
   // eslint-disable-next-line @angular-eslint/prefer-inject
   constructor(private readonly firestoreService: FirestoreService, @Inject(ENV) private readonly env: BkEnvironment) {}
@@ -33,7 +35,7 @@ export class AvatarService {
 
   /**
    * Read an avatar model from Firestore by its key.
-   * @param key the key of the avatar in the format ModelType.ModelKey e.g. 15.1123123asdf
+   * @param key the key of the avatar in the format ModelType.ModelKey e.g. org.1123123asdf
    * @returns an Observable of the avatar model or undefined if not found
    */
   public read(key: string): Observable<AvatarModel | undefined> {
@@ -51,7 +53,7 @@ export class AvatarService {
 
   /**
    * Get the imgix URL for an avatar by its key.
-   * @param key the key of the avatar in the format ModelType.ModelKey e.g. 15.1123123asdf
+   * @param key the key of the avatar in the format ModelType.ModelKey e.g. person.1123123asdf
    * @param size the optional size of the image to retrieve; default is THUMBNAIL_SIZE
    * @param imgixBaseUrl the optional base URL for imgix, defaults to the configured value
    * @param expandImgixBaseUrl whether to expand the imgix base URL with parameters, defaults to true
@@ -76,7 +78,7 @@ export class AvatarService {
    * @param expandImgixBaseUrl
    * @returns
    */
-  private getImgixUrl(modelType: ModelType, key: string, imgixBaseUrl: string, size: number, avatar?: AvatarModel, expandImgixBaseUrl = true): string {
+  private getImgixUrl(modelType: string, key: string, imgixBaseUrl: string, size: number, avatar?: AvatarModel, expandImgixBaseUrl = true): string {
     if (!avatar) {
       const iconName = this.getDefaultIcon(modelType, key);
       return `${imgixBaseUrl}/logo/icons/${iconName}.svg`;
@@ -94,20 +96,23 @@ export class AvatarService {
    * @param key
    * @returns
    */
-  private getDefaultIcon(modelType: ModelType, key: string): string {
-    if (modelType === ModelType.Resource) {
+  private getDefaultIcon(modelType: string, key: string): string {
+    let types = this.appStore.getCategory('resource_type');
+    if (modelType === 'resource') {
       const resourceTypePart = key.split(':')[0];
       if (resourceTypePart.includes('_')) {
-        const [resTypePart, subTypePart] = resourceTypePart.split('_');
-        if (parseInt(resTypePart) === ResourceType.RowingBoat) {
-          return getCategoryIcon(RowingBoatTypes, parseInt(subTypePart));
+        const [resourceType, subType] = resourceTypePart.split('_');
+        if (resourceType === 'rboat') {
+          types = this.appStore.getCategory('rboat_type');
+          return getCategoryIcon(types, subType);
         } else {
-          return getCategoryIcon(ResourceTypes, parseInt(resTypePart));
+          return getCategoryIcon(types, resourceType);
         }
       }
-      return getCategoryIcon(ResourceTypes, parseInt(resourceTypePart));
+      return getCategoryIcon(types, resourceTypePart);
     } else {
-      return getCategoryIcon(ModelTypes, modelType);
+      types = this.appStore.getCategory('model_type');
+      return getCategoryIcon(types, modelType);
     }
   }
 }

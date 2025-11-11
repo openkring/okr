@@ -2,9 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, PersonalRelTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, PersonalRelModel, RoleName } from '@bk2/shared-models';
+import { PersonalRelModel, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -52,12 +51,10 @@ import { PersonalRelListStore } from './personal-rel-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="personalRelTags()"
-      [types]="personalRelTypes"
-      typeName="personalRelType"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+      [type]="types()" (typeChanged)="onTypeSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
-      (typeChanged)="onTypeSelected($event)"
+      [showIcons]=false
     />
 
     <!-- list header -->
@@ -85,20 +82,20 @@ import { PersonalRelListStore } from './personal-rel-list.store';
                 <ion-col size="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ modelType.Person + '.' + personalRel.subjectKey | avatar | async}}" alt="avatar of first person" />
+                      <ion-img src="{{ 'person.' + personalRel.subjectKey | avatar | async}}" alt="avatar of first person" />
                     </ion-avatar>
                     <ion-label>{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
                   </ion-item>
                 </ion-col>
                 <ion-col size="4">
                   <ion-item lines="none">
-                    <ion-label>{{ personalRel.type | personalRelName:personalRel.label }}</ion-label>
+                    <ion-label>{{ personalRel | personalRelName:types() }}</ion-label>
                   </ion-item>
                 </ion-col>
                 <ion-col size="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ modelType.Person + '.' + personalRel.objectKey | avatar | async}}" alt="avatar of second person" />
+                      <ion-img src="{{ 'person.' + personalRel.objectKey | avatar | async}}" alt="avatar of second person" />
                     </ion-avatar>
                     <ion-label>{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
                   </ion-item> 
@@ -124,10 +121,9 @@ export class PersonalRelListComponent {
   protected personalRelsCount = computed(() => this.personalRelListStore.allPersonalRels()?.length ?? 0);
   protected selectedPersonalRelsCount = computed(() => this.filteredPersonalRels()?.length ?? 0);
   protected isLoading = computed(() => this.personalRelListStore.isLoading());
-  protected personalRelTags = computed(() => this.personalRelListStore.getTags());
+  protected tags = computed(() => this.personalRelListStore.getTags());
+  protected types = computed(() => this.personalRelListStore.appStore.getCategory('personalrel_type'));
 
-  protected modelType = ModelType;
-  protected readonly personalRelTypes = addAllCategory(PersonalRelTypes);
   private imgixBaseUrl = this.personalRelListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
@@ -201,7 +197,7 @@ export class PersonalRelListComponent {
     this.personalRelListStore.setSelectedTag(tag);
   }
 
-  protected onTypeSelected(personalRelType: number): void {
+  protected onTypeSelected(personalRelType: string): void {
     this.personalRelListStore.setSelectedPersonalRelType(personalRelType);
   }
 

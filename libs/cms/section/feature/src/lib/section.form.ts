@@ -4,12 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { RoleEnums, SectionTypes, ViewPositions } from '@bk2/shared-categories';
+import { ViewPositions } from '@bk2/shared-categories';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, newButton, newIcon, RoleEnum, RoleName, SectionType, Table, UserModel } from '@bk2/shared-models';
-import { CategoryNamePipe } from '@bk2/shared-pipes';
-import { ButtonCopyComponent, CategoryComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { newButton, newIcon, RoleName, Table, UserModel } from '@bk2/shared-models';
+import { ButtonCopyComponent, CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, hasRole, isPerson } from '@bk2/shared-util-core';
 
 import { AlbumSectionConfigComponent, ArticleSectionConfigComponent, ButtonSectionConfigComponent, IframeSectionFormComponent, ImageConfigFormComponent, MapSectionFormComponent, PeopleListFormComponent, TableSectionFormComponent, VideoSectionFormComponent } from '@bk2/cms-section-ui';
@@ -17,14 +16,15 @@ import { newTable, SectionFormModel, sectionFormValidations } from '@bk2/cms-sec
 
 import { ImageListComponent } from './image-list.component';
 import { SingleImageComponent } from './single-image.component';
+import { DEFAULT_ROLE } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-section-form',
   standalone: true,
   imports: [
     vestForms, FormsModule,
-    TranslatePipe, AsyncPipe, CategoryNamePipe,
-    ChipsComponent, NotesInputComponent, TextInputComponent, CategoryComponent,
+    TranslatePipe, AsyncPipe,
+    ChipsComponent, NotesInputComponent, TextInputComponent, CategorySelectComponent,
     ImageConfigFormComponent, SingleImageComponent,
     IframeSectionFormComponent, ImageListComponent, ErrorNoteComponent,
     MapSectionFormComponent, TableSectionFormComponent, ButtonSectionConfigComponent,
@@ -52,7 +52,7 @@ import { SingleImageComponent } from './single-image.component';
             </ion-card-header>
             <ion-card-content>
               <ion-item lines="none">
-                <ion-label>{{ '@content.section.default.type' | translate | async }}: {{ vm().type | categoryName:STS }}</ion-label>
+                <ion-label>{{ '@content.section.default.type' | translate | async }}: {{ vm().type }}</ion-label>
               </ion-item>
               @if(bkey(); as bkey) {
                 <ion-item lines="none">
@@ -62,8 +62,8 @@ import { SingleImageComponent } from './single-image.component';
               }
               <bk-text-input name="name" [value]="vm().name ?? ''" [showHelper]=true />
               <bk-error-note [errors]="nameErrors()" />
-
-              <bk-cat name="roleNeeded" [value]="roleNeeded()" [categories]="roles" (changed)="onChange('roleNeeded', $event)"/>
+                
+              <bk-cat-select [category]="roles()!" selectedItemName="roleNeeded()" [withAll]="false" (changed)="onChange('roleNeeded', $event)" />
             </ion-card-content>
           </ion-card>
         </ion-col>
@@ -71,22 +71,19 @@ import { SingleImageComponent } from './single-image.component';
 
       <!-- section specific settings must be defined within ion-row -->
       @switch(vm().type) {
-        @case(ST.Album) { 
+        @case('album') { 
           <bk-album-section-config [vm]="vm()" (changed)="onChange()" />
           <bk-image-config-form [vm]="vm()" />
         }
-        @case(ST.Article) {
+        @case('article') {
           <bk-single-image [vm]="vm()" />
           <bk-article-section-config [vm]="vm()" />
         }
-        <!-- tbd: ChartSectionForm is not yet implemented -->
-
-        @case(ST.Gallery) {
+        @case('gallery') {
           <bk-image-list [vm]="vm()" />
           <bk-image-config-form [vm]="vm()" />
-        }
-                       
-        @case(ST.Hero) {
+        }             
+        @case('hero') {
           <ion-row>
             <ion-col size="12">
               <ion-label>{{ '@content.section.forms.imageConfig.heroInfo' | translate | async }}</ion-label>
@@ -94,30 +91,29 @@ import { SingleImageComponent } from './single-image.component';
           </ion-row>
           <bk-image-list [vm]="vm()" />
         }
-        @case(ST.Map) {
+        @case('map') {
           <bk-map-section-form [vm]="vm()" />
         }
-        @case(ST.PeopleList) {
+        @case('peopleList') {
           <bk-people-list-form [vm]="vm()" (changed)="onChange()" (selectClicked)="selectPerson()" />
         }
-        @case(ST.Slider) {
+        @case('slider') {
           <bk-image-list [vm]="vm()" />
           <bk-image-config-form [vm]="vm()" />
         }
-        <!-- tbd: ListSectionForm is not yet implemented -->
-        @case(ST.Video) {
+        @case('video') {
           <bk-video-section-form [vm]="vm()" />
         }
-        <!-- tbd: CalendarSectionForm is not yet implemented --> 
-        @case(ST.Button) {
+        @case('button') {
           <bk-button-section-config [vm]="vm()" />
         }
-        @case(ST.Table) {
+        @case('table') {
           <bk-table-section-form [table]="table()!" (changed)="onChange('table', $event)" />  
         }
-        @case(ST.Iframe) {     
+        @case('iframe') {     
           <bk-iframe-section-form [vm]="vm()" />
         }
+        <!-- tbd: not yet implemented: Calendar, List, Chart -->
       }
     </ion-grid>
     @if(hasRole('privileged')) {
@@ -143,21 +139,19 @@ export class SectionFormComponent {
   protected readonly suite = sectionFormValidations;
   private readonly validationResult = computed(() => sectionFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+  protected roles = computed(() => this.appStore.getCategory('roles'));
 
   public table = computed(() => this.vm().properties?.table ?? newTable());
   public icon = computed(() => this.vm().properties?.icon ?? newIcon());
   public button = computed(() => this.vm().properties?.button ?? newButton()); 
-  protected roleNeeded = computed(() => this.vm().roleNeeded ?? RoleEnum.Registered);
+  protected roleNeeded = computed(() => this.vm().roleNeeded ?? DEFAULT_ROLE);
   protected bkey = computed(() => this.vm().bkey ?? '');
   protected persons = computed(() => this.vm().properties?.persons ?? []);
 
   public viewPositions = ViewPositions;
-  public STS = SectionTypes;
-  public ST = SectionType;
-  protected roles = RoleEnums;
 
   protected onValueChange(value: SectionFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
+    this.vm.update((vm) => ({...vm, ...value}));
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 
@@ -175,7 +169,7 @@ export class SectionFormComponent {
   }
 
   public async selectPerson(): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: PersonSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -183,8 +177,8 @@ export class SectionFormComponent {
         currentUser: this.appStore.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isPerson(data, this.appStore.env.tenantId)) {
         const persons = this.persons();
@@ -193,7 +187,7 @@ export class SectionFormComponent {
           name1: data.firstName,
           name2: data.lastName,
           label: '',
-          modelType: ModelType.Person
+          modelType: 'person'
         });
         this.vm.update((vm) => ({ ...vm, properties: { ...vm.properties, persons } }));
         debugFormErrors('SectionForm (modal)', this.validationResult().errors, this.currentUser());

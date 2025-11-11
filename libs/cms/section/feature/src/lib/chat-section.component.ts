@@ -5,7 +5,6 @@ import { StreamAutocompleteTextareaModule, StreamChatModule } from 'stream-chat-
 
 import { SectionModel } from '@bk2/shared-models';
 import { SpinnerComponent } from '@bk2/shared-ui';
-import { debugMessage } from '@bk2/shared-util-core';
 
 import { ChatSectionStore } from './chat-section.store';
 
@@ -62,7 +61,6 @@ import { ChatSectionStore } from './chat-section.store';
 export class ChatSectionComponent {
   private readonly chatSectionStore = inject(ChatSectionStore);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly destroyRef = inject(DestroyRef);
 
   public section = input<SectionModel>();
   protected readonly title = computed(() => this.section()?.title);
@@ -71,18 +69,18 @@ export class ChatSectionComponent {
 
   constructor() {
     effect(() => {
-      const _section = this.section();
-      if (_section) {
-        this.chatSectionStore.setConfig(_section.properties.chat);
+      const section = this.section();
+      if (section) {
+        this.chatSectionStore.setConfig(section.properties.chat);
       }
     });
 
     effect(async () => {
       if (isPlatformBrowser(this.platformId)) {
-        const _chatUser = this.chatSectionStore.chatUser();
-        const _token = this.chatSectionStore.userToken();
-        if (_chatUser && _token && !this.chatSectionStore.isChatInitialized()) {
-          this.chatSectionStore.initializeChat(_chatUser, _token);
+        const chatUser = this.chatSectionStore.chatUser();
+        const token = this.chatSectionStore.userToken();
+        if (chatUser && token && !this.chatSectionStore.isChatInitialized()) {
+          this.chatSectionStore.initializeChat(chatUser, token);
         }
       }
     });

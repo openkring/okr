@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as logger from "firebase-functions/logger";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
-import { GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, ReservationCollection, ResourceCollection, WorkingRelCollection } from "@bk2/shared-models";
+import { GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, PersonModel, ReservationCollection, ResourceCollection, WorkrelCollection } from "@bk2/shared-models";
 import {
   getAllMembershipsOfMember, getAllMembershipsOfOrg,
   getAllOwnershipsOfOwner, getAllOwnershipsOfResource,
@@ -17,8 +17,8 @@ const firestore = admin.firestore();
 /**
  * BE AWARE OF RECURSIVE TRIGGERS !
  * 
- * person/address -> person (fav_*)
- * org/address -> org (fav_*)
+ * person/address -> person (fav*)
+ * org/address -> org (fav*)
  * resource -> ownership, reservation
  * person -> ownership, membership, personalRel, workingRel, reservation
  * org -> ownership, membership, workingRel
@@ -72,31 +72,31 @@ export const onResourceChange = onDocumentWritten(
     logger.info(`resource ${resourceId} has changed`);
 
     try {
-      const _resource = event.data?.after.data();
-      if (_resource) {
+      const resource = event.data?.after.data();
+      if (resource) {
 
         // synchronize the ownerships
-        const _ownerships = await getAllOwnershipsOfResource(firestore, resourceId)
-        for (const _ownership of _ownerships) {
-          const _ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${_ownership.bkey}`);
-          await _ownershipRef.update({
-            resourceName: _resource.name,
-            resourceType: _resource.type,
-            resourceSubType: _resource.subType,
+        const ownerships = await getAllOwnershipsOfResource(firestore, resourceId)
+        for (const ownership of ownerships) {
+          const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.bkey}`);
+          await ownershipRef.update({
+            resourceName: resource.name,
+            resourceType: resource.type,
+            resourceSubType: resource.subType,
           });
-          logger.info(`Successfully updated ownership ${_ownership.bkey} for resource ${resourceId}`);
+          logger.info(`Successfully updated ownership ${ownership.bkey} for resource ${resourceId}`);
         }
 
         // synchronize the reservations
-        const _reservations = await getAllReservationsOfResource(firestore, resourceId);
-        for (const _reservation of _reservations) {
-          const _resRef = admin.firestore().doc(`${ReservationCollection}/${_reservation.bkey}`);
-          await _resRef.update({
-            resourceName: _resource.name,
-            resourceType: _resource.type,
-            resourceSubType: _resource.subType,
+        const reservations = await getAllReservationsOfResource(firestore, resourceId);
+        for (const reservation of reservations) {
+          const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.bkey}`);
+          await resRef.update({
+            resourceName: resource.name,
+            resourceType: resource.type,
+            resourceSubType: resource.subType,
           });
-          logger.info(`Successfully updated reservation ${_reservation.bkey} for resource ${resourceId} (resource)`);
+          logger.info(`Successfully updated reservation ${reservation.bkey} for resource ${resourceId} (resource)`);
         }
       } else {
         logger.warn(`Resource ${resourceId} does not exist or has been deleted.`);
@@ -121,83 +121,83 @@ export const onPersonChange = onDocumentWritten(
     logger.info(`person ${personId} has changed`);
 
     try {
-      const _person = event.data?.after.data();
-      if (_person) {
+      const person = event.data?.after.data();
+      if (person) {
 
         // synchronize the ownerships
-        const _ownerships = await getAllOwnershipsOfOwner(firestore, personId);
-        for (const _ownership of _ownerships) {
-          const _ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${_ownership.bkey}`);
-          await _ownershipRef.update({
-            ownerName1: _person.firstName,
-            ownerName2: _person.lastName,
-            ownerType: _person.gender,
+        const ownerships = await getAllOwnershipsOfOwner(firestore, personId);
+        for (const ownership of ownerships) {
+          const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.bkey}`);
+          await ownershipRef.update({
+            ownerName1: person.firstName,
+            ownerName2: person.lastName,
+            ownerType: person.gender,
           });
-          logger.info(`Successfully updated ownership ${_ownership.bkey} for person ${personId} (owner)`);
+          logger.info(`Successfully updated ownership ${ownership.bkey} for person ${personId} (owner)`);
         }
 
         // synchronize the memberships
-        const _memberships = await getAllMembershipsOfMember(firestore, personId);
-        for (const _membership of _memberships) {
-          const _membershipRef = admin.firestore().doc(`${MembershipCollection}/${_membership.bkey}`);
-          await _membershipRef.update({
-            memberName1: _person.firstName,
-            memberName2: _person.lastName,
-            memberType: _person.gender,
-            memberDateOfBirth: _person.dateOfBirth,
-            memberDateOfDeath: _person.dateOfDeath,
-            memberZipCode: _person.fav_zip,
-            memberBexioId: _person.bexioId,
+        const memberships = await getAllMembershipsOfMember(firestore, personId);
+        for (const membership of memberships) {
+          const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
+          await membershipRef.update({
+            memberName1: person.firstName,
+            memberName2: person.lastName,
+            memberType: person.gender,
+            memberDateOfBirth: person.dateOfBirth,
+            memberDateOfDeath: person.dateOfDeath,
+            memberZipCode: person.favZipCode,
+            memberBexioId: person.bexioId,
           });
-          logger.info(`Successfully updated membership ${_membership.bkey} for person ${personId} (member)`);
+          logger.info(`Successfully updated membership ${membership.bkey} for person ${personId} (member)`);
         }
 
         // synchronize the personalRels (by subject)
-        const _personalRels = await getAllPersonalRelsOfSubject(firestore, personId);
-        for (const _personalRel of _personalRels) {
-          const _personalRelRef = admin.firestore().doc(`${PersonalRelCollection}/${_personalRel.bkey}`);
-          await _personalRelRef.update({
-            subjectFirstName: _person.firstName,
-            subjectLastName: _person.lastName,
-            subjectGender: _person.gender,
+        const personalRels = await getAllPersonalRelsOfSubject(firestore, personId);
+        for (const _personalRel of personalRels) {
+          const personalRelRef = admin.firestore().doc(`${PersonalRelCollection}/${_personalRel.bkey}`);
+          await personalRelRef.update({
+            subjectFirstName: person.firstName,
+            subjectLastName: person.lastName,
+            subjectGender: person.gender,
           });
           logger.info(`Successfully updated personalRel ${_personalRel.bkey} for person ${personId} (subject)`);
         }
 
         // synchronize the personalRels (by object)
         const _personalRelsByObject = await getAllPersonalRelsOfObject(firestore, personId);
-        for (const _personalRel of _personalRelsByObject) {
-          const _personalRelRef = admin.firestore().doc(`${PersonalRelCollection}/${_personalRel.bkey}`);
-          await _personalRelRef.update({
-            objectFirstName: _person.firstName,
-            objectLastName: _person.lastName,
-            objectGender: _person.gender,
+        for (const personalRel of _personalRelsByObject) {
+          const personalRelRef = admin.firestore().doc(`${PersonalRelCollection}/${personalRel.bkey}`);
+          await personalRelRef.update({
+            objectFirstName: person.firstName,
+            objectLastName: person.lastName,
+            objectGender: person.gender,
           });
-          logger.info(`Successfully updated personalRel ${_personalRel.bkey} for person ${personId} (object)`);
+          logger.info(`Successfully updated personalRel ${personalRel.bkey} for person ${personId} (object)`);
         }
 
-        // synchronize the workingRels (by subject)
-        const _workingRels = await getAllWorkingRelsOfSubject(firestore, personId);
-        for (const _workingRel of _workingRels) {
-          const _workingRelRef = admin.firestore().doc(`${WorkingRelCollection}/${_workingRel.bkey}`);
-          await _workingRelRef.update({
-            subjectName1: _person.firstName,
-            subjectName2: _person.lastName,
-            subjectType: _person.gender,
+        // synchronize the workRels (by subject)
+        const workRels = await getAllWorkingRelsOfSubject(firestore, personId);
+        for (const workRel of workRels) {
+          const workRelRef = admin.firestore().doc(`${WorkingRelCollection}/${workRel.bkey}`);
+          await workRelRef.update({
+            subjectName1: person.firstName,
+            subjectName2: person.lastName,
+            subjectType: person.gender,
           });
-          logger.info(`Successfully updated personalRel ${_workingRel.bkey} for person ${personId} (subject)`);
+          logger.info(`Successfully updated personalRel ${workRel.bkey} for person ${personId} (subject)`);
         }
 
         // synchronize the reservations (by reserver)
-        const _reservations = await getAllReservationsOfReserver(firestore, personId);
-        for (const _reservation of _reservations) {
-          const _resRef = admin.firestore().doc(`${ReservationCollection}/${_reservation.bkey}`);
-          await _resRef.update({
-            reserverName: _person.firstName,
-            reserverName2: _person.lastName,
-            reserverType: _person.gender,
+        const reservations = await getAllReservationsOfReserver(firestore, personId);
+        for (const reservation of reservations) {
+          const resRef = admin.firestore().doc(`${ReservationCollection}/${reservation.bkey}`);
+          await resRef.update({
+            reserverName: person.firstName,
+            reserverName2: person.lastName,
+            reserverType: person.gender,
           });
-          logger.info(`Successfully updated reservation ${_reservation.bkey} for person ${personId} (reserver)`);
+          logger.info(`Successfully updated reservation ${reservation.bkey} for person ${personId} (reserver)`);
         }
 
       } else {
@@ -219,66 +219,66 @@ export const onOrgChange = onDocumentWritten(
     region: 'europe-west6'
   },
   async (event) => {
-    const _orgId = event.params.orgId;
-    logger.info(`org ${_orgId} has changed`);
+    const orgId = event.params.orgId;
+    logger.info(`org ${orgId} has changed`);
 
     try {
-      const _org = event.data?.after.data();
-      if (_org) {
+      const org = event.data?.after.data();
+      if (org) {
 
         // synchronize the ownerships
-        const _ownerships = await getAllOwnershipsOfOwner(firestore, _orgId);
-        for (const _ownership of _ownerships) {
-          const _ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${_ownership.bkey}`);
-          await _ownershipRef.update({
+        const ownerships = await getAllOwnershipsOfOwner(firestore, orgId);
+        for (const _ownership of ownerships) {
+          const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${_ownership.bkey}`);
+          await ownershipRef.update({
             ownerName1: '',
-            ownerName2: _org.name,
-            ownerType: _org.type,
+            ownerName2: org.name,
+            ownerType: org.type,
           });
-          logger.info(`Successfully updated ownership ${_ownership.bkey} for org ${_orgId} (owner)`);
+          logger.info(`Successfully updated ownership ${_ownership.bkey} for org ${orgId} (owner)`);
         }
 
         // synchronize the memberships of the member org
-        const _memberships = await getAllMembershipsOfMember(firestore, _orgId);
-        for (const _membership of _memberships) {
-          const _membershipRef = admin.firestore().doc(`${MembershipCollection}/${_membership.bkey}`);
-          await _membershipRef.update({
+        const memberships = await getAllMembershipsOfMember(firestore, orgId);
+        for (const membership of memberships) {
+          const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
+          await membershipRef.update({
             memberName1: '',
-            memberName2: _org.name,
-            memberType: _org.type,
-            memberDateOfBirth: _org.dateOfFoundation,
-            memberDateOfDeath: _org.dateOfLiquidation,
-            memberZipCode: _org.fav_zip,
-            memberBexioId: _org.bexioId,
+            memberName2: org.name,
+            memberType: org.type,
+            memberDateOfBirth: org.dateOfFoundation,
+            memberDateOfDeath: org.dateOfLiquidation,
+            memberZipCode: org.favZipCode,
+            memberBexioId: org.bexioId,
           });
-          logger.info(`Successfully updated membership ${_membership.bkey} for org ${_orgId} (member)`);
+          logger.info(`Successfully updated membership ${membership.bkey} for org ${orgId} (member)`);
         }
 
         // synchronize the membership org
-        const _memberOrgs = await getAllMembershipsOfOrg(firestore, _orgId);
-        for (const _membership of _memberOrgs) {
-          const _membershipRef = admin.firestore().doc(`${MembershipCollection}/${_membership.bkey}`);
-          await _membershipRef.update({
-            orgName: _org.name,
+        const memberOrgs = await getAllMembershipsOfOrg(firestore, orgId);
+        for (const membership of memberOrgs) {
+          const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
+          await membershipRef.update({
+            orgName: org.name,
           });
-          logger.info(`Successfully updated membership ${_membership.bkey} for org ${_orgId} (org)`);
+          logger.info(`Successfully updated membership ${membership.bkey} for org ${orgId} (org)`);
         }
 
         // synchronize the workingRels (by object)
-        const _workingRels = await getAllWorkingRelsOfObject(firestore, _orgId);
-        for (const _workingRel of _workingRels) {
-          const _workingRelRef = admin.firestore().doc(`${WorkingRelCollection}/${_workingRel.bkey}`);
-          await _workingRelRef.update({
-            objectName: _org.name,
-            objectType: _org.type,
+        const workRels = await getAllWorkingRelsOfObject(firestore, orgId);
+        for (const workRel of workRels) {
+          const workRelRef = admin.firestore().doc(`${WorkrelCollection}/${workRel.bkey}`);
+          await workRelRef.update({
+            objectName: org.name,
+            objectType: org.type,
           });
-          logger.info(`Successfully updated workingRel ${_workingRel.bkey} for org ${_orgId} (object)`);
+          logger.info(`Successfully updated workingRel ${workRel.bkey} for org ${orgId} (object)`);
         }
       } else {
-        logger.warn(`Org ${_orgId} does not exist or has been deleted.`);
+        logger.warn(`Org ${orgId} does not exist or has been deleted.`);
       }
     } catch (error) {
-      logger.error(`Error updating org ${_orgId}:`, { error });
+      logger.error(`Error updating org ${orgId}:`, { error });
     }
   }
 );
@@ -293,42 +293,42 @@ export const onGroupChange = onDocumentWritten(
     region: 'europe-west6'
   },
   async (event) => {
-    const _groupId = event.params.groupId;
-    logger.info(`group ${_groupId} has changed`);
+    const groupId = event.params.groupId;
+    logger.info(`group ${groupId} has changed`);
 
     try {
-      const _group = event.data?.after.data();
-      if (_group) {
+      const group = event.data?.after.data();
+      if (group) {
 
         // synchronize the memberships of the member group
-        const _memberships = await getAllMembershipsOfMember(firestore, _groupId);
-        for (const _membership of _memberships) {
-          const _membershipRef = admin.firestore().doc(`${MembershipCollection}/${_membership.bkey}`);
-          await _membershipRef.update({
+        const memberships = await getAllMembershipsOfMember(firestore, groupId);
+        for (const membership of memberships) {
+          const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
+          await membershipRef.update({
             memberName1: '',
-            memberName2: _group.name,
+            memberName2: group.name,
             memberDateOfBirth: '',
             memberDateOfDeath: '',
             memberZipCode: '',
             memberBexioId: '',
           });
-          logger.info(`Successfully updated membership ${_membership.bkey} for group ${_groupId} (member)`);
+          logger.info(`Successfully updated membership ${membership.bkey} for group ${groupId} (member)`);
         }
 
         // synchronize the membership group
-        const _memberOrgs = await getAllMembershipsOfOrg(firestore, _groupId);
-        for (const _membership of _memberOrgs) {
-          const _membershipRef = admin.firestore().doc(`${MembershipCollection}/${_membership.bkey}`);
-          await _membershipRef.update({
-            orgName: _group.name,
+        const memberOrgs = await getAllMembershipsOfOrg(firestore, groupId);
+        for (const membership of memberOrgs) {
+          const membershipRef = admin.firestore().doc(`${MembershipCollection}/${membership.bkey}`);
+          await membershipRef.update({
+            orgName: group.name,
           });
-          logger.info(`Successfully updated membership ${_membership.bkey} for group ${_groupId} (org)`);
+          logger.info(`Successfully updated membership ${membership.bkey} for group ${groupId} (org)`);
         }
       } else {
-        logger.warn(`Org ${_groupId} does not exist or has been deleted.`);
+        logger.warn(`Org ${groupId} does not exist or has been deleted.`);
       }
     } catch (error) {
-      logger.error(`Error updating org ${_groupId}:`, { error });
+      logger.error(`Error updating org ${groupId}:`, { error });
     }
   }
 );

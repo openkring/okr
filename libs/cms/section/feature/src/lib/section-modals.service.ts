@@ -11,16 +11,16 @@ export class SectionModalsService {
   private readonly modalController = inject(ModalController);
 
   public async editImage(imageDesc: Image): Promise<Image | undefined> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: ImageEditModalComponent,
       cssClass: 'wide-modal',
       componentProps: {
         imageDesc: imageDesc
       }
     });
-    _modal.present();
+    modal.present();
 
-    const { data, role } = await _modal.onWillDismiss();
+    const { data, role } = await modal.onWillDismiss();
     if(role === 'confirm') {
       return data as Image;
     }

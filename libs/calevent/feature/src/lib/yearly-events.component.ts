@@ -3,9 +3,8 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, CalEventTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, CalEventModel, RoleName } from '@bk2/shared-models';
+import { CalEventModel, RoleName } from '@bk2/shared-models';
 import { LabelPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { AvatarDisplayComponent, EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, navigateByUrl } from '@bk2/shared-util-angular';
@@ -55,8 +54,7 @@ import { ActionSheetController } from '@ionic/angular';
     <!-- search and filters -->
     <bk-list-filter 
       [tags]="calEventTags()"
-      [types]="calEventTypes"
-      typeName="calEventType"
+      [type]="calEventTypes()"
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)"
       (typeChanged)="onTypeSelected($event)"
@@ -122,9 +120,9 @@ export class YearlyEventsComponent {
   protected selectedCalEventsCount = computed(() => this.filteredCalEvents().length);
   protected isLoading = computed(() => this.calEventListStore.isLoading());
   protected calEventTags = computed(() => this.calEventListStore.getTags());
-  
-  protected selectedCategory = AllCategories;
-  protected calEventTypes = addAllCategory(CalEventTypes);
+  protected calEventTypes = computed(() => this.calEventListStore.appStore.getCategory('calevent_type'));
+  private currentUser = computed(() => this.calEventListStore.appStore.currentUser());
+
   private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 
   constructor() {
@@ -157,7 +155,7 @@ export class YearlyEventsComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
     actionSheetOptions.buttons.push(createActionSheetButton('album', this.imgixBaseUrl, 'albums'));
-    if (hasRole('privileged', this.appStore.currentUser()) || hasRole('eventAdmin', this.appStore.currentUser())) {
+    if (hasRole('privileged', this.currentUser()) || hasRole('eventAdmin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
@@ -211,7 +209,7 @@ export class YearlyEventsComponent {
     this.calEventListStore.setSelectedTag($event);
   }
 
-  protected onTypeSelected(calEventType: number): void {
+  protected onTypeSelected(calEventType: string): void {
     this.calEventListStore.setSelectedCategory(calEventType);
   }
 

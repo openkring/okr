@@ -1,11 +1,10 @@
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, input, model, output, signal } from '@angular/core';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { OrgTypes } from '@bk2/shared-categories';
 import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
-import { OrgType, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
-import { CategoryComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
+import { ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
 import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
@@ -17,7 +16,7 @@ import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidati
   standalone: true,
   imports: [
     vestForms,
-    CategoryComponent, DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent, ErrorNoteComponent,
+    DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent, ErrorNoteComponent,
     EmailInputComponent, PhoneInputComponent, SwissCitySearchComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -38,7 +37,7 @@ import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidati
           @if (isOrgTypeVisible()) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat name="orgType" [value]="orgType()" [categories]="orgTypes" [readOnly]="isOrgTypeReadOnly() || readOnly()" (changed)="onChange('type', $event)" />
+                <bk-cat-select [category]="orgTypes()" [selectedItemName]="orgType()" [withAll]="false" [readOnly]="isOrgTypeReadOnly() || readOnly()" (changed)="onChange('type', $event)" />
               </ion-col>
             </ion-row>
           }
@@ -66,11 +65,11 @@ import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidati
           <ion-row>
             <ion-col size="10">
               <bk-text-input name="streetName" [value]="streetName()" autocomplete="street-address" (changed)="onChange('streetName', $event)" />
-              <bk-error-note [errors]="streetErrors()" />                                                                                                                     
+              <bk-error-note [errors]="streetNameErrors()" />                                                                                                                     
             </ion-col>
             <ion-col size="2">
               <bk-text-input name="streetNumber" [value]="streetNumber()" (changed)="onChange('streetNumber', $event)" />
-              <bk-error-note [errors]="streetErrors()" />                                                                                                                     
+              <bk-error-note [errors]="streetNumberErrors()" />                                                                                                                     
             </ion-col>
           </ion-row>
 
@@ -128,12 +127,12 @@ import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidati
   `
 })
 export class OrgNewFormComponent {
-  private readonly modalController = inject(ModalController)
   public vm = model.required<OrgNewFormModel>();
-  public currentUser = input<UserModel | undefined>();
+  public currentUser = input.required<UserModel | undefined>();
   public isOrgTypeReadOnly = input(false);
   public isOrgTypeVisible = input(true);
   public orgTags = input.required<string>();
+  public types = input.required<CategoryListModel>();
 
   public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));  
 
@@ -143,7 +142,7 @@ export class OrgNewFormComponent {
   protected readonly suite = orgNewFormValidations;
   protected readonly shape = orgNewFormModelShape;
 
-  protected orgType = computed(() => this.vm().type ?? OrgType.Association);
+  protected orgType = computed(() => this.vm().type ?? 'association');
   protected orgName = computed(() => this.vm().orgName ?? '');
   protected dateOfFoundation = computed(() => this.vm().dateOfFoundation ?? '');
   protected dateOfLiquidation = computed(() => this.vm().dateOfLiquidation ?? '');
@@ -164,13 +163,12 @@ export class OrgNewFormComponent {
 
   private readonly validationResult = computed(() => orgNewFormValidations(this.vm()));
   protected orgNameErrors = computed(() => this.validationResult().getErrors('orgName'));
-  protected streetErrors = computed(() => this.validationResult().getErrors('street'));
+  protected streetNameErrors = computed(() => this.validationResult().getErrors('streetName'));
+  protected streetNumberErrors = computed(() => this.validationResult().getErrors('streetNumber'));
   protected phoneErrors = computed(() => this.validationResult().getErrors('phone'));
   protected emailErrors = computed(() => this.validationResult().getErrors('email'));
   protected urlErrors = computed(() => this.validationResult().getErrors('url'));
 
-  public orgTypeEnum = OrgType;
-  public orgTypes = OrgTypes;
   protected bexioMask = BexioIdMask;
   protected vatMask = ChVatMask;
 

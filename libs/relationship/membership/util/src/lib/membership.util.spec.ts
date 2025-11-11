@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MembershipModel, ModelType, GenderType, Periodicity } from '@bk2/shared-models';
+import { MembershipModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
-import { isMembership, convertMembershipToForm, convertFormToMembership } from './membership.util';
+import { convertMembershipToForm, convertFormToMembership } from './membership.util';
 import { MembershipFormModel } from './membership-form.model';
 
 // Mock shared utility functions
@@ -30,14 +30,14 @@ describe('Membership Utils', () => {
     membership.memberKey = 'person-1';
     membership.memberName1 = 'John';
     membership.memberName2 = 'Doe';
-    membership.memberModelType = ModelType.Person;
-    membership.memberType = GenderType.Male;
+    membership.memberModelType = 'person';
+    membership.memberType = 'male';
     membership.orgKey = 'org-1';
     membership.orgName = 'Test Club';
     membership.dateOfEntry = '20200101';
     membership.membershipCategory = 'active';
     membership.price = 100;
-    membership.periodicity = Periodicity.Yearly;
+    membership.periodicity = 'yearly';
   });
 
   describe('convertMembershipToForm', () => {
@@ -63,7 +63,7 @@ describe('Membership Utils', () => {
         dateOfExit: '20251231',
         membershipCategory: 'passive',
         price: 50,
-        periodicity: Periodicity.Monthly,
+        periodicity: 'monthly',
         orgFunction: 'Treasurer',
       } as MembershipFormModel;
     });
@@ -73,7 +73,7 @@ describe('Membership Utils', () => {
       expect(updatedMembership.dateOfEntry).toBe('20210101');
       expect(updatedMembership.membershipCategory).toBe('passive');
       expect(updatedMembership.price).toBe(50);
-      expect(updatedMembership.periodicity).toBe(Periodicity.Monthly);
+      expect(updatedMembership.periodicity).toBe('monthly');
       expect(updatedMembership.bkey).toBe('membership-1'); // Should not be changed
     });
 

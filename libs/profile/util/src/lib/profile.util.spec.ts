@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AvatarUsage, DefaultLanguage, DeliveryType, GenderType, NameDisplay, Language, PersonModel, PersonSortCriteria, PrivacyUsage, UserModel } from '@bk2/shared-models';
+import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, Language, PersonModel, PersonSortCriteria, PrivacyUsage, UserModel } from '@bk2/shared-models';
 import * as angularUtils from '@bk2/shared-util-angular';
 import { convertPersonToDataForm, convertUserToSettingsForm, convertUserToPrivacyForm, convertPersonalDataFormToPerson, convertSettingsFormToUser, convertPrivacyFormToUser } from './profile.util';
 import { PersonalDataFormModel } from './personal-data-form.model';
@@ -28,7 +28,7 @@ describe('Profile Utils', () => {
       bkey: 'person-1',
       firstName: 'John',
       lastName: 'Doe',
-      gender: GenderType.Male,
+      gender: 'male',
       dateOfBirth: '19900101',
       ssnId: '7561234567890',
     } as PersonModel;
@@ -58,12 +58,12 @@ describe('Profile Utils', () => {
       showArchivedData: false,
       showDebugInfo: true,
       showHelpers: true,
-      usage_images: PrivacyUsage.Protected,
-      usage_dateOfBirth: PrivacyUsage.Protected,
-      usage_postalAddress: PrivacyUsage.Protected,
-      usage_email: PrivacyUsage.Protected,
-      usage_phone: PrivacyUsage.Protected,
-      usage_name: PrivacyUsage.Protected,
+      usageImages: PrivacyUsage.Protected,
+      usageDateOfBirth: PrivacyUsage.Protected,
+      usagePostalAddress: PrivacyUsage.Protected,
+      usageEmail: PrivacyUsage.Protected,
+      usagePhone: PrivacyUsage.Protected,
+      usageName: PrivacyUsage.Protected,
     } as UserModel;
   });
 
@@ -73,7 +73,7 @@ describe('Profile Utils', () => {
       expect(form.personKey).toBe('person-1');
       expect(form.firstName).toBe('John');
       expect(form.lastName).toBe('Doe');
-      expect(form.gender).toBe(GenderType.Male);
+      expect(form.gender).toBe('male');
       expect(form.dateOfBirth).toBe('19900101');
       expect(form.ssnId).toBe('formatted:7561234567890:friendly');
 
@@ -100,8 +100,8 @@ describe('Profile Utils', () => {
   describe('convertUserToPrivacyForm', () => {
     it('should convert a UserModel to a PrivacyFormModel', () => {
       const form = convertUserToPrivacyForm(user);
-      expect(form.usage_images).toBe(PrivacyUsage.Protected);
-      expect(form.usage_name).toBe(PrivacyUsage.Protected);
+      expect(form.usageImages).toBe(PrivacyUsage.Protected);
+      expect(form.usageName).toBe(PrivacyUsage.Protected);
     });
   });
 
@@ -143,15 +143,15 @@ describe('Profile Utils', () => {
         usage_name: PrivacyUsage.Public,
       } as PrivacyFormModel;
       const updatedUser = convertPrivacyFormToUser(form, user);
-      expect(updatedUser.usage_images).toBe(PrivacyUsage.Public);
-      expect(updatedUser.usage_name).toBe(PrivacyUsage.Public);
+      expect(updatedUser.usageImages).toBe(PrivacyUsage.Public);
+      expect(updatedUser.usageName).toBe(PrivacyUsage.Public);
     });
 
     it('should use default values for undefined form properties', () => {
       const form: PrivacyFormModel = {} as PrivacyFormModel;
       const updatedUser = convertPrivacyFormToUser(form, user);
-      expect(updatedUser.usage_images).toBe(PrivacyUsage.Public);
-      expect(updatedUser.usage_dateOfBirth).toBe(PrivacyUsage.Restricted);
+      expect(updatedUser.usageImages).toBe(PrivacyUsage.Public);
+      expect(updatedUser.usageDateOfBirth).toBe(PrivacyUsage.Restricted);
     });
   });
 });

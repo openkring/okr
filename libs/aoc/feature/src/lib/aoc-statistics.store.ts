@@ -5,14 +5,14 @@ import { firstValueFrom, map, Observable, of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { BkModel, GenderType, LogInfo, logMessage, MembershipCollection, MembershipModel, ModelType, OrgCollection, OrgModel, PersonCollection, PersonModel, SectionCollection, SectionModel } from '@bk2/shared-models';
+import { BkModel, LogInfo, logMessage, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel, SectionCollection, SectionModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
 import { DateFormat, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
 import { initializeAgeByGenderStatistics, updateAgeByGenderStats } from '@bk2/aoc-util';
 
 export type AocStatisticsState = {
-  modelType: ModelType | undefined;
+  modelType: string | undefined;
   log: LogInfo[];
   logTitle: string;
 };
@@ -36,11 +36,11 @@ export const AocStatisticsStore = signalStore(
       }),
       stream: ({ params }): Observable<BkModel[] | undefined> => {
         switch (params.modelType) {
-          case ModelType.Person:
+          case 'person':
             return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
-          case ModelType.Org:
+          case 'org':
             return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc');
-          case ModelType.Membership:
+          case 'membership':
             return store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.env.tenantId), 'memberName2', 'asc');
           default:
             return of(undefined);
@@ -60,7 +60,7 @@ export const AocStatisticsStore = signalStore(
   withMethods(store => {
     return {
       /******************************** setters (filter) ******************************************* */
-      setModelType(modelType: ModelType | undefined): void {
+      setModelType(modelType: string | undefined): void {
         patchState(store, { modelType, log: [], logTitle: '' });
       },
 
@@ -82,7 +82,7 @@ export const AocStatisticsStore = signalStore(
         const _activeMembers = await firstValueFrom(this.getActiveMembersOfDefaultOrg(_log));
 
         for (const _member of _activeMembers) {
-          updateAgeByGenderStats(_ageByGenderStats, _member.memberType as GenderType, _member.memberDateOfBirth);
+          updateAgeByGenderStats(_ageByGenderStats, _member.memberType, _member.memberDateOfBirth);
         }
         patchState(store, { log: logMessage(_log, `aoc-statistics.updateAgeByGender: saving updated statistics to ${SectionCollection}/${sectionKey}...`) });
 

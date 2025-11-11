@@ -3,10 +3,10 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches, yearMatches } from '@bk2/shared-categories';
+import { yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, ModelType, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
+import { ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
 
@@ -18,18 +18,18 @@ export type ReservationListState = {
   resourceId: string;
   searchTerm: string;
   selectedTag: string;
-  selectedType: number;
+  selectedType: string;
   selectedYear: number;
-  selectedState: number;
+  selectedState: string;
 };
 
 const initialState: ReservationListState = {
   resourceId: '',
   searchTerm: '',
   selectedTag: '',
-  selectedType: AllCategories,
+  selectedType: 'all',
   selectedYear: parseInt(getTodayStr(DateFormat.Year)),
-  selectedState: AllCategories
+  selectedState: 'all'
 };
 
 export const ReservationListStore = signalStore(
@@ -75,8 +75,8 @@ export const ReservationListStore = signalStore(
         return state.reservationsResource.value()?.filter((reservation: ReservationModel) =>
           nameMatches(reservation.index, state.searchTerm()) &&
           yearMatches(reservation.startDate, state.selectedYear() + '') &&
-          categoryMatches(reservation.resourceType, state.selectedType()) &&
-          categoryMatches(reservation.reservationState, state.selectedState()) &&
+          nameMatches(reservation.resourceType, state.selectedType()) &&
+          nameMatches(reservation.reservationState, state.selectedState()) &&
           chipMatches(reservation.tags, state.selectedTag()))
       }),
     }
@@ -98,7 +98,7 @@ export const ReservationListStore = signalStore(
         patchState(store, { selectedTag });
       },
 
-      setSelectedType(selectedType: number) {
+      setSelectedType(selectedType: string) {
         patchState(store, { selectedType });
       },
 
@@ -106,13 +106,13 @@ export const ReservationListStore = signalStore(
         patchState(store, { selectedYear });
       },
 
-      setSelectedState(selectedState: number) {
+      setSelectedState(selectedState: string) {
         patchState(store, { selectedState });
       },
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Reservation);
+        return store.appStore.getTags('reservation');
       },
 
       /******************************** actions ******************************************* */
@@ -120,7 +120,7 @@ export const ReservationListStore = signalStore(
         const _person = store.currentPerson();
         const _resource = store.defaultResource();
         if (_person && _resource) {
-          await store.reservationModalsService.add(_person, ModelType.Person, _resource);
+          await store.reservationModalsService.add(_person, 'person', _resource);
           store.reservationsResource.reload();
         }
       },

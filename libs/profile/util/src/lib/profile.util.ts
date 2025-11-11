@@ -5,24 +5,25 @@ import { die } from '@bk2/shared-util-core';
 import { PersonalDataFormModel } from './personal-data-form.model';
 import { PrivacyFormModel } from './privacy-form.model';
 import { SettingsFormModel } from './settings-form.model';
+import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME } from '@bk2/shared-constants';
 
 export function convertPersonToDataForm(person?: PersonModel): PersonalDataFormModel {
   if (!person) {
     return {
-      personKey: 'personKey', // readonly
-      firstName: 'firstName', // readonly
-      lastName: 'lastName', // readonly
-      gender: undefined, // readonly
-      dateOfBirth: '', // readonly
-      ssnId: '',
+      personKey: DEFAULT_KEY, 
+      firstName: DEFAULT_NAME,
+      lastName: DEFAULT_NAME,
+      gender: DEFAULT_GENDER,
+      dateOfBirth: DEFAULT_DATE,
+      ssnId: DEFAULT_ID,
     };
   }
   return {
-    personKey: person.bkey, // readonly
-    firstName: person.firstName, // readonly
-    lastName: person.lastName, // readonly
-    gender: person.gender, // readonly
-    dateOfBirth: person.dateOfBirth, // readonly
+    personKey: person.bkey,
+    firstName: person.firstName,
+    lastName: person.lastName,
+    gender: person.gender,
+    dateOfBirth: person.dateOfBirth,
     ssnId: formatAhv(person.ssnId, AhvFormat.Friendly),
   };
 }
@@ -75,7 +76,7 @@ export function convertSettingsFormToUser(vm: SettingsFormModel, user?: UserMode
   user.useTouchId = vm.useTouchId ?? false;
   user.useFaceId = vm.useFaceId ?? false;
   user.avatarUsage = vm.avatarUsage ?? AvatarUsage.PhotoFirst;
-  user.gravatarEmail = vm.gravatarEmail ?? '';
+  user.gravatarEmail = vm.gravatarEmail ?? DEFAULT_EMAIL;
   user.nameDisplay = vm.nameDisplay ?? NameDisplay.FirstLast;
   user.useDisplayName = vm.useDisplayName ?? false;
   user.personSortCriteria = vm.personSortCriteria ?? PersonSortCriteria.Lastname;

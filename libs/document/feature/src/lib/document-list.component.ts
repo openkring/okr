@@ -3,10 +3,9 @@ import { Component, computed, inject, input } from '@angular/core';
 import { Browser } from '@capacitor/browser';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, DocumentTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { DocumentModel, RoleName } from '@bk2/shared-models';
-import { CategoryAbbreviationPipe, FileExtensionPipe, FileLogoPipe, FileNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { FileExtensionPipe, FileLogoPipe, FileNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
@@ -21,7 +20,7 @@ import { DocumentListStore } from './document-list.store';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, FileNamePipe, FileLogoPipe, FileExtensionPipe,
     SpinnerComponent, ListFilterComponent,
-    CategoryAbbreviationPipe, EmptyListComponent, MenuComponent,
+    EmptyListComponent, MenuComponent,
     IonToolbar, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
     IonTitle, IonMenuButton, IonContent, IonItem, IonPopover
   ],
@@ -31,7 +30,7 @@ import { DocumentListStore } from './document-list.store';
     <!-- title and actions -->
   <ion-toolbar color="secondary">
     <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-    <ion-title>{{ selectedDocumentsCount()}}/{{documentsCount()}} {{ '@document.plural' | translate | async }}</ion-title>
+    <ion-title>{{ selectedDocumentsCount()}}/{{allDocumentsCount()}} {{ '@document.plural' | translate | async }}</ion-title>
     @if(hasRole('privileged') || hasRole('contentAdmin')) {
       <ion-buttons slot="end">
         <ion-button id="c-docs">
@@ -51,8 +50,7 @@ import { DocumentListStore } from './document-list.store';
   <!-- search and filters -->
   <bk-list-filter 
     [tags]="documentTags()"
-    [types]="docTypes"
-    [typeName]="typeName"
+    [type]="types()"
     (searchTermChanged)="onSearchtermChange($event)"
     (tagChanged)="onTagSelected($event)"
     (typeChanged)="onTypeSelected($event)"
@@ -79,12 +77,12 @@ import { DocumentListStore } from './document-list.store';
 <!-- list data -->
 <ion-content #content>
   @if(!isLoading()) {
-    @if (filteredDocuments.length === 0) {
+    @if (documents.length === 0) {
       <bk-empty-list message="@content.page.field.empty" />
     } @else {
       <ion-grid>
         <!-- don't use 'document' here as it leads to confusions with HTML document -->
-        @for(doc of filteredDocuments(); track doc.bkey) {
+        @for(doc of documents(); track doc.bkey) {
           <ion-row (click)="showActions(doc)">
             <ion-col size="12" size-sm="8">
               <ion-item lines="none">
@@ -94,7 +92,7 @@ import { DocumentListStore } from './document-list.store';
             </ion-col>
             <ion-col size="2" class="ion-hide-sm-down">
               <ion-item lines="none">
-                <ion-label>{{ doc.type ?? 0 | categoryAbbreviation:docTypes }}</ion-label>
+                <ion-label>{{ doc.type }}</ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="2" class="ion-hide-sm-down">
@@ -119,14 +117,14 @@ export class DocumentAllListComponent {
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  protected filteredDocuments = computed(() => this.documentListStore.filteredDocuments() ?? []);
-  protected documentsCount = computed(() => this.documentListStore.documentsCount());
-  protected selectedDocumentsCount = computed(() => this.filteredDocuments().length);
+  protected documents = computed(() => this.documentListStore.documents() ?? []);
+  protected allDocumentsCount = computed(() => this.documentListStore.allDocumentsCount());
+  protected selectedDocumentsCount = computed(() => this.documents().length);
   protected isLoading = computed(() => this.documentListStore.isLoading());
   protected documentTags = computed(() => this.documentListStore.getTags());
+  protected types = computed(() => this.documentListStore.docTypes());
+  protected sources = computed(() => this.documentListStore.docSources());
 
-  protected docTypes = addAllCategory(DocumentTypes);
-  protected typeName = 'documentType';
   private imgixBaseUrl = this.documentListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
@@ -157,6 +155,9 @@ export class DocumentAllListComponent {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, document: DocumentModel): void {
     if (hasRole('contentAdmin', this.documentListStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      // tbd: download the document
+      // tbd: replace it with a new version
+      // tbd: show version history
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
@@ -203,7 +204,7 @@ export class DocumentAllListComponent {
     this.documentListStore.setSearchTerm(searchTerm);
   }
 
-  public onTypeSelected(type: number): void {
+  public onTypeSelected(type: string): void {
     this.documentListStore.setSelectedType(type);
   }
 

@@ -1,16 +1,17 @@
+import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, SearchableModel } from './base.model';
 
 export class CommentModel implements BkModel, SearchableModel {
-  bkey = '';
-  index = '';
-  authorKey = '';
-  authorName = '';
-  creationDate = '';
-  parentKey = '';
+  bkey = DEFAULT_KEY;
+  index = DEFAULT_INDEX;
+  authorKey = DEFAULT_KEY;
+  authorName = DEFAULT_NAME;
+  creationDate = DEFAULT_DATE;
+  parentKey = DEFAULT_KEY;
   parentCollection = '';
-  description = '';
+  description = DEFAULT_NOTES;
   isArchived = false;
-  tenants: string[] = [];
+  tenants: string[] = DEFAULT_TENANTS;
 }
 
 export const CommentCollection = 'comments';

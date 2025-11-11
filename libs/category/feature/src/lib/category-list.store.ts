@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryListModel, ModelType } from '@bk2/shared-models';
+import { CategoryListModel } from '@bk2/shared-models';
 import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared-util-core';
 
 import { CategoryService } from '@bk2/category-data-access';
@@ -72,7 +72,7 @@ export const CategoryListStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Category);
+        return store.appStore.getTags('category');
       },
 
       /******************************** actions ******************************************* */

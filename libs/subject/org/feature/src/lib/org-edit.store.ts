@@ -6,7 +6,7 @@ import { Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, ModelType, OrgModel } from '@bk2/shared-models';
+import { AddressModel, OrgModel } from '@bk2/shared-models';
 import { AppNavigationService } from '@bk2/shared-util-angular';
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
@@ -92,7 +92,7 @@ export const OrgEditStore = signalStore(
 
       /******************************** getters ******************************************* */
       getOrgTags(): string {
-        return store.appStore.getTags(ModelType.Org);
+        return store.appStore.getTags('org');
       },
       
       /************************************ ACTIONS ************************************* */

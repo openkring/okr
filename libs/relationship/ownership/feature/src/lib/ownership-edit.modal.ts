@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/s
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, OwnershipCollection, OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
+import { OwnershipCollection, OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -38,7 +38,7 @@ import { convertFormToOwnership, convertOwnershipToForm, getOwnerName } from '@b
       }
       <!--
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
-          <bk-documents-accordion [modelType]="modelType.Ownership"[parentKey]="vm.bkey!" />
+          <bk-documents-accordion modelType="ownership" [parentKey]="vm.bkey!" />
         }
       -->
     </ion-content>
@@ -50,7 +50,7 @@ export class OwnershipEditModalComponent {
 
   public ownership = input.required<OwnershipModel>();
   public currentUser = input<UserModel | undefined>();
-  protected readonly ownershipTags = computed(() => this.appStore.getTags(ModelType.Ownership))
+  protected readonly ownershipTags = computed(() => this.appStore.getTags('ownership'))
 
   protected vm = linkedSignal(() => convertOwnershipToForm(this.ownership()));
   protected modalTitle = computed(() => this.getModalTitle());
@@ -58,7 +58,7 @@ export class OwnershipEditModalComponent {
   protected titleArguments = computed(() => ({
     relationship: 'ownership',
     objectName: this.name(),
-    objectIcon: this.ownership().ownerModelType === ModelType.Person ? 'person' : 'org',
+    objectIcon: this.ownership().ownerModelType === 'person' ? 'person' : 'org',
     objectUrl: this.objectUrl(),
     subjectName: this.ownership().resourceName,
     subjectIcon: 'resource',
@@ -85,20 +85,7 @@ export class OwnershipEditModalComponent {
     return hasRole(role, this.currentUser());
   }
 
-  private getUrl(modelType?: ModelType, bkey?: string): string {
-    if (modelType === undefined || bkey === undefined) return '';
-    switch (modelType) {
-      case ModelType.Person:
-        return `/person/${bkey}`;
-      case ModelType.Org:
-        return `/org/${bkey}`;
-      case ModelType.Resource:
-        return `/resource/${bkey}`;
-      case ModelType.Account:
-        return `/account/${bkey}`;
-      default:
-        return '';
-    }
+  private getUrl(modelType?: string, bkey?: string): string {
+    return (modelType === undefined || bkey === undefined)  ? '' : `/${modelType}/${bkey}`;
   }
-
 }

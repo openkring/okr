@@ -3,7 +3,7 @@ import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AddressCollection, AddressModel, GenderType, PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
+import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
 import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 @Injectable({
@@ -122,9 +122,8 @@ export class PersonService {
   public getSearchIndex(person: PersonModel): string {
     let _index = '';
     _index = addIndexElement(_index, 'n', person.lastName);
-    _index = addIndexElement(_index, 'c', person.fav_city);
+    _index = addIndexElement(_index, 'c', person.favCity);
     _index = addIndexElement(_index, 'fn', person.firstName);
-    _index = addIndexElement(_index, 'g', person.gender === Number(GenderType.Female) ? 'f' : 'm');
     _index = addIndexElement(_index, 'bx', person.bexioId);
     _index = addIndexElement(_index, 'dob', person.dateOfBirth);
     return _index;
@@ -135,6 +134,6 @@ export class PersonService {
    * This can be used in info boxes on the GUI.
    */
   public getSearchIndexInfo(): string {
-    return 'n:name c:city fn:firstName g:m|f dob:dateOfBirth bx:bexioId';
+    return 'n:name c:city fn:firstName dob:dateOfBirth bx:bexioId';
   }
 }

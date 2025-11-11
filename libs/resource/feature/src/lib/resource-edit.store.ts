@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Observable, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ModelType, ResourceModel } from '@bk2/shared-models';
+import { ResourceModel } from '@bk2/shared-models';
 import { AppNavigationService } from '@bk2/shared-util-angular';
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
@@ -66,7 +66,7 @@ export const ResourceEditStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Resource);
+        return store.appStore.getTags('resource');
       },
 
       /************************************ ACTIONS ************************************* */

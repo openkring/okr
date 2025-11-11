@@ -5,7 +5,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { ENV } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, SectionModel } from '@bk2/shared-models';
+import { SectionModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
 import { convertFormToSection, convertSectionToForm } from '@bk2/cms-section-util';
@@ -38,7 +38,7 @@ export class SectionEditModalComponent {
   public section = input.required<SectionModel>();
   protected vm = linkedSignal(() => convertSectionToForm(this.section()));
   protected title = computed(() => this.section().name);
-  protected readonly sectionTags = computed(() => this.appStore.getTags(ModelType.Section));
+  protected readonly sectionTags = computed(() => this.appStore.getTags('section'));
   protected formIsValid = signal(false);
 
   /**

@@ -7,10 +7,10 @@ import { flattenRoles, structureRoles } from '@bk2/user-util';
 
 import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllRoles, ModelType } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { AvatarDisplayComponent, ChipsComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
 import { AocRolesStore } from './aoc-roles.store';
+import { getCategoryItemNames } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-aoc-roles',
@@ -226,7 +226,7 @@ import { AocRolesStore } from './aoc-roles.store';
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoles" (changed)="onRoleChange($event)" />
+      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoleNames()" (changed)="onRoleChange($event)" />
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@aoc.roles.chat.title' | translate | async }}</ion-card-title>
@@ -278,6 +278,8 @@ export class AocRolesComponent {
   protected readonly logTitle = computed(() => this.aocRolesStore.logTitle());
   protected readonly logInfo = computed(() => this.aocRolesStore.log());
   protected readonly isLoading = computed(() => this.aocRolesStore.isLoading());
+  protected readonly allRoles = computed(() => this.aocRolesStore.appStore.getCategory('roles'));
+  protected readonly allRoleNames = computed(() => getCategoryItemNames(this.allRoles()));
 
   protected pwdLength = PASSWORD_MAX_LENGTH;
   protected emailLength = EMAIL_LENGTH;
@@ -285,8 +287,6 @@ export class AocRolesComponent {
   protected selectedPerson = computed(() => this.aocRolesStore.selectedPerson());
   protected selectedUser = computed(() => this.aocRolesStore.selectedUser());
   protected roles = computed(() => flattenRoles(this.selectedUser()?.roles ?? { 'registered': true }));
-
-  protected allRoles = AllRoles;
 
   protected avatar = computed(() => {
     const _person = this.aocRolesStore.selectedPerson();
@@ -296,7 +296,7 @@ export class AocRolesComponent {
         name1: _person.firstName,
         name2: _person.lastName,
         label: '',
-        modelType: ModelType.Person,
+        modelType: 'person',
       };
     }
     return undefined;

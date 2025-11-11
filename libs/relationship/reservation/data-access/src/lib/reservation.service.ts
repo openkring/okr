@@ -3,7 +3,7 @@ import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { ModelType, ReservationCollection, ReservationModel, UserModel } from '@bk2/shared-models';
+import { ReservationCollection, ReservationModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getReservationSearchIndex, getReservationSearchIndexInfo } from '@bk2/relationship-reservation-util';
@@ -84,9 +84,9 @@ export class ReservationService {
    * @param modelType the type of the reserver (Person or Org)
    * @returns an Observable array of the selected reservations
    */
-  public listReservationsOfReserver(reserverKey: string, modelType: ModelType): Observable<ReservationModel[]> {
+  public listReservationsOfReserver(reserverKey: string, modelType: 'person' | 'org'): Observable<ReservationModel[]> {
     if (!reserverKey || reserverKey.length === 0) return of([]);
-    if (!modelType || (modelType !== ModelType.Person && modelType !== ModelType.Org)) return of([]);
+    if (!modelType || (modelType !== 'person' && modelType !== 'org')) return of([]);
     return this.list().pipe(
       map((reservations: ReservationModel[]) => {
         return reservations.filter((reservation: ReservationModel) => {

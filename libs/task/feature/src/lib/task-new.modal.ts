@@ -29,7 +29,9 @@ import { TaskEditStore } from './task-edit.store';
     <ion-content>
       <bk-task-form [(vm)]="vm"
         [currentUser]="taskEditStore.currentUser()" 
-        [taskTags]="taskTags()"
+        [states]="states()"
+        [priorities]="priorities()"
+        [importances]="importances()"
         (validChange)="formIsValid.set($event)" />
     </ion-content>
   `
@@ -41,7 +43,9 @@ export class TaskNewModalComponent {
   public author = input.required<AvatarInfo>();
 
   public vm = linkedSignal(() => newTaskFormModel(this.author()));
-  protected taskTags = computed(() => this.taskEditStore.tags());
+  protected states = computed(() => this.taskEditStore.appStore.getCategory('task_state'));
+  protected priorities = computed(() => this.taskEditStore.appStore.getCategory('priority'));
+  protected importances = computed(() => this.taskEditStore.appStore.getCategory('importance'));
 
   // as we prepared everything with currentPerson and defaultResource, we already have a valid form, so we need to signal this here.
   protected formIsValid = signal(true);

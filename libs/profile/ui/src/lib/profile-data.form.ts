@@ -4,12 +4,12 @@ import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { PersonalDataFormModel, personalDataFormModelShape, personalDataFormValidations } from "@bk2/profile-util";
-import { GenderTypes } from "@bk2/shared-categories";
 import { ChSsnMask } from "@bk2/shared-config";
 import { TranslatePipe } from "@bk2/shared-i18n";
-import { GenderType, UserModel } from "@bk2/shared-models";
-import { CategoryComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared-ui";
+import { CategoryListModel, UserModel } from "@bk2/shared-models";
+import { CategorySelectComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared-ui";
 import { debugFormErrors } from "@bk2/shared-util-core";
+import { DEFAULT_GENDER } from "@bk2/shared-constants";
 
 @Component({
   selector: 'bk-profile-data-accordion',
@@ -17,7 +17,7 @@ import { debugFormErrors } from "@bk2/shared-util-core";
   imports: [ 
     TranslatePipe, AsyncPipe, 
     vestForms,
-    DateInputComponent, TextInputComponent, CategoryComponent, ErrorNoteComponent,
+    DateInputComponent, TextInputComponent, CategorySelectComponent, ErrorNoteComponent,
     IonGrid, IonRow, IonCol, IonItem, IonAccordion, IonLabel
   ],
   styles: [`
@@ -52,7 +52,7 @@ import { debugFormErrors } from "@bk2/shared-util-core";
               <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" autocomplete="bday" [showHelper]=true [readOnly]=true />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat name="gender" [value]="gender()" [categories]="genderTypes" [readOnly]=true />                                                  
+              <bk-cat-select [category]="genders()!" selectedItemName="gender()" [readOnly]=true />
             </ion-col>
             <ion-col size="12" size-md="6">
               <bk-text-input name="ssnId" [value]="ssnId()" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true (changed)="onChange('ssnId', $event)" />
@@ -68,11 +68,12 @@ import { debugFormErrors } from "@bk2/shared-util-core";
 export class ProfileDataAccordionComponent {
   public vm = model.required<PersonalDataFormModel>();
   public color = input('light'); // color of the accordion
-  public title = input('@profile.data.title'); // title of the accordion
-  public currentUser = input<UserModel | undefined>();
+  public readonly title = input('@profile.data.title'); // title of the accordion
+  public readonly currentUser = input<UserModel | undefined>();
+  public readonly genders = input.required<CategoryListModel>();
 
   protected dateOfBirth = computed(() => this.vm().dateOfBirth ?? '');
-  protected gender = computed(() => this.vm().gender ?? GenderType.Male);
+  protected gender = computed(() => this.vm().gender ?? DEFAULT_GENDER);
   protected ssnId = computed(() => this.vm().ssnId ?? '');
 
   public validChange = output<boolean>();
@@ -82,9 +83,6 @@ export class ProfileDataAccordionComponent {
 
   protected readonly suite = personalDataFormValidations;
   protected readonly shape = personalDataFormModelShape;
-
-  protected genderType = GenderType;
-  protected genderTypes = GenderTypes;
   protected ssnMask = ChSsnMask;
 
   protected onValueChange(value: PersonalDataFormModel): void {

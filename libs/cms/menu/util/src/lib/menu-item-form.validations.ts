@@ -1,6 +1,5 @@
-import { SHORT_NAME_LENGTH } from "@bk2/shared-constants";
-import { MenuAction, RoleEnum } from "@bk2/shared-models";
-import { categoryValidations, isArrayOfBaseProperties, isArrayOfStrings, stringValidations } from "@bk2/shared-util-core";
+import { SHORT_NAME_LENGTH, WORD_LENGTH } from "@bk2/shared-constants";
+import { isArrayOfBaseProperties, isArrayOfStrings, stringValidations } from "@bk2/shared-util-core";
 import { enforce, omitWhen, only, staticSuite, test } from "vest";
 
 import { MenuItemFormModel } from "./menu-item-form.model";
@@ -14,9 +13,9 @@ export const menuItemFormValidation = staticSuite((model: MenuItemFormModel, fie
   //urlValidations('url', model.url);
   stringValidations('label', model.label, SHORT_NAME_LENGTH);
   stringValidations('icon', model.icon, SHORT_NAME_LENGTH);
-  categoryValidations('action', model.action, MenuAction);
- // tenantValidations(model.tenants);
-  categoryValidations('roleNeeded', model.roleNeeded, RoleEnum);
+  stringValidations('action', model.action, WORD_LENGTH);
+  // tenantValidations(model.tenants);
+  stringValidations('roleNeeded', model.roleNeeded, WORD_LENGTH, 4, true);
 
   omitWhen(model.data === undefined, () => {
     test('data', '@menuDataProperty', () => {
@@ -24,7 +23,7 @@ export const menuItemFormValidation = staticSuite((model: MenuItemFormModel, fie
     });
   });
 
-  omitWhen(model.action !== MenuAction.SubMenu, () => {
+  omitWhen(model.action !== 'sub', () => {
     test('menuItems', '@menuSubMenuItemsMissing', () => {
       enforce(model.menuItems).isNotUndefined();
     });
@@ -40,17 +39,9 @@ export const menuItemFormValidation = staticSuite((model: MenuItemFormModel, fie
   });
 
   // if MenuAction.Navigate|Browse -> url must be defined
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  omitWhen(model.action! > MenuAction.Browse, () => {
+  omitWhen(model.action !== 'browse' && model.action !== 'navigate', () => {
     test('menuItems', '@menuItemsEmptySubMenu', () => {
       enforce(model.menuItems).isEmpty();
     });
   });  
-
-  // if MenuAction.Navigate|Browse -> roleNeeded must be defined
-  omitWhen(model.action === MenuAction.Browse, () => {
-    test('roleNeeded', '@menuRoleNeededMandatory', () => {
-      enforce(model.roleNeeded).isNotUndefined();
-    });
-  });
 });

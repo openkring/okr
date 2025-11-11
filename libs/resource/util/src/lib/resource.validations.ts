@@ -1,9 +1,9 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import 'vest/enforce/compounds';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { CarType, GenderType, ResourceModel, ResourceType, RowingBoatType, RowingBoatUsage } from '@bk2/shared-models';
-import { baseValidations, categoryValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { ResourceModel } from '@bk2/shared-models';
+import { baseValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
 export const resourceValidations = staticSuite((model: ResourceModel, field?: string) => {
   if (field) only(field);
@@ -14,7 +14,7 @@ export const resourceValidations = staticSuite((model: ResourceModel, field?: st
   stringValidations('index', model.name, SHORT_NAME_LENGTH);
   //tagValidations('tags', model.tags);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
-  categoryValidations('type', model.type, ResourceType);
+  stringValidations('type', model.type, WORD_LENGTH);
   numberValidations('currentValue', model.currentValue, true, 0, 100000);
   stringValidations('load', model.load, SHORT_NAME_LENGTH);
   numberValidations('weight', model.weight, true, 0, 10000);
@@ -33,20 +33,20 @@ export const resourceValidations = staticSuite((model: ResourceModel, field?: st
     });
   });
 
-  omitWhen(model.type !== ResourceType.RowingBoat, () => {
+  omitWhen(model.type !== 'rboat', () => {
     test('boatType', '@boatSubType', () => {
-      categoryValidations('subType', model.subType, RowingBoatType);
-      categoryValidations('usage', model.usage, RowingBoatUsage);
+      stringValidations('subType', model.subType, WORD_LENGTH, 3, true);
+      stringValidations('usage', model.usage, WORD_LENGTH);
     });
   });
-  omitWhen(model.type !== ResourceType.Locker, () => {
+  omitWhen(model.type !== 'locker', () => {
     test('gender', '@genderSubType', () => {
-      categoryValidations('subType', model.subType, GenderType);
+      stringValidations('subType', model.subType, WORD_LENGTH, 4, true); // gender 
     });
   });
-  omitWhen(model.type !== ResourceType.Car, () => {
+  omitWhen(model.type !== 'car', () => {
     test('carType', '@gcarSubType', () => {
-      categoryValidations('subType', model.subType, CarType);
+      stringValidations('subType', model.subType, WORD_LENGTH, 3, true);
     });
   });
 });

@@ -31,18 +31,18 @@ export const CalendarStore = signalStore(
         calendarName: store.calendarName()
       }),
       stream: ({params}) => {
-        const _calName = params.calendarName;
-        if (!_calName || _calName.length === 0) {
+        const calName = params.calendarName;
+        if (!calName || calName.length === 0) {
           return of([]);
         } else {
-          if (_calName === 'all') {
+          if (calName === 'all') {
             return store.calEventService.list();
           }
           return store.calEventService.list()
             .pipe(
               map((calEvents: CalEventModel[]) => 
                 calEvents.filter((calEvent: CalEventModel) => 
-                  calEvent.calendars.includes(_calName)))
+                  calEvent.calendars.includes(calName)))
             );
         }
       }
@@ -54,8 +54,8 @@ export const CalendarStore = signalStore(
       calEvents: computed(() => state.calEventsResource.value()),
       calEventsCount: computed(() => state.calEventsResource.value()?.length ?? 0),
       filteredEvents: computed(() => {
-        const _calEvents = state.calEventsResource.value() ?? [];
-        return _calEvents.map((calEvent: CalEventModel) => convertCalEventToFullCalendar(calEvent));
+        const calEvents = state.calEventsResource.value() ?? [];
+        return calEvents.map((calEvent: CalEventModel) => convertCalEventToFullCalendar(calEvent));
       }),
       isLoading: computed(() => state.calEventsResource.isLoading()),
       currentUser: computed(() => state.appStore.currentUser()),

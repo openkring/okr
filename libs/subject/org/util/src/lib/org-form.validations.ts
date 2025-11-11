@@ -1,8 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { OrgType } from '@bk2/shared-models';
-import { categoryValidations, dateValidations, isAfterDate, stringValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { dateValidations, isAfterDate, stringValidations } from '@bk2/shared-util-core';
 
 import { OrgFormModel } from './org-form.model';
 
@@ -11,7 +10,7 @@ export const orgFormValidations = staticSuite((model: OrgFormModel, field?: stri
 
   stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
   stringValidations('orgName', model.orgName, SHORT_NAME_LENGTH, 3, true);
-  categoryValidations('type', model.type, OrgType);
+  stringValidations('type', model.type, WORD_LENGTH);
   dateValidations('dateOfFoundation', model.dateOfFoundation);
   dateValidations('dateOfLiquidation', model.dateOfLiquidation);
   stringValidations('taxId', model.taxId, SHORT_NAME_LENGTH);

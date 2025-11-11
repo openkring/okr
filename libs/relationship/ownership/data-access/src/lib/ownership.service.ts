@@ -3,7 +3,7 @@ import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { ModelType, OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared-models';
+import { OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from '@bk2/relationship-ownership-util';
@@ -79,7 +79,7 @@ export class OwnershipService {
    * @param ownerKey the given subject to list its ownerships for.
    * @returns a list of the owner's ownerships as an Observable
    */
-  public listOwnershipsOfOwner(ownerKey: string, modelType: ModelType): Observable<OwnershipModel[]> {
+  public listOwnershipsOfOwner(ownerKey: string, modelType: 'person' | 'org'): Observable<OwnershipModel[]> {
     if (!ownerKey || ownerKey.length === 0) return of([]);
 
     return this.list().pipe(

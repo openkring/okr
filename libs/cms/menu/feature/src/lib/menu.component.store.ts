@@ -49,6 +49,7 @@ export const MenuStore = signalStore(
        * @param name the key of the menu
        */
       setMenuName(name: string) {
+        console.log('set menu name to ' + name);
         patchState(store, { name });
       },
 

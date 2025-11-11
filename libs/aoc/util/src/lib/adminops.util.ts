@@ -185,11 +185,11 @@ export function generatePassword(password?: string): string {
 export function createUserFromPerson(person: PersonModel, tenantId: string): UserModel {
   if (!person.bkey) die('AdminOpsUtil.createUserFromPerson: person must have a bkey.');
   const _user = new UserModel(tenantId);
-  _user.loginEmail = person.fav_email;
+  _user.loginEmail = person.favEmail;
   _user.personKey = person.bkey;
   _user.firstName = person.firstName;
   _user.lastName = person.lastName;
-  _user.gravatarEmail = person.fav_email;
+  _user.gravatarEmail = person.favEmail;
   _user.roles = { registered: true };
   return _user;
 }
@@ -213,8 +213,8 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
 /* export const fixFunction = async (sig: OpSignature): Promise<void> => {
   if (!sig.dataService) return Promise.resolve()
   const _membership = sig.model;
-  if (isMembership(_membership) && _membership.modelType === ModelType.Relationship 
-    && _membership.category === RelationshipType.Membership && _membership.bkey) {
+  if (isMembership(_membership) && _membership.modelType === 'relationship' 
+    && _membership.category === 'membership' && _membership.bkey) {
       const _bexioId = _membership.properties.bexioId;
     // if the membership has a bexioId
     if (_bexioId) {
@@ -285,7 +285,7 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
 
 /* 
 export const checkJuniorEntryFunction = async (sig: OpSignature): Promise<void> => {
-  if (isMembership(sig.model) && sig.model.subjectType === ModelType.Person && sig.model.priority === 1 && sig.model.subType != ScsMemberType.Junioren) {
+  if (isMembership(sig.model) && sig.model.subjectType === 'person' && sig.model.priority === 1 && sig.model.subType != ScsMemberType.Junioren) {
     const _refYear = parseInt(sig.model.validFrom.substring(0, 4));
     const _dateOfBirth = sig.model.properties.dateOfBirth;
     if (!_dateOfBirth) {
@@ -332,7 +332,7 @@ export const checkJuniorEntryFunction = async (sig: OpSignature): Promise<void> 
 export const updateMembershipAttributes = async (sig: OpSignature): Promise<void> => {
   const _dataService = sig.dataService;
   if (!_dataService) return Promise.resolve()
-  if (isSubject(sig.model) && sig.model.modelType === ModelType.Person && sig.model.bkey) {
+  if (isSubject(sig.model) && sig.model.modelType === 'person' && sig.model.bkey) {
 
     // 1) get all relationships of the subject
     _dataService.listModelsBySingleQuery(CollectionNames.Membership, 'subjectKey', sig.model.bkey, '==', 'validFrom', 'asc').pipe(take(1))

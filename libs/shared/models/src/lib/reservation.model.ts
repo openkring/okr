@@ -1,13 +1,5 @@
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_RBOAT_TYPE, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME } from '@bk2/shared-constants';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
-import { AccountType } from './enums/account-type.enum';
-import { DocumentType } from './enums/document-type.enum';
-import { GenderType } from './enums/gender-type.enum';
-import { ModelType } from './enums/model-type.enum';
-import { OrgType } from './enums/org-type.enum';
-import { Periodicity } from './enums/periodicity.enum';
-import { ReservationReason } from './enums/reservation-reason.enum';
-import { ReservationState } from './enums/reservation-state.enum';
-import { ResourceType } from './enums/resource-type.enum';
 
 /**
  * A reservation of a resource or a rowing boat.
@@ -26,42 +18,42 @@ import { ResourceType } from './enums/resource-type.enum';
  */
 export class ReservationModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
   // base
-  public bkey = '';
-  public tenants: string[] = [];
+  public bkey = DEFAULT_KEY;
+  public tenants = DEFAULT_TENANTS;
   public isArchived = false;
-  public index = '';
-  public tags = '';
-  public name = '';
-  public notes = '';
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS;
+  public name = DEFAULT_NAME;
+  public notes = DEFAULT_NOTES;
 
   // the person or org making the reservation
-  public reserverKey = '';
-  public reserverName = ''; // e.g. firstname of subject
-  public reserverName2 = ''; // name of subject, e.g. lastname
-  public reserverModelType: ModelType = ModelType.Person; // Person or Org
-  public reserverType?: GenderType | OrgType; // gender for Person or orgType for Org
+  public reserverKey = DEFAULT_KEY;
+  public reserverName = DEFAULT_NAME; // e.g. firstname of subject
+  public reserverName2 = DEFAULT_NAME; // name of subject, e.g. lastname
+  public reserverModelType: 'person' | 'org' = 'person';
+  public reserverType = DEFAULT_GENDER; // gender for Person or orgType for Org
 
   // the resource that the reservation is for
-  public resourceKey = '';
-  public resourceName = ''; // name of object, e.g. lastname
-  public resourceModelType: ModelType = ModelType.Resource; // Resource or Account
-  public resourceType: ResourceType | AccountType = ResourceType.RowingBoat; // e.g. Locker, Boat, Room, Document
-  public resourceSubType?: GenderType | DocumentType; // e.g. gender for Lockers or License, DocumentType for Documents or contracts
+  public resourceKey = DEFAULT_KEY;
+  public resourceName = DEFAULT_NAME; // name of object, e.g. lastname
+  public resourceModelType: 'resource' | 'account' = 'resource';
+  public resourceType = DEFAULT_RESOURCE_TYPE; // resource or account e.g. Locker, Boat, Room, Document
+  public resourceSubType = DEFAULT_RBOAT_TYPE; // e.g. gender for Lockers or License, type for Documents or contracts
 
-  public startDate = '';
-  public startTime = '';
-  public endDate = '';
-  public endTime = '';
+  public startDate = DEFAULT_DATE;
+  public startTime = DEFAULT_TIME;
+  public endDate = DEFAULT_DATE;
+  public endTime = DEFAULT_TIME;
   public numberOfParticipants = '';
   public area = '';
   public reservationRef = ''; // e.g. the reservation number or contact person
-  public reservationState?: ReservationState;
-  public reservationReason?: ReservationReason;
-  public priority?: number; // e.g. relevant for waiting list (state applied)
+  public reservationState = DEFAULT_RES_STATE;
+  public reservationReason = DEFAULT_RES_REASON;
+  public order = DEFAULT_ORDER; // e.g. relevant for waiting list (state applied)
 
-  public price = 0;
-  public currency = 'CHF';
-  public periodicity = Periodicity.Once;
+  public price = DEFAULT_PRICE;
+  public currency = DEFAULT_CURRENCY;
+  public periodicity = DEFAULT_PERIODICITY;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

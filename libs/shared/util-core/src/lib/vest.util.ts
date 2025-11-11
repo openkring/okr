@@ -1,5 +1,5 @@
 import { LONG_NAME_LENGTH, STORE_DATE_LENGTH, STORE_DATETIME_LENGTH, TIME_LENGTH, URL_LENGTH } from '@bk2/shared-constants';
-import { AllRoles, Roles } from '@bk2/shared-models';
+import { Roles } from '@bk2/shared-models';
 import { enforce, omitWhen, test } from 'vest';
 import { checkDate, DateFormat } from './date.util';
 import { isArrayOfStrings } from './type.util';
@@ -218,23 +218,6 @@ export function tagValidations(givenTags: string, fieldName: string, tags: unkno
   _tagsArray.forEach((tag) => {
     test(fieldName, '@validation.tagValid', () => {
       enforce(tag).inside(_givenTags);
-    });
-  });
-}
-
-export function roleValidations(fieldName: string, roles: unknown) {
-  // type should be Roles
-  test(fieldName, '@validation.rolesType', () => {
-    enforce(typeof roles === 'object').isTruthy();
-  });
-  const _roleKeys = Object.keys(roles as Roles);
-  test(fieldName, '@validation.minRoles', () => {
-    enforce(_roleKeys.length).greaterThan(0);
-  });
-  const _givenRoles = AllRoles.split(',');
-  _roleKeys.forEach((_key) => {
-    test(fieldName, '@validation.keyValues', () => {
-      enforce(_key).inside(_givenRoles);
     });
   });
 }

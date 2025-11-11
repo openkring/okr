@@ -5,7 +5,7 @@ import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalo
 
 import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupCollection, ModelType, RoleName } from '@bk2/shared-models';
+import { GroupCollection, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -61,13 +61,12 @@ export class GroupEditPageComponent {
   protected currentUser = computed(() => this.groupEditStore.currentUser());
   protected group = computed(() => this.groupEditStore.group());
   public vm = linkedSignal(() => convertGroupToForm(this.group()));
-  protected path = computed(() => getDocumentStoragePath(this.groupEditStore.tenantId(), ModelType.Group, this.group()?.bkey));
-  protected avatarKey = computed(() => `${ModelType.Group}.${this.groupKey()}`);
+  protected path = computed(() => getDocumentStoragePath(this.groupEditStore.tenantId(), 'group', this.group()?.bkey));
+  protected avatarKey = computed(() => `group.${this.groupKey()}`);
   protected title = computed(() => this.group()?.name ?? '');
   protected groupTags = computed(() => this.groupEditStore.getTags());
 
   protected formIsValid = signal(false);
-  protected modelType = ModelType;
   protected groupCollection = GroupCollection;
 
   constructor() {
@@ -88,7 +87,7 @@ export class GroupEditPageComponent {
     const group = this.group();
     if (!group) return;
     const file = await readAsFile(photo, this.platform);
-    const avatar = newAvatarModel([this.env.tenantId], ModelType.Group, group.bkey, file.name);
+    const avatar = newAvatarModel([this.env.tenantId], 'group', group.bkey, file.name);
     const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, '@document.operation.upload.avatar.title')
 
     if (downloadUrl) {

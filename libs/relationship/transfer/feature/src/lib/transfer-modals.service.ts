@@ -2,7 +2,7 @@ import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
 import { AppStore } from "@bk2/shared-feature";
-import { ModelType, OrgModel, PersonModel, ResourceModel, TransferModel } from "@bk2/shared-models";
+import { OrgModel, PersonModel, ResourceModel, TransferModel } from "@bk2/shared-models";
 
 import { TransferService } from "@bk2/relationship-transfer-data-access";
 import { isTransfer } from "@bk2/relationship-transfer-util";
@@ -29,7 +29,7 @@ export class TransferModalsService {
    * @param modelType the type of the object (Person or Org)
    * @param resource the resource object that is transferred
    */
-   public async add(subject: PersonModel | OrgModel, subjectModelType: ModelType, object: PersonModel | OrgModel, objectModelType: ModelType, resource: ResourceModel): Promise<void> {
+   public async add(subject: PersonModel | OrgModel, subjectModelType: 'person' | 'org', object: PersonModel | OrgModel, objectModelType: 'person' | 'org', resource: ResourceModel): Promise<void> {
     const _modal = await this.modalController.create({
       component: TransferNewModalComponent,
       cssClass: 'small-modal',

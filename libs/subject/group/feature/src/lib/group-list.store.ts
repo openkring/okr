@@ -6,7 +6,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { GroupCollection, GroupModel, ModelType } from '@bk2/shared-models';
+import { GroupCollection, GroupModel } from '@bk2/shared-models';
 import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 
@@ -87,7 +87,7 @@ export const GroupListStore = signalStore(
       patchState(store, { selectedTag });
     },
     getTags(): string {
-      return store.appStore.getTags(ModelType.Group);
+      return store.appStore.getTags('group');
     },
     async export(type: string): Promise<void> {
       console.log(`GroupListStore.export(${type}) is not yet implemented.`);
@@ -108,7 +108,7 @@ export const GroupListStore = signalStore(
       const { data, role } = await _modal.onDidDismiss();
       if (role === 'confirm') {
         const vm = data as GroupNewFormModel;
-        const key = ModelType.Group + '.' + await this.saveGroup(vm);
+        const key = 'group.' + await this.saveGroup(vm);
         // tbd: save avatar image if provided
         console.log(`GroupListStore.add: new group created with key ${key}`);
       }

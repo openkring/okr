@@ -2,9 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, OrgTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, ModelType, OrgModel, RoleName } from '@bk2/shared-models';
+import { OrgModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -54,12 +53,9 @@ import { OrgListStore } from './org-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="orgTags()"
-      [types]="orgTypes"
-      typeName="orgType"
-      (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
-      (typeChanged)="onTypeChange($event)"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+      [type]="types()" (typeChanged)="onTypeSelected($event)"
+      (searchTermChanged)="onSearchtermChange($event)"      
     />
 
     <!-- list header -->
@@ -92,20 +88,20 @@ import { OrgListStore } from './org-list.store';
           @for(org of filteredOrgs(); track $index) {
             <ion-item (click)="showActions(org)">
               <ion-avatar slot="start">
-                <ion-img src="{{ modelType.Org + '.' + org.bkey | avatar | async }}" alt="Avatar Logo" />
+                <ion-img src="{{ 'org.' + org.bkey | avatar | async }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{org.name}}</ion-label>      
               <ion-label class="ion-hide-sm-down">
-                @if(org.fav_phone) {
-                  <a href="tel:{{org.fav_phone}}" style="text-decoration:none;">
-                    <span>{{org.fav_phone }}</span>
+                @if(org.favPhone) {
+                  <a href="tel:{{org.favPhone}}" style="text-decoration:none;">
+                    <span>{{org.favPhone }}</span>
                   </a>
                 }
               </ion-label>
               <ion-label class="ion-hide-sm-down">
-                @if(org?.fav_email) {
-                  <a href="mailto:{{org.fav_email}}" style="text-decoration:none;">
-                    <span>{{org.fav_email }}</span>
+                @if(org?.favEmail) {
+                  <a href="mailto:{{org.favEmail}}" style="text-decoration:none;">
+                    <span>{{org.favEmail }}</span>
                   </a>
                 }
               </ion-label>
@@ -137,11 +133,9 @@ export class OrgListComponent {
   protected orgsCount = computed(() => this.orgListStore.orgsCount());
   protected selectedOrgsCount = computed(() => this.filteredOrgs().length);
   protected isLoading = computed(() => this.orgListStore.isLoading());
-  protected orgTags = computed(() => this.orgListStore.getOrgTags());
+  protected tags = computed(() => this.orgListStore.getOrgTags());
+  protected types = computed(() => this.orgListStore.appStore.getCategory('org_type'));
 
-  protected selectedCategory = AllCategories;
-  protected orgTypes = addAllCategory(OrgTypes);
-  protected modelType = ModelType;
   private imgixBaseUrl = this.orgListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
@@ -153,7 +147,7 @@ export class OrgListComponent {
     this.orgListStore.setSelectedTag($event);
   }
 
-  protected onTypeChange(orgType: number): void {
+  protected onTypeSelected(orgType: string): void {
     this.orgListStore.setSelectedType(orgType);
   }
 

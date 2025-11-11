@@ -2,10 +2,9 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, ReservationStates, ResourceTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, ReservationModel, RoleName } from '@bk2/shared-models';
-import { CategoryNamePipe, DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { ReservationModel, RoleName } from '@bk2/shared-models';
+import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
@@ -20,7 +19,7 @@ import { ReservationListStore } from './reservation-list.store';
   selector: 'bk-reservation-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe, CategoryNamePipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe,
     ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover
@@ -50,17 +49,12 @@ import { ReservationListStore } from './reservation-list.store';
 
     <!-- search and filters -->
       <bk-list-filter 
-        [tags]="reservationTags()"
-        [types]="resourceTypes"
-        typeName="resourceType"
-        [years]="years"
-        [states]="allReservationStates"
-        stateName="reservationState"
+        [tags]="tags()" (tagChanged)="onTagSelected($event)"
+        [type]="reasons()" (typeChanged)="onTypeSelected($event)"
+        [years]="years" (yearChanged)="onYearSelected($event)"
+        [state]="states()" (stateChanged)="onStateSelected($event)"
         (searchTermChanged)="onSearchtermChange($event)"
-        (tagChanged)="onTagSelected($event)"
-        (typeChanged)="onTypeSelected($event)"
-        (stateChanged)="onStateSelected($event)"
-        (yearChanged)="onYearSelected($event)" />
+         />
 
     <!-- list header -->
     <ion-toolbar color="primary">
@@ -82,12 +76,12 @@ import { ReservationListStore } from './reservation-list.store';
         @for(reservation of filteredReservations(); track $index) {
           <ion-item (click)="showActions(reservation)">
             <ion-avatar slot="start">
-              <ion-img src="{{ modelType.Person + '.' + reservation.reserverKey | avatar | async }}" alt="Avatar Logo" />
+              <ion-img src="{{ 'person.' + reservation.reserverKey | avatar | async }}" alt="Avatar Logo" />
             </ion-avatar>
             <ion-label>{{getReserverName(reservation)}}</ion-label>
             <ion-label>{{reservation.resourceName}}</ion-label>
             <ion-label>{{reservation.startDate | duration:reservation.endDate}}</ion-label>      
-            <ion-label class="ion-hide-md-down">{{reservation.reservationState|categoryName:reservationStates}}</ion-label>
+            <ion-label class="ion-hide-md-down">{{reservation.reservationState}}</ion-label>
           </ion-item>
         }
       </ion-list>
@@ -107,13 +101,11 @@ export class ReservationListComponent {
   protected reservationsCount = computed(() => this.reservationListStore.allReservations()?.length ?? 0);
   protected selectedReservationsCount = computed(() => this.filteredReservations()?.length ?? 0);
   protected isLoading = computed(() => this.reservationListStore.isLoading());
-  protected reservationTags = computed(() => this.reservationListStore.getTags());
+  protected tags = computed(() => this.reservationListStore.getTags());
+  protected reasons = computed(() => this.reservationListStore.appStore.getCategory('reservation_reason'));
+  protected states = computed(() => this.reservationListStore.appStore.getCategory('reservation_state'));
   protected popupId = computed(() => 'c_reservation_' + this.listId());
 
-  protected reservationStates = ReservationStates;
-  protected allReservationStates = addAllCategory(ReservationStates);
-  protected resourceTypes = addAllCategory(ResourceTypes);
-  protected modelType = ModelType;
   protected years = getYearList();
   private imgixBaseUrl = this.reservationListStore.appStore.env.services.imgixBaseUrl;
 
@@ -192,11 +184,11 @@ export class ReservationListComponent {
     this.reservationListStore.setSelectedYear(year);
   }
 
-  protected onTypeSelected(type: number): void {
+  protected onTypeSelected(type: string): void {
     this.reservationListStore.setSelectedType(type);
   }
 
-  protected onStateSelected(state: number): void {
+  protected onStateSelected(state: string): void {
     this.reservationListStore.setSelectedState(state);
   }
 

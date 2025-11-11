@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ContentState, PageModel, PageType } from '@bk2/shared-models';
+import { PageModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 import { isPage, convertPageToForm, convertFormToPage } from './page.util';
 import { PageFormModel } from './page-form.model';
@@ -30,8 +30,8 @@ describe('Page Utils', () => {
     page.name = 'Home Page';
     page.tags = 'home,main';
     page.title = 'Welcome to the Home Page';
-    page.type = PageType.Content;
-    page.state = ContentState.Published;
+    page.type = 'content';
+    page.state = 'published';
     page.notes = 'Some notes';
     page.sections = ['section-1', 'section-2'];
   });
@@ -53,8 +53,8 @@ describe('Page Utils', () => {
       expect(formModel.bkey).toBe('page-1');
       expect(formModel.name).toBe('Home Page');
       expect(formModel.title).toBe('Welcome to the Home Page');
-      expect(formModel.type).toBe(PageType.Content);
-      expect(formModel.state).toBe(ContentState.Published);
+      expect(formModel.type).toBe('content');
+      expect(formModel.state).toBe('published');
       expect(formModel.sections).toEqual(['section-1', 'section-2']);
     });
 
@@ -63,8 +63,8 @@ describe('Page Utils', () => {
       minimalPage.bkey = 'min-page';
       minimalPage.name = 'Minimal';
       const formModel = convertPageToForm(minimalPage);
-      expect(formModel.type).toBe(PageType.Content);
-      expect(formModel.state).toBe(ContentState.Draft);
+      expect(formModel.type).toBe('content');
+      expect(formModel.state).toBe('draft');
     });
   });
 
@@ -78,8 +78,8 @@ describe('Page Utils', () => {
         tags: 'updated,tags',
         tenants: [tenantId],
         title: 'Updated Title',
-        type: PageType.Blog,
-        state: ContentState.Archived,
+        type: 'blog',
+        state: 'archived',
         notes: 'Updated notes',
         sections: ['section-3'],
       };
@@ -89,8 +89,8 @@ describe('Page Utils', () => {
       const updatedPage = convertFormToPage(page, formModel, tenantId);
       expect(updatedPage.name).toBe('Updated Page');
       expect(updatedPage.title).toBe('Updated Title');
-      expect(updatedPage.type).toBe(PageType.Blog);
-      expect(updatedPage.state).toBe(ContentState.Archived);
+      expect(updatedPage.type).toBe('blog');
+      expect(updatedPage.state).toBe('archived');
       expect(updatedPage.bkey).toBe('page-1'); // Should not be changed
     });
 
@@ -113,8 +113,8 @@ describe('Page Utils', () => {
       const newPage = convertFormToPage(undefined, partialForm, tenantId);
       expect(newPage.name).toBe('Partial Page');
       expect(newPage.title).toBe('');
-      expect(newPage.type).toBe(PageType.Content);
-      expect(newPage.state).toBe(ContentState.Draft);
+      expect(newPage.type).toBe('content');
+      expect(newPage.state).toBe('draft');
       expect(newPage.sections).toEqual([]);
     });
   });

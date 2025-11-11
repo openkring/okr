@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AvatarInfo, ColorIonic, ModelType, NameDisplay, SectionModel } from '@bk2/shared-models';
+import { AvatarInfo, ColorIonic, NameDisplay, SectionModel } from '@bk2/shared-models';
 import { AvatarLabelComponent } from '@bk2/shared-ui';
 import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getFullPersonName } from '@bk2/shared-util-core';
@@ -64,12 +64,10 @@ export class PersonsWidgetComponent {
   protected color = computed(() => this.section()?.color ?? ColorIonic.Light);
   protected altText = computed(() => this.avatar().altText ?? 'avatar');
 
-  protected MT = ModelType;
-
   protected getPersonLabel(person: AvatarInfo): string {
     if (!this.showName()) return '';
-    const _name = getFullPersonName(person.name1 ?? '', person.name2 ?? '', '', this.nameDisplay());
-    return (this.showLabel() && person.label && person.label.length > 0) ? `${_name} (${person.label})` : _name;
+    const name = getFullPersonName(person.name1 ?? '', person.name2 ?? '', '', this.nameDisplay());
+    return (this.showLabel() && person.label && person.label.length > 0) ? `${name} (${person.label})` : name;
   }
 
   // tbd: add a group and show all persons of this group

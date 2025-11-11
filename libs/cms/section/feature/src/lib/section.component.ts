@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { RoleName, SectionType } from '@bk2/shared-models';
+import { RoleName } from '@bk2/shared-models';
 import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
 import { AlbumSectionComponent } from './album-section.component';
@@ -42,49 +42,49 @@ import { VideoSectionComponent } from './video-section.component';
     @if (section(); as section) {
       @if (hasRole(roleNeeded())) {
         @switch (section.type) {
-          @case(ST.Album) { 
+          @case('album') { 
             <bk-album-section [section]="section" />
           }
-          @case(ST.Article) {
+          @case('article') {
             <bk-article-section [section]="section" [readOnly]="readOnly()" />
           }
-          @case(ST.Button) {  
+          @case('button') {  
             <bk-button-section [section]="section" [readOnly]="readOnly()" />
           }
-          @case(ST.Calendar) {
+          @case('calendar') {
             <bk-calendar-section [section]="section" />
           }
-          @case(ST.Chart) {
+          @case('chart') {
             <bk-chart-section [section]="section" />
           }
-          @case(ST.Chat) {
+          @case('chat') {
             <bk-chat-section [section]="section" />
           }
-          @case(ST.Gallery) {
+          @case('gallery') {
             <bk-gallery-section [section]="section" />
           }
-          @case(ST.Hero) {
+          @case('hero') {
             <bk-hero-section [section]="section" />
           }
-          @case(ST.Iframe) { 
+          @case('iframe') { 
             <bk-iframe-section [section]="section" />
           }
-          @case(ST.Map) {
+          @case('map') {
             <bk-map-section [section]="section" />
           }
-          @case(ST.PeopleList) {
+          @case('peopleList') {
             <bk-people-list-section [section]="section" [readOnly]="readOnly()" />
           }
-          @case(ST.Slider) {
+          @case('slider') {
             <bk-swiper-section [section]="section" />
           }
-          @case(ST.Table) {
+          @case('table') {
             <bk-table-section [section]="section" />
           }
-          @case(ST.Tracker) {
+          @case('tracker') {
             <bk-tracker-section [section]="section" />
           }
-          @case(ST.Video) {
+          @case('video') {
             <bk-video-section [section]="section" />
           }
           @default {
@@ -98,13 +98,13 @@ import { VideoSectionComponent } from './video-section.component';
       </ion-item>
     }
 <!--         
-          @case(ST.List) {      
+          @case('list') {      
             <bk-list-section [section]="section" />           
           }
-          @case(ST.Model) {
+          @case('model') {
             <bk-model-section [section]="section" />
           }
-          @case(ST.Accordion) {
+          @case('accordion') {
             <bk-accordion-section [section]="section" [readOnly]="readOnly()" />      
           }
 
@@ -128,13 +128,11 @@ export class SectionComponent {
   protected readonly section = computed(() => this.sectionStore.section());
   protected readonly roleNeeded = computed(() => this.section()?.roleNeeded as RoleName);
 
-  public ST = SectionType;
-
   constructor() {
     effect(() => {
-      const _id = replaceSubstring(this.id(), '@TID@', this.sectionStore.appStore.env.tenantId);
-      debugMessage(`SectionComponent: sectionId=${this.id()} -> ${_id}`, this.sectionStore.currentUser());
-      this.sectionStore.setSectionId(_id);
+      const id = replaceSubstring(this.id(), '@TID@', this.sectionStore.appStore.env.tenantId);
+      debugMessage(`SectionComponent: sectionId=${this.id()} -> ${id}`, this.sectionStore.currentUser());
+      this.sectionStore.setSectionId(id);
     });
   }
 

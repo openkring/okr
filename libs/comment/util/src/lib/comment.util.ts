@@ -10,18 +10,18 @@ import { DateFormat, getTodayStr } from "@bk2/shared-util-core";
    * @returns the created CommentModel
    */
 export function createComment(authorKey: string, authorName: string, commentStr: string, parentCollection: string, parentKey: string, tenant: string): CommentModel {
-  const _comment = new CommentModel();
-  _comment.bkey = '';
-  _comment.authorKey = authorKey;
-  _comment.authorName = authorName;
-  _comment.creationDate = getTodayStr(DateFormat.StoreDate);
-  _comment.parentKey = parentKey;
-  _comment.parentCollection = parentCollection;
-  _comment.description = commentStr;
-  _comment.isArchived = false;
-  _comment.tenants = [tenant];
-  _comment.index = getCommentIndex(_comment);
-  return _comment;
+  const comment = new CommentModel();
+  comment.bkey = '';
+  comment.authorKey = authorKey;
+  comment.authorName = authorName;
+  comment.creationDate = getTodayStr(DateFormat.StoreDate);
+  comment.parentKey = parentKey;
+  comment.parentCollection = parentCollection;
+  comment.description = commentStr;
+  comment.isArchived = false;
+  comment.tenants = [tenant];
+  comment.index = getCommentIndex(comment);
+  return comment;
 }
 
 export function getCommentIndex(comment: CommentModel): string {

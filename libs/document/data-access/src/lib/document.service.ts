@@ -2,14 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { FullMetadata, getDownloadURL, getMetadata, listAll, ref } from "firebase/storage";
 import { Observable, of } from 'rxjs';
 
-import { DocumentTypes, getCategoryAbbreviation } from '@bk2/shared-categories';
 import { ENV, STORAGE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { DocumentCollection, DocumentModel, DocumentType, ModelType, UserModel } from '@bk2/shared-models';
+import { DocumentCollection, DocumentModel, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
 import { DateFormat, addIndexElement, convertDateFormatToString, die, dirName, fileExtension, fileName, fileSizeUnit, findByKey, generateRandomString, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
 import { getDocumentStoragePath } from '@bk2/document-util';
+import { DEFAULT_DOCUMENT_SOURCE, DEFAULT_DOCUMENT_TYPE, DEFAULT_KEY, DEFAULT_NOTES } from '@bk2/shared-constants';
 
 @Injectable({
   providedIn: 'root'
@@ -69,33 +69,33 @@ export class DocumentService {
     return this.firestoreService.searchData<DocumentModel>(DocumentCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
   }
 
-  public listDocumentsByStorageDirectory(modelType: ModelType, key: string): Observable<DocumentModel[]> {
-    const _dir = getDocumentStoragePath(this.tenantId, modelType, key);
-    return _dir ? this.listDocumentsByDirectory(_dir) : of<DocumentModel[]>([]);
+  public listDocumentsByStorageDirectory(modelType: string, key: string): Observable<DocumentModel[]> {
+    const dir = getDocumentStoragePath(this.tenantId, modelType, key);
+    return dir ? this.listDocumentsByDirectory(dir) : of<DocumentModel[]>([]);
   }
 
   public listDocumentsByDirectory(dir: string, orderBy = 'name', sortOrder = 'asc'): Observable<DocumentModel[]> {
-    const _dbQuery = getSystemQuery(this.tenantId);
-    _dbQuery.push({ key: 'dir', operator: '==', value: dir });
-    return this.firestoreService.searchData<DocumentModel>(DocumentCollection, _dbQuery, orderBy, sortOrder);
+    const dbQuery = getSystemQuery(this.tenantId);
+    dbQuery.push({ key: 'dir', operator: '==', value: dir });
+    return this.firestoreService.searchData<DocumentModel>(DocumentCollection, dbQuery, orderBy, sortOrder);
   }
 
-  public async listDocumentsFromStorageDirectory(modelType: ModelType, key: string): Promise<DocumentModel[]> {
-    const _docs: DocumentModel[] = [];
-    const _path = getDocumentStoragePath(this.tenantId, modelType, key);
-    const _ref = ref(this.storage, _path);
+  public async listDocumentsFromStorageDirectory(modelType: string, key: string): Promise<DocumentModel[]> {
+    const docs: DocumentModel[] = [];
+    const path = getDocumentStoragePath(this.tenantId, modelType, key);
+    const _ref = ref(this.storage, path);
     try {
-      const _items = await listAll(_ref);
-      await Promise.all(_items.items.map(async (_item) => {
-        const _metadata = await getMetadata(_item);
-        const _doc = await this.convertStorageMetadataToDocumentModel(_metadata);
-        _docs.push(_doc);
+      const items = await listAll(_ref);
+      await Promise.all(items.items.map(async (_item) => {
+        const metadata = await getMetadata(_item);
+        const doc = await this.convertStorageMetadataToDocumentModel(metadata);
+        docs.push(doc);
       }));
     }
-    catch(_ex) {
-      error(undefined, 'DocumentService.listDocumentsFromStorageDirectory: ERROR: ' + JSON.stringify(_ex));
+    catch(ex) {
+      error(undefined, 'DocumentService.listDocumentsFromStorageDirectory: ERROR: ' + JSON.stringify(ex));
     }
-    return _docs;
+    return docs;
   }
   
   /*-------------------------- CONVERSION --------------------------------*/
@@ -106,50 +106,53 @@ export class DocumentService {
    * @returns the DocumentModel
    */
   public async getDocumentFromFile(file: File, fullPath: string): Promise<DocumentModel> {
-    const _doc = new DocumentModel(this.tenantId);
-    _doc.fullPath = fullPath;
-    _doc.description = '';
-    _doc.type = DocumentType.InternalFile;
+    const doc = new DocumentModel(this.tenantId);
+    doc.fullPath = fullPath;
+    doc.description = DEFAULT_NOTES;
+    doc.type = DEFAULT_DOCUMENT_TYPE;
+    doc.source = DEFAULT_DOCUMENT_SOURCE;
 
-    _doc.url = await getDownloadURL(ref(this.storage, fullPath));
-    _doc.dateOfDocCreation = getTodayStr();
-    _doc.dateOfDocLastUpdate = getTodayStr();
-    _doc.mimeType = file.type;
-    _doc.size = file.size;
-    _doc.priorVersionKey = '';
-    _doc.version = '1.0.0';
-    _doc.isArchived = false;
-    return _doc;
+    doc.url = await getDownloadURL(ref(this.storage, fullPath));
+    doc.dateOfDocCreation = getTodayStr();
+    doc.dateOfDocLastUpdate = getTodayStr();
+    doc.mimeType = file.type;
+    doc.size = file.size;
+    doc.priorVersionKey = DEFAULT_KEY;
+    doc.version = '1.0.0';
+    doc.isArchived = false;
+    return doc;
   }
 
   private async convertStorageMetadataToDocumentModel(metadata: FullMetadata): Promise<DocumentModel> {
-    const _doc = new DocumentModel(this.tenantId);
-    _doc.bkey = generateRandomString(10);
-    _doc.fullPath = metadata.fullPath;
-    _doc.description = '';
-    _doc.type = DocumentType.InternalFile;
-    _doc.url = await getDownloadURL(ref(this.storage, metadata.fullPath));
-    //_doc.url = getImgixUrl(metadata.fullPath, undefined);
-    _doc.dateOfDocCreation = convertDateFormatToString(metadata.timeCreated.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
-    _doc.dateOfDocLastUpdate = convertDateFormatToString(metadata.updated.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
-    _doc.mimeType = metadata.contentType ?? '';
-    _doc.size = metadata.size;
-    _doc.priorVersionKey = '';
-    _doc.version = '1.0.0';
-    _doc.isArchived = false;
-    _doc.md5hash = metadata.md5Hash ?? '';
-    return _doc;
+    const doc = new DocumentModel(this.tenantId);
+    doc.bkey = generateRandomString(10);
+    doc.fullPath = metadata.fullPath;
+    doc.description = DEFAULT_NOTES;
+    doc.type = DEFAULT_DOCUMENT_TYPE;
+    doc.source = DEFAULT_DOCUMENT_SOURCE;
+    doc.url = await getDownloadURL(ref(this.storage, metadata.fullPath));
+    // doc.url = getImgixUrl(metadata.fullPath, undefined);
+    doc.dateOfDocCreation = convertDateFormatToString(metadata.timeCreated.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
+    doc.dateOfDocLastUpdate = convertDateFormatToString(metadata.updated.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
+    doc.mimeType = metadata.contentType ?? '';
+    doc.size = metadata.size;
+    doc.priorVersionKey = DEFAULT_KEY;
+    doc.version = '1.0.0';
+    doc.isArchived = false;
+    doc.md5hash = metadata.md5Hash ?? '';
+    return doc;
   }
   
   /*-------------------------- SEARCH INDEX --------------------------------*/
   public getSearchIndex(document: DocumentModel): string {
     if (document.type === undefined) die('DocumentService.getSearchIndex: ERROR: document.type is mandatory.');
-    let _index = '';
-    _index = addIndexElement(_index, 'n', fileName(document.fullPath));
-    _index = addIndexElement(_index, 'c', getCategoryAbbreviation(DocumentTypes, document.type));
-    _index = addIndexElement(_index, 'e', fileExtension(document.fullPath));
-    _index = addIndexElement(_index, 'd', dirName(document.fullPath));
-    return _index;
+    let index = '';
+    index = addIndexElement(index, 'n', fileName(document.fullPath));
+    index = addIndexElement(index, 't', document.type);
+    index = addIndexElement(index, 's', document.source);
+    index = addIndexElement(index, 'e', fileExtension(document.fullPath));
+    index = addIndexElement(index, 'd', dirName(document.fullPath));
+    return index;
     }
 
   /**
@@ -157,7 +160,7 @@ export class DocumentService {
    * This can be used in info boxes on the GUI.
    */
   public getSearchIndexInfo(): string {
-    return 'n:name c:documentTypeAbbreviation e:extension, d:directory';
+    return 'n:name t:type s:source e:extension, d:directory';
   }
 
   /*-------------------------- STORAGE --------------------------------*/
@@ -188,12 +191,12 @@ export class DocumentService {
   public async getSize(path: string): Promise<number | undefined>{
     const _ref = ref(this.storage, path);
     try {
-      const _metadata = await getMetadata(_ref);
-      console.log('DocumentService.getSize: metadata: ' + JSON.stringify(_metadata));
-      return _metadata.size;
+      const metadata = await getMetadata(_ref);
+      console.log('DocumentService.getSize: metadata: ' + JSON.stringify(metadata));
+      return metadata.size;
     }
-    catch(_ex) {
-      error(undefined, 'DocumentService.getSize: ERROR: ' + JSON.stringify(_ex));
+    catch(ex) {
+      error(undefined, 'DocumentService.getSize: ERROR: ' + JSON.stringify(ex));
     }
     return undefined;
   }
@@ -206,24 +209,24 @@ export class DocumentService {
    */
   public async calculateStorageConsumption(path: string, isRecursive = false): Promise<void> {
     const _ref = ref(this.storage, path);
-    let _totalSize = 0;
+    let totalSize = 0;
     console.log('Calculating storage consumption for ' + path);
     try {
-      const _result = await listAll(_ref);
-      for (const _item of _result.items) {
-        const _size = (await getMetadata(_item)).size;
-        console.log('    ' + _item.fullPath + ': ' + _size);
-        _totalSize += _size;
+      const result = await listAll(_ref);
+      for (const item of result.items) {
+        const size = (await getMetadata(item)).size;
+        console.log('    ' + item.fullPath + ': ' + size);
+        totalSize += size;
       }
-      console.log(path + ': ' + _result.items.length + ' files with ' + fileSizeUnit(_totalSize));
+      console.log(path + ': ' + result.items.length + ' files with ' + fileSizeUnit(totalSize));
       if (isRecursive === true) {
-        for (const _prefix of _result.prefixes) {
-          await this.calculateStorageConsumption(_prefix.fullPath, true);
+        for (const prefix of result.prefixes) {
+          await this.calculateStorageConsumption(prefix.fullPath, true);
         }
       }
     }
-    catch(_ex) {
-      error(undefined, 'DocumentService.calculateStorageConsumption: ERROR: ' + JSON.stringify(_ex));
+    catch(ex) {
+      error(undefined, 'DocumentService.calculateStorageConsumption: ERROR: ' + JSON.stringify(ex));
     }
   }
 
@@ -235,14 +238,14 @@ export class DocumentService {
     const _ref = ref(this.storage, path);
     console.log(_ref.fullPath + ': ');
     try {
-      const _metadata = await getMetadata(_ref);
-      console.log('    contentType: ' + _metadata.contentType);
-      console.log('    size: ' + fileSizeUnit(_metadata.size));
-      console.log('    created: ' + _metadata.timeCreated);
-      console.log('    hash: ' + _metadata.md5Hash);
+      const metadata = await getMetadata(_ref);
+      console.log('    contentType: ' + metadata.contentType);
+      console.log('    size: ' + fileSizeUnit(metadata.size));
+      console.log('    created: ' + metadata.timeCreated);
+      console.log('    hash: ' + metadata.md5Hash);
     }
-    catch(_ex) {
-      console.log('    no metadata; probably it is a folder.', _ex);
+    catch(ex) {
+      console.log('    no metadata; probably it is a folder.', ex);
     }
   }
 }

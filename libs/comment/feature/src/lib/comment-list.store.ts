@@ -32,9 +32,9 @@ export const CommentListStore = signalStore(
       }),  
       stream: ({params}) => {
         if (!params.collectionName || params.collectionName.length === 0 || !params.parentKey || params.parentKey.length === 0) return of([]);
-        const _comments$ = store.commentService.list(params.collectionName, params.parentKey);
-        debugListLoaded('CommentListStore.comment$', _comments$, store.appStore.currentUser());   
-        return _comments$;
+        const comments$ = store.commentService.list(params.collectionName, params.parentKey);
+        debugListLoaded('CommentListStore.comment$', comments$, store.appStore.currentUser());   
+        return comments$;
       }
     }),
   })),

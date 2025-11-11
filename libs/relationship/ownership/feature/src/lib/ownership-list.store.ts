@@ -3,27 +3,28 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { categoryMatches, ownerTypeMatches } from '@bk2/shared-categories';
+import { ownerTypeMatches } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
-import { AllCategories, GenderType, ModelType, OrgType, OwnershipModel, OwnershipType, OwnerTypeSelect, ResourceType, RowingBoatType } from '@bk2/shared-models';
+import { OwnershipModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { confirm } from '@bk2/shared-util-angular';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
 
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
 import { OwnershipModalsService } from './ownership-modals.service';
+import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
 
 export type OwnershipListState = {
   ownerKey: string;
   searchTerm: string;
   selectedTag: string;
-  selectedOwnershipType: OwnershipType | typeof AllCategories;
-  selectedResourceType: ResourceType | typeof AllCategories;
+  selectedOwnershipType: string;
+  selectedResourceType: string;
   selectedYear: number;
-  selectedModelType: ModelType | typeof AllCategories;
-  selectedGender: GenderType | typeof AllCategories;
-  selectedOrgType: OrgType | typeof AllCategories;
-  selectedRowingBoatType: RowingBoatType | typeof AllCategories;
+  selectedModelType: 'person' | 'org' | 'all';
+  selectedGender: string;
+  selectedOrgType: string;
+  selectedRowingBoatType: string;
   yearField: 'validFrom' | 'validTo';
 };
 
@@ -31,13 +32,13 @@ const initialState: OwnershipListState = {
   ownerKey: '',
   searchTerm: '',
   selectedTag: '',
-  selectedOwnershipType: AllCategories,
-  selectedResourceType: AllCategories,
+  selectedOwnershipType: 'all',
+  selectedResourceType: 'all',
   selectedYear: parseInt(getTodayStr(DateFormat.Year)),
-  selectedModelType: AllCategories,
-  selectedGender: AllCategories,
-  selectedOrgType: AllCategories,
-  selectedRowingBoatType: AllCategories,
+  selectedModelType: 'all',
+  selectedGender: 'all',
+  selectedOrgType: 'all',
+  selectedRowingBoatType: 'all',
   yearField: 'validFrom',
 };
 
@@ -76,24 +77,24 @@ export const OwnershipListStore = signalStore(
         ownership.ownerKey === state.ownerKey()) ?? []),
 
       lockers: computed(() => state.ownershipsResource.value()?.filter((ownership: OwnershipModel) =>
-        ownership.resourceModelType === ModelType.Resource &&
-        ownership.resourceType === ResourceType.Locker &&
+        ownership.resourceModelType === 'resource' &&
+        ownership.resourceType === 'locker' &&
         isAfterDate(ownership.validTo, getTodayStr(DateFormat.StoreDate))) ?? []),
 
       keys: computed(() => state.ownershipsResource.value()?.filter((ownership: OwnershipModel) =>
-        ownership.resourceModelType === ModelType.Resource &&
-        ownership.resourceType === ResourceType.Key &&
+        ownership.resourceModelType === 'resource' &&
+        ownership.resourceType === 'key' &&
         isAfterDate(ownership.validTo, getTodayStr(DateFormat.StoreDate))) ?? []),
 
       privateBoats: computed(() => state.ownershipsResource.value()?.filter((ownership: OwnershipModel) =>
-        ownership.resourceModelType === ModelType.Resource &&
-        ownership.resourceType === ResourceType.RowingBoat &&
-        ownership.ownerModelType === ModelType.Person &&
+        ownership.resourceModelType === 'resource' &&
+        ownership.resourceType === 'rboat' &&
+        ownership.ownerModelType === 'person' &&
         isAfterDate(ownership.validTo, getTodayStr(DateFormat.StoreDate))) ?? []),
   
       scsBoats: computed(() => state.ownershipsResource.value()?.filter((ownership: OwnershipModel) =>
-        ownership.resourceModelType === ModelType.Resource &&
-        ownership.resourceType === ResourceType.RowingBoat &&
+        ownership.resourceModelType === 'resource' &&
+        ownership.resourceType === 'rboat' &&
         ownership.ownerKey === 'scs' &&
         isAfterDate(ownership.validTo, getTodayStr(DateFormat.StoreDate))) ?? [])
     };
@@ -108,7 +109,7 @@ export const OwnershipListStore = signalStore(
         state.allOwnerships().filter((ownership: OwnershipModel) => 
           nameMatches(ownership.index, state.searchTerm()) &&
           chipMatches(ownership.tags, state.selectedTag()) &&
-          categoryMatches(ownership.resourceType ?? 0, state.selectedResourceType()) &&
+          nameMatches(ownership.resourceType ?? DEFAULT_RESOURCE_TYPE, state.selectedResourceType()) &&
           ownerTypeMatches(ownership, state.selectedModelType(), state.selectedGender(), state.selectedOrgType()))
       ),
       // ownerships of a given owner
@@ -117,7 +118,7 @@ export const OwnershipListStore = signalStore(
         state.ownerships().filter((ownership: OwnershipModel) => 
           nameMatches(ownership.index, state.searchTerm()) &&
           chipMatches(ownership.tags, state.selectedTag()) &&
-          categoryMatches(ownership.resourceType ?? 0, state.selectedResourceType()) &&
+          nameMatches(ownership.resourceType ?? DEFAULT_RESOURCE_TYPE, state.selectedResourceType()) &&
           ownerTypeMatches(ownership, state.selectedModelType(), state.selectedGender(), state.selectedOrgType()))
       ),
 
@@ -127,7 +128,7 @@ export const OwnershipListStore = signalStore(
         state.lockers().filter((ownership: OwnershipModel) => 
           nameMatches(ownership.index, state.searchTerm()) &&
           chipMatches(ownership.tags, state.selectedTag()) &&
-          categoryMatches(ownership.resourceType ?? 0, state.selectedResourceType()) &&
+          nameMatches(ownership.resourceType ?? DEFAULT_RESOURCE_TYPE, state.selectedResourceType()) &&
           ownerTypeMatches(ownership, state.selectedModelType(), state.selectedGender(), state.selectedOrgType()))
       ),
 
@@ -137,7 +138,7 @@ export const OwnershipListStore = signalStore(
         state.keys()?.filter((ownership: OwnershipModel) => 
           nameMatches(ownership.index, state.searchTerm()) &&
           chipMatches(ownership.tags, state.selectedTag()) &&
-          categoryMatches(ownership.resourceType ?? 0, state.selectedResourceType()) &&
+          nameMatches(ownership.resourceType ?? DEFAULT_RESOURCE_TYPE, state.selectedResourceType()) &&
           ownerTypeMatches(ownership, state.selectedModelType(), state.selectedGender(), state.selectedOrgType()))
       ),
 
@@ -147,7 +148,7 @@ export const OwnershipListStore = signalStore(
         state.privateBoats()?.filter((ownership: OwnershipModel) => 
           nameMatches(ownership.index, state.searchTerm()) &&
           chipMatches(ownership.tags, state.selectedTag()) &&
-          categoryMatches(ownership.resourceType ?? 0, state.selectedResourceType()) &&
+          nameMatches(ownership.resourceType ?? DEFAULT_RESOURCE_TYPE, state.selectedResourceType()) &&
           ownerTypeMatches(ownership, state.selectedModelType(), state.selectedGender(), state.selectedOrgType()))
       ),
       
@@ -157,7 +158,7 @@ export const OwnershipListStore = signalStore(
         state.scsBoats()?.filter((ownership: OwnershipModel) => 
         nameMatches(ownership.index, state.searchTerm()) &&
         chipMatches(ownership.tags, state.selectedTag()) &&
-        categoryMatches(ownership.resourceSubType ?? 0, state.selectedRowingBoatType())
+        nameMatches(ownership.resourceSubType ?? DEFAULT_RBOAT_TYPE, state.selectedRowingBoatType())
       )),
     }
   }),
@@ -182,11 +183,11 @@ export const OwnershipListStore = signalStore(
         patchState(store, { searchTerm });
       },
 
-      setSelectedOwnershipType(selectedOwnershipType: OwnershipType | typeof AllCategories) {
+      setSelectedOwnershipType(selectedOwnershipType: string) {
         patchState(store, { selectedOwnershipType });
       },
 
-      setSelectedResourceType(selectedResourceType: ResourceType | typeof AllCategories) {
+      setSelectedResourceType(selectedResourceType: string) {
         patchState(store, { selectedResourceType });
       },
 
@@ -194,15 +195,15 @@ export const OwnershipListStore = signalStore(
         patchState(store, { selectedYear });
       },
 
-      setSelectedGender(selectedGender: GenderType | typeof AllCategories) {
-        patchState(store, { selectedGender, selectedModelType: ModelType.Person });
+      setSelectedGender(selectedGender: string) {
+        patchState(store, { selectedGender, selectedModelType: 'person' });
       },
 
-      setSelectedOrgType(selectedOrgType: OrgType | typeof AllCategories) {
-        patchState(store, { selectedOrgType, selectedModelType: ModelType.Org });
+      setSelectedOrgType(selectedOrgType: string) {
+        patchState(store, { selectedOrgType, selectedModelType: 'org' });
       },
 
-      setSelectedRowingBoatType(selectedRowingBoatType: RowingBoatType | typeof AllCategories) {
+      setSelectedRowingBoatType(selectedRowingBoatType: string) {
         patchState(store, { selectedRowingBoatType });
       },
 
@@ -210,37 +211,37 @@ export const OwnershipListStore = signalStore(
         patchState(store, { selectedTag });
       },
 
-      setSelectedOwnerType(ownerType: OwnerTypeSelect | typeof AllCategories) {
+      setSelectedOwnerType(ownerType: string) {
         switch(ownerType) {
-          case OwnerTypeSelect.Persons: 
+          case 'persons': 
             patchState(store, { 
-              selectedModelType: ModelType.Person,
-              selectedGender: AllCategories,
+              selectedModelType: 'person',
+              selectedGender: 'all',
             }); 
             break;
-          case OwnerTypeSelect.Men:     
+          case 'men':     
             patchState(store, { 
-              selectedModelType: ModelType.Person,
-              selectedGender: GenderType.Male,
+              selectedModelType: 'person',
+              selectedGender: 'male',
             }); 
             break;
-          case OwnerTypeSelect.Women:   
+          case 'women':   
             patchState(store, { 
-              selectedModelType: ModelType.Person,
-              selectedGender: GenderType.Female,
+              selectedModelType: 'person',
+              selectedGender: 'female',
             }); 
             break;
-          case OwnerTypeSelect.Org:     
+          case 'orgs':     
             patchState(store, {
-              selectedModelType: ModelType.Org,
-              selectedOrgType: AllCategories,
+              selectedModelType: 'org',
+              selectedOrgType: 'all',
             }); 
             break;
-          case AllCategories:
+          case 'all':
             patchState(store, {
-              selectedModelType: AllCategories,
-              selectedGender: AllCategories,
-              selectedOrgType: AllCategories,
+              selectedModelType: 'all',
+              selectedGender: 'all',
+              selectedOrgType: 'all',
             });
             break;
           default:
@@ -250,7 +251,7 @@ export const OwnershipListStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Ownership);
+        return store.appStore.getTags('ownership');
       },
 
       /******************************* actions *************************************** */
@@ -258,7 +259,7 @@ export const OwnershipListStore = signalStore(
         const _currentPerson = store.appStore.currentPerson();
         const _defaultResource = store.appStore.defaultResource();
         if (!_currentPerson || !_defaultResource) return;
-        await store.ownershipModalsService.add(_currentPerson, ModelType.Person, _defaultResource);
+        await store.ownershipModalsService.add(_currentPerson, 'person', _defaultResource);
         store.ownershipsResource.reload();
       },
 

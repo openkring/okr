@@ -75,11 +75,11 @@ export class SingleImageComponent {
 
   // call modal with input form to select an image and add metadata
   protected async addImage() {
-    const _sectionKey = this.vm().bkey;
-    if (_sectionKey) {
-      const _image = await this.documentModalsService.pickAndUploadImage(_sectionKey);
-      if (_image) {
-        this.saveAndNotify(_image);    
+    const sectionKey = this.vm().bkey;
+    if (sectionKey) {
+      const image = await this.documentModalsService.pickAndUploadImage(sectionKey);
+      if (image) {
+        this.saveAndNotify(image);    
       }
     }
   }
@@ -110,10 +110,10 @@ export class SingleImageComponent {
   }
 
   private saveAndNotify(image: Image) {
-    const _properties = this.vm().properties;
+    const properties = this.vm().properties;
     console.log(image);
-    if (_properties) {
-      _properties.image = image;
+    if (properties) {
+      properties.image = image;
     }
     this.changedProperties.emit({
       image

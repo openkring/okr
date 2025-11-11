@@ -1,9 +1,9 @@
 
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { MenuAction, MenuItemModel } from '@bk2/shared-models';
-import { booleanValidations, categoryValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { MenuItemModel } from '@bk2/shared-models';
+import { booleanValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
 
 export const menuItemValidation = staticSuite((model: MenuItemModel, field?: string) => {
   if (field) only(field);
@@ -20,13 +20,8 @@ export const menuItemValidation = staticSuite((model: MenuItemModel, field?: str
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
   stringValidations('label', model.label, SHORT_NAME_LENGTH);
   stringValidations('icon', model.icon, SHORT_NAME_LENGTH);
-  categoryValidations('category', model.action, MenuAction);
-
-  omitWhen(model.roleNeeded === undefined, () => {
-    test('roleNeeded', '@menuRoleNeededMandatory', () => {
-      enforce(typeof(model.roleNeeded)).equals('RoleName');
-    });
-  });
+  stringValidations('category', model.action, WORD_LENGTH);
+  stringValidations('roleNeeded', model.roleNeeded, WORD_LENGTH, 4, true);
 
   omitWhen(model.data === undefined, () => {
     test('data', '@menuDataProperty', () => {
@@ -34,7 +29,7 @@ export const menuItemValidation = staticSuite((model: MenuItemModel, field?: str
     });
   });
 
-  omitWhen(model.action !== MenuAction.SubMenu, () => {
+  omitWhen(model.action !== 'sub', () => {
     test('menuItems', '@menuSubMenuItemsMissing', () => {
       enforce(model.menuItems).isNotUndefined();
     });
@@ -47,18 +42,10 @@ export const menuItemValidation = staticSuite((model: MenuItemModel, field?: str
   });
 
   // if MenuAction.Navigate|Browse -> url must be defined
-  omitWhen(model.action > MenuAction.Browse, () => {
+  omitWhen(model.action !== 'browse' && model.action !== 'navigate', () => {
     test('menuItems', '@menuItemsEmptySubMenu', () => {
       enforce(model.menuItems).isEmpty();
     });
   });  
-
-
-  // if MenuAction.Navigate|Browse|SubMenu -> roleNeeded must be defined
-  omitWhen(model.action > MenuAction.SubMenu, () => {
-    test('roleNeeded', '@menuRoleNeededMandatory', () => {
-      enforce(model.roleNeeded).isNotUndefined();
-    });
-  });
 });
 

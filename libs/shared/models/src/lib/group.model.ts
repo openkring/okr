@@ -1,5 +1,5 @@
+import { DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
-import { ModelType } from './enums/model-type.enum';
 
 /**
  * A group is a collection of persons (members), typically part of an organization.
@@ -7,12 +7,12 @@ import { ModelType } from './enums/model-type.enum';
  * Groups can be administered by GroupAdmins. They can open additonal groups and add/remove members.
  */
 export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = ''; // unique
-  public name = '';
-  public id = ''; // unique
+  public bkey = DEFAULT_KEY; // unique
+  public name = DEFAULT_NAME;
+  public id = DEFAULT_ID; // unique
 
-  public notes = '';
-  public tags = '';
+  public notes = DEFAULT_NOTES;
+  public tags = DEFAULT_TAGS;
 
   public hasContent = true; // page id = id
   public hasChat = true; // chat id = id
@@ -23,13 +23,13 @@ export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedM
   public hasMembers = true;
 
   // hierarchy
-  public parentKey = '';
-  public parentName = '';
-  public parentModelType = ModelType.Org; // org or group
+  public parentKey = DEFAULT_KEY;
+  public parentName = DEFAULT_NAME;
+  public parentModelType: 'org' | 'group' = 'org';
 
-  public tenants: string[] = [];
+  public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
-  public index = '';
+  public index = DEFAULT_INDEX;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

@@ -61,8 +61,8 @@ export const TrackerSectionStore = signalStore(
       },
 
       async start(): Promise<void> {
-        const _watchId = store.watchId();
-        if (_watchId) {
+        const watchId = store.watchId();
+        if (watchId) {
           console.log('TrackerSectionStore.start: already watching position (state === paused ?)');
           console.log('started');  
         } else {
@@ -73,18 +73,18 @@ export const TrackerSectionStore = signalStore(
       },
 
       pause(): void {
-        const _watchId = store.watchId();
-        if (_watchId) {
+        const watchId = store.watchId();
+        if (watchId) {
           patchState(store, { state: 'paused' });
           console.log('paused');
         }
       },
 
       stop(): void {
-        const _watchId = store.watchId();
-        if (_watchId) {
+        const watchId = store.watchId();
+        if (watchId) {
           console.log('stopped');
-          Geolocation.clearWatch({ id: _watchId });
+          Geolocation.clearWatch({ id: watchId });
           patchState(store, { watchId: undefined, state: 'stopped' });
         }
       },
@@ -95,9 +95,9 @@ export const TrackerSectionStore = signalStore(
       },
 
       async watchPosition(): Promise<void> {
-       /*  const _permissionStatus = (await Geolocation.requestPermissions()).location;
-        if (_permissionStatus !== 'granted') {
-          throw new Error('Geolocation is not supported by this browser: ' + _permissionStatus);
+       /*  const permissionStatus = (await Geolocation.requestPermissions()).location;
+        if (permissionStatus !== 'granted') {
+          throw new Error('Geolocation is not supported by this browser: ' + permissionStatus);
         } */
        console.log('TrackerSectionStore.watchPosition: start watching position', store.enableHighAccuracy(), store.maximumAge(), store.timeout());
         const watchId = await Geolocation.watchPosition({
@@ -112,9 +112,9 @@ export const TrackerSectionStore = signalStore(
               if (store.state() === 'paused') return;
               patchState(store, { currentPosition: position });
               // we currently save the positions in memory
-              const _positions = store.positions();
-              _positions.push(position);
-              patchState(store, { positions: _positions });
+              const positions = store.positions();
+              positions.push(position);
+              patchState(store, { positions: positions });
               // tbd: write the position to the database (per user)
                 // only keep the data for one day (with the exception of admin)
                 // make the data downloadable and show it on a map
@@ -130,8 +130,8 @@ export const TrackerSectionStore = signalStore(
       async export(): Promise<void> {
         switch(store.exportFormat()) {
           case 'kmz': {
-            const _kml = convertToKml(store.positions());
-            await downloadZipFile(_kml, 'positions.kmz');
+            const kml = convertToKml(store.positions());
+            await downloadZipFile(kml, 'positions.kmz');
             break;
           }
           case 'csv': {

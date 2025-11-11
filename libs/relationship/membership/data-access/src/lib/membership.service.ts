@@ -5,7 +5,7 @@ import { combineLatest, firstValueFrom, map, Observable, of } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { CategoryListModel, MembershipCollection, MembershipModel, ModelType, PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, MembershipCollection, MembershipModel, PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
 import { copyToClipboardWithConfirmation, error } from '@bk2/shared-util-angular';
 import { addDuration, findByKey, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
@@ -122,10 +122,10 @@ export class MembershipService {
     _newMembership.membershipState = getCategoryAttribute(membershipCategory, _newMembership.membershipCategory, 'state') as string;
     _newMembership.dateOfEntry = membershipChange.dateOfChange ?? getTodayStr();
     _newMembership.dateOfExit = END_FUTURE_DATE_STR;
-    _newMembership.priority = (oldMembership.priority ?? 0) + 1;
+    _newMembership.order = (oldMembership.order ?? 0) + 1;
     _newMembership.relIsLast = true;
     const _cat = getCategoryAttribute(membershipCategory, _newMembership.membershipCategory, 'abbreviation') + '';
-    _newMembership.relLog = getRelLogEntry(_newMembership.priority, oldMembership.relLog, _newMembership.dateOfEntry, _cat);
+    _newMembership.relLog = getRelLogEntry(_newMembership.order, oldMembership.relLog, _newMembership.dateOfEntry, _cat);
     _newMembership.price = getCategoryAttribute(membershipCategory, _newMembership.membershipCategory, 'price') as number;
     return _newMembership;
   }
@@ -140,9 +140,9 @@ export class MembershipService {
    * @param memberKey the given subject to list its memberships for.
    * @returns a list of the subject's memberships as an Observable
    */
-  public listMembershipsOfMember(memberKey: string, modelType: ModelType): Observable<MembershipModel[]> {
+  public listMembershipsOfMember(memberKey: string, modelType: string): Observable<MembershipModel[]> {
     if (!memberKey || memberKey.length === 0) return of([]);
-    if (!modelType || (modelType !== ModelType.Person && modelType !== ModelType.Org)) return of([]);
+    if (!modelType || (modelType !== 'person' && modelType !== 'org')) return of([]);
     return this.list().pipe(
       map((memberships: MembershipModel[]) => {
         return memberships.filter((membership: MembershipModel) => membership.memberKey === memberKey && membership.memberModelType === modelType);
@@ -169,9 +169,9 @@ export class MembershipService {
     // join the two streams to retrieve the email addresses of the selected memberships
     const _emails$ = combineLatest([memberships$, _persons$]).pipe(
       map(([_memberships, _persons]) => _memberships.map(_membership => {
-        if (_membership.memberModelType !== ModelType.Person) return '';
+        if (_membership.memberModelType !== 'person') return '';
         const _person = _persons.find(a => a.bkey === _membership.memberKey);
-        return _person?.fav_email ?? '';
+        return _person?.favEmail ?? '';
       }))
     );
     return _emails$.pipe(map(_emails => _emails.filter(_email => _email !== '')));

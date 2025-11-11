@@ -67,11 +67,9 @@ import { AlbumStore } from './album-section.store';
                     <ion-icon src="{{ 'arrow-up-circle' | svgIcon}}" (click)="goUp()" slot="start" />
                     <ion-title>{{ title() }}</ion-title>
                   </ion-item>
-                } @else {
-                  <ion-title>Album</ion-title>
                 }
             </ion-col>
-            <ion-col size="4">
+            <ion-col size="6" size-md="4">
                 <bk-cat name="albumStyle" [value]="selectedAlbumStyle()" [categories]="albumStyles" (changed)="onCategoryChange($event)" />
             </ion-col>
           </ion-row>
@@ -234,8 +232,8 @@ export class AlbumSectionComponent {
 
   constructor() {
     effect(() => {
-      const _config = this.section()?.properties.album;
-      this.albumStore.setConfig(_config); // set the album config from the section properties
+      const config = this.section()?.properties.album;
+      this.albumStore.setConfig(config); // set the album config from the section properties
       // this also updates the current directory and the albumStyle in the store
     });
   }
@@ -281,11 +279,11 @@ export class AlbumSectionComponent {
    */
   private getValue(key: 'width' | 'height', defaultValue: number): number {
     if (isPlatformBrowser(this.platformId)) {
-      const _el = this.imageContainer();
-      if (_el) {
-        const _value = (_el.nativeElement[key] ?? defaultValue) as number;
-        debugMessage(`AlbumSectionComponent.getValue -> imgix-image.${key} -> ${_value}`);
-        return _value;
+      const el = this.imageContainer();
+      if (el) {
+        const value = (el.nativeElement[key] ?? defaultValue) as number;
+        debugMessage(`AlbumSectionComponent.getValue -> imgix-image.${key} -> ${value}`);
+        return value;
       }
     }
     return defaultValue;

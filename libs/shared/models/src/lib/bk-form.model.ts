@@ -66,7 +66,7 @@ export type BkFormModel = Partial<{
   fileName: string;
   firstName: string;
   function: string;
-  gender: number; // GenderType: person/competitionLevel: category
+  gender: string;
   gravatarEmail: string;
   height: number;
   hexColor: string;
@@ -95,29 +95,29 @@ export type BkFormModel = Partial<{
   lockerNr: number;
   md5hash: string;
   membershipId: string;
-  memberCategory: number;
+  memberCategory: string;
   memberKey: string;
-  memberState: number;
+  memberState: string;
   memberUrl: string;
   menuAction: string;
   menuItems: string[];
   mimeType: string;
-  modelType: number; // ModelType
+  modelType: string;
   name: string;
   nameDisplay: number; // NameDisplay
   newsDelivery: number; // DeliveryType
   nickName: string;
   notes: string;
-  objectCategory: number;
+  objectCategory: string;
   objectKey: string;
   objectName: string;
   objectName2: string;
-  objectType: number; // ModelType
+  objectType: string;
   objectUrl: string;
   orgFunction: string;
   orgId: string;
   orgName: string;
-  orgType: number; // OrgType
+  orgType: string;
   orgUrl: string;
   participants: string;
   password: string;
@@ -127,7 +127,7 @@ export type BkFormModel = Partial<{
   personLastName: string;
   persons: string[];
   personSortCriteria: number; // PersonSortCriteria
-  periodicity: number; // Periodicity
+  periodicity: string;
   phone: string;
   priority: number; // Priority
   priorVersionKey: string;
@@ -136,42 +136,36 @@ export type BkFormModel = Partial<{
   relDate: string;
   repeatUntilDate: string;
   resourceKey: string;
-  resourceType: number; // ResourceType
-  roleNeeded: number; // RoleEnum
+  resourceType: string;
+  roleNeeded: string;
   roles: Roles;
   scsMembershipKey: string;
-  scsMemberType: number; // ScsMemberType
   showDebugInfo: boolean;
   showTestData: boolean;
   showArchivedData: boolean;
   size: number;
   sectionProperties: SectionProperties;
   speed: number;
-  srvMembershipKey: string;
-  srvMemberId: string;
-  srvMemberType: number; // MemberType
-  srvLicenseOwnershipKey: string;
-  srvLicenseValidUntil: string;
   srvEmail: boolean;
   ssn: string;
   startDate: string;
   startTime: string;
-  state: number;
+  state: string;
   street: string;
   subjectKey: string;
   subjectName: string;
   subjectName2: string;
-  subjectType: number; // ModelType
-  subjectCategory: number;
+  subjectType: string; 
+  subjectCategory: string;
   subTitle: string;
-  subType: number;
+  subType: string;
   tags: string;
-  taskState: number;
+  taskState: string;
   taxId: string;
   tenants: string[];
   title: string;
   thumbUrl: string;
-  type: number;
+  type: string;
   url: string;
   urgency: number;
   usageImages: number;

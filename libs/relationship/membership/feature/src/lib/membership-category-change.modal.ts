@@ -5,7 +5,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { CategoryChangeFormComponent } from '@bk2/relationship-membership-ui';
 import { convertMembershipToCategoryChangeForm, getMembershipName } from '@bk2/relationship-membership-util';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryListModel, MembershipModel, ModelType } from '@bk2/shared-models';
+import { CategoryListModel, MembershipModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
 
 @Component({
@@ -40,8 +40,8 @@ export class CategoryChangeModalComponent {
   protected titleArguments = computed(() => ({
     relationship: 'membership',
     subjectName: this.name(),
-    subjectIcon: this.membership().memberModelType === ModelType.Person ? 'person' : 'org',
-    subjectUrl: this.membership().memberModelType === ModelType.Person ? `/person/${this.membership().memberKey}` : `/org/${this.membership().memberKey}`,
+    subjectIcon: this.membership().memberModelType === 'person' ? 'person' : 'org',
+    subjectUrl: this.membership().memberModelType === 'person' ? `/person/${this.membership().memberKey}` : `/org/${this.membership().memberKey}`,
     objectName: this.membership().orgName,
     objectIcon: 'org',
     objectUrl: `/org/${this.membership().orgKey}`

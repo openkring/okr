@@ -3,7 +3,7 @@ import { Component, forwardRef, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonMenuButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { SectionModel, SectionType } from '@bk2/shared-models';
+import { SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
 import { AlbumSectionComponent } from './album-section.component';
@@ -47,43 +47,43 @@ import { VideoSectionComponent } from './video-section.component';
     <ion-content>
       @if(section(); as section) {
         @switch (section.type) {
-          @case(ST.Album) {                                   <!-- 0: Album -->
+          @case('album') {
             <bk-album-section [section]="section" />
           }
-          @case(ST.Article) {                                 <!-- 1: Article -->
+          @case('article') {
             <bk-article-section [section]="section" [readOnly]="true"  />
           }
-          <!-- not yet implemented -->                        <!-- 2: Chart -->        
-          @case(ST.Gallery) {                                 <!-- 3: Gallery -->
+          @case('gallery') {
             <bk-gallery-section [section]="section" />
           }
-          @case(ST.Hero) {                                    <!-- 4: Hero -->
+          @case('hero') {
             <bk-hero-section [section]="section" />
           }
-          @case(ST.Map) {                                     <!-- 5: Map -->
+          @case('map') {
             <bk-map-section [section]="section" />
           }
-          @case(ST.PeopleList) {                              <!-- 6: PeopleList -->
+          @case('peopleList') {
             <bk-people-list-section [section]="section" [readOnly]="true"  />
           }
-          @case(ST.Slider) {                                  <!-- 7: Slider -->
+          @case('slider') {
             <bk-swiper-section [section]="section" />
           }
-          @case(ST.Video) {                                   <!-- 8: Video -->
+          @case('video') {
             <bk-video-section [section]="section" />
           }
-          @case(ST.Calendar) {                                <!-- 9: Calendar -->
+          @case('calendar') {
             <bk-calendar-section [section]="section" />
           }
-          @case(ST.Button) {                                  <!-- 10: Button -->      
+          @case('button') {     
             <bk-button-section [section]="section" [readOnly]="true"  />    
           }
-          @case(ST.Table) {                                   <!-- 11: Table -->
+          @case('table') {
             <bk-table-section [section]="section" />          
           }
-          @case(ST.Iframe) {
-            <bk-iframe-section [section]="section" />         <!-- 12: Iframe -->
+          @case('iframe') {
+            <bk-iframe-section [section]="section" />
           }
+          <!-- not yet implemented: chart, chat, tracker -->       
           @default {
             <ion-label>{{ '@content.section.error.noSuchSection' | translate: { type: section.type } | async }}</ion-label>
           }
@@ -96,8 +96,6 @@ export class PreviewModalComponent {
   private readonly modalController = inject(ModalController);
   public section = input.required<SectionModel>();
   public title = input('Preview');
-
-  public ST = SectionType;
 
   public close(): void {
     this.modalController.dismiss(null, 'cancel');

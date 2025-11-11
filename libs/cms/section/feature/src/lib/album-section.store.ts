@@ -40,8 +40,8 @@ export const AlbumStore = signalStore(
       title: computed(() => state.currentDirectory().split('/').pop()),
       currentDirLength: computed(() => state.currentDirectory().split('/').length),
       initialDirLength: computed(() => {
-        const _initialDir = state.config().directory;
-        return !_initialDir ? 0 : _initialDir.split('/').length;
+        const initialDir = state.config().directory;
+        return !initialDir ? 0 : initialDir.split('/').length;
       }),
       parentDirectory: computed(() => state.currentDirectory().split('/').slice(0, -1).join('/')),
       imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
@@ -54,18 +54,18 @@ export const AlbumStore = signalStore(
       params: () => store.currentDirectory(),
       loader: async ({ params }) => { // currentDirectory
         if (!params || params.length === 0) return [];
-        const _files =  await listAllFilesFromDirectory(store.storage, store.config(), store.imgixBaseUrl(), params);
-        debugMessage(`AlbumStore.filesResource: loaded ${_files.length} files from ${params}`, store.currentUser());
-        return _files;
+        const files =  await listAllFilesFromDirectory(store.storage, store.config(), store.imgixBaseUrl(), params);
+        debugMessage(`AlbumStore.filesResource: loaded ${files.length} files from ${params}`, store.currentUser());
+        return files;
       }
     }),
 
     metaDataResource: resource({
       params: () => store.currentImage(),
       loader: async ({ params }) => { // currentImage
-        const _meta = await getImageMetaData(store.httpClient, store.imgixBaseUrl(), params);
+        const meta = await getImageMetaData(store.httpClient, store.imgixBaseUrl(), params);
         debugMessage(`AlbumStore.metaDataResource: loaded metadata for ${params?.url}`, store.currentUser());
-        return _meta;
+        return meta;
       }
     })
   })),
@@ -117,21 +117,21 @@ export const AlbumStore = signalStore(
       },
 
       async openGallery(files: Image[], title = '', initialSlide = 0): Promise<void> {
-        const _images = files.filter((file) => file.imageType === ImageType.Image);
-        const _effect = store.config().galleryEffect ?? die('AlbumStore.openGallery: gallery effect is mandatory.');
-        const _modal = await store.modalController.create({
+        const images = files.filter((file) => file.imageType === ImageType.Image);
+        const effect = store.config().galleryEffect ?? die('AlbumStore.openGallery: gallery effect is mandatory.');
+        const modal = await store.modalController.create({
           component: GalleryModalComponent,
           cssClass: 'full-modal',
           componentProps: {
-            imageList: _images,
+            imageList: images,
             initialSlide: initialSlide,
             title: title,
-            effect: getCategoryName(GalleryEffects, _effect)
+            effect: getCategoryName(GalleryEffects, effect)
           }
         });
-        _modal.present();
+        modal.present();
     
-        await _modal.onWillDismiss();
+        await modal.onWillDismiss();
       }
     }
   })

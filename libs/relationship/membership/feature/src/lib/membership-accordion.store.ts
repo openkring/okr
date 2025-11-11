@@ -6,7 +6,7 @@ import { firstValueFrom, of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryCollection, CategoryListModel, MembershipModel, ModelType, OrgModel, PersonModel } from '@bk2/shared-models';
+import { CategoryCollection, CategoryListModel, MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { confirm } from '@bk2/shared-util-angular';
 import { convertDateFormatToString, DateFormat, debugListLoaded, isValidAt } from '@bk2/shared-util-core';
@@ -18,13 +18,13 @@ import { MembershipModalsService } from './membership-modals.service';
 
 export type MembershipAccordionState = {
   member: PersonModel | OrgModel | undefined;
-  modelType: ModelType;
+  modelType: string;
   showOnlyCurrent: boolean;
 };
 
 const initialState: MembershipAccordionState = {
   member: undefined,
-  modelType: ModelType.Person,
+  modelType: 'person',
   showOnlyCurrent: true,
 };
 
@@ -71,7 +71,7 @@ export const MembershipAccordionStore = signalStore(
     return {
 
       /******************************** setters ******************************************* */
-      setMember(member: PersonModel | OrgModel, modelType: ModelType): void {
+      setMember(member: PersonModel | OrgModel, modelType: string): void {
         patchState(store, { member, modelType });
         store.membershipsResource.reload();
       },
@@ -81,7 +81,7 @@ export const MembershipAccordionStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      async add(defaultMember: PersonModel | OrgModel, modelType: ModelType): Promise<void> {
+      async add(defaultMember: PersonModel | OrgModel, modelType: 'person' | 'org'): Promise<void> {
         await store.membershipModalsService.add(defaultMember, store.defaultOrg(), modelType);
         store.membershipsResource.reload();
       },

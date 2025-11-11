@@ -82,17 +82,17 @@ export class TaskService {
    * @returns the index string
    */
   public getSearchIndex(task: TaskModel): string {
-    let _index = '';
-    _index = addIndexElement(_index, 'n', task.name);
+    let index = '';
+    index = addIndexElement(index, 'n', task.name);
     if (task.author) {
-      _index = addIndexElement(_index, 'an', task.author.name1 + ' ' + task.author.name2);
-      _index = addIndexElement(_index, 'ak', task.author.key);
+      index = addIndexElement(index, 'an', task.author.name1 + ' ' + task.author.name2);
+      index = addIndexElement(index, 'ak', task.author.key);
     }
     if (task.assignee) {
-      _index = addIndexElement(_index, 'asn', task.assignee.name1 + ' ' + task.assignee.name2);
-      _index = addIndexElement(_index, 'ask', task.assignee.key);
+      index = addIndexElement(index, 'asn', task.assignee.name1 + ' ' + task.assignee.name2);
+      index = addIndexElement(index, 'ask', task.assignee.key);
     }
-    return _index;
+    return index;
   }
 
   /**

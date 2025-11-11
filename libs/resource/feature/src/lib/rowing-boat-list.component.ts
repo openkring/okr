@@ -2,9 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { addAllCategory, RowingBoatTypes } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AllCategories, ResourceModel, RoleName } from '@bk2/shared-models';
+import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -29,7 +28,7 @@ import { ResourceListStore } from './resource-list.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedBoatsCount()}}/{{boatsCount() }} {{ title | translate | async}}</ion-title>
+      <ion-title>{{selectedBoatsCount()}}/{{boatsCount() }} {{ '@resource.boat.plural' | translate | async}}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c_rboat">
@@ -48,12 +47,9 @@ import { ResourceListStore } from './resource-list.store';
 
      <!-- search and filters -->
      <bk-list-filter 
-      [tags]="boatTags()"
-      [types]="allBoatTypes"
-      typeName="rowingBoatType"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+      [type]="types()" (typeChanged)="onTypeSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
-      (typeChanged)="onTypeSelected($event)"
      />
 
     <!-- list header -->
@@ -101,13 +97,9 @@ export class RowingBoatListComponent {
   protected boatsCount = computed(() => this.resourceListStore.boatsCount());
   protected selectedBoatsCount = computed(() => this.filteredBoats().length);
   protected isLoading = computed(() => this.resourceListStore.isLoading());
-  protected boatTags = computed(() => this.resourceListStore.getRowingBoatTags());
-  protected title = '@resource.boat.plural'
+  protected tags = computed(() => this.resourceListStore.getRowingBoatTags());
+  protected types = computed(() => this.resourceListStore.appStore.getCategory('rboat_type'));
   
-  protected boatTypes = RowingBoatTypes;
-  protected allBoatTypes = addAllCategory(RowingBoatTypes);
-  protected selectedCategory = AllCategories;
-  protected categories = addAllCategory(RowingBoatTypes);
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
@@ -119,13 +111,13 @@ export class RowingBoatListComponent {
     this.resourceListStore.setSelectedTag($event);
   }
 
-  protected onTypeSelected($event: number): void {
+  protected onTypeSelected($event: string): void {
     this.resourceListStore.setSelectedBoatType($event);
   }
 
   /******************************** getters ******************************************* */
-  protected getIcon(resource: ResourceModel): string {
-    return this.boatTypes[resource.subType].icon;
+  protected getIcon(resource: ResourceModel): string | undefined {
+    return this.resourceListStore.appStore.getCategoryItem('rboat_type', resource.subType)?.icon;
   }
 
   /******************************** actions ******************************************* */

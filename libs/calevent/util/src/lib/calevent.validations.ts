@@ -1,18 +1,18 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
-import { CalEventModel, CalEventType, Periodicity } from '@bk2/shared-models';
-import { baseValidations, categoryValidations, dateValidations, isAfterDate, isAfterOrEqualDate, stringValidations } from '@bk2/shared-util-core';
+import { SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { CalEventModel } from '@bk2/shared-models';
+import { baseValidations, dateValidations, isAfterDate, isAfterOrEqualDate, stringValidations } from '@bk2/shared-util-core';
 
 export const calEventValidations = staticSuite((model: CalEventModel, field?: string) => {
   if (field) only(field);
 
   baseValidations(model, field);
-  categoryValidations('type', model.type, CalEventType);
+  stringValidations('type', model.type, WORD_LENGTH);
   dateValidations('startDate', model.startDate);
   dateValidations('endDate', model.endDate);
   stringValidations('locationKey', model.locationKey, SHORT_NAME_LENGTH);
-  categoryValidations('periodicity', model.periodicity, Periodicity);
+  stringValidations('periodicity', model.periodicity, WORD_LENGTH);
   dateValidations('repeatUntilDate', model.repeatUntilDate);
   // tbd: responsiblePersons: AvatarInfo[] - not yet implemented
 
@@ -28,7 +28,7 @@ export const calEventValidations = staticSuite((model: CalEventModel, field?: st
     enforce(isAfterOrEqualDate(model.endDate, model.startDate)).isTruthy();
   });
 
-  omitWhen(model.periodicity === Periodicity.Once, () => {
+  omitWhen(model.periodicity === 'once', () => {
     test('repeatUntilDate', '@calEventRepeatUntilDateMandatoryWithGivenPeriodicity', () => {
       enforce(model.repeatUntilDate).isNotEmpty();
     });

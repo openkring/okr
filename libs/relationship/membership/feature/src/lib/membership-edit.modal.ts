@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/s
 
 import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { MembershipCollection, MembershipModel, ModelType, RoleName, UserModel } from '@bk2/shared-models';
+import { MembershipCollection, MembershipModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -58,8 +58,8 @@ export class MembershipEditModalComponent {
     protected titleArguments = computed(() => ({
       relationship: 'membership',
       subjectName: this.name(),
-      subjectIcon: this.membership().memberModelType === ModelType.Person ? 'person' : 'org',
-      subjectUrl: this.membership().memberModelType === ModelType.Person ? `/person/${this.membership().memberKey}` : `/org/${this.membership().memberKey}`,
+      subjectIcon: this.membership().memberModelType === 'person' ? 'person' : 'org',
+      subjectUrl: this.membership().memberModelType === 'person' ? `/person/${this.membership().memberKey}` : `/org/${this.membership().memberKey}`,
       objectName: this.membership().orgName,
       objectIcon: 'org',
       objectUrl: `/org/${this.membership().orgKey}`

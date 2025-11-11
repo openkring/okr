@@ -1,6 +1,5 @@
+import { DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_SECTIONS, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE } from '@bk2/shared-constants';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
-import { ContentState, PageType } from '@bk2/shared-models';
 
 export type PageFormModel = DeepPartial<{
     bkey: string,
@@ -9,22 +8,22 @@ export type PageFormModel = DeepPartial<{
     tenants: string[]
 
     title: string,
-    type: PageType,
-    state: ContentState,
+    type: string,
+    state: string,
     notes: string,
     sections: string[],
 }>;
 
 export const pageFormModelShape: DeepRequired<PageFormModel> = {
-    bkey: '',
-    name: '',
-    tags: '',
-    tenants: [],
+    bkey: DEFAULT_KEY,
+    name: DEFAULT_NAME,
+    tags: DEFAULT_TAGS,
+    tenants: DEFAULT_TENANTS,
 
-    title: '',
-    type: PageType.Content,
-    state: ContentState.Draft,
-    notes: '',
+    title: DEFAULT_TITLE,
+    type: DEFAULT_PAGE_TYPE,
+    state: DEFAULT_CONTENT_STATE,
+    notes: DEFAULT_NOTES,
 
-    sections: [],
+    sections: DEFAULT_SECTIONS,
 };

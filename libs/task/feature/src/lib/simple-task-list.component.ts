@@ -2,7 +2,6 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonAvatar, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonTextarea } from '@ionic/angular/standalone';
 
-import { addAllCategory, Importances, Priorities, TaskStates } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TaskModel } from '@bk2/shared-models';
 import { CategoryAbbreviationPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
@@ -63,13 +62,10 @@ import { TaskListStore } from './task-list.store';
 
       <!-- search and filters -->
       <bk-list-filter 
-        [tags]="taskTags()"
-        [types]="types"
-        [typeName]="typeName"
+        [tags]="tags()" (tagChanged)="onTagSelected($event)"
+        [type]="types" (typeChanged)="onTypeSelected($event)"
         (searchTermChanged)="onSearchtermChange($event)"
-        (tagChanged)="onTagSelected($event)"
-        (typeChanged)="onTypeSelected($event)"
-          />
+      />
     </ion-header>
 
   <!-- list data -->
@@ -118,12 +114,8 @@ export class SimpleTaskListComponent {
   protected tasksCount = computed(() => this.taskListStore.tasksCount());
   protected selectedTasksCount = computed(() => this.filteredTasks().length);
   protected isLoading = computed(() => this.taskListStore.isLoading());
-  protected taskTags = computed(() => this.taskListStore.getTags());
-
-  protected taskStates = TaskStates;
-  protected types = addAllCategory(Priorities);
-  protected typeName = 'priority';
-  protected importances = Importances;
+  protected tags = computed(() => this.taskListStore.getTags());
+  protected types = computed(() => this.taskListStore.appStore.getCategory('priority'));
 
   constructor() {
     effect(() => {
@@ -177,11 +169,11 @@ export class SimpleTaskListComponent {
     this.taskListStore.setSelectedTag(tag);
   }
 
-  protected onStateChange(state: number): void {
+  protected onStateChange(state: string): void {
     this.taskListStore.setSelectedState(state);
   }
 
-  protected onTypeSelected(type: number): void {
+  protected onTypeSelected(type: string): void {
     this.taskListStore.setSelectedPriority(type);
   }
 

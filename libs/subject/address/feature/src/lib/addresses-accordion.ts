@@ -5,7 +5,7 @@ import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, Ion
 import { AddressChannels, AddressUsages, getCategoryIcon } from "@bk2/shared-categories";
 import { AppStore } from "@bk2/shared-feature";
 import { TranslatePipe } from "@bk2/shared-i18n";
-import { AddressChannel, AddressModel, AddressUsage, ModelType } from "@bk2/shared-models";
+import { AddressChannel, AddressModel, AddressUsage } from "@bk2/shared-models";
 import { SvgIconPipe } from "@bk2/shared-pipes";
 import { EmptyListComponent } from "@bk2/shared-ui";
 
@@ -76,7 +76,7 @@ export class AddressesAccordionComponent {
 
   public addresses = model.required<AddressModel[]>(); // the addresses shown in the accordion
   public parentKey = input.required<string>(); // the parent key of the addresses
-  public parentModelType = input.required<ModelType>(); // the parent model type of the addresses
+  public parentModelType = input.required<'person' | 'org'>(); // the parent model type of the addresses
   public addressesChanged = output(); // event emitted when the addresses have changed
   private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 

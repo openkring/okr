@@ -1,7 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
 
-import { getCategoryAbbreviation, OrgTypes } from '@bk2/shared-categories';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AddressCollection, AddressModel, OrgCollection, OrgModel, UserModel } from '@bk2/shared-models';
@@ -102,8 +101,8 @@ export class OrgService  {
   public getSearchIndex(org: OrgModel): string {
     let _index = '';
     _index = addIndexElement(_index, 'n', org.name);
-    _index = addIndexElement(_index, 'c', org.fav_city);
-    _index = addIndexElement(_index, 'ot', getCategoryAbbreviation(OrgTypes, org.type));
+    _index = addIndexElement(_index, 'c', org.favCity);
+    _index = addIndexElement(_index, 'ot', org.type);
     _index = addIndexElement(_index, 'dof', org.dateOfFoundation);
     return _index;
   }

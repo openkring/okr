@@ -1,6 +1,5 @@
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
-import { GenderType } from './enums/gender-type.enum';
-import { PersonalRelType } from './enums/personal-rel-type.enum';
 
 /**
  * A personal relationship between two persons.
@@ -15,29 +14,29 @@ import { PersonalRelType } from './enums/personal-rel-type.enum';
  * - build ancestry graph
  */
 export class PersonalRelModel implements BkModel, SearchableModel, TaggedModel {
-  public bkey = '';
-  public tenants: string[] = [];
+  public bkey = DEFAULT_KEY;
+  public tenants = DEFAULT_TENANTS;
   public isArchived = false;
-  public index = '';
-  public tags = '';
-  public notes = '';
+  public index = DEFAULT_INDEX;
+  public tags = DEFAULT_TAGS;
+  public notes = DEFAULT_NOTES;
 
   // person 1
-  public subjectKey = '';
-  public subjectFirstName = '';
-  public subjectLastName = '';
-  public subjectGender?: GenderType;
+  public subjectKey = DEFAULT_KEY;
+  public subjectFirstName = DEFAULT_NAME;
+  public subjectLastName = DEFAULT_NAME;
+  public subjectGender = DEFAULT_GENDER;
 
   // person 2
-  public objectKey = '';
-  public objectFirstName = '';
-  public objectLastName = '';
-  public objectGender?: GenderType;
+  public objectKey = DEFAULT_KEY;
+  public objectFirstName = DEFAULT_NAME;
+  public objectLastName = DEFAULT_NAME;
+  public objectGender = DEFAULT_GENDER;
 
-  public type?: PersonalRelType;
-  public label = '';
-  public validFrom = '';
-  public validTo = '';
+  public type = DEFAULT_PERSONAL_REL;
+  public label = DEFAULT_LABEL;
+  public validFrom = DEFAULT_DATE;
+  public validTo = DEFAULT_DATE;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

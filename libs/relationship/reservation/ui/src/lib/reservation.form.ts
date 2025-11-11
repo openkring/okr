@@ -3,11 +3,10 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { vestForms } from 'ngx-vest-forms';
 
 import { ReservationFormModel, reservationFormModelShape, reservationFormValidations } from '@bk2/relationship-reservation-util';
-import { PeriodicityTypes, ReservationReasons, ReservationStates } from '@bk2/shared-categories';
 import { ChTimeMask } from '@bk2/shared-config';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { GenderType, ModelType, OrgType, Periodicity, ReservationReason, ReservationState, RoleName, UserModel } from '@bk2/shared-models';
-import { CategoryComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_ORG_TYPE, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
 @Component({
@@ -16,7 +15,7 @@ import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
   imports: [
     vestForms,
     TextInputComponent, DateInputComponent,
-    NumberInputComponent, ChipsComponent, NotesInputComponent, CategoryComponent,
+    NumberInputComponent, ChipsComponent, NotesInputComponent, CategorySelectComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
   template: `
@@ -59,7 +58,7 @@ import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat name="reservationReason" [value]="reservationReason()" [categories]="reservationReasons" (changed)="onChange('reservationReason', $event)" />
+              <bk-cat-select [category]="reasons()" [selectedItemName]="reason()" [withAll]="false" (changed)="onChange('reservationReason', $event)" />
             </ion-col>
 
             <ion-col size="12" size-md="6">
@@ -86,7 +85,7 @@ import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat name="reservationState" [value]="reservationState()" [categories]="reservationStates" (changed)="onChange('reservationState', $event)" />
+              <bk-cat-select [category]="states()" [selectedItemName]="reservationState()" [withAll]="false" (changed)="onChange('reservationState', $event)" />
             </ion-col>
 
             <ion-col size="12" size-md="6">
@@ -98,7 +97,7 @@ import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
             </ion-col>
 
             <ion-col size="12" size-md="6"> 
-              <bk-cat name="periodicity" [value]="periodicity()" [categories]="periodicities" (changed)="onChange('periodicity', $event)" />
+              <bk-cat-select [category]="periodicities()" [selectedItemName]="periodicity()" [withAll]="false" (changed)="onChange('periodicity', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -106,7 +105,7 @@ import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
     </ion-card>
 
     @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="reservationTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
     }
   
     @if(hasRole('admin')) {
@@ -118,29 +117,31 @@ import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
 export class ReservationFormComponent {
   public vm = model.required<ReservationFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public reservationTags = input.required<string>();
+  public allTags = input.required<string>();
+  public reasons = input.required<CategoryListModel>();
+  public states = input.required<CategoryListModel>();
+  public periodicities = input.required<CategoryListModel>();
 
   public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser())); 
-  protected reserverName = computed(() => this.vm().reserverName ?? ''); 
-  protected reserverName2 = computed(() => this.vm().reserverName2 ?? ''); 
-  protected reserverModelType = computed(() => this.vm().reserverModelType ?? ModelType.Person);
-  protected reserverGender = computed(() => this.vm().reserverType as GenderType ?? GenderType.Male);
-  protected reserverOrgType = computed(() => this.vm().reserverType as OrgType ?? OrgType.Association);
-  protected resourceKey = computed(() => this.vm().resourceKey ?? '');
-  protected resourceName = computed(() => this.vm().resourceName ?? '');
-  protected startDate = computed(() => this.vm().startDate ?? '');
-  protected startTime = computed(() => this.vm().startTime ?? '');
-  protected endDate = computed(() => this.vm().endDate ?? '');
-  protected endTime = computed(() => this.vm().endTime ?? '');
+  protected reserverName = computed(() => this.vm().reserverName ?? DEFAULT_NAME); 
+  protected reserverName2 = computed(() => this.vm().reserverName2 ?? DEFAULT_NAME); 
+  protected reserverModelType = computed(() => this.vm().reserverModelType ?? 'person');
+  protected reserverType = computed(() => this.vm().reserverType ?? DEFAULT_GENDER);
+  protected resourceKey = computed(() => this.vm().resourceKey ?? DEFAULT_KEY);
+  protected resourceName = computed(() => this.vm().resourceName ?? DEFAULT_NAME);
+  protected startDate = computed(() => this.vm().startDate ?? DEFAULT_DATE);
+  protected startTime = computed(() => this.vm().startTime ?? DEFAULT_TIME);
+  protected endDate = computed(() => this.vm().endDate ?? DEFAULT_DATE);
+  protected endTime = computed(() => this.vm().endTime ?? DEFAULT_TIME);
   protected numberOfParticipants = computed(() => this.vm().numberOfParticipants ?? '');
   protected area = computed(() => this.vm().area ?? '');
   protected reservationRef = computed(() => this.vm().reservationRef ?? '');
-  protected reservationState = computed(() => this.vm().reservationState ?? ReservationState.Active);
-  protected reservationReason = computed(() => this.vm().reservationReason ?? ReservationReason.SocialEvent);
-  protected priority = computed(() => this.vm().priority ?? 0);
+  protected reservationState = computed(() => this.vm().reservationState ?? DEFAULT_RES_STATE);
+  protected reason = computed(() => this.vm().reservationReason ?? DEFAULT_RES_REASON);
+  protected order = computed(() => this.vm().order ?? 0);
   protected price = computed(() => this.vm().price ?? 0);
   protected currency = computed(() => this.vm().currency ?? 'CHF');
-  protected periodicity = computed(() => this.vm().periodicity ?? Periodicity.Yearly);
+  protected periodicity = computed(() => this.vm().periodicity ?? 'yearly');
   protected tags = computed(() => this.vm().tags ?? '');
   protected notes = computed(() => this.vm().notes ?? '');
   protected name = computed(() => this.vm().name ?? '');
@@ -152,10 +153,6 @@ export class ReservationFormComponent {
   protected readonly shape = reservationFormModelShape;
   private readonly validationResult = computed(() => reservationFormValidations(this.vm()));
   
-  protected modelType = ModelType;
-  protected reservationStates = ReservationStates;
-  protected reservationReasons = ReservationReasons;
-  protected periodicities = PeriodicityTypes;
   protected timeMask = ChTimeMask;
   protected endFutureDate = END_FUTURE_DATE_STR;
 

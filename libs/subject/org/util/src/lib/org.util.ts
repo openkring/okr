@@ -1,4 +1,4 @@
-import { AddressModel, AddressUsage, OrgModel, OrgType } from '@bk2/shared-models';
+import { AddressModel, AddressUsage, OrgModel } from '@bk2/shared-models';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
 
@@ -10,7 +10,7 @@ export function newOrgFormModel(): OrgFormModel {
   return {
     bkey: '',
     orgName: '',
-    type: OrgType.Association,
+    type: 'association',
     dateOfFoundation: '',
     dateOfLiquidation: '',
     membershipCategoryKey: 'mcat_default',
@@ -26,7 +26,7 @@ export function convertOrgToForm(org?: OrgModel): OrgFormModel {
   return {
     bkey: org.bkey ?? '',
     orgName: org.name ?? '',
-    type: org.type ?? OrgType.Association,
+    type: org.type ?? 'association',
     dateOfFoundation: org.dateOfFoundation ?? '',
     dateOfLiquidation: org.dateOfLiquidation ?? '',
     membershipCategoryKey: org.membershipCategoryKey ?? 'mcat_default',
@@ -41,7 +41,7 @@ export function convertFormToOrg(org: OrgModel | undefined, vm: OrgFormModel, te
   org ??= new OrgModel(tenantId);
   org.bkey = vm.bkey ?? '';
   org.name = vm.orgName ?? '';
-  org.type = vm.type ?? OrgType.Association;
+  org.type = vm.type ?? 'association';
   org.dateOfFoundation = vm.dateOfFoundation ?? '';
   org.dateOfLiquidation = vm.dateOfLiquidation ?? '';
   org.membershipCategoryKey = vm.membershipCategoryKey ?? 'mcat_default';
@@ -52,25 +52,15 @@ export function convertFormToOrg(org: OrgModel | undefined, vm: OrgFormModel, te
   return org;
 }
 
-export function getOrgNameByOrgType(orgType?: number): string {
-  if (orgType === undefined) return '';
-  switch (orgType) {
-    case OrgType.Association:
-      return 'orgName.association';
-    case OrgType.Authority:
-      return 'orgName.authority';
-    case OrgType.LegalEntity:
-      return 'orgName.company';
-    default:
-      return 'orgName';
-  }
+export function getOrgNameByOrgType(orgType?: string): string {
+  return orgType && orgType.length > 0 ? 'orgName.' + orgType : '';
 }
 
 /*-------------------------- NEW ORG --------------------------------*/
 export function createNewOrgFormModel(): OrgNewFormModel {
   return {
     orgName: '',
-    type: OrgType.Association,
+    type: 'association',
     dateOfFoundation: '',
     dateOfLiquidation: '',
     streetName: '',
@@ -93,7 +83,7 @@ export function convertFormToNewOrg(vm: OrgNewFormModel, tenantId: string): OrgM
   const org = new OrgModel(tenantId);
   org.bkey = '';
   org.name = vm.orgName ?? '';
-  org.type = vm.type ?? OrgType.Association;
+  org.type = vm.type ?? 'association';
   org.dateOfFoundation = vm.dateOfFoundation ?? '';
   org.dateOfLiquidation = vm.dateOfLiquidation ?? '';
   org.taxId = vm.taxId ?? '';
@@ -101,13 +91,13 @@ export function convertFormToNewOrg(vm: OrgNewFormModel, tenantId: string): OrgM
   org.bexioId = vm.bexioId ?? '';
   org.tags = vm.tags ?? '';
 
-  org.fav_email = vm.email ?? '';
-  org.fav_phone = vm.phone ?? '';
-  org.fav_street_name = vm.streetName ?? '';
-  org.fav_street_number = vm.streetNumber ?? '';
-  org.fav_zip_code = vm.zipCode ?? '';
-  org.fav_city = vm.city ?? '';
-  org.fav_country_code = vm.countryCode ?? '';
+  org.favEmail = vm.email ?? '';
+  org.favPhone = vm.phone ?? '';
+  org.favStreetName = vm.streetName ?? '';
+  org.favStreetNumber = vm.streetNumber ?? '';
+  org.favZipCode = vm.zipCode ?? '';
+  org.favCity = vm.city ?? '';
+  org.favCountryCode = vm.countryCode ?? '';
   return org;
 }
 

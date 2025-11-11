@@ -1,19 +1,20 @@
 import { DeepRequired } from 'ngx-vest-forms';
 
-import { AvatarInfo, CalEventType, Periodicity } from '@bk2/shared-models';
+import { AvatarInfo } from '@bk2/shared-models';
+import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL } from '@bk2/shared-constants';
 
 // a form model is always deep partial because angular will create it over time organically
 export type CalEventFormModel = {
   bkey: string,
   tenants: string[],
   name: string,
-  type: CalEventType,
+  type: string,
   startDate: string,
   startTime: string,
   endDate: string,
   endTime: string,
   locationKey: string,
-  periodicity: Periodicity,
+  periodicity: string,
   repeatUntilDate: string,
   calendars: string[],
   responsiblePersons: AvatarInfo[],
@@ -23,20 +24,20 @@ export type CalEventFormModel = {
 };
 
 export const calEventFormModelShape: DeepRequired<CalEventFormModel> = {
-  bkey: '',
-  tenants: [],
-  name: '',
-  type: CalEventType.SocialEvent,
-  startDate: '',
-  startTime: '',
-  endDate: '',
-  endTime: '',
-  locationKey: '',
-  periodicity: Periodicity.Once,
-  repeatUntilDate: '',
-  calendars: [],
+  bkey: DEFAULT_KEY,
+  tenants: DEFAULT_TENANTS,
+  name: DEFAULT_NAME,
+  type: DEFAULT_CALEVENT_TYPE,
+  startDate: DEFAULT_DATE,
+  startTime: DEFAULT_TIME,
+  endDate: DEFAULT_DATE,
+  endTime: DEFAULT_TIME,
+  locationKey: DEFAULT_KEY,
+  periodicity: DEFAULT_PERIODICITY,
+  repeatUntilDate: DEFAULT_DATE,
+  calendars: DEFAULT_CALENDARS,
   responsiblePersons: [],
-  url: '',
-  description: '',
-  tags: ''
+  url: DEFAULT_URL,
+  description: DEFAULT_NOTES,
+  tags: DEFAULT_TAGS
 };

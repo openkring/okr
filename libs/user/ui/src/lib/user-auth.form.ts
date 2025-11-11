@@ -4,9 +4,9 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
-import { AllRoles, UserModel } from "@bk2/shared-models";
+import { CategoryListModel, UserModel } from "@bk2/shared-models";
 import { CheckboxComponent, ChipsComponent } from "@bk2/shared-ui";
-import { debugFormErrors } from "@bk2/shared-util-core";
+import { debugFormErrors, getCategoryItemNames } from "@bk2/shared-util-core";
 
 import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormValidations } from "@bk2/user-util";
 
@@ -47,17 +47,19 @@ import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormVa
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoles" (changed)="onChange('roles', $event)" />
+      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoleNames()" (changed)="onChange('roles', $event)" />
     </form>
   `
 })
 export class UserAuthFormComponent {
   public vm = model.required<UserAuthFormModel>();
   public currentUser = input<UserModel | undefined>();
+  public allRoles = input.required<CategoryListModel>();
 
   protected useTouchId = computed(() => this.vm().useTouchId ?? false);
   protected useFaceId = computed(() => this.vm().useFaceId ?? false);
   protected roles = computed(() => flattenRoles(this.vm().roles ?? { 'registered': true }));
+  protected allRoleNames = computed(() => getCategoryItemNames(this.allRoles()));
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
@@ -65,8 +67,6 @@ export class UserAuthFormComponent {
 
   protected readonly suite = userAuthFormValidations;
   protected readonly shape = userAuthFormModelShape;
-
-  protected allRoles = AllRoles;
 
   protected onValueChange(value: UserAuthFormModel): void {
     this.vm.update((_vm) => ({..._vm, ...value}));

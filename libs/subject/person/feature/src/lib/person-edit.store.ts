@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Observable, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, ModelType, PersonCollection, PersonModel, ResourceModel } from '@bk2/shared-models';
+import { AddressCollection, AddressModel, PersonCollection, PersonModel, ResourceModel } from '@bk2/shared-models';
 import { AppNavigationService } from '@bk2/shared-util-angular';
 import { debugItemLoaded, debugListLoaded } from '@bk2/shared-util-core';
 
@@ -95,7 +95,7 @@ export const PersonEditStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags(ModelType.Person);
+        return store.appStore.getTags('person');
       },
 
       /************************************ ACTIONS ************************************* */

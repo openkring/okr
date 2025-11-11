@@ -1,12 +1,13 @@
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 
-import { getCategoryAbbreviation, MenuActions, RoleEnums } from '@bk2/shared-categories';
-import { MenuAction, MenuItemModel, RoleEnum, RoleName } from '@bk2/shared-models';
+
+import { MenuItemModel, RoleName } from '@bk2/shared-models';
 import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getPropertyValue, isType, warn } from '@bk2/shared-util-core';
 
 import { MenuItemFormModel } from './menu-item-form.model';
+import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@bk2/shared-constants';
 
 export async function menuActionNavigate(router: Router, menuItem: MenuItemModel): Promise<void> {
   await navigateByUrl(router, menuItem.url, menuItem.data);
@@ -23,19 +24,19 @@ export function getMenuItemTitle(menuItemKey: string | undefined): string {
 
 export function newMenuItemFormModel(): MenuItemFormModel {
   return {
-    bkey: '',
-    name: '',
-    index: '',
-    action: MenuAction.Navigate,
-    url: '',
-    label: '',
+    bkey: DEFAULT_KEY,
+    name: DEFAULT_NAME,
+    index: DEFAULT_INDEX,
+    action: 'navigate',
+    url: DEFAULT_URL,
+    label: DEFAULT_LABEL,
     icon: 'help-circle',
     data: [],
     menuItems: [],
-    roleNeeded: RoleEnum.None,
-    tenants: [],
-    description: '',
-    tags: '',
+    roleNeeded: 'none',
+    tenants: DEFAULT_TENANTS,
+    description: DEFAULT_NOTES,
+    tags: DEFAULT_TAGS,
     isArchived: false,
   };
 }
@@ -43,70 +44,40 @@ export function newMenuItemFormModel(): MenuItemFormModel {
 export function convertMenuItemToForm(menuItem: MenuItemModel | undefined): MenuItemFormModel {
   if (!menuItem) return newMenuItemFormModel();
   return {
-    bkey: menuItem.bkey ?? '',
-    name: menuItem.name ?? '',
-    index: menuItem.index ?? '',
-    action: menuItem.action ?? MenuAction.Navigate,
-    url: menuItem.url ?? '',
-    label: menuItem.label ?? '',
+    bkey: menuItem.bkey ?? DEFAULT_KEY,
+    name: menuItem.name ?? DEFAULT_NAME,
+    index: menuItem.index ?? DEFAULT_INDEX,
+    action: menuItem.action ?? 'navigate',
+    url: menuItem.url ?? DEFAULT_URL,
+    label: menuItem.label ?? DEFAULT_LABEL,
     icon: menuItem.icon ?? '',
     data: menuItem.data ?? [],
     menuItems: menuItem.menuItems ?? [],
-    roleNeeded: convertRoleNameToEnum(menuItem.roleNeeded),
-    tenants: menuItem.tenants ?? [],
-    description: menuItem.description ?? '',
-    tags: menuItem.tags ?? '',
+    roleNeeded: menuItem.roleNeeded,
+    tenants: menuItem.tenants ?? DEFAULT_TENANTS,
+    description: menuItem.description ?? DEFAULT_NOTES,
+    tags: menuItem.tags ?? DEFAULT_TAGS,
     isArchived: menuItem.isArchived ?? false,
   };
 }
 
 export function convertFormToMenuItem(menuItem: MenuItemModel | undefined, vm: MenuItemFormModel, tenantId: string): MenuItemModel {
   menuItem ??= new MenuItemModel(tenantId);
-  menuItem.name = vm.name ?? '';
-  menuItem.bkey = !vm.bkey || vm.bkey.length === 0 ? vm.name ?? '' : vm.bkey; // we want to use the name as the key of the menu item in the database
-  menuItem.action = vm.action ?? MenuAction.Navigate;
-  menuItem.url = vm.url ?? '';
-  menuItem.label = vm.label ?? '';
+  menuItem.name = vm.name ?? DEFAULT_NAME;
+  menuItem.bkey = !vm.bkey || vm.bkey.length === 0 ? vm.name ?? DEFAULT_NAME : vm.bkey; // we want to use the name as the key of the menu item in the database
+  menuItem.action = vm.action ?? 'navigate';
+  menuItem.url = vm.url ?? DEFAULT_URL;
+  menuItem.label = vm.label ?? DEFAULT_LABEL;
   menuItem.icon = vm.icon ?? 'help-circle';
   menuItem.data = vm.data ?? [];
   menuItem.menuItems = vm.menuItems ?? [];
-  const _roleNeeded = convertRoleEnumToName(vm.roleNeeded);
-  if (_roleNeeded) menuItem.roleNeeded = _roleNeeded;
-  menuItem.tenants = vm.tenants ?? [];
-  menuItem.description = vm.description ?? '';
-  menuItem.tags = vm.tags ?? '';
+  menuItem.roleNeeded = (vm.roleNeeded ?? DEFAULT_ROLE) as RoleName;
+  menuItem.tenants = vm.tenants ?? DEFAULT_TENANTS;
+  menuItem.description = vm.description ?? DEFAULT_NOTES;
+  menuItem.tags = vm.tags ?? DEFAULT_TAGS;
   menuItem.isArchived = vm.isArchived ?? false;
   menuItem.index = getSearchIndex(menuItem);
   return menuItem;
-}
-
-/**
- * Map a role name to its corresponding RoleEnum value by searching the RoleEnums array (from @bk2/shared-categories) 
- * for an entry where the name property matches the input roleName. It is primarily used in the convertMenuItemToForm function to 
- * transform a MenuItemModel’s roleNeeded field into a RoleEnum for the MenuItemFormModel. If the input roleName is invalid, 
- * it logs a warning using warn (from @bk2/shared-util-core) and returns RoleEnum.None, ensuring graceful error handling.
- * @param roleName The corresponding RoleEnum value from the RoleEnums array (e.g., RoleEnum.Admin, RoleEnum.Registered).
- * @returns Returns RoleEnum.None if the role name is invalid or not found.
- */
-export function convertRoleNameToEnum(roleName?: string): RoleEnum {
-  if (!roleName) return RoleEnum.None;
-
-  const _role = RoleEnums.find(enumItem => enumItem.name === roleName);
-  if (!_role) {
-    warn(`MenuUtil.convertRoleNameToEnum: invalid roleName=${roleName}, defaulting to RoleEnum.None`);
-    return RoleEnum.None;
-  }
-  return _role.id;
-}
-
-/**
- * Map a RoleEnum value to its role name by searching the RoleEnums array (from @bk2/shared-categories)
- * @param roleEnum the RoleEnum value
- * @returns the corresponding role name of the role value
- */
-export function convertRoleEnumToName(roleEnum?: RoleEnum): RoleName | undefined {
-  console.log('MenuUtil.convertRoleEnumToName: roleEnum=' + roleEnum);
-  return roleEnum === undefined ? 'none' : (RoleEnums[roleEnum].name as RoleName);
 }
 
 export function getTarget(menuItem: MenuItemModel): string {
@@ -125,9 +96,9 @@ export function isMenuItem(menuItem: unknown, tenantId: string): menuItem is Men
 
 /*-------------------------- SEARCH --------------------------------*/
 export function getSearchIndex(menuItem: MenuItemModel): string {
-  return 'n:' + menuItem.name + ' m:' + getCategoryAbbreviation(MenuActions, menuItem.action) + ' k:' + menuItem.bkey;
+  return 'n:' + menuItem.name + ' a:' + menuItem.action + ' k:' + menuItem.bkey;
 }
 
 export function getSearchIndexInfo(): string {
-  return 'n:ame m:enuAction k:ey';
+  return 'n:ame a:ction k:ey';
 }

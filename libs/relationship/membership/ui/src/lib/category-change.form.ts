@@ -9,6 +9,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { CategorySelectComponent, DateInputComponent } from '@bk2/shared-ui';
 
 import { CategoryChangeFormModel, categoryChangeFormModelShape, categoryChangeFormValidations, MembershipFormModel } from '@bk2/relationship-membership-util';
+import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
 
 
 @Component({
@@ -39,7 +40,7 @@ import { CategoryChangeFormModel, categoryChangeFormModelShape, categoryChangeFo
           <ion-row>
             <ion-col size="5">
               <ion-item lines="none">
-                <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" popoverId="mcat-change1" [readOnly]="true" [showHelper]=true labelName="labelOld" />
+                <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" [readOnly]="true" [showHelper]=true labelName="labelOld" />
               </ion-item>
             </ion-col>
             <ion-col size="2">
@@ -49,7 +50,7 @@ import { CategoryChangeFormModel, categoryChangeFormModelShape, categoryChangeFo
             </ion-col>
             <ion-col size="5">
               <ion-item lines="none">
-                <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" popoverId="mcat-change2" labelName="labelNew" (changed)="onChange('membershipCategoryNew', $event)" />
+                <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" labelName="labelNew" (changed)="onChange('membershipCategoryNew', $event)" />
               </ion-item>
             </ion-col>
             <ion-col size="12"> 
@@ -64,11 +65,11 @@ export class CategoryChangeFormComponent {
   public vm = model.required<CategoryChangeFormModel>();
   public membershipCategory = input.required<CategoryListModel>();
 
-  protected name = computed(() => this.vm().memberName ?? ''); 
-  protected orgName = computed(() => this.vm().orgName ?? '');
+  protected name = computed(() => this.vm().memberName ?? DEFAULT_NAME); 
+  protected orgName = computed(() => this.vm().orgName ?? DEFAULT_NAME);
   protected oldCategory = computed(() => this.vm().membershipCategoryOld ?? '');
   protected newCategory = computed(() => this.vm().membershipCategoryOld ?? '');
-  protected dateOfChange = computed(() => this.vm().dateOfChange ?? '');
+  protected dateOfChange = computed(() => this.vm().dateOfChange ?? DEFAULT_DATE);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

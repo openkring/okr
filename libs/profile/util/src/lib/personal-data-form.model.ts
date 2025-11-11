@@ -1,6 +1,5 @@
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME } from '@bk2/shared-constants';
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
-import { GenderType } from '@bk2/shared-models';
 
 // attributes from PersonModel
 export type PersonalDataFormModel = DeepPartial<{
@@ -8,16 +7,16 @@ export type PersonalDataFormModel = DeepPartial<{
   personKey: string,
   firstName: string,
   lastName: string,
-  gender: GenderType, 
+  gender: string, 
   dateOfBirth: string,
   ssnId: string
 }>;
 
 export const personalDataFormModelShape: DeepRequired<PersonalDataFormModel> = {
-  personKey: '',
-  firstName: '',
-  lastName  : '',
-  gender: GenderType.Male,
-  dateOfBirth: '',
-  ssnId: ''
+  personKey: DEFAULT_KEY,
+  firstName: DEFAULT_NAME,
+  lastName  : DEFAULT_NAME,
+  gender: DEFAULT_GENDER,
+  dateOfBirth: DEFAULT_DATE,
+  ssnId: DEFAULT_ID
 };

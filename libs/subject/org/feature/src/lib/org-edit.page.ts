@@ -5,7 +5,7 @@ import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalo
 
 import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, OrgCollection, OrgType, RoleName } from '@bk2/shared-models';
+import { OrgCollection, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -43,17 +43,21 @@ import { OrgEditStore } from './org-edit.store';
     <ion-content>
       <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [isEditable]="hasRole('memberAdmin')" title="{{ title() }}"/>
       @if(org(); as org) {
-        <bk-org-form [(vm)]="vm" [currentUser]="currentUser()" [orgTags]="orgTags()" (validChange)="formIsValid.set($event)" />
+        <bk-org-form [(vm)]="vm"
+          [currentUser]="currentUser()"
+          [allTags]="tags()"
+          [types]="types()"
+          (validChange)="formIsValid.set($event)" />
 
         <ion-accordion-group value="members" [multiple]="true">
-          <bk-addresses-accordion [parentKey]="orgKey()" [readOnly]="false" [parentModelType]="modelType.Org" [addresses]="addresses()" 
+          <bk-addresses-accordion [parentKey]="orgKey()" [readOnly]="false" parentModelType="org" [addresses]="addresses()" 
             [readOnly]="!hasRole('memberAdmin')" (addressesChanged)="onAddressesChanged()" />
-          <bk-membership-accordion [member]="org" [modelType]="modelType.Org" />
+          <bk-membership-accordion [member]="org" modelType="org" />
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             @if(defaultResource(); as defaultResource) {
-              <bk-ownerships-accordion [owner]="org" [ownerModelType]="modelType.Org" [defaultResource]="defaultResource" />
+              <bk-ownerships-accordion [owner]="org" ownerModelType="org" [defaultResource]="defaultResource" />
               <!--
-              <bk-reservations-accordion [reserver]="org" [reserverModelType]="modelType.Org" [defaultResource]="defaultResource" />
+              <bk-reservations-accordion [reserver]="org" reserverModelType="org" [defaultResource]="defaultResource" />
             -->
             }
             <bk-members-accordion [orgKey]="orgKey()" />
@@ -84,14 +88,13 @@ export class OrgEditPageComponent {
   protected defaultResource = computed(() => this.orgEditStore.defaultResource());
   protected addresses = computed(() => this.orgEditStore.addresses());
   public vm = linkedSignal(() => convertOrgToForm(this.org()));
-  protected path = computed(() => getDocumentStoragePath(this.orgEditStore.tenantId(), ModelType.Org, this.org()?.bkey));
-  protected avatarKey = computed(() => `${ModelType.Org}.${this.orgKey()}`);
+  protected path = computed(() => getDocumentStoragePath(this.orgEditStore.tenantId(), 'org', this.org()?.bkey));
+  protected avatarKey = computed(() => `org.${this.orgKey()}`);
   protected title = computed(() => this.org()?.name ?? '');
-  protected orgTags = computed(() => this.orgEditStore.getOrgTags());
+  protected tags = computed(() => this.orgEditStore.getOrgTags());
+  protected types = computed(() => this.orgEditStore.appStore.getCategory('org_type'));
 
   protected formIsValid = signal(false);
-  protected modelType = ModelType;
-  protected orgType = OrgType;
   protected orgCollection = OrgCollection;
 
   constructor() {
@@ -112,7 +115,7 @@ export class OrgEditPageComponent {
     const _org = this.org();
     if (!_org) return;
     const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.tenantId], ModelType.Org, _org.bkey, _file.name);
+    const _avatar = newAvatarModel([this.env.tenantId], 'org', _org.bkey, _file.name);
     const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
 
     if (_downloadUrl) {

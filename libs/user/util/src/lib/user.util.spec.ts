@@ -59,8 +59,8 @@ describe('User Utils', () => {
     user.personSortCriteria = PersonSortCriteria.Firstname;
     user.newsDelivery = DeliveryType.EmailAttachment;
     user.invoiceDelivery = DeliveryType.EmailAttachment;
-    user.usage_images = PrivacyUsage.Protected;
-    user.usage_dateOfBirth = PrivacyUsage.Restricted;
+    user.usageImages = PrivacyUsage.Protected;
+    user.usageDateOfBirth = PrivacyUsage.Restricted;
   });
 
   describe('Roles functions', () => {
@@ -102,8 +102,8 @@ describe('User Utils', () => {
 
     it('convertUserToPrivacyForm should convert user to privacy form model', () => {
       const form = convertUserToPrivacyForm(user);
-      expect(form.usage_images).toBe(PrivacyUsage.Protected);
-      expect(form.usage_dateOfBirth).toBe(PrivacyUsage.Restricted);
+      expect(form.usageImages).toBe(PrivacyUsage.Protected);
+      expect(form.usageDateOfBirth).toBe(PrivacyUsage.Restricted);
     });
 
     it('convertAuthFormToUser should update user from auth form model', () => {
@@ -144,9 +144,17 @@ describe('User Utils', () => {
     });
 
     it('convertPrivacyFormToUser should update user from privacy form model', () => {
-      const form: UserPrivacyFormModel = { usage_images: PrivacyUsage.Public };
+      const form: UserPrivacyFormModel = {
+        usageImages: PrivacyUsage.Public,
+        usageDateOfBirth: PrivacyUsage.Public,
+        usagePostalAddress: PrivacyUsage.Public,
+        usageEmail: PrivacyUsage.Public,
+        usagePhone: PrivacyUsage.Public,
+        usageName: PrivacyUsage.Public,
+        srvEmail: false
+      };
       const updatedUser = convertPrivacyFormToUser(form, user);
-      expect(updatedUser.usage_images).toBe(PrivacyUsage.Public);
+      expect(updatedUser.usageImages).toBe(PrivacyUsage.Public);
     });
   });
 

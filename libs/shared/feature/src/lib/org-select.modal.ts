@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ModelType, OrgModel, UserModel } from '@bk2/shared-models';
+import { OrgModel, UserModel } from '@bk2/shared-models';
 import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -37,7 +37,7 @@ import { OrgSelectStore } from './org-select.store';
             <ion-list lines="none">
               <ion-item class="item" (click)="select(org)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ modelType.Org + '.' + org.bkey | avatar | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'org.' + org.bkey | avatar | async }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ org.name }}</ion-label>
               </ion-item>
@@ -59,8 +59,6 @@ export class OrgSelectModalComponent {
   protected orgs = computed(() => this.orgSelectStore.orgs() ?? []);
   protected selectedOrgsCount = computed(() => this.filteredOrgs().length);
   protected isLoading = computed(() => this.orgSelectStore.isLoading());
-
-  protected modelType = ModelType;
 
   constructor() {
     effect(() => {

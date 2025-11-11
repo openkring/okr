@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { LocationModel, ModelType, UserModel } from '@bk2/shared-models';
+import { LocationModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
 import { LocationFormComponent } from '@bk2/location-ui';
@@ -25,7 +25,11 @@ import { convertFormToLocation, convertLocationToForm, getLocationTitle } from '
         <bk-change-confirmation (okClicked)="save()" />
       } 
     <ion-content>
-      <bk-location-form [(vm)]="vm" [currentUser]="currentUser()" [locationTags]="locationTags()" (validChange)="formIsValid.set($event)" />
+      <bk-location-form [(vm)]="vm" 
+        [currentUser]="currentUser()"
+        [types]="types()"
+        [allTags]="tags()"
+        (validChange)="formIsValid.set($event)" />
     </ion-content>
   `
 })
@@ -37,7 +41,8 @@ export class LocationEditModalComponent {
   public currentUser = input<UserModel | undefined>();
   protected title = computed(() => getLocationTitle(this.location().bkey));
   protected vm = linkedSignal(() => convertLocationToForm(this.location()));
-  protected locationTags = computed(() => this.appStore.getTags(ModelType.Location));
+  protected tags = computed(() => this.appStore.getTags('location'));
+  protected types = computed(() => this.appStore.getCategory('location_type'));
 
   protected formIsValid = signal(false);
 

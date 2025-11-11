@@ -27,10 +27,8 @@ import { PersonNewStore } from './person-new.store';
     }
     <ion-content>
       <bk-person-new-form [(vm)]="vm"
-        [currentUser]="currentUser()"
         [priv]="priv()"
         [membershipCategories]="mcat()"
-        [personTags]="tags()"
         (validChange)="onValidChange($event)" />
     </ion-content>
   `
@@ -45,7 +43,6 @@ export class PersonNewModalComponent {
   protected priv = computed(() => this.personNewStore.privacySettings());
   protected currentUser = computed(() => this.personNewStore.currentUser());
   protected mcat = computed(() => this.personNewStore.membershipCategory());
-  protected tags = computed(() => this.personNewStore.getTags());
 
   protected formIsValid = signal(false);
 

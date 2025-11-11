@@ -1,5 +1,5 @@
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { GenderType, PersonalRelModel, PersonalRelType, PersonModel, UserModel } from '@bk2/shared-models';
+import { DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { PersonalRelModel, PersonModel, UserModel } from '@bk2/shared-models';
 import { addIndexElement, die, getTodayStr } from '@bk2/shared-util-core';
 import { PersonalRelFormModel } from './personal-rel-form.model';
 
@@ -7,22 +7,22 @@ import { PersonalRelNewFormModel } from './personal-rel-new-form.model';
 
 export function newPersonalRelFormModel(): PersonalRelFormModel {
   return {
-    bkey: '',
-    tags: '',
-    notes: '',
+    bkey: DEFAULT_KEY,
+    tags: DEFAULT_TAGS,
+    notes: DEFAULT_NOTES,
 
-    subjectKey: '',
-    subjectFirstName: '',
-    subjectLastName: '',
-    subjectGender: GenderType.Male,
+    subjectKey: DEFAULT_KEY,
+    subjectFirstName: DEFAULT_NAME,
+    subjectLastName: DEFAULT_NAME,
+    subjectGender: DEFAULT_GENDER,
 
-    objectKey: '',
-    objectFirstName: '',
-    objectLastName: '',
-    objectGender: GenderType.Male,
+    objectKey: DEFAULT_KEY,
+    objectFirstName: DEFAULT_NAME,
+    objectLastName: DEFAULT_NAME,
+    objectGender: DEFAULT_GENDER,
 
-    type: PersonalRelType.Partner,
-    label: '',
+    type: DEFAULT_PERSONAL_REL,
+    label: DEFAULT_LABEL,
     validFrom: getTodayStr(),
     validTo: END_FUTURE_DATE_STR,
   };
@@ -31,22 +31,22 @@ export function newPersonalRelFormModel(): PersonalRelFormModel {
 export function convertPersonalRelToForm(personalRel: PersonalRelModel | undefined): PersonalRelFormModel {
   if (!personalRel) return newPersonalRelFormModel();
   return {
-    bkey: personalRel.bkey ?? '',
-    tags: personalRel.tags ?? '',
-    notes: personalRel.notes ?? '',
+    bkey: personalRel.bkey ?? DEFAULT_KEY,
+    tags: personalRel.tags ?? DEFAULT_TAGS,
+    notes: personalRel.notes ?? DEFAULT_NOTES,
 
-    subjectKey: personalRel.subjectKey ?? '',
-    subjectFirstName: personalRel.subjectFirstName ?? '',
-    subjectLastName: personalRel.subjectLastName ?? '',
-    subjectGender: personalRel.subjectGender ?? GenderType.Male,
+    subjectKey: personalRel.subjectKey ?? DEFAULT_KEY,
+    subjectFirstName: personalRel.subjectFirstName ?? DEFAULT_NAME,
+    subjectLastName: personalRel.subjectLastName ?? DEFAULT_NAME,
+    subjectGender: personalRel.subjectGender ?? DEFAULT_GENDER,
 
-    objectKey: personalRel.objectKey ?? '',
-    objectFirstName: personalRel.objectFirstName ?? '',
-    objectLastName: personalRel.objectLastName ?? '',
-    objectGender: personalRel.objectGender ?? GenderType.Male,
+    objectKey: personalRel.objectKey ?? DEFAULT_KEY,
+    objectFirstName: personalRel.objectFirstName ?? DEFAULT_NAME,
+    objectLastName: personalRel.objectLastName ?? DEFAULT_NAME,
+    objectGender: personalRel.objectGender ?? DEFAULT_GENDER,
 
-    type: personalRel.type ?? PersonalRelType.Partner,
-    label: personalRel.label ?? '',
+    type: personalRel.type ?? DEFAULT_PERSONAL_REL,
+    label: personalRel.label ?? DEFAULT_LABEL,
     validFrom: personalRel.validFrom ?? getTodayStr(),
     validTo: personalRel.validTo ?? END_FUTURE_DATE_STR,
   };
@@ -61,23 +61,23 @@ export function convertPersonalRelToForm(personalRel: PersonalRelModel | undefin
 export function convertFormToPersonalRel(personalRel: PersonalRelModel | undefined, vm: PersonalRelFormModel, tenantId: string): PersonalRelModel {
   if (!personalRel) {
     personalRel = new PersonalRelModel(tenantId);
-    personalRel.bkey = vm.bkey ?? '';
+    personalRel.bkey = vm.bkey ?? DEFAULT_KEY;
   }
-  personalRel.tags = vm.tags ?? '';
-  personalRel.notes = vm.notes ?? '';
+  personalRel.tags = vm.tags ?? DEFAULT_TAGS;
+  personalRel.notes = vm.notes ?? DEFAULT_NOTES;
 
-  personalRel.subjectKey = vm.subjectKey ?? '';
-  personalRel.subjectFirstName = vm.subjectFirstName ?? '';
-  personalRel.subjectLastName = vm.subjectLastName ?? '';
-  personalRel.subjectGender = vm.subjectGender ?? GenderType.Male;
+  personalRel.subjectKey = vm.subjectKey ?? DEFAULT_KEY;
+  personalRel.subjectFirstName = vm.subjectFirstName ?? DEFAULT_NAME;
+  personalRel.subjectLastName = vm.subjectLastName ?? DEFAULT_NAME;
+  personalRel.subjectGender = vm.subjectGender ?? DEFAULT_GENDER;
 
-  personalRel.objectKey = vm.objectKey ?? '';
-  personalRel.objectFirstName = vm.objectFirstName ?? '';
-  personalRel.objectLastName = vm.objectLastName ?? '';
-  personalRel.objectGender = vm.objectGender ?? GenderType.Male;
+  personalRel.objectKey = vm.objectKey ?? DEFAULT_KEY;
+  personalRel.objectFirstName = vm.objectFirstName ?? DEFAULT_NAME;
+  personalRel.objectLastName = vm.objectLastName ?? DEFAULT_NAME;
+  personalRel.objectGender = vm.objectGender ?? DEFAULT_GENDER;
 
-  personalRel.type = vm.type ?? PersonalRelType.Partner;
-  personalRel.label = vm.label ?? '';
+  personalRel.type = vm.type ?? DEFAULT_PERSONAL_REL;
+  personalRel.label = vm.label ?? DEFAULT_LABEL;
   personalRel.validFrom = vm.validFrom ?? getTodayStr();
   personalRel.validTo = vm.validTo ?? END_FUTURE_DATE_STR;
   return personalRel;
@@ -87,8 +87,8 @@ export function convertPersonsToNewForm(subject: PersonModel, object: PersonMode
   if (!currentUser) die('personal-rel.util.convertPersonsToNewForm: currentUser is mandatory');
 
   return {
-    tags: '',
-    notes: '',
+    tags: DEFAULT_TAGS,
+    notes: DEFAULT_NOTES,
     subjectKey: subject.bkey,
     subjectFirstName: subject.firstName,
     subjectLastName: subject.lastName,
@@ -97,8 +97,8 @@ export function convertPersonsToNewForm(subject: PersonModel, object: PersonMode
     objectFirstName: object.firstName,
     objectLastName: object.lastName,
     objectGender: object.gender,
-    type: PersonalRelType.Partner,
-    label: '',
+    type: DEFAULT_PERSONAL_REL,
+    label: DEFAULT_LABEL,
     validFrom: getTodayStr(),
     validTo: END_FUTURE_DATE_STR,
   };
@@ -108,19 +108,19 @@ export function convertFormToNewPersonalRel(vm: PersonalRelFormModel, tenantId: 
   const _personalRel = new PersonalRelModel(tenantId);
   _personalRel.tenants = [tenantId];
   _personalRel.isArchived = false;
-  _personalRel.tags = vm.tags ?? '';
-  _personalRel.notes = vm.notes ?? '';
+  _personalRel.tags = vm.tags ?? DEFAULT_TAGS;
+  _personalRel.notes = vm.notes ?? DEFAULT_NOTES;
 
-  _personalRel.subjectKey = vm.subjectKey ?? '';
-  _personalRel.subjectFirstName = vm.subjectFirstName ?? '';
-  _personalRel.subjectLastName = vm.subjectLastName ?? '';
-  _personalRel.subjectGender = vm.subjectGender ?? GenderType.Male;
-  _personalRel.objectKey = vm.objectKey ?? '';
-  _personalRel.objectFirstName = vm.objectFirstName ?? '';
-  _personalRel.objectLastName = vm.objectLastName ?? '';
-  _personalRel.objectGender = vm.objectGender ?? GenderType.Male;
-  _personalRel.type = vm.type ?? PersonalRelType.Partner;
-  _personalRel.label = vm.label ?? '';
+  _personalRel.subjectKey = vm.subjectKey ?? DEFAULT_KEY;
+  _personalRel.subjectFirstName = vm.subjectFirstName ?? DEFAULT_NAME;
+  _personalRel.subjectLastName = vm.subjectLastName ?? DEFAULT_NAME;
+  _personalRel.subjectGender = vm.subjectGender ?? DEFAULT_GENDER;
+  _personalRel.objectKey = vm.objectKey ?? DEFAULT_KEY;
+  _personalRel.objectFirstName = vm.objectFirstName ?? DEFAULT_NAME;
+  _personalRel.objectLastName = vm.objectLastName ?? DEFAULT_NAME;
+  _personalRel.objectGender = vm.objectGender ?? DEFAULT_GENDER;
+  _personalRel.type = vm.type ?? DEFAULT_PERSONAL_REL;
+  _personalRel.label = vm.label ?? DEFAULT_LABEL;
   _personalRel.validFrom = vm.validFrom ?? getTodayStr();
   _personalRel.validTo = vm.validTo ?? END_FUTURE_DATE_STR;
   return _personalRel;
