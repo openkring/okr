@@ -1,0 +1,22 @@
+import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+export type WorkrelNewFormModel = DeepPartial<{
+    tags: string;
+    notes: string;
+    subjectKey: string;
+    subjectName1: string;
+    subjectName2: string;
+    subjectType: string;
+    objectKey: string;
+    objectName: string;
+    objectType: string;
+    type: string;
+    label: string;
+    validFrom: string;
+    validTo: string;
+    price: number;
+    currency: string;
+    periodicity: string;
+    order: number;
+    state: string;
+}>;
+export declare const workrelNewFormModelShape: DeepRequired<WorkrelNewFormModel>;

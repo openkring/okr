@@ -1,0 +1,24 @@
+{
+  "name": "relationship-workrel-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/workrel/data-access/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:workrel", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/workrel/data-access",
+        "main": "libs/relationship/workrel/data-access/src/index.ts",
+        "tsConfig": "libs/relationship/workrel/data-access/tsconfig.lib.json",
+        "assets": ["libs/relationship/workrel/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

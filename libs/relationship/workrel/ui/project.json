@@ -1,0 +1,24 @@
+{
+  "name": "relationship-workrel-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/workrel/ui/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:workrel", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/workrel/ui",
+        "main": "libs/relationship/workrel/ui/src/index.ts",
+        "tsConfig": "libs/relationship/workrel/ui/tsconfig.lib.json",
+        "assets": ["libs/relationship/workrel/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

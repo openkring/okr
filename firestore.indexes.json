@@ -1135,7 +1135,7 @@
       ]
     },
     {
-      "collectionGroup": "working-rels",
+      "collectionGroup": "workrels",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -1153,7 +1153,7 @@
       ]
     },
     {
-      "collectionGroup": "working-rels",
+      "collectionGroup": "workrels",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -1171,7 +1171,7 @@
       ]
     },
     {
-      "collectionGroup": "working-rels",
+      "collectionGroup": "workrels",
       "queryScope": "COLLECTION",
       "fields": [
         {
