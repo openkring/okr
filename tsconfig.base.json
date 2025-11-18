@@ -8,6 +8,8 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
     "esModuleInterop": true,
     "target": "es2020",
     "module": "esnext",
@@ -132,6 +134,9 @@
       "@bk2/user-util": ["libs/user/util/src/index.ts"]
     },
     "types": ["node", "vitest"]
+  },
+  "angularCompilerOptions": {
+    "strictTemplates": true
   },
   "exclude": ["node_modules", "tmp"]
 }
