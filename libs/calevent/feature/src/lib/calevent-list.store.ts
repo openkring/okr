@@ -101,15 +101,15 @@ export const CalEventListStore = signalStore(
 
       /******************************* actions *************************************** */
       async add(): Promise<void> {
-        const _calEvent = new CalEventModel(store.appStore.tenantId());
-        const _modal = await store.modalController.create({
+        const calEvent = new CalEventModel(store.appStore.tenantId());
+        const modal = await store.modalController.create({
           component: CalEventEditModalComponent,
           componentProps: {
-            event: _calEvent
+            calevent: calEvent
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onDidDismiss();
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm') {
           if (isCalEvent(data, store.appStore.tenantId())) {
             await store.calEventService.create(data, store.currentUser());
@@ -118,14 +118,14 @@ export const CalEventListStore = signalStore(
       },
 
       async edit(calEvent: CalEventModel): Promise<void> {
-        const _modal = await store.modalController.create({
+        const modal = await store.modalController.create({
           component: CalEventEditModalComponent,
           componentProps: {
-            event: calEvent
+            calevent: calEvent
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onDidDismiss();
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm') {
           if (isCalEvent(data, store.appStore.tenantId())) {
             await store.calEventService.update(data, store.currentUser());

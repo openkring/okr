@@ -59,6 +59,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
 
   public section = input.required<SectionModel>();
+  
   protected mapId: string;
   protected locationError: string | null = null;
 

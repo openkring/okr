@@ -117,8 +117,8 @@ export const PageDetailStore = signalStore(
        * Add a new section to the page.
        */
       async addSection(): Promise<void> {
-        const _page = structuredClone(store.page() ?? die('PageDetailStore.addSection: page is mandatory.'));
-        const _modal = await store.modalController.create({
+        const page = structuredClone(store.page() ?? die('PageDetailStore.addSection: page is mandatory.'));
+        const modal = await store.modalController.create({
           component: CardSelectModalComponent,
           cssClass: 'full-modal',
           componentProps: {
@@ -126,14 +126,14 @@ export const PageDetailStore = signalStore(
             slug: 'section'
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onWillDismiss();
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm') { // data = selected Category
           const _section = createSection(data, store.tenantId());
           const _sectionKey = await store.sectionService.create(_section);
           if (_sectionKey) {
-            _page.sections.push(_sectionKey);
-            store.pageService.update(_page, store.currentUser());
+            page.sections.push(_sectionKey);
+            store.pageService.update(page, store.currentUser());
             store.pageResource.reload();
           }
         }
@@ -144,22 +144,27 @@ export const PageDetailStore = signalStore(
        * @returns 
        */
       async selectSection(): Promise<void> {
-        const _page = store.page() ?? die('PageDetailStore.selectSection: page is mandatory.');
-        const _modal = await store.modalController.create({
+        const page = store.page() ?? die('PageDetailStore.selectSection: page is mandatory.');
+        const modal = await store.modalController.create({
           component: SectionSelectModalComponent,
           cssClass: 'full-modal'
         });
-        _modal.present();
-        const { data, role } = await _modal.onWillDismiss();
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm') { // data = selected sectionKey
-          _page.sections.push(data);
-          store.pageService.update(_page, store.currentUser());
+          page.sections.push(data);
+          store.pageService.update(page, store.currentUser());
           store.pageResource.reload();
         }
       },
 
       async export(type: string): Promise<void> {
         console.log(`PageDetailStore.export(${type}) is not yet implemented.`);
+      },
+
+      async print(): Promise<void> {
+        store.page() ?? die('PageDetailStore.print: page is mandatory.');
+        window.print();
       }
     }
   }),

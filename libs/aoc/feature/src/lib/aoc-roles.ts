@@ -11,6 +11,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { AvatarDisplayComponent, ChipsComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
 import { AocRolesStore } from './aoc-roles.store';
 import { getCategoryItemNames } from '@bk2/shared-util-core';
+import { AvatarInfo } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-aoc-roles',
@@ -59,7 +60,7 @@ import { getCategoryItemNames } from '@bk2/shared-util-core';
                 <ion-label>{{ person.bkey }}</ion-label>
               </ion-col>
               <ion-col size="3">
-                <ion-label>{{ person.fav_email }}</ion-label>
+                <ion-label>{{ person.favEmail }}</ion-label>
               </ion-col>
             </ion-row>
             } @if(selectedUser(); as user) {
@@ -226,7 +227,7 @@ import { getCategoryItemNames } from '@bk2/shared-util-core';
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoleNames()" (changed)="onRoleChange($event)" />
+      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoleNames()" [readOnly]="false" (changed)="onRoleChange($event)" />
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@aoc.roles.chat.title' | translate | async }}</ion-card-title>
@@ -297,7 +298,7 @@ export class AocRolesComponent {
         name2: _person.lastName,
         label: '',
         modelType: 'person',
-      };
+      } as AvatarInfo;
     }
     return undefined;
   });
