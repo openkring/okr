@@ -26,6 +26,7 @@
     {"path": "../../shared/util-core/tsconfig.lib.json"},
     {"path": "../../cms/menu/feature/tsconfig.lib.json"},
     {"path": "../../comment/feature/tsconfig.lib.json"},
+    {"path": "../../category/util/tsconfig.lib.json"},
     {"path": "../../resource/ui/tsconfig.lib.json"},
     {"path": "../../resource/util/tsconfig.lib.json"},
     {"path": "../../resource/data-access/tsconfig.lib.json"}
