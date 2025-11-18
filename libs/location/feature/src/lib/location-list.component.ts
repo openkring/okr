@@ -4,7 +4,7 @@ import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonB
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { LocationModel, RoleName } from '@bk2/shared-models';
-import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
@@ -17,7 +17,7 @@ import { LocationListStore } from './location-list.store';
   selector: 'bk-location-all-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, CategoryNamePipe, SvgIconPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe,
     SpinnerComponent, EmptyListComponent, MenuComponent, ListFilterComponent,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
     IonTitle, IonMenuButton, IonContent, IonItem, IonBackdrop,
@@ -90,7 +90,7 @@ import { LocationListStore } from './location-list.store';
         @for(location of filteredLocations(); track location.bkey) {
           <ion-item (click)="showActions(location)">
             <ion-label>{{ location.name }}</ion-label>
-            <ion-label>{{ location.type | categoryName:locationTypes }}</ion-label>
+            <ion-label>{{ location.type }}</ion-label>
           </ion-item>
         }
       </ion-list> 

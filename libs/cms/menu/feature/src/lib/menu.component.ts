@@ -165,7 +165,7 @@ export class MenuComponent {
       case 'navigate':
         await navigateByUrl(router, menuItem.url, menuItem.data);
         break;
-      case 'callFunction':
+      case 'call':
         this.popoverController.dismiss(menuItem.url);
         break;
       default:

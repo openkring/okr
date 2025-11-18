@@ -4,7 +4,7 @@ import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonBut
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TaskModel } from '@bk2/shared-models';
-import { CategoryAbbreviationPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared-util-core';
@@ -27,7 +27,7 @@ import { TaskListStore } from './task-list.store';
   selector: 'bk-task-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, CategoryAbbreviationPipe, PrettyDatePipe, AvatarPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe, AvatarPipe,
     EmptyListComponent, ListFilterComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg, IonTextarea, IonChip, IonPopover
@@ -105,7 +105,7 @@ import { TaskListStore } from './task-list.store';
                   }
                 }
               </div>
-              <ion-label class="name" (click)="edit(undefined, task)">{{ task.name }}</ion-label>
+              <ion-label class="name" (click)="showActions(task)">{{ task.name }}</ion-label>
               @if(task.dueDate.length > 0) {
                 <ion-label>{{ task.dueDate | prettyDate }}</ion-label>
               }
@@ -115,7 +115,7 @@ import { TaskListStore } from './task-list.store';
                 </ion-avatar>
               }
               <ion-label class="ion-hide-md-down ion-text-end">
-                {{task.priority | categoryAbbreviation:types}} {{task.importance | categoryAbbreviation:importances}}
+                {{task.priority}} {{task.importance}}
               </ion-label> 
             </ion-item>
           }

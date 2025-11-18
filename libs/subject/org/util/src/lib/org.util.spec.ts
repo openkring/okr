@@ -29,13 +29,13 @@ describe('Org Utils', () => {
   describe('OrgFormModel functions', () => {
     it('newOrgFormModel should return a default form model', () => {
       const formModel = newOrgFormModel();
-      expect(formModel.orgName).toBe('');
+      expect(formModel.name).toBe('');
     });
 
     it('convertOrgToForm should convert an OrgModel to an OrgFormModel', () => {
       const formModel = convertOrgToForm(org);
       expect(formModel.bkey).toBe('org-key-1');
-      expect(formModel.orgName).toBe('Test Org');
+      expect(formModel.name).toBe('Test Org');
       expect(formModel.tags).toBe('test,org');
     });
 
@@ -47,7 +47,7 @@ describe('Org Utils', () => {
     it('convertFormToOrg should update an existing OrgModel', () => {
       const formModel: OrgFormModel = {
         bkey: 'org-key-1',
-        orgName: 'Updated Org Name',
+        name: 'Updated Org Name',
         tags: 'updated,tags',
         notes: 'Updated notes.',
       };
@@ -58,7 +58,7 @@ describe('Org Utils', () => {
     });
 
     it('convertFormToOrg should create a new OrgModel if one is not provided', () => {
-      const formModel: OrgFormModel = { orgName: 'New Org' };
+      const formModel: OrgFormModel = { name: 'New Org' };
       const newOrg = convertFormToOrg(undefined, formModel, tenantId);
       expect(newOrg).toBeInstanceOf(OrgModel);
       expect(newOrg.name).toBe('New Org');
@@ -69,12 +69,12 @@ describe('Org Utils', () => {
   describe('OrgNewFormModel functions', () => {
     it('createNewOrgFormModel should return a default new-org form model', () => {
       const formModel = createNewOrgFormModel();
-      expect(formModel.orgName).toBe('');
+      expect(formModel.name).toBe('');
     });
 
     it('convertFormToNewOrg should create a new OrgModel from a OrgNewFormModel', () => {
       const formModel: OrgNewFormModel = {
-        orgName: 'Brand New Org',
+        name: 'Brand New Org',
         bexioId: 'BNO1',
         notes: 'Notes for the new org',
       };

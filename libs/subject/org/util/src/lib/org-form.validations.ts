@@ -9,7 +9,7 @@ export const orgFormValidations = staticSuite((model: OrgFormModel, field?: stri
   if (field) only(field);
 
   stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
-  stringValidations('orgName', model.orgName, SHORT_NAME_LENGTH, 3, true);
+  stringValidations('orgName', model.name, SHORT_NAME_LENGTH, 3, true);
   stringValidations('type', model.type, WORD_LENGTH);
   dateValidations('dateOfFoundation', model.dateOfFoundation);
   dateValidations('dateOfLiquidation', model.dateOfLiquidation);

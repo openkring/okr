@@ -3,7 +3,7 @@ import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
 export type OrgFormModel = DeepPartial<{
   bkey: string;
-  orgName: string;
+  name: string;
   type: string;
   dateOfFoundation: string;
   dateOfLiquidation: string;
@@ -16,7 +16,7 @@ export type OrgFormModel = DeepPartial<{
 
 export const orgFormModelShape: DeepRequired<OrgFormModel> = {
   bkey: DEFAULT_KEY,
-  orgName: DEFAULT_NAME,
+  name: DEFAULT_NAME,
   type: DEFAULT_ORG_TYPE,
   dateOfFoundation: DEFAULT_DATE,
   dateOfLiquidation: DEFAULT_DATE,

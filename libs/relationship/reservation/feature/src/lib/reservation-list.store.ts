@@ -18,7 +18,7 @@ export type ReservationListState = {
   resourceId: string;
   searchTerm: string;
   selectedTag: string;
-  selectedType: string;
+  selectedReason: string;
   selectedYear: number;
   selectedState: string;
 };
@@ -27,7 +27,7 @@ const initialState: ReservationListState = {
   resourceId: '',
   searchTerm: '',
   selectedTag: '',
-  selectedType: 'all',
+  selectedReason: 'all',
   selectedYear: parseInt(getTodayStr(DateFormat.Year)),
   selectedState: 'all'
 };
@@ -75,7 +75,7 @@ export const ReservationListStore = signalStore(
         return state.reservationsResource.value()?.filter((reservation: ReservationModel) =>
           nameMatches(reservation.index, state.searchTerm()) &&
           yearMatches(reservation.startDate, state.selectedYear() + '') &&
-          nameMatches(reservation.resourceType, state.selectedType()) &&
+          nameMatches(reservation.reservationReason, state.selectedReason()) &&
           nameMatches(reservation.reservationState, state.selectedState()) &&
           chipMatches(reservation.tags, state.selectedTag()))
       }),
@@ -98,8 +98,8 @@ export const ReservationListStore = signalStore(
         patchState(store, { selectedTag });
       },
 
-      setSelectedType(selectedType: string) {
-        patchState(store, { selectedType });
+      setSelectedReason(selectedReason: string) {
+        patchState(store, { selectedReason });
       },
 
       setSelectedYear(selectedYear: number) {
@@ -116,22 +116,26 @@ export const ReservationListStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      async add(): Promise<void> {
-        const _person = store.currentPerson();
-        const _resource = store.defaultResource();
-        if (_person && _resource) {
-          await store.reservationModalsService.add(_person, 'person', _resource);
+      async add(readOnly = true): Promise<void> {
+        if (readOnly === false) {
+          const _person = store.currentPerson();
+          const _resource = store.defaultResource();
+          if (_person && _resource) {
+            await store.reservationModalsService.add(_person, 'person', _resource);
+            store.reservationsResource.reload();
+          }
+        }
+      },
+
+      async edit(reservation?: ReservationModel, readOnly = true): Promise<void> {
+        if (readOnly === false) {
+          await store.reservationModalsService.edit(reservation);
           store.reservationsResource.reload();
         }
       },
 
-      async edit(reservation?: ReservationModel): Promise<void> {
-        await store.reservationModalsService.edit(reservation);
-        store.reservationsResource.reload();
-      },
-
-      async end(reservation?: ReservationModel): Promise<void> {
-        if (reservation) {
+      async end(reservation?: ReservationModel, readOnly = true): Promise<void> {
+        if (reservation && readOnly === false) {
           const _date = await selectDate(store.modalController);
           if (!_date) return;
           const _endDate = convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false);
@@ -140,8 +144,8 @@ export const ReservationListStore = signalStore(
         }
       },
 
-      async delete(reservation?: ReservationModel): Promise<void> {
-        if (reservation) {
+      async delete(reservation?: ReservationModel, readOnly = true): Promise<void> {
+        if (reservation && readOnly === false) {
           await store.reservationService.delete(reservation, store.appStore.currentUser());
           store.reservationsResource.reload();
         }

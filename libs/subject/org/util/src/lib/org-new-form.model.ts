@@ -2,7 +2,7 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEF
 import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
 export type OrgNewFormModel = DeepPartial<{
-  orgName: string,
+  name: string,
   type: string,
   dateOfFoundation: string,
   dateOfLiquidation: string,
@@ -22,7 +22,7 @@ export type OrgNewFormModel = DeepPartial<{
 }>;
 
 export const orgNewFormModelShape: DeepRequired<OrgNewFormModel> = {
-  orgName: DEFAULT_NAME,
+  name: DEFAULT_NAME,
   type: DEFAULT_ORG_TYPE,
   dateOfFoundation: DEFAULT_DATE,
   dateOfLiquidation: DEFAULT_DATE,

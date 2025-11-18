@@ -47,11 +47,9 @@ import { CalEventListStore } from './calevent-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="calEventTags()"
-      [type]="calEventTypes()"
+      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+      [type]="types()" (typeChanged)="onTypeChange($event)"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
-      (typeChanged)="onTypeChange($event)"
     />
 
     <!-- list header -->
@@ -101,9 +99,9 @@ export class CalEventListComponent {
   protected calEventsCount = computed(() => this.calEventListStore.calEventsCount());
   protected selectedCalEventsCount = computed(() => this.filteredCalEvents().length);
   protected isLoading = computed(() => this.calEventListStore.isLoading());
-  protected calEventTags = computed(() => this.calEventListStore.getTags());
+  protected tags = computed(() => this.calEventListStore.getTags());
   protected popupId = computed(() => `c_calevent_${this.listId}`);
-  protected calEventTypes = computed(() => this.calEventListStore.appStore.getCategory('calevent_type'));
+  protected types = computed(() => this.calEventListStore.appStore.getCategory('calevent_type'));
   private currentUser = computed(() => this.calEventListStore.appStore.currentUser());
 
   private imgixBaseUrl = this.calEventListStore.appStore.env.services.imgixBaseUrl;

@@ -4,10 +4,11 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCo
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ResourceModel, RoleName } from '@bk2/shared-models';
-import { CategoryNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
+import { getCategoryIcon } from '@bk2/category-util';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
@@ -17,7 +18,7 @@ import { ResourceListStore } from './resource-list.store';
   selector: 'bk-rowing-boat-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, CategoryNamePipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe,
     MenuComponent, ListFilterComponent,
     SpinnerComponent, EmptyListComponent,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList, IonPopover, IonIcon, IonItem, IonLabel, IonContent
@@ -73,9 +74,9 @@ import { ResourceListStore } from './resource-list.store';
       <ion-list lines="inset">
         @for(boat of filteredBoats(); track $index) {
           <ion-item class="ion-text-wrap" (click)="showActions(boat)">
-            <ion-icon slot="start" color="primary" src="{{ getIcon(boat) | svgIcon }}" />
+            <ion-icon slot="start" color="primary" src="{{ getCategoryIcon(boat) | svgIcon }}" />
             <ion-label>{{ boat.name }}</ion-label>
-            <ion-label>{{ boat.subType | categoryName:boatTypes }}</ion-label>
+            <ion-label>{{ boat.subType }}</ion-label>
             <ion-label class="ion-hide-md-down">{{ boat?.load }}</ion-label>
           </ion-item>
         }
@@ -101,6 +102,7 @@ export class RowingBoatListComponent {
   protected types = computed(() => this.resourceListStore.appStore.getCategory('rboat_type'));
   
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
+  private cat = this.resourceListStore.appStore.getCategory('rboat_type');
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -179,6 +181,10 @@ export class RowingBoatListComponent {
   /******************************** helpers ******************************************* */
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.resourceListStore.currentUser());
+  }
+
+  protected getCategoryIcon(boat: ResourceModel): string {
+    return getCategoryIcon(this.cat, boat.subType);
   }
 }
 

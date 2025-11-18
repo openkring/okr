@@ -2,7 +2,6 @@ import { Component, inject, input, output } from '@angular/core';
 import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetail, ModalController } from '@ionic/angular/standalone';
 
 import { SectionModel } from '@bk2/shared-models';
-import { CategoryNamePipe } from '@bk2/shared-pipes';
 import { HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { arrayMove } from '@bk2/shared-util-core';
 
@@ -13,7 +12,6 @@ import { arrayMove } from '@bk2/shared-util-core';
   selector: 'bk-page-sort-modal',
   standalone: true,
   imports: [ 
-    CategoryNamePipe,
     SpinnerComponent, HeaderComponent,
     IonContent, IonReorderGroup, IonReorder, IonItem
   ],
@@ -25,7 +23,7 @@ import { arrayMove } from '@bk2/shared-util-core';
         <ion-reorder-group disabled="false" (ionItemReorder)="reorder($any($event))">
           @for(section of sections; track section.bkey) {
             <ion-item>              
-              {{ section.name}}  ({{ section.type | categoryName:STS }})
+              {{ section.name}}  ({{ section.type }})
               <ion-reorder slot="start" />
             </ion-item>
           }

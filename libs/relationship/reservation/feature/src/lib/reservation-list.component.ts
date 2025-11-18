@@ -50,7 +50,7 @@ import { ReservationListStore } from './reservation-list.store';
     <!-- search and filters -->
       <bk-list-filter 
         [tags]="tags()" (tagChanged)="onTagSelected($event)"
-        [type]="reasons()" (typeChanged)="onTypeSelected($event)"
+        [type]="reasons()" (typeChanged)="onReasonSelected($event)"
         [years]="years" (yearChanged)="onYearSelected($event)"
         [state]="states()" (stateChanged)="onStateSelected($event)"
         (searchTermChanged)="onSearchtermChange($event)"
@@ -76,7 +76,7 @@ import { ReservationListStore } from './reservation-list.store';
         @for(reservation of filteredReservations(); track $index) {
           <ion-item (click)="showActions(reservation)">
             <ion-avatar slot="start">
-              <ion-img src="{{ 'person.' + reservation.reserverKey | avatar | async }}" alt="Avatar Logo" />
+              <ion-img src="{{ 'person.' + reservation.reserverKey | avatar:'reservation' | async }}" alt="Avatar Logo" />
             </ion-avatar>
             <ion-label>{{getReserverName(reservation)}}</ion-label>
             <ion-label>{{reservation.resourceName}}</ion-label>
@@ -184,8 +184,8 @@ export class ReservationListComponent {
     this.reservationListStore.setSelectedYear(year);
   }
 
-  protected onTypeSelected(type: string): void {
-    this.reservationListStore.setSelectedType(type);
+  protected onReasonSelected(reason: string): void {
+    this.reservationListStore.setSelectedReason(reason);
   }
 
   protected onStateSelected(state: string): void {

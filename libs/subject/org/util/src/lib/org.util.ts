@@ -9,7 +9,7 @@ import { OrgNewFormModel } from './org-new-form.model';
 export function newOrgFormModel(): OrgFormModel {
   return {
     bkey: '',
-    orgName: '',
+    name: '',
     type: 'association',
     dateOfFoundation: '',
     dateOfLiquidation: '',
@@ -25,7 +25,7 @@ export function convertOrgToForm(org?: OrgModel): OrgFormModel {
   if (!org) return {};
   return {
     bkey: org.bkey ?? '',
-    orgName: org.name ?? '',
+    name: org.name ?? '',
     type: org.type ?? 'association',
     dateOfFoundation: org.dateOfFoundation ?? '',
     dateOfLiquidation: org.dateOfLiquidation ?? '',
@@ -40,7 +40,7 @@ export function convertOrgToForm(org?: OrgModel): OrgFormModel {
 export function convertFormToOrg(org: OrgModel | undefined, vm: OrgFormModel, tenantId: string): OrgModel {
   org ??= new OrgModel(tenantId);
   org.bkey = vm.bkey ?? '';
-  org.name = vm.orgName ?? '';
+  org.name = vm.name ?? '';
   org.type = vm.type ?? 'association';
   org.dateOfFoundation = vm.dateOfFoundation ?? '';
   org.dateOfLiquidation = vm.dateOfLiquidation ?? '';
@@ -52,14 +52,10 @@ export function convertFormToOrg(org: OrgModel | undefined, vm: OrgFormModel, te
   return org;
 }
 
-export function getOrgNameByOrgType(orgType?: string): string {
-  return orgType && orgType.length > 0 ? 'orgName.' + orgType : '';
-}
-
 /*-------------------------- NEW ORG --------------------------------*/
 export function createNewOrgFormModel(): OrgNewFormModel {
   return {
-    orgName: '',
+    name: '',
     type: 'association',
     dateOfFoundation: '',
     dateOfLiquidation: '',
@@ -82,7 +78,7 @@ export function createNewOrgFormModel(): OrgNewFormModel {
 export function convertFormToNewOrg(vm: OrgNewFormModel, tenantId: string): OrgModel {
   const org = new OrgModel(tenantId);
   org.bkey = '';
-  org.name = vm.orgName ?? '';
+  org.name = vm.name ?? '';
   org.type = vm.type ?? 'association';
   org.dateOfFoundation = vm.dateOfFoundation ?? '';
   org.dateOfLiquidation = vm.dateOfLiquidation ?? '';

@@ -7,7 +7,7 @@ import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getPropertyValue, isType, warn } from '@bk2/shared-util-core';
 
 import { MenuItemFormModel } from './menu-item-form.model';
-import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@bk2/shared-constants';
+import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@bk2/shared-constants';
 
 export async function menuActionNavigate(router: Router, menuItem: MenuItemModel): Promise<void> {
   await navigateByUrl(router, menuItem.url, menuItem.data);
@@ -47,7 +47,7 @@ export function convertMenuItemToForm(menuItem: MenuItemModel | undefined): Menu
     bkey: menuItem.bkey ?? DEFAULT_KEY,
     name: menuItem.name ?? DEFAULT_NAME,
     index: menuItem.index ?? DEFAULT_INDEX,
-    action: menuItem.action ?? 'navigate',
+    action: menuItem.action ?? DEFAULT_MENU_ACTION,
     url: menuItem.url ?? DEFAULT_URL,
     label: menuItem.label ?? DEFAULT_LABEL,
     icon: menuItem.icon ?? '',
@@ -65,7 +65,7 @@ export function convertFormToMenuItem(menuItem: MenuItemModel | undefined, vm: M
   menuItem ??= new MenuItemModel(tenantId);
   menuItem.name = vm.name ?? DEFAULT_NAME;
   menuItem.bkey = !vm.bkey || vm.bkey.length === 0 ? vm.name ?? DEFAULT_NAME : vm.bkey; // we want to use the name as the key of the menu item in the database
-  menuItem.action = vm.action ?? 'navigate';
+  menuItem.action = vm.action ?? DEFAULT_MENU_ACTION;
   menuItem.url = vm.url ?? DEFAULT_URL;
   menuItem.label = vm.label ?? DEFAULT_LABEL;
   menuItem.icon = vm.icon ?? 'help-circle';
