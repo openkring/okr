@@ -1,14 +1,14 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model, output, signal } from '@angular/core';
-import { IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask } from '@bk2/shared-config';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, getItemLabel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, getItemLabel, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
 
 import { MembershipFormModel, membershipFormModelShape, membershipFormValidations } from '@bk2/relationship-membership-util';
 
@@ -20,7 +20,7 @@ import { MembershipFormModel, membershipFormModelShape, membershipFormValidation
     TranslatePipe, AsyncPipe,
     TextInputComponent, DateInputComponent,
     NumberInputComponent, ChipsComponent, NotesInputComponent,
-    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote
+    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonCard, IonCardContent
   ],
   template: `
   <form scVestForm
@@ -30,86 +30,79 @@ import { MembershipFormModel, membershipFormModelShape, membershipFormValidation
     (dirtyChange)="dirtyChange.set($event)"
     (formValueChange)="onValueChange($event)">
   
-      <ion-grid>
-        <!---------------------------------------------------
-        MEMBERSHIP
-        --------------------------------------------------->
-        <ion-row>
-          <ion-col size="12" size-md="6">
-            <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfEntry', $event)" />
-          </ion-col>
-    
-          @if(dateOfExit() && dateOfExit().length > 0 && dateOfExit() !== endFutureDate) {
-            <ion-col size="12" size-md="6">
-              <bk-date-input name="dateOfExit" [storeDate]="dateOfExit()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfExit', $event)" />
-            </ion-col>
-          }
-        </ion-row>
-        <ion-row>
-          <ion-col size="12" size-md="6">
-            <ion-item lines="none">
-              <ion-label>{{ '@membership.category.label' | translate | async }}:</ion-label>
-              <ion-label>{{ membershipCategory() | translate | async }}</ion-label>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-note>{{ '@membership.category.helper' | translate | async }}</ion-note>
-            </ion-item>
-          </ion-col>
-          <ion-col size="12" size-md="6">
-            <ion-item lines="none">
-              <ion-label>{{ '@input.memberState.label' | translate | async }}:</ion-label>
-              <ion-label>{{ membershipState() }}</ion-label>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-note>{{ '@membership.state.helper' | translate | async }}</ion-note>
-            </ion-item>
-          </ion-col>
-          
-          <ion-col size="12" size-md="6">
-            <bk-number-input name="price" [value]="price()" [maxLength]=6 [readOnly]="readOnly()" (changed)="onChange('price', $event)" />                                        
-          </ion-col>
-        </ion-row>
+      <ion-card>
+        <ion-card-content class="ion-no-padding">
+          <ion-grid>
+            <!---------------------------------------------------
+            MEMBERSHIP
+            --------------------------------------------------->
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfEntry', $event)" />
+              </ion-col>
+        
+              @if(dateOfExit() && dateOfExit().length > 0 && dateOfExit() !== endFutureDate) {
+                <ion-col size="12" size-md="6">
+                  <bk-date-input name="dateOfExit" [storeDate]="dateOfExit()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfExit', $event)" />
+                </ion-col>
+              }
+            </ion-row>
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <ion-item lines="none">
+                  <ion-label>{{ '@membership.category.label' | translate | async }}:</ion-label>
+                  <ion-label>{{ membershipCategory() | translate | async }}</ion-label>
+                </ion-item>
+                <ion-item lines="none">
+                  <ion-note>{{ '@membership.category.helper' | translate | async }}</ion-note>
+                </ion-item>
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <ion-item lines="none">
+                  <ion-label>{{ '@input.memberState.label' | translate | async }}:</ion-label>
+                  <ion-label>{{ membershipState() }}</ion-label>
+                </ion-item>
+                <ion-item lines="none">
+                  <ion-note>{{ '@membership.state.helper' | translate | async }}</ion-note>
+                </ion-item>
+              </ion-col>
+              
+              <ion-col size="12" size-md="6">
+                <bk-number-input name="price" [value]="price()" [maxLength]=6 [readOnly]="readOnly()" (changed)="onChange('price', $event)" />                                        
+              </ion-col>
+            </ion-row>
 
-      <!---------------------------------------------------
-        PROPERTIES 
-        --------------------------------------------------->
-        <ion-row>
-          <ion-col size="12" size-md="6">
-            <bk-text-input name="memberBexioId" [value]="memberBexioId()" [maxLength]=6 [mask]="bexioMask" [readOnly]="readOnly()" (changed)="onChange('memberBexioId', $event)" />                                        
-          </ion-col>
+          <!---------------------------------------------------
+            PROPERTIES 
+            --------------------------------------------------->
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <bk-text-input name="memberBexioId" [value]="memberBexioId()" [maxLength]=6 [mask]="bexioMask" [readOnly]="readOnly()" (changed)="onChange('memberBexioId', $event)" />                                        
+              </ion-col>
 
-          <ion-col size="12" size-md="6"> 
-            <bk-text-input name="memberAbbreviation" [value]="memberAbbreviation()" [maxLength]=20 [readOnly]="readOnly()" (changed)="onChange('memberAbbreviation', $event)" />                                        
-          </ion-col>
+              <ion-col size="12" size-md="6"> 
+                <bk-text-input name="memberAbbreviation" [value]="memberAbbreviation()" [maxLength]=20 [readOnly]="readOnly()" (changed)="onChange('memberAbbreviation', $event)" />                                        
+              </ion-col>
 
-          <ion-col size="12" size-md="6"> 
-            <bk-text-input name="orgFunction" [value]="orgFunction()" [maxLength]=30 [readOnly]="readOnly()" (changed)="onChange('orgFunction', $event)" />                                        
-          </ion-col>
+              <ion-col size="12" size-md="6"> 
+                <bk-text-input name="orgFunction" [value]="orgFunction()" [maxLength]=30 [readOnly]="readOnly()" (changed)="onChange('orgFunction', $event)" />                                        
+              </ion-col>
 
-          <ion-col size="12" size-md="6">
-            <bk-text-input name="memberNickName" [value]="memberNickName()" [maxLength]=20 [readOnly]="readOnly()" (changed)="onChange('memberNickName', $event)" />                                        
-          </ion-col>
-        </ion-row>
+              <ion-col size="12" size-md="6">
+                <bk-text-input name="memberNickName" [value]="memberNickName()" [maxLength]=20 [readOnly]="readOnly()" (changed)="onChange('memberNickName', $event)" />                                        
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
 
-      <!---------------------------------------------------
-        TAG, NOTES 
-        --------------------------------------------------->
-        @if(hasRole('privileged')) {
-          <ion-row>
-            <ion-col>
-              <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="membershipTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
-            </ion-col>
-          </ion-row>
-        }
-    
-        @if(hasRole('admin')) {
-          <ion-row> 
-            <ion-col>                                           
-              <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
-            </ion-col>
-          </ion-row>
-        }
-      </ion-grid>
+      @if(isTagsVisible()) {
+        <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onChange('tags', $event)" />
+      }
+      
+      @if(isNotesVisible()) {
+        <bk-notes [value]="notes()" [readOnly]="isReadOnly()" (changed)="onChange('notes', $event)" />
+      }
     </form>
   `
 })
@@ -117,9 +110,11 @@ export class MembershipFormComponent {
   public vm = model.required<MembershipFormModel>();
   public currentUser = input<UserModel | undefined>();
   public membershipCategories = input.required<CategoryListModel>();
-  public membershipTags = input.required<string>();
+  public allTags = input.required<string>();
+  public priv = input.required<PrivacySettings>();
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser())); 
   protected memberName1 = computed(() => this.vm().memberName1 ?? DEFAULT_NAME); 
   protected memberName2 = computed(() => this.vm().memberName2 ?? DEFAULT_NAME); 
   protected memberModelType = computed(() => this.vm().memberModelType ?? 'person');
@@ -171,5 +166,15 @@ export class MembershipFormComponent {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
+  }
+  protected isTagsVisible(): boolean {
+    if (!this.isReadOnly()) return true;
+    if (!isVisibleToUser(this.priv().showTags, this.currentUser())) return false;
+    return (this.tags() && this.tags().length > 0) ? true : false;
+  }
+    protected isNotesVisible(): boolean {
+    if (!this.isReadOnly()) return true;
+    if (!isVisibleToUser(this.priv().showNotes, this.currentUser())) return false;
+    return (this.notes() && this.notes().length > 0) ? true : false;
   }
 }
