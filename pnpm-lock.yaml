@@ -120,14 +120,14 @@ importers:
         specifier: ^7.6.1
         version: 7.6.1(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(typescript@5.8.3)
       '@maskito/angular':
-        specifier: ^3.11.1
-        version: 3.11.1(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/forms@20.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.2.0(@angular/animations@20.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2))(@maskito/core@3.11.1)
+        specifier: ^4.0.0
+        version: 4.0.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/forms@20.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.2.0(@angular/animations@20.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2))(@maskito/core@4.0.0)
       '@maskito/core':
-        specifier: ^3.11.1
-        version: 3.11.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@maskito/kit':
-        specifier: ^3.11.1
-        version: 3.11.1(@maskito/core@3.11.1)
+        specifier: ^4.0.0
+        version: 4.0.0(@maskito/core@4.0.0)
       '@ngrx/signals':
         specifier: 20.0.0
         version: 20.0.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2)
@@ -166,7 +166,7 @@ importers:
         version: 13.5.0(encoding@0.1.13)
       firebase-functions:
         specifier: latest
-        version: 6.6.0(firebase-admin@13.5.0(encoding@0.1.13))
+        version: 7.0.0(firebase-admin@13.5.0(encoding@0.1.13))
       firebase-tools:
         specifier: ^14.20.0
         version: 14.20.0(@swc/core@1.5.29(@swc/helpers@0.5.17))(@types/node@24.2.0)(encoding@0.1.13)(typescript@5.8.3)
@@ -2992,20 +2992,20 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@maskito/angular@3.11.1':
-    resolution: {integrity: sha512-+OZzbRJj/9fOGhgPr0xYctSHe/Ngahip3VdNWBslRTpt7g+UTBYcB8vU9J4cHfpdXYeLM3tM0tnKksc3Eis0+Q==}
+  '@maskito/angular@4.0.0':
+    resolution: {integrity: sha512-2VEaona5U9uQ8zH+w6ME/FFAdk0yEFW0rIswRYqsC+Csz0EbLHGcfcHty0CCcAIGJCcLbn2nN7+us8o8rDOJzg==}
     peerDependencies:
-      '@angular/core': '>=16.0.0'
-      '@angular/forms': '>=16.0.0'
-      '@maskito/core': ^3.11.1
+      '@angular/core': '>=19.0.0'
+      '@angular/forms': '>=19.0.0'
+      '@maskito/core': ^4.0.0
 
-  '@maskito/core@3.11.1':
-    resolution: {integrity: sha512-zN5k/BiZXblo8mEFhsGnnXBCqKMkjEGArorOOcpB1/ymZyqF12Dk6IipEsSE6abMnWw4YF2tukzfq73BFZKz8A==}
+  '@maskito/core@4.0.0':
+    resolution: {integrity: sha512-lpoouYGMEyZsv6JicU7GDpB3kziElPzf/ggyv8l6zyXonQu/oPbZjxYtITI7PQIPXz2qyVhytQpw5+aTlKa4aA==}
 
-  '@maskito/kit@3.11.1':
-    resolution: {integrity: sha512-KOBUqxRz383xJWCoe+Emwxv2oAzUrZobIN+Gntmi5Py2S10XbqYnGX/6W7QHN8CUK2Nx11d3HsxbEQaq5Hinjg==}
+  '@maskito/kit@4.0.0':
+    resolution: {integrity: sha512-s6aZ4GrvgfgWyefeLC5J/LqntPMgrGjpgLfXLWxcq6LcMkf8hw2IqsgAnQRHgp1w+olgLwz4Zv3Icvsa16Wyew==}
     peerDependencies:
-      '@maskito/core': ^3.11.1
+      '@maskito/core': ^4.0.0
 
   '@modelcontextprotocol/sdk@1.20.1':
     resolution: {integrity: sha512-j/P+yuxXfgxb+mW7OEoRCM3G47zCTDqUPivJo/VzpjbG8I9csTXtOprCf5FfOfHK4whOJny0aHuBEON+kS7CCA==}
@@ -6739,9 +6739,9 @@ packages:
     peerDependencies:
       firebase-admin: ^11.10.0 || ^12.0.0 || ^13.0.0
 
-  firebase-functions@6.6.0:
-    resolution: {integrity: sha512-wwfo6JF+N7HUExVs5gUFgkgVGHDEog9O+qtouh7IuJWk8TBQ+KwXEgRiXbatSj7EbTu3/yYnHuzh3XExbfF6wQ==}
-    engines: {node: '>=14.10.0'}
+  firebase-functions@7.0.0:
+    resolution: {integrity: sha512-IPedw7JJ4Ok7t1Lg75RDCQkLtUhs5V1I/WzZK25iGjK9Ej7U5EWFBchiLX0uhuNlRMKixUFuiDAGj2A5ryg2bw==}
+    engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       firebase-admin: ^11.10.0 || ^12.0.0 || ^13.0.0
@@ -14183,18 +14183,18 @@ snapshots:
   '@lmdb/lmdb-win32-x64@3.4.2':
     optional: true
 
-  '@maskito/angular@3.11.1(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/forms@20.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.2.0(@angular/animations@20.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2))(@maskito/core@3.11.1)':
+  '@maskito/angular@4.0.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/forms@20.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.2.0(@angular/animations@20.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2))(@maskito/core@4.0.0)':
     dependencies:
       '@angular/core': 20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)
       '@angular/forms': 20.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.2.0(@angular/animations@20.2.0(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.2.0(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.2.0(@angular/compiler@20.2.0)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2)
-      '@maskito/core': 3.11.1
+      '@maskito/core': 4.0.0
       tslib: 2.8.1
 
-  '@maskito/core@3.11.1': {}
+  '@maskito/core@4.0.0': {}
 
-  '@maskito/kit@3.11.1(@maskito/core@3.11.1)':
+  '@maskito/kit@4.0.0(@maskito/core@4.0.0)':
     dependencies:
-      '@maskito/core': 3.11.1
+      '@maskito/core': 4.0.0
 
   '@modelcontextprotocol/sdk@1.20.1':
     dependencies:
@@ -18813,7 +18813,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  firebase-functions@6.6.0(firebase-admin@13.5.0(encoding@0.1.13)):
+  firebase-functions@7.0.0(firebase-admin@13.5.0(encoding@0.1.13)):
     dependencies:
       '@types/cors': 2.8.19
       '@types/express': 4.17.23
