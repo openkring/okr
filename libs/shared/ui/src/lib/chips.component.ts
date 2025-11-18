@@ -4,7 +4,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChi
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { getNonSelectedChips, string2stringArray } from '@bk2/shared-util-core';
+import { coerceBoolean, getNonSelectedChips, string2stringArray } from '@bk2/shared-util-core';
 import { ChipSelectModalComponent } from './chip-select.modal';
 
 /**
@@ -20,14 +20,19 @@ import { ChipSelectModalComponent } from './chip-select.modal';
     IonItem, IonLabel, IonIcon, IonChip, IonButton,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+  `],
   template: `
     <ion-card>
-      <ion-card-header>
-        <ion-card-title>{{ title() | translate | async}}</ion-card-title>
-      </ion-card-header>
+      @if(doShowTitle()) {
+        <ion-card-header>
+          <ion-card-title>{{ title() | translate | async}}</ion-card-title>
+        </ion-card-header>
+      }
       <ion-card-content>
         <ion-item lines="none">
-          @if (readOnly()) {
+          @if (isReadOnly()) {
             <ion-label class="ion-hide-sm-down">{{ title() | translate | async }}</ion-label>
             <div  class="ion-text-wrap">
               @for (chip of selectedChips(); track $index) {
@@ -60,8 +65,11 @@ export class ChipsComponent {
   protected modalController = inject(ModalController);
   public storedChips = model.required<string>();    // the list of tag or role names, separated by comma, as read from the database
   public allChips = input.required<string>();       // a comma-separated list of all available tags or roles
-  public readOnly = input(false); // if true, the selected tags or roles are shown as ready-only, disabled chips
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public chipName = input<'tag' | 'role'>('tag');
+  public showTitle = input<boolean>(false);
+  protected doShowTitle = computed(() => coerceBoolean(this.showTitle()));
 
   protected selectedChips = computed<string[]>(() => string2stringArray(this.storedChips()));
   protected nonSelectedChips = computed<string[]>(() => getNonSelectedChips(string2stringArray(this.allChips()), this.selectedChips()));

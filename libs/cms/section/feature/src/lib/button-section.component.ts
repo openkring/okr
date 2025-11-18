@@ -30,7 +30,7 @@ import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from '
                     <bk-button-widget [section]="section" />
                   </ion-col>
                   <ion-col size="12" [sizeMd]="colSizeText()">
-                    <bk-editor [content]="content()" [readOnly]="readOnly()" (contentChange)="onContentChange($event)" />
+                    <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -88,7 +88,8 @@ import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from '
 })
 export class ButtonSectionComponent {
   public section = input<SectionModel>();
-  public readOnly = input(false);
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => this.readOnly());
   public contentChange = output<string>();
 
   protected content = computed(() => this.section()?.properties?.content?.htmlContent ?? '<p></p>');

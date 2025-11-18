@@ -9,6 +9,7 @@ import { CategorySelectComponent } from './category-select.component';
 import { SearchbarComponent } from './searchbar.component';
 import { SingleTagComponent } from './single-tag.component';
 import { YearSelectComponent } from './year-select.component';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 /**
  * This component shows a list of filters in a toolbar at the top of a list.
@@ -34,7 +35,7 @@ import { YearSelectComponent } from './year-select.component';
     <ion-toolbar>
       <ion-grid>
         <ion-row>
-          @if(showSearch()) {
+          @if(shouldShowSearch()) {
             <ion-col size="6" size-md="3">
               <bk-searchbar placeholder="{{ '@general.operation.search.placeholder' | translate | async  }}" (ionInput)="onSearchTermChange($event)" />
             </ion-col>
@@ -46,22 +47,22 @@ import { YearSelectComponent } from './year-select.component';
           }
           @if(showCategory()) {
             <ion-col size="6" size-md="3">
-              <bk-cat-select [category]="category()!" selectedItemName="all" [withAll]="true" (changed)="categoryChanged.emit($event)" [showIcons]="showIcons()" />
+              <bk-cat-select [category]="category()!" selectedItemName="all" [withAll]="true" [readOnly]="false" (changed)="categoryChanged.emit($event)" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
           @if(showType()) {
             <ion-col size="6" size-md="3">
-              <bk-cat-select [category]="type()!" selectedItemName="all" [withAll]="true" (changed)="typeChanged.emit($event)" [showIcons]="showIcons()" />
+              <bk-cat-select [category]="type()!" selectedItemName="all" [withAll]="true" [readOnly]="false" (changed)="typeChanged.emit($event)" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }                                                  
           @if(showYear()) {
             <ion-col size="6" size-md="2">
-              <bk-year-select [label]="yearLabel()!" (changed)="yearChanged.emit($event)" [showAllYears]="true" />
+              <bk-year-select [label]="yearLabel()!" (changed)="yearChanged.emit($event)" [readOnly]="false" [showAllYears]="true" />
             </ion-col>
           }
           @if(showState()) {
             <ion-col size="6" size-md="2">
-              <bk-cat-select [category]="state()!" selectedItemName="all" [withAll]="true" (changed)="stateChanged.emit($event)" [showIcons]="showIcons()" />
+              <bk-cat-select [category]="state()!" selectedItemName="all" [withAll]="true" [readOnly]="false" (changed)="stateChanged.emit($event)" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
         </ion-row>
@@ -73,18 +74,20 @@ import { YearSelectComponent } from './year-select.component';
 export class ListFilterComponent {
   // data inputs per filter (optional, if undefined, the filter is not shown)
   public showSearch = input(true);
+  protected shouldShowSearch = computed(() => coerceBoolean(this.showSearch()));
   public tags = input<string>();
   public category = input<CategoryListModel>();
   public type = input<CategoryListModel>();
   public years = input<number[]>();
   public state = input<CategoryListModel>();
   public showIcons = input(true);
+  protected shouldShowIcons = computed(() => coerceBoolean(this.showIcons()));
+  public yearLabel = input<string>();
 
   // name the popups per filter name
   protected catName = computed(() => this.category()?.name);
   protected typeName = computed(() => this.type()?.name);
   protected stateName = computed(() => this.state()?.name);
-  public yearLabel = input<string>();
 
  // filter definitions
   protected showTags = computed(()     => this.tags() !== undefined);

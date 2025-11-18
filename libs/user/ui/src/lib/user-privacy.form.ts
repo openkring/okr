@@ -38,22 +38,22 @@ import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidat
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageImages" [value]="usageImages()" [categories]="privacyUsages" (changed)="onChange('usageImages', $event)" />
+                <bk-cat name="usageImages" [value]="usageImages()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usageImages', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageDateOfBirth" [value]="usageDateOfBirth()" [categories]="privacyUsages" (changed)="onChange('usageDateOfBirth', $event)" />
+                <bk-cat name="usageDateOfBirth" [value]="usageDateOfBirth()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usageDateOfBirth', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usagePostalAddress" [value]="usagePostalAddress()" [categories]="privacyUsages" (changed)="onChange('usagePostalAddress', $event)" />
+                <bk-cat name="usagePostalAddress" [value]="usagePostalAddress()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usagePostalAddress', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageEmail" [value]="usageEmail()" [categories]="privacyUsages" (changed)="onChange('usageEmail', $event)" />
+                <bk-cat name="usageEmail" [value]="usageEmail()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usageEmail', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usagePhone" [value]="usagePhone()" [categories]="privacyUsages" (changed)="onChange('usagePhone', $event)" />
+                <bk-cat name="usagePhone" [value]="usagePhone()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usagePhone', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageName" [value]="usageName()" [categories]="privacyUsages" (changed)="onChange('usageName', $event)" />
+                <bk-cat name="usageName" [value]="usageName()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usageName', $event)" />
               </ion-col>
             </ion-row>
             @if(isScs()) {
@@ -66,7 +66,7 @@ import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidat
               </ion-row>
               <ion-row>
                 <ion-col>
-                  <bk-checkbox name="srvEmail" [isChecked]="srvEmail()" [showHelper]="true" (changed)="onChange('srvEmail', $event)" />
+                  <bk-checkbox name="srvEmail" [isChecked]="srvEmail()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('srvEmail', $event)" />
                 </ion-col>
               </ion-row>
             }
@@ -79,6 +79,7 @@ import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidat
 export class UserPrivacyFormComponent {
   public vm = model.required<UserPrivacyFormModel>();
   public currentUser = input<UserModel | undefined>();
+  public readOnly = input.required<boolean>();
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

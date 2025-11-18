@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, input, model, output, viewChild } from '@angular/core';
+import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
@@ -9,6 +9,7 @@ import { NAME_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 /**
  * Vest updates work by binding to ngModel.
@@ -66,10 +67,10 @@ import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angu
                     <ion-reorder slot="start" />
                     <ion-label>{{ text }}</ion-label>
                     <ion-icon src="{{'close_cancel_circle' | svgIcon }}" (click)="remove($index)" slot="end" />
-                    @if (copyable()) {
+                    @if (isCopyable()) {
                       <ion-icon slot="end" src="{{'copy' | svgIcon }}" (click)="copy(text)" />
                     }
-                    @if (editable()) {
+                    @if (isEditable()) {
                       <ion-icon slot="end" src="{{'create_edit' | svgIcon }}" (click)="edit(text, $index)" />
                     }
                   </ion-item>
@@ -90,8 +91,11 @@ export class StringsComponent {
   public title = input('@input.strings.label');
   public addLabel = input('@input.strings.addString');
   public copyable = input(false);
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   public editable = input(false);
-  public readOnly = input(false);
+  protected isEditable = computed(() => coerceBoolean(this.editable()));
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public description = input<string>();
   public mask = input<MaskitoOptions>(LowercaseWordMask);
   public maxLength = input(NAME_LENGTH);
@@ -99,26 +103,26 @@ export class StringsComponent {
   public stringInput = viewChild<IonInput>('stringInput');
 
   public save($event: CustomEvent): void {
-    const _newString = $event?.detail?.value as string;
+    const newString = $event?.detail?.value as string;
     this.resetInput();
-    if (_newString && _newString.length > 0) {
-      const _strings = this.strings();
-      _strings.push(_newString);
-      this.updateStrings(_strings);
+    if (newString && newString.length > 0) {
+      const strings = this.strings();
+      strings.push(newString);
+      this.updateStrings(strings);
     }
   }
 
   private resetInput(): void {
-    const _input = this.stringInput();
-    if (_input) {
-      _input.value = '';
+    const input = this.stringInput();
+    if (input) {
+      input.value = '';
     }
   }
 
   public remove(index: number): void {
-    const _strings = this.strings();
-    _strings.splice(index, 1);
-    this.updateStrings(_strings);
+    const strings = this.strings();
+    strings.splice(index, 1);
+    this.updateStrings(strings);
   }
 
   public async copy(data: string | number | undefined, confirmation?: string): Promise<void> {
@@ -126,11 +130,11 @@ export class StringsComponent {
   }
 
   public async edit(text: string, index: number): Promise<void> {
-    const _changedText = await bkPrompt(this.alertController, '@input.strings.edit', text);
-    if (_changedText) {
-      const _strings = this.strings();
-      _strings[index] = _changedText;
-      this.updateStrings(_strings);
+    const changedText = await bkPrompt(this.alertController, '@input.strings.edit', text);
+    if (changedText) {
+      const strings = this.strings();
+      strings[index] = changedText;
+      this.updateStrings(strings);
     }
   }
 

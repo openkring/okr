@@ -27,7 +27,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
     <ion-accordion toggle-icon-slot="start" value="ownerships">
       <ion-item slot="header" [color]="color()">
         <ion-label>{{ title() | translate | async }}</ion-label>
-        @if(hasRole('resourceAdmin')) {
+        @if(hasRole('resourceAdmin') && !readOnly()) {
           <ion-button fill="clear" (click)="add()" size="default">
             <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
           </ion-button>
@@ -58,10 +58,11 @@ export class OwnershipAccordionComponent {
   private actionSheetController = inject(ActionSheetController);
 
   public owner = input.required<PersonModel | OrgModel>();
-  public ownerModelType = input<'person' | 'org'>('person');
-  public defaultResource = input<ResourceModel>();
-  public color = input('light');
-  public title = input('@ownership.plural');
+  public readonly ownerModelType = input<'person' | 'org'>('person');
+  public readonly defaultResource = input<ResourceModel>();
+  public readonly color = input('light');
+  public readonly title = input('@ownership.plural');
+  public readonly readOnly = input(true);
 
   protected ownerships = computed(() => this.ownershipStore.ownerships());
 
@@ -125,13 +126,13 @@ export class OwnershipAccordionComponent {
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
         case 'delete':
-          await this.ownershipStore.delete(ownership);
+          await this.ownershipStore.delete(ownership, this.readOnly());
           break;
         case 'edit':
-          await this.ownershipStore.edit(ownership);
+          await this.ownershipStore.edit(ownership, this.readOnly());
           break;
         case 'endownership':
-          await this.ownershipStore.end(ownership);
+          await this.ownershipStore.end(ownership, this.readOnly());
           break;
       }
     }

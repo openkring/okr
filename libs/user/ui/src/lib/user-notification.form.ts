@@ -38,10 +38,10 @@ import { UserNotificationFormModel, userNotificationFormModelShape, userNotifica
           <ion-grid>
             <ion-row>
             <ion-col size="12" size-md="6">                                                             
-              <bk-cat name="newsDelivery" [value]="newsDelivery()" [categories]="deliveryTypes" (changed)="onChange('newsDelivery', $event)" />
+              <bk-cat name="newsDelivery" [value]="newsDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" (changed)="onChange('newsDelivery', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">                                                             
-              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" [categories]="deliveryTypes" (changed)="onChange('invoiceDelivery', $event)" />
+              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" (changed)="onChange('invoiceDelivery', $event)" />
             </ion-col>
             </ion-row>
           </ion-grid>
@@ -53,6 +53,7 @@ import { UserNotificationFormModel, userNotificationFormModelShape, userNotifica
 export class UserNotificationFormComponent {
   public vm = model.required<UserNotificationFormModel>();
   public currentUser = input<UserModel | undefined>();
+  public readOnly = input.required<boolean>();
 
   protected newsDelivery = computed(() => this.vm().newsDelivery ?? DeliveryType.EmailAttachment);
   protected invoiceDelivery = computed(() => this.vm().invoiceDelivery ?? DeliveryType.EmailAttachment);

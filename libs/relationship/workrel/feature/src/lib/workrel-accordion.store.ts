@@ -106,34 +106,36 @@ export const WorkrelAccordionStore = signalStore(
       /**
        * Show a modal to add a new workRel.
        */
-      async add(): Promise<void> {
-        const person = structuredClone(store.appStore.currentPerson() ?? await store.workrelModalsService.selectPerson());
-        const org = structuredClone(store.appStore.defaultOrg() ?? await store.workrelModalsService.selectOrg());
-        if (person && org) {
-          const modal = await store.modalController.create({
-            component: WorkrelNewModalComponent,
-            cssClass: 'small-modal',
-            componentProps: {
-              subject: person,
-              object: org,
-              currentUser: store.appStore.currentUser()
+      async add(readOnly = true): Promise<void> {
+        if(readOnly === false) {
+          const person = structuredClone(store.appStore.currentPerson() ?? await store.workrelModalsService.selectPerson());
+          const org = structuredClone(store.appStore.defaultOrg() ?? await store.workrelModalsService.selectOrg());
+          if (person && org) {
+            const modal = await store.modalController.create({
+              component: WorkrelNewModalComponent,
+              cssClass: 'small-modal',
+              componentProps: {
+                subject: person,
+                object: org,
+                currentUser: store.appStore.currentUser()
+              }
+            });
+            modal.present();
+            const { data, role } = await modal.onDidDismiss();
+            if (role === 'confirm') {
+              const workRel = convertFormToNewWorkrel(data as WorkrelFormModel, store.appStore.tenantId());
+              await store.workrelService.create(workRel, store.appStore.currentUser());
             }
-          });
-          modal.present();
-          const { data, role } = await modal.onDidDismiss();
-          if (role === 'confirm') {
-            const workRel = convertFormToNewWorkrel(data as WorkrelFormModel, store.appStore.tenantId());
-            await store.workrelService.create(workRel, store.appStore.currentUser());
           }
+          store.workrelsResource.reload();
         }
-        store.workrelsResource.reload();
       },
 
       /**
        * Show a modal to edit an existing work relationship.
        * @param workRel the work relationship to edit
        */
-      async edit(workRel?: WorkrelModel): Promise<void> {
+      async edit(workRel?: WorkrelModel, readOnly = true): Promise<void> {
         let _workRel = workRel;
         _workRel ??= new WorkrelModel(store.appStore.tenantId());
 
@@ -142,12 +144,13 @@ export const WorkrelAccordionStore = signalStore(
           componentProps: {
             workrel: _workRel,
             currentUser: store.appStore.currentUser(),
+            readOnly
           }
         });
         modal.present();
         await modal.onWillDismiss();
         const { data, role } = await modal.onDidDismiss();
-        if (role === 'confirm') {
+        if (role === 'confirm' && readOnly === false) {
           if (isWorkrel(data, store.appStore.tenantId())) {
             await (!data.bkey ?
               store.workrelService.create(data, store.appStore.currentUser()) :
@@ -157,15 +160,15 @@ export const WorkrelAccordionStore = signalStore(
         }
       },
 
-      async end(workRel?: WorkrelModel): Promise<void> {
-        if (workRel) {
+      async end(workRel?: WorkrelModel, readOnly = true): Promise<void> {
+        if (workRel && readOnly === false) {
           await store.workrelModalsService.end(workRel);
           store.workrelsResource.reload();
         }
       },
 
-      async delete(workrel?: WorkrelModel): Promise<void> {
-        if (workrel) {
+      async delete(workrel?: WorkrelModel, readOnly = true): Promise<void> {
+        if (workrel && readOnly === false) {
           const result = await confirm(store.alertController, '@workrel.operation.delete.confirm', true);
           if (result === true) {
             await store.workrelService.delete(workrel, store.appStore.currentUser());

@@ -37,7 +37,8 @@ export class PersonNewModalComponent {
   private readonly modalController = inject(ModalController);
   protected readonly personNewStore = inject(PersonNewStore);
 
-  public org = input<OrgModel>(); 
+  public org = input<OrgModel>();
+  public readOnly = input(true);
   public vm = linkedSignal(() => createNewPersonFormModel(this.org()));
 
   protected priv = computed(() => this.personNewStore.privacySettings());

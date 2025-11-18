@@ -7,6 +7,7 @@ import { convertMembershipToCategoryChangeForm, getMembershipName } from '@bk2/r
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, MembershipModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
+import { hasRole } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-category-change-modal',
@@ -24,7 +25,7 @@ import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarCompon
     <ion-content>
       <bk-relationship-toolbar [titleArguments]="titleArguments()" />
 
-      <bk-category-change-form [(vm)]="vm" [membershipCategory]="membershipCategory()" (validChange)="formIsValid.set($event)" />
+      <bk-category-change-form [(vm)]="vm" [membershipCategory]="membershipCategory()" [readOnly]=false (validChange)="formIsValid.set($event)" />
     </ion-content>
   `,
 })

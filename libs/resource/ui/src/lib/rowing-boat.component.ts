@@ -2,12 +2,11 @@ import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryListModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ColorComponent, ErrorNoteComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
 
 import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
-import { DEFAULT_NAME, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE } from '@bk2/shared-constants';
+import { DEFAULT_NAME, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-rowing-boat',
@@ -31,10 +30,10 @@ import { DEFAULT_NAME, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE } from '@bk2/shared-con
               <bk-error-note [errors]="nameErrors()" />
             </ion-col>
             <ion-col size="12">
-              <bk-cat-select [category]="subTypes()!" [selectedItemName]="vm().subType" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('subType', $event)" />
+              <bk-cat-select [category]="subTypes()!" [selectedItemName]="type()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('subType', $event)" />
             </ion-col>
             <ion-col size="12">
-              <bk-cat-select [category]="usages()!" [selectedItemName]="vm().usage" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('usage', $event)" />
+              <bk-cat-select [category]="usages()!" [selectedItemName]="usage()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('usage', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
               <bk-text-input name="load" [value]="load()" [maxLength]=20 [readOnly]="readOnly()" />
@@ -56,34 +55,25 @@ import { DEFAULT_NAME, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE } from '@bk2/shared-con
 })
 export class RowingBoatComponent {
   public vm = model.required<ResourceFormModel>();
-  public currentUser = input.required<UserModel | undefined>();
   public subTypes = input.required<CategoryListModel | undefined>();
   public usages = input.required<CategoryListModel | undefined>();
+  public readOnly = input(true);
 
-  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
-  
+  protected name = linkedSignal(() => this.vm()?.name ?? DEFAULT_NAME);
+  protected type = computed(() => this.vm().subType ?? DEFAULT_RBOAT_TYPE);
+  protected usage = computed(() => this.vm().usage ?? DEFAULT_RBOAT_USAGE);
+  protected load = linkedSignal(() => this.vm().load ?? '');
+  protected currentValue = linkedSignal(() => this.vm()?.currentValue ?? DEFAULT_PRICE);
+  protected hexColor = linkedSignal(() => this.vm()?.hexColor ?? '');
+
   private readonly validationResult = computed(() => resourceFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected loadErrors = computed(() => this.validationResult().getErrors('load'));
   protected currentValueErrors = computed(() => this.validationResult().getErrors('currentValue'));
   protected hexColorErrors = computed(() => this.validationResult().getErrors('hexColor'));
 
-  protected name = linkedSignal(() => this.vm()?.name ?? DEFAULT_NAME);
-  protected load = linkedSignal(() => this.vm().load ?? '');
-  protected rboatType = linkedSignal(() => this.vm().subType ?? DEFAULT_RBOAT_TYPE);
-  protected currentValue = linkedSignal(() => this.vm()?.currentValue ?? DEFAULT_PRICE);
-  protected hexColor = linkedSignal(() => this.vm()?.hexColor ?? '');
-
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
-  }
-
   protected onChange(fieldName: string, $event: string): void {
     this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-  }
-
-  protected onValueChange(value: ResourceFormModel): void {
-    this.vm.update((_vm) => ({ ..._vm, ...value }));
   }
 }
 

@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, input, model, output } from '@angular/core';
+import { Component, computed, inject, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonTextarea } from '@ionic/angular/standalone';
+import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { DESCRIPTION_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe, bkTranslate } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { decrypt, encrypt } from '@bk2/shared-util-core';
+import { coerceBoolean, decrypt, encrypt } from '@bk2/shared-util-core';
 import { ButtonCopyComponent } from './button-copy.component';
 
 /**
@@ -21,45 +21,61 @@ import { ButtonCopyComponent } from './button-copy.component';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     FormsModule,
-    IonIcon, IonTextarea, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem,
+    IonIcon, IonTextarea, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonNote,
     ButtonCopyComponent
   ],
   viewProviders: [vestFormsViewProviders],
-  styles: [`ion-item.helper { --min-height: 0; }`],
+  styles: [`
+    ion-item.helper { --min-height: 0; }
+    ion-card-content { padding: 0; }
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+  `],
   template: `
   <ion-card>
-    <ion-card-header>
-      <ion-card-title>Notizen</ion-card-title>
-    </ion-card-header>
+    @if(doShowTitle()) {
+      <ion-card-header>
+        <ion-card-title>Notizen</ion-card-title>
+      </ion-card-header>
+    }
     <ion-card-content>
-      <ion-item lines="none">
-        <ion-textarea (ionInput)="onChange($event)"
+
+      @if(!isReadOnly()) {
+        <ion-item lines="none">
+          <ion-textarea (ionInput)="onChange($event)"
             type="text"
             [name]="name()"
             [ngModel]="value()"
-            labelPlacement="floating"
-            label="{{'@input.' + name() + '.label' | translate | async }}"
             placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
+            aria-label="{{'@input.' + name() + '.label' | translate | async }}"
             inputMode="text"
-            [counter]="!readOnly()"
+            [counter]="!isReadOnly()"
             fill="outline"
-            [autoGrow]="autoGrow()"
+            [autoGrow]="isAutoGrow()"
             [maxlength]="maxLength()"
             [rows]="rows()"
-            [readonly]="readOnly()"
+            [readonly]="isReadOnly()"
           />
-      </ion-item>
-      <ion-item lines="none">
-        @if (clearable()) {
-          <ion-icon src="{{'close_cancel' | svgIcon }}" (click)="clearValue()" />
-        }
-        @if (copyable()) {
-          <bk-button-copy [value]="value()" />
-        }
-        @if (encryptable()) {
-          <ion-icon src="{{'resource_key' | svgIcon }}" (click)="dencrypt()" />
-        }
-      </ion-item>
+          <!--
+            labelPlacement="floating"
+            label="{{'@input.' + name() + '.label' | translate | async }}"
+            -->
+        </ion-item>
+        <ion-item lines="none">
+          @if (isClearable()) {
+            <ion-icon src="{{'close_cancel' | svgIcon }}" (click)="clearValue()" />
+          }
+          @if (isCopyable()) {
+            <bk-button-copy [value]="value()" />
+          }
+          @if (isEncryptable()) {
+            <ion-icon src="{{'resource_key' | svgIcon }}" (click)="dencrypt()" />
+          }
+        </ion-item>
+      } @else {
+        <ion-item lines="none">
+          <ion-note>{{value()}}</ion-note>
+       </ion-item>
+      }
     </ion-card-content>
   </ion-card>
   `
@@ -69,14 +85,21 @@ export class NotesInputComponent {
 
   public value = model.required<string>(); // mandatory view model
   public name = input('notes'); // name of the input field
-  public readOnly = input(false); // if true, the input field is read-only
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public maxLength = input(DESCRIPTION_LENGTH); // max number of characters allowed
   public rows = input(5); // number of rows
+  public showTitle = input<boolean>(false);
+  protected doShowTitle = computed(() => coerceBoolean(this.showTitle()));
 
   protected clearable = input(true); // show a button to clear the notes
+  protected isClearable = computed(() => coerceBoolean(this.clearable()));
   protected copyable = input(true); // show a button to copy the notes
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected encryptable = input(true); // show a button to encrypt or decrypt the notes
+  protected isEncryptable = computed(() => coerceBoolean(this.encryptable()));
   public autoGrow = input(true); // if true, the input field grows with the content
+  protected isAutoGrow = computed(() => coerceBoolean(this.autoGrow()));
 
   protected changed = output<string>(); // output event when the value changes
 

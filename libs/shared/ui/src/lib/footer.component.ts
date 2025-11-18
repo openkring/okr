@@ -1,9 +1,10 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButtons, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { navigateByUrl } from '@bk2/shared-util-angular';
 import { ButtonComponent } from './button.component';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-footer',
@@ -34,9 +35,9 @@ import { ButtonComponent } from './button.component';
   }
   `],
   template: `
-  @if(showFooter()) {
+  @if(shouldShowFooter()) {
   <ion-toolbar color="secondary">
-    @if(isMobile()) {
+    @if(isMobileDevice()) {
       <ion-buttons slot="start">
         @if (twitterUrl()) {
           <bk-button iconName="twitter" fill="clear" size="small" (click)="callTwitter()" />
@@ -48,10 +49,10 @@ import { ButtonComponent } from './button.component';
       <ion-title>&copy; 2023/<a href="{{ authorUrl() }}">{{author()}}</a></ion-title>
     } @else {
       <ion-buttons>
-        @if (twitterUrl()) {
+        @if (twitterUrl().length > 0) {
           <bk-button label="@ui.twitter" iconName="twitter" fill="clear" size="small" (click)="callTwitter()" />
         }
-        @if (emailUrl()) {
+        @if (emailUrl().length > 0) {
           <bk-button label="@ui.email" iconName="send" fill="clear" size="small" (click)="callEmail()" />
         }
       </ion-buttons>
@@ -64,7 +65,9 @@ import { ButtonComponent } from './button.component';
 export class FooterComponent {
   public router = inject(Router);
   public showFooter = input(false);
+  protected shouldShowFooter = computed(() => coerceBoolean(this.showFooter()));
   public isMobile = input(false);
+  protected isMobileDevice = computed(() => coerceBoolean(this.isMobile()));
   public twitterUrl = input('');
   public emailUrl = input('');
   public author = input('bkaiser.com');

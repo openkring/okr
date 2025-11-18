@@ -1,4 +1,4 @@
-import { Component, computed, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
@@ -28,28 +28,28 @@ import { AlbumStyles, SectionFormModel } from '@bk2/cms-section-util';
             <ion-grid>
               <ion-row>
                 <ion-col size="12">
-                  <bk-text-input name="directory" [value]="directory()" [showHelper]=true />
+                  <bk-text-input name="directory" [value]="directory()" [readOnly]="readOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6"> 
-                  <bk-cat name="albumStyle" [value]="albumStyle()" [categories]="albumStyles" (changed)="onChange('albumStyle', $event)" />
+                  <bk-cat name="albumStyle" [value]="albumStyle()" [categories]="albumStyles" [readOnly]="readOnly()" (changed)="onChange('albumStyle', $event)" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="recursive" [isChecked]="recursive()" [showHelper]="true" (changed)="onChange('recursive', $event)" />
+                  <bk-checkbox name="recursive" [isChecked]="recursive()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('recursive', $event)" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="showVideos" [isChecked]="showVideos()" [showHelper]="true"  (changed)="onChange('showVideos', $event)" />
+                  <bk-checkbox name="showVideos" [isChecked]="showVideos()" [showHelper]="true" [readOnly]="readOnly()"  (changed)="onChange('showVideos', $event)" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="showStreamingVideos" [isChecked]="showStreamingVideos()" [showHelper]="true" (changed)="onChange('showStreamingVideos', $event)" />
+                  <bk-checkbox name="showStreamingVideos" [isChecked]="showStreamingVideos()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('showStreamingVideos', $event)" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="showDocs" [isChecked]="showDocs()" [showHelper]="true" (changed)="onChange('showDocs', $event)"/>
+                  <bk-checkbox name="showDocs" [isChecked]="showDocs()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('showDocs', $event)"/>
                 </ion-col>
                 <ion-col size="12" size-md="6">        
-                  <bk-checkbox name="showPdfs" [isChecked]="showPdfs()" [showHelper]="true" (changed)="onChange('showPdfs', $event)" />
+                  <bk-checkbox name="showPdfs" [isChecked]="showPdfs()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('showPdfs', $event)" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-cat name="galleryEffect" [value]="galleryEffect()" [categories]="galleryEffects" (changed)="onChange('galleryEffect', $event)" />
+                  <bk-cat name="galleryEffect" [value]="galleryEffect()" [categories]="galleryEffects" [readOnly]="readOnly()" (changed)="onChange('galleryEffect', $event)" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -61,6 +61,8 @@ import { AlbumStyles, SectionFormModel } from '@bk2/cms-section-util';
 })
 export class AlbumSectionConfigComponent {
   public vm = model.required<SectionFormModel>();
+  public readonly readOnly = input(true);
+
   protected album = computed(() => this.vm().properties?.album);
 
   protected directory = linkedSignal(() => this.album()?.directory ?? '');

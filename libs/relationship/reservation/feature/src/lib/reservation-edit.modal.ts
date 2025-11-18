@@ -33,6 +33,7 @@ import { convertFormToReservation, convertReservationToForm, getReserverName } f
         [allTags]="tags()"
         [reasons]="reasons()"
         [states]="states()"
+        [readOnly]="readOnly()"
         [periodicities]="periodicities()"
         (validChange)="formIsValid.set($event)"
       />
@@ -56,7 +57,8 @@ export class ReservationEditModalComponent {
   protected reasons = computed(() => this.appStore.getCategory('reservation_reason'));
   protected states = computed(() => this.appStore.getCategory('reservation_state'));
   protected periodicities = computed(() => this.appStore.getCategory('periodicity'));
-
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+  
   public vm = linkedSignal(() => convertReservationToForm(this.reservation()));
 
   protected readonly reservationKey = computed(() => this.reservation().bkey ?? '');

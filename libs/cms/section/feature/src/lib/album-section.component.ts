@@ -70,7 +70,7 @@ import { AlbumStore } from './album-section.store';
                 }
             </ion-col>
             <ion-col size="6" size-md="4">
-                <bk-cat name="albumStyle" [value]="selectedAlbumStyle()" [categories]="albumStyles" (changed)="onCategoryChange($event)" />
+                <bk-cat name="albumStyle" [value]="selectedAlbumStyle()" [categories]="albumStyles" [readOnly]="isReadOnly()" (changed)="onCategoryChange($event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -207,6 +207,8 @@ export class AlbumSectionComponent {
   private readonly modalController = inject(ModalController);
   protected albumStore = inject(AlbumStore);
   private readonly platformId = inject(PLATFORM_ID);
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => this.readOnly());
 
   public section = input<SectionModel>();
 

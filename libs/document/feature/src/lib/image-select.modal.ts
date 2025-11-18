@@ -33,19 +33,20 @@ import { getDocumentStoragePath, pickPhoto } from '@bk2/document-util';
           <ion-icon slot="start" src="{{'camera' | svgIcon }}" />
           {{ '@content.section.operation.selectImage.upload' | translate | async }}
         </ion-button>
-        <bk-image-config-form [(vm)]="vm" [currentUser]="currentUser()" (validChange)="validChange.set($event)" />
+        <bk-image-config-form [(vm)]="vm" [currentUser]="currentUser()" [readOnly]="readOnly()" (validChange)="validChange.set($event)" />
       </ion-content>
   `
 })
 export class ImageSelectModalComponent {
+  public key = input.required<string>();     // usually the key of a section
+  public modelType = input('section'); // the model type of the key
+  public currentUser = input<UserModel | undefined>(); // the current user
+  public readonly readOnly = input(true);
+
   private readonly modelController = inject(ModalController);
   private readonly platform = inject(Platform);
   private readonly uploadService = inject(UploadService);
   private readonly env = inject(ENV);
-
-  public key = input.required<string>();     // usually the key of a section
-  public modelType = input('section'); // the model type of the key
-  public currentUser = input<UserModel | undefined>(); // the current user
 
   protected vm = signal(newImage());
   protected validChange = signal(false);

@@ -33,7 +33,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
           @for(member of members(); track $index) {
             <ion-item (click)="showActions(member)">
               <ion-thumbnail slot="start">
-                <ion-img src="{{ 'person.' + member.memberKey | avatar | async}}" alt="membership avatar" />
+                <ion-img src="{{ 'person.' + member.memberKey | avatar:'membership' | async}}" alt="membership avatar" />
               </ion-thumbnail>
               <ion-label>{{member.memberName1 | fullName:member.memberName2}}</ion-label>      
               <ion-label>{{ member.relLog | categoryLog }} / {{ member.dateOfEntry | duration:member.dateOfExit }}</ion-label>
@@ -49,6 +49,7 @@ export class MembersComponent {
   private actionSheetController = inject(ActionSheetController);
 
   public orgKey = input.required<string>();
+  public readonly readOnly = input(true);
 
   protected members = computed(() => this.membersStore.members());
 
@@ -105,16 +106,16 @@ export class MembersComponent {
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
         case 'delete':
-          await this.membersStore.delete(member);
+          await this.membersStore.delete(member, this.readOnly());
           break;
         case 'edit':
-          await this.membersStore.edit(member);
+          await this.membersStore.edit(member, this.readOnly());
           break;
         case 'endMembership':
-          await this.membersStore.end(member);
+          await this.membersStore.end(member, this.readOnly());
           break;
         case 'changeMcat':
-          await this.membersStore.changeMembershipCategory(member);
+          await this.membersStore.changeMembershipCategory(member, this.readOnly());
           break;
       }
     }

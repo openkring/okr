@@ -1,11 +1,11 @@
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, inject, input, PLATFORM_ID } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, inject, input, PLATFORM_ID, computed } from '@angular/core';
 import { GoogleMap, MapType } from '@capacitor/google-maps';
 import { IonContent } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { die } from '@bk2/shared-util-core';
+import { coerceBoolean, die } from '@bk2/shared-util-core';
 import { HeaderComponent } from './header.component';
 
 export interface GeoCoordinates {
@@ -45,6 +45,7 @@ export class MapViewModalComponent implements OnInit, OnDestroy {
   public title = input('@menu.main.info.map');
   public zoom = input(15); // The initial zoom level to be rendered by the map
   public enableTrafficLayer = input(false);
+  protected shouldEnableTrafficLayer = computed(() => coerceBoolean(this.enableTrafficLayer()));
 
   private map: GoogleMap | undefined;
   
@@ -76,7 +77,7 @@ export class MapViewModalComponent implements OnInit, OnDestroy {
       }
     });
     this.map.setMapType(MapType.Satellite);
-    this.map.enableTrafficLayer(this.enableTrafficLayer());
+    this.map.enableTrafficLayer(this.shouldEnableTrafficLayer());
     await this.addMarker(this.initialPosition());
     for (const _coord of this.coordinates()) {
       await this.addMarker(_coord);

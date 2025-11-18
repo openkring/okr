@@ -132,9 +132,12 @@ export const PersonListStore = signalStore(
       },
 
       /******************************* actions *************************************** */
-      async add(): Promise<void> {
+      async add(readOnly = true): Promise<void> {
         const _modal = await store.modalController.create({
-          component: PersonNewModalComponent
+          component: PersonNewModalComponent,
+          componentProps: {
+            readOnly
+          }
         });
         _modal.present();
         const { data, role } = await _modal.onWillDismiss();
@@ -193,15 +196,20 @@ export const PersonListStore = signalStore(
         console.log(`PersonListStore.export(${type}) ist not yet implemented`);
       },
 
-      async edit(person: PersonModel): Promise<void> {
+      async edit(person: PersonModel, readOnly = true): Promise<void> {
         store.appNavigationService.pushLink('/person/all' );
-        await navigateByUrl(store.router, `/person/${person.bkey}`);
+        await navigateByUrl(store.router, `/person/${person.bkey}`, { readOnly });
         store.personsResource.reload();
       },
 
-      async delete(person: PersonModel): Promise<void> {
-        await store.personService.delete(person, store.currentUser());
-        this.reset();
+      async delete(person: PersonModel, readOnly = true): Promise<void> {
+        if (!readOnly) {
+          const result = await confirm(store.alertController, '@subject.person.operation.delete.confirm', true);
+          if (result === true) {
+            await store.personService.delete(person, store.currentUser());
+            this.reset();
+          }
+        }
       },
 
       async copyEmailAddresses(): Promise<void> {

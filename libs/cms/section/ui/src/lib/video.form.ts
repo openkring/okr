@@ -1,4 +1,4 @@
-import { Component, linkedSignal, model } from '@angular/core';
+import { Component, input, linkedSignal, model } from '@angular/core';
 import { IonCol, IonRow } from '@ionic/angular/standalone';
 
 import { SectionFormModel } from '@bk2/cms-section-util';
@@ -15,7 +15,7 @@ import { TextInputComponent } from '@bk2/shared-ui';
     @if(vm(); as vm) {
       <ion-row>
         <ion-col size="12">
-          <bk-text-input name="youtubeId" [(value)]="url" [maxLength]=11 [showHelper]=true />                                        
+          <bk-text-input name="youtubeId" [(value)]="url" [maxLength]=11 [readOnly]="readOnly()" [showHelper]=true />                                        
         </ion-col>
       </ion-row>
     }
@@ -23,5 +23,7 @@ import { TextInputComponent } from '@bk2/shared-ui';
 })
 export class VideoSectionFormComponent {
   public vm = model.required<SectionFormModel>();
+  public readonly readOnly = input(true);
+
   protected url = linkedSignal(() => this.vm().properties?.video?.url ?? '');
 } 

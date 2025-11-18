@@ -74,7 +74,7 @@ import { hasRole } from '@bk2/shared-util-core';
         @if(hasRole('admin')) {
           <ion-row>
             <ion-col>                                           
-            <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
+            <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
             </ion-col>
           </ion-row>
         }
@@ -86,8 +86,8 @@ export class OwnershipFormComponent {
   public vm = model.required<OwnershipFormModel>();
   public currentUser = input<UserModel | undefined>();
   public ownershipTags = input.required<string>();
+  public readOnly = input(true);
 
-  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected ownerName1 = computed(() => this.vm().ownerName1 ?? ''); 
   protected ownerName2 = computed(() => this.vm().ownerName2 ?? ''); 
   protected ownerModelType = computed(() => this.vm().ownerModelType ?? 'person');

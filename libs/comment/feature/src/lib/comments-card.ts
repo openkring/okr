@@ -42,7 +42,8 @@ export class CommentsCardComponent {
   public name = input('comment'); // mandatory name for the form control
   public collectionName = input.required<string>();
   public parentKey = input.required<string>();
-  public readOnly = input(false);
+  public readOnly = input(true);
+  
   public comments$: Observable<CommentModel[]> | undefined
   protected value = signal<string>('');
   public comments = computed(() => this.commentListStore.comments() ?? []);

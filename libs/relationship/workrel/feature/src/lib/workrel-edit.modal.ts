@@ -33,6 +33,7 @@ import { WorkrelModalsService } from './workrel-modals.service';
         [allTags]="tags()"
         [types]="types()"
         [states]="states()" 
+        [readOnly]="readOnly()"
         [periodicities]="periodicities()" 
         (selectPerson)="selectPerson()"
         (selectOrg)="selectOrg()"
@@ -60,6 +61,7 @@ export class WorkrelEditModalComponent {
   protected types = computed(() => this.appStore.getCategory('workrel_type'));
   protected states = computed(() => this.appStore.getCategory('workrel_state'));
   protected periodicities = computed(() => this.appStore.getCategory('periodicity'));
+  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
   protected readonly workrelKey = computed(() => this.workrel().bkey ?? '');
   protected readonly subjectUrl = computed(() => `/person/${this.vm().subjectKey}`);

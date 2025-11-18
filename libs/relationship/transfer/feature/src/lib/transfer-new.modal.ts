@@ -26,7 +26,7 @@ import { TransferFormComponent } from './transfer.form';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-transfer-form [(vm)]="vm" (validChange)="formIsValid.set($event)" />
+      <bk-transfer-form [(vm)]="vm" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
     </ion-content>
   `
 })
@@ -41,6 +41,8 @@ export class TransferNewModalComponent {
   public resource = input.required<ResourceModel>();
 
   public vm = linkedSignal(() => newTransferFormModel(this.subject(), this.subjectModelType(), this.object(), this.objectModelType(), this.resource()));
+  private currentUser = computed(() => this.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   // as we prepared everything with currentPerson and defaultResource, we already have a valid form, so we need to signal this here.
   protected formIsValid = signal(true);
@@ -50,6 +52,6 @@ export class TransferNewModalComponent {
   }
 
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.appStore.currentUser());
+    return hasRole(role, this.currentUser());
   }
 }

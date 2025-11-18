@@ -30,34 +30,34 @@ import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } fr
     <ion-grid>
       <ion-row>
         <ion-col size="12">
-          <bk-cat-select [category]="types()!" selectedItemName="typeName()" [withAll]="false" (changed)="onChange('calEventType', $event)" />
+          <bk-cat-select [category]="types()!" selectedItemName="typeName()" [withAll]="false"  [readOnly]="readOnly()" (changed)="onChange('calEventType', $event)" />
         </ion-col>
         </ion-row>
         <ion-row>
           <ion-col size="12">
-            <bk-text-input name="name" [value]="name()" [autofocus]="true"  (changed)="onChange('name', $event)" /> 
+            <bk-text-input name="name" [value]="name()" [autofocus]="true" [readOnly]="readOnly()"  (changed)="onChange('name', $event)" /> 
             <bk-error-note [errors]="nameErrors()" />                                                                               
           </ion-col>
         </ion-row>
         <ion-row>
           <ion-col size="12" size-md="6">
-            <bk-date-input name="startDate"  [storeDate]="startDate()" [locale]="locale()" [showHelper]=true  (changed)="onChange('startDate', $event)" />
+            <bk-date-input name="startDate"  [storeDate]="startDate()" [locale]="locale()" [readOnly]="readOnly()" [showHelper]=true  (changed)="onChange('startDate', $event)" />
           </ion-col>
           <ion-col size="12" size-md="6">
-            <bk-time-input name="startTime" [value]="startTime()" [locale]="locale()"  (changed)="onChange('startTime', $event)" />
+            <bk-time-input name="startTime" [value]="startTime()" [locale]="locale()" [readOnly]="readOnly()"  (changed)="onChange('startTime', $event)" />
           </ion-col>
           <ion-col size="12" size-md="6">
-            <bk-date-input name="endDate"  [storeDate]="endDate()" [showHelper]=true  (changed)="onChange('endDate', $event)" />
+            <bk-date-input name="endDate"  [storeDate]="endDate()" [showHelper]=true [readOnly]="readOnly()"  (changed)="onChange('endDate', $event)" />
           </ion-col>
           <ion-col size="12" size-md="6">
-            <bk-time-input name="endTime" [value]="endTime()" [locale]="locale()"  (changed)="onChange('endTime', $event)" />
+            <bk-time-input name="endTime" [value]="endTime()" [locale]="locale()" [readOnly]="readOnly()"  (changed)="onChange('endTime', $event)" />
           </ion-col>
           <ion-col size="12" size-md="6">
-            <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" (changed)="onChange('periodicity', $event)" />
+            <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [readOnly]="readOnly()" [withAll]="false" (changed)="onChange('periodicity', $event)" />
           </ion-col>
           @if(periodicity() !== 'once') {
             <ion-col size="12" size-md="6">
-              <bk-date-input name="repeatUntilDate" [storeDate]="repeatUntilDate()" [locale]="locale()" [mask]="chFutureDate" [showHelper]=true  (changed)="onChange('repeatUntilDate', $event)" />
+              <bk-date-input name="repeatUntilDate" [storeDate]="repeatUntilDate()" [locale]="locale()" [readOnly]="readOnly()" [mask]="chFutureDate" [showHelper]=true  (changed)="onChange('repeatUntilDate', $event)" />
             </ion-col>
           }
         </ion-row>
@@ -65,17 +65,18 @@ import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } fr
       <ion-row>
         <ion-col size="12">
           <!-- tbd: locationKey is currently only a text field, should be [key]@[name], e.g.  qlöh1341hkqj@Stäfa -->
-          <bk-text-input name="locationKey" [value]="locationKey()"  (changed)="onChange('locationKey', $event)" />                                        
+          <bk-text-input name="locationKey" [value]="locationKey()" [readOnly]="readOnly()"  (changed)="onChange('locationKey', $event)" />                                        
         </ion-col>
       </ion-row>
     </ion-grid>
     
-    <bk-avatars name="responsiblePersons" [avatars]="responsiblePersons()" (changed)="onChange('responsiblePersons', $event)" />
+    <bk-avatars name="responsiblePersons" [avatars]="responsiblePersons()" defaultIcon="person" [readOnly]="readOnly()" (changed)="onChange('responsiblePersons', $event)" />
 
     <bk-strings (changed)="onChange('calendars', $event)"
               [strings]="calendars()" 
               [mask]="calendarMask" 
-              [maxLength]="nameLength" 
+              [maxLength]="nameLength"
+              [readOnly]="readOnly()" 
               title="@input.calendarName.label"
               description="@input.calendarName.description"
               addLabel="@input.calendarName.addLabel" />           
@@ -84,11 +85,11 @@ import { CalEventFormModel, calEventFormModelShape, calEventFormValidations } fr
         TAG, NOTES 
         --------------------------------------------------->
         @if(hasRole('privileged')) {
-          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (changed)="onChange('tags', $event)" />
+          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
         }
     
         @if(hasRole('admin')) {
-          <bk-notes name="description" [value]="description()" (changed)="onChange('description', $event)" />
+          <bk-notes name="description" [value]="description()" [readOnly]="readOnly()" (changed)="onChange('description', $event)" />
         }
   </form>
 `
@@ -97,11 +98,12 @@ export class CalEventFormComponent {
   protected modalController = inject(ModalController);
 
   public vm = model.required<CalEventFormModel>();
-  public currentUser = input<UserModel | undefined>();
-  public types = input.required<CategoryListModel>();
-  public periodicities = input.required<CategoryListModel>();
-  public allTags = input.required<string>();
-  public locale = input.required<string>();
+  public readonly currentUser = input<UserModel | undefined>();
+  public readonly types = input.required<CategoryListModel>();
+  public readonly periodicities = input.required<CategoryListModel>();
+  public readonly allTags = input.required<string>();
+  public readonly locale = input.required<string>();
+  public readonly readOnly = input(true);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
@@ -120,8 +122,17 @@ export class CalEventFormComponent {
   protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
   protected description = computed(() => this.vm().description ?? DEFAULT_NOTES);
   protected calendars = computed(() => this.vm().calendars ?? DEFAULT_CALENDARS);
-  protected responsiblePersons = computed(() => this.vm().responsiblePersons ?? []);
-
+  //protected responsiblePersons = computed(() => this.vm().responsiblePersons ?? [] as AvatarInfo[]);
+protected responsiblePersons = computed(() => {
+  const raw = this.vm().responsiblePersons ?? [];
+  return raw.map(p => ({
+    key: p.key ?? '',
+    label: p.label ?? p.name1 ?? '',
+    modelType: p.modelType ?? 'person',
+    name1: p.name1 ?? '',
+    name2: p.name2 ?? ''
+  } as AvatarInfo));
+});
   protected readonly suite = calEventFormValidations;
   protected readonly shape = calEventFormModelShape;
   private readonly validationResult = computed(() => calEventFormValidations(this.vm()));
@@ -137,7 +148,18 @@ export class CalEventFormComponent {
   }
 
   protected onChange(fieldName: string, $event: string | string[] | number | boolean | AvatarInfo[]): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
+    if (fieldName === 'responsiblePersons') {
+      const normalized = ($event as AvatarInfo[]).map(p => ({
+        key: p.key ?? '',
+        label: p.label ?? p.name1 ?? '',
+        modelType: p.modelType ?? 'person',
+        name1: p.name1 ?? '',
+        name2: p.name2 ?? ''
+      }));
+      this.vm.update(vm => ({ ...vm, responsiblePersons: normalized }));
+    } else {
+      this.vm.update(vm => ({ ...vm, [fieldName]: $event }));
+    }
     debugFormErrors('CalEventForm', this.validationResult().errors, this.currentUser());
     this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());

@@ -1,4 +1,4 @@
-import { Component, model } from '@angular/core';
+import { Component, input, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ColorsIonic } from '@bk2/shared-categories';
@@ -27,14 +27,14 @@ import { StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
               <ion-row>
                 @if(icon().slot !== 'none') {
                 <ion-col size="12" size-md="6">                            <!-- icon name -->           
-                  <bk-text-input name="iconName" [value]="icon.name!" [mask]="mask" [showHelper]=true />
+                  <bk-text-input name="iconName" [value]="icon.name!" [mask]="mask" [readOnly]="readOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">                            <!-- icon size -->
-                  <bk-text-input name="iconSize" [value]="icon().size ?? ''" [mask]="sizeMask" [maxLength]=3 [showHelper]=true />                             
+                  <bk-text-input name="iconSize" [value]="icon().size ?? ''" [mask]="sizeMask" [readOnly]="readOnly()" [maxLength]=3 [showHelper]=true />                             
                 </ion-col>
                 }
                 <ion-col size="12" size-md="6">                            <!-- icon position / slot --> 
-                  <bk-string-select name="slot"  [selectedString]="icon().slot ?? 'start'" [stringList] = "['start', 'end', 'icon-only', 'none']" />
+                  <bk-string-select name="slot"  [selectedString]="icon().slot ?? 'start'" [readOnly]="readOnly()" [stringList] = "['start', 'end', 'icon-only', 'none']" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -46,6 +46,7 @@ import { StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
 })
 export class IconFormComponent {
   public icon = model.required<Icon>();
+  public readonly readOnly = input(true);
 
   protected colorsIonic = ColorsIonic;
   protected mask = LowercaseWordMask;

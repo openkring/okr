@@ -23,7 +23,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   <ion-accordion toggle-icon-slot="start" value="documents">
     <ion-item slot="header" [color]="color()">
       <ion-label>{{ title() | translate | async }}</ion-label>
-      @if(hasRole('contentAdmin')) {
+      @if(hasRole('contentAdmin') && !readOnly()) {
         <ion-button fill="outline" (click)="upload()">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
@@ -58,9 +58,12 @@ export class DocumentsAccordionComponent {
   private actionSheetController = inject(ActionSheetController);
 
   public documents = input.required<DocumentModel[]>();
-  public path = input.required<string>();
-  public color = input('primary');
-  public title = input('@document.plural');
+  public readonly path = input.required<string>();
+  public readonly color = input('primary');
+  public readonly title = input('@document.plural');
+  public readonly readOnly = input(true);
+
+
   private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 
    /**
@@ -136,13 +139,17 @@ export class DocumentsAccordionComponent {
   }
 
   protected async edit(doc?: DocumentModel): Promise<void> {
-    console.log('DocumentAccordion.edit is not yet implemented.', document);
-    // tbd: modal to edit the document
+    if (!this.readOnly()) {
+      console.log('DocumentAccordion.edit is not yet implemented.', document);
+      // tbd: modal to edit the document
+    }
   }
 
   protected async delete(doc?: DocumentModel): Promise<void> {
-    console.log('DocumentAccordion.delete is not yet implemented.', document);
-   // this.documentService.delete(document);
+    if (!this.readOnly()) {
+      console.log('DocumentAccordion.delete is not yet implemented.', document);
+      // this.documentService.delete(document);
+    }
   }
 
   protected hasRole(role: RoleName): boolean {

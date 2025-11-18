@@ -81,14 +81,18 @@ export const MembershipAccordionStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      async add(defaultMember: PersonModel | OrgModel, modelType: 'person' | 'org'): Promise<void> {
-        await store.membershipModalsService.add(defaultMember, store.defaultOrg(), modelType);
-        store.membershipsResource.reload();
+      async add(defaultMember: PersonModel | OrgModel, modelType: 'person' | 'org', readOnly = true): Promise<void> {
+        if (!readOnly) {
+          await store.membershipModalsService.add(defaultMember, store.defaultOrg(), modelType);
+          store.membershipsResource.reload();
+        }
       },
 
-      async edit(membership?: MembershipModel): Promise<void> {
-        await store.membershipModalsService.edit(membership);
-        store.membershipsResource.reload();
+      async edit(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (!readOnly) {
+          await store.membershipModalsService.edit(membership);
+          store.membershipsResource.reload();
+        }
       },
 
       /**
@@ -97,29 +101,29 @@ export const MembershipAccordionStore = signalStore(
          * Therefore, we end an membership by setting its validTo date.
          * @param membership the membership to delete
          */
-      async end(membership: MembershipModel): Promise<void> {
-        if (membership) {
-          const _date = await selectDate(store.modalController);
-          if (!_date) return;
-          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());
+      async end(membership: MembershipModel, readOnly = true): Promise<void> {
+        if (membership && !readOnly) {
+          const date = await selectDate(store.modalController);
+          if (!date) return;
+          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());
           store.membershipsResource.reload();
         }
       },
 
-      async changeMembershipCategory(membership?: MembershipModel): Promise<void> {
-        if (membership) {
-          const _mcat = await firstValueFrom(store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_' + membership.orgKey));
-          if (_mcat) {
-            await store.membershipModalsService.changeMembershipCategory(membership, _mcat);
+      async changeMembershipCategory(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (membership && !readOnly) {
+          const mcat = await firstValueFrom(store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_' + membership.orgKey));
+          if (mcat) {
+            await store.membershipModalsService.changeMembershipCategory(membership, mcat);
             store.membershipsResource.reload();
           }
         }
       },
 
-      async delete(membership?: MembershipModel): Promise<void> {
-        if (membership) {
-          const _result = await confirm(store.alertController, '@membership.operation.delete.confirm', true);
-          if (_result === true) {
+      async delete(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (membership && !readOnly) {
+          const result = await confirm(store.alertController, '@membership.operation.delete.confirm', true);
+          if (result === true) {
             await store.membershipService.delete(membership);
             store.membershipsResource.reload();
           }

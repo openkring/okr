@@ -1,4 +1,4 @@
-import { Component, computed, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonNote, IonRow } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
@@ -38,8 +38,8 @@ import { IconFormComponent } from './icon.form';
                 Beispielsweise kann bei einem Download-Button beschrieben werden, was heruntergeladen wird (Dateiname, Grösse etc.).
                 Mit der Einstellung 'Position des Buttons' bestimmst du, ob der Button links/rechts oder oben/unten vom Text angezeigt wird.
               </ion-note>
-              <bk-cat name="buttonPosition" [(value)]="position" [categories]="positions" />
-              <bk-editor [(content)]="htmlContent" [readOnly]="false" />
+              <bk-cat name="buttonPosition" [(value)]="position" [readOnly]="readOnly()" [categories]="positions" />
+              <bk-editor [(content)]="htmlContent" [readOnly]="readOnly()" />
             </ion-card-content>
           </ion-card>
         </ion-col>
@@ -49,6 +49,8 @@ import { IconFormComponent } from './icon.form';
 })
 export class ButtonSectionConfigComponent {
   public vm = model.required<SectionFormModel>();
+  public readonly readOnly = input(true);
+
   public button = computed(() => this.vm().properties?.button ?? newButton());
   public icon = computed(() => this.vm().properties?.icon ?? newIcon());
   protected position = linkedSignal(() => this.vm().properties?.button?.position ?? HorizontalPosition.Left);

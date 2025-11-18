@@ -30,7 +30,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   <ion-accordion toggle-icon-slot="start" value="workrels">
     <ion-item slot="header" [color]="color()">
       <ion-label>{{ title() | translate | async }}</ion-label>
-      @if(hasRole('memberAdmin')) {
+      @if(hasRole('memberAdmin') && readOnly() === false) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
@@ -81,6 +81,7 @@ export class WorkrelAccordionComponent {
   public personKey = input<string>();
   public color = input('light');
   public title = input('@workrel.plural');
+  public readOnly = input(true);
 
   protected workRels = computed(() => this.workRelStore.allWorkrels());  // tbd: better define: a) all, b) open c) current year ...
 
@@ -140,13 +141,13 @@ export class WorkrelAccordionComponent {
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
         case 'delete':
-          await this.workRelStore.delete(workRel);
+          await this.workRelStore.delete(workRel, this.readOnly());
           break;
         case 'edit':
-          await this.workRelStore.edit(workRel);
+          await this.workRelStore.edit(workRel, this.readOnly());
           break;
         case 'endrel':
-          await this.workRelStore.end(workRel);
+          await this.workRelStore.end(workRel, this.readOnly());
           break;
       }
     }

@@ -7,7 +7,7 @@ import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { UserCollection } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
-import { debugFormModel, getFullPersonName } from '@bk2/shared-util-core';
+import { debugFormModel, getFullPersonName, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarService } from '@bk2/avatar-data-access';
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
@@ -34,14 +34,14 @@ import { UserEditStore } from './user-edit.store';
         <bk-change-confirmation (okClicked)="save()" />
       } 
     <ion-content>
-      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [isEditable]="true" title="{{ avatarTitle() }}"/>
+      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" title="{{ avatarTitle() }}"/>
       @if(user(); as user) {
-        <bk-user-model-form [(vm)]="userModelVm" (validChange)="formIsValid.set($event)" />
-        <bk-user-auth-form [(vm)]="userAuthVm" (validChange)="formIsValid.set($event)" />
-        <bk-user-display-form [(vm)]="userDisplayVm" (validChange)="formIsValid.set($event)" />
-        <bk-user-privacy-form [(vm)]="userPrivacyVm" [currentUser]="currentUser()" (validChange)="formIsValid.set($event)" />
-        <bk-user-notification-form [(vm)]="userNotificationVm" (validChange)="formIsValid.set($event)" />
-        <bk-chips chipName="tag" [storedChips]="user.tags" [allChips]="userTags()" chipName="tag" (changed)="onTagsChanged($event)" />
+        <bk-user-model-form [(vm)]="userModelVm" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
+        <bk-user-auth-form [(vm)]="userAuthVm" [allRoles]="allRoles()" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
+        <bk-user-display-form [(vm)]="userDisplayVm" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
+        <bk-user-privacy-form [(vm)]="userPrivacyVm" [readOnly]="readOnly()" [currentUser]="currentUser()" (validChange)="formIsValid.set($event)" />
+        <bk-user-notification-form [(vm)]="userNotificationVm" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
+        <bk-chips chipName="tag" [storedChips]="user.tags" [readOnly]="readOnly()" [allChips]="userTags()" chipName="tag" (changed)="onTagsChanged($event)" />
       }
       <bk-comments-card [collectionName]="userCollection" [parentKey]="userKey()" />
     </ion-content>
@@ -62,6 +62,8 @@ export class UserPageComponent{
   protected readonly avatarKey = computed(() => `person.${this.user().bkey}`);
   protected readonly userTags = computed(() => this.userEditStore.getTags());
   protected readonly currentUser = computed(() => this.userEditStore.currentUser());
+  protected readonly readOnly = computed(() => !hasRole('admin', this.currentUser()));
+  protected readonly allRoles = computed(() => this.userEditStore.appStore.getCategory('roles'));
 
   protected userAuthVm = linkedSignal(() => convertUserToAuthForm(this.user()));
   protected userDisplayVm = linkedSignal(() => convertUserToDisplayForm(this.user()));

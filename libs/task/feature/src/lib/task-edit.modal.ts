@@ -25,7 +25,7 @@ import { TaskEditStore } from './task-edit.store';
   ],
   providers: [TaskEditStore],
   template: `
-    <bk-header title="{{ '@task.operation.update.label' | translate | async }}" [isModal]="true" />
+    <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
     @if(formIsValid()) {
       <bk-change-confirmation (okClicked)="save()" />
     }
@@ -35,24 +35,25 @@ import { TaskEditStore } from './task-edit.store';
         [states]="states()"
         [priorities]="priorities()"
         [importances]="importances()"
+        [readOnly]="readOnly()"
         (validChange)="formIsValid.set($event)" />
       <!-- <bk-editor [(content)]="notes" [readOnly]="false" /> -->
 
-      <bk-avatar-select title="@task.field.author" [avatarUrl]="authorUrl()" [name]="authorName()" [readOnly]="true" />
-      <bk-avatar-select title="@task.field.assignee" [avatarUrl]="assigneeUrl()" [name]="assigneeName()" (selectClicked)="select()" />
-      <bk-avatar-select title="@task.field.scope" [avatarUrl]="scopeUrl()" [name]="scopeName()" (selectClicked)="select()" />    
+      <bk-avatar-select title="@task.field.author" [avatarUrl]="authorUrl()" [name]="authorName()" [readOnly]="readOnly()" />
+      <bk-avatar-select title="@task.field.assignee" [avatarUrl]="assigneeUrl()" [name]="assigneeName()" [readOnly]="readOnly()" (selectClicked)="select()" />
+      <bk-avatar-select title="@task.field.scope" [avatarUrl]="scopeUrl()" [name]="scopeName()" [readOnly]="readOnly()" (selectClicked)="select()" />    
 
-      @if(hasRole('privileged')) {
-        <bk-strings (changed)="onChange('calendars', $event)"
-          [strings]="calendars()" 
-          [mask]="calendarMask" 
-          [maxLength]="20" 
-          title="@input.calendarName.label"
-          description="@input.calendarName.description"
-          addLabel="@input.calendarName.addLabel" />    
+      <bk-strings (changed)="onChange('calendars', $event)"
+        [strings]="calendars()" 
+        [mask]="calendarMask" 
+        [maxLength]="20"
+        [readOnly]="readOnly()" 
+        title="@input.calendarName.label"
+        description="@input.calendarName.description"
+        addLabel="@input.calendarName.addLabel" />    
 
-        <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="taskTags()" (changed)="onChange('tags', $event)" />
-      }
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="taskTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+
       @if(hasRole('privileged') || hasRole('eventAdmin')) {
         <ion-accordion-group value="comments">
           <bk-comments-accordion [collectionName]="collectionName" [parentKey]="key()" />
@@ -66,6 +67,7 @@ export class TaskEditModalComponent {
   protected readonly taskEditStore = inject(TaskEditStore);
 
   public task = input.required<TaskModel>();
+  public readOnly = input.required<boolean>();
   
   public vm = linkedSignal(() => convertTaskToForm(this.task()));
   protected key = computed(() => this.task().bkey);
@@ -75,6 +77,7 @@ export class TaskEditModalComponent {
   protected states = computed(() => this.taskEditStore.appStore.getCategory('task_state'));
   protected priorities = computed(() => this.taskEditStore.appStore.getCategory('priority'));
   protected importances = computed(() => this.taskEditStore.appStore.getCategory('importance'));
+  protected title = computed(() => this.readOnly() ? '@task.operation.update.label' : '@task.operation.view.label');
 
   protected taskTags = computed(() => this.taskEditStore.tags());
   protected currentUser = computed(() => this.taskEditStore.currentUser());

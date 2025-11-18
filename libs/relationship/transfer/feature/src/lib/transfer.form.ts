@@ -25,10 +25,26 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
   template: `
     <form scVestForm [formShape]="shape" [formValue]="vm()" [suite]="suite" (dirtyChange)="dirtyChange.set($event)" (formValueChange)="onValueChange($event)">
       <!-- subjects -->
-      <bk-avatars (changed)="onChange('subjects', $event)" (selectClicked)="selectPerson('subjects')" [avatars]="subjects()" title="@transfer.field.subjects" addLabel="@transfer.operation.addSubject.label" />
+      <bk-avatars
+        (changed)="onChange('subjects', $event)" 
+        (selectClicked)="selectPerson('subjects')"
+        [avatars]="subjects()"
+        defaultIcon="person"
+        [readOnly]="readOnly()"
+        title="@transfer.field.subjects"
+        addLabel="@transfer.operation.addSubject.label"
+      />
 
       <!-- objects -->
-      <bk-avatars (changed)="onChange('objects', $event)" (selectClicked)="selectPerson('objects')" [avatars]="objects()" title="@transfer.field.objects" addLabel="@transfer.operation.addObject.label" />
+      <bk-avatars
+        (changed)="onChange('objects', $event)"
+        (selectClicked)="selectPerson('objects')"
+        [avatars]="objects()"
+        defaultIcon="person"
+        [readOnly]="readOnly()"
+        title="@transfer.field.objects"
+        addLabel="@transfer.operation.addObject.label"
+      />
 
       <ion-card>
         <ion-card-header>
@@ -55,7 +71,7 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="types()!" selectedItemName="type()" [withAll]="false" (changed)="onChange('type', $event)" />
+                <bk-cat-select [category]="types()!" selectedItemName="type()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('type', $event)" />
               </ion-col>
 
               @if(type() === 'custom') {
@@ -65,7 +81,7 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
               }
 
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" (changed)="onChange('state', $event)" />
+                <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('state', $event)" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
@@ -92,7 +108,7 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" (changed)="onChange('periodicity', $event)" />
+                <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('periodicity', $event)" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -102,7 +118,7 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
       @if(hasRole('privileged')) {
       <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
       } @if(hasRole('admin')) {
-      <bk-notes name="notes" [value]="notes()" (changed)="onChange('notes', $event)" />
+      <bk-notes name="notes" [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
       }
     </form>
   `,
@@ -112,6 +128,7 @@ export class TransferFormComponent {
   private readonly appStore = inject(AppStore);
 
   public vm = model.required<TransferFormModel>();
+  public readOnly = input(true);
 
   protected readonly currentUser = computed(() => this.appStore.currentUser());
   protected readonly allTags = computed(() => this.appStore.getTags('transfer'));
@@ -119,7 +136,6 @@ export class TransferFormComponent {
   protected readonly states = computed(() => this.appStore.getCategory('transfer_state'));
   protected readonly periodicities = computed(() => this.appStore.getCategory('periodicity'));
 
-  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
   protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES);
   protected name = computed(() => this.vm().name ?? DEFAULT_NAME);

@@ -2,9 +2,7 @@ import { Component, computed, input, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { RoleName, UserModel } from '@bk2/shared-models';
 import { ErrorNoteComponent, TextInputComponent } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
 
 import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
 
@@ -37,22 +35,12 @@ import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
 })
 export class KeyComponent {
   public vm = model.required<ResourceFormModel>();
-  public currentUser = input.required<UserModel | undefined>();
+  public readOnly = input(true);
 
-  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
-  protected keyNr = computed(() => this.vm().keyNr ?? 0);
   protected name = computed(() => this.vm().name ?? '');
 
   private readonly validationResult = computed(() => resourceFormValidations(this.vm()));
   protected keyNrErrors = computed(() => this.validationResult().getErrors('keyNr'));
-
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
-  }
-
-  protected onValueChange(value: ResourceFormModel): void {
-    this.vm.update((_vm) => ({ ..._vm, ...value }));
-  }
 }
 
 

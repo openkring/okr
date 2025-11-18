@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { NameDisplays, ViewPositions } from '@bk2/shared-categories';
@@ -23,6 +23,8 @@ import { SectionFormModel } from '@bk2/cms-section-util';
     @if(vm(); as vm) {
       <bk-avatars (changed)="onPeopleListChange($event)" (selectClicked)="selectClicked.emit()"
             [avatars]="persons()"
+            defaultIcon="person"
+            [readOnly]="readOnly()"
             title="@content.type.peopleList.label"
             addLabel="@content.type.peopleList.addLabel" />
 
@@ -31,7 +33,7 @@ import { SectionFormModel } from '@bk2/cms-section-util';
           <ion-card-title>{{ '@content.type.peopleList.editorLabel' | translate | async}}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <bk-cat name="imagePosition" [(value)]="position" [categories]="viewPositions" />
+          <bk-cat name="imagePosition" [(value)]="position" [readOnly]="readOnly()" [categories]="viewPositions" />
           <bk-editor [content]="htmlContent()" [readOnly]="false" (contentChange)="onContentChange($event)" />                                             
         </ion-card-content>
       </ion-card>
@@ -44,25 +46,25 @@ import { SectionFormModel } from '@bk2/cms-section-util';
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input name="title" [(value)]="title" />
+                <bk-text-input name="title" [(value)]="title" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input name="altText" [(value)]="altText" [showHelper]=true />
+                <bk-text-input name="altText" [(value)]="altText" [readOnly]="readOnly()" [showHelper]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showName" [isChecked]="showName()" />
+                <bk-checkbox name="showName" [isChecked]="showName()" [readOnly]="readOnly()" />
               </ion-col>  
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showLabel" [isChecked]="showLabel()" />
+                <bk-checkbox name="showLabel" [isChecked]="showLabel()" [readOnly]="readOnly()" />
               </ion-col>  
               <ion-col size="12" size-md="6">
-                <bk-number-input name="cols" [(value)]="cols" [showHelper]=true />
+                <bk-number-input name="cols" [(value)]="cols" [readOnly]="readOnly()" [showHelper]=true />
               </ion-col>  
               <ion-col size="12" size-md="6">
-                <bk-cat name="nameDisplay" [(value)]="nameDisplay" [categories]="nameDisplays" />                                               
+                <bk-cat name="nameDisplay" [(value)]="nameDisplay" [readOnly]="readOnly()" [categories]="nameDisplays" />                                               
               </ion-col>  
               <ion-col size="12" size-md="6">
-                <bk-text-input name="linkedSection" [(value)]="linkedSection" [showHelper]=true />                                               
+                <bk-text-input name="linkedSection" [(value)]="linkedSection" [readOnly]="readOnly()" [showHelper]=true />                                               
               </ion-col> 
             </ion-row>
           </ion-grid>
@@ -73,6 +75,8 @@ import { SectionFormModel } from '@bk2/cms-section-util';
 })
 export class PeopleListFormComponent {
   public vm = model.required<SectionFormModel>();
+  public readonly readOnly = input(true);
+
   protected avatarConfig = computed(() => this.vm().properties?.avatar);
 
   protected position = linkedSignal(() => this.vm()?.properties?.content?.position ?? ViewPosition.Top);

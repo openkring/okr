@@ -87,39 +87,43 @@ export const MembersAccordionStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      async addMember(): Promise<void> {
-        await store.membershipModalsService.add(store.currentPerson(), store.currentOrg(), 'person');
-        store.membersResource.reload();
-      },
-
-      async edit(membership?: MembershipModel): Promise<void> {
-        await store.membershipModalsService.edit(membership);
-        store.membersResource.reload();
-      },
-
-      async end(membership?: MembershipModel): Promise<void> {
-        if (membership) {
-          const _date = await selectDate(store.modalController);
-          if (!_date) return;
-          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());
+      async addMember(readOnly = true): Promise<void> {
+        if (!readOnly) {
+          await store.membershipModalsService.add(store.currentPerson(), store.currentOrg(), 'person');
           store.membersResource.reload();
         }
       },
 
-      async changeMembershipCategory(membership?: MembershipModel): Promise<void> {
-        if (membership) {
-          const _mcat = await firstValueFrom(store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_' + membership.orgKey));
-          if (_mcat) {
-            await store.membershipModalsService.changeMembershipCategory(membership, _mcat);
+      async edit(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (!readOnly && membership) {
+          await store.membershipModalsService.edit(membership);
+          store.membersResource.reload();
+        }
+      },
+
+      async end(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (!readOnly && membership) {
+          const date = await selectDate(store.modalController);
+          if (!date) return;
+          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());
+          store.membersResource.reload();
+        }
+      },
+
+      async changeMembershipCategory(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (!readOnly && membership) {
+          const mcat = await firstValueFrom(store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_' + membership.orgKey));
+          if (mcat) {
+            await store.membershipModalsService.changeMembershipCategory(membership, mcat);
             store.membersResource.reload();
           }
         }
       },
 
-      async delete(membership?: MembershipModel): Promise<void> {
-        if (membership) {
-          const _result = await confirm(store.alertController, '@membership.operation.delete.confirm', true);
-          if (_result === true) {
+      async delete(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (!readOnly && membership) {
+          const result = await confirm(store.alertController, '@membership.operation.delete.confirm', true);
+          if (result === true) {
             await store.membershipService.delete(membership);
             store.membersResource.reload();
           }

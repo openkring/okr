@@ -36,25 +36,25 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_RBOAT_USAGE, DEFAUL
  
     @switch(vm().type) {
       @case('rboat') {
-        <bk-rowing-boat [vm]="vm()" [subTypes]="subTypes()" [usages]="usages()" [currentUser]="currentUser()" />
+        <bk-rowing-boat [vm]="vm()" [readOnly]="readOnly()" [subTypes]="subTypes()" [usages]="usages()" />
       }
       @case('boat') {
-        <bk-boat [vm]="vm()" [subTypes]="subTypes()" [currentUser]="currentUser()" />
+        <bk-boat [vm]="vm()" [readOnly]="readOnly()" [subTypes]="subTypes()" />
       }
       @case('car') {
-        <bk-car [vm]="vm()" [subTypes]="subTypes()" [currentUser]="currentUser()" />
+        <bk-car [vm]="vm()" [readOnly]="readOnly()" [subTypes]="subTypes()" />
       }
       @case('locker') {
-        <bk-locker [vm]="vm()" [subTypes]="subTypes()" [currentUser]="currentUser()" />
+        <bk-locker [vm]="vm()" [readOnly]="readOnly()" [subTypes]="subTypes()" />
       }
       @case('key') {
-        <bk-key [vm]="vm()" [currentUser]="currentUser()" />
+        <bk-key [vm]="vm()" [readOnly]="readOnly()" />
       }
       @case('realestate') {
-        <bk-real-estate [vm]="vm()" [currentUser]="currentUser()" />
+        <bk-real-estate [vm]="vm()" [readOnly]="readOnly()" />
       }
       @default {
-        <bk-other-resource [vm]="vm()" [currentUser]="currentUser()" />
+        <bk-other-resource [vm]="vm()" [readOnly]="readOnly()" />
       }
     }
 
@@ -65,7 +65,7 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_RBOAT_USAGE, DEFAUL
     }
   
     @if(hasRole('admin')) {
-      <bk-notes name="description" [value]="description()" (changed)="onChange('description', $event)" />
+      <bk-notes name="description" [value]="description()" [readOnly]="readOnly()" (changed)="onChange('description', $event)" />
     }
 </form>
   `
@@ -77,11 +77,11 @@ export class ResourceFormComponent {
   public types = input<CategoryListModel | undefined>();
   public subTypes = input<CategoryListModel | undefined>();
   public usages = input<CategoryListModel | undefined>();
+  public readOnly = input(true);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
 
-  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected isNew = computed(() => this.vm().bkey === undefined || this.vm().bkey === '');
   protected typeName = computed(() => this.vm().type ?? DEFAULT_RESOURCE_TYPE);
   protected name = computed(() => this.vm().name ?? DEFAULT_NAME);

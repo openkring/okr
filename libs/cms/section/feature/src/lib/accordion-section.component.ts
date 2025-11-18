@@ -27,7 +27,7 @@ import { SectionComponent } from './section.component';
                 <ion-label>{{sectionDesc.label | translate | async}}</ion-label>
               </ion-item>
               <div slot="content">
-                <bk-section [id]="sectionDesc.key" [readOnly]="readOnly()"/>
+                <bk-section [id]="sectionDesc.key" [readOnly]="isReadOnly()"/>
               </div>
             </ion-accordion>
           }
@@ -38,7 +38,8 @@ import { SectionComponent } from './section.component';
 })
 export class AccordionSectionComponent {
   public section = input<SectionModel>();
-  public readOnly = input(true);
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => this.readOnly());
   protected sections = computed(() => this.section()?.properties.accordion?.sections ?? []);
 
   colorsIonic = ColorsIonic;

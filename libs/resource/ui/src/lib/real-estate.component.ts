@@ -2,9 +2,7 @@ import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { RoleName, UserModel } from '@bk2/shared-models';
 import { ErrorNoteComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
 
 import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
 
@@ -41,24 +39,14 @@ import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
 })
 export class RealEstateComponent {
   public vm = model.required<ResourceFormModel>();
-  public currentUser = input.required<UserModel | undefined>();
+  public readOnly = input(true);
 
-  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+  protected name = linkedSignal(() => this.vm()?.name ?? '');
+  protected currentValue = linkedSignal(() => this.vm()?.currentValue ?? 0);
   
   private readonly validationResult = computed(() => resourceFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected currentValueErrors = computed(() => this.validationResult().getErrors('currentValue'));
-
-  protected name = linkedSignal(() => this.vm()?.name ?? '');
-  protected currentValue = linkedSignal(() => this.vm()?.currentValue ?? 0);
-
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
-  }
-
-  protected onValueChange(value: ResourceFormModel): void {
-    this.vm.update((_vm) => ({ ..._vm, ...value }));
-  }
 }
 
 

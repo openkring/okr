@@ -111,7 +111,7 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="reasons()!" [selectedItemName]="reservationReason()" [withAll]="false" (changed)="onChange('reservationReason', $event)" />
+              <bk-cat-select [category]="reasons()!" [selectedItemName]="reservationReason()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('reservationReason', $event)" />
             </ion-col>
 
             <ion-col size="12" size-md="6">
@@ -138,7 +138,7 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="states()!" [selectedItemName]="reservationState()" [withAll]="false" (changed)="onChange('reservationState', $event)" />
+              <bk-cat-select [category]="states()!" [selectedItemName]="reservationState()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('reservationState', $event)" />
             </ion-col>
 
             <ion-col size="12" size-md="6">
@@ -150,7 +150,7 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
             </ion-col>
 
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" [withAll]="false" (changed)="onChange('periodicity', $event)" />
+              <bk-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('periodicity', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -162,7 +162,7 @@ import { ReservationSelectorsService } from './reservation-selectors.service';
     }
   
     @if(hasRole('admin')) {
-      <bk-notes name="notes" [value]="notes()" (changed)="onChange('notes', $event)" />
+      <bk-notes name="notes" [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
     }
   </form>
   `
@@ -172,6 +172,7 @@ export class ReservationNewFormComponent {
   private readonly appStore = inject(AppStore);
 
   public vm = model.required<ReservationNewFormModel>();
+  public readOnly = input(true);
 
   protected readonly currentUser = computed(() => this.appStore.currentUser());
   protected readonly reasons = computed(() => this.appStore.getCategory('reservation_reason'));
@@ -179,7 +180,6 @@ export class ReservationNewFormComponent {
   protected readonly periodicities = computed(() => this.appStore.getCategory('periodicity'));
   protected readonly allTags = computed(() => this.appStore.getTags('reservation'));
 
-  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected reserverKey = computed(() => this.vm().reserverKey ?? DEFAULT_KEY);
   protected reserverName = computed(() => this.vm().reserverName ?? DEFAULT_NAME);
   protected reserverName2 = computed(() => this.vm().reserverName2 ?? DEFAULT_NAME);

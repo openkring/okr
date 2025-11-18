@@ -1,4 +1,4 @@
-import { Component, linkedSignal, model, output } from '@angular/core';
+import { Component, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
@@ -32,11 +32,11 @@ import { SectionFormModel } from '@bk2/cms-section-util';
             <ion-grid>
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-cat name="buttonAction" [(value)]="buttonAction" [categories]="buttonActions" (changed)="onChange('buttonAction', $event)" />
+                  <bk-cat name="buttonAction" [(value)]="buttonAction" [categories]="buttonActions" [readOnly]="readOnly()" (changed)="onChange('buttonAction', $event)" />
                 </ion-col>
                 @if(buttonAction() !== buttonActionEnum.None) {
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="url" [(value)]="url" [maxLength]=100 />                             
+                    <bk-text-input name="url" [(value)]="url" [readOnly]="readOnly()" [maxLength]=100 />                             
                   </ion-col>
                 }
               </ion-row>
@@ -49,6 +49,8 @@ import { SectionFormModel } from '@bk2/cms-section-util';
 })
 export class ButtonActionConfigComponent {
   public vm = model.required<SectionFormModel>();
+  public readonly readOnly = input(true);
+
   protected buttonAction = linkedSignal(() => this.vm().properties?.button?.buttonAction ?? ButtonAction.None);
   protected url = linkedSignal(() => this.vm()?.properties?.button?.url ?? '');
   public changed = output<void>(); 

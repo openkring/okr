@@ -31,27 +31,27 @@ import { TaskFormModel, taskFormModelShape, taskFormValidations } from '@bk2/tas
         <ion-grid>
           <ion-row>
             <ion-col size="12"> 
-              <bk-text-input name="name" [value]="name()" [maxLength]="nameLength" [autofocus]="true" [copyable]="true" (changed)="onChange('name', $event)" /> 
+              <bk-text-input name="name" [value]="name()" [maxLength]="nameLength" [autofocus]="true" [readOnly]="readOnly()" [copyable]="true" (changed)="onChange('name', $event)" /> 
               <bk-error-note [errors]="nameErrors()" />                                                                               
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-date-input name="dueDate" [storeDate]="dueDate()" [showHelper]=true (changed)="onChange('dueDate', $event)" />
+              <bk-date-input name="dueDate" [storeDate]="dueDate()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dueDate', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-date-input name="completionDate" [storeDate]="completionDate()" [showHelper]=true (changed)="onChange('completionDate', $event)" />
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" (changed)="onChange('taskState', $event)" />
+              <bk-date-input name="completionDate" [storeDate]="completionDate()" [readOnly]="readOnly()" [showHelper]=true (changed)="onChange('completionDate', $event)" />
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="priorities()!" selectedItemName="priority()" [withAll]="false" (changed)="onChange('priority', $event)" />
+              <bk-cat-select [category]="states()!" selectedItemName="state()" [readOnly]="readOnly()" [withAll]="false" (changed)="onChange('taskState', $event)" />
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="12" size-md="6">
+              <bk-cat-select [category]="priorities()!" selectedItemName="priority()" [readOnly]="readOnly()" [withAll]="false" (changed)="onChange('priority', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="importances()!" selectedItemName="importance()" [withAll]="false" (changed)="onChange('importance', $event)" />
+              <bk-cat-select [category]="importances()!" selectedItemName="importance()" [readOnly]="readOnly()" [withAll]="false" (changed)="onChange('importance', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -66,6 +66,7 @@ export class TaskFormComponent {
   public readonly states = input.required<CategoryListModel>();
   public readonly priorities = input.required<CategoryListModel>();
   public readonly importances = input.required<CategoryListModel>();
+  public readOnly = input.required<boolean>();
   
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

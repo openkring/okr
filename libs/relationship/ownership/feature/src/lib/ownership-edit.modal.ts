@@ -29,7 +29,7 @@ import { convertFormToOwnership, convertOwnershipToForm, getOwnerName } from '@b
     <ion-content>
       <bk-relationship-toolbar [titleArguments]="titleArguments()" />
       
-      <bk-ownership-form [(vm)]="vm" [currentUser]="currentUser()" [ownershipTags]="ownershipTags()" (validChange)="formIsValid.set($event)" />
+      <bk-ownership-form [(vm)]="vm" [currentUser]="currentUser()" [ownershipTags]="ownershipTags()" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
 
       @if(hasRole('privileged')) {
         <ion-accordion-group value="comments">
@@ -50,7 +50,9 @@ export class OwnershipEditModalComponent {
 
   public ownership = input.required<OwnershipModel>();
   public currentUser = input<UserModel | undefined>();
-  protected readonly ownershipTags = computed(() => this.appStore.getTags('ownership'))
+
+  protected readonly ownershipTags = computed(() => this.appStore.getTags('ownership'));
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected vm = linkedSignal(() => convertOwnershipToForm(this.ownership()));
   protected modalTitle = computed(() => this.getModalTitle());

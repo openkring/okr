@@ -24,7 +24,7 @@ import { createNewGroupFormModel } from '@bk2/subject-group-util';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-group-new-form [(vm)]="vm" [currentUser]="currentUser()" [groupTags]="groupTags()" (validChange)="onValidChange($event)" />
+      <bk-group-new-form [(vm)]="vm" [currentUser]="currentUser()" [groupTags]="groupTags()" [readOnly]="readOnly()" (validChange)="onValidChange($event)" />
     </ion-content>
   `
 })
@@ -33,6 +33,7 @@ export class GroupNewModalComponent {
   private readonly appStore = inject(AppStore);
 
   public currentUser = input<UserModel | undefined>();
+  public readOnly = input(true);
 
   public vm = linkedSignal(() => createNewGroupFormModel());
   protected readonly groupTags = computed(() => this.appStore.getTags('group'));

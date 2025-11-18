@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { ColorsIonic } from '@bk2/shared-categories';
@@ -7,6 +7,7 @@ import { ColorIonic } from '@bk2/shared-models';
 import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 
 import { AsyncPipe } from '@angular/common';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-avatar-select',
@@ -28,7 +29,7 @@ import { AsyncPipe } from '@angular/common';
           <!-- <ion-img src="{{ modelType() + '.' + key() | avatar | async }}" alt="Avatar icon" /> -->
         </ion-avatar>
         <ion-label>{{name()}}</ion-label>
-        @if(!readOnly()) {
+        @if(!isReadOnly()) {
           <ion-label>
             <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ selectLabel() | translate | async }}</ion-button>
           </ion-label>
@@ -44,7 +45,8 @@ export class AvatarSelectComponent {
   public title = input('Avatar');
   public color = input<ColorIonic>(ColorIonic.White);
   public selectLabel = input('@general.operation.select.label');
-  public readOnly = input(false);
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   public selectClicked = output<void>();
 

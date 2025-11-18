@@ -23,6 +23,7 @@ import { OrgFormComponent } from '@bk2/subject-org-ui';
 import { convertOrgToForm } from '@bk2/subject-org-util';
 
 import { OrgEditStore } from './org-edit.store';
+import { DEFAULT_TITLE } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-org-edit-page',
@@ -41,7 +42,7 @@ import { OrgEditStore } from './org-edit.store';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [isEditable]="hasRole('memberAdmin')" title="{{ title() }}"/>
+      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" title="{{ title() }}"/>
       @if(org(); as org) {
         <bk-org-form [(vm)]="vm"
           [currentUser]="currentUser()"
@@ -50,7 +51,7 @@ import { OrgEditStore } from './org-edit.store';
           (validChange)="formIsValid.set($event)" />
 
         <ion-accordion-group value="members" [multiple]="true">
-          <bk-addresses-accordion [parentKey]="orgKey()" [readOnly]="false" parentModelType="org" [addresses]="addresses()" 
+          <bk-addresses-accordion [parentKey]="orgKey()" [readOnly]="readOnly()" parentModelType="org" [addresses]="addresses()" 
             [readOnly]="!hasRole('memberAdmin')" (addressesChanged)="onAddressesChanged()" />
           <bk-membership-accordion [member]="org" modelType="org" />
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
@@ -84,13 +85,14 @@ export class OrgEditPageComponent {
   public orgKey = input.required<string>();
 
   protected currentUser = computed(() => this.orgEditStore.currentUser());
+  protected readOnly = computed(() => !hasRole('memberAdmin', this.orgEditStore.currentUser()));
   protected org = computed(() => this.orgEditStore.org());
   protected defaultResource = computed(() => this.orgEditStore.defaultResource());
   protected addresses = computed(() => this.orgEditStore.addresses());
   public vm = linkedSignal(() => convertOrgToForm(this.org()));
   protected path = computed(() => getDocumentStoragePath(this.orgEditStore.tenantId(), 'org', this.org()?.bkey));
   protected avatarKey = computed(() => `org.${this.orgKey()}`);
-  protected title = computed(() => this.org()?.name ?? '');
+  protected title = computed(() => this.org()?.name ?? DEFAULT_TITLE);
   protected tags = computed(() => this.orgEditStore.getOrgTags());
   protected types = computed(() => this.orgEditStore.appStore.getCategory('org_type'));
 

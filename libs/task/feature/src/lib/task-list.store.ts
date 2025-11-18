@@ -103,12 +103,13 @@ export const TaskListStore = signalStore(
       },
 
       /******************************* actions *************************************** */
-      async add(): Promise<void> {
-        const currentPerson = getAvatarInfoFromCurrentUser(store.currentUser());
-        if (!currentPerson) return;
-        console.log('TaskListStore.add: ', store.calendarName());
-        await store.taskModalsService.add(currentPerson, store.calendarName());
-        store.tasksResource.reload();
+      async add(readOnly = true): Promise<void> {
+          if(!readOnly) {
+          const currentPerson = getAvatarInfoFromCurrentUser(store.currentUser());
+          if (!currentPerson) return;
+          await store.taskModalsService.add(currentPerson, store.calendarName());
+          store.tasksResource.reload();
+        }
       },
 
       async addName(task: TaskModel): Promise<void> {
@@ -119,9 +120,11 @@ export const TaskListStore = signalStore(
         console.log('TaskListStore.export ist not yet implemented');
       },
 
-      async edit(task?: TaskModel): Promise<void> {
-        await store.taskModalsService.edit(task);
-        store.tasksResource.reload();
+      async edit(task?: TaskModel, readOnly = true): Promise<void> {
+        if (!readOnly) {
+          await store.taskModalsService.edit(task);
+          store.tasksResource.reload();
+        }
       },
 
       async delete(task?: TaskModel): Promise<void> {
@@ -131,16 +134,18 @@ export const TaskListStore = signalStore(
         }
       },
 
-      async setCompleted(task: TaskModel): Promise<void> {
-        if (task.completionDate) {
-          task.completionDate = '';
-          task.state = 'planned';
-        } else {
-          task.completionDate = getTodayStr();
-          task.state = 'done';
+      async setCompleted(task: TaskModel, readOnly = true): Promise<void> {
+        if (!readOnly) {
+          if (task.completionDate) {
+            task.completionDate = '';
+            task.state = 'planned';
+          } else {
+            task.completionDate = getTodayStr();
+            task.state = 'done';
+          }
+          await store.taskService.update(task, store.currentUser());
+          store.tasksResource.reload();
         }
-        await store.taskService.update(task, store.currentUser());
-        store.tasksResource.reload();
       }
     }
   }),

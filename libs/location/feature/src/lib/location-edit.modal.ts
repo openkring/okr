@@ -9,6 +9,7 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
 import { LocationFormComponent } from '@bk2/location-ui';
 import { convertFormToLocation, convertLocationToForm, getLocationTitle } from '@bk2/location-util';
+import { hasRole } from '@bk2/shared-util-core';
 
 
 @Component({
@@ -29,6 +30,7 @@ import { convertFormToLocation, convertLocationToForm, getLocationTitle } from '
         [currentUser]="currentUser()"
         [types]="types()"
         [allTags]="tags()"
+        [readOnly]="readOnly()"
         (validChange)="formIsValid.set($event)" />
     </ion-content>
   `
@@ -43,6 +45,7 @@ export class LocationEditModalComponent {
   protected vm = linkedSignal(() => convertLocationToForm(this.location()));
   protected tags = computed(() => this.appStore.getTags('location'));
   protected types = computed(() => this.appStore.getCategory('location_type'));
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
   protected formIsValid = signal(false);
 

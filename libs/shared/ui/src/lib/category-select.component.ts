@@ -3,10 +3,10 @@ import { Component, computed, input, model, output } from '@angular/core';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPopover } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { getItemLabel } from '@bk2/shared-util-core';
+import { coerceBoolean, getItemLabel } from '@bk2/shared-util-core';
 
 // unique id to avoid duplicated IDs in reusable component
 let id = 0;
@@ -37,16 +37,16 @@ let id = 0;
   `],
   template: `
   <ion-button fill="clear" id="{{popoverId}}">
-    @if(showIcons() === true && selectedItem().icon.length > 0) {
+    @if(showIcons() && selectedItem().icon.length > 0) {
       <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
     }
     {{ getItemLabel(selectedItem()) | translate | async}}
-    @if(readOnly() === false) {
+    @if(!isReadOnly()) {
       <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
     }
   </ion-button>
-  @if(!readOnly()) {
-    <ion-popover trigger="{{popoverId}}" [showBackdrop]="true" [dismissOnSelect]="true">
+  @if(!isReadOnly()) {
+    <ion-popover trigger="{{popoverId}}" [showBackdrop]=true [dismissOnSelect]=true>
       <ng-template>
         <ion-content>
           <ion-list lines="inset">
@@ -57,7 +57,7 @@ let id = 0;
                 (mouseleave)="hovered = ''"
                 [class.hover]="hovered === item.name"
               >
-              @if(showIcons() === true) {
+              @if(shouldShowIcons()) {
                 <ion-icon slot="start" src="{{ item.icon| svgIcon }}" />
               }
               <ion-label class="ion-text-wrap">{{ getItemLabel(item) | translate | async }}</ion-label>
@@ -68,7 +68,7 @@ let id = 0;
       </ng-template>
     </ion-popover>
   }
-  @if(showHelper()) {
+  @if(shouldShowHelper()) {
     <ion-item lines="none">
       <ion-note>{{helper() | translate | async}}</ion-note>
     </ion-item>
@@ -79,10 +79,14 @@ export class CategorySelectComponent {
   public category = input.required<CategoryListModel>(); // mandatory view model
   public selectedItemName = model.required<string>(); // mandatory view model
   public withAll = input(false); // if true, the first item in the list is 'All' and the user can select it. This is useful for filtering.
+  protected showWithAll = computed(() => coerceBoolean(this.withAll()));
   public labelName = input('label'); // the name of the label in the i18n file
-  public readOnly = input(false); // if true, the selected category is shown as a ready-only text
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public showHelper = input(false);
+  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public showIcons = input(true);
+  protected shouldShowIcons = computed(() => coerceBoolean(this.showIcons()));
 
   protected name = computed(() => this.category().name); // category name, determines the label
   protected label = computed(() => `@${this.category().i18nBase}.${this.labelName()}`);

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { DEFAULT_ROLE, NAME_LENGTH } from '@bk2/shared-constants';
+import { DEFAULT_MENU_ACTION, DEFAULT_ROLE, NAME_LENGTH } from '@bk2/shared-constants';
 import { BaseProperty, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, PropertyListComponent, StringsComponent, TextInputComponent, UrlInputComponent } from '@bk2/shared-ui';
 import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
@@ -33,29 +33,29 @@ import { MenuItemFormModel, menuItemFormModelShape, menuItemFormValidation } fro
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-text-input name="name" [value]="name()" [autofocus]="true" [maxLength]="nameLength" [showHelper]=true (changed)="onChange('name', $event)" />
+              <bk-text-input name="name" [value]="name()" [autofocus]="true" [maxLength]="nameLength" [readOnly]="readOnly()" [showHelper]=true (changed)="onChange('name', $event)" />
               <bk-error-note [errors]="nameErrors()" />                                        
             </ion-col>
 
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="type()!" selectedItemName="navigate" [withAll]="false" (changed)="onChange('action', $event)" />
+              <bk-cat-select [category]="type()!" [selectedItemName]="menuAction()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('action', $event)" />
             </ion-col>
           </ion-row>
 
-          @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'callFunction') {
+          @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call') {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="icon" [value]="icon()" [maxLength]="nameLength" [showHelper]=true (changed)="onChange('icon', $event)" />
+                <bk-text-input name="icon" [value]="icon()" [maxLength]="nameLength" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('icon', $event)" />
                 <bk-error-note [errors]="iconErrors()" />                                        
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="label" [value]="label()" [showHelper]=true (changed)="onChange('label', $event)" />
+                <bk-text-input name="label" [value]="label()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('label', $event)" />
                 <bk-error-note [errors]="labelErrors()" />                                        
               </ion-col>
 
               <ion-col size="12">
-                <bk-url name="url" [value]="url()" [showHelper]=true (changed)="onChange('url', $event)"  placeholder="@input.url.placeholder2" helper="@input.url.helper2" />
+                <bk-url name="url" [value]="url()" [showHelper]=true (changed)="onChange('url', $event)" [readOnly]="readOnly()"  placeholder="@input.url.placeholder2" helper="@input.url.helper2" />
                 <bk-error-note [errors]="urlErrors()" />                                        
               </ion-col>
             </ion-row>
@@ -64,16 +64,16 @@ import { MenuItemFormModel, menuItemFormModelShape, menuItemFormValidation } fro
           @if(menuAction() === 'sub') {
             <ion-row>
                 <ion-col size="12">
-                  <bk-text-input name="label" [value]="label()" [showHelper]=true (changed)="onChange('label', $event)" />
+                  <bk-text-input name="label" [value]="label()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('label', $event)" />
                   <bk-error-note [errors]="labelErrors()" />                                        
                 </ion-col>
               </ion-row>
           }
 
-          @if(menuAction() !== 'mainMenu') {
+          @if(menuAction() !== 'main') {
               <ion-row>
               <ion-col size="12">
-                <bk-cat-select [category]="roles()!" selectedItemName="registered" [withAll]="false" (changed)="onChange('roleNeeded', $event)" />
+                <bk-cat-select [category]="roles()!" selectedItemName="registered" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('roleNeeded', $event)" />
               </ion-col>
             </ion-row>
           }
@@ -81,24 +81,25 @@ import { MenuItemFormModel, menuItemFormModelShape, menuItemFormValidation } fro
       </ion-card-content>
     </ion-card>
 
-    @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'callFunction') {
+    @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call') {
       <bk-property-list [propertyList]="data()" (changed)="onChange('propertyList', $event)" />
     }
 
-    @if(menuAction() === 'mainMenu' || menuAction() === 'contextMenu' || menuAction() === 'sub') {
+    @if(menuAction() === 'main' || menuAction() === 'context' || menuAction() === 'sub') {
       <bk-strings (changed)="onChange('menuItems', $event)"
         [strings]="menuItems()"
         title="@input.menuItems.title"
         addLabel="@input.menuItems.addLabel"
+        [readOnly]="readOnly()"
       />
     }
 
     @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (changed)="onChange('tags', $event)" />
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
     }
 
     @if(hasRole('admin')) {
-      <bk-notes name="description" [value]="description()" (changed)="onChange('description', $event)"/>
+      <bk-notes name="description" [value]="description()" [readOnly]="readOnly()" (changed)="onChange('description', $event)"/>
     }
   </form>
 `
@@ -107,8 +108,9 @@ export class MenuItemFormComponent {
   public readonly vm = model.required<MenuItemFormModel>();
   public readonly type = input.required<CategoryListModel>();
   public readonly roles = input.required<CategoryListModel>();
-  public readonly currentUser = input.required<UserModel>();
-  public allTags = input.required<string>();
+  public readonly currentUser = input.required<UserModel | undefined>();
+  public readonly allTags = input.required<string>();
+  public readonly readOnly = input(true);
   
   protected name = computed(() => this.vm().name ?? '');
   protected icon = computed(() => this.vm().icon ?? '');
@@ -118,7 +120,7 @@ export class MenuItemFormComponent {
   protected tags = computed(() => this.vm().tags ?? '');
   protected description = computed(() => this.vm().description ?? '');
   protected roleNeeded = computed(() => this.vm().roleNeeded ?? DEFAULT_ROLE);
-  protected menuAction = computed(() => this.vm().action ?? 'divider');
+  protected menuAction = computed(() => this.vm().action ?? DEFAULT_MENU_ACTION);
   protected menuItems = linkedSignal(() => this.vm().menuItems ?? []);
 
   public validChange = output<boolean>();

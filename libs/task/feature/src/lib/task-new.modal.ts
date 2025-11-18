@@ -32,6 +32,7 @@ import { TaskEditStore } from './task-edit.store';
         [states]="states()"
         [priorities]="priorities()"
         [importances]="importances()"
+        [readOnly]="readOnly()"
         (validChange)="formIsValid.set($event)" />
     </ion-content>
   `
@@ -43,9 +44,11 @@ export class TaskNewModalComponent {
   public author = input.required<AvatarInfo>();
 
   public vm = linkedSignal(() => newTaskFormModel(this.author()));
+  private currentUser = computed(() => this.taskEditStore.currentUser());
   protected states = computed(() => this.taskEditStore.appStore.getCategory('task_state'));
   protected priorities = computed(() => this.taskEditStore.appStore.getCategory('priority'));
   protected importances = computed(() => this.taskEditStore.appStore.getCategory('importance'));
+  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()));
 
   // as we prepared everything with currentPerson and defaultResource, we already have a valid form, so we need to signal this here.
   protected formIsValid = signal(true);
@@ -61,6 +64,6 @@ export class TaskNewModalComponent {
   }
 
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.taskEditStore.currentUser());
+    return hasRole(role, this.currentUser());
   }
 }

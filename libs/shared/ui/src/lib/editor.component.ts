@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, OnDestroy, OnInit, input, model } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonIcon, IonItem } from '@ionic/angular/standalone';
 import { Editor, NgxEditorModule } from 'ngx-editor';
@@ -10,6 +10,8 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 
 import { ButtonCopyComponent } from './button-copy.component';
 import { EditorToolbar } from './editor-toolbar.component';
+import { coerceBoolean } from '@bk2/shared-util-core';
+import { inject } from 'vitest';
 
 @Component({
   selector: 'bk-editor',
@@ -38,17 +40,17 @@ import { EditorToolbar } from './editor-toolbar.component';
  `],
   template: `
       <div class="editor">
-        @if(!readOnly()) {   <!-- editing mode -->
+        @if(!isReadOnly()) {   <!-- editing mode -->
           <ngx-editor-menu [editor]="editor!" [toolbar]="toolbar" /> 
           <ngx-editor [editor]="editor!" [(ngModel)]="content" name="content" [disabled]=false [placeholder]="'Text...'" />
           <ion-item lines="none">
-            @if (clearable()) {
+            @if (isClearable()) {
               <ion-button fill="clear" (click)="content.set('<p></p>')">
                 <ion-icon slot="start" src="{{'close_cancel' | svgIcon }}" />
                 {{ '@general.operation.deleteContent' | translate | async }}
               </ion-button>
             }
-            @if (copyable()) {
+            @if (isCopyable()) {
               <bk-button-copy [value]="content()" [label]="'@general.operation.copy.label'" />
             }
           </ion-item>
@@ -65,9 +67,12 @@ import { EditorToolbar } from './editor-toolbar.component';
 })
 export class EditorComponent implements OnInit, OnDestroy {
   public content = model('');
-  public readOnly = input(true);
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public clearable = input(true); // show a button to clear the notes
+  protected isClearable = computed(() => coerceBoolean(this.clearable()));
   public copyable = input(true); // show a button to copy the notes
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
 
   public editor: Editor | undefined;
   protected toolbar = EditorToolbar;

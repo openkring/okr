@@ -7,6 +7,7 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { AutoComplete, InputMode, INT_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ButtonCopyComponent } from './button-copy.component';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-number-input',
@@ -29,17 +30,17 @@ import { ButtonCopyComponent } from './button-copy.component';
       label="{{label() | translate | async }}"
       placeholder="{{placeholder() | translate | async }}"
       [inputMode]="inputMode()"
-      [counter]="!readOnly()"
+      [counter]="!isReadOnly()"
       [maxlength]="maxLength()"
       [autocomplete]="autocomplete()"
-      [clearInput]="clearInput()"
-      [readonly]="readOnly()"
+      [clearInput]="shouldClearInput()"
+      [readonly]="isReadOnly()"
     />
-    @if (copyable()) {
+    @if (isCopyable()) {
       <bk-button-copy [value]="value()" />
     }
   </ion-item>
-  @if(showHelper()) {
+  @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
       <ion-note>{{helper() | translate | async}}</ion-note>
     </ion-item>
@@ -49,13 +50,17 @@ import { ButtonCopyComponent } from './button-copy.component';
 export class NumberInputComponent {
   public value = model.required<number>(); // mandatory view model
   public name = input.required<string>(); // mandatory name of the input field
-  public readOnly = input(false); // if true, the input field is read-only
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public maxLength = input(INT_LENGTH); // max number of characters allowed
   public showHelper = input(false);
+  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public autocomplete = input<AutoComplete>('off'); // Automated input assistance in filling out form field values
   public copyable = input(false); // if true, a button to copy the value of the input field is shown
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   public inputMode = input<InputMode>('decimal'); // A hint to the browser for which keyboard to display.
   public clearInput = input(true); // show an icon to clear the input field
+  protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   public changed = output<number>(); 
 
   protected label = computed(() => `@input.${this.name()}.label`);

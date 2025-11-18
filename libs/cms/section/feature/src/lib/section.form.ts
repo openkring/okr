@@ -60,10 +60,10 @@ import { DEFAULT_ROLE } from '@bk2/shared-constants';
                   <bk-button-copy [value]="bkey" />
                 </ion-item>
               }
-              <bk-text-input name="name" [value]="vm().name ?? ''" [showHelper]=true />
+              <bk-text-input name="name" [value]="vm().name ?? ''" [readOnly]="isReadOnly()" [showHelper]=true />
               <bk-error-note [errors]="nameErrors()" />
                 
-              <bk-cat-select [category]="roles()!" selectedItemName="roleNeeded()" [withAll]="false" (changed)="onChange('roleNeeded', $event)" />
+              <bk-cat-select [category]="roles()!" selectedItemName="roleNeeded()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onChange('roleNeeded', $event)" />
             </ion-card-content>
           </ion-card>
         </ion-col>
@@ -117,10 +117,10 @@ import { DEFAULT_ROLE } from '@bk2/shared-constants';
       }
     </ion-grid>
     @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="vm().tags ?? ''" [allChips]="sectionTags()" />
+      <bk-chips chipName="tag" [storedChips]="vm().tags ?? ''" [readOnly]="isReadOnly()" [allChips]="sectionTags()" />
     }
     @if(hasRole('admin')) {
-      <bk-notes [value]="vm().description ?? ''" />
+      <bk-notes [value]="vm().description ?? ''" [readOnly]="isReadOnly()" />
     }
   </form>
   `
@@ -132,6 +132,8 @@ export class SectionFormComponent {
   public readonly vm = model.required<SectionFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly sectionTags = input.required<string>();
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => this.readOnly());
   
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

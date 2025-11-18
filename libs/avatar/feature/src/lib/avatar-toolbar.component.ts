@@ -17,7 +17,7 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
     <ion-toolbar [color]="color() | categoryPlainName : colorsIonic">
       <ion-avatar (click)="editImage()">
         <ion-img [src]="avatarToolbarStore.url()" [alt]="alt()" />
-        @if(isEditable()) {
+        @if(readOnly() === false) {
           <ion-icon src="{{ 'camera' | svgIcon }}" />
         }
       </ion-avatar>
@@ -62,7 +62,7 @@ export class AvatarToolbarComponent {
   protected avatarToolbarStore = inject(AvatarToolbarStore);
 
   public key = input.required<string>(); // = ModelType.ModelKey e.g. person.1asdfölj
-  public isEditable = input<boolean>(false);
+  public readOnly = input(true);
   public alt = input('Avatar');
   public color = input<ColorIonic>(ColorIonic.Primary);
   public title = input<string | undefined>();
@@ -79,7 +79,7 @@ export class AvatarToolbarComponent {
   }
 
   public async editImage(): Promise<void> {
-    if (this.isEditable() === false) {
+    if (this.readOnly() === true) {
       this.avatarToolbarStore.showZoomedImage(this.title()); // zoom the avatar image to show it bigger
     } else {
       const photo = await this.avatarToolbarStore.uploadPhoto();

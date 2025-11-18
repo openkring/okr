@@ -34,7 +34,7 @@ import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerCo
                     </ion-col>
                   }
                   <ion-col size="12" [sizeMd]="colSizeText()">
-                    <bk-editor [content]="content()" [readOnly]="readOnly()" (contentChange)="onContentChange($event)" />
+                    <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -43,7 +43,7 @@ import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerCo
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" [sizeMd]="colSizeText()">
-                    <bk-editor [content]="content()" [readOnly]="readOnly()" (contentChange)="onContentChange($event)" />
+                    <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
                   </ion-col>
                   @if(image(); as image) {
                     <ion-col size="12" [sizeMd]="colSizeImage()">
@@ -57,16 +57,16 @@ import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerCo
               @if(image(); as image) {
                 <bk-img [image]="image" />
               }
-              <bk-editor [content]="content()" [readOnly]="readOnly()" (contentChange)="onContentChange($event)" />
+              <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
             }
             @case(VP.Bottom) {
-              <bk-editor [content]="content()" [readOnly]="readOnly()" (contentChange)="onContentChange($event)" />
+              <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
               @if(image(); as image) {
                 <bk-img [image]="image" />
               }
             }
             @default {  <!-- VP.None -->
-              <bk-editor [content]="content()" [readOnly]="readOnly()" (contentChange)="onContentChange($event)" />
+              <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
             }
           }
         </ion-card-content>
@@ -78,7 +78,8 @@ import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerCo
 })
 export class ArticleSectionComponent {
   public section = input<SectionModel>();
-  public readOnly = input(false);
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => this.readOnly());
   public contentChange = output<string>();
 
   protected image = computed(() => this.section()?.properties.image);

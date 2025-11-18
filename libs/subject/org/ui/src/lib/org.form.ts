@@ -29,12 +29,12 @@ import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subjec
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="types()!" selectedItemName="orgType()"  (changed)="onChange('orgType', $event)" />
+              <bk-cat-select [category]="types()!" selectedItemName="type()" [readOnly]="readOnly()"  (changed)="onChange('type', $event)" />
             </ion-col>
           </ion-row>
           <ion-row> 
             <ion-col size="12">
-              <bk-text-input name="orgName" [value]="orgName()" autocomplete="organization" [maxLength]=50 [readOnly]="readOnly()" (changed)="onChange('orgName', $event)" />
+              <bk-text-input name="orgName" [value]="name()" autocomplete="organization" [maxLength]=50 [readOnly]="readOnly()" (changed)="onChange('name', $event)" />
             </ion-col>
           </ion-row>
           <ion-row>
@@ -63,7 +63,7 @@ import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subjec
     <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
 
     @if(hasRole('admin')) { 
-      <bk-notes name="notes" [value]="notes()" />
+      <bk-notes name="notes" [readOnly]="readOnly()" [value]="notes()" />
     }
   </form>
   `
@@ -74,7 +74,6 @@ export class OrgFormComponent {
   public readonly allTags = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
 
-  // protected orgName = computed(() => getOrgNameByOrgType(this.vm().type)); tbd: typed orgName collides with validations
   public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));  
 
   public validChange = output<boolean>();
@@ -83,8 +82,8 @@ export class OrgFormComponent {
   protected readonly suite = orgFormValidations;
   protected readonly shape = orgFormModelShape;
 
-  protected orgType = computed(() => this.vm().type ?? 'association');
-  protected orgName = computed(() => this.vm().orgName ?? '');
+  protected type = computed(() => this.vm().type ?? 'association');
+  protected name = computed(() => this.vm().name ?? '');
   protected dateOfFoundation = computed(() => this.vm().dateOfFoundation ?? '');
   protected dateOfLiquidation = computed(() => this.vm().dateOfLiquidation ?? '');
   protected taxId = computed(() => this.vm().taxId ?? '');

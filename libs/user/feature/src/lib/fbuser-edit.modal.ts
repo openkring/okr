@@ -1,5 +1,5 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, inject, input, linkedSignal, signal } from "@angular/core";
+import { Component, computed, inject, input, linkedSignal, signal } from "@angular/core";
 import { IonContent, ModalController } from "@ionic/angular/standalone";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
@@ -7,6 +7,7 @@ import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
 import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared-ui";
 
 import { FbuserFormComponent } from "@bk2/user-ui";
+import { hasRole } from "@bk2/shared-util-core";
 
 @Component({
   selector: 'bk-address-edit-modal',
@@ -22,7 +23,7 @@ import { FbuserFormComponent } from "@bk2/user-ui";
         <bk-change-confirmation (okClicked)="save()" />
       } 
     <ion-content>
-      <bk-fbuser-form [(vm)]="vm" [currentUser]="currentUser()" (validChange)="formIsValid.set($event)" />
+      <bk-fbuser-form [(vm)]="vm" [currentUser]="currentUser()" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
     </ion-content>
   `
 })
@@ -31,6 +32,7 @@ export class FbuserEditModalComponent {
 
   public fbuser = input.required<FirebaseUserModel>();
   public currentUser = input.required<UserModel | undefined>();
+  protected readonly readOnly = computed(() => !hasRole('admin', this.currentUser()));
 
   public vm = linkedSignal(() => this.fbuser()); 
 

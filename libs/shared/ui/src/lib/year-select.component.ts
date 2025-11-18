@@ -1,9 +1,9 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, input, model, output } from '@angular/core';
+import { Component, computed, input, model, output } from '@angular/core';
 import { IonLabel, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { getYear, getYearList } from '@bk2/shared-util-core';
+import { coerceBoolean, getYear, getYearList } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-year-select',
@@ -13,7 +13,7 @@ import { getYear, getYearList } from '@bk2/shared-util-core';
     IonSelect, IonSelectOption, IonLabel
   ],
   template: `
-  @if(readOnly()) {
+  @if(isReadOnly()) {
     <ion-label>{{ label() | translate | async }}</ion-label>
   } @else {
     <ion-select (ionChange)="selectYear($event.detail.value)"
@@ -22,7 +22,7 @@ import { getYear, getYearList } from '@bk2/shared-util-core';
       interface="popover"
       [value]="selectedYear()"
       [compareWith]="compareWith">
-      @if(showAllYears()) {
+      @if(shouldShowAllYears()) {
         <ion-select-option value="99">{{ '@general.util.allYears' | translate | async }}</ion-select-option>
       }
       @for(year of years; track year) {
@@ -36,7 +36,9 @@ export class YearSelectComponent {
   public selectedYear = model<number>(getYear());   // default is current year
   public label = input('@general.util.year');
   public showAllYears = input(false); // if true, all years are shown
-  public readOnly = input(false); // if true, the selected category is shown as a ready-only text
+  protected shouldShowAllYears = computed(() => coerceBoolean(this.showAllYears()));
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected years = getYearList();    // default are the last 8 years including the current year
   public changed = output<number>();
 

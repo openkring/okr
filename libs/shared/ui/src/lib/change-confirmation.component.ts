@@ -1,11 +1,12 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { IonButton, IonButtons, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { ColorsIonic } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ColorIonic } from '@bk2/shared-models';
 import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-change-confirmation',
@@ -15,10 +16,10 @@ import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
     IonButton, IonToolbar, IonTitle, IonButtons
   ],
   template: `
-    <ion-toolbar [color]="color() | categoryPlainName:colorsIonic">
-      <ion-title slot="start">{{ confirmation() | translate | async }}</ion-title>
+    <ion-toolbar [color]="color() | categoryPlainName:colorsIonic" mode="md">
+      <ion-title>{{ confirmation() | translate | async }}</ion-title>      
       <ion-buttons slot="end">
-        @if(showCancel()) {
+        @if(shouldShowCancel()) {
           <ion-button (click)="cancelClicked.emit()">{{ cancelLabel() | translate | async }}</ion-button>
         }
         <ion-button (click)="okClicked.emit()">{{ okLabel() | translate | async }}</ion-button>
@@ -31,6 +32,7 @@ export class ChangeConfirmationComponent {
   public okLabel = input('@general.operation.change.ok');
   public cancelLabel = input('@general.operation.change.cancel');
   public showCancel = input(false);
+  protected shouldShowCancel = computed(() => coerceBoolean(this.showCancel()));
   public color = input<ColorIonic>(ColorIonic.Warning);
 
   public okClicked = output(); // event to notify the parent component about ok button clicked

@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonContent } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ResourceCollection, RoleName } from '@bk2/shared-models';
@@ -11,6 +11,7 @@ import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { ResourceFormComponent } from '@bk2/resource-ui';
 import { convertResourceToForm, isReservable } from '@bk2/resource-util';
 import { ResourceEditStore } from './resource-edit.store';
+import { DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-resource-edit-page',
@@ -19,7 +20,7 @@ import { ResourceEditStore } from './resource-edit.store';
     HeaderComponent, ChangeConfirmationComponent,
     CommentsAccordionComponent, IconToolbarComponent, ResourceFormComponent, CategorySelectComponent,
     TranslatePipe, AsyncPipe,
-    IonContent, IonAccordionGroup
+    IonContent, IonAccordionGroup, IonGrid, IonRow, IonCol
   ],
   providers: [ResourceEditStore],
   template: `
@@ -33,7 +34,7 @@ import { ResourceEditStore } from './resource-edit.store';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="types()!" [selectedItemName]="type()" [withAll]="false" (changed)="onTypeChange($event)" />
+              <bk-cat-select [category]="types()!" [selectedItemName]="type()" [withAll]="false" [readOnly]="readOnly()" (changed)="onTypeChange($event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -73,9 +74,11 @@ export class ResourceEditPageComponent {
   protected headerTitle = computed(() => this.isNew() ? '@resource.operation.create.label' : '@resource.operation.update.label');
   protected currentUser = computed(() => this.resourceEditStore.currentUser());
   protected types = computed(() => this.resourceEditStore.appStore.getCategory(this.vm().type));
+  protected type = computed(() => this.vm().type ?? DEFAULT_RESOURCE_TYPE);
   protected subTypes = computed(() => this.resourceEditStore.appStore.getCategory(this.vm().subType));
   protected usages = computed(() => this.resourceEditStore.appStore.getCategory(this.vm().usage));
-  private rowingBoatIcon = computed(() => this.resourceEditStore.appStore.getCategoryItem('rboat_type', this.vm().subType));
+  protected readonly readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+  private rowingBoatIcon = computed(() => this.resourceEditStore.appStore.getCategoryIcon('rboat_type', this.vm().subType));
   private resourceIcon = computed(() => this.resourceEditStore.appStore.getCategoryIcon('resource_type', this.vm().type));
   protected icon = computed(() => this.vm().type === 'rboat' ? this.rowingBoatIcon() : this.resourceIcon());
 
@@ -105,5 +108,9 @@ export class ResourceEditPageComponent {
   protected isReservable(resourceType?: string): boolean {
     if (!resourceType || resourceType.length === 0) return false;
     return isReservable(resourceType);
+  }
+
+  protected onTypeChange($event: string): void {
+    this.vm.update((vm) => ({ ...vm, type: $event }));
   }
 }

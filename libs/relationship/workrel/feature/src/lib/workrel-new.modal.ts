@@ -30,7 +30,8 @@ import { WorkrelModalsService } from './workrel-modals.service';
       <bk-workrel-new-form [(vm)]="vm" [currentUser]="currentUser()" 
       [allTags]="tags()" 
       [types]="types()" 
-      [states]="states()" 
+      [states]="states()"
+      [readOnly]="readOnly()"
       [periodicities]="periodicities()" 
       (selectPerson)="selectPerson()"
       (selectOrg)="selectOrg()"
@@ -52,6 +53,7 @@ export class WorkrelNewModalComponent {
   protected types = computed(() => this.appStore.getCategory('workrel_type'));
   protected states = computed(() => this.appStore.getCategory('workrel_state'));
   protected periodicities = computed(() => this.appStore.getCategory('periodicity'));
+  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
   // as we prepared everything with defaultMember and defaultOrg, we already have a valid form, so we need to signal this here.
   protected formIsValid = signal(true);

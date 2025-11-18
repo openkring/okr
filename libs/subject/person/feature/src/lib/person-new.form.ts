@@ -46,12 +46,12 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, D
         <ion-grid>
           <ion-row> 
             <ion-col size="12" size-md="6">
-              <bk-text-input name="firstName" [value]="firstName()" autocomplete="given-name" [autofocus]="true" [maxLength]=30 (changed)="onChange('firstName', $event)" />
+              <bk-text-input name="firstName" [value]="firstName()" autocomplete="given-name" [readOnly]="readOnly()" [autofocus]="true" [maxLength]=30 (changed)="onChange('firstName', $event)" />
               <bk-error-note [errors]="firstNameErrors()" />                                                                                                                                                            
             </ion-col>
 
             <ion-col size="12" size-md="6">
-              <bk-text-input name="lastName" [value]="lastName()" autocomplete="family-name" [maxLength]=30 (changed)="onChange('lastName', $event)" />
+              <bk-text-input name="lastName" [value]="lastName()" autocomplete="family-name" [readOnly]="readOnly()" [maxLength]=30 (changed)="onChange('lastName', $event)" />
               <bk-error-note [errors]="lastNameErrors()" />                                                                                                                                                            
             </ion-col>
           </ion-row>
@@ -59,7 +59,7 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, D
           @if(isVisibleToUser(priv().showGender)) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="genders()!" selectedItemName="gender()" (changed)="onChange('gender', $event)" />
+                <bk-cat-select [category]="genders()!" selectedItemName="gender()" [readOnly]="readOnly()" (changed)="onChange('gender', $event)" />
               </ion-col>
             </ion-row>
           }
@@ -70,13 +70,13 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, D
             <ion-row>
               @if(isVisibleToUser(priv().showDateOfBirth)) {
                 <ion-col size="12" size-md="6"> 
-                  <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" [locale]="locale()" autocomplete="bday" [showHelper]=true (changed)="onChange('dateOfBirth', $event)" />
+                  <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" [locale]="locale()" [readOnly]="readOnly()" autocomplete="bday" [showHelper]=true (changed)="onChange('dateOfBirth', $event)" />
                 </ion-col>
               }
 
               @if(isVisibleToUser(priv().showDateOfDeath)) {
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="dateOfDeath"  [storeDate]="dateOfDeath()" [locale]="locale()" (changed)="onChange('dateOfDeath', $event)" />
+                  <bk-date-input name="dateOfDeath"  [storeDate]="dateOfDeath()" [locale]="locale()" [readOnly]="readOnly()" (changed)="onChange('dateOfDeath', $event)" />
                 </ion-col>
               }
             </ion-row>
@@ -94,11 +94,11 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, D
         <ion-grid>
           <ion-row>
             <ion-col size="9">
-              <bk-text-input name="streetName" [value]="streetName()" autocomplete="street-address" (changed)="onChange('streetName', $event)" />
+              <bk-text-input name="streetName" [value]="streetName()" autocomplete="street-address" [readOnly]="readOnly()" (changed)="onChange('streetName', $event)" />
               <bk-error-note [errors]="streetNameErrors()" />                                                                                                                     
             </ion-col>
             <ion-col size="3">
-              <bk-text-input name="streetNumber" [value]="streetNumber()" (changed)="onChange('streetNumber', $event)" />
+              <bk-text-input name="streetNumber" [value]="streetNumber()" [readOnly]="readOnly()" (changed)="onChange('streetNumber', $event)" />
               <bk-error-note [errors]="streetNumberErrors()" />                                                                                                                     
             </ion-col>
           </ion-row>
@@ -107,29 +107,29 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, D
 
           <ion-row>
             <ion-col size="12" size-md="3">
-              <bk-text-input name="countryCode" [value]="countryCode()" (changed)="onChange('countryCode', $event)" />
+              <bk-text-input name="countryCode" [value]="countryCode()" [readOnly]="readOnly()" (changed)="onChange('countryCode', $event)" />
             </ion-col>
     
             <ion-col size="12" size-md="3">
-              <bk-text-input name="zipCode" [value]="zipCode()" (changed)="onChange('zipCode', $event)" />
+              <bk-text-input name="zipCode" [value]="zipCode()" [readOnly]="readOnly()" (changed)="onChange('zipCode', $event)" />
             </ion-col>
             
             <ion-col size="12" size-md="6">
-              <bk-text-input name="city" [value]="city()" (changed)="onChange('city', $event)" />
+              <bk-text-input name="city" [value]="city()" [readOnly]="readOnly()" (changed)="onChange('city', $event)" />
             </ion-col>
           </ion-row>
 
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-phone [value]="phone()" (changed)="onChange('phone', $event)" />
+              <bk-phone [value]="phone()" [readOnly]="readOnly()" (changed)="onChange('phone', $event)" />
               <bk-error-note [errors]="phoneErrors()" />                                                                                                                     
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-email [value]="email()" (changed)="onChange('email', $event)" />
+              <bk-email [value]="email()" [readOnly]="readOnly()" (changed)="onChange('email', $event)" />
               <bk-error-note [errors]="emailErrors()" />                                                                                                                     
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-text-input name="web" [value]="web()" (changed)="onChange('web', $event)" />
+              <bk-text-input name="web" [value]="web()" [readOnly]="readOnly()" (changed)="onChange('web', $event)" />
               <bk-error-note [errors]="webErrors()" />                                                                                                                     
             </ion-col>
           </ion-row>
@@ -148,12 +148,12 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, D
             <ion-row>
               @if(isVisibleToUser(priv().showTaxId)) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="ssnId" [value]="ssnId()" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true (changed)="onChange('ssnId', $event)" />                                        
+                  <bk-text-input name="ssnId" [value]="ssnId()" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [readOnly]="readOnly()" [copyable]=true (changed)="onChange('ssnId', $event)" />                                        
                 </ion-col>
               }
               @if(isVisibleToUser(priv().showBexioId)) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true (changed)="onChange('bexioId', $event)" />                                        
+                  <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('bexioId', $event)" />                                        
                 </ion-col>
               }
             </ion-row>
@@ -171,7 +171,7 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, D
         <ion-grid>
           <ion-row>
             <ion-col size="12">                               
-              <bk-checkbox name="shouldAddMembership" [isChecked]="shouldAddMembership()" [showHelper]="true" (changed)="onChange('shouldAddMembership', $event)" />
+              <bk-checkbox name="shouldAddMembership" [isChecked]="shouldAddMembership()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('shouldAddMembership', $event)" />
             </ion-col>
           </ion-row>
           @if(shouldAddMembership()) {
@@ -192,10 +192,10 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, D
             </ion-row>
             <ion-row>
               <ion-col size="12">
-                <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (changed)="onCatChanged($event)" />
+                <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" [readOnly]="readOnly()" (changed)="onCatChanged($event)" />
               </ion-col>
               <ion-col size="12"> 
-                <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [showHelper]=true (changed)="onChange('dateOfEntry', $event)" />
+                <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfEntry', $event)" />
               </ion-col>      
             </ion-row>
           }
@@ -204,11 +204,11 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, D
     </ion-card>
     
     @if(isVisibleToUser(priv().showTags)) {
-          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (changed)="onChange('tags', $event)" />
+          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
     }
 
     @if(isVisibleToUser(priv().showNotes)) {
-          <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
+          <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
     }
   </form>
   `
@@ -220,6 +220,7 @@ export class PersonNewFormComponent {
   public vm = model.required<PersonNewFormModel>();
   public membershipCategories = input.required<CategoryListModel>();
   public priv = input.required<PrivacySettings>();
+  public readonly readOnly = input(true);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

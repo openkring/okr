@@ -24,22 +24,21 @@ import { SectionFormModel } from '@bk2/cms-section-util';
     </ion-row>
     <ion-row>
       <ion-col size="12">
-        <bk-text-input name="latitude" [(value)]="centerLatitude" [maxLength]=8 [mask]="latitudeMask" [showHelper]=true [readOnly]="!isContentAdmin()" />                                        
+        <bk-text-input name="latitude" [(value)]="centerLatitude" [maxLength]=8 [mask]="latitudeMask" [showHelper]=true [readOnly]="readOnly()" />                                        
       </ion-col>
       <ion-col size="12">
-        <bk-text-input name="longitude" [(value)]="centerLongitude" [maxLength]=7 [mask]="longitudeMask" [showHelper]=true [readOnly]="!isContentAdmin()" />                                        
+        <bk-text-input name="longitude" [(value)]="centerLongitude" [maxLength]=7 [mask]="longitudeMask" [showHelper]=true [readOnly]="readOnly()" />                                        
       </ion-col>
       <ion-col size="12">
-        <bk-text-input name="zoom" [(value)]="zoom" [maxLength]=2 [mask]="zoomMask" [showHelper]=true [readOnly]="!isContentAdmin()" />                                        
+        <bk-text-input name="zoom" [(value)]="zoom" [maxLength]=2 [mask]="zoomMask" [showHelper]=true [readOnly]="readOnly()" />                                        
       </ion-col>
 
     </ion-row>
   `
 })
 export class MapSectionFormComponent {
-  private readonly env = inject(ENV);
   public vm = model.required<SectionFormModel>();
-  public isContentAdmin = input(false);
+  public readonly readOnly = input(true);
 
   // tbd: lookup appStore.locationId and use it to determine the default values
   protected centerLatitude = linkedSignal(() => this.vm().properties?.map?.centerLatitude ?? '');

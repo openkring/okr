@@ -50,11 +50,11 @@ import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
             </ion-col>
             <ion-col size="5">
               <ion-item lines="none">
-                <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" labelName="labelNew" (changed)="onChange('membershipCategoryNew', $event)" />
+                <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" labelName="labelNew" [readOnly]="readOnly()" (changed)="onChange('membershipCategoryNew', $event)" />
               </ion-item>
             </ion-col>
             <ion-col size="12"> 
-              <bk-date-input name="dateOfChange" [storeDate]="dateOfChange()" [showHelper]=true (changed)="onChange('dateOfChange', $event)" />
+              <bk-date-input name="dateOfChange" [storeDate]="dateOfChange()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfChange', $event)" />
             </ion-col>      
           </ion-row>
       </ion-grid>
@@ -64,6 +64,7 @@ import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
 export class CategoryChangeFormComponent {
   public vm = model.required<CategoryChangeFormModel>();
   public membershipCategory = input.required<CategoryListModel>();
+  public readonly readOnly = input(true);
 
   protected name = computed(() => this.vm().memberName ?? DEFAULT_NAME); 
   protected orgName = computed(() => this.vm().orgName ?? DEFAULT_NAME);

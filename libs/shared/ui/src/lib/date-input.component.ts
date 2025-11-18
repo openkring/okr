@@ -7,7 +7,7 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { ChAnyDate } from '@bk2/shared-config';
 import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared-util-core';
+import { coerceBoolean, convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared-util-core';
 
 import { DateSelectModalComponent } from './date-select.modal';
 import { ViewDateInputComponent } from './viewdate-input.component';
@@ -23,19 +23,19 @@ import { ViewDateInputComponent } from './viewdate-input.component';
   viewProviders: [vestFormsViewProviders],
   template: `
     <ion-item lines="none">
-      @if(showDateSelect() && !readOnly()) {
-        <ion-icon  src="{{'calendar' | svgIcon }}" slot="start" (click)="selectDate()" />
+      @if(shouldShowDateSelect() && !isReadOnly()) {
+        <ion-icon src="{{'calendar' | svgIcon }}" slot="start" (click)="selectDate()" />
       }
       <bk-viewdate-input (changed)="onChange($event)"
         [name]="name()" 
         [viewDate]="viewDate()"
-        [readOnly]="readOnly()"
-        [clearInput]="clearInput()"
+        [readOnly]="isReadOnly()"
+        [clearInput]="shouldShowClearInput()"
         [inputMode]="inputMode()"
         [maxLength]="maxLength()"
         [autocomplete]="autocomplete()"
         [mask]="mask()"
-        [showHelper]="showHelper()"
+        [showHelper]="shouldShowHelper()"
        />
     </ion-item>
   `
@@ -49,14 +49,18 @@ export class DateInputComponent {
   // optional date in StoreDate format (yyyyMMdd); default is today
   public storeDate = model(getTodayStr(DateFormat.StoreDate));
   public name = input.required<string>(); // mandatory name of the input field
-  public readOnly = input(false); // if true, the input field is read-only
+  public readOnly = input.required<boolean | string>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public clearInput = input(true); // show an icon to clear the input field
+  protected shouldShowClearInput = computed(() => coerceBoolean(this.clearInput()));
   public inputMode = input<InputMode>('numeric'); // A hint to the browser for which keyboard to display.
   public maxLength = input(DATE_LENGTH);
   public autocomplete = input('off'); // can be set to bday for birth date
   public mask = input<MaskitoOptions>(ChAnyDate);
   public showHelper = input(false);
+  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public showDateSelect = input(true);
+  protected shouldShowDateSelect = computed(() => coerceBoolean(this.showDateSelect()));
   public locale = input('de-ch'); // mandatory locale for the input field, used for formatting
 
   protected viewDate = computed(() => convertDateFormatToString(this.storeDate(), DateFormat.StoreDate, DateFormat.ViewDate, false));
@@ -65,7 +69,7 @@ export class DateInputComponent {
   public changed = output<string>(); // output event when the value changes
 
   protected async selectDate(): Promise<void> {
-    if (this.readOnly() === true) return;
+    if (this.readOnly()) return;
     const _modal = await this.modalController.create({
       component: DateSelectModalComponent,
       cssClass: 'date-modal',

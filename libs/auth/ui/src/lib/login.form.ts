@@ -17,7 +17,7 @@ import { authCredentialsValidations } from '@bk2/auth-util';
       <ion-grid>
         <ion-row>
           <ion-col size="12">
-            <bk-email name="loginEmail" [value]="vm().loginEmail" [showHelper]="true" autocomplete="username email" />
+            <bk-email name="loginEmail" [value]="vm().loginEmail" [showHelper]="true" [readOnly]="false" autocomplete="username email" />
             <bk-error-note [errors]="emailErrors()" />
           </ion-col>
         </ion-row>

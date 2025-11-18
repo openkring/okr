@@ -40,25 +40,25 @@ import { GroupFormModel, GroupNewFormModel, groupNewFormModelShape, groupNewForm
           </ion-row>
           <ion-row> 
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasContent" [isChecked]="hasContent()" [showHelper]="true" (changed)="onChange('hasContent', $event)"/>
+              <bk-checkbox name="hasContent" [isChecked]="hasContent()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasContent', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasChat" [isChecked]="hasChat()" [showHelper]="true" (changed)="onChange('hasChat', $event)"/>
+              <bk-checkbox name="hasChat" [isChecked]="hasChat()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasChat', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasCalendar" [isChecked]="hasCalendar()" [showHelper]="true" (changed)="onChange('hasCalendar', $event)"/>
+              <bk-checkbox name="hasCalendar" [isChecked]="hasCalendar()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasCalendar', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasTasks" [isChecked]="hasTasks()" [showHelper]="true" (changed)="onChange('hasTasks', $event)"/>
+              <bk-checkbox name="hasTasks" [isChecked]="hasTasks()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasTasks', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasFiles" [isChecked]="hasFiles()" [showHelper]="true" (changed)="onChange('hasFiles', $event)"/>
+              <bk-checkbox name="hasFiles" [isChecked]="hasFiles()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasFiles', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasAlbum" [isChecked]="hasAlbum()" [showHelper]="true" (changed)="onChange('hasAlbum', $event)"/>
+              <bk-checkbox name="hasAlbum" [isChecked]="hasAlbum()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasAlbum', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasMembers" [isChecked]="hasMembers()" [showHelper]="true" (changed)="onChange('hasMembers', $event)"/>
+              <bk-checkbox name="hasMembers" [isChecked]="hasMembers()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasMembers', $event)"/>
             </ion-col>
 
             <!-- tbd: hierarchy comes later 
@@ -72,17 +72,17 @@ import { GroupFormModel, GroupNewFormModel, groupNewFormModelShape, groupNewForm
     <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="groupTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
 
     @if(hasRole('admin')) { 
-      <bk-notes name="notes" [value]="notes()" />
+      <bk-notes name="notes" [value]="notes()" [readOnly]="readOnly()" />
     }
   </form>
   `
 })
 export class GroupNewFormComponent {
   public vm = model.required<GroupNewFormModel>();
+
   public currentUser = input<UserModel | undefined>();
   public groupTags = input.required<string>();
-
-  public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));  
+  public readOnly = input(true); 
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

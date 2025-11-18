@@ -100,49 +100,49 @@ import { GroupEditStore } from './group-edit.store';
       @switch (selectedSegment()) {
         @case ('content') {
           @defer (on immediate) {
-            <bk-content id="{{id() + '_content'}}" />
+            <bk-content id="{{id() + '_content'}}" [readOnly]="readOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('chat') {
           @defer (on immediate) {
-            <bk-content id="{{id() + '_chat'}}" />
+            <bk-content id="{{id() + '_chat'}}" [readOnly]="readOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('calendar') {
           @defer (on immediate) {
-            <bk-content id="{{id() + '_calendar'}}" />
+            <bk-content id="{{id() + '_calendar'}}" [readOnly]="readOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('tasks') {
           @defer (on immediate) {
-            <bk-simple-task-list [listId]="id()" />
+            <bk-simple-task-list [listId]="id()" [readOnly]="readOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('files') {
           @defer (on immediate) {
-            <bk-content id="{{id() + '_files'}}" />
+            <bk-content id="{{id() + '_files'}}" [readOnly]="readOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('album') {
           @defer (on immediate) {
-            <bk-content id="{{id() + '_album'}}" />
+            <bk-content id="{{id() + '_album'}}" [readOnly]="readOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('members') {
           @defer (on immediate) {
-            <bk-members [orgKey]="groupKey()" />
+            <bk-members [orgKey]="groupKey()" [readOnly]="readOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
@@ -159,6 +159,7 @@ export class GroupViewPageComponent {
   private readonly env = inject(ENV);
 
   public groupKey = input.required<string>();
+  public readOnly = input(true);
 
   protected currentUser = computed(() => this.groupEditStore.currentUser());
   protected selectedSegment = computed(() => this.groupEditStore.segment());

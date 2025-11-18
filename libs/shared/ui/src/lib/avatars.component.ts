@@ -7,7 +7,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { getFullPersonName, newAvatarInfo } from '@bk2/shared-util-core';
+import { coerceBoolean, getFullPersonName, newAvatarInfo } from '@bk2/shared-util-core';
 
 import { AvatarDisplayComponent } from './avatar-display.component';
 
@@ -39,9 +39,9 @@ import { AvatarDisplayComponent } from './avatar-display.component';
             <ion-note>{{ description() | translate | async }}</ion-note>
           </ion-item>
         }
-        @if(readOnly() === true) {
+        @if(isReadOnly()) {
           <ion-item lines="none">
-            <bk-avatar-display [avatars]="avatars()" [showName]="false" />
+            <bk-avatar-display [avatars]="avatars()" [defaultIcon]="defaultIcon()" [showName]="false" />
           </ion-item>
         } @else {
           <ion-item lines="none">
@@ -67,10 +67,10 @@ import { AvatarDisplayComponent } from './avatar-display.component';
                     <ion-reorder slot="start" />
                     <ion-label>{{ getNameFromAvatar(avatar) }}</ion-label>
                     <ion-icon src="{{'close_cancel_circle' | svgIcon }}" (click)="remove($index)" slot="end" />
-                    @if (copyable()) {
+                    @if (isCopyable()) {
                       <ion-icon slot="end" src="{{'copy' | svgIcon }}" (click)="copy(avatar)" />
                     }
-                    @if (editable()) {
+                    @if (isEditable()) {
                       <ion-icon slot="end" src="{{'create_edit' | svgIcon }}" (click)="edit(avatar, $index)" />
                     }
                   </ion-item>
@@ -90,10 +90,14 @@ export class AvatarsComponent {
   public avatars = model.required<AvatarInfo[]>(); // the keys of the menu items
   public name = input('avatars'); // the name of the menu
   public copyable = input(false);
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   public editable = input(false);
-  public readOnly = input(false);
+  protected isEditable = computed(() => coerceBoolean(this.editable()));
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public description = input<string>();
   public maxLength = input(NAME_LENGTH);
+  public defaultIcon = input('other');
 
   public changed = output<AvatarInfo[]>();
   public stringInput = viewChild<IonInput>('stringInput');

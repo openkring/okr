@@ -34,7 +34,7 @@ import { convertPersonalDataFormToPerson, convertPersonToDataForm, convertPrivac
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-avatar-toolbar key="{{ avatarKey() }}" (imageSelected)="onImageSelected($event)" [isEditable]="true" title="{{ title() }}" />
+      <bk-avatar-toolbar key="{{ avatarKey() }}" (imageSelected)="onImageSelected($event)" title="{{ title() }}" />
       <ion-item lines="none">
         <ion-label><div [innerHTML]="introHtml() | async"></div></ion-label>    
       </ion-item>

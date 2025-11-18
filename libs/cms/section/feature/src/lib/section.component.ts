@@ -46,10 +46,10 @@ import { VideoSectionComponent } from './video-section.component';
             <bk-album-section [section]="section" />
           }
           @case('article') {
-            <bk-article-section [section]="section" [readOnly]="readOnly()" />
+            <bk-article-section [section]="section" [readOnly]="isReadOnly()" />
           }
           @case('button') {  
-            <bk-button-section [section]="section" [readOnly]="readOnly()" />
+            <bk-button-section [section]="section" [readOnly]="isReadOnly()" />
           }
           @case('calendar') {
             <bk-calendar-section [section]="section" />
@@ -73,7 +73,7 @@ import { VideoSectionComponent } from './video-section.component';
             <bk-map-section [section]="section" />
           }
           @case('peopleList') {
-            <bk-people-list-section [section]="section" [readOnly]="readOnly()" />
+            <bk-people-list-section [section]="section" [readOnly]="isReadOnly()" />
           }
           @case('slider') {
             <bk-swiper-section [section]="section" />
@@ -105,7 +105,7 @@ import { VideoSectionComponent } from './video-section.component';
             <bk-model-section [section]="section" />
           }
           @case('accordion') {
-            <bk-accordion-section [section]="section" [readOnly]="readOnly()" />      
+            <bk-accordion-section [section]="section" [readOnly]="isReadOnly()" />      
           }
 
           Testimonials (Section)
@@ -123,7 +123,8 @@ export class SectionComponent {
   private readonly sectionStore = inject(SectionDetailStore);
 
   public id = input.required<string>();     // sectionId
-  public readOnly = input(true);
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => this.readOnly());
 
   protected readonly section = computed(() => this.sectionStore.section());
   protected readonly roleNeeded = computed(() => this.section()?.roleNeeded as RoleName);

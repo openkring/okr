@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, linkedSignal, model } from '@angular/core';
+import { Component, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ImageActions } from '@bk2/shared-categories';
@@ -28,28 +28,28 @@ import { SectionFormModel } from '@bk2/cms-section-util';
             <ion-grid>
               <ion-row>
                 <ion-col size="12">  
-                  <bk-text-input name="imgIxParams" [(value)]="imgIxParams" [showHelper]=true />
+                  <bk-text-input name="imgIxParams" [(value)]="imgIxParams" [readOnly]="readOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-number-input name="width" [(value)]="width" />
+                  <bk-number-input name="width" [(value)]="width" [readOnly]="readOnly()" />
                 </ion-col>  
                 <ion-col size="12" size-md="6"> 
-                  <bk-number-input name="height" [(value)]="height" />
+                  <bk-number-input name="height" [(value)]="height" [readOnly]="readOnly()" />
                 </ion-col>  
                 <ion-col size="12" size-md="6">
-                  <bk-number-input name="borderRadius" [(value)]="borderRadius" [showHelper]=true />
+                  <bk-number-input name="borderRadius" [(value)]="borderRadius" [readOnly]="readOnly()" [showHelper]=true />
                 </ion-col>  
                 <ion-col size="12" size-md="6">
-                    <bk-cat name="imageAction" [(value)]="imageAction" [categories]="imageActions" />
+                    <bk-cat name="imageAction" [(value)]="imageAction" [readOnly]="readOnly()" [categories]="imageActions" />
                 </ion-col>  
                 <ion-col size="12" size-md="6">
-                  <bk-number-input name="zoomFactor" [(value)]="zoomFactor" [showHelper]=true />
+                  <bk-number-input name="zoomFactor" [(value)]="zoomFactor" [readOnly]="readOnly()" [showHelper]=true />
                 </ion-col>  
                 <ion-col size="12" size-md="6">
-                  <bk-checkbox name="isThumbnail" [isChecked]="isThumbnail()" />
+                  <bk-checkbox name="isThumbnail" [isChecked]="isThumbnail()" [readOnly]="readOnly()" />
                 </ion-col>  
                 <ion-col size="12" size-md="6">
-                  <bk-string-select name="slot"  [selectedString]="slot()" [stringList] = "['start', 'end', 'icon-only']" (changed)="onSlotChanged($event)" />           
+                  <bk-string-select name="slot"  [selectedString]="slot()" [readOnly]="readOnly()" [stringList] = "['start', 'end', 'icon-only']" (changed)="onSlotChanged($event)" />           
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -61,6 +61,8 @@ import { SectionFormModel } from '@bk2/cms-section-util';
 })
 export class ImageConfigFormComponent {
   public vm = model.required<SectionFormModel>();
+  public readonly readOnly = input(true);
+
   protected defaultImageConfig = newDefaultImageConfig();
 
   protected imgIxParams = linkedSignal(() => this.vm().properties?.defaultImageConfig?.imgIxParams ?? this.defaultImageConfig.imgIxParams ?? '');

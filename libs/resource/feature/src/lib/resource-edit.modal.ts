@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -20,7 +20,7 @@ import { DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
     HeaderComponent, ChangeConfirmationComponent,
     ResourceFormComponent, IconToolbarComponent, CommentsAccordionComponent, CategorySelectComponent,
     TranslatePipe, AsyncPipe,
-    IonContent, IonAccordionGroup
+    IonContent, IonAccordionGroup, IonGrid, IonRow, IonCol
   ],
   template: `
     <bk-header title="{{ headerTitle() | translate | async }}" [isModal]="true" />
@@ -33,7 +33,7 @@ import { DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="types()!" [selectedItemName]="type()" [withAll]="false" (changed)="onTypeChange($event)" />
+              <bk-cat-select [category]="types()!" [selectedItemName]="type()" [withAll]="false" [readOnly]="readOnly()" (changed)="onTypeChange($event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -75,6 +75,7 @@ export class ResourceEditModalComponent {
   protected tags = computed(() => this.appStore.getTags('resource'));
   protected type = computed(() => this.vm().type ?? DEFAULT_RESOURCE_TYPE);
   protected resourceKey = computed(() => this.resource()?.bkey ?? '');
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected readonly isNew = computed(() => this.resource()?.bkey === undefined);
   protected headerTitle = computed(() => this.isNew() ? '@resource.operation.create.label' : '@resource.operation.update.label');

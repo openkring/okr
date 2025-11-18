@@ -29,17 +29,17 @@ import { hasRole } from '@bk2/shared-util-core';
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input name="name" [value]="name()" [autofocus]="true" [copyable]="true" (changed)="onChange('name', $event)" /> 
+              <bk-text-input name="name" [value]="name()" [autofocus]="true" [copyable]="true" [readOnly]="readOnly()" (changed)="onChange('name', $event)" /> 
               <bk-error-note [errors]="nameErrors()" />                                                                               
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-text-input name="i18nBase" [value]="i18nBase()" [showHelper]="true" (changed)="onChange('i18nBase', $event)" /> 
+              <bk-text-input name="i18nBase" [value]="i18nBase()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('i18nBase', $event)" /> 
               <bk-error-note [errors]="i18nBaseErrors()" />                                                                               
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="translateItems" [isChecked]="translateItems()" [showHelper]="true" (changed)="onChange('translateItems', $event)"/>
+              <bk-checkbox name="translateItems" [isChecked]="translateItems()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('translateItems', $event)"/>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -49,11 +49,11 @@ import { hasRole } from '@bk2/shared-util-core';
     <bk-category-items [items]="items()" (changed)="onChange('items', $event)" />
 
     @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="categoryTags()" (changed)="onChange('tags', $event)" />
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="categoryTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
     }
 
     @if(hasRole('admin')) {
-      <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
+      <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
     }
   </form>
 `
@@ -62,6 +62,7 @@ export class CategoryListFormComponent {
   public vm = model.required<CategoryListFormModel>();
   public currentUser = input<UserModel | undefined>();
   public categoryTags = input.required<string>();
+  public readOnly = input(true);
   
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

@@ -10,6 +10,7 @@ import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared-ui";
 import { convertAddressToForm, convertFormToAddress, getAddressModalTitle } from "@bk2/subject-address-util";
 
 import { AddressFormComponent } from "./address.form";
+import { hasRole } from "@bk2/shared-util-core";
 
 @Component({
   selector: 'bk-address-edit-modal',
@@ -25,7 +26,7 @@ import { AddressFormComponent } from "./address.form";
         <bk-change-confirmation (okClicked)="save()" />
       } 
     <ion-content>
-      <bk-address-form [(vm)]="vm" [currentUser]="currentUser()" (validChange)="formIsValid.set($event)" />
+      <bk-address-form [(vm)]="vm" [currentUser]="currentUser()" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
     </ion-content>
   `
 })
@@ -35,6 +36,7 @@ export class AddressEditModalComponent {
 
   public address = input.required<AddressModel>();
   public currentUser = input.required<UserModel | undefined>();
+  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   
   public title = computed(() => getAddressModalTitle(this.address().bkey));
   public vm = linkedSignal(() => convertAddressToForm(this.address())); 

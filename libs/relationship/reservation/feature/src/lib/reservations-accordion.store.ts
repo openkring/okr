@@ -82,20 +82,22 @@ export const ReservationsAccordionStore = signalStore(
         console.log('ReservationAccordionStore.export() is not yet implemented.');
       },
 
-      async add(reserver: PersonModel | OrgModel, reserverModelType: 'person' | 'org', defaultResource: ResourceModel | undefined): Promise<void> {
-        if (defaultResource !== undefined) {
+      async add(reserver: PersonModel | OrgModel, reserverModelType: 'person' | 'org', defaultResource: ResourceModel | undefined, readOnly = true): Promise<void> {
+        if (defaultResource !== undefined && readOnly === false) {
           await store.reservationModalsService.add(reserver, reserverModelType, defaultResource);
           store.reservationsResource.reload();
         }
       },
 
-      async edit(reservation?: ReservationModel): Promise<void> {
-        await store.reservationModalsService.edit(reservation);
-        store.reservationsResource.reload();
+      async edit(reservation?: ReservationModel, readOnly = true): Promise<void> {
+        if (readOnly === false) {
+          await store.reservationModalsService.edit(reservation);
+          store.reservationsResource.reload();
+        }
       },
 
-      async end(reservation?: ReservationModel): Promise<void> {
-        if (reservation) {
+      async end(reservation?: ReservationModel, readOnly = true): Promise<void> {
+        if (reservation && readOnly === false) {
           const _date = await selectDate(store.modalController);
           if (!_date) return;
           await store.reservationService.endReservationByDate(reservation, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false));    
@@ -104,8 +106,8 @@ export const ReservationsAccordionStore = signalStore(
       },
       
 
-      async delete(reservation?: ReservationModel): Promise<void> {
-        if (reservation) {
+      async delete(reservation?: ReservationModel, readOnly = true): Promise<void> {
+        if (reservation && readOnly === false) {
           const _result = await confirm(store.alertController, '@reservation.operation.delete.confirm', true);
           if (_result === true) {
             await store.reservationService.delete(reservation);

@@ -27,7 +27,7 @@ import { ReservationNewFormComponent } from './reservation-new.form';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-reservation-new-form [(vm)]="vm" (validChange)="onValidChange($event)" />
+      <bk-reservation-new-form [(vm)]="vm" [readOnly]="readOnly()" (validChange)="onValidChange($event)" />
     </ion-content>
   `
 })
@@ -42,6 +42,7 @@ export class ReservationNewModalComponent implements OnInit {
   public vm = linkedSignal(() => convertReserverAndResourceToNewForm(this.reserver(), this.resource(), this.currentUser(), this.modelType()));
 
   public currentUser = computed(() => this.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected formIsValid = signal(false);
 

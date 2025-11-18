@@ -27,17 +27,17 @@ import { imageConfigFormModelShape, imageConfigValidations } from '@bk2/document
     <ion-grid>
       <ion-row>
         <ion-col size="12" size-md="6">
-          <bk-text-input name="imageLabel" [value]="imageLabel()" [showHelper]=true (changed)="onChange('imageLabel', $event)" />
+          <bk-text-input name="imageLabel" [value]="imageLabel()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('imageLabel', $event)" />
           <bk-error-note [errors]="imageLabelErrors()" />                                                                      
         </ion-col>
 
         <ion-col size="12" size-md="6">
-          <bk-text-input name="imageOverlay" [value]="imageOverlay()" [showHelper]=true (changed)="onChange('imageOverlay', $event)" />
+          <bk-text-input name="imageOverlay" [value]="imageOverlay()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('imageOverlay', $event)" />
           <bk-error-note [errors]="imageOverlayErrors()" />                                      
         </ion-col>
 
         <ion-col size="12" size-md="6">
-          <bk-text-input name="altText" [value]="altText()" [showHelper]=true (changed)="onChange('altText', $event)" />
+          <bk-text-input name="altText" [value]="altText()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('altText', $event)" />
           <bk-error-note [errors]="altTextErrors()" />   
         </ion-col>
       </ion-row>
@@ -48,6 +48,7 @@ import { imageConfigFormModelShape, imageConfigValidations } from '@bk2/document
 export class ImageConfigFormComponent {
   public readonly vm = model.required<Image>();
   public currentUser = input<UserModel | undefined>();
+  public readonly readOnly = input(true);
 
   protected imageLabel = computed(() => this.vm().imageLabel ?? 'image label');
   protected imageOverlay = computed(() => this.vm().imageOverlay ?? 'overlay text');

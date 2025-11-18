@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CalEventModel, RoleName } from '@bk2/shared-models';
+import { CalEventModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
@@ -30,8 +30,9 @@ import { convertCalEventToForm, convertFormToCalEvent } from '@bk2/calevent-util
         [currentUser]="currentUser()"
         [types]="types()"
         [periodicities]="periodicities()"
-        [allTags]="tags()" 
+        [allTags]="allTags()" 
         [locale]="locale()"
+        [readOnly]="readOnly()"
         (validChange)="formIsValid.set($event)"
       />
     </ion-content>
@@ -41,22 +42,19 @@ export class CalEventEditModalComponent {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
 
-  public event = input.required<CalEventModel>();
+  public calevent = input.required<CalEventModel>();
+  public vm = linkedSignal(() => convertCalEventToForm(this.calevent()));
 
   protected currentUser = computed(() => this.appStore.currentUser());
   protected types = computed(() => this.appStore.getCategory('calevent_type'));
   protected periodicities = computed(() => this.appStore.getCategory('periodicity'));
-  protected tags = computed(() => this.appStore.getTags('calevent'));
+  protected allTags = computed(() => this.appStore.getTags('calevent'));
   protected locale = computed(() => this.appStore.appConfig().locale);
+  protected readOnly = computed(() => !hasRole('eventAdmin', this.appStore.currentUser()));
 
-  public vm = linkedSignal(() => convertCalEventToForm(this.event()));
   protected formIsValid = signal(false);
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToCalEvent(this.event(), this.vm(), this.appStore.tenantId()), 'confirm');
-  }
-
-  protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.appStore.currentUser());
+    return this.modalController.dismiss(convertFormToCalEvent(this.calevent(), this.vm(), this.appStore.tenantId()), 'confirm');
   }
 }

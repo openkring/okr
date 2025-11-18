@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, input, model } from '@angular/core';
+import { Component, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonInputPasswordToggle, IonItem, IonNote } from '@ionic/angular/standalone';
 
@@ -11,6 +11,7 @@ import { PasswordMask } from '@bk2/shared-config';
 import { InputMode, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ButtonCopyComponent } from './button-copy.component';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-password-input',
@@ -36,7 +37,7 @@ import { ButtonCopyComponent } from './button-copy.component';
           placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
           [inputMode]="inputMode()"
           [maxlength]="maxLength()"
-          [clearInput]="clearInput()"
+          [clearInput]="shouldClearInput()"
           [counter]="true"
           autocomplete="current-password"
           [maskito]="mask"
@@ -44,12 +45,12 @@ import { ButtonCopyComponent } from './button-copy.component';
         >
           <ion-input-password-toggle slot="end"></ion-input-password-toggle>
         </ion-input>
-        @if (copyable()) {
+        @if (isCopyable()) {
           <bk-button-copy [value]="value()" />
         }
       }
     </ion-item>
-    @if(showHelper()) {
+    @if(shouldShowHelper()) {
       <ion-item lines="none" class="helper">
         <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
       </ion-item>
@@ -61,8 +62,11 @@ export class PasswordInputComponent {
   public name = input('password'); // name of the input field
   public maxLength = input(PASSWORD_MAX_LENGTH); // max number of characters allowed
   public clearInput = input(true); // show an icon to clear the input field
+  protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   public copyable = input(true); // if true, a button to copy the value of the input field is shown
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   public showHelper = input(false);
+  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public inputMode = input<InputMode>('text'); // A hint to the browser for which keyboard to display.
 
   // usefull masks: lowercaseWordMask, uppercaseWordMask, caseInsensitiveWordMask, passwordMask

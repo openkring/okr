@@ -39,7 +39,7 @@ export class CommentsAccordionComponent {
   public name = input('comment'); // mandatory name for the form control
   public collectionName = input.required<string>();
   public parentKey = input.required<string>();
-  public readOnly = input(false);
+  public readOnly = input(true);
   public color = input('light');
 
   public comments = computed(() => this.commentListStore.comments() ?? []);

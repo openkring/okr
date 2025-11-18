@@ -48,52 +48,52 @@ import { SettingsFormModel, settingsFormModelShape, settingsFormValidations } fr
           </ion-row>
           <ion-row> 
             <ion-col size="12">
-              <bk-cat name="language" [value]="language()" [categories]="languages" (changed)="onChange('language', $event)" />                                                             
+              <bk-cat name="language" [value]="language()" [categories]="languages" [readOnly]="readOnly()" (changed)="onChange('language', $event)" />                                                             
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="showDebugInfo" [isChecked]="showDebugInfo()" [showHelper]="true" (changed)="onChange('showDebugInfo', $event)" />
+              <bk-checkbox name="showDebugInfo" [isChecked]="showDebugInfo()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('showDebugInfo', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="showArchivedData" [isChecked]="showArchivedData()" [showHelper]="true" (changed)="onChange('showArchivedData', $event)" />
+              <bk-checkbox name="showArchivedData" [isChecked]="showArchivedData()" [readOnly]="readOnly()" [showHelper]="true" (changed)="onChange('showArchivedData', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="showHelpers" [isChecked]="showHelpers()" [showHelper]="true" (changed)="onChange('showHelpers', $event)" />
+              <bk-checkbox name="showHelpers" [isChecked]="showHelpers()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('showHelpers', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="useTouchId" [isChecked]="useTouchId()" [showHelper]="true" (changed)="onChange('useTouchId', $event)" />
+              <bk-checkbox name="useTouchId" [isChecked]="useTouchId()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('useTouchId', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="useFaceId" [isChecked]="useFaceId()" [showHelper]="true" (changed)="onChange('useFaceId', $event)" />
+              <bk-checkbox name="useFaceId" [isChecked]="useFaceId()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('useFaceId', $event)" />
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat name="avatarUsage" [value]="avatarUsage()" [categories]="avatarUsages" [showHelper]="true" (changed)="onChange('avatarUsage', $event)" />  
+              <bk-cat name="avatarUsage" [value]="avatarUsage()" [categories]="avatarUsages" [readOnly]="readOnly()" [showHelper]="true" (changed)="onChange('avatarUsage', $event)" />  
             </ion-col>
             @if(avatarUsage() === avatarUsageEnum.GravatarFirst || avatarUsage() === avatarUsageEnum.PhotoFirst) {
               <ion-col size="12" size-md="6">
-                <bk-text-input name="gravatarEmail" [value]="gravatarEmail()" [showHelper]=true [copyable]=true (changed)="onChange('gravatarEmail', $event)" /> 
+                <bk-text-input name="gravatarEmail" [value]="gravatarEmail()" [showHelper]=true [copyable]=true [readOnly]="readOnly()" (changed)="onChange('gravatarEmail', $event)" /> 
                 <bk-error-note [errors]="gravatarEmailErrors()" />                                                 
               </ion-col>
             }
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat name="nameDisplay" [value]="nameDisplay()" [categories]="nameDisplays"  [showHelper]="true" (changed)="onChange('nameDisplay', $event)"/>  
+              <bk-cat name="nameDisplay" [value]="nameDisplay()" [categories]="nameDisplays" [readOnly]="readOnly()"  [showHelper]="true" (changed)="onChange('nameDisplay', $event)"/>  
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat name="personSortCriteria" [value]="personSortCriteria()" [categories]="personSortCriterias" [showHelper]="true" (changed)="onChange('personSortCriteria', $event)"/>  
+              <bk-cat name="personSortCriteria" [value]="personSortCriteria()" [categories]="personSortCriterias" [readOnly]="readOnly()" [showHelper]="true" (changed)="onChange('personSortCriteria', $event)"/>  
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="useDisplayName" [isChecked]="useDisplayName()" [showHelper]="true" (changed)="onChange('useDisplayName', $event)" />
+              <bk-checkbox name="useDisplayName" [isChecked]="useDisplayName()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('useDisplayName', $event)" />
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat name="newsDelivery" [value]="newsDelivery()" [categories]="deliveryTypes" [showHelper]="true" (changed)="onChange('newsDelivery', $event)"/>  
+              <bk-cat name="newsDelivery" [value]="newsDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" [showHelper]="true" (changed)="onChange('newsDelivery', $event)"/>  
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" [categories]="deliveryTypes" [showHelper]="true" (changed)="onChange('invoiceDelivery', $event)"/>  
+              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" [showHelper]="true" (changed)="onChange('invoiceDelivery', $event)"/>  
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -109,6 +109,7 @@ export class ProfileSettingsAccordionComponent {
   public color = input('light'); // color of the accordion
   public title = input('@profile.settings.title'); // title of the accordion
   public currentUser = input<UserModel | undefined>();
+  public readonly readOnly = input(true);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

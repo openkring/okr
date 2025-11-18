@@ -1,10 +1,10 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, inject, input, model, output } from "@angular/core";
+import { Component, computed, inject, input, model, output } from "@angular/core";
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList, ModalController } from "@ionic/angular/standalone";
 
 import { AddressChannels, AddressUsages, getCategoryIcon } from "@bk2/shared-categories";
 import { AppStore } from "@bk2/shared-feature";
-import { TranslatePipe } from "@bk2/shared-i18n";
+import { bkTranslate, TranslatePipe } from "@bk2/shared-i18n";
 import { AddressChannel, AddressModel, AddressUsage } from "@bk2/shared-models";
 import { SvgIconPipe } from "@bk2/shared-pipes";
 import { EmptyListComponent } from "@bk2/shared-ui";
@@ -14,7 +14,7 @@ import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/sub
 
 import { AddressModalsService } from "./address-modals.service";
 import { createActionSheetButton, createActionSheetOptions } from "@bk2/shared-util-angular";
-import { hasRole } from "@bk2/shared-util-core";
+import { coerceBoolean, getItemLabel, hasRole } from "@bk2/shared-util-core";
 
 @Component({
   selector: 'bk-addresses-accordion',
@@ -34,7 +34,7 @@ import { hasRole } from "@bk2/shared-util-core";
   <ion-accordion toggle-icon-slot="start" value="addresses">
     <ion-item slot="header" [color]="color()">
         <ion-label>{{ label() | translate | async }}</ion-label>
-        @if(readOnly() === false) {
+        @if(!isReadOnly()) {
           <ion-button fill="clear" (click)="add()" size="default">
             <ion-icon color="secondary" slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
           </ion-button>
@@ -77,18 +77,20 @@ export class AddressesAccordionComponent {
   public addresses = model.required<AddressModel[]>(); // the addresses shown in the accordion
   public parentKey = input.required<string>(); // the parent key of the addresses
   public parentModelType = input.required<'person' | 'org'>(); // the parent model type of the addresses
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  public color = input('light'); // color of the accordion
+  public label = input('@subject.address.plural'); // label of the accordion
+
   public addressesChanged = output(); // event emitted when the addresses have changed
   private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 
   // we need to solve the access with an input parameter (instead of using the authorizationService),
   // in order to support the profile use case (where the current user is allowed to edit addresses even if she does not have memberAdmin role)
-  public readOnly = input(true); // if true, the addresses are read-only
-  public color = input('light'); // color of the accordion
-  public label = input('@subject.address.plural'); // label of the accordion
   protected addressChannel = AddressChannel; 
 
   public async toggleFavorite(address: AddressModel): Promise<void> {
-    if (this.readOnly() === false) {
+    if (!this.isReadOnly()) {
       await this.addressService.toggleFavorite(address, this.appStore.currentUser());
     }
   }
@@ -121,26 +123,30 @@ export class AddressesAccordionComponent {
    * @param address 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
-    if (hasRole('admin', this.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    const cat = this.appStore.getCategory('model_type');
+    const prefix = bkTranslate(getItemLabel(cat, 'address'));
+    if (hasRole('admin', this.appStore.currentUser()) && !this.isReadOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete', prefix));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('copy', this.imgixBaseUrl, 'copy'));
-    if (hasRole('memberAdmin', this.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('copy', this.imgixBaseUrl, 'copy', prefix));
+    if (!this.isReadOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit', prefix));
     }
     switch(address.channelType) {
       case AddressChannel.BankAccount:
-        actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'qrcode'));
-        actionSheetOptions.buttons.push(createActionSheetButton('upload', this.imgixBaseUrl, 'qrcode'));
+        actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'qrcode', 'QR EZS'));
+        if (!this.isReadOnly()) {
+          actionSheetOptions.buttons.push(createActionSheetButton('upload', this.imgixBaseUrl, 'qrcode', 'QR EZS'));
+        }
         break;
       case AddressChannel.Email:
-        actionSheetOptions.buttons.push(createActionSheetButton('send', this.imgixBaseUrl, 'email'));
+        actionSheetOptions.buttons.push(createActionSheetButton('send', this.imgixBaseUrl, 'email', 'E-Mail'));
         break;
       case AddressChannel.Phone:
         actionSheetOptions.buttons.push(createActionSheetButton('call', this.imgixBaseUrl, 'tel'));
         break;
       case AddressChannel.Postal:
-        actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'location'));
+        actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'location', prefix));
         break;
       case AddressChannel.Web:
         actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'link'));
@@ -159,6 +165,7 @@ export class AddressesAccordionComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
           await this.addressService.delete(address, this.appStore.currentUser());

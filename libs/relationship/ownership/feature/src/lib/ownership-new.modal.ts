@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, input, linkedSignal, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, OnInit, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
@@ -26,7 +26,7 @@ import { OwnershipNewFormComponent } from './ownership-new.form';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-ownership-new-form [(vm)]="vm" [currentUser]="currentUser()" (validChange)="onValidChange($event)" />
+      <bk-ownership-new-form [(vm)]="vm" [currentUser]="currentUser()" [readOnly]="readOnly()" (validChange)="onValidChange($event)" />
     </ion-content>
   `
 })
@@ -38,6 +38,7 @@ export class OwnershipNewModalComponent implements OnInit {
   public resource = input.required<ResourceModel | AccountModel>(); 
   public currentUser = input<UserModel | undefined>();
 
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   public vm = linkedSignal(() => newOwnership(this.owner(), this.resource(), this.appStore.tenantId()));
   protected formIsValid = signal(false);
 

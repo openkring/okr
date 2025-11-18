@@ -1,11 +1,12 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, input, model, output } from '@angular/core';
+import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonChip, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { error } from '@bk2/shared-util-angular';
 import { ColorSelectModalComponent } from './color-select.modal';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 /**
  * Color is in hex format e.g. #FF0000 for red.
@@ -41,10 +42,11 @@ export class ColorComponent {
   public hexColor = model<string | undefined>('#ffffcc');
   public label = input('@input.color.label');
   public changed = output<string>();
-  public readOnly = input(false);
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = inject(computed(() => coerceBoolean(this.readOnly())));
 
   public async selectColor(): Promise<void> {
-    if (this.readOnly() === false) {
+    if (!this.isReadOnly()) {
       const _modal = await this.modalController.create({
         component: ColorSelectModalComponent,
         cssClass: 'color-modal',

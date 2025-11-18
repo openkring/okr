@@ -1,4 +1,4 @@
-import { Component, computed, model, output } from '@angular/core';
+import { Component, computed, input, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { HtmlTextMask } from '@bk2/shared-config';
@@ -24,16 +24,16 @@ import { StringsComponent, TextInputComponent } from '@bk2/shared-ui';
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="gridTemplate" [value]="gridTemplate()" [showHelper]="true" (changed)="onChange('gridTemplate', $event)" />
+                    <bk-text-input name="gridTemplate" [value]="gridTemplate()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('gridTemplate', $event)" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="gridGap" [value]="gridGap()" [showHelper]="true" (changed)="onChange('gridGap', $event)" />
+                    <bk-text-input name="gridGap" [value]="gridGap()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('gridGap', $event)" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="gridBackgroundColor" [value]="gridBackgroundColor()" [showHelper]="true" (changed)="onChange('gridBackgroundColor', $event)" />
+                    <bk-text-input name="gridBackgroundColor" [value]="gridBackgroundColor()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('gridBackgroundColor', $event)" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="gridPadding" [value]="gridPadding()" [showHelper]="true" (changed)="onChange('gridPadding', $event)" />
+                    <bk-text-input name="gridPadding" [value]="gridPadding()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('gridPadding', $event)" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -51,19 +51,19 @@ import { StringsComponent, TextInputComponent } from '@bk2/shared-ui';
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="headerBackgroundColor" [value]="headerBackgroundColor()" [showHelper]="true" (changed)="onChange('headerBackgroundColor', $event)"/>
+                    <bk-text-input name="headerBackgroundColor" [value]="headerBackgroundColor()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('headerBackgroundColor', $event)"/>
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="headerTextAlign" [value]="headerTextAlign()" [showHelper]="true" (changed)="onChange('headerTextAlign', $event)"/>
+                    <bk-text-input name="headerTextAlign" [value]="headerTextAlign()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('headerTextAlign', $event)"/>
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="headerFontSize" [value]="headerFontSize()" [showHelper]="true" (changed)="onChange('headerFontSize', $event)"/>
+                    <bk-text-input name="headerFontSize" [value]="headerFontSize()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('headerFontSize', $event)"/>
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="headerFontWeight" [value]="headerFontWeight()" [showHelper]="true" (changed)="onChange('headerFontWeight', $event)"/>
+                    <bk-text-input name="headerFontWeight" [value]="headerFontWeight()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('headerFontWeight', $event)"/>
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="headerPadding" [value]="headerPadding()" [showHelper]="true" (changed)="onChange('headerPadding', $event)"/>
+                    <bk-text-input name="headerPadding" [value]="headerPadding()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('headerPadding', $event)"/>
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -81,19 +81,19 @@ import { StringsComponent, TextInputComponent } from '@bk2/shared-ui';
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="cellBackgroundColor" [value]="cellBackgroundColor()" [showHelper]="true" (changed)="onChange('cellBackgroundColor', $event)" />
+                    <bk-text-input name="cellBackgroundColor" [value]="cellBackgroundColor()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('cellBackgroundColor', $event)" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="cellTextAlign" [value]="cellTextAlign()" [showHelper]="true" (changed)="onChange('cellTextAlign', $event)"/>
+                    <bk-text-input name="cellTextAlign" [value]="cellTextAlign()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('cellTextAlign', $event)"/>
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="cellFontSize" [value]="cellFontSize()" [showHelper]="true" (changed)="onChange('cellFontSize', $event)"/>
+                    <bk-text-input name="cellFontSize" [value]="cellFontSize()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('cellFontSize', $event)"/>
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="cellFontWeight" [value]="cellFontWeight()" [showHelper]="true" (changed)="onChange('cellFontWeight', $event)"/>
+                    <bk-text-input name="cellFontWeight" [value]="cellFontWeight()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('cellFontWeight', $event)"/>
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="cellPadding" [value]="cellPadding()" [showHelper]="true" (changed)="onChange('cellPadding', $event)"/>
+                    <bk-text-input name="cellPadding" [value]="cellPadding()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('cellPadding', $event)"/>
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -108,6 +108,7 @@ import { StringsComponent, TextInputComponent } from '@bk2/shared-ui';
             [mask]="mask"
             [maxLength]="40"
             title="@input.tableHeader.title"
+            [readOnly]="readOnly()"
             description="@input.tableHeader.description"
             addLabel="@input.tableHeader.addLabel" />
         </ion-col>
@@ -118,6 +119,7 @@ import { StringsComponent, TextInputComponent } from '@bk2/shared-ui';
             [strings]="content()"
             [mask]="mask"
             [maxLength]="500" 
+            [readOnly]="readOnly()"
             title="@input.tableContent.title"
           description="@input.tableContent.description"
           addLabel="@input.tableContent.addLabel" />
@@ -128,6 +130,8 @@ import { StringsComponent, TextInputComponent } from '@bk2/shared-ui';
 })
 export class TableSectionFormComponent {
   public table = model.required<Table>();
+  public readonly readOnly = input(true);
+
   protected header = computed(() => this.table().header ?? []);
   protected content = computed(() => this.table().data ?? []);
   protected gridTemplate = computed(() => this.table().config?.gridTemplate ?? 'auto auto');

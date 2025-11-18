@@ -31,12 +31,13 @@ import { PersonalRelModalsService } from './personal-rel-modals.service';
       <bk-personal-rel-form [(vm)]="vm" [currentUser]="currentUser()" 
       [types]="types()"
       [allTags]="tags()"
+      [readOnly]="readOnly()"
       (selectPerson)="selectPerson($event)"
       (validChange)="formIsValid.set($event)" />
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-accordion-group value="comments">
-          <bk-comments-accordion [collectionName]="personalRelCollection" [parentKey]="personalRelKey()" />
+          <bk-comments-accordion [collectionName]="personalRelCollection" [parentKey]="personalRelKey()" [readOnly]="readOnly()" />
         </ion-accordion-group>
       }
     </ion-content>
@@ -49,6 +50,7 @@ export class PersonalRelEditModalComponent {
 
   public personalRel = input.required<PersonalRelModel>();
   public currentUser = input<UserModel | undefined>();
+  public readonly readOnly = input(true);
 
   public vm = linkedSignal(() => convertPersonalRelToForm(this.personalRel()));
   protected tags = computed(() => this.appStore.getTags('personalrel'));

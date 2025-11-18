@@ -6,10 +6,10 @@ import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { MembershipModel, OrgModel, PersonModel, RoleName } from '@bk2/shared-models';
+import { MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
-import { hasRole, isOngoing } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole, isOngoing } from '@bk2/shared-util-core';
 import { MembershipAccordionStore } from './membership-accordion.store';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
@@ -28,7 +28,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   <ion-accordion toggle-icon-slot="start" value="memberships">
     <ion-item slot="header" [color]="color()">
       <ion-label>{{ title() | translate | async }}</ion-label>
-      @if(hasRole('memberAdmin')) {
+      @if(isReadOnly() === false) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
@@ -42,7 +42,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
           @for(membership of memberships(); track $index) {
             <ion-item (click)="showActions(membership)">
               <ion-thumbnail slot="start">
-                <ion-img src="{{ 'org.' + membership.orgKey | avatar | async}}" alt="membership avatar" />
+                <ion-img src="{{ 'org.' + membership.orgKey | avatar:'membership' | async}}" alt="membership avatar" />
               </ion-thumbnail>
               <ion-label>{{ membership.orgName }}</ion-label>
               <ion-label>{{ membership.relLog | categoryLog }} / {{ membership.dateOfEntry | duration:membership.dateOfExit }}</ion-label>
@@ -59,18 +59,23 @@ export class MembershipAccordionComponent {
   private actionSheetController = inject(ActionSheetController);
 
   public member = input.required<PersonModel | OrgModel>();
-  public modelType = input<'person' | 'org'>('person');
-  public color = input('light');
-  public title = input('@membership.plural');
+  public readonly modelType = input<'person' | 'org'>('person');
+  public readonly color = input('light');
+  public readonly title = input('@membership.plural');
+  public readonly readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+
   public membershipsChanged = output();
 
   protected memberships = computed(() => this.membershipStore.memberships());
+  private currentUser = computed(() => this.membershipStore.currentUser());
+  private showOnlyCurrent = computed(() => hasRole('admin', this.currentUser())); // admins also see past memberships
 
   private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => this.membershipStore.setMember(this.member(), this.modelType()));
-    effect(() => this.membershipStore.setShowMode(hasRole('admin')));
+    effect(() => this.membershipStore.setShowMode(this.showOnlyCurrent()));
   }
 
   /******************************* actions *************************************** */
@@ -94,14 +99,15 @@ export class MembershipAccordionComponent {
    * @param membership 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): void {
-    if (hasRole('memberAdmin', this.membershipStore.appStore.currentUser())) {
+    actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+    if (!this.isReadOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
       if (isOngoing(membership.dateOfExit)) {
         actionSheetOptions.buttons.push(createActionSheetButton('endMembership', this.imgixBaseUrl, 'stop-circle'));
         actionSheetOptions.buttons.push(createActionSheetButton('changeMcat', this.imgixBaseUrl, 'member_change'));
       }
     }
-    if (hasRole('admin', this.membershipStore.appStore.currentUser())) {
+    if (hasRole('admin', this.currentUser()) && !this.isReadOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
@@ -117,28 +123,26 @@ export class MembershipAccordionComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
-          await this.membershipStore.delete(membership);
+          await this.membershipStore.delete(membership, this.isReadOnly());
           break;
         case 'edit':
-          await this.membershipStore.edit(membership);
+        case 'view':
+          await this.membershipStore.edit(membership, this.isReadOnly());
           break;
         case 'endMembership':
-          await this.membershipStore.end(membership);
+          await this.membershipStore.end(membership, this.isReadOnly());
           break;
         case 'changeMcat':
-          await this.membershipStore.changeMembershipCategory(membership);
+          await this.membershipStore.changeMembershipCategory(membership, this.isReadOnly());
           break;
       }
     }
   }
 
   /******************************* helpers *************************************** */
-  protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.membershipStore.currentUser());
-  }
-
   protected isOngoing(membership: MembershipModel): boolean {
     return isOngoing(membership.dateOfExit);
   }

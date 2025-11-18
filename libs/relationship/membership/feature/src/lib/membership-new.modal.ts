@@ -27,7 +27,7 @@ import { MembershipNewStore } from './membership-new.store';
     }
     <ion-content>
       @if(mcat(); as mcat) {
-        <bk-membership-new-form [(vm)]="vm" [membershipCategories]="mcat" [currentUser]="currentUser()" (validChange)="onValidChange($event)" />
+        <bk-membership-new-form [(vm)]="vm" [membershipCategories]="mcat" [currentUser]="currentUser()" [readOnly]="readOnly()" (validChange)="onValidChange($event)" />
       }
     </ion-content>
   `
@@ -44,6 +44,7 @@ export class MembershipNewModalComponent implements OnInit {
   public vm = linkedSignal(() => convertMemberAndOrgToNewForm(this.member(), this.org(), this.membershipNewStore.currentUser(), this.modelType()));
 
   protected mcat = computed(() => this.membershipNewStore.membershipCategory());
+  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
   protected formIsValid = signal(false);
 

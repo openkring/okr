@@ -9,6 +9,7 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
 import { CategoryListFormComponent } from '@bk2/category-ui';
 import { convertCategoryListToForm, convertFormToCategoryList } from '@bk2/category-util';
+import { hasRole } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-category-edit-modal',
@@ -24,7 +25,7 @@ import { convertCategoryListToForm, convertFormToCategoryList } from '@bk2/categ
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-category-list-form [(vm)]="vm" [currentUser]="currentUser()" [categoryTags]="categoryTags()" (validChange)="formIsValid.set($event)" />
+      <bk-category-list-form [(vm)]="vm" [currentUser]="currentUser()" [categoryTags]="categoryTags()" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
     </ion-content>
   `
 })
@@ -39,6 +40,7 @@ export class CategoryEditModalComponent {
   protected formIsValid = signal(false);
 
   protected categoryTags = computed(() => this.appStore.getTags('category'));
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.appStore.currentUser()));
 
   public save(): Promise<boolean> {
     return this.modalController.dismiss(convertFormToCategoryList(this.category(), this.vm(), this.appStore.env.tenantId), 'confirm');

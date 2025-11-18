@@ -7,7 +7,7 @@ import { MembershipModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { coerceBoolean, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -82,7 +82,7 @@ import { MembershipListStore } from './membership-list.store';
           @for(membership of filteredMemberships(); track $index) {
               <ion-item (click)="showActions(membership)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ 'person.' + membership.memberKey | avatar | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'person.' + membership.memberKey | avatar:'membership' | async }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{getMembershipName(membership)}}</ion-label>      
                 <ion-label>{{membership.relLog | duration:membership.dateOfExit}}</ion-label>      
@@ -111,6 +111,8 @@ export class MembershipListComponent {
   protected tags = computed(() => this.membershipListStore.getTags());
   protected types = computed(() => this.listId() === 'orgs' ? this.orgTypes() : this.genders());
   protected years = computed(() => this.listId() === 'entries' || this.listId() === 'exits' ? getYearList() : undefined);
+  protected currentUser = computed(() => this.membershipListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
   protected filteredMemberships = computed(() => {
     switch (this.listId()) {
@@ -190,17 +192,20 @@ export class MembershipListComponent {
    * @param membership 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): void {
-    if (hasRole('memberAdmin', this.membershipListStore.appStore.currentUser())) {
+    if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
       if (isOngoing(membership.dateOfExit)) {
         actionSheetOptions.buttons.push(createActionSheetButton('endMembership', this.imgixBaseUrl, 'stop-circle'));
         actionSheetOptions.buttons.push(createActionSheetButton('changeMcat', this.imgixBaseUrl, 'member_change'));
       }
     }
-    if (hasRole('admin', this.membershipListStore.appStore.currentUser())) {
+    if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
   }
 
   /**
@@ -213,18 +218,22 @@ export class MembershipListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
-          await this.membershipListStore.delete(membership);
+          await this.membershipListStore.delete(membership, this.readOnly());
           break;
         case 'edit':
-          await this.membershipListStore.edit(membership);
+          await this.membershipListStore.edit(membership, this.readOnly());
+          break;
+        case 'view':
+          await this.membershipListStore.view(membership);
           break;
         case 'endMembership':
-          await this.membershipListStore.end(membership);
+          await this.membershipListStore.end(membership, this.readOnly());
           break;
         case 'changeMcat':
-          await this.membershipListStore.changeMembershipCategory(membership);
+          await this.membershipListStore.changeMembershipCategory(membership, this.readOnly());
           break;
       }
     }

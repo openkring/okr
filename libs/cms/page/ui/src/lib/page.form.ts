@@ -54,18 +54,18 @@ import { DEFAULT_CONTENT_STATE, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS }
                 }
               </ion-col>
               <ion-col size="12">
-                <bk-text-input name="name" [value]="name()" (changed)="onChange('name', $event)" />
+                <bk-text-input name="name" [value]="name()" [readOnly]="readOnly()" (changed)="onChange('name', $event)" />
                 <bk-error-note [errors]="nameErrors()" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input name="title" [value]="title()" (changed)="onChange('title', $event)" />
+                <bk-text-input name="title" [value]="title()" [readOnly]="readOnly()" (changed)="onChange('title', $event)" />
                 <bk-error-note [errors]="titleErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="types()!" [selectedItemName]="type()" [withAll]="false" (changed)="onChange('type', $event)" />
+                <bk-cat-select [category]="types()!" [selectedItemName]="type()" [readOnly]="readOnly()" [withAll]="false" (changed)="onChange('type', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="states()!" [selectedItemName]="state()" [withAll]="false" (changed)="onChange('state', $event)" />
+                <bk-cat-select [category]="states()!" [selectedItemName]="state()" [readOnly]="readOnly()" [withAll]="false" (changed)="onChange('state', $event)" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -77,14 +77,15 @@ import { DEFAULT_CONTENT_STATE, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS }
           [strings]="sections()"
           [mask]="mask"
           [maxLength]="40"
+          [readOnly]="readOnly()"
           title="@content.page.forms.section.label"
           addLabel="@content.section.operation.add.label" />
           
       @if(hasRole('privileged')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (changed)="onChange('tags', $event)" />
+        <bk-chips chipName="tag" [storedChips]="tags()" [readOnly]="readOnly()" [allChips]="allTags()" (changed)="onChange('tags', $event)" />
       }
       @if(hasRole('admin')) {
-        <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
+        <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
       }
     </form>
   `
@@ -98,6 +99,7 @@ export class PageFormComponent {
   public readonly allTags = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
+  public readonly readOnly = input(true);
   
   protected bkey = computed(() => this.vm().bkey ?? '');
   protected sections = linkedSignal(() => this.vm().sections ?? []);

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, linkedSignal, model } from '@angular/core';
+import { Component, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonRow } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
@@ -25,9 +25,9 @@ import { SectionFormModel } from '@bk2/cms-section-util';
             <ion-card-title>{{ '@content.section.forms.iframe.title' | translate | async}}</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <bk-url [(value)]="url" />
-            <bk-text-input name="title" [(value)]="title" label="@input.title.label" placeholder="@input.title.placeholder" />
-            <bk-text-input name="style" [(value)]="style" label="@input.style.label" placeholder="@input.style.placeholder" [maxLength]=200 helperText="@input.style.helper" />
+            <bk-url [(value)]="url" [readOnly]="readOnly()" />
+            <bk-text-input name="title" [(value)]="title" label="@input.title.label" [readOnly]="readOnly()" placeholder="@input.title.placeholder" />
+            <bk-text-input name="style" [(value)]="style" label="@input.style.label" [readOnly]="readOnly()" placeholder="@input.style.placeholder" [maxLength]=200 helperText="@input.style.helper" />
           </ion-card-content>
         </ion-card>                                                   
       </ion-col>
@@ -36,6 +36,8 @@ import { SectionFormModel } from '@bk2/cms-section-util';
 })
 export class IframeSectionFormComponent {
   public vm = model.required<SectionFormModel>();
+  public readonly readOnly = input(true);
+
   protected title = linkedSignal(() => this.vm()?.title ?? '');
   protected style = linkedSignal(() => this.vm()?.properties?.iframe?.style ?? 'width: 100%; min-height:400px; border: none;');
   protected url = linkedSignal(() => this.vm()?.properties?.iframe?.url ?? '');

@@ -34,12 +34,12 @@ import { AddressFormModel, addressFormModelShape, addressFormValidations } from 
         --------------------------------------------------->
       <ion-row>
         <ion-col size="12" size-md="6">
-          <bk-cat name="channelType" [value]="channelType()" [categories]="addressChannels" [showHelper]="true" (changed)="onChange('channelType', $event)" />
+          <bk-cat name="channelType" [value]="channelType()" [categories]="addressChannels" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('channelType', $event)" />
         </ion-col>
 
         @if(channelType() === addressChannel.Custom) {
           <ion-col size="12" size-md="6">
-            <bk-text-input name="channelLabel" [value]="channelLabel()" [showHelper]="true" />
+            <bk-text-input name="channelLabel" [value]="channelLabel()" [showHelper]="true" [readOnly]="readOnly()" />
             <bk-error-note [errors]="channelLabelError()" />                                                                                                                     
           </ion-col>
         }
@@ -47,12 +47,12 @@ import { AddressFormModel, addressFormModelShape, addressFormValidations } from 
 
       <ion-row>
         <ion-col size="12" size-md="6">
-          <bk-cat name="usageType" [value]="usageType()" [categories]="addressUsages" [showHelper]="true" (changed)="onChange('usageType', $event)" />
+          <bk-cat name="usageType" [value]="usageType()" [categories]="addressUsages" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('usageType', $event)" />
         </ion-col>
 
         @if(usageType() === addressUsage.Custom) {
           <ion-col size="12" size-md="6">
-            <bk-text-input name="usageLabel" [value]="usageLabel()"  [showHelper]="true" (changed)="onChange('usageLabel', $event)" />
+            <bk-text-input name="usageLabel" [value]="usageLabel()"  [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('usageLabel', $event)" />
             <bk-error-note [errors]="usageLabelError()" />                                                                                                                     
           </ion-col>
         }
@@ -62,7 +62,7 @@ import { AddressFormModel, addressFormModelShape, addressFormValidations } from 
         @case (addressChannel.Email) {
           <ion-row>
             <ion-col size="12">
-              <bk-email [value]="email()" (changed)="onChange('email', $event)" />
+              <bk-email [value]="email()" [readOnly]="readOnly()" (changed)="onChange('email', $event)" />
               <bk-error-note [errors]="emailError()" />                                                                                                                     
             </ion-col>
           </ion-row>
@@ -70,7 +70,7 @@ import { AddressFormModel, addressFormModelShape, addressFormValidations } from 
         @case (addressChannel.Phone) {
           <ion-row>
             <ion-col size="12"> 
-              <bk-phone [value]="phone()" (changed)="onChange('phone', $event)" />
+              <bk-phone [value]="phone()" [readOnly]="readOnly()" (changed)="onChange('phone', $event)" />
               <bk-error-note [errors]="phoneError()" />                                                                                                                     
             </ion-col>
           </ion-row>
@@ -78,16 +78,16 @@ import { AddressFormModel, addressFormModelShape, addressFormValidations } from 
         @case (addressChannel.Postal) {
           <ion-row>
             <ion-col size="9">
-              <bk-text-input name="streetName" [value]="streetName()" autocomplete="street-address" (changed)="onChange('streetName', $event)" />
+              <bk-text-input name="streetName" [value]="streetName()" [readOnly]="readOnly()" autocomplete="street-address" (changed)="onChange('streetName', $event)" />
               <bk-error-note [errors]="streetNameError()" />                                                                                                                     
             </ion-col>
             <ion-col size="3">
-              <bk-text-input name="streetNumber" [value]="streetNumber()" (changed)="onChange('streetNumber', $event)" />
+              <bk-text-input name="streetNumber" [value]="streetNumber()" [readOnly]="readOnly()" (changed)="onChange('streetNumber', $event)" />
               <bk-error-note [errors]="streetNumberError()" />                                                                                                                     
             </ion-col>
 
             <ion-col size="12">
-              <bk-text-input name="addressValue2" [value]="addressValue2()" (changed)="onChange('addressValue2', $event)" />
+              <bk-text-input name="addressValue2" [value]="addressValue2()" [readOnly]="readOnly()" (changed)="onChange('addressValue2', $event)" />
             </ion-col>
           </ion-row>
           
@@ -95,30 +95,38 @@ import { AddressFormModel, addressFormModelShape, addressFormValidations } from 
 
           <ion-row>
             <ion-col size="12" size-md="3">
-             <bk-text-input name="countryCode" [value]="countryCode()" (changed)="onChange('countryCode', $event)" />
+             <bk-text-input name="countryCode" [value]="countryCode()" [readOnly]="readOnly()" (changed)="onChange('countryCode', $event)" />
             </ion-col>
     
             <ion-col size="12" size-md="3">
-              <bk-text-input name="zipCode" [value]="zipCode()" (changed)="onChange('zipCode', $event)" />
+              <bk-text-input name="zipCode" [value]="zipCode()" [readOnly]="readOnly()" (changed)="onChange('zipCode', $event)" />
             </ion-col>
             
             <ion-col size="12" size-md="6">
-              <bk-text-input name="city" [value]="city()" (changed)="onChange('city', $event)" />
+              <bk-text-input name="city" [value]="city()" [readOnly]="readOnly()" (changed)="onChange('city', $event)" />
             </ion-col>
           </ion-row>
         }
         @case (addressChannel.BankAccount) {
           <ion-row>
             <ion-col size="12">
-              <bk-iban [value]="iban()" (changed)="onChange('iban', $event)" />
+              <bk-iban [value]="iban()" [readOnly]="readOnly()" (changed)="onChange('iban', $event)" />
               <bk-error-note [errors]="ibanError()" />                                                                                                                     
             </ion-col>
           </ion-row>
+          @if(hasRole('admin')) {
+            <ion-row>
+              <ion-col size="12">
+                <bk-text-input name="url" [value]="url()" [readOnly]="readOnly()" (changed)="onChange('url', $event)" />
+                <bk-error-note [errors]="urlError()" />                                                                                                                     
+              </ion-col>
+            </ion-row>
+          }
         }
         @default {
           <ion-row>
             <ion-col size="12">
-              <bk-text-input name="url" [value]="url()" (changed)="onChange('url', $event)" />
+              <bk-text-input name="url" [value]="url()" [readOnly]="readOnly()" (changed)="onChange('url', $event)" />
               <bk-error-note [errors]="urlError()" />                                                                                                                     
             </ion-col>
           </ion-row>
@@ -129,15 +137,15 @@ import { AddressFormModel, addressFormModelShape, addressFormValidations } from 
         OTHER 
         --------------------------------------------------->
       <ion-row>
-        @if(isFavorable(vm())) {
+        @if(isFavorable()) {
           <ion-col size="12" size-md="6">
-            <bk-checkbox name="isFavorite" [isChecked]="isFavorite()" (changed)="onChange('isFavorite', $event)" />
+            <bk-checkbox name="isFavorite" [isChecked]="isFavorite()" [readOnly]="readOnly()" (changed)="onChange('isFavorite', $event)" />
           </ion-col>  
         }
 
         @if(isFavorite() === false && channelType() === addressChannel.Email) {
           <ion-col size="12" size-md="6">
-            <bk-checkbox name="isCc" [isChecked]="isCc()" (changed)="onChange('isCc', $event)" />
+            <bk-checkbox name="isCc" [isChecked]="isCc()" [readOnly]="readOnly()" (changed)="onChange('isCc', $event)" />
           </ion-col>  
         }
       </ion-row>
@@ -150,6 +158,7 @@ export class AddressFormComponent {
 
   public vm = model.required<AddressFormModel>();
   public currentUser = input<UserModel | undefined>();
+  protected readOnly = input(true);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
@@ -191,15 +200,12 @@ export class AddressFormComponent {
   protected tags = computed(() => this.vm().tags ?? '');
   protected isFavorite = computed(() => this.vm().isFavorite ?? false);
   protected isCc = computed(() => this.vm().isCc ?? false);
+  protected isFavorable = computed(() => this.vm().isCc === false);
 
   public addressChannel = AddressChannel;
   public addressUsage = AddressUsage;
   public addressChannels = AddressChannels;
   public addressUsages = AddressUsages;
-
-  public isFavorable(vm: AddressFormModel): boolean {
-    return vm.isCc === false && vm.channelType === AddressChannel.Email || vm.channelType === AddressChannel.Phone || vm.channelType === AddressChannel.Postal;
-  }
 
   protected onValueChange(value: AddressFormModel): void {
     this.vm.update((vm) => ({...vm, ...value}));
@@ -210,7 +216,7 @@ export class AddressFormComponent {
     if (!value) return;
     this.vm.update((vm) => ({ ...vm, [fieldName]: value }));
     debugFormErrors('AddressForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
+    //this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 

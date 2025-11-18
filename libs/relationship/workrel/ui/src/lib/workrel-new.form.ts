@@ -53,11 +53,11 @@ import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LA
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="types()!" selectedItemName="type()" [withAll]="false" (changed)="onChange('type', $event)" />
+              <bk-cat-select [category]="types()!" selectedItemName="type()" [readOnly]="readOnly()" [withAll]="false" (changed)="onChange('type', $event)" />
             </ion-col>
             @if(type() === 'custom') {
               <ion-col size="12" size-md="6">
-                  <bk-text-input name="label" [value]="label()" (changed)="onChange('label', $event)" />
+                  <bk-text-input name="label" [value]="label()" [readOnly]="readOnly()" (changed)="onChange('label', $event)" />
               </ion-col>
             }
           </ion-row>
@@ -97,7 +97,7 @@ import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LA
               <bk-number-input name="order" [value]="order()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('order', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" (changed)="onChange('state', $event)" />
+              <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('state', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -115,10 +115,10 @@ import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LA
             <bk-number-input name="price" [value]="price()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('price', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-            <bk-text-input name="currency" [value]="currency()" (changed)="onChange('currency', $event)" />
+            <bk-text-input name="currency" [value]="currency()" [readOnly]="readOnly()" (changed)="onChange('currency', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" (changed)="onChange('periodicity', $event)" />
+              <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('periodicity', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -130,7 +130,7 @@ import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LA
     }
 
     @if(hasRole('admin')) {
-          <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
+          <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
     }
   </form>
   `
@@ -142,11 +142,11 @@ export class WorkrelNewFormComponent {
   public readonly types = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
   public readonly periodicities = input.required<CategoryListModel>();
+  public readOnly = input(true);
 
   public selectPerson = output<void>();
   public selectOrg = output<void>();
 
-  public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   protected subjectKey = computed(() => this.vm().subjectKey ?? DEFAULT_KEY);
   protected subjectName1 = computed(() => this.vm().subjectName1 ?? DEFAULT_NAME);
   protected subjectName2 = computed(() => this.vm().subjectName2 ?? DEFAULT_NAME);

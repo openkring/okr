@@ -4,7 +4,7 @@ import { IonAvatar, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, Io
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TaskModel } from '@bk2/shared-models';
-import { CategoryAbbreviationPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { error } from '@bk2/shared-util-angular';
 import { extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared-util-core';
@@ -28,7 +28,7 @@ import { TaskListStore } from './task-list.store';
   selector: 'bk-simple-task-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, CategoryAbbreviationPipe, PrettyDatePipe, AvatarPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe, AvatarPipe,
     EmptyListComponent, ListFilterComponent,
     IonHeader, IonIcon, IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg, IonTextarea, IonChip
   ],
@@ -41,29 +41,30 @@ import { TaskListStore } from './task-list.store';
     `],
   template: `
     <ion-header>
-
-      <!-- quick entry -->
-      <ion-item lines="none">
-        <ion-textarea #bkTaskName 
-          (keyup.enter)="addName(bkTaskName)"
-          label = "{{'@input.taskName.label' | translate | async }}"
-          labelPlacement = "floating"
-          placeholder = "{{'@input.taskName.placeholder' | translate | async }}"
-          [counter]="true"
-          fill="outline"
-          [maxlength]="1000"
-          [rows]="1"
-          inputmode="text"
-          type="text"
-          [autoGrow]="true">
-        </ion-textarea>
-        <ion-icon slot="end" src="{{'close_cancel' | svgIcon }}" (click)="clear(bkTaskName)" />
-      </ion-item>
+      @if(!readOnly()) {
+        <!-- quick entry -->
+        <ion-item lines="none">
+          <ion-textarea #bkTaskName 
+            (keyup.enter)="addName(bkTaskName)"
+            label = "{{'@input.taskName.label' | translate | async }}"
+            labelPlacement = "floating"
+            placeholder = "{{'@input.taskName.placeholder' | translate | async }}"
+            [counter]="true"
+            fill="outline"
+            [maxlength]="1000"
+            [rows]="1"
+            inputmode="text"
+            type="text"
+            [autoGrow]="true">
+          </ion-textarea>
+          <ion-icon slot="end" src="{{'close_cancel' | svgIcon }}" (click)="clear(bkTaskName)" />
+        </ion-item>
+      }
 
       <!-- search and filters -->
       <bk-list-filter 
         [tags]="tags()" (tagChanged)="onTagSelected($event)"
-        [type]="types" (typeChanged)="onTypeSelected($event)"
+        [type]="types()" (typeChanged)="onTypeSelected($event)"
         (searchTermChanged)="onSearchtermChange($event)"
       />
     </ion-header>
@@ -96,7 +97,7 @@ import { TaskListStore } from './task-list.store';
                   </ion-avatar>
                 }
                 <ion-label class="ion-hide-md-down ion-text-end">
-                  {{task.priority | categoryAbbreviation:types}} {{task.importance | categoryAbbreviation:importances}}
+                  {{task.priority}} {{task.importance}}
                 </ion-label> 
               </ion-item>
           }
@@ -109,6 +110,7 @@ export class SimpleTaskListComponent {
   protected taskListStore = inject(TaskListStore);
 
   public listId = input.required<string>();
+  public readOnly = input(true);
 
   protected filteredTasks = computed(() => this.taskListStore.filteredTasks() ?? []);
   protected tasksCount = computed(() => this.taskListStore.tasksCount());
@@ -138,18 +140,18 @@ export class SimpleTaskListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.taskListStore.add(); break;
+      case 'add': await this.taskListStore.add(this.readOnly()); break;
       case 'export': await this.taskListStore.export(); break;
       default: error(undefined, `TaskListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
   public async edit(task: TaskModel): Promise<void> {
-    await this.taskListStore.edit(task);
+    await this.taskListStore.edit(task, this.readOnly());
   }
 
   public async toggleCompleted(task: TaskModel): Promise<void> {
-    await this.taskListStore.setCompleted(task);
+    await this.taskListStore.setCompleted(task, this.readOnly());
   }
 
   public getIcon(task: TaskModel): string {

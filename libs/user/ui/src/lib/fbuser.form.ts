@@ -36,27 +36,27 @@ import { firebaseUserFormValidations, FirebaseUserShape } from "@bk2/user-util";
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="uid" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="uid()" [readOnly]=true [copyable]=true />
+                <bk-text-input name="uid" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="uid()"  [readOnly]="readOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="displayName" label="@input.displayName.label" placeholder="@input.displayName.placeholder" [value]="displayName()" [copyable]=true />
+                <bk-text-input name="displayName" label="@input.displayName.label" placeholder="@input.displayName.placeholder"  [readOnly]="readOnly()" [value]="displayName()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email [value]="email()" (changed)="onChange('email', $event)" />
+                <bk-email [value]="email()" (changed)="onChange('email', $event)"  [readOnly]="readOnly()"/>
                 <bk-error-note [errors]="emailError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6"> 
-                <bk-phone [value]="phone()" (changed)="onChange('phone', $event)" />
+                <bk-phone [value]="phone()" (changed)="onChange('phone', $event)"  [readOnly]="readOnly()"/>
                 <bk-error-note [errors]="phoneError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="emailVerified" [isChecked]="emailVerified()" [showHelper]="true" (changed)="onChange('emailVerified', $event)" />
+                <bk-checkbox name="emailVerified" [isChecked]="emailVerified()" [showHelper]="true"  [readOnly]="readOnly()" (changed)="onChange('emailVerified', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="disabled" [isChecked]="disabled()" [showHelper]="true" (changed)="onChange('disabled', $event)" />
+                <bk-checkbox name="disabled" [isChecked]="disabled()" [showHelper]="true"  [readOnly]="readOnly()" (changed)="onChange('disabled', $event)" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input name="photoUrl" label="@input.photoUrl.label" placeholder="@input.photoUrl.placeholder" [value]="photoUrl()" [copyable]=true />
+                <bk-text-input name="photoUrl" label="@input.photoUrl.label" placeholder="@input.photoUrl.placeholder"  [readOnly]="readOnly()" [value]="photoUrl()" [copyable]=true />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -70,6 +70,7 @@ import { firebaseUserFormValidations, FirebaseUserShape } from "@bk2/user-util";
 export class FbuserFormComponent {
   public vm = model.required<FirebaseUserModel>();
   public currentUser = input<UserModel | undefined>();
+  public readOnly = input.required<boolean>();
 
   protected uid = computed(() => this.vm().uid ?? '');
   protected email = computed(() => this.vm().email ?? '');

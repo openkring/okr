@@ -58,7 +58,7 @@ import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="reasons()" [selectedItemName]="reason()" [withAll]="false" (changed)="onChange('reservationReason', $event)" />
+              <bk-cat-select [category]="reasons()" [selectedItemName]="reason()" [withAll]=false [readOnly]="readOnly()" (changed)="onChange('reservationReason', $event)" />
             </ion-col>
 
             <ion-col size="12" size-md="6">
@@ -85,7 +85,7 @@ import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="states()" [selectedItemName]="reservationState()" [withAll]="false" (changed)="onChange('reservationState', $event)" />
+              <bk-cat-select [category]="states()" [selectedItemName]="reservationState()" [withAll]=false [readOnly]="readOnly()" (changed)="onChange('reservationState', $event)" />
             </ion-col>
 
             <ion-col size="12" size-md="6">
@@ -97,7 +97,7 @@ import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
             </ion-col>
 
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="periodicities()" [selectedItemName]="periodicity()" [withAll]="false" (changed)="onChange('periodicity', $event)" />
+              <bk-cat-select [category]="periodicities()" [selectedItemName]="periodicity()" [withAll]=false [readOnly]="readOnly()" (changed)="onChange('periodicity', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -109,7 +109,7 @@ import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
     }
   
     @if(hasRole('admin')) {
-      <bk-notes name="notes" [value]="notes()" (changed)="onChange('notes', $event)" />
+      <bk-notes name="notes" [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
     }
   </form>
   `
@@ -121,8 +121,8 @@ export class ReservationFormComponent {
   public reasons = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public periodicities = input.required<CategoryListModel>();
-
-  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser())); 
+  public readOnly = input(true);
+  
   protected reserverName = computed(() => this.vm().reserverName ?? DEFAULT_NAME); 
   protected reserverName2 = computed(() => this.vm().reserverName2 ?? DEFAULT_NAME); 
   protected reserverModelType = computed(() => this.vm().reserverModelType ?? 'person');

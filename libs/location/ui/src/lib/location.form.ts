@@ -32,32 +32,32 @@ import { LocationFormModel, locationFormModelShape, locationFormValidations } fr
         --------------------------------------------------->
       <ion-row>
         <ion-col size="12" size-md="6">
-          <bk-text-input name="name" [value]="name()" [autofocus]="true" [copyable]="true" (changed)="onChange('name', $event)" />  
+          <bk-text-input name="name" [value]="name()" [autofocus]="true" [copyable]="true" [readOnly]="readOnly()" (changed)="onChange('name', $event)" />  
           <bk-error-note [errors]="nameErrors()" />                                                                                                                     
         </ion-col>
         <ion-col size="12" size-md="6">
-          <bk-cat-select [category]="types()!" selectedItemName="locationType()" [withAll]=false (changed)="onChange('locationType', $event)" />
+          <bk-cat-select [category]="types()!" selectedItemName="locationType()" [readOnly]="readOnly()" [withAll]=false (changed)="onChange('locationType', $event)" />
         </ion-col>
         <ion-col size="12" size-md="6">
-          <bk-text-input name="latitude" [value]="latitude()" [mask]="latitudeMask" (changed)="onChange('latitude', $event)" />                                        
+          <bk-text-input name="latitude" [value]="latitude()" [mask]="latitudeMask" [readOnly]="readOnly()" (changed)="onChange('latitude', $event)" />                                        
         </ion-col>
         <ion-col size="12" size-md="6">
-          <bk-text-input name="longitude" [value]="longitude()" [mask]="longitudeMask" (changed)="onChange('longitude', $event)" />                                        
+          <bk-text-input name="longitude" [value]="longitude()" [mask]="longitudeMask" [readOnly]="readOnly()" (changed)="onChange('longitude', $event)" />                                        
         </ion-col>
         <ion-col size="12" size-md="6">
-          <bk-text-input name="placeId" [value]="placeId()" [copyable]="true" [mask]="caseInsensitiveWordMask" [showHelper]=true (changed)="onChange('placeId', $event)" />                                        
+          <bk-text-input name="placeId" [value]="placeId()" [copyable]="true" [mask]="caseInsensitiveWordMask" [readOnly]="readOnly()" [showHelper]=true (changed)="onChange('placeId', $event)" />                                        
         </ion-col>
         <ion-col size="12" size-md="6">
-        <bk-text-input name="what3words" [value]="what3words()" [copyable]="true" [mask]="what3wordMask" [showHelper]=true (changed)="onChange('what3words', $event)" />                                        
+        <bk-text-input name="what3words" [value]="what3words()" [copyable]="true" [mask]="what3wordMask" [readOnly]="readOnly()" [showHelper]=true (changed)="onChange('what3words', $event)" />                                        
         </ion-col>
         <ion-col size="12" size-md="6">
-          <bk-number-input name="seaLevel" [value]="seaLevel()" [maxLength]=4 [showHelper]=true (changed)="onChange('seaLevel', $event)" />                                        
+          <bk-number-input name="seaLevel" [value]="seaLevel()" [maxLength]=4 [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('seaLevel', $event)" />                                        
         </ion-col>
         <ion-col size="12" size-md="6">
-          <bk-number-input name="speed" [value]="speed()" [maxLength]=5 [showHelper]=true (changed)="onChange('speed', $event)" />                                        
+          <bk-number-input name="speed" [value]="speed()" [maxLength]=5 [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('speed', $event)" />                                        
         </ion-col>
         <ion-col size="12" size-md="6">
-          <bk-number-input name="direction" [value]="direction()" [maxLength]=4 [showHelper]=true (changed)="onChange('direction', $event)" />                                        
+          <bk-number-input name="direction" [value]="direction()" [maxLength]=4 [readOnly]="readOnly()" [showHelper]=true (changed)="onChange('direction', $event)" />                                        
         </ion-col>
       </ion-row>
 
@@ -67,7 +67,7 @@ import { LocationFormModel, locationFormModelShape, locationFormValidations } fr
       @if(hasRole('privileged')) {
         <ion-row> 
           <ion-col>
-            <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" (changed)="onChange('tags', $event)" />
+            <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
           </ion-col>
         </ion-row>
       }
@@ -75,7 +75,7 @@ import { LocationFormModel, locationFormModelShape, locationFormValidations } fr
       @if(hasRole('admin')) {
         <ion-row> 
           <ion-col>
-            <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
+            <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
           </ion-col>
         </ion-row>    
       }
@@ -89,6 +89,7 @@ export class LocationFormComponent {
   public currentUser = input<UserModel | undefined>();
   public types = input.required<CategoryListModel>();
   public allTags = input.required<string>();
+  public readonly readOnly = input(true);
 
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);

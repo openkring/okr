@@ -36,10 +36,10 @@ import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormVa
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="useTouchId" [isChecked]="useTouchId()" [showHelper]="true" (changed)="onChange('useTouchId', $event)" />
+                <bk-checkbox name="useTouchId" [isChecked]="useTouchId()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('useTouchId', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="useFaceId" [isChecked]="useFaceId()" [showHelper]="true" (changed)="onChange('useFaceId', $event)" />
+                <bk-checkbox name="useFaceId" [isChecked]="useFaceId()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('useFaceId', $event)" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -47,7 +47,7 @@ import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormVa
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoleNames()" (changed)="onChange('roles', $event)" />
+      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoleNames()" [readOnly]="readOnly()" (changed)="onChange('roles', $event)" />
     </form>
   `
 })
@@ -55,6 +55,7 @@ export class UserAuthFormComponent {
   public vm = model.required<UserAuthFormModel>();
   public currentUser = input<UserModel | undefined>();
   public allRoles = input.required<CategoryListModel>();
+  public readOnly = input.required<boolean>();
 
   protected useTouchId = computed(() => this.vm().useTouchId ?? false);
   protected useFaceId = computed(() => this.vm().useFaceId ?? false);

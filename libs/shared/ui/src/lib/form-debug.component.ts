@@ -1,9 +1,10 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { IonButton, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { Suite } from 'vest';
 
 import { BkFormModel } from '@bk2/shared-models';
 import { PrettyjsonPipe } from '@bk2/shared-pipes';
+import { coerceBoolean } from 'libs/shared/util-core/src/lib/type.util';
 
 @Component({
   selector: 'bk-form-debug',
@@ -14,7 +15,7 @@ import { PrettyjsonPipe } from '@bk2/shared-pipes';
   ],
   template: `
     <ion-grid>
-      @if(showDebugInfo()) {
+      @if(shouldShowDebugInfo()) {
       <ion-row>
         <ion-col>
           <small>formValue on form level:</small>
@@ -22,11 +23,11 @@ import { PrettyjsonPipe } from '@bk2/shared-pipes';
       </ion-row>      
       <ion-row>
         <ion-col><small>valid:</small></ion-col>
-        <ion-col><small>{{ formValid() }}</small></ion-col>
+        <ion-col><small>{{ isFormValid() }}</small></ion-col>
       </ion-row>
       <ion-row>
         <ion-col><small>dirty:</small></ion-col>
-        <ion-col><small>{{ formDirty() }}</small></ion-col>
+        <ion-col><small>{{ isFormDirty() }}</small></ion-col>
       </ion-row>
       <ion-row>
         <ion-col>
@@ -44,9 +45,12 @@ import { PrettyjsonPipe } from '@bk2/shared-pipes';
 })
 export class FormDebugComponent {
   public formValid = input(false);
+  protected isFormValid = computed(() => coerceBoolean(this.formValid()));
   public formDirty = input(false);
+  protected isFormDirty = computed(() => coerceBoolean(this.formDirty()));
   public formValue = input<BkFormModel>({});
   public showDebugInfo = input(false);
+  protected shouldShowDebugInfo = computed(() => coerceBoolean(this.showDebugInfo()));
   public suite = input<Suite<string, string>>();
 
   protected validate(): void {

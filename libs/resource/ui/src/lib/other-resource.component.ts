@@ -2,9 +2,7 @@ import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 
-import { RoleName, UserModel } from '@bk2/shared-models';
 import { ColorComponent, ErrorNoteComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
 
 import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
 
@@ -51,24 +49,18 @@ import { ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
 })
 export class OtherResourceComponent {
   public vm = model.required<ResourceFormModel>();
-  public currentUser = input.required<UserModel | undefined>();
+  public readOnly = input(true);
 
-  public readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+  protected name = linkedSignal(() => this.vm()?.name ?? '');
+  protected load = linkedSignal(() => this.vm().load ?? '');
+  protected currentValue = linkedSignal(() => this.vm()?.currentValue ?? 0);
+  protected hexColor = linkedSignal(() => this.vm()?.hexColor ?? '');
   
   private readonly validationResult = computed(() => resourceFormValidations(this.vm()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected loadErrors = computed(() => this.validationResult().getErrors('load'));
   protected currentValueErrors = computed(() => this.validationResult().getErrors('currentValue'));
   protected hexColorErrors = computed(() => this.validationResult().getErrors('hexColor'));
-
-  protected name = linkedSignal(() => this.vm()?.name ?? '');
-  protected load = linkedSignal(() => this.vm().load ?? '');
-  protected currentValue = linkedSignal(() => this.vm()?.currentValue ?? 0);
-  protected hexColor = linkedSignal(() => this.vm()?.hexColor ?? '');
-
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
-  }
 }
 
 

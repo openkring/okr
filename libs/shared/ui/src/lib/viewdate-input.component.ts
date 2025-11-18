@@ -9,7 +9,7 @@ import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 import { ChAnyDate } from '@bk2/shared-config';
 import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
+import { coerceBoolean, DateFormat, getTodayStr } from '@bk2/shared-util-core';
 
 /**
  * This ui component enables to input a date in ViewDate format (dd.MM.yyyy) in a text input field.
@@ -26,7 +26,6 @@ import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
   ],
   styles: [`ion-item.helper { --min-height: 0; }`],
   template: `
-  <ion-item lines="none">
     <ion-input (ionChange)="onChange($event)"
       type="text"
       name="{{ name() }}"
@@ -37,13 +36,12 @@ import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
       [inputMode]="inputMode()"
       [maxlength]="maxLength()"
       [autocomplete]="autocomplete()"
-      [clearInput]="clearInput()"
-      [readonly]="readOnly()"
+      [clearInput]="shouldClearInput()"
+      [readonly]="isReadOnly()"
       [maskito]="mask()"
       [maskitoElement]="maskPredicate"
     />
-  </ion-item>
-  @if(showHelper()) {
+  @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
       <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
     </ion-item>
@@ -56,13 +54,16 @@ export class ViewDateInputComponent {
   // optional date in ViewDate format (dd.MM.yyyy); default is today
   public viewDate = model(getTodayStr(DateFormat.ViewDate)); 
   public name = input.required<string>(); // mandatory name of the input field
-  public readOnly = input(false); // if true, the input field is read-only
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public inputMode = input<InputMode>('numeric'); // A hint to the browser for which keyboard to display.
   public maxLength = input(DATE_LENGTH);
   public clearInput = input(true); // show an icon to clear the input field
+  protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   public autocomplete = input('off'); // can be set to bday for birth date
   public mask = input<MaskitoOptions>(ChAnyDate);
   public showHelper = input(false);
+  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
 
   public changed = output<string>();  // emits the new value when the input field changes in ViewDate format
   // we need to explicitely notify the change, so that it can be converted in the parent components into StoreDate format

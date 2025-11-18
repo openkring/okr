@@ -37,28 +37,28 @@ import { UserDisplayFormModel, userDisplayFormModelShape, userDisplayFormValidat
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="avatarUsage" [value]="avatarUsage()" [categories]="avatarUsages" (changed)="onChange('avatarUsage', $event)" [readOnly]="false" />
+                <bk-cat name="avatarUsage" [value]="avatarUsage()" [categories]="avatarUsages" (changed)="onChange('avatarUsage', $event)" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="personSortCriteria" [value]="personSortCriteria()" [categories]="personSortCriterias" (changed)="onChange('personSortCriteria', $event)" [readOnly]="false" />
+                <bk-cat name="personSortCriteria" [value]="personSortCriteria()" [categories]="personSortCriterias"  [readOnly]="readOnly()" (changed)="onChange('personSortCriteria', $event)" [readOnly]="false" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="userLanguage" [value]="userLanguage()" [categories]="languages" (changed)="onChange('userLanguage', $event)" [readOnly]="false" />
+                <bk-cat name="userLanguage" [value]="userLanguage()" [categories]="languages" (changed)="onChange('userLanguage', $event)"  [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="nameDisplay" [value]="nameDisplay()" [categories]="nameDisplays" (changed)="onChange('nameDisplay', $event)" [readOnly]="false" />
+                <bk-cat name="nameDisplay" [value]="nameDisplay()" [categories]="nameDisplays" (changed)="onChange('nameDisplay', $event)"  [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="useDisplayName" [isChecked]="useDisplayName()" [showHelper]="showHelpers()" (changed)="onChange('useDisplayName', $event)" />
+                <bk-checkbox name="useDisplayName" [isChecked]="useDisplayName()" [showHelper]="showHelpers()"  [readOnly]="readOnly()" (changed)="onChange('useDisplayName', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showArchivedData" [isChecked]="showArchivedData()" [showHelper]="showHelpers()" (changed)="onChange('showArchivedData', $event)" />
+                <bk-checkbox name="showArchivedData" [isChecked]="showArchivedData()" [showHelper]="showHelpers()"  [readOnly]="readOnly()" (changed)="onChange('showArchivedData', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showDebugInfo" [isChecked]="showDebugInfo()" [showHelper]="showHelpers()" (changed)="onChange('showDebugInfo', $event)" />
+                <bk-checkbox name="showDebugInfo" [isChecked]="showDebugInfo()" [showHelper]="showHelpers()"  [readOnly]="readOnly()" (changed)="onChange('showDebugInfo', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showHelpers" [isChecked]="showHelpers()" [showHelper]="showHelpers()" (changed)="onChange('showHelpers', $event)" />
+                <bk-checkbox name="showHelpers" [isChecked]="showHelpers()" [showHelper]="showHelpers()"  [readOnly]="readOnly()" (changed)="onChange('showHelpers', $event)" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -70,7 +70,8 @@ import { UserDisplayFormModel, userDisplayFormModelShape, userDisplayFormValidat
 export class UserDisplayFormComponent {
   public vm = model.required<UserDisplayFormModel>();
   public currentUser = input<UserModel | undefined>();
-  
+  public readOnly = input.required<boolean>();
+
   protected avatarUsage = computed(() => this.vm().avatarUsage);
   protected personSortCriteria = computed(() => this.vm().personSortCriteria);
   protected userLanguage = computed(() => this.vm().userLanguage);

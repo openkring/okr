@@ -3,9 +3,8 @@ import { Component, effect, inject, input } from '@angular/core';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
+import { debugMessage, replaceSubstring } from '@bk2/shared-util-core';
 
 import { SectionComponent } from '@bk2/cms-section-feature';
 import { PageDetailStore } from './page-detail.store';
@@ -29,7 +28,7 @@ import { PageDetailStore } from './page-detail.store';
         <ion-item lines="none">
           <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPage' | translate | async }}</ion-label>
         </ion-item>
-        @if(hasRole('contentAdmin')) {
+        @if(!readOnly()) {
           <ion-item lines="none">
             <ion-button (click)="pageStore.addSection()">
               <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" />
@@ -41,7 +40,7 @@ import { PageDetailStore } from './page-detail.store';
         <ion-list>
           @for(section of pageStore.sections(); track $index) {
             <ion-item lines="none">
-              <bk-section id="{{ section }}" />
+              <bk-section id="{{ section }}" [readOnly]="readOnly()" />
             </ion-item>
           }
         </ion-list>
@@ -53,6 +52,7 @@ export class ContentComponent {
   protected pageStore = inject(PageDetailStore);
 
   public id = input.required<string>();     // pageId (can contain @TID@ placeholder)
+  public readOnly = input(true);
 
   protected tenantId = this.pageStore.appStore.env.tenantId;
 
@@ -62,9 +62,5 @@ export class ContentComponent {
       debugMessage(`ContentComponent: pageId=${this.id()} -> ${_id}`, this.pageStore.currentUser());
       this.pageStore.setPageId(_id);
     });
-  }
-
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.pageStore.currentUser());
   }
 }

@@ -31,7 +31,7 @@ import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
                   </ion-col>
                   @if(content(); as content) {
                     <ion-col size="12" [sizeMd]="colSizeText()">
-                      <bk-editor [content]="content" [readOnly]="true" />
+                      <bk-editor [content]="content" [readOnly]="isReadOnly()" />
                     </ion-col>
                   }
                 </ion-row>
@@ -42,7 +42,7 @@ import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
                 <ion-row>
                   @if(content(); as content) {
                     <ion-col size="12" [sizeMd]="colSizeText()">
-                      <bk-editor [content]="content" [readOnly]="true" />
+                      <bk-editor [content]="content" [readOnly]="isReadOnly()" />
                     </ion-col>
                   }
                   <ion-col size="12" [sizeMd]="colSizeImage()">
@@ -54,12 +54,12 @@ import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
             @case(VP.Top) {
               <bk-persons-widget [section]="section" />
               @if(content(); as content) {
-                <bk-editor [content]="content" [readOnly]="true" />
+                <bk-editor [content]="content" [readOnly]="isReadOnly()" />
               }
             }
             @case(VP.Bottom) {
               @if(content(); as content) {
-                <bk-editor [content]="content" [readOnly]="true" />
+                <bk-editor [content]="content" [readOnly]="isReadOnly()" />
               }
               <bk-persons-widget [section]="section" />
             }
@@ -76,7 +76,8 @@ import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
 })
 export class PeopleListSectionComponent {
   public section = input<SectionModel>();
-  public readOnly = input(false);
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => this.readOnly());
   public contentChange = output<string>();
 
   protected content = computed(() => this.section()?.properties?.content?.htmlContent ?? '<p></p>');

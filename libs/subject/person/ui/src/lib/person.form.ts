@@ -1,12 +1,12 @@
-import { Component, computed, effect, input, model, output, signal } from '@angular/core';
+import { Component, computed, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
-import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, PrivacyAccessor, PrivacySettings, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, isVisibleToUser } from '@bk2/shared-util-core';
 import { PersonFormModel, personFormModelShape, personFormValidations } from '@bk2/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
@@ -17,8 +17,11 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, 
     vestForms,
     FormsModule,
     TextInputComponent, DateInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
-    IonGrid, IonRow, IonCol, IonCard, IonCardTitle, IonCardHeader, IonCardContent
-  ],  
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent
+  ],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+  `],
   template: `
     <form scVestForm
     [formShape]="shape"
@@ -27,18 +30,15 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, 
     (dirtyChange)="dirtyChange.set($event)"
     (formValueChange)="onValueChange($event)">
       <ion-card>
-        <ion-card-header>
-          <ion-card-title>Angaben zur Person</ion-card-title>
-        </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
               <ion-row> 
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="firstName" [value]="firstName()" autocomplete="given-name" [autofocus]="true" [maxLength]=30 [readOnly]="readOnly()" (changed)="onChange('firstName', $event)" />                                        
+                  <bk-text-input name="firstName" [value]="firstName()" autocomplete="given-name" [autofocus]="true" [maxLength]=30 [readOnly]="isReadOnly()" (changed)="onChange('firstName', $event)" />                                        
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="lastName" [value]="lastName()" autocomplete="family-name" [maxLength]=30 [readOnly]="readOnly()" (changed)="onChange('lastName', $event)" />                                        
+                  <bk-text-input name="lastName" [value]="lastName()" autocomplete="family-name" [maxLength]=30 [readOnly]="isReadOnly()" (changed)="onChange('lastName', $event)" />                                        
                 </ion-col>
               </ion-row>
 
@@ -48,13 +48,13 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, 
                   <ion-row>
                     @if(isVisibleToUser(priv().showDateOfBirth)) {
                       <ion-col size="12" size-md="6"> 
-                        <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" autocomplete="bday" [showHelper]=false [readOnly]="readOnly()" (changed)="onChange('dateOfBirth', $event)" />
+                        <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" autocomplete="bday" [showHelper]=false [showDateSelect]="true" [readOnly]="isReadOnly()" (changed)="onChange('dateOfBirth', $event)" />
                       </ion-col>
                     }
 
-                    @if(isVisibleToUser(priv().showDateOfDeath)) {
+                    @if(isDeathDateVisible()) {
                       <ion-col size="12" size-md="6">
-                        <bk-date-input name="dateOfDeath"  [storeDate]="dateOfDeath()" [readOnly]="readOnly()" (changed)="onChange('dateOfDeath', $event)" />
+                        <bk-date-input name="dateOfDeath"  [storeDate]="dateOfDeath()" [readOnly]="isReadOnly()" (changed)="onChange('dateOfDeath', $event)" />
                       </ion-col>
                     }
                   </ion-row>
@@ -63,18 +63,18 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, 
               <ion-row>
                 @if(isVisibleToUser(priv().showGender)) {
                   <ion-col size="12" size-md="6">
-                    <bk-cat-select [category]="genders()!" [selectedItemName]="gender()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('gender', $event)" />
+                    <bk-cat-select [category]="genders()!" [selectedItemName]="gender()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onChange('gender', $event)" />
                   </ion-col>
                 }
         
                 @if(isVisibleToUser(priv().showTaxId)) {
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="ssnId" [value]="ssnId()" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="readOnly()" (changed)="onChange('ssnId', $event)" />                                        
+                    <bk-text-input name="ssnId" [value]="ssnId()" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="isReadOnly()" (changed)="onChange('ssnId', $event)" />                                        
                   </ion-col>
                 }
                 @if(isVisibleToUser(priv().showBexioId)) {
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('bexioId', $event)" />                                        
+                    <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onChange('bexioId', $event)" />                                        
                   </ion-col>
                 }
               </ion-row>
@@ -82,12 +82,12 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, 
           </ion-card-content>
         </ion-card>
 
-        @if(isVisibleToUser(priv().showTags)) {
-          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+        @if(isTagsVisible()) {
+          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onChange('tags', $event)" />
         }
         
-        @if(isVisibleToUser(priv().showNotes)) {
-          <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
+        @if(isNotesVisible()) {
+          <bk-notes [value]="notes()" [readOnly]="isReadOnly()" (changed)="onChange('notes', $event)" />
         }
       </form>
   `
@@ -98,11 +98,12 @@ export class PersonFormComponent {
   public allTags = input.required<string>();
   public priv = input.required<PrivacySettings>();
   public genders = input.required<CategoryListModel>();
+  public readonly readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   
   public validChange = output<boolean>();
   protected dirtyChange = signal(false);
 
-  public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   protected firstName = computed(() => this.vm().firstName ?? DEFAULT_NAME);
   protected lastName = computed(() => this.vm().lastName ?? DEFAULT_NAME);
   protected dateOfBirth = computed(() => this.vm().dateOfBirth ?? DEFAULT_DATE);
@@ -133,11 +134,23 @@ export class PersonFormComponent {
     this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
-  }
-
   protected isVisibleToUser(privacyAccessor: PrivacyAccessor): boolean {
     return isVisibleToUser(privacyAccessor, this.currentUser());
+  }
+
+  protected isDeathDateVisible(): boolean {
+    if (!this.isReadOnly()) return true;
+    if (!isVisibleToUser(this.priv().showDateOfDeath, this.currentUser())) return false;
+    return this.dateOfDeath().length > 0 ? true : false;
+  }
+  protected isTagsVisible(): boolean {
+    if (!this.isReadOnly()) return true;
+    if (!isVisibleToUser(this.priv().showTags, this.currentUser())) return false;
+    return (this.tags() && this.tags().length > 0) ? true : false;
+  }
+    protected isNotesVisible(): boolean {
+    if (!this.isReadOnly()) return true;
+    if (!isVisibleToUser(this.priv().showNotes, this.currentUser())) return false;
+    return (this.notes() && this.notes().length > 0) ? true : false;
   }
 }

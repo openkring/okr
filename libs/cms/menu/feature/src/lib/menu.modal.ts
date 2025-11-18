@@ -5,9 +5,8 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { ENV } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { MenuItemModel, RoleName, UserModel } from '@bk2/shared-models';
+import { MenuItemModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
 import { convertFormToMenuItem, convertMenuItemToForm, getMenuItemTitle } from '@bk2/cms-menu-util';
@@ -31,6 +30,7 @@ import { convertFormToMenuItem, convertMenuItemToForm, getMenuItemTitle } from '
         [currentUser]="currentUser()"
         [roles]="roles()"
         [type]="types()"
+        [readOnly]="readOnly()"
         [allTags]="allTags()"
         (validChange)="formIsValid.set($event)"
       />
@@ -43,9 +43,10 @@ export class MenuItemModalComponent {
   private readonly appStore = inject(AppStore);
 
   public menuItem = input.required<MenuItemModel>();
-  public currentUser = input.required<UserModel>();
-  
+  public readonly readOnly = input(true);
   protected vm = linkedSignal(() => convertMenuItemToForm(this.menuItem()));
+
+  protected currentUser = computed(() => this.appStore.currentUser());
   protected title = computed(() => getMenuItemTitle(this.menuItem().bkey));
   protected allTags = computed(() => this.appStore.getTags('menuitem'));
   protected roles = computed(() => this.appStore.getCategory('roles'));
@@ -55,10 +56,6 @@ export class MenuItemModalComponent {
 
   public save(): Promise<boolean> {
     return this.modalController.dismiss(convertFormToMenuItem(this.menuItem(), this.vm(), this.env.tenantId), 'confirm');
-  }
-
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
   }
 }
 

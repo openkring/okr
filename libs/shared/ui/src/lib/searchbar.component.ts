@@ -1,4 +1,5 @@
-import { Component, OnInit, input, viewChild } from '@angular/core';
+import { Component, OnInit, computed, input, viewChild } from '@angular/core';
+import { coerceBoolean } from '@bk2/shared-util-core';
 import { IonSearchbar } from '@ionic/angular/standalone';
 
 @Component({
@@ -11,7 +12,7 @@ import { IonSearchbar } from '@ionic/angular/standalone';
       <ion-searchbar  #bksearch
           type="search" 
           inputmode="search"
-          [disabled]="disabled()"
+          [disabled]="isDisabled()"
           [debounce]="debounce()"
           [placeholder]="placeholder()"
           [value]="searchTerm()">
@@ -22,6 +23,7 @@ export class SearchbarComponent implements OnInit {
   public searchTerm = input('');
   public placeholder = input('');
   public disabled = input(false);
+  protected isDisabled = computed(() => coerceBoolean(this.disabled()));
   public debounce = input(500);
   protected bkSearch = viewChild<IonSearchbar>('bksearch');
 

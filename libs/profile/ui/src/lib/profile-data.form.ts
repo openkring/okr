@@ -55,7 +55,7 @@ import { DEFAULT_GENDER } from "@bk2/shared-constants";
               <bk-cat-select [category]="genders()!" selectedItemName="gender()" [readOnly]=true />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-text-input name="ssnId" [value]="ssnId()" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true (changed)="onChange('ssnId', $event)" />
+              <bk-text-input name="ssnId" [value]="ssnId()" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="readOnly()" (changed)="onChange('ssnId', $event)" />
               <bk-error-note [errors]="ssnIdErrors()" />                                                  
             </ion-col>
           </ion-row>
@@ -71,6 +71,7 @@ export class ProfileDataAccordionComponent {
   public readonly title = input('@profile.data.title'); // title of the accordion
   public readonly currentUser = input<UserModel | undefined>();
   public readonly genders = input.required<CategoryListModel>();
+  public readonly readOnly = input(true);
 
   protected dateOfBirth = computed(() => this.vm().dateOfBirth ?? '');
   protected gender = computed(() => this.vm().gender ?? DEFAULT_GENDER);

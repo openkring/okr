@@ -57,6 +57,8 @@ export const MenuItemListStore = signalStore(
 
   withMethods((store) => {
     return {
+  
+      /******************************** setters (filter) ******************************************* */
       setSearchTerm(searchTerm: string) {
         patchState(store, { searchTerm });
       },
@@ -65,27 +67,33 @@ export const MenuItemListStore = signalStore(
         patchState(store, { selectedCategory });
       },
 
-      async delete(menuItem: MenuItemModel): Promise<void> {
-        await store.menuItemService.delete(menuItem);
-        store.menuItemsResource.reload();
+      /******************************* actions *************************************** */
+      async delete(menuItem?: MenuItemModel, readOnly = true): Promise<void> {
+        if (!readOnly && menuItem) {
+          await store.menuItemService.delete(menuItem);
+          store.menuItemsResource.reload();
+        }
       },
       
-      async edit(menuItem?: MenuItemModel): Promise<void> {
-        // we need to clone the menuItem to avoid changing the original object (NG0100: ExpressionChangeAfterItHasBeenCheckedError)
-        const _menuItem = structuredClone(menuItem) ?? new MenuItemModel(store.env.tenantId);
-        const _modal = await store.modalController.create({
-          component: MenuItemModalComponent,
-          componentProps: {
-            menuItem: _menuItem,
-            currentUser: store.currentUser()
-          }
-        });
-        _modal.present();
-        const { data, role } = await _modal.onWillDismiss();
-        if (role === 'confirm') {
-          if (isMenuItem(data, store.env.tenantId)) {
-            await ((!menuItem) ? store.menuItemService.create(data, store.currentUser()) : store.menuItemService.update(data));
-            store.menuItemsResource.reload();
+      async edit(menuItem?: MenuItemModel, readOnly = true): Promise<void> {
+        if (!readOnly) {
+          // we need to clone the menuItem to avoid changing the original object (NG0100: ExpressionChangeAfterItHasBeenCheckedError)
+          const _menuItem = structuredClone(menuItem) ?? new MenuItemModel(store.env.tenantId);
+          const modal = await store.modalController.create({
+            component: MenuItemModalComponent,
+            componentProps: {
+              menuItem: _menuItem,
+              currentUser: store.currentUser(),
+              readOnly
+            }
+          });
+          modal.present();
+          const { data, role } = await modal.onWillDismiss();
+          if (role === 'confirm') {
+            if (isMenuItem(data, store.env.tenantId)) {
+              await ((!menuItem) ? store.menuItemService.create(data, store.currentUser()) : store.menuItemService.update(data));
+              store.menuItemsResource.reload();
+            }
           }
         }
       }

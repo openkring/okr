@@ -30,8 +30,8 @@ import { ActionSheetController } from '@ionic/angular';
         <ion-buttons slot="start"><ion-menu-button></ion-menu-button></ion-buttons>
         <ion-title>{{ selectedMenuItemsCount() }}/{{ menuItemsCount() }} {{'@content.menuItem.plural' | translate | async }}</ion-title>
         <ion-buttons slot="end">
-          @if(hasRole('privileged') || hasRole('contentAdmin')) {
-            <ion-button (click)="edit()">
+          @if(hasRole('privileged') || !readOnly()) {
+            <ion-button (click)="add()">
               <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
             </ion-button>
           }
@@ -53,7 +53,7 @@ import { ActionSheetController } from '@ionic/angular';
               <bk-searchbar placeholder="{{ '@general.operation.search.placeholder' | translate | async }}" (ionInput)="onSearchtermChange($event)" />
             </ion-col>
             <ion-col size="6">
-              <bk-cat-select [category]="menuActions()!" selectedItemName="all" [withAll]="true" (changed)="onCategoryChange($event)" />
+              <bk-cat-select [category]="menuActions()!" selectedItemName="all" [withAll]="true" [readOnly]="readOnly()" (changed)="onCategoryChange($event)" />
           </ion-col>
           </ion-row>
         </ion-grid>
@@ -116,6 +116,7 @@ export class MenuListComponent {
   protected selectedMenuItemsCount = computed(() => this.filteredMenuItems().length);
   protected isLoading = computed(() => this.menuItemListStore.isLoading());
   protected menuActions = computed(() => this.menuItemListStore.appStore.getCategory('menu_action'));
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.menuItemListStore.currentUser()));
 
   private imgixBaseUrl = this.menuStore.appStore.env.services.imgixBaseUrl;
 
@@ -162,23 +163,17 @@ export class MenuListComponent {
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
         case 'delete':
-          await this.delete(menuItem);
+          await this.menuItemListStore.delete(menuItem, this.readOnly());
           break;
         case 'edit':
-          await this.edit(menuItem);
+          await this.menuItemListStore.edit(menuItem, this.readOnly());
           break;
       }
     }
   }
 
-  protected async edit(menuItem?: MenuItemModel): Promise<void> {
-    await this.menuItemListStore.edit(menuItem);
-    this.menuStore.reload();
-  }
-
-  protected async delete(menuItem: MenuItemModel): Promise<void> {
-    await this.menuItemListStore.delete(menuItem);
-    this.menuStore.reload();
+  protected async add(): Promise<void> {
+    await this.menuItemListStore.edit(undefined, this.readOnly());
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

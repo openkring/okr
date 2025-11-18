@@ -41,7 +41,7 @@ import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from '
       <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
         @if(content(); as content) {
-          <bk-editor [content]="content" [readOnly]="true" />
+          <bk-editor [content]="content" [readOnly]="isReadOnly()" />
         }
         @if(echartsOption(); as echartsOption) {
           <div echarts [options]="echartsOption" class="chart"></div>
@@ -55,6 +55,9 @@ import { EditorComponent, OptionalCardHeaderComponent, SpinnerComponent } from '
 })
 export class ChartSectionComponent {
   public section = input<SectionModel>();
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => this.readOnly());
+
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);  
   protected content = computed(() => this.section()?.properties?.content?.htmlContent ?? '<p></p>');

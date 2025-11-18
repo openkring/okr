@@ -94,23 +94,22 @@ export const GroupListStore = signalStore(
     },
 
     /**
-     * Fetches the avatar URL for the author, assignee, and scope of the group.
-     * @returns an object containing the URLs and names of the author, assignee, and
+     * Adds a new group.
      */
-    async add(): Promise<void> {
+    async add(readOnly = true): Promise<void> {
       const _modal = await store.modalController.create({
         component: GroupNewModalComponent,
         componentProps: {
-          currentUser: store.currentUser()
+          currentUser: store.currentUser(),
+          readOnly
         }
       });
       _modal.present();
       const { data, role } = await _modal.onDidDismiss();
       if (role === 'confirm') {
         const vm = data as GroupNewFormModel;
-        const key = 'group.' + await this.saveGroup(vm);
-        // tbd: save avatar image if provided
-        console.log(`GroupListStore.add: new group created with key ${key}`);
+        await this.saveGroup(vm);
+        // tbd: save avatar image if provided: const key = 'group.' + await this.saveGroup(vm)
       }
       store.groupsResource.reload();
     },
@@ -135,16 +134,16 @@ export const GroupListStore = signalStore(
      * @param group 
      * @returns 
      */
-    async edit(group?: GroupModel): Promise<void> {
+    async edit(group?: GroupModel, readOnly = true): Promise<void> {
       if (!group?.bkey || group.bkey.length === 0) return;
       store.appNavigationService.pushLink('/group/all/c-test-groups');
-      await navigateByUrl(store.router, `/group/${group.bkey}`);
+      await navigateByUrl(store.router, `/group/${group.bkey}`, { readOnly });
     },
 
-    async view(group?: GroupModel): Promise<void> {
+    async view(group?: GroupModel, readOnly = true): Promise<void> {
       if (!group?.bkey || group.bkey.length === 0) return;
       store.appNavigationService.pushLink('/group/all/c-test-groups');
-      await navigateByUrl(store.router, `/group-view/${group.bkey}`);
+      await navigateByUrl(store.router, `/group-view/${group.bkey}`, { readOnly });
     },
 
     async delete(group?: GroupModel): Promise<void> {

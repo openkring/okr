@@ -76,16 +76,18 @@ export const OwnershipAccordionStore = signalStore(
         console.log('OwnershipsAccordionStore.export() is not yet implemented.');
       },
 
-      async add(owner: PersonModel | OrgModel, ownerModelType: 'person' | 'org', defaultResource: ResourceModel): Promise<void> {
-        if (defaultResource.bkey.length > 0) {    // check if resource is valid
+      async add(owner: PersonModel | OrgModel, ownerModelType: 'person' | 'org', defaultResource: ResourceModel, readOnly = true): Promise<void> {
+        if (defaultResource.bkey.length > 0 && !readOnly) {    // check if resource is valid
           await store.ownershipModalsService.add(owner, ownerModelType, defaultResource);
           store.ownershipsResource.reload();
         }
       },
 
-      async edit(ownership?: OwnershipModel): Promise<void> {
-        await store.ownershipModalsService.edit(ownership);
-        store.ownershipsResource.reload();
+      async edit(ownership?: OwnershipModel, readOnly = true): Promise<void> {
+        if (!readOnly) {
+          await store.ownershipModalsService.edit(ownership);
+          store.ownershipsResource.reload();
+        }
       },
 
       /**
@@ -94,8 +96,8 @@ export const OwnershipAccordionStore = signalStore(
        * Therefore, we end an ownership by setting its validTo date.
        * @param ownership the Ownership to delete, its bkey needs to be valid so that we can find it in the database. 
        */
-      async end(ownership: OwnershipModel): Promise<void> {
-        if (ownership) {
+      async end(ownership: OwnershipModel, readOnly = true): Promise<void> {
+        if (ownership && !readOnly) {
           const _date = await selectDate(store.modalController);
           if (!_date) return;
           await store.ownershipService.endOwnershipByDate(ownership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
@@ -103,8 +105,8 @@ export const OwnershipAccordionStore = signalStore(
         }
       },  
 
-      async delete(ownership?: OwnershipModel): Promise<void> {
-        if (ownership) {
+      async delete(ownership?: OwnershipModel, readOnly = true): Promise<void> {
+        if (ownership && !readOnly) {
           const _result = await confirm(store.alertController, '@ownership.operation.delete.confirm', true);
           if (_result === true) {
             await store.ownershipService.delete(ownership);

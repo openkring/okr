@@ -53,14 +53,15 @@ export class MembershipModalsService {
    * Show a modal to edit an existing membership.
    * @param membership the membership to edit
    */
-  public async edit(membership?: MembershipModel): Promise<void> {
+  public async edit(membership?: MembershipModel, readOnly = true): Promise<void> {
     let _membership = membership;
     _membership ??= new MembershipModel(this.tenantId);
     const _modal = await this.modalController.create({
       component: MembershipEditModalComponent,
       componentProps: {
         membership: _membership,
-        currentUser: this.appStore.currentUser()
+        currentUser: this.appStore.currentUser(),
+        readOnly: readOnly
       }
     });
     _modal.present();

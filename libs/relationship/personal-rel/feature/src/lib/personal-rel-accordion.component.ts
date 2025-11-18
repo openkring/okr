@@ -9,7 +9,6 @@ import { EmptyListComponent } from '@bk2/shared-ui';
 import { hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { PersonalRelNamePipe } from '@bk2/relationship-personal-rel-util';
 import { PersonalRelAccordionStore } from './personal-rel-accordion.store';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
@@ -17,7 +16,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   selector: 'bk-personal-rel-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, PersonalRelNamePipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe,
     EmptyListComponent,
     IonAccordion, IonItem, IonLabel, IonIcon, IonList, IonButton,
     IonImg, IonGrid, IonRow, IonCol, IonAvatar
@@ -30,7 +29,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   <ion-accordion toggle-icon-slot="start" value="personalRels">
     <ion-item slot="header" [color]="color()">
       <ion-label>{{ title() | translate | async }}</ion-label>
-      @if(hasRole('memberAdmin')) {
+      @if(readOnly() === false) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
@@ -47,20 +46,20 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start" class="list-avatar">
-                      <ion-img src="{{ 'person.' + personalRel.subjectKey | avatar | async}}" alt="avatar of first person" />
+                      <ion-img src="{{ 'person.' + personalRel.subjectKey | avatar:'person' | async}}" alt="avatar of first person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
                   </ion-item>
                 </ion-col>
                 <ion-col size="6" size-md="4">
                   <ion-item lines="none">
-                    <ion-label>{{ personalRel.type | personalRelName:personalRel.label }}</ion-label>
+                    <ion-label>{{ personalRel.type }}</ion-label>
                   </ion-item>
                 </ion-col>
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start" class="list-avatar">
-                      <ion-img src="{{ 'person.' + personalRel.objectKey | avatar | async}}" alt="avatar of second person" />
+                      <ion-img src="{{ 'person.' + personalRel.objectKey | avatar:'person' | async}}" alt="avatar of second person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
                   </ion-item> 
@@ -81,6 +80,7 @@ export class PersonalRelAccordionComponent {
   public personKey = input.required<string>();
   public color = input('light');
   public title = input('@personalRel.plural');
+  public readOnly = input(true);
 
   protected personalRels = computed(() => this.personalRelStore.allPersonalRels());  // tbd: better define: a) all, b) open c) current year ...
   protected relsCount = computed(() => this.personalRels().length);
@@ -107,9 +107,11 @@ export class PersonalRelAccordionComponent {
    * @param personalRel 
    */
   protected async showActions(personalRel: PersonalRelModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, personalRel);
-    await this.executeActions(actionSheetOptions, personalRel);
+    if (this.readOnly() === false) {
+      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      this.addActionSheetButtons(actionSheetOptions, personalRel);
+      await this.executeActions(actionSheetOptions, personalRel);
+    }
   }
 
   /**
@@ -141,13 +143,13 @@ export class PersonalRelAccordionComponent {
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
         case 'delete':
-          await this.personalRelStore.delete(personalRel);
+          await this.personalRelStore.delete(personalRel, this.readOnly());
           break;
         case 'edit':
-          await this.personalRelStore.edit(personalRel);
+          await this.personalRelStore.edit(personalRel, this.readOnly());
           break;
         case 'endrel':
-          await this.personalRelStore.end(personalRel);
+          await this.personalRelStore.end(personalRel, this.readOnly());
           break;
       }
     }

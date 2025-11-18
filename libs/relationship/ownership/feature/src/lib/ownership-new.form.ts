@@ -39,7 +39,7 @@ import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, 
           <ion-col size="9">
             <ion-item lines="none">
               <ion-avatar slot="start">
-                <ion-img src="{{ ownerModelType() + '.' + ownerKey() | avatar | async }}" alt="Avatar of Owner" />
+                <ion-img src="{{ ownerModelType() + '.' + ownerKey() | avatar:'ownership' | async }}" alt="Avatar of Owner" />
               </ion-avatar>
               <ion-label>{{ ownerName() }}</ion-label>
             </ion-item>
@@ -74,7 +74,7 @@ import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, 
         </ion-row>
         <ion-row>
           <ion-col size="12"> 
-            <bk-date-input name="validFrom" [storeDate]="validFrom()" [locale]="locale()" [showHelper]=true (changed)="onChange('validFrom', $event)" />
+            <bk-date-input name="validFrom" [storeDate]="validFrom()" [locale]="locale()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('validFrom', $event)" />
           </ion-col>      
         </ion-row>
       </ion-grid>
@@ -87,6 +87,7 @@ export class OwnershipNewFormComponent {
 
   public vm = model.required<OwnershipNewFormModel>();
   public currentUser = input<UserModel | undefined>();
+  public readonly readOnly = input(true);
 
   protected ownerKey = computed(() => this.vm().ownerKey ?? '');
   protected ownerName = computed(() => getFullPersonName(this.vm().ownerName1 ?? '', this.vm().ownerName2 ?? ''));

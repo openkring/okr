@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, input, model, output } from '@angular/core';
+import { Component, computed, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
@@ -8,6 +8,7 @@ import { URL_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { ButtonCopyComponent } from './button-copy.component';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-image-url',
@@ -30,17 +31,17 @@ import { ButtonCopyComponent } from './button-copy.component';
         label="{{'@input.' + name() + '.label' | translate | async }}"
         placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
         inputmode="url"
-        [counter]="!readOnly()"
+        [counter]="!isReadOnly()"
         [maxlength]="maxLength()"
         autocomplete="url"
-        [clearInput]="clearInput()"
-        [readonly]="readOnly()" 
+        [clearInput]="shouldClearInput()"
+        [readonly]="isReadOnly()" 
       />
-      @if (copyable()) {
+      @if (isCopyable()) {
         <bk-button-copy [value]="value()" />
       }
     </ion-item>
-    @if(showHelper()) {
+    @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
       <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
     </ion-item>
@@ -50,11 +51,15 @@ import { ButtonCopyComponent } from './button-copy.component';
 export class ImageUrlComponent {
   public value = model.required<string>(); // mandatory view model
   public name = input('url'); // name of the input field
-  public readOnly = input(false); // if true, the input field is read-only
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public maxLength = input(URL_LENGTH); // max number of characters allowed
   public copyable = input(true); // if true, a button to copy the value of the input field is shown
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   public showHelper = input(false);
+  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public clearInput = input(true); // show an icon to clear the input field
+  protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   public changed = output<string>();
 
   public onChange(event: CustomEvent): void {

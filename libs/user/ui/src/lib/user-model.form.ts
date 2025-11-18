@@ -36,25 +36,25 @@ import { UserModelFormModel, userModelFormModelShape, userModelFormValidations }
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="bkey" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="bkey()" [readOnly]=true [copyable]=true />
+                <bk-text-input name="bkey" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="bkey()" [readOnly]="readOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="personKey" [value]="personKey()" [readOnly]=true [copyable]=true />
+                <bk-text-input name="personKey" [value]="personKey()" [readOnly]="readOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="firstName" [value]="firstName()" [copyable]=true (changed)="onChange('firstName', $event)" />
+                <bk-text-input name="firstName" [value]="firstName()" [copyable]=true [readOnly]="readOnly()" (changed)="onChange('firstName', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="lastName" [value]="lastName()" [copyable]=true (changed)="onChange('lastName', $event)" />
+                <bk-text-input name="lastName" [value]="lastName()" [copyable]=true [readOnly]="readOnly()" (changed)="onChange('lastName', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email name="loginEmail" [value]="loginEmail()" [readOnly]=true />
+                <bk-email name="loginEmail" [value]="loginEmail()" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email name="gravatarEmail" [value]="gravatarEmail()" (changed)="onChange('gravatarEmail', $event)"  />
+                <bk-email name="gravatarEmail" [value]="gravatarEmail()" [readOnly]="readOnly()" (changed)="onChange('gravatarEmail', $event)"  />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="tenants" [value]="tenants()" [readOnly]=true [copyable]=true />
+                <bk-text-input name="tenants" [value]="tenants()" [readOnly]="readOnly()" [copyable]=true />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -66,6 +66,7 @@ import { UserModelFormModel, userModelFormModelShape, userModelFormValidations }
 export class UserModelFormComponent {
   public vm = model.required<UserModelFormModel>();
   public currentUser = input<UserModel | undefined>();
+  public readOnly = input.required<boolean>();
 
   protected bkey = computed(() => this.vm().bkey);
   protected tenants = computed(() => {

@@ -28,7 +28,8 @@ import { PersonalRelModalsService } from './personal-rel-modals.service';
     <ion-content>
       <bk-personal-rel-new-form [(vm)]="vm" [currentUser]="currentUser()" 
       [types]="types()"
-      [allTags]="allTags()" 
+      [allTags]="allTags()"
+      [readOnly]="readOnly()"
       (selectPerson)="selectPerson($event)"
       (validChange)="formIsValid.set($event)" />
     </ion-content>
@@ -42,6 +43,7 @@ export class PersonalRelNewModalComponent {
   public subject = input.required<PersonModel>();
   public object = input.required<PersonModel>(); 
   public currentUser = input<UserModel | undefined>();
+  public readonly readOnly = input(true);
 
   public vm = linkedSignal(() => convertPersonsToNewForm(this.subject(), this.object(), this.currentUser()));
   protected allTags = computed(() => this.appStore.getTags('personalrel'));

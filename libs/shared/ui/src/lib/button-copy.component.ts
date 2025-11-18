@@ -1,10 +1,11 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonIcon, ToastController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-button-copy',
@@ -14,7 +15,7 @@ import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
     IonIcon, IonButton
   ],
   template: `
-  @if (label().length > 0) {
+  @if (label().length > 0 && !isReadOnly()) {
     <ion-button fill="clear" (click)="copyValue()">
       <ion-icon slot="start" src="{{'copy' | svgIcon }}" />
       {{ label() | translate | async }}
@@ -29,6 +30,8 @@ export class ButtonCopyComponent {
 
   public value = input.required<string | number | null | undefined>(); // data to copy
   public label = input(''); // optional label for the button
+  public readOnly = input(false);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   public copyValue(): void {
     const value = this.value();

@@ -23,7 +23,7 @@ import { TransferFormComponent } from './transfer.form';
     <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-transfer-form [(vm)]="vm" (validChange)="formIsValid.set($event)" />
+      <bk-transfer-form [(vm)]="vm" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
 
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
       <ion-accordion-group value="comments">
@@ -41,6 +41,8 @@ export class TransferEditModalComponent {
 
   public vm = linkedSignal(() => convertTransferToForm(this.transfer()));
   protected readonly transferKey = computed(() => this.transfer().bkey ?? '');
+  protected currentUser = computed(() => this.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected formIsValid = signal(false);
   protected transferCollection = TransferCollection;
@@ -50,6 +52,6 @@ export class TransferEditModalComponent {
   }
 
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.appStore.currentUser());
+    return hasRole(role, this.currentUser());
   }
 }

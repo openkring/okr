@@ -29,7 +29,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   <ion-accordion toggle-icon-slot="start" value="reservations">
     <ion-item slot="header" [color]="color()">
       <ion-label>{{ title() | translate | async }}</ion-label>
-      @if(hasRole('resourceAdmin')) {
+      @if(readOnly() === false) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
@@ -61,6 +61,7 @@ export class ReservationsAccordionComponent {
   
   public color = input('light');
   public title = input('@reservation.plural');
+  public readOnly = input(true);
 
   public reserver = input.required<PersonModel | OrgModel>();
   public reserverModelType = input<'person' | 'org'>('person');
@@ -127,13 +128,13 @@ export class ReservationsAccordionComponent {
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
         case 'delete':
-          await this.reservationsStore.delete(reservation);
+          await this.reservationsStore.delete(reservation, this.readOnly());
           break;
         case 'edit':
-          await this.reservationsStore.edit(reservation);
+          await this.reservationsStore.edit(reservation, this.readOnly());
           break;
         case 'endres':
-          await this.reservationsStore.end(reservation);
+          await this.reservationsStore.end(reservation, this.readOnly());
           break;
       }
     }

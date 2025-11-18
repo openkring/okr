@@ -53,11 +53,11 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME,
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="types()!" selectedItemName="type()" [withAll]="false" (changed)="onChange('type', $event)" />
+              <bk-cat-select [category]="types()!" selectedItemName="type()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('type', $event)" />
             </ion-col>
             @if(type() === 'custom') {
               <ion-col size="12" size-md="6">
-                  <bk-text-input name="label" [value]="label()" (changed)="onChange('label', $event)" />
+                  <bk-text-input name="label" [value]="label()" [readOnly]="readOnly()" (changed)="onChange('label', $event)" />
               </ion-col>
             }
           </ion-row>
@@ -103,7 +103,7 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME,
     }
 
     @if(hasRole('admin')) {
-      <bk-notes [value]="notes()" (changed)="onChange('notes', $event)" />
+      <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
     }
   </form>
   `
@@ -113,10 +113,10 @@ export class PersonalRelNewFormComponent {
   public currentUser = input<UserModel | undefined>();
   public types = input.required<CategoryListModel>();
   public allTags = input.required<string>();
+  public readOnly = input(true);
 
   public selectPerson = output<boolean>();
 
-  public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   protected subjectKey = computed(() => this.vm().subjectKey ?? DEFAULT_KEY);
   protected subjectFirstName = computed(() => this.vm().subjectFirstName ?? DEFAULT_NAME);
   protected subjectLastName = computed(() => this.vm().subjectLastName ?? DEFAULT_NAME);

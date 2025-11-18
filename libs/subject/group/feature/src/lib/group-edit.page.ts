@@ -7,7 +7,6 @@ import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupCollection, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
 
 import { AvatarService } from '@bk2/avatar-data-access';
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
@@ -37,9 +36,13 @@ import { GroupEditStore } from './group-edit.store';
       <bk-change-confirmation (okClicked)="save()" />
     }
     <ion-content>
-      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [isEditable]="hasRole('memberAdmin')" title="{{ title() }}"/>
+      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" title="{{ title() }}"/>
       @if(group(); as group) {
-        <bk-group-form [(vm)]="vm" [currentUser]="currentUser()" [groupTags]="groupTags()" (validChange)="formIsValid.set($event)" />
+        <bk-group-form [(vm)]="vm" 
+          [currentUser]="currentUser()"
+          [groupTags]="groupTags()"
+          [readOnly]="readOnly()"
+          (validChange)="formIsValid.set($event)" />
 
         <ion-accordion-group value="members" [multiple]="true">
           <bk-members-accordion [orgKey]="groupKey()" />
@@ -57,6 +60,7 @@ export class GroupEditPageComponent {
   private readonly env = inject(ENV);
 
   public groupKey = input.required<string>();
+  public readOnly = input(true);
 
   protected currentUser = computed(() => this.groupEditStore.currentUser());
   protected group = computed(() => this.groupEditStore.group());
@@ -93,9 +97,5 @@ export class GroupEditPageComponent {
     if (downloadUrl) {
       await this.avatarService.updateOrCreate(avatar);
     }
-  }
-
-  protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.currentUser());
   }
 }

@@ -6,6 +6,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonConten
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ButtonComponent, CategorySelectComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
 import { AocDataStore } from './aoc-data.store';
+import { hasRole } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-aoc-data',
@@ -58,7 +59,7 @@ import { AocDataStore } from './aoc-data.store';
             <ion-row>
               <ion-col>
                 <ion-item lines="none">
-                  <bk-cat-select [category]="types()!" selectedItemName="person" [withAll]="false" (changed)="onCategoryChange($event)" />
+                  <bk-cat-select [category]="types()!" selectedItemName="person" [withAll]="false" [readOnly]="readOnly()" (changed)="onCategoryChange($event)" />
                 </ion-item>
               </ion-col>
               <ion-col>
@@ -80,6 +81,7 @@ export class AocDataComponent {
   protected readonly logInfo = computed(() => this.aocDataStore.log());
   protected readonly isLoading = computed(() => this.aocDataStore.isLoading());
   protected readonly types = computed(() => this.aocDataStore.appStore.getCategory('model_type'));
+  protected readonly readOnly = computed(() => hasRole('admin', this.aocDataStore.currentUser()));
 
   protected onCategoryChange($event: string): void {
     this.aocDataStore.setModelType($event);
