@@ -174,18 +174,20 @@ export class PersonalRelListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
-      switch (data.action) {
-        case 'delete':
-          await this.personalRelListStore.delete(personalRel);
-          break;
-        case 'edit':
-          await this.personalRelListStore.edit(personalRel);
-          break;
-        case 'endrel':
-          await this.personalRelListStore.end(personalRel);
-          break;
+      if (data?.action) {
+        switch (data.action) {
+            case 'delete':
+              await this.personalRelListStore.delete(personalRel);
+              break;
+            case 'edit':
+              await this.personalRelListStore.edit(personalRel);
+              break;
+            case 'endrel':
+              await this.personalRelListStore.end(personalRel);
+              break;
+          }
+        }
       }
-    }
   }
 
   /******************************* change notifications *************************************** */
