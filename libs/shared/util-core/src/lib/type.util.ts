@@ -91,8 +91,8 @@ export function removeProperty(obj: object, key: string): object {
   // or const copy = structuredClone(obj); delete copy[key]; return copy;
 }
 
-export function removeKeyFromBkModel(model: BkModel): PersistedModel {
-  return removeProperty(model, 'bkey') as PersistedModel;
+export function removeKeyFromBkModel<T extends BkModel>(model: T): T {
+  return removeProperty(model, 'bkey') as T;
 }
 
 /**
@@ -287,8 +287,47 @@ export function isBoolean<U>(term: boolean | U): term is boolean {
   return typeof term === 'boolean';
 }
 
+/**
+ * Enforce that a unknown value (e.g. input parameter) is treated as boolean.
+ * Parents should bind the property like [readOnly]="readOnly()" and the child component should use coerceBoolean(readOnly).
+ * IT IS NOT ENOUGH tO DECLARE THE TYPE AS BOOLEAN, because Angular may pass strings from HTML templates.
+ * The boolean declaration (e.g. input<boolean>) only works when the property is set from TypeScript code (compile time).
+ * At runtime, Angular may pass strings (e.g. "true" or "false") when the property is bound from HTML templates.
+ * @param value the unknown value
+ * @returns its boolean value
+ */
+export function coerceBoolean(value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    return value.toLowerCase() === 'true';
+  }
+  return false;
+}
+
 export function isNumber<U>(term: number | U): term is number {
   return typeof term === 'number';
+}
+
+/**
+ * Enforce that a unknown value (e.g. input parameter) is treated as a valid number.
+ * Parents should bind the property like [maxLength]="maxLength()" and the child component should use coerceNumber(maxLength).
+ * IT IS NOT ENOUGH tO DECLARE THE TYPE AS NUMBER, because Angular may pass strings from HTML templates.
+ * The number declaration (e.g. input<number>) only works when the property is set from TypeScript code (compile time).
+ * At runtime, Angular may pass strings (e.g. "123") when the property is bound from HTML templates.
+ * @param value the unknown value
+ * @returns its number value
+ */
+export function coerceNumber(value: unknown, defaultValue = 0): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : defaultValue;
+  }
+  return defaultValue;
 }
 
 export function isString<U>(term: string | U): term is string {

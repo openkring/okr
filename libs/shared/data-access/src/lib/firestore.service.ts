@@ -31,7 +31,7 @@ import { BehaviorSubject, from, interval, map, Observable, of, shareReplay, star
 import { ENV, FIRESTORE, isFirestoreInitializedCheck, isSafari } from '@bk2/shared-config';
 import { BkModel, CommentCollection, CommentModel, DbQuery, UserModel } from "@bk2/shared-models";
 import { error, showToast } from '@bk2/shared-util-angular';
-import { debugMessage, getFullPersonName, getQuery, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
+import { debugMessage, generateRandomString, getFullPersonName, getQuery, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
 
 import { createComment } from '@bk2/comment-util';
 
@@ -72,30 +72,31 @@ export class FirestoreService {
       return error(undefined, 'FirestoreService.createModel: model is mandatory.', true);
     }
       
-    // If bkey is not set, the document ID is automatically assigned, otherwise bkey is used as the document ID in Firestore.
-    const key = model.bkey;
-    const collection = (key?.length === 0) ? collectionName : `${collectionName}/${key}`;
-    const ref = doc(this.firestore, collection);
+    let key = model.bkey;
+    // if bkey is not set, we auto-generate a random key for the document ID in firestore.
+    if (key?.length === 0) key = generateRandomString(20);
+    const path = `${collectionName}/${key}`;
+    const ref = doc(this.firestore, path);
 
-    // we delete the bkey from the model because we don't want to store it in the database (_ref.id is available instead)
-    const _storedModel = removeKeyFromBkModel(model);
-    _storedModel.tenants = [this.env.tenantId];   // ensure that the tenant is set
+    // we delete the bkey from the model because we don't want to store it in the database (ref.id is available instead)
+    const persistedModel = removeKeyFromBkModel(model);
+    persistedModel.tenants = [this.env.tenantId];   // ensure that the tenant is set
 
     try {
       // we need to convert the custom object to a pure JavaScript object (e.g. arrays)
-      await setDoc(ref, structuredClone(_storedModel));
+      await setDoc(ref, structuredClone(persistedModel));
       if (confirmMessage) {
         await showToast(this.toastController, confirmMessage + '.conf');
       }
       if (currentUser) {
-        debugMessage(`FirestoreService.createModel(${collection}/${ref.id}) -> OK`, currentUser);
+        debugMessage(`FirestoreService.createModel(${collectionName}/${ref.id}) -> OK`, currentUser);
         const comment = createComment(currentUser.bkey, getFullPersonName(currentUser.firstName, currentUser.lastName), '@comment.operation.initial.conf', collectionName, ref.id, this.env.tenantId);
         await this.saveComment(collectionName, ref.id, comment);
       }
       return Promise.resolve(ref.id);
     }
     catch (ex) {
-      console.error(`FirestoreService.createModel(${collection}/${ref.id}) -> ERROR:`, ex);
+      console.error(`FirestoreService.createModel(${collectionName}/${ref.id}) -> ERROR:`, ex);
       const message = confirmMessage ? confirmMessage + '.error' : `Could not create model ${collectionName}/${ref.id} in the database.`;      
       return error(this.toastController, message);
     }
@@ -124,9 +125,10 @@ export class FirestoreService {
     if (collectionName?.length === 0) {
       return error(undefined, 'FirestoreService.createObject: collectionName is mandatory.', true);
     }
-    // If key is not set, the document ID is automatically assigned, otherwise key is used as the document ID in Firestore.
-    const _collection = (!key || key.length === 0) ? collectionName : `${collectionName}/${key}`;
-    const ref = doc(collection(this.firestore, _collection));
+    // if key is not set, we auto-generate a random key for the document ID in firestore.
+    if (key?.length === 0) key = generateRandomString(20);
+    const path = `${collectionName}/${key}`;
+    const ref = doc(this.firestore, path);
 
     try {
       // we need to convert the custom object to a pure JavaScript object (e.g. arrays)
@@ -137,7 +139,7 @@ export class FirestoreService {
       return Promise.resolve(ref.id);
     }
     catch (ex) {
-      console.error(`FirestoreService.createObject(${_collection}/${ref.id}) -> ERROR:`, ex);
+      console.error(`FirestoreService.createObject(${collectionName}/${ref.id}) -> ERROR:`, ex);
       const message = confirmMessage ? confirmMessage + '.error' : `Could not create object ${collectionName}/${ref.id} in the database.`;      
       return error(this.toastController, message);
     }
