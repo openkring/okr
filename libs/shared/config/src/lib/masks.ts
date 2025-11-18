@@ -5,10 +5,10 @@ export const MaskPredicate: MaskitoElementPredicate = async (el: HTMLElement) =>
 
 // 1) Word masks
 export const LowercaseWordMask: MaskitoOptions = {
-  mask: /^[a-z0-9-_]+$/,
+  mask: /^[a-z0-9-_]+$/i,
 };
 export const UppercaseWordMask: MaskitoOptions = {
-  mask: /^[A-Z0-9-_]+$/,
+  mask: /^[A-Z0-9-_]+$/i,
 };
 export const CaseInsensitiveWordMask: MaskitoOptions = {
   mask: /^[a-zA-Z0-9-_]+$/,
@@ -25,7 +25,7 @@ export const CaseInsensitiveTextMask: MaskitoOptions = {
   mask: /^[a-zA-Z0-9-_ ]+$/,
 };
 export const AnyCharacterMask: MaskitoOptions = {
-  mask: /^[\s\S]+$/,
+  mask: /^[\s\S]+$/i,
 };
 
 // 3) HTML text masks (this is not matching emojis, foreign characters, only typical western html code is matched)
@@ -67,7 +67,7 @@ export const ChIbanMask: MaskitoOptions = {
 // coordinates: latitude, longitude, altitude
 // + northern hemisphere, - southern hemisphere
 export const LatitudeMask = maskitoNumberOptionsGenerator({
-    precision: 5,
+    maximumFractionDigits: 5,
     decimalSeparator: '.',
     min: -90,
     max: 90
@@ -75,7 +75,7 @@ export const LatitudeMask = maskitoNumberOptionsGenerator({
 
 // longitude: + east of Greenwich, - west of Greenwich
 export const LongitudeMask = maskitoNumberOptionsGenerator({
-  precision: 6,
+  maximumFractionDigits: 6,
   decimalSeparator: '.',
   min: -180,
   max: 180
@@ -83,7 +83,7 @@ export const LongitudeMask = maskitoNumberOptionsGenerator({
 
 // altitude: + above sea level, - below sea level
 export const AltitudeMask = maskitoNumberOptionsGenerator({
-  precision: 0,
+  maximumFractionDigits: 0,
   min: -10928,
   max: +8849
 });

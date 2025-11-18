@@ -234,24 +234,34 @@ export function urlValidations(fieldName: string, url: unknown ) {
       // /: relative url to root
       enforce(_url.startsWith('https://') || _url.startsWith('assets') || _url.startsWith('tenant') || _url.startsWith('/')).isTruthy();
     });
+  });
 
-    test(fieldName, '@validation.urlValid', () => {
+  // test the components of an absolute url only
+  // tbd: this is not working correctly.
+/*   omitWhen((url + '').startsWith('http') === false, () => {
+    test(fieldName, '@validation.urlValidProtocol', () => {
       enforce(url)['isURL']({
         protocols: ['https'],
-        require_tld: false,
-        require_protocol: false,
-        require_host: false,
+        require_protocol: true,
+      });
+    });
+    test(fieldName, '@validation.urlHost', () => {
+      enforce(url)['isURL']({
+        require_host: true,
         require_port: false,
-        require_valid_protocol: false,
+      });
+    });
+    test(fieldName, '@validation.urlParts', () => {
+      enforce(url)['isURL']({
         allow_underscores: false,
         allow_trailing_dot: false,
         allow_protocol_relative_urls: false,
-        allow_fragments: false,
+        allow_fragments: true,
         allow_query_components: true,
         validate_length: true,
       });
     });
-  });
+  }); */
 }
 
 
