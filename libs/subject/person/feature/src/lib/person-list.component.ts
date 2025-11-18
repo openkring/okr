@@ -84,7 +84,7 @@ import { PersonListStore } from './person-list.store';
           @for(person of filteredPersons(); track $index) {
             <ion-item (click)="showActions(person)">
               <ion-avatar slot="start">
-                <ion-img src="{{ 'person.' + person.bkey | avatar | async }}" alt="Avatar Logo" />
+                <ion-img src="{{ 'person.' + person.bkey | avatar:'person' | async }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>      
               <ion-label>
@@ -122,8 +122,9 @@ export class PersonListComponent {
   protected isLoading = computed(() => this.personListStore.isLoading());
   protected readonly tags = computed(() => this.personListStore.getTags());
   protected readonly types = computed(() => this.personListStore.appStore.getCategory('gender'));
-
+  protected readonly currentUser = computed(() => this.personListStore.appStore.currentUser());
   private imgixBaseUrl = this.personListStore.appStore.env.services.imgixBaseUrl;
+  private readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -142,7 +143,7 @@ export class PersonListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.personListStore.add(); break;
+      case 'add': await this.personListStore.add(this.readOnly()); break;
       case 'exportRaw': await this.personListStore.export('raw'); break;
       case 'copyEmailAddresses': await this.personListStore.copyEmailAddresses(); break;
       default: error(undefined, `PersonListComponent.call: unknown method ${selectedMethod}`);
@@ -165,11 +166,14 @@ export class PersonListComponent {
    * @param person 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): void {
-    if (hasRole('memberAdmin', this.personListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
-    if (hasRole('admin', this.personListStore.appStore.currentUser())) {
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
@@ -184,20 +188,26 @@ export class PersonListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
-      switch (data.action) {
-        case 'delete':
-          await this.personListStore.delete(person);
-          break;
-        case 'edit':
-          await this.personListStore.edit(person);
-          break;
+      if (!data) return;
+      if (data) {
+        switch (data.action) {
+          case 'view':
+            await this.personListStore.edit(person, true);
+            break;
+          case 'delete':
+            await this.personListStore.delete(person, this.readOnly());
+            break;
+          case 'edit':
+            await this.personListStore.edit(person, this.readOnly());
+            break;
+        }
       }
     }
   }
 
   /******************************** helpers ******************************************* */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.personListStore.currentUser());
+    return hasRole(role, this.currentUser());
   }
 }
 

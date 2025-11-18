@@ -59,7 +59,7 @@ export const ChatSectionStore = signalStore(
           debugMessage(`ChatSectionStore.imageUrlResource: No user, can't load image.`);
           return of(undefined);
         }
-        const url$ = store.avatarService.getAvatarImgixUrl(`person.${params.currentUser.personKey}`)
+        const url$ = store.avatarService.getAvatarImgixUrl(`person.${params.currentUser.personKey}`, "person");
         debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${params.currentUser.personKey}`, url$, store.currentUser());
         return url$;
       }

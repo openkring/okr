@@ -36,7 +36,7 @@ export class AvatarLabelComponent {
     params: () => ({
       key: this.key()
     }),
-    stream: ({ params }) => this.avatarService.getAvatarImgixUrl(params.key)
+    stream: ({ params }) => this.avatarService.getAvatarImgixUrl(params.key, 'other')
   });
   public url = computed(() => this.urlRef.value() ?? '');
 

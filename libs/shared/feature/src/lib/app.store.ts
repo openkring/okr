@@ -221,6 +221,32 @@ export const AppStore = signalStore(
       },
       getCategoryIcon(categoryName?: string, itemName?: string): string {
         return this.getCategoryItem(categoryName, itemName)?.icon ?? '';
+      },
+      /**
+       * This returns the name of the default icon for a given modelType.
+       * For most modelTypes, this is the icon of the category of the modelType.
+       * ModelType[.ResourceType[_SubType]]:key
+       * For Resources, the given key consists of resourceType:key and the icon is derived from the resourceType, e.g. 20.0:key.
+       * @param modelType
+       * @param key
+       * @returns
+       */
+       getDefaultIcon(modelType?: string, key?: string): string {
+        if (!modelType || !key) return 'other';
+        if (modelType === 'resource') {
+          const resourceTypePart = key.split(':')[0];
+          if (resourceTypePart.includes('_')) {
+            const [resourceType, subType] = resourceTypePart.split('_');
+            if (resourceType === 'rboat') {
+              return this.getCategoryIcon('rboat_type', subType);
+            } else {
+              return this.getCategoryIcon('resource_type', resourceType);
+            }
+          }
+          return this.getCategoryIcon('resource_type', resourceTypePart);
+        } else {
+          return this.getCategoryIcon('model_type', modelType);
+        }
       }
     }
   }),

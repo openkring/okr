@@ -35,7 +35,7 @@ import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShap
           <ion-col size="9">
             <ion-item lines="none">
               <ion-avatar slot="start">
-                <ion-img src="{{ memberModelType() + '.' + memberKey() | avatar | async }}" alt="Avatar of Member" />
+                <ion-img src="{{ memberModelType() + '.' + memberKey() | avatar:'membership' | async }}" alt="Avatar of Member" />
               </ion-avatar>
               <ion-label>{{ memberName() }}</ion-label>
             </ion-item>
@@ -70,10 +70,10 @@ import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShap
         </ion-row>
         <ion-row>
           <ion-col size="12">
-            <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (changed)="onCatChanged($event)" />
+            <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" [readOnly]="readOnly()" (changed)="onCatChanged($event)" />
           </ion-col>
           <ion-col size="12"> 
-            <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [locale]="locale()" [showHelper]=true (changed)="onChange('dateOfEntry', $event)" />
+            <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [locale]="locale()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfEntry', $event)" />
           </ion-col>      
         </ion-row>
       </ion-grid>
@@ -87,6 +87,7 @@ export class MembershipNewFormComponent {
   public vm = model.required<MembershipNewFormModel>();
   public membershipCategories = input.required<CategoryListModel>();
   public currentUser = input<UserModel | undefined>();
+  public readonly readOnly = input(true);
 
   protected memberKey = computed(() => this.vm().memberKey ?? '');
   protected memberName = computed(() => this.vm().memberName ?? '');

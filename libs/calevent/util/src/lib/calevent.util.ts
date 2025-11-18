@@ -1,17 +1,18 @@
 import { EventInput } from '@fullcalendar/core';
 
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { CalEventModel } from '@bk2/shared-models';
+import { AvatarInfo, CalEventModel } from '@bk2/shared-models';
 import { DateFormat, getIsoDateTime, getTodayStr, isType } from '@bk2/shared-util-core';
 
 import { CalEventFormModel } from './calevent-form.model';
 
 export function convertCalEventToForm(calEvent: CalEventModel): CalEventFormModel {
+  console.log('convertCalEventToForm: ', calEvent);
   return {
     bkey: calEvent.bkey ?? DEFAULT_KEY,
     tenants: calEvent.tenants ?? DEFAULT_TENANTS,
     name: calEvent.name ?? DEFAULT_NAME,
-    type: calEvent.type,
+    type: calEvent.type ?? DEFAULT_CALEVENT_TYPE,
     startDate: calEvent.startDate ?? getTodayStr(),
     startTime: calEvent.startTime ?? DEFAULT_TIME,
     endDate: calEvent.endDate ?? END_FUTURE_DATE_STR,
@@ -20,7 +21,7 @@ export function convertCalEventToForm(calEvent: CalEventModel): CalEventFormMode
     calendars: calEvent.calendars ?? DEFAULT_CALENDARS,
     periodicity: calEvent.periodicity ?? DEFAULT_PERIODICITY,
     repeatUntilDate: calEvent.repeatUntilDate ?? getTodayStr(),
-    responsiblePersons: calEvent.responsiblePersons ?? [],
+    responsiblePersons: calEvent.responsiblePersons ?? [] as AvatarInfo[],
     url: calEvent.url ?? DEFAULT_URL,
     description: calEvent.description ?? DEFAULT_NOTES,
     tags: calEvent.tags ?? DEFAULT_TAGS,
@@ -29,6 +30,8 @@ export function convertCalEventToForm(calEvent: CalEventModel): CalEventFormMode
 
 export function convertFormToCalEvent(calEvent: CalEventModel | undefined, vm: CalEventFormModel, tenantId: string): CalEventModel {
   calEvent ??= new CalEventModel(tenantId);
+    console.log('convertFormToCalEvent: ', calEvent);
+
   calEvent.name = vm.name ?? DEFAULT_NAME;
   calEvent.type = vm.type ?? DEFAULT_CALEVENT_TYPE;
   calEvent.startDate = vm.startDate ?? getTodayStr(DateFormat.StoreDate);
@@ -39,10 +42,11 @@ export function convertFormToCalEvent(calEvent: CalEventModel | undefined, vm: C
   calEvent.calendars = vm.calendars ?? DEFAULT_CALENDARS;
   calEvent.periodicity = vm.periodicity ?? DEFAULT_PERIODICITY;
   calEvent.repeatUntilDate = vm.repeatUntilDate ?? DEFAULT_DATE;
-  calEvent.responsiblePersons = vm.responsiblePersons ?? [];
+  calEvent.responsiblePersons = vm.responsiblePersons ?? [] as AvatarInfo[];
   calEvent.url = vm.url ?? DEFAULT_URL;
   calEvent.description = vm.description ?? DEFAULT_NOTES;
   calEvent.tags = vm.tags ?? DEFAULT_TAGS;
+  calEvent.index = getSearchIndex(calEvent);
   return calEvent;
 }
 
@@ -103,4 +107,13 @@ export function convertTimeCalEventToFullCalendar(calEvent: CalEventModel): Even
 export function convertFullCalendarToCalEvent(event: EventInput, tenantId: string): CalEventModel {
   // tbd: do this later
   return new CalEventModel(tenantId);
+}
+
+/*-------------------------- SEARCH --------------------------------*/
+export function getSearchIndex(calEvent: CalEventModel): string {
+  return 'n:' + calEvent.name + ' st:' + calEvent.startDate;
+}
+
+export function getSearchIndexInfo(): string {
+  return 'n:ame st:artDate';
 }

@@ -38,7 +38,7 @@ import { PersonSelectStore } from './person-select.store';
             <ion-list lines="none">
               <ion-item class="item" (click)="select(person)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ 'person.' + person.bkey | avatar | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'person.' + person.bkey | avatar:defaultIcon | async }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>
               </ion-item>
@@ -59,6 +59,8 @@ export class PersonSelectModalComponent {
   protected filteredPersons = computed(() => this.personSelectStore.filteredPersons() ?? []);
   protected selectedPersonsCount = computed(() => this.filteredPersons().length);
   protected isLoading = computed(() => this.personSelectStore.isLoading());
+
+  protected defaultIcon = this.personSelectStore.appStore.getCategoryIcon('model_type', 'person');
 
   constructor() {
     effect(() => {

@@ -33,7 +33,7 @@ export const TaskEditStore = signalStore(
       }),  
       stream: ({params}) => {
         const key = params.author?.key + '.' + params.author?.modelType;
-        const author$ = store.avatarService.getAvatarImgixUrl(key);
+        const author$ = store.avatarService.getAvatarImgixUrl(key, 'person');
         debugItemLoaded<string>(`authorUrl `, author$, params.currentUser);
         return author$;
       }
@@ -46,7 +46,7 @@ export const TaskEditStore = signalStore(
       }),  
       stream: ({params}) => {
         const key = params.assignee?.key + '.' + params.assignee?.modelType;
-        const assignee$ = store.avatarService.getAvatarImgixUrl(key);
+        const assignee$ = store.avatarService.getAvatarImgixUrl(key, 'person');
         debugItemLoaded<string>(`assigneeUrl `, assignee$, params.currentUser);
         return assignee$;
       }
@@ -59,7 +59,7 @@ export const TaskEditStore = signalStore(
       }),  
       stream: ({params}) => {
         const key = params.scope?.key + '.' + params.scope?.modelType;
-        const scope$ = store.avatarService.getAvatarImgixUrl(key);
+        const scope$ = store.avatarService.getAvatarImgixUrl(key, store.appStore.getDefaultIcon(params.scope?.modelType, params.scope?.key));
         debugItemLoaded<string>(`scopeUrl `, scope$, params.currentUser);
         return scope$;
       }

@@ -37,7 +37,7 @@ import { OrgSelectStore } from './org-select.store';
             <ion-list lines="none">
               <ion-item class="item" (click)="select(org)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ 'org.' + org.bkey | avatar | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'org.' + org.bkey | avatar:defaultIcon | async }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ org.name }}</ion-label>
               </ion-item>
@@ -59,6 +59,8 @@ export class OrgSelectModalComponent {
   protected orgs = computed(() => this.orgSelectStore.orgs() ?? []);
   protected selectedOrgsCount = computed(() => this.filteredOrgs().length);
   protected isLoading = computed(() => this.orgSelectStore.isLoading());
+
+  protected defaultIcon = this.orgSelectStore.appStore.getCategoryIcon('model_type', 'org');
 
   constructor() {
     effect(() => {
