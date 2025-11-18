@@ -9,6 +9,7 @@ import { CategoryCollection, CategoryListModel, MembershipModel, OrgCollection, 
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { Observable } from 'rxjs';
 
 export type MembershipEditState = {
   membership: MembershipModel | undefined;
@@ -33,6 +34,7 @@ export const MembershipEditStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),  
       stream: ({params}) => {
+        if (!params.orgId?.length) return new Observable<OrgModel>(() => {});
         const org$ = store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgId);
         debugItemLoaded<OrgModel>(`org ${params.orgId}`, org$, params.currentUser);
         return org$;
@@ -44,7 +46,8 @@ export const MembershipEditStore = signalStore(
     return {
       orgId: computed(() => state.membership()?.orgKey ?? ''),
       org: computed(() => state.orgResource.value() ?? undefined),
-      membershipCategoryKey: computed(() => `mcat_${state.membership()?.orgKey}`)
+      membershipCategoryKey: computed(() => `mcat_${state.membership()?.orgKey}`),
+      privacySettings: computed(() => state.appStore.privacySettings()),
     };
   }),
   withProps((store) => ({
