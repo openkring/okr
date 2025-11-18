@@ -26,6 +26,54 @@ import { ActionSheetController } from '@ionic/angular';
   ],
   styles: [`
   bk-section { width: 100%; }
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  /* FORCE FULL HEIGHT */
+  html, body, ion-app, ion-router-outlet {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  ion-content {
+    --offset-bottom: 0px !important;
+    --overflow: visible !important;
+    overflow: visible !important;
+    contain: none !important;
+  }
+
+  /* PRINT CONTAINER */
+  .print-content {
+    display: block !important;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 15mm;
+    box-sizing: border-box;
+    page-break-after: always;
+    overflow: visible !important;
+    position: relative !important;
+  }
+
+  /* ENSURE CHILDREN DON'T CLIP */
+  .print-content > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* FORCE PAGE BREAKS */
+  .page-break {
+    page-break-before: always;
+    height: 0;
+  }
+
+  /* HIDE UI */
+  ion-header, ion-footer, ion-toolbar, .print-btn, .no-print {
+    display: none !important;
+  }
+}
 `],
   providers: [PageDetailStore],
   template: `
@@ -76,9 +124,11 @@ import { ActionSheetController } from '@ionic/angular';
             <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPageReadOnly' | translate | async }}</ion-label>
           </ion-item>
         } @else {
-          @for(sectionId of pageStore.sections(); track $index) {
-            <bk-section [id]="sectionId" />
-          } 
+          <div class="print-content" #printContent>
+            @for(sectionId of pageStore.sections(); track $index) {
+              <bk-section [id]="sectionId" />
+            } 
+          </div>
         }
       }
     </ion-content>
@@ -128,6 +178,7 @@ export class ContentPageComponent {
       case 'selectSection': await this.pageStore.selectSection(); break;
       case 'addSection':    await this.pageStore.addSection(); break;
       case 'exportRaw': await this.pageStore.export("raw"); break;
+      case 'print': await this.pageStore.print(); break;
       default: error(undefined, `ContentPage.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
