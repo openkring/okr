@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 export class AvatarPipe implements PipeTransform {
   private readonly avatarService = inject(AvatarService);
 
-  transform(key: string): Observable<string> {
-    return this.avatarService.getAvatarImgixUrl(key);
+  transform(key: string, defaultIcon?: string): Observable<string> {
+    return this.avatarService.getAvatarImgixUrl(key, defaultIcon ?? 'other');
   }
 }
