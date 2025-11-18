@@ -26,7 +26,7 @@ export function createActionSheetOptions(
 
 /**
  * 
- * @param name  cancel, call, copy, delete, edit, send, show, upload
+ * @param name  cancel, call, copy, delete, edit, send, show, upload, view
  * @param imgixBaseUrl 
  * @param iconName 
  * @returns 
@@ -34,11 +34,14 @@ export function createActionSheetOptions(
 export function createActionSheetButton(
     name: string,
     imgixBaseUrl: string,
-    iconName?: string
+    iconName?: string,
+    prefix?: string
 ): ActionSheetButton {
     const nameLC = name.toLowerCase();
+    const nameT = bkTranslate(`@actionsheet.${nameLC}`);
+    const text = prefix ? prefix + ' ' + nameT.toLowerCase() : nameT;
     return {
-        text: bkTranslate(`@actionsheet.${nameLC}`),
+        text: text,
         icon: iconName ? getSvgIconUrl(imgixBaseUrl, iconName) : undefined,
         role: getRole(nameLC),
         data: {

@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
 
@@ -10,6 +10,7 @@ import { AppStore } from '@bk2/shared-feature';
 import { CategoryCollection, CategoryListModel, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
+import { confirm } from '@bk2/shared-util-angular';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { MembershipModalsService } from './membership-modals.service';
@@ -43,7 +44,8 @@ export const MembershipListStore = signalStore(
     membershipModalsService: inject(MembershipModalsService),
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
-    modalController: inject(ModalController),    
+    modalController: inject(ModalController),
+    alertController: inject(AlertController)
   })),
   withProps((store) => ({
     membershipsResource: rxResource({
@@ -304,21 +306,41 @@ export const MembershipListStore = signalStore(
       },
  
       /******************************** actions ******************************************* */
-      async add(): Promise<void> {
-        await store.membershipModalsService.add(store.currentPerson(), store.defaultOrg(), 'person');
-        store.membershipsResource.reload();
+      async add(readOnly = true): Promise<void> {
+        if (!readOnly) {
+          await store.membershipModalsService.add(store.currentPerson(), store.defaultOrg(), 'person');
+          store.membershipsResource.reload();
+        }
       },
 
-      async edit(membership?: MembershipModel): Promise<void> {
-        await store.membershipModalsService.edit(membership);
-        store.membershipsResource.reload();
+      async edit(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (!readOnly && membership) {
+          await store.membershipModalsService.edit(membership);
+          store.membershipsResource.reload();
+        }
       },
 
-      async changeMembershipCategory(membership?: MembershipModel): Promise<void> {
-        if(membership) {
-          const _mcat = store.membershipCategory();
-          if (_mcat) {
-            await store.membershipModalsService.changeMembershipCategory(membership, _mcat);
+      async view(membership?: MembershipModel): Promise<void> {
+        if (membership) {
+          await store.membershipModalsService.edit(membership);
+          store.membershipsResource.reload();
+        }
+      },
+
+      async end(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (!readOnly && membership) {
+          const date = await selectDate(store.modalController);
+          if (!date) return;
+          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
+          store.membershipsResource.reload();  
+        }
+      },
+
+      async changeMembershipCategory(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if(!readOnly && membership) {
+          const mcat = store.membershipCategory();
+          if (mcat) {
+            await store.membershipModalsService.changeMembershipCategory(membership, mcat);
             store.membershipsResource.reload();
           }
         }
@@ -328,25 +350,21 @@ export const MembershipListStore = signalStore(
         console.log(`MembershipListStore.export(${type}) is not yet implemented.`);
       },
 
-      async end(membership?: MembershipModel): Promise<void> {
-        if (membership) {
-          const _date = await selectDate(store.modalController);
-          if (!_date) return;
-          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
-          store.membershipsResource.reload();  
-        }
-      },
-
-      async delete(membership?: MembershipModel): Promise<void> {
-        if (membership) {
+      async delete(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (membership && !readOnly) {
+          const result = await confirm(store.alertController, '@membership.operation.delete.confirm', true);
+          if (result === true)
           await store.membershipService.delete(membership);
           store.membershipsResource.reload();  
         }
       },
 
-      async copyEmailAddresses(): Promise<void> {
-        await store.membershipService.copyAllEmailAddresses(of(store.memberships()));
+      async copyEmailAddresses(readOnly = true): Promise<void> {
+        if (!readOnly) {
+          await store.membershipService.copyAllEmailAddresses(of(store.memberships()));
+        }
       },
     }
   }),
 );
+  

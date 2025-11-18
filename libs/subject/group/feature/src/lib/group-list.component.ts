@@ -102,6 +102,7 @@ export class GroupListComponent {
   protected selectedGroupsCount = computed(() => this.filteredGroups().length);
   protected isLoading = computed(() => this.groupListStore.isLoading());
   protected tags = computed(() => this.groupListStore.getTags());
+  private currentUser = computed(() => this.groupListStore.currentUser());
 
   private imgixBaseUrl = this.groupListStore.appStore.env.services.imgixBaseUrl;
 
@@ -118,7 +119,7 @@ export class GroupListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.groupListStore.add(); break;
+      case 'add': await this.groupListStore.add(hasRole('memberAdmin', this.currentUser())); break;
       case 'exportRaw': await this.groupListStore.export("raw_groups"); break;
       default: error(undefined, `GroupListComponent.call: unknown method ${selectedMethod}`);
     }
@@ -165,10 +166,10 @@ export class GroupListComponent {
           await this.groupListStore.delete(group);
           break;
         case 'edit':
-          await this.groupListStore.edit(group);
+          await this.groupListStore.edit(group, !hasRole('memberAdmin', this.currentUser()));
           break;
         case 'show':
-          await this.groupListStore.view(group);
+          await this.groupListStore.view(group, !hasRole('memberAdmin', this.currentUser()));
           break;
       }
     }

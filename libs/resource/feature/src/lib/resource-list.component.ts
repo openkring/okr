@@ -118,11 +118,13 @@ export class ResourceListComponent {
   }
 
   /******************************** getters ******************************************* */
-  protected getIcon(resource: ResourceModel): string | undefined {
+  protected getIcon(resource: ResourceModel): string {
+    let iconName: string;
     if (resource.type === 'rboat')
-      return this.resourceListStore.appStore.getCategoryItem('rboat_type', resource.subType)?.icon
+      iconName = this.resourceListStore.appStore.getCategoryItem('rboat_type', resource.subType)?.icon ?? '';
     else
-      return this.resourceListStore.appStore.getCategoryItem('resource_type', resource.type)?.icon
+      iconName = this.resourceListStore.appStore.getCategoryItem('resource_type', resource.type)?.icon ?? '';
+    return iconName ?? '';
   }
 
   /******************************** actions ******************************************* */
