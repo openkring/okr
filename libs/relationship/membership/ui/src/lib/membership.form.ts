@@ -88,9 +88,11 @@ import { MembershipFormModel, membershipFormModelShape, membershipFormValidation
                 <bk-text-input name="orgFunction" [value]="orgFunction()" [maxLength]=30 [readOnly]="readOnly()" (changed)="onChange('orgFunction', $event)" />                                        
               </ion-col>
 
+              @if(hasRole('memberAdmin')) {
               <ion-col size="12" size-md="6">
                 <bk-text-input name="memberNickName" [value]="memberNickName()" [maxLength]=20 [readOnly]="readOnly()" (changed)="onChange('memberNickName', $event)" />                                        
               </ion-col>
+              }
             </ion-row>
           </ion-grid>
         </ion-card-content>
