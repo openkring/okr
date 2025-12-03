@@ -7,7 +7,6 @@ export * from './lib/avatar-info';
 export * from './lib/avatar.model';
 export * from './lib/base.model';
 export * from './lib/bill.model';
-export * from './lib/bk-form.model';
 export * from './lib/calEvent.model';
 export * from './lib/category-list.model';
 export * from './lib/category.model';

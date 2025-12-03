@@ -24,7 +24,6 @@ export * from './lib/empty-list.component';
 export * from './lib/error-note.component';
 export * from './lib/error-toolbar.component';
 export * from './lib/footer.component';
-export * from './lib/form-debug.component';
 export * from './lib/header.component';
 export * from './lib/iban-input.component';
 export * from './lib/icon-toolbar.component';
