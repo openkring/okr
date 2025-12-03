@@ -6,7 +6,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { PersonalRelCollection, PersonalRelModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery, removeDuplicatesFromArray } from '@bk2/shared-util-core';
 
-import { getPersonalRelSearchIndex, getPersonalRelSearchIndexInfo } from '@bk2/relationship-personal-rel-util';
+import { getPersonalRelIndex } from '@bk2/relationship-personal-rel-util';
 
 @Injectable({
     providedIn: 'root'
@@ -25,7 +25,7 @@ export class PersonalRelService {
    * @returns the document id of the stored personalRel in the database or undefined if the operation failed
    */
   public async create(personalRel: PersonalRelModel, currentUser?: UserModel): Promise<string | undefined> {
-    personalRel.index = this.getSearchIndex(personalRel);
+    personalRel.index = getPersonalRelIndex(personalRel);
     return await this.firestoreService.createModel<PersonalRelModel>(PersonalRelCollection, personalRel, '@personalRel.operation.create', currentUser);
   }
 
@@ -46,7 +46,7 @@ export class PersonalRelService {
    * @returns the document id of the updated personalRel or undefined if the operation failed
    */
   public async update(personalRel: PersonalRelModel, currentUser?: UserModel, confirmMessage = '@personalRel.operation.update'): Promise<string | undefined> {
-    personalRel.index = this.getSearchIndex(personalRel);
+    personalRel.index = getPersonalRelIndex(personalRel);
     return await this.firestoreService.updateModel<PersonalRelModel>(PersonalRelCollection, personalRel, false, confirmMessage, currentUser);
   }
 
@@ -95,14 +95,5 @@ export class PersonalRelService {
   /*-------------------------- export --------------------------------*/
   public export(): void {
     console.log('PersonalRelService.export: not yet implemented.');
-  }
- 
-  /*-------------------------- search index --------------------------------*/
-  public getSearchIndex(personalRel: PersonalRelModel): string {
-    return getPersonalRelSearchIndex(personalRel);
-  }
-
-  public getSearchIndexInfo(): string {
-    return getPersonalRelSearchIndexInfo();
   }
 }

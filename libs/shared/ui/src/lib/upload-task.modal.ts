@@ -63,8 +63,8 @@ export class UploadTaskComponent implements OnInit {
       // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
       this.percentage.set((_snapshot.bytesTransferred / _snapshot.totalBytes) * 100);
     }, 
-    (_error) => {           // Handle unsuccessful uploads
-      error(undefined, 'UploadTask.start: ERROR: ' + JSON.stringify(_error));
+    (ex) => {           // Handle unsuccessful uploads
+      error(undefined, 'UploadTask.start: ERROR: ' + JSON.stringify(ex));
       this.modalController.dismiss(undefined, 'cancel');
     }, 
     async () => {           // Handle successful uploads on complete; i.e. save the download URL in the avatar collection

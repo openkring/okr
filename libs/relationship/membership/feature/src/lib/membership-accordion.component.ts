@@ -5,11 +5,11 @@ import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, Ion
 import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { coerceBoolean, getItemLabel, hasRole, isOngoing } from '@bk2/shared-util-core';
 import { MembershipAccordionStore } from './membership-accordion.store';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
@@ -64,8 +64,6 @@ export class MembershipAccordionComponent {
   public readonly title = input('@membership.plural');
   public readonly readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-
-  public membershipsChanged = output();
 
   protected memberships = computed(() => this.membershipStore.memberships());
   private currentUser = computed(() => this.membershipStore.currentUser());
@@ -133,6 +131,7 @@ export class MembershipAccordionComponent {
           await this.membershipStore.edit(membership, this.isReadOnly());
           break;
         case 'endMembership':
+          console.log('MembershipAccordion.executeActions → opening date picker modal');
           await this.membershipStore.end(membership, this.isReadOnly());
           break;
         case 'changeMcat':

@@ -2,12 +2,12 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TaskModel } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared-util-core';
+import { extractTagAndDate, getAvatarInfoFromCurrentUser, getItemLabel, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -137,6 +137,8 @@ export class TaskListComponent {
   protected isLoading = computed(() => this.taskListStore.isLoading());
   protected tags = computed(() => this.taskListStore.getTags());
   protected types = computed(() => this.taskListStore.appStore.getCategory('priority'));
+  protected currentUser = computed(() => this.taskListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.taskListStore.appStore.env.services.imgixBaseUrl;
 
@@ -163,7 +165,7 @@ export class TaskListComponent {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
       case 'add': await this.taskListStore.add(); break;
-      case 'export': await this.taskListStore.export(); break;
+      case 'export': await this.taskListStore.export('raw'); break;
       default: error(undefined, `TaskListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -184,7 +186,7 @@ export class TaskListComponent {
    * @param task 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
-    if (hasRole('privileged', this.taskListStore.appStore.currentUser()) || hasRole('eventAdmin', this.taskListStore.appStore.currentUser())) {
+    if (hasRole('privileged', this.currentUser()) || !this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
@@ -201,6 +203,7 @@ export class TaskListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
           await this.taskListStore.delete(task);

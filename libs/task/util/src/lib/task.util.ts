@@ -1,5 +1,5 @@
 import { AvatarInfo, TaskModel } from '@bk2/shared-models';
-import { isType } from '@bk2/shared-util-core';
+import { addIndexElement, die, isType } from '@bk2/shared-util-core';
 
 import { TaskFormModel } from './task-form.model';
 import { DEFAULT_CALENDARS, DEFAULT_DATE, DEFAULT_IMPORTANCE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRIORITY, DEFAULT_TAGS, DEFAULT_TASK_STATE } from '@bk2/shared-constants';
@@ -46,8 +46,10 @@ export function convertTaskToForm(task: TaskModel): TaskFormModel {
   };
 }
 
-export function convertFormToTask(task: TaskModel | undefined, vm: TaskFormModel, tenantId: string): TaskModel {
-  task ??= new TaskModel(tenantId);
+export function convertFormToTask(vm?: TaskFormModel, task?: TaskModel): TaskModel {
+  if (!task) die('task.util.convertFormToTask: task is mandatory.');
+  if (!vm) return task;
+  
   task.name = vm.name ?? DEFAULT_NAME;
   task.notes = vm.notes ?? DEFAULT_NOTES;
   task.tags = vm.tags ?? DEFAULT_TAGS;
@@ -68,4 +70,32 @@ export function convertFormToTask(task: TaskModel | undefined, vm: TaskFormModel
 
 export function isTask(task: unknown, tenantId: string): task is TaskModel {
   return isType(task, new TaskModel(tenantId));
+}
+
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given task based on its values.
+ * @param task 
+ * @returns the index string
+ */
+export function getTaskIndex(task: TaskModel): string {
+  let index = '';
+  index = addIndexElement(index, 'n', task.name);
+  if (task.author) {
+    index = addIndexElement(index, 'an', task.author.name1 + ' ' + task.author.name2);
+    index = addIndexElement(index, 'ak', task.author.key);
+  }
+  if (task.assignee) {
+    index = addIndexElement(index, 'asn', task.assignee.name1 + ' ' + task.assignee.name2);
+    index = addIndexElement(index, 'ask', task.assignee.key);
+  }
+  return index;
+}
+
+/**
+ * Returns a string explaining the structure of the index.
+ * This can be used in info boxes on the GUI.
+ */
+export function getTaskIndexInfo(): string {
+  return 'n:name, an:authorname, ak:authorKey, asn:assigneeName, ask:assigneeKey';
 }

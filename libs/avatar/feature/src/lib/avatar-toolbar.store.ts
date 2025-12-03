@@ -2,13 +2,14 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Photo } from '@capacitor/camera';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { Observable, of } from 'rxjs';
 
-import { AvatarService } from '@bk2/avatar-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { ImageAction, newImage } from '@bk2/shared-models';
-import { getImageDimensionsFromMetadata, updateImageDimensions, UploadService } from '@bk2/shared-ui';
-import { Observable, of } from 'rxjs';
+import { getImageDimensionsFromMetadata, updateImageDimensions } from '@bk2/shared-ui';
 import { getModelAndKey } from '@bk2/shared-util-core';
+
+import { AvatarService, UploadService } from '@bk2/avatar-data-access';
 
 export interface AvatarToolbarState {
   key: string; // = ModelType.ModelKey e.g. person.lasdfölj

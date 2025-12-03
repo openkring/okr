@@ -3,7 +3,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { PersonalRelNewFormComponent } from '@bk2/relationship-personal-rel-ui';
-import { convertPersonsToNewForm } from '@bk2/relationship-personal-rel-util';
+import { convertPersonsToNewForm, PersonalRelNewFormModel } from '@bk2/relationship-personal-rel-util';
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import {  PersonModel, RoleName, UserModel } from '@bk2/shared-models';
@@ -22,16 +22,19 @@ import { PersonalRelModalsService } from './personal-rel-modals.service';
   ],
   template: `
     <bk-header title="{{ '@personalRel.operation.create.label' | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content>
-      <bk-personal-rel-new-form [(vm)]="vm" [currentUser]="currentUser()" 
-      [types]="types()"
-      [allTags]="allTags()"
-      [readOnly]="readOnly()"
-      (selectPerson)="selectPerson($event)"
-      (validChange)="formIsValid.set($event)" />
+    <ion-content no-padding>
+      <bk-personal-rel-new-form
+        [formData]="formData()"
+        [currentUser]="currentUser()" 
+        [types]="types()"
+        [allTags]="allTags()"
+        [readOnly]="readOnly()"
+        (selectPerson)="selectPerson($event)"
+        (formDataChange)="onFormDataChange($event)"
+      />
     </ion-content>
   `
 })
@@ -40,20 +43,35 @@ export class PersonalRelNewModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
+  // inputs
   public subject = input.required<PersonModel>();
   public object = input.required<PersonModel>(); 
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);
 
-  public vm = linkedSignal(() => convertPersonsToNewForm(this.subject(), this.object(), this.currentUser()));
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(true); // new form is prefilled and valid
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = linkedSignal(() => convertPersonsToNewForm(this.subject(), this.object(), this.currentUser()));
+
+  // derived signals
   protected allTags = computed(() => this.appStore.getTags('personalrel'));
   protected types = computed(() => this.appStore.getCategory('personalrel_type'));
 
-  // as we prepared everything with defaultMember and defaultOrg, we already have a valid form, so we need to signal this here.
-  protected formIsValid = signal(true);
+  /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(this.formData(), 'confirm');
+  }
 
-  public async save(): Promise<boolean> {
-    return this.modalController.dismiss(this.vm(), 'confirm');
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertPersonsToNewForm(this.subject(), this.object(), this.currentUser()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: PersonalRelNewFormModel): void {
+    this.formData.set(formData);
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
@@ -61,23 +79,23 @@ export class PersonalRelNewModalComponent {
   }
 
   protected async selectPerson(isSubject: boolean): Promise<void> {
-    const _person = await this.personalRelModalsService.selectPerson();
-    if (!_person) return;
+    const person = await this.personalRelModalsService.selectPerson();
+    if (!person) return;
     if (isSubject) {
-      this.vm.update((_vm) => ({
-        ..._vm, 
-        subjectKey: _person.bkey, 
-        subjectFirstName: _person.firstName,
-        subjectLastName: _person.lastName,
-        subjectGender: _person.gender,
+      this.formData.update((vm) => ({
+        ...vm, 
+        subjectKey: person.bkey, 
+        subjectFirstName: person.firstName,
+        subjectLastName: person.lastName,
+        subjectGender: person.gender,
       }));
     } else {
-      this.vm.update((_vm) => ({
-        ..._vm, 
-        objectKey: _person.bkey, 
-        objectFirstName: _person.firstName,
-        objectLastName: _person.lastName,
-        objectGender: _person.gender,
+      this.formData.update((vm) => ({
+        ...vm, 
+        objectKey: person.bkey, 
+        objectFirstName: person.firstName,
+        objectLastName: person.lastName,
+        objectGender: person.gender,
       }));
     }
   }

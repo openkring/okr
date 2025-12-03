@@ -1,8 +1,7 @@
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@bk2/shared-constants';
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
 // tbd: in a first phase, we only support persons as subjects; support for org subjects will be added later
-export type WorkrelFormModel = DeepPartial<{
+export type WorkrelFormModel = {
   bkey: string,
   tags: string,
   notes: string
@@ -25,9 +24,9 @@ export type WorkrelFormModel = DeepPartial<{
   periodicity: string,
   order: number,
   state: string,
-}>;
+};
 
-export const workrelFormModelShape: DeepRequired<WorkrelFormModel> = {
+export const WORKREL_FORM_SHAPE: WorkrelFormModel = {
   bkey: DEFAULT_KEY,
   tags: DEFAULT_TAGS,
   notes: DEFAULT_NOTES,

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -8,9 +8,9 @@ import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, DateInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, getFullPersonName, getTodayStr, isOrg, isPerson } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, getFullName, getTodayStr, isOrg, isPerson } from '@bk2/shared-util-core';
 
-import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShape, membershipNewFormValidations } from '@bk2/relationship-membership-util';
+import { MEMBERSHIP_NEW_FORM_SHAPE, MembershipFormModel, MembershipNewFormModel, membershipNewFormValidations } from '@bk2/relationship-membership-util';
 
 
 @Component({
@@ -22,13 +22,14 @@ import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShap
     DateInputComponent, CategorySelectComponent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonAvatar, IonImg, IonButton
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   <form scVestForm
     [formShape]="shape"
-    [formValue]="vm()"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
   
       <ion-grid>
         <ion-row>
@@ -70,10 +71,10 @@ import { MembershipFormModel, MembershipNewFormModel, membershipNewFormModelShap
         </ion-row>
         <ion-row>
           <ion-col size="12">
-            <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" [readOnly]="readOnly()" (changed)="onCatChanged($event)" />
+            <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" [readOnly]="isReadOnly()" (changed)="onCatChanged($event)" />
           </ion-col>
           <ion-col size="12"> 
-            <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [locale]="locale()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfEntry', $event)" />
+            <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" [locale]="locale()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfEntry', $event)" />
           </ion-col>      
         </ion-row>
       </ion-grid>
@@ -84,45 +85,52 @@ export class MembershipNewFormComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
-  public vm = model.required<MembershipNewFormModel>();
+  // inputs
+  public formData = model.required<MembershipNewFormModel>();
   public membershipCategories = input.required<CategoryListModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected memberKey = computed(() => this.vm().memberKey ?? '');
-  protected memberName = computed(() => this.vm().memberName ?? '');
-  protected memberModelType = computed(() => this.vm().memberModelType ?? '');
-  protected orgKey = computed(() => this.vm().orgKey ?? '');
-  protected orgName = computed(() => this.vm().orgName ?? '');
-  protected currentMembershipCategoryItem = computed(() => this.vm().membershipCategory ?? '');
-  protected dateOfEntry = computed(() => this.vm().dateOfEntry ?? getTodayStr());
+ // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
+
+  // validation and errors
+  protected readonly suite = membershipNewFormValidations;
+  protected readonly shape = MEMBERSHIP_NEW_FORM_SHAPE;
+  private readonly validationResult = computed(() => membershipNewFormValidations(this.formData()));
+
+  // fields
+  protected memberKey = computed(() => this.formData().memberKey ?? '');
+  protected memberName = computed(() => getFullName(this.formData().memberName1, this.formData().memberName2, this.currentUser()?.nameDisplay));
+  protected memberModelType = computed(() => this.formData().memberModelType ?? '');
+  protected orgKey = computed(() => this.formData().orgKey ?? '');
+  protected orgName = computed(() => this.formData().orgName ?? '');
+  protected currentMembershipCategoryItem = computed(() => this.formData().membershipCategory ?? '');
+  protected dateOfEntry = computed(() => this.formData().dateOfEntry ?? getTodayStr());
   protected readonly locale = computed(() => this.appStore.appConfig().locale);
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(true);
-
-  protected readonly suite = membershipNewFormValidations;
-  protected readonly shape = membershipNewFormModelShape;
-  private readonly validationResult = computed(() => membershipNewFormValidations(this.vm()));
-
-  protected onValueChange(value: MembershipFormModel): void {
-    this.vm.update((_vm) => ({ ..._vm, ...value }));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('MembershipNewForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: MembershipNewFormModel): void {
+    this.formData.update((vm) => ({ ...vm, ...value }));
+    debugFormErrors('MembershipNewForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('MembershipNewForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 
   protected onCatChanged(membershipCategory: string): void {
     const membershipCategoryAbbreviation = this.membershipCategories().items.find(item => item.name === membershipCategory)?.abbreviation ?? 'A';
-    this.vm.update((_vm) => ({ ..._vm, membershipCategory, membershipCategoryAbbreviation }));
-    debugFormErrors('MembershipNewForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+    this.formData.update((vm) => ({ ...vm, membershipCategory, membershipCategoryAbbreviation }));
+    debugFormErrors('MembershipNewForm.onCatChanged', this.validationResult().errors, this.currentUser());
   }
 
   protected async selectMember(): Promise<void> {
@@ -134,7 +142,7 @@ export class MembershipNewFormComponent {
   }
 
   protected async selectPerson(): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: PersonSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -142,16 +150,16 @@ export class MembershipNewFormComponent {
         currentUser: this.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isPerson(data, this.appStore.tenantId())) {
-        this.vm.update((_vm) => ({
-          ..._vm,
+        this.formData.update((vm) => ({
+          ...vm,
           memberKey: data.bkey,
           memberName1: data.firstName,
           memberName2: data.lastName,
-          memberName: getFullPersonName(data.firstName, data.lastName),
+          memberName: getFullName(data.firstName, data.lastName, this.currentUser()?.nameDisplay),
           memberModelType: 'person',
           memberType: data.gender,
           memberDateOfBirth: data.dateOfBirth,
@@ -159,15 +167,13 @@ export class MembershipNewFormComponent {
           memberZipCode: data.favZipCode,
           memberBexioId: data.bexioId
         }));
-        debugFormErrors('MembershipNewForm (Person)', this.validationResult().errors, this.currentUser());
-        this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+        debugFormErrors('MembershipNewForm.selectPerson', this.validationResult().errors, this.currentUser());
       }
     }
   }
 
   protected async selectOrg(): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: OrgSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -175,18 +181,16 @@ export class MembershipNewFormComponent {
         currentUser: this.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isOrg(data, this.appStore.tenantId())) {
-        this.vm.update((_vm) => ({
-          ..._vm,
+        this.formData.update((vm) => ({
+          ...vm,
           orgKey: data.bkey,
           orgName: data.name,
         }));
-        debugFormErrors('MembershipNewForm (Org)', this.validationResult().errors, this.currentUser());
-        this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+        debugFormErrors('MembershipNewForm.selectOrg', this.validationResult().errors, this.currentUser());
       }
     }
   }

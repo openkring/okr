@@ -1,20 +1,18 @@
-import { DeepRequired } from 'ngx-vest-forms';
-
-export const FirebaseUserShape: DeepRequired<FirebaseUserModel> = {
-  uid: '',
-  email: '',
-  displayName: '',
+export const FIREBASE_USER_SHAPE: FirebaseUserModel = {
+  uid: DEFAULT_ID,
+  email: DEFAULT_EMAIL,
+  displayName: DEFAULT_NAME,
   emailVerified: false,
   disabled: false,
-  phone: '',
-  photoUrl: ''
+  phone: DEFAULT_PHONE,
+  photoUrl: DEFAULT_URL
 };
 import { only, staticSuite } from 'vest';
 
 import { booleanValidations, stringValidations } from '@bk2/shared-util-core';
 
 import { FirebaseUserModel } from '@bk2/shared-models';
-import { EMAIL_LENGTH, NAME_LENGTH, PHONE_LENGTH, URL_LENGTH } from '@bk2/shared-constants';
+import { DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_PHONE, DEFAULT_URL, EMAIL_LENGTH, NAME_LENGTH, PHONE_LENGTH, URL_LENGTH } from '@bk2/shared-constants';
 
 export const firebaseUserFormValidations = staticSuite((model: FirebaseUserModel, field?: string) => {
   only(field);

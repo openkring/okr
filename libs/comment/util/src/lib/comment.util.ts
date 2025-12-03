@@ -1,5 +1,5 @@
 import { CommentModel } from "@bk2/shared-models";
-import { DateFormat, getTodayStr } from "@bk2/shared-util-core";
+import { DateFormat, generateRandomString, getTodayStr } from "@bk2/shared-util-core";
 
 /* ---------------------- Model  -------------------------------*/
  /**
@@ -7,16 +7,17 @@ import { DateFormat, getTodayStr } from "@bk2/shared-util-core";
    * @param authorKey 
    * @param authorName 
    * @param commentStr 
+   * @param parentKey modelType.key of the parent model
+   * @param tenant
    * @returns the created CommentModel
    */
-export function createComment(authorKey: string, authorName: string, commentStr: string, parentCollection: string, parentKey: string, tenant: string): CommentModel {
+export function createComment(authorKey: string, authorName: string, commentStr: string, parentKey: string, tenant: string): CommentModel {
   const comment = new CommentModel();
-  comment.bkey = '';
+  comment.bkey = generateRandomString(20);
   comment.authorKey = authorKey;
   comment.authorName = authorName;
-  comment.creationDate = getTodayStr(DateFormat.StoreDate);
+  comment.creationDateTime = getTodayStr(DateFormat.StoreDateTime);
   comment.parentKey = parentKey;
-  comment.parentCollection = parentCollection;
   comment.description = commentStr;
   comment.isArchived = false;
   comment.tenants = [tenant];
@@ -24,7 +25,8 @@ export function createComment(authorKey: string, authorName: string, commentStr:
   return comment;
 }
 
+// as long as we don't show list of comments, we don't need an index
 export function getCommentIndex(comment: CommentModel): string {
-  return `an:${comment.authorName}, cd:${comment.creationDate}, pc:${comment.parentCollection} pk:${comment.parentKey}`;
+  return `an:${comment.authorName}, cd:${comment.creationDateTime}, pk:${comment.parentKey}`;
 }
 

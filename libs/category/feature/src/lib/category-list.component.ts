@@ -107,7 +107,9 @@ export class CategoryListComponent {
   protected isLoading = computed(() => this.categoryListStore.isLoading());
   protected popupId = computed(() => `c_category_${this.listId}`);
   protected tags = computed(() => this.categoryListStore.getTags());
-  
+  protected currentUser = computed(() => this.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
+
   protected isYearly = false;
   private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 
@@ -137,10 +139,15 @@ export class CategoryListComponent {
    * @param cat 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, cat: CategoryListModel): void {
-    if (hasRole('privileged', this.appStore.currentUser()) || hasRole('eventAdmin', this.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('category.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('category.edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    if (hasRole('admin', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('category.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -155,21 +162,17 @@ export class CategoryListComponent {
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
-        case 'delete':
-          await this.delete(cat);
+        case 'category.delete':
+          await this.categoryListStore.delete(cat, this.readOnly());
           break;
-        case 'edit':
-          await this.edit(cat);
+        case 'category.edit':
+          await this.categoryListStore.edit(cat, this.readOnly());
+          break;
+        case 'category.view':
+          await this.categoryListStore.edit(cat, true);
           break;
       }
     }
-  }
-  public async delete(cat?: CategoryListModel): Promise<void> {
-    if (cat) await this.categoryListStore.delete(cat);
-  }
-
-  public async edit(cat: CategoryListModel): Promise<void> {
-    await this.categoryListStore.edit(cat);
   }
 
   /******************************* change notifications *************************************** */

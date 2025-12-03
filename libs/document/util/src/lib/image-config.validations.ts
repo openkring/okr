@@ -1,11 +1,10 @@
-import { DeepRequired } from 'ngx-vest-forms';
 import { only, staticSuite } from 'vest';
 
 import { DEFAULT_LABEL, DEFAULT_URL, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
 import { Image, ImageType } from '@bk2/shared-models';
 import { stringValidations } from '@bk2/shared-util-core';
 
-export const imageConfigFormModelShape: DeepRequired<Image> = {
+export const imageConfigFormModelShape: Image = {
     imageLabel: DEFAULT_LABEL,
     imageType: ImageType.Image,
     url: DEFAULT_URL,
@@ -32,5 +31,4 @@ export const imageConfigValidations = staticSuite((model: Image, field?: string)
   stringValidations('imageLabel', model.imageLabel, SHORT_NAME_LENGTH);
   stringValidations('imageOverlay', model.imageOverlay, SHORT_NAME_LENGTH);
   stringValidations('altText', model.altText, SHORT_NAME_LENGTH);
-
 });

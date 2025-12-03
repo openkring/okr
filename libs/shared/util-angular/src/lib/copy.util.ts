@@ -13,8 +13,8 @@ export async function copyToClipboardWithConfirmation(toastController: ToastCont
     .then(() => {
         showToast(toastController, confirmMsg);
     })
-    .catch(_ex => {
-        error(toastController, `copy.util/copyToClibboard(${content}, confirmMsg) -> ERROR with navigator.clipboard: ${_ex}`);
+    .catch(ex => {
+        error(toastController, `copy.util/copyToClibboard(${content}, confirmMsg) -> ERROR with navigator.clipboard: ${ex}`);
     });
 }
 

@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, model, output } from '@angular/core';
-import { IonItem, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { IonItem, IonLabel, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { compareCategories } from '@bk2/shared-categories';
@@ -20,28 +20,31 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    IonItem, IonSelect, IonSelectOption, IonNote
+    IonItem, IonSelect, IonSelectOption, IonNote, IonLabel
   ],
   viewProviders: [vestFormsViewProviders],
   template: `
     <ion-item lines="none">
-      <ion-select [name]="name()" (ionChange)="onCategoryChange($event)"
-        label="{{ this.label() | translate | async }}"
-        [disabled]="isReadOnly()"
-        label-placement="floating"
-        interface="popover"
-        [value]="this.selectedCategory()"
-        [compareWith]="compareWith">
-        @for (cat of this.categories(); track cat) {
-          <ion-select-option [value]="cat">
-<!--       
-          unfortunately, Ionic is not supporting icons within ion-select-option   
-          <ion-icon slot="start" src="{{ cat.icon| svgIcon }}" />
- -->            
-            {{ '@' + cat.i18nBase + '.label' | translate | async }}
-          </ion-select-option>
-        }
-      </ion-select>
+      @if(isReadOnly()) {
+        <ion-label>{{ this.label() | translate | async }}: {{ '@' + this.selectedCategory().i18nBase + '.label' | translate | async }}</ion-label>
+      } @else {
+        <ion-select [name]="name()" (ionChange)="onCategoryChange($event)"
+          label="{{ this.label() | translate | async }}"
+          [disabled]="isReadOnly()"
+          label-placement="floating"
+          interface="popover"
+          [value]="this.selectedCategory()"
+          [compareWith]="compareWith">
+          @for (cat of this.categories(); track cat) {
+            <ion-select-option [value]="cat">
+  <!--       
+            unfortunately, Ionic is not supporting icons within ion-select-option   
+  -->            
+              {{ '@' + cat.i18nBase + '.label' | translate | async }}
+            </ion-select-option>
+          }
+        </ion-select>
+      }
     </ion-item>
     @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
@@ -73,9 +76,9 @@ export class CategoryComponent {
   }
 
   public onCategoryChange($event: Event): void {
-    const _category = ($event.target as HTMLInputElement).value as unknown as CategoryModel;
-    this.value.set(_category.id);
-    this.changed.emit(_category.id);
+    const category = ($event.target as HTMLInputElement).value as unknown as CategoryModel;
+    this.value.set(category.id);
+    this.changed.emit(category.id);
   }
 }
 

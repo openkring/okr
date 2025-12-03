@@ -1,11 +1,11 @@
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
-import { IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input, model, output } from '@angular/core';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@bk2/shared-config';
 import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
 import { LocationFormModel, locationFormModelShape, locationFormValidations } from '@bk2/location-util';
 
@@ -16,120 +16,129 @@ import { LocationFormModel, locationFormModelShape, locationFormValidations } fr
     vestForms,
     CategorySelectComponent, TextInputComponent, NumberInputComponent, ChipsComponent, 
     NotesInputComponent, ErrorNoteComponent,
-    IonGrid, IonRow, IonCol
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   <form scVestForm
     [formShape]="shape"
-    [formValue]="vm()"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
 
-    <ion-grid>
-      <!---------------------------------------------------
-        Latitude, Longitude, PlaceId, What3Words, Height, Speed, Direction 
-        --------------------------------------------------->
-      <ion-row>
-        <ion-col size="12" size-md="6">
-          <bk-text-input name="name" [value]="name()" [autofocus]="true" [copyable]="true" [readOnly]="readOnly()" (changed)="onChange('name', $event)" />  
-          <bk-error-note [errors]="nameErrors()" />                                                                                                                     
-        </ion-col>
-        <ion-col size="12" size-md="6">
-          <bk-cat-select [category]="types()!" selectedItemName="locationType()" [readOnly]="readOnly()" [withAll]=false (changed)="onChange('locationType', $event)" />
-        </ion-col>
-        <ion-col size="12" size-md="6">
-          <bk-text-input name="latitude" [value]="latitude()" [mask]="latitudeMask" [readOnly]="readOnly()" (changed)="onChange('latitude', $event)" />                                        
-        </ion-col>
-        <ion-col size="12" size-md="6">
-          <bk-text-input name="longitude" [value]="longitude()" [mask]="longitudeMask" [readOnly]="readOnly()" (changed)="onChange('longitude', $event)" />                                        
-        </ion-col>
-        <ion-col size="12" size-md="6">
-          <bk-text-input name="placeId" [value]="placeId()" [copyable]="true" [mask]="caseInsensitiveWordMask" [readOnly]="readOnly()" [showHelper]=true (changed)="onChange('placeId', $event)" />                                        
-        </ion-col>
-        <ion-col size="12" size-md="6">
-        <bk-text-input name="what3words" [value]="what3words()" [copyable]="true" [mask]="what3wordMask" [readOnly]="readOnly()" [showHelper]=true (changed)="onChange('what3words', $event)" />                                        
-        </ion-col>
-        <ion-col size="12" size-md="6">
-          <bk-number-input name="seaLevel" [value]="seaLevel()" [maxLength]=4 [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('seaLevel', $event)" />                                        
-        </ion-col>
-        <ion-col size="12" size-md="6">
-          <bk-number-input name="speed" [value]="speed()" [maxLength]=5 [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('speed', $event)" />                                        
-        </ion-col>
-        <ion-col size="12" size-md="6">
-          <bk-number-input name="direction" [value]="direction()" [maxLength]=4 [readOnly]="readOnly()" [showHelper]=true (changed)="onChange('direction', $event)" />                                        
-        </ion-col>
-      </ion-row>
+    <ion-card>
+      <ion-card-content>
+        <ion-grid>
+          <!---------------------------------------------------
+            Latitude, Longitude, PlaceId, What3Words, Height, Speed, Direction 
+            --------------------------------------------------->
+          <ion-row>
+            <ion-col size="12" size-md="6">
+              <bk-text-input name="name" [value]="name()" [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />  
+              <bk-error-note [errors]="nameErrors()" />                                                                                                                     
+            </ion-col>
+            <ion-col size="12" size-md="6">
+              <bk-cat-select [category]="types()!" selectedItemName="locationType()" [readOnly]="isReadOnly()" [withAll]=false (changed)="onFieldChange('locationType', $event)" />
+            </ion-col>
+            <ion-col size="12" size-md="6">
+              <bk-text-input name="latitude" [value]="latitude()" [mask]="latitudeMask" [readOnly]="isReadOnly()" (changed)="onFieldChange('latitude', $event)" />                                        
+            </ion-col>
+            <ion-col size="12" size-md="6">
+              <bk-text-input name="longitude" [value]="longitude()" [mask]="longitudeMask" [readOnly]="isReadOnly()" (changed)="onFieldChange('longitude', $event)" />                                        
+            </ion-col>
+            <ion-col size="12" size-md="6">
+              <bk-text-input name="placeId" [value]="placeId()" [copyable]="true" [mask]="caseInsensitiveWordMask" [readOnly]="isReadOnly()" [showHelper]=true (changed)="onFieldChange('placeId', $event)" />                                        
+            </ion-col>
+            <ion-col size="12" size-md="6">
+            <bk-text-input name="what3words" [value]="what3words()" [copyable]="true" [mask]="what3wordMask" [readOnly]="isReadOnly()" [showHelper]=true (changed)="onFieldChange('what3words', $event)" />                                        
+            </ion-col>
+            <ion-col size="12" size-md="6">
+              <bk-number-input name="seaLevel" [value]="seaLevel()" [maxLength]=4 [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('seaLevel', $event)" />                                        
+            </ion-col>
+            <ion-col size="12" size-md="6">
+              <bk-number-input name="speed" [value]="speed()" [maxLength]=5 [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('speed', $event)" />                                        
+            </ion-col>
+            <ion-col size="12" size-md="6">
+              <bk-number-input name="direction" [value]="direction()" [maxLength]=4 [readOnly]="isReadOnly()" [showHelper]=true (changed)="onFieldChange('direction', $event)" />                                        
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
 
-      <!---------------------------------------------------
-        TAG, NOTES 
-        --------------------------------------------------->
-      @if(hasRole('privileged')) {
-        <ion-row> 
-          <ion-col>
-            <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
-          </ion-col>
-        </ion-row>
-      }
+    <!---------------------------------------------------
+      TAG, NOTES 
+      --------------------------------------------------->
+    @if(hasRole('privileged')) {
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
+    }
 
-      @if(hasRole('admin')) {
-        <ion-row> 
-          <ion-col>
-            <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
-          </ion-col>
-        </ion-row>    
-      }
-    </ion-grid>
+    @if(hasRole('admin')) {
+      <bk-notes [value]="notes()" [readOnly]="isReadOnly()" (changed)="onFieldChange('notes', $event)" />
+    }
   </form>
 `
 })
 export class LocationFormComponent {
   protected modalController = inject(ModalController);
-  public vm = model.required<LocationFormModel>();
+
+  // inputs
+  public formData = model.required<LocationFormModel>();
   public currentUser = input<UserModel | undefined>();
   public types = input.required<CategoryListModel>();
   public allTags = input.required<string>();
   public readonly readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
+ // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
 
-  protected name = computed(() => this.vm().name ?? '');
-  protected locationType = computed(() => this.vm().type ?? 'geomarker');
-  protected latitude = computed(() => this.vm().latitude + '');
-  protected longitude = computed(() => this.vm().longitude + '');
-  protected placeId = computed(() => this.vm().placeId ?? '');
-  protected what3words = computed(() => this.vm().what3words ?? '');
-  protected seaLevel = computed(() => this.vm().seaLevel ?? 0);
-  protected speed = computed(() => this.vm().speed ?? 0);
-  protected direction = computed(() => this.vm().direction ?? 0);
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
-  
+  // validation and errors
   protected readonly suite = locationFormValidations;
   protected shape = locationFormModelShape;
-  private readonly validationResult = computed(() => locationFormValidations(this.vm()));
+  private readonly validationResult = computed(() => locationFormValidations(this.formData()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
+  // fields
+  protected name = computed(() => this.formData().name ?? '');
+  protected locationType = computed(() => this.formData().type ?? 'geomarker');
+  protected latitude = computed(() => this.formData().latitude + '');
+  protected longitude = computed(() => this.formData().longitude + '');
+  protected placeId = computed(() => this.formData().placeId ?? '');
+  protected what3words = computed(() => this.formData().what3words ?? '');
+  protected seaLevel = computed(() => this.formData().seaLevel ?? 0);
+  protected speed = computed(() => this.formData().speed ?? 0);
+  protected direction = computed(() => this.formData().direction ?? 0);
+  protected tags = computed(() => this.formData().tags ?? '');
+  protected notes = computed(() => this.formData().notes ?? '');
+  
+  // passing constants to template
   protected what3wordMask = What3WordMask;
   protected longitudeMask = LongitudeMask;
   protected latitudeMask = LatitudeMask;
   protected caseInsensitiveWordMask = CaseInsensitiveWordMask;
 
-  protected onValueChange(value: LocationFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number): void {
+  protected onFormChange(value: LocationFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('LocationForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
+    this.dirty.emit(true);
     if (fieldName === 'longitude' || fieldName === 'latitude') {
-      this.vm.update((vm) => ({ ...vm, type: $event + '' }));
+      this.formData.update((vm) => ({ ...vm, type: fieldValue + '' }));
     } else {
-      this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
+      this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     }
-    debugFormErrors('LocationForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+    debugFormErrors('LocationForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

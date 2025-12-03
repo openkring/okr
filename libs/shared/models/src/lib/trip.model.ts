@@ -23,3 +23,4 @@ export class TripModel implements BkModel, NamedModel, SearchableModel, TaggedMo
 }
 
 export const TripCollection = 'trips';
+export const TripModelName = 'trip';

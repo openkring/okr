@@ -80,7 +80,7 @@ export function isSearchableModel(obj: unknown): obj is SearchableModel {
 }
 
 export function isAddressableModel(obj: unknown): obj is AddressableModel {
-  return typeof obj === 'object' && obj !== null && 'fav_email' in obj && 'fav_phone' in obj && 'fav_street_name' in obj && 'fav_street_number' in obj && 'fav_zipCode' in obj && 'fav_city' in obj && 'fav_countryCode' in obj;
+  return typeof obj === 'object' && obj !== null && 'favEmail' in obj && 'favPhone' in obj && 'favStreetName' in obj && 'favStreetNumber' in obj && 'favZipCode' in obj && 'favCity' in obj && 'favCountryCode' in obj;
 }
 
 export function isPersistedModel(obj: unknown): obj is PersistedModel {

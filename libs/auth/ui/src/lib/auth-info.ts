@@ -93,7 +93,7 @@ export class AuthInfoComponent {
   public isAdmin = input.required<boolean>();
 
   public printRoles(): string {
-    const _roles = this.currentUser()?.roles ?? [];
-    return JSON.stringify(_roles);
+    const roles = this.currentUser()?.roles ?? [];
+    return JSON.stringify(roles);
   }
 }

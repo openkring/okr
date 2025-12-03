@@ -1,13 +1,10 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
 import { getTodayStr } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME } from '@bk2/shared-constants';
 
-export type MembershipNewFormModel = DeepPartial<{
+export type MembershipNewFormModel = {
   memberKey: string,
   memberName1: string,    // firstName (not visible)
   memberName2: string,    // lastName (not visible)
-  memberName: string,    // firstName lastName or orgName
   memberModelType: 'person' | 'org' | 'group',
   memberType: string,
   memberDateOfBirth: string,
@@ -19,13 +16,12 @@ export type MembershipNewFormModel = DeepPartial<{
   dateOfEntry: string,     // the first day of the new membership
   membershipCategory: string,
   membershipCategoryAbbreviation: string      // we cache this to the form in order to avoid re-loading of the Category 
-}>;
+};
 
-export const membershipNewFormModelShape: DeepRequired<MembershipNewFormModel> = {
+export const MEMBERSHIP_NEW_FORM_SHAPE: MembershipNewFormModel = {
   memberKey: DEFAULT_KEY,
   memberName1: DEFAULT_NAME,
   memberName2: DEFAULT_NAME,
-  memberName: DEFAULT_NAME,
   memberModelType: 'person',
   memberType: DEFAULT_GENDER,
   memberDateOfBirth: DEFAULT_DATE,

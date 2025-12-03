@@ -19,6 +19,7 @@
     {"path": "../../shared/config/tsconfig.lib.json"},
     {"path": "../../shared/util-core/tsconfig.lib.json"},
     {"path": "../../shared/categories/tsconfig.lib.json"},
-    {"path": "../../shared/data-access/tsconfig.lib.json"}
+    {"path": "../../shared/data-access/tsconfig.lib.json"},
+    {"path": "../../calevent/util/tsconfig.lib.json"}
   ]
 }

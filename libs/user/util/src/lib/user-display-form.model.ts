@@ -1,5 +1,3 @@
-import { DeepRequired } from 'ngx-vest-forms';
-
 import { AvatarUsage, Language, NameDisplay, PersonSortCriteria } from '@bk2/shared-models';
 
 export type UserDisplayFormModel = {
@@ -13,7 +11,7 @@ export type UserDisplayFormModel = {
   showHelpers: boolean;
 };
 
-export const userDisplayFormModelShape: DeepRequired<UserDisplayFormModel> = {
+export const USER_DISPLAY_FORM_SHAPE: UserDisplayFormModel = {
   avatarUsage: AvatarUsage.PhotoFirst,
   personSortCriteria: PersonSortCriteria.Lastname,
   userLanguage: Language.GE,

@@ -30,11 +30,11 @@ import { StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
                   <bk-text-input name="iconName" [value]="icon.name!" [mask]="mask" [readOnly]="readOnly()" [showHelper]=true />
                 </ion-col>
                 <ion-col size="12" size-md="6">                            <!-- icon size -->
-                  <bk-text-input name="iconSize" [value]="icon().size ?? ''" [mask]="sizeMask" [readOnly]="readOnly()" [maxLength]=3 [showHelper]=true />                             
+                  <bk-text-input name="iconSize" [value]="icon().size" [mask]="sizeMask" [readOnly]="readOnly()" [maxLength]=3 [showHelper]=true />                             
                 </ion-col>
                 }
                 <ion-col size="12" size-md="6">                            <!-- icon position / slot --> 
-                  <bk-string-select name="slot"  [selectedString]="icon().slot ?? 'start'" [readOnly]="readOnly()" [stringList] = "['start', 'end', 'icon-only', 'none']" />
+                  <bk-string-select name="slot"  [selectedString]="icon().slot" [readOnly]="readOnly()" [stringList] = "['start', 'end', 'icon-only', 'none']" />
                 </ion-col>
               </ion-row>
             </ion-grid>

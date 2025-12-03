@@ -68,45 +68,45 @@ export const SectionListStore = signalStore(
         patchState(store, { selectedCategory });
       },
 
-      async delete(section: SectionModel): Promise<void> {
+      async delete(section: SectionModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
         await store.sectionService.delete(section, store.appStore.currentUser());
         this.reset();
       },
 
-      async add() {
+      async add(readOnly = true) {
         const modal = await store.modalController.create({
           component: CardSelectModalComponent,
           cssClass: 'full-modal',
           componentProps: {
             categories: store.sectionTypes(),
-            slug: 'section'
+            slug: 'section',
+            readOnly
           }
         });
         modal.present();
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm') { // data = selected Category
           const section = createSection(data, store.appStore.tenantId());
-          this.edit(await store.sectionService.create(section));
+          await store.sectionService.create(section);
         }
         this.reset();
       },
 
-      async edit(sectionKey?: string): Promise<void> {
-        if (sectionKey) {
-          const section = await firstValueFrom(store.sectionService.read(sectionKey));
-          if (section) {
-            const modal = await store.modalController.create({
-              component: SectionEditModalComponent,
-              componentProps: {
-                section: section
-              }
-            });
-            modal.present();
-            const { data, role } = await modal.onWillDismiss();
-            if (role === 'confirm') {
-              if (isSection(data, store.appStore.tenantId())) {
-                store.sectionService.update(data, store.appStore.currentUser());
-              }
+      async edit(section?: SectionModel, readOnly = true): Promise<void> {
+        if (section) {
+          const modal = await store.modalController.create({
+            component: SectionEditModalComponent,
+            componentProps: {
+              section: section,
+              readOnly
+            }
+          });
+          modal.present();
+          const { data, role } = await modal.onWillDismiss();
+          if (role === 'confirm') {
+            if (isSection(data, store.appStore.tenantId())) {
+              store.sectionService.update(data, store.appStore.currentUser());
             }
           }
         }

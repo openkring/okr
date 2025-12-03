@@ -18,4 +18,5 @@ export class CompetitionLevelModel implements BkModel, SearchableModel {
   }
 }
 
-export const CompetitionLevelCollection = 'competition-levels2';
+export const CompetitionLevelCollection = 'competition-levels';
+export const CompetitionLevelModelName = 'competition-level';

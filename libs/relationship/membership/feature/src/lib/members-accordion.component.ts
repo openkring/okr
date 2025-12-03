@@ -1,15 +1,15 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
 import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { MembershipModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { DatePickerModalComponent, EmptyListComponent } from '@bk2/shared-ui';
+import { coerceBoolean, DateFormat, getItemLabel, getTodayStr, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { MembersAccordionStore } from './members-accordion.store';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
@@ -19,7 +19,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   standalone: true,
   imports: [
     TranslatePipe, DurationPipe, AsyncPipe, SvgIconPipe, CategoryLogPipe, AvatarPipe, FullNamePipe,
-    EmptyListComponent,
+    EmptyListComponent, DatePickerModalComponent,
     IonAccordion, IonItem, IonLabel, IonIcon, IonList, IonButton, IonImg, IonThumbnail
   ],
   providers: [MembersAccordionStore],
@@ -54,11 +54,13 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
       }
     </div>
   </ion-accordion>
+  <bk-date-picker-modal #datePicker [isoDate]="isoDate()" (dateSelected)="onDateSelected($event)" />
   `,
 })
 export class MembersAccordionComponent {
   protected readonly membersStore = inject(MembersAccordionStore);
   private actionSheetController = inject(ActionSheetController);
+  protected datePickerModal = viewChild.required<DatePickerModalComponent>(DatePickerModalComponent);
 
   public orgKey = input.required<string>();
   public readonly color = input('light');
@@ -66,9 +68,10 @@ export class MembersAccordionComponent {
   public readonly readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected members = computed(() => this.membersStore.members());
+  protected isoDate = signal(getTodayStr(DateFormat.IsoDate));
 
   private imgixBaseUrl = this.membersStore.appStore.env.services.imgixBaseUrl;
+  protected members = computed(() => this.membersStore.members());
 
   constructor() {
     effect(() => this.membersStore.setOrgKey(this.orgKey()));
@@ -130,7 +133,9 @@ export class MembersAccordionComponent {
           await this.membersStore.edit(member, this.isReadOnly());
           break;
         case 'endMembership':
-          await this.membersStore.end(member, this.isReadOnly());
+          this.membersStore.setCurrentMembership(member);
+          console.log('MembersAccordion.executeActions → opening date picker modal');
+          this.datePickerModal().open();
           break;
         case 'changeMcat':
           await this.membersStore.changeMembershipCategory(member, this.isReadOnly());
@@ -146,5 +151,10 @@ export class MembersAccordionComponent {
 
   protected isOngoing(membership: MembershipModel): boolean {
     return isOngoing(membership.dateOfExit);
+  }
+
+  protected async onDateSelected(isoDate: string): Promise<void> {
+    console.log(`MembersAccordion.onDateSelected → isoDate: ${isoDate}`);
+        await this.membersStore.end(isoDate);
   }
 }

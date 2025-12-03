@@ -1,5 +1,5 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, input, model, output, signal } from "@angular/core";
+import { Component, computed, input, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
@@ -7,9 +7,9 @@ import { PrivacyUsages } from "@bk2/shared-categories";
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { PrivacyUsage, UserModel } from "@bk2/shared-models";
 import { CategoryComponent, CheckboxComponent } from "@bk2/shared-ui";
-import { debugFormErrors } from "@bk2/shared-util-core";
+import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
-import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidations } from "@bk2/user-util";
+import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-privacy-form',
@@ -21,14 +21,15 @@ import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidat
     IonCard, IonCardHeader, IonCardContent, IonCardTitle,
     IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   viewProviders: [vestFormsViewProviders],
   template: `
     <form scVestForm
       [formShape]="shape"
-      [formValue]="vm()"
+      [formValue]="formData()"
       [suite]="suite" 
-      (dirtyChange)="dirtyChange.set($event)"
-      (formValueChange)="onValueChange($event)">
+      (dirtyChange)="dirty.emit($event)"
+      (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@user.privacy.title' | translate | async }}</ion-card-title>
@@ -77,37 +78,41 @@ import { UserPrivacyFormModel, userPrivacyFormModelShape, userPrivacyFormValidat
   `
 })
 export class UserPrivacyFormComponent {
-  public vm = model.required<UserPrivacyFormModel>();
+  // inputs
+  public formData = model.required<UserPrivacyFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public readOnly = input.required<boolean>();
+  public readonly readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-  private readonly validationResult = computed(() => userPrivacyFormValidations(this.vm()));
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
 
-  protected usageImages = computed(() => this.vm().usageImages ?? PrivacyUsage.Restricted);
-  protected usageDateOfBirth = computed(() => this.vm().usageDateOfBirth ?? PrivacyUsage.Restricted);
-  protected usagePostalAddress = computed(() => this.vm().usagePostalAddress ?? PrivacyUsage.Restricted);
-  protected usageEmail = computed(() => this.vm().usageEmail ?? PrivacyUsage.Restricted);
-  protected usagePhone = computed(() => this.vm().usagePhone ?? PrivacyUsage.Restricted);
-  protected usageName = computed(() => this.vm().usageName ?? PrivacyUsage.Restricted);
-  protected isScs = computed(() => this.currentUser()?.tenants.includes('scs') || this.currentUser()?.tenants.includes('test'));
-  protected srvEmail = computed(() => this.vm().srvEmail ?? true);
-
+  // validation and errors
   protected readonly suite = userPrivacyFormValidations;
-  protected readonly shape = userPrivacyFormModelShape;
+  protected readonly shape = USER_PRIVACY_FORM_SHAPE;
+  private readonly validationResult = computed(() => userPrivacyFormValidations(this.formData()));
 
+  // fields
+  protected usageImages = computed(() => this.formData().usageImages ?? PrivacyUsage.Restricted);
+  protected usageDateOfBirth = computed(() => this.formData().usageDateOfBirth ?? PrivacyUsage.Restricted);
+  protected usagePostalAddress = computed(() => this.formData().usagePostalAddress ?? PrivacyUsage.Restricted);
+  protected usageEmail = computed(() => this.formData().usageEmail ?? PrivacyUsage.Restricted);
+  protected usagePhone = computed(() => this.formData().usagePhone ?? PrivacyUsage.Restricted);
+  protected usageName = computed(() => this.formData().usageName ?? PrivacyUsage.Restricted);
+  protected isScs = computed(() => this.currentUser()?.tenants.includes('scs') || this.currentUser()?.tenants.includes('test'));
+  protected srvEmail = computed(() => this.formData().srvEmail ?? true);
+
+  // passing constants to template
   protected privacyUsages = PrivacyUsages;
 
-  protected onValueChange(value: UserPrivacyFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: UserPrivacyFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('UserPrivacyForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('UserPrivacyForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('UserPrivacyForm.onChange', this.validationResult().errors, this.currentUser());
   }
 }

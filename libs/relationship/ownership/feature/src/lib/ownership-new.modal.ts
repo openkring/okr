@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
@@ -8,7 +8,7 @@ import { AccountModel, OrgModel, PersonModel, ResourceModel, RoleName, UserModel
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
-import { newOwnership } from '@bk2/relationship-ownership-util';
+import { convertOwnershipToForm, newOwnership, OwnershipFormModel } from '@bk2/relationship-ownership-util';
 import { OwnershipNewFormComponent } from './ownership-new.form';
 
 @Component({
@@ -22,40 +22,55 @@ import { OwnershipNewFormComponent } from './ownership-new.form';
   ],
   template: `
     <bk-header title="{{ '@ownership.operation.create.label' | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content>
-      <bk-ownership-new-form [(vm)]="vm" [currentUser]="currentUser()" [readOnly]="readOnly()" (validChange)="onValidChange($event)" />
+      @if(formData(); as formData) {
+        <bk-ownership-new-form
+          [formData]="formData"
+          [currentUser]="currentUser()"
+          [readOnly]="readOnly()"
+          (formDataChange)="onFormDataChange($event)"
+        />
+      }
     </ion-content>
   `
 })
-export class OwnershipNewModalComponent implements OnInit {
+export class OwnershipNewModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
+  // inputs
   public owner = input.required<PersonModel | OrgModel>();
   public resource = input.required<ResourceModel | AccountModel>(); 
   public currentUser = input<UserModel | undefined>();
 
-  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
-  public vm = linkedSignal(() => newOwnership(this.owner(), this.resource(), this.appStore.tenantId()));
-  protected formIsValid = signal(false);
+   // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(true);   // default to true as the form is prefilled
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = linkedSignal(() => convertOwnershipToForm(newOwnership(this.owner(), this.resource(), this.appStore.tenantId())));
 
-  ngOnInit() {
-    // as we prepared everything with defaultMember and defaultOrg, we already have a valid form, so we need to signal this here.
-    this.onValidChange(true);
+  // derived signals
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+
+ /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(this.formData(), 'confirm');
   }
 
-  public async save(): Promise<boolean> {
-    return this.modalController.dismiss(this.vm(), 'confirm');
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertOwnershipToForm(newOwnership(this.owner(), this.resource(), this.appStore.tenantId())));  // reset the form
+  }
+
+  protected onFormDataChange(formData: OwnershipFormModel): void {
+    this.formData.set(formData);
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.appStore.currentUser());
-  }
-
-  protected onValidChange(valid: boolean): void {
-    this.formIsValid.set(valid);
   }
 }

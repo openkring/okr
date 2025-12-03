@@ -187,44 +187,26 @@ export function uniqueElements(duplicates: string[]): string[] {
 export interface NameObject { name: string }
 
 /**
- * Creates a full person name from two names considering the NameDisplay policy and an optional nickname.
+ * Combines two name parts into a fullname considering the NameDisplay policy.
  * @param name1 
  * @param name2 
- * @returns 
+ * @param nameDisplay: FirstLast, LastFirst, FirstOnly, LastOnly
+ * @returns the trimmed combined full name
  */
-export function getFullPersonName(name1: string, name2: string, nickName = '', nameDisplay = NameDisplay.FirstLast, useNickName = false): string {
-  if (useNickName === true && nickName && nickName.length > 0) {
-    return nickName;
-  }
-  if (!name2 || name2.length === 0) return name1; // name2 is optional
+export function getFullName(name1?: string, name2?: string, nameDisplay = NameDisplay.FirstLast): string {
+  if (!name2?.trim().length) return name1?.trim() ?? ''; // name2 is optional
+  if (!name1?.trim().length) return name2?.trim() ?? ''; // name1 is optional
   switch (nameDisplay) {
     case NameDisplay.FirstLast:
-      return createFullName(name1, name2);
+      return name1.trim() + ' ' + name2.trim();
     case NameDisplay.LastFirst:
-      return createFullName(name2, name1);
+      return name2.trim() + ' ' + name1.trim();
     case NameDisplay.FirstOnly:
-      return name1;
+      return name1.trim();
     case NameDisplay.LastOnly:
-      return name2;
-    default: die('convert.util.getName -> invalid nameDisplay=' + nameDisplay);
+      return name2.trim();
+    default: return '';
   }
-}
-
-/**
- * Safely combines two name parts into one full name.
- * @param name1 
- * @param name2 
- * @returns 
- */
-export function createFullName(name1: string, name2: string): string {
-  let _name = '';
-  if (name1 && name1.length > 0) {
-    _name = name1 + ' ';
-  }
-  if (name2 && name2.length > 0) {
-    _name = _name + name2;
-  }
-  return _name.trim();
 }
 
 /**
@@ -248,7 +230,7 @@ export function getInitials(name1: string, name2: string): string {
 export function getAvatarNames(avatars: AvatarInfo[]): string {
   let names = '';
   for (const avatar of avatars) {
-    const _name = createFullName(avatar.name1, avatar.name2);
+    const _name = getFullName(avatar.name1, avatar.name2);
     names = names.length > 0 ? names + ',' + _name : _name;
   }
   return names;
@@ -275,20 +257,20 @@ export function newAvatarInfo(name1: string, name2: string, modelType: 'person' 
 export function getAvatarInfo(model?: PersonModel | OrgModel, modelType?: string): AvatarInfo | undefined {
   if (!model || modelType === undefined) return undefined;
   if (modelType === 'person') {
-    const _person = model as PersonModel;
+    const person = model as PersonModel;
     return {
-      key: _person.bkey,
-      name1: _person.firstName,
-      name2: _person.lastName,
+      key: person.bkey,
+      name1: person.firstName,
+      name2: person.lastName,
       modelType: 'person',
       label: ''
     };
   } else {
-    const _org = model as OrgModel;
+    const org = model as OrgModel;
     return {
-      key: _org.bkey,
+      key: org.bkey,
       name1: '',
-      name2: _org.name,
+      name2: org.name,
       modelType: 'org',
       label: ''
     };
@@ -296,8 +278,8 @@ export function getAvatarInfo(model?: PersonModel | OrgModel, modelType?: string
 }
 
 export function getAvatarInfoArray(model?: PersonModel | OrgModel, modelType?: string): AvatarInfo[] {
-  const _avatarInfo = getAvatarInfo(model, modelType);
-  return _avatarInfo ? [_avatarInfo] : [];
+  const avatarInfo = getAvatarInfo(model, modelType);
+  return avatarInfo ? [avatarInfo] : [];
 }
 
 export function getAvatarInfoFromCurrentUser(currentUser?: UserModel): AvatarInfo | undefined {

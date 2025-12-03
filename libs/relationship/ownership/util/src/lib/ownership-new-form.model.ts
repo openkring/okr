@@ -1,8 +1,6 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
 import { DEFAULT_COUNT, DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_OCAT, DEFAULT_OSTATE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
 
-export type OwnershipNewFormModel = DeepPartial<{
+export type OwnershipNewFormModel = {
   ownerKey: string,
   ownerName1: string,
   ownerName2: string,
@@ -26,9 +24,9 @@ export type OwnershipNewFormModel = DeepPartial<{
   price: number,
   currency: string,
   periodicity: string,
-}>;
+};
 
-export const ownershipNewFormModelShape: DeepRequired<OwnershipNewFormModel> = {
+export const OWNERSHIP_NEW_FORM_SHAPE: OwnershipNewFormModel = {
   ownerKey: DEFAULT_KEY,
   ownerName1: DEFAULT_NAME,
   ownerName2: DEFAULT_NAME,

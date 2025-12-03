@@ -6,7 +6,6 @@ import { Observable, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { ResourceModel } from '@bk2/shared-models';
-import { AppNavigationService } from '@bk2/shared-util-angular';
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
 import { ResourceService } from '@bk2/resource-data-access';
@@ -27,7 +26,6 @@ export const ResourceEditStore = signalStore(
   withState(initialState),
   withProps(() => ({
     resourceService: inject(ResourceService),
-    appNavigationService: inject(AppNavigationService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),    
   })),
@@ -71,12 +69,11 @@ export const ResourceEditStore = signalStore(
 
       /************************************ ACTIONS ************************************* */
 
-      async save(vm: ResourceFormModel): Promise<void> {
-        const _resource = convertFormToResource(store.resource(), vm, store.appStore.tenantId());
-        await (!_resource.bkey ? 
-          store.resourceService.create(_resource, store.currentUser()) : 
-          store.resourceService.update(_resource, store.currentUser()));
-        store.appNavigationService.back();
+      async save(formData?: ResourceFormModel): Promise<void> {
+        const resource = convertFormToResource(formData, store.resource());
+        await (!resource.bkey ? 
+          store.resourceService.create(resource, store.currentUser()) : 
+          store.resourceService.update(resource, store.currentUser()));
       }
     }
   }),

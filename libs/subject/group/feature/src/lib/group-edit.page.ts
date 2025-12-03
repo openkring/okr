@@ -1,22 +1,23 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupCollection, RoleName } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
+import { GroupModelName } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { coerceBoolean } from '@bk2/shared-util-core';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { AvatarService } from '@bk2/avatar-data-access';
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
-import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
+
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { MembersAccordionComponent } from '@bk2/relationship-membership-feature';
-
 import { GroupFormComponent } from '@bk2/subject-group-ui';
-import { convertGroupToForm } from '@bk2/subject-group-util';
+import { convertGroupToForm, GroupFormModel } from '@bk2/subject-group-util';
+
+import { DEFAULT_TITLE } from '@bk2/shared-constants';
 
 import { GroupEditStore } from './group-edit.store';
 
@@ -27,51 +28,63 @@ import { GroupEditStore } from './group-edit.store';
     HeaderComponent, ChangeConfirmationComponent, GroupFormComponent,
     AvatarToolbarComponent, CommentsAccordionComponent, MembersAccordionComponent,
     TranslatePipe, AsyncPipe,
-    IonContent, IonAccordionGroup
+    IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   providers: [GroupEditStore],
+  styles: [` @media (width <= 600px) { ion-card { margin: 5px;} } `],
   template: `
-    <bk-header title="{{ '@subject.group.operation.update.label' | translate | async }}" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    <bk-header title="{{ title() | translate | async }}" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content>
-      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" title="{{ title() }}"/>
-      @if(group(); as group) {
-        <bk-group-form [(vm)]="vm" 
+      <bk-avatar-toolbar key="{{parentKey()}}" (imageSelected)="onImageSelected($event)" [readOnly]="isReadOnly()" title="{{ avatarTitle() }}"/>
+      @if(formData(); as formData) {
+        <bk-group-form
+          [formData]="formData" 
           [currentUser]="currentUser()"
-          [groupTags]="groupTags()"
-          [readOnly]="readOnly()"
-          (validChange)="formIsValid.set($event)" />
+          [allTags]="tags()"
+          [readOnly]="isReadOnly()"
+          (formDataChange)="onFormDataChange($event)"
+        />
+      }
 
-        <ion-accordion-group value="members" [multiple]="true">
-          <bk-members-accordion [orgKey]="groupKey()" />
-          <bk-comments-accordion [collectionName]="groupCollection" [parentKey]="groupKey()" />
-        </ion-accordion-group>
+      @if(group(); as group) {
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <ion-accordion-group value="members" [multiple]="true">
+              <bk-members-accordion [orgKey]="groupKey()" [readOnly]="isReadOnly()" />
+              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+            </ion-accordion-group>
+          </ion-card-content>
+        </ion-card>
       }
     </ion-content>
   `
 })
 export class GroupEditPageComponent {
-  private readonly avatarService = inject(AvatarService);
   private readonly groupEditStore = inject(GroupEditStore);
-  private readonly uploadService = inject(UploadService);
-  private readonly platform = inject(Platform);
-  private readonly env = inject(ENV);
 
+  // inputs
   public groupKey = input.required<string>();
   public readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  public formData = linkedSignal(() => convertGroupToForm(this.group()));
+
+  // derived signals and fields
+  protected title = computed(() => getTitleLabel('subject.group', this.group()?.bkey, this.isReadOnly()));
+  protected avatarTitle = computed(() => this.group()?.name ?? DEFAULT_TITLE);
+  protected readonly parentKey = computed(() => `${GroupModelName}.${this.groupKey()}`);
   protected currentUser = computed(() => this.groupEditStore.currentUser());
   protected group = computed(() => this.groupEditStore.group());
-  public vm = linkedSignal(() => convertGroupToForm(this.group()));
   protected path = computed(() => getDocumentStoragePath(this.groupEditStore.tenantId(), 'group', this.group()?.bkey));
   protected avatarKey = computed(() => `group.${this.groupKey()}`);
-  protected title = computed(() => this.group()?.name ?? '');
-  protected groupTags = computed(() => this.groupEditStore.getTags());
-
-  protected formIsValid = signal(false);
-  protected groupCollection = GroupCollection;
+  protected tags = computed(() => this.groupEditStore.getTags());
 
   constructor() {
     effect(() => {
@@ -79,8 +92,19 @@ export class GroupEditPageComponent {
     });
   }
 
+  /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.groupEditStore.save(this.vm());
+    this.formDirty.set(false);
+    await this.groupEditStore.save(this.formData());
+  }
+
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertGroupToForm(this.group()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: GroupFormModel): void {
+    this.formData.set(formData);
   }
 
   /**
@@ -88,14 +112,6 @@ export class GroupEditPageComponent {
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   public async onImageSelected(photo: Photo): Promise<void> {
-    const group = this.group();
-    if (!group) return;
-    const file = await readAsFile(photo, this.platform);
-    const avatar = newAvatarModel([this.env.tenantId], 'group', group.bkey, file.name);
-    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, '@document.operation.upload.avatar.title')
-
-    if (downloadUrl) {
-      await this.avatarService.updateOrCreate(avatar);
-    }
+    await this.groupEditStore.saveAvatar(photo);
   }
 }

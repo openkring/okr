@@ -2,24 +2,25 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, WorkrelModel } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole, isOngoing } from '@bk2/shared-util-core';
+import { getItemLabel, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { WorkrelListStore } from './workrel-list.store';
 import { ActionSheetController } from '@ionic/angular';
+import { WorkrelNamePipe } from '@bk2/relationship-workrel-util';
 
 @Component({
   selector: 'bk-workrel-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe, WorkrelNamePipe,
     ListFilterComponent, EmptyListComponent, SpinnerComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonImg, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover
@@ -79,25 +80,25 @@ import { ActionSheetController } from '@ionic/angular';
           @for(workrel of filteredWorkRels(); track $index) {
             <ion-grid (click)="showActions(workrel)">
               <ion-row>
-                <ion-col size="4">
+                <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
                       <ion-img src="{{ 'person.' + workrel.subjectKey | avatar | async}}" alt="avatar of first person" />
                     </ion-avatar>
-                    <ion-label>{{workrel.subjectName1 | fullName:workrel.subjectName2}}</ion-label>
+                    <ion-label class="ion-hide-md-down">{{workrel.subjectName1 | fullName:workrel.subjectName2}}</ion-label>
                   </ion-item>
                 </ion-col>
-                <ion-col size="4">
+                <ion-col size="6" size-md="4">
                   <ion-item lines="none">
-                    <ion-label>{{ workrel.type }}</ion-label>
+                    <ion-label>{{ workrel | workrelName:types() }}</ion-label>
                   </ion-item>
                 </ion-col>
-                <ion-col size="4">
+                <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
                       <ion-img src="{{ 'org.' + workrel.objectKey | avatar | async}}" alt="avatar of second person" />
                     </ion-avatar>
-                    <ion-label>{{workrel.objectName }}</ion-label>
+                    <ion-label class="ion-hide-md-down">{{workrel.objectName }}</ion-label>
                   </ion-item> 
                 </ion-col>
               </ion-row>
@@ -124,6 +125,8 @@ export class WorkrelListComponent {
   protected tags = computed(() => this.workrelListStore.getTags());
   protected types = computed(() => this.workrelListStore.appStore.getCategory('workrel_type'));
   protected states = computed(() => this.workrelListStore.appStore.getCategory('workrel_state'));
+  protected currentUser = computed(() => this.workrelListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.workrelListStore.appStore.env.services.imgixBaseUrl;
 
@@ -153,14 +156,17 @@ export class WorkrelListComponent {
      * @param workRel 
      */
     private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, workRel: WorkrelModel): void {
-      if (hasRole('memberAdmin', this.workrelListStore.appStore.currentUser())) {
+      if (hasRole('registered', this.currentUser())) {
+        actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      }
+      if (!(this.readOnly())) {
         actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
         if (isOngoing(workRel.validTo)) {
           actionSheetOptions.buttons.push(createActionSheetButton('endrel', this.imgixBaseUrl, 'stop-circle'));
         }
-        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
       }
-      if (hasRole('admin', this.workrelListStore.appStore.currentUser())) {
+      if (hasRole('admin', this.currentUser())) {
         actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
       }
     }
@@ -175,15 +181,19 @@ export class WorkrelListComponent {
         const actionSheet = await this.actionSheetController.create(actionSheetOptions);
         await actionSheet.present();
         const { data } = await actionSheet.onDidDismiss();
+        if (!data) return;
         switch (data.action) {
           case 'delete':
-            await this.workrelListStore.delete(workRel);
+            await this.workrelListStore.delete(workRel, this.readOnly());
             break;
           case 'edit':
-            await this.workrelListStore.edit(workRel);
+            await this.workrelListStore.edit(workRel, this.readOnly());
+            break;
+          case 'view':
+            await this.workrelListStore.edit(workRel, true);
             break;
           case 'endrel':
-            await this.workrelListStore.end(workRel);
+            await this.workrelListStore.end(workRel, this.readOnly());
             break;
         }
       }

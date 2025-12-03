@@ -10,7 +10,7 @@ import { booleanValidations, stringValidations } from './vest.util';
  * - NamedModel: name
  * - TaggedModel: tags
  * - SearchableModel: index
- * - AddressableModel: fav_email, fav_phone, fav_street, fav_zip, fav_city, fav_country
+ * - AddressableModel: favEmail, favPhone, favStreetName, favStreetNumber, favZipCode, favCity, favCountryCode
  * - PersistedModel: tenants, isArchived
  * @param model BkModel
  * @param field optional field to validate
@@ -31,13 +31,13 @@ export const baseValidations = staticSuite((model: BkModel, field?: string) => {
     stringValidations('index', model.index, LONG_NAME_LENGTH);
   }
   if (isAddressableModel(model)) {
-    stringValidations('fav_email', model.favEmail, SHORT_NAME_LENGTH);
-    stringValidations('fav_phone', model.favPhone, SHORT_NAME_LENGTH);
-    stringValidations('fav_street_name', model.favStreetName, NAME_LENGTH);
-    stringValidations('fav_street_number', model.favStreetNumber, NUMBER_LENGTH);
-    stringValidations('fav_zip_code', model.favZipCode, SHORT_NAME_LENGTH);
-    stringValidations('fav_city', model.favCity, SHORT_NAME_LENGTH);
-    stringValidations('fav_country_code', model.favCountryCode, SHORT_NAME_LENGTH);
+    stringValidations('favEmail', model.favEmail, SHORT_NAME_LENGTH);
+    stringValidations('favPhone', model.favPhone, SHORT_NAME_LENGTH);
+    stringValidations('favStreetName', model.favStreetName, NAME_LENGTH);
+    stringValidations('favStreetNumber', model.favStreetNumber, NUMBER_LENGTH);
+    stringValidations('favZipCode', model.favZipCode, SHORT_NAME_LENGTH);
+    stringValidations('favCity', model.favCity, SHORT_NAME_LENGTH);
+    stringValidations('favCountryCode', model.favCountryCode, SHORT_NAME_LENGTH);
   }
   if (isPersistedModel(model)) {  
    // tenantValidations(model.tenants);

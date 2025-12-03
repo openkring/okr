@@ -1,8 +1,7 @@
 
 import { DEFAULT_KEY, DEFAULT_LOCATION_TYPE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
-export type LocationFormModel = DeepPartial<{
+export type LocationFormModel = {
   bkey: string,
   // tenants
   // isArchived
@@ -19,9 +18,9 @@ export type LocationFormModel = DeepPartial<{
   speed: number,
   direction: number,
   notes: string,
-}>;
+};
 
-export const locationFormModelShape: DeepRequired<LocationFormModel> = {
+export const locationFormModelShape: LocationFormModel = {
   bkey: DEFAULT_KEY,
   name: DEFAULT_NAME,
   tags: DEFAULT_TAGS,

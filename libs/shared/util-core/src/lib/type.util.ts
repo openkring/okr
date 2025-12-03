@@ -1,4 +1,4 @@
-import { BaseProperty, BaseType, BkModel, MembershipModel, MetaTag, OrgModel, PersistedModel, PersonalRelModel, PersonModel, ResourceModel } from '@bk2/shared-models';
+import { BaseProperty, BaseType, BkModel, MembershipModel, MetaTag, OrgModel, PersonalRelModel, PersonModel, ResourceModel } from '@bk2/shared-models';
 import { die, warn } from './log.util';
 
 /************************************************* Tupel ********************************************************** */

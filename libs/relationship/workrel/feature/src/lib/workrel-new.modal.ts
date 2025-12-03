@@ -9,7 +9,7 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { WorkrelNewFormComponent } from '@bk2/relationship-workrel-ui';
-import { convertPersonAndOrgToNewForm } from '@bk2/relationship-workrel-util';
+import { convertPersonAndOrgToNewForm, WorkrelNewFormModel } from '@bk2/relationship-workrel-util';
 import { WorkrelModalsService } from './workrel-modals.service';
 
 @Component({
@@ -23,19 +23,22 @@ import { WorkrelModalsService } from './workrel-modals.service';
   ],
   template: `
     <bk-header title="{{ '@workrel.operation.create.label' | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content>
-      <bk-workrel-new-form [(vm)]="vm" [currentUser]="currentUser()" 
-      [allTags]="tags()" 
-      [types]="types()" 
-      [states]="states()"
-      [readOnly]="readOnly()"
-      [periodicities]="periodicities()" 
-      (selectPerson)="selectPerson()"
-      (selectOrg)="selectOrg()"
-      (validChange)="formIsValid.set($event)" />
+      <bk-workrel-new-form
+        [formData]="formData()"
+        [currentUser]="currentUser()" 
+        [allTags]="tags()" 
+        [types]="types()" 
+        [states]="states()"
+        [readOnly]="readOnly()"
+        [periodicities]="periodicities()" 
+        (selectPerson)="selectPerson()"
+        (selectOrg)="selectOrg()"
+        (formDataChange)="onFormDataChange($event)"
+      />
     </ion-content>
   `
 })
@@ -44,48 +47,64 @@ export class WorkrelNewModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
+  // inputs
   public subject = input.required<PersonModel>();
   public object = input.required<OrgModel>(); 
   public currentUser = input<UserModel | undefined>();
 
-  public vm = linkedSignal(() => convertPersonAndOrgToNewForm(this.subject(), this.object(), this.currentUser()));
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(true); // form is prefilled, so valid
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = linkedSignal(() => convertPersonAndOrgToNewForm(this.subject(), this.object(), this.currentUser()));
+
+  // derived signals
   protected tags = computed(() => this.appStore.getTags('workrel'));
   protected types = computed(() => this.appStore.getCategory('workrel_type'));
   protected states = computed(() => this.appStore.getCategory('workrel_state'));
   protected periodicities = computed(() => this.appStore.getCategory('periodicity'));
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
-  // as we prepared everything with defaultMember and defaultOrg, we already have a valid form, so we need to signal this here.
-  protected formIsValid = signal(true);
-
-  public async save(): Promise<boolean> {
-    return this.modalController.dismiss(this.vm(), 'confirm');
+  /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(this.formData(), 'confirm');
   }
 
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertPersonAndOrgToNewForm(this.subject(), this.object(), this.currentUser()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: WorkrelNewFormModel): void {
+    this.formData.set(formData);
+  }
+
+  /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
   }
 
   protected async selectPerson(): Promise<void> {
-    const _person = await this.workrelModalsService.selectPerson();
-    if (!_person) return;
-    this.vm.update((_vm) => ({
-      ..._vm, 
-      subjectKey: _person.bkey, 
-      subjectName1: _person.firstName,
-      subjectName2: _person.lastName,
-      subjectType: _person.gender,
+    const person = await this.workrelModalsService.selectPerson();
+    if (!person) return;
+    this.formData.update((vm) => ({
+      ...vm, 
+      subjectKey: person.bkey, 
+      subjectName1: person.firstName,
+      subjectName2: person.lastName,
+      subjectType: person.gender,
     }));
   }
 
   protected async selectOrg(): Promise<void> {
-    const _org = await this.workrelModalsService.selectOrg();
-    if (!_org) return;
-    this.vm.update((_vm) => ({
-      ..._vm, 
-      objectKey: _org.bkey, 
-      objectName: _org.name,
-      objectType: _org.type,
+    const org = await this.workrelModalsService.selectOrg();
+    if (!org) return;
+    this.formData.update((vm) => ({
+      ...vm, 
+      objectKey: org.bkey, 
+      objectName: org.name,
+      objectType: org.type,
     }));
   }
 }

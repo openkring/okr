@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AvatarService } from '@bk2/avatar-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AvatarInfo } from '@bk2/shared-models';
-import { createFullName, debugItemLoaded } from '@bk2/shared-util-core';
+import { debugItemLoaded, getFullName } from '@bk2/shared-util-core';
 
 export type TaskEditState = {
   author: AvatarInfo | undefined;
@@ -69,11 +69,11 @@ export const TaskEditStore = signalStore(
   withComputed((state) => {
     return {
       authorUrl: computed(() => state.authorResource.value() ?? ''),
-      authorName: computed(() => createFullName(state.author()?.name1 ?? '', state.author()?.name2 ?? '')),
+      authorName: computed(() => getFullName(state.author()?.name1, state.author()?.name2)),
       assigneeUrl: computed(() => state.assigneeResource.value() ?? ''),
-      assigneeName: computed(() => createFullName(state.assignee()?.name1 ?? '', state.assignee()?.name2 ?? '')),
+      assigneeName: computed(() => getFullName(state.assignee()?.name1, state.assignee()?.name2)),
       scopeUrl: computed(() => state.scopeResource.value() ?? ''),
-      scopeName: computed(() => createFullName(state.scope()?.name1 ?? '', state.scope()?.name2 ?? '')),
+      scopeName: computed(() => getFullName(state.scope()?.name1, state.scope()?.name2)),
       isLoading: computed(() => state.authorResource.isLoading() || state.assigneeResource.isLoading() || state.scopeResource.isLoading()),
 
       tags: computed(() => state.appStore.getTags('task')),

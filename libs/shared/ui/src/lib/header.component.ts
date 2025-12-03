@@ -5,8 +5,9 @@ import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonTitle, Ion
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { AppNavigationService } from '@bk2/shared-util-angular';
+import { coerceBoolean } from '@bk2/shared-util-core';
+
 import { SearchbarComponent } from './searchbar.component';
-import { coerceBoolean } from 'libs/shared/util-core/src/lib/type.util';
 
 @Component({
   selector: 'bk-header',

@@ -118,10 +118,10 @@ export const ReservationListStore = signalStore(
       /******************************** actions ******************************************* */
       async add(readOnly = true): Promise<void> {
         if (readOnly === false) {
-          const _person = store.currentPerson();
-          const _resource = store.defaultResource();
-          if (_person && _resource) {
-            await store.reservationModalsService.add(_person, 'person', _resource);
+          const person = store.currentPerson();
+          const resource = store.defaultResource();
+          if (person && resource) {
+            await store.reservationModalsService.add(person, 'person', resource);
             store.reservationsResource.reload();
           }
         }
@@ -136,10 +136,10 @@ export const ReservationListStore = signalStore(
 
       async end(reservation?: ReservationModel, readOnly = true): Promise<void> {
         if (reservation && readOnly === false) {
-          const _date = await selectDate(store.modalController);
-          if (!_date) return;
-          const _endDate = convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false);
-          await store.reservationService.endReservationByDate(reservation, _endDate, store.appStore.currentUser());
+          const date = await selectDate(store.modalController);
+          if (!date) return;
+          const endDate = convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false);
+          await store.reservationService.endReservationByDate(reservation, endDate, store.appStore.currentUser());
           store.reservationsResource.reload();
         }
       },

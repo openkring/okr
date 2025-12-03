@@ -1,5 +1,3 @@
-import { DeepRequired } from 'ngx-vest-forms';
-
 import { AvatarInfo, DefaultResourceInfo, ResourceInfo } from '@bk2/shared-models';
 import { getTodayStr } from '@bk2/shared-util-core';
 import { DEFAULT_CURRENCY, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE } from '@bk2/shared-constants';
@@ -26,7 +24,7 @@ export type TransferFormModel = {
   periodicity: string
 };
 
-export const transferFormModelShape: DeepRequired<TransferFormModel> = {
+export const TRANSFER_FORM_SHAPE: TransferFormModel = {
   bkey: DEFAULT_KEY,
   name: DEFAULT_NAME,
   tags: DEFAULT_TAGS,

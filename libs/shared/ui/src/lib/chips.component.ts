@@ -83,7 +83,7 @@ export class ChipsComponent {
   }
 
   public async addChip() {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: ChipSelectModalComponent,
       cssClass: 'chip-modal',
       componentProps: {
@@ -91,8 +91,8 @@ export class ChipsComponent {
         chipName: this.chipName()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       const _chip = data as string;
       const _selectedChips = this.selectedChips();

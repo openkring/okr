@@ -2,12 +2,12 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { ReservationModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { getItemLabel, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -105,6 +105,8 @@ export class ReservationListComponent {
   protected reasons = computed(() => this.reservationListStore.appStore.getCategory('reservation_reason'));
   protected states = computed(() => this.reservationListStore.appStore.getCategory('reservation_state'));
   protected popupId = computed(() => 'c_reservation_' + this.listId());
+  protected currentUser = computed(() => this.reservationListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected years = getYearList();
   private imgixBaseUrl = this.reservationListStore.appStore.env.services.imgixBaseUrl;
@@ -135,14 +137,17 @@ export class ReservationListComponent {
    * @param reservation 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {
-    if (hasRole('resourceAdmin', this.reservationListStore.appStore.currentUser())) {
+    if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
       if (isOngoing(reservation.endDate)) {
         actionSheetOptions.buttons.push(createActionSheetButton('endres', this.imgixBaseUrl, 'stop-circle'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
-    if (hasRole('admin', this.reservationListStore.appStore.currentUser())) {
+    if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
@@ -157,15 +162,19 @@ export class ReservationListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
-          await this.reservationListStore.delete(reservation);
+          await this.reservationListStore.delete(reservation, this.readOnly());
           break;
         case 'edit':
-          await this.reservationListStore.edit(reservation);
+          await this.reservationListStore.edit(reservation, this.readOnly());
+          break;
+        case 'view':
+          await this.reservationListStore.edit(reservation, true);
           break;
         case 'endres':
-          await this.reservationListStore.end(reservation);
+          await this.reservationListStore.end(reservation, this.readOnly());
           break;
       }
     }

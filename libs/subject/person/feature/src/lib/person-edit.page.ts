@@ -1,15 +1,15 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, Platform } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
 
-import { ENV } from '@bk2/shared-config';
-import { PersonCollection, RoleName } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
-import { coerceBoolean, getFullPersonName, hasRole } from '@bk2/shared-util-core';
-
-import { AvatarService } from '@bk2/avatar-data-access';
+import { PersonModelName, RoleName } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { coerceBoolean, getFullName, hasRole } from '@bk2/shared-util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { DocumentsAccordionComponent } from '@bk2/document-feature';
 import { MembershipAccordionComponent } from '@bk2/relationship-membership-feature';
 import { OwnershipAccordionComponent } from '@bk2/relationship-ownership-feature';
 import { PersonalRelAccordionComponent } from '@bk2/relationship-personal-rel-feature';
@@ -18,55 +18,58 @@ import { WorkrelAccordionComponent } from '@bk2/relationship-workrel-feature';
 import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
 
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
-import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
 import { PersonFormComponent } from '@bk2/subject-person-ui';
-import { convertPersonToForm } from '@bk2/subject-person-util';
+import { convertPersonToForm, PersonFormModel } from '@bk2/subject-person-util';
 
 import { PersonEditStore } from './person-edit.store';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-person-edit-page',
   standalone: true,
   imports: [
+    TranslatePipe, AsyncPipe,
     HeaderComponent, ChangeConfirmationComponent,
-    PersonFormComponent, AvatarToolbarComponent, AddressesAccordionComponent, CommentsAccordionComponent,
+    PersonFormComponent, AvatarToolbarComponent, AddressesAccordionComponent, CommentsAccordionComponent, DocumentsAccordionComponent,
     MembershipAccordionComponent, OwnershipAccordionComponent, ReservationsAccordionComponent,
     PersonalRelAccordionComponent, WorkrelAccordionComponent,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   providers: [PersonEditStore],
-    styles: [`
-    @media (width <= 600px) { ion-card { margin: 5px;} }
-  `],
+  styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header [title]="title()" />
-    @if(formIsValid() && !isReadOnly()) {
+    <bk-header title="{{ headerTitle() | translate | async }}" />
+    @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content no-padding>
-      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [readOnly]="isReadOnly()" title="{{ avatarTitle() }}"/>
-      @if(person(); as person) {
-        <bk-person-form [(vm)]="vm" 
+      <bk-avatar-toolbar key="{{parentKey()}}" title="{{ toolbarTitle() }}" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
+
+      @if(formData(); as formData) {
+        <bk-person-form
+          [formData]="formData" 
           [currentUser]="currentUser()"
           [priv]="priv()"
           [genders]="genders()"
           [allTags]="tags()"
           [readOnly]="isReadOnly()"
-          (validChange)="setFormIsValid($event)" />
+          (formDataChange)="onFormDataChange($event)"
+        />
+      }
 
+      @if(person(); as person) {
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="addresses" [multiple]="true">
-              <bk-addresses-accordion [parentKey]="person.bkey" parentModelType="person" [addresses]="addresses()" 
-                [readOnly]="isReadOnly()" (addressesChanged)="onAddressesChanged()" />
+              <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
               <bk-membership-accordion [member]="person" [readOnly]="isReadOnly()"/>
               <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="isReadOnly()" />
-              <bk-reservations-accordion [reserver]="person" [defaultResource]="defaultResource()" [readOnly]="isReadOnly()" />
+              <bk-reservations-accordion [reserver]="person" [resource]="defaultResource()" [readOnly]="isReadOnly()" />
               @if(hasRole('privileged') || hasRole('memberAdmin')) {
                 <bk-personal-rel-accordion [personKey]="personKey()" [readOnly]="isReadOnly()" />
                 <bk-workrel-accordion [personKey]="personKey()" [readOnly]="isReadOnly()" />
-                <bk-comments-accordion [collectionName]="personCollection" [parentKey]="personKey()" [readOnly]="isReadOnly()"/>
-                <!-- documents -->
+                <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
+                <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
               }
             </ion-accordion-group> 
           </ion-card-content>
@@ -76,30 +79,29 @@ import { PersonEditStore } from './person-edit.store';
   `
 })
 export class PersonEditPageComponent {
-  private readonly avatarService = inject(AvatarService);
-  private readonly personEditStore = inject(PersonEditStore);
-  private readonly uploadService = inject(UploadService);
-  private readonly platform = inject(Platform);
-  private readonly env = inject(ENV);
+  protected readonly personEditStore = inject(PersonEditStore);
 
+  // inputs
   public personKey = input.required<string>();
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = linkedSignal(() => convertPersonToForm(this.person()));
+
+  // derived signals
+  protected headerTitle = computed(() => getTitleLabel('subject.person', this.person()?.bkey, this.isReadOnly()));
+  protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
+  protected readonly parentKey = computed(() => `${PersonModelName}.${this.personKey()}`);
   protected priv = computed(() => this.personEditStore.privacySettings());
-  protected title = computed(() => this.isReadOnly() ? 'Person anzeigen' : 'Person ändern');
   protected currentUser = computed(() => this.personEditStore.currentUser());
   protected person = computed(() => this.personEditStore.person());
   protected defaultResource = computed(() => this.personEditStore.defaultResource());
-  protected addresses = computed(() => this.personEditStore.addresses());
-  public vm = linkedSignal(() => convertPersonToForm(this.person()));
-  protected avatarKey = computed(() => `person.${this.personKey()}`);
-  protected avatarTitle = computed(() => getFullPersonName(this.person()?.firstName ?? '', this.person()?.lastName ?? ''));
   protected tags = computed(() => this.personEditStore.getTags());
   protected genders = computed(() => this.personEditStore.appStore.getCategory('gender'));
-  protected formIsValid = computed(() => this.personEditStore.formIsValid());
-
-  protected personCollection = PersonCollection;
 
   constructor() {
     effect(() => {
@@ -109,17 +111,17 @@ export class PersonEditPageComponent {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    this.setFormIsValid(false);
-    await this.personEditStore.save(this.vm());
+    this.formDirty.set(false);
+    await this.personEditStore.save(this.formData());
   }
 
   public async cancel(): Promise<void> {
-    this.setFormIsValid(false);
-    this.vm.set(convertPersonToForm(this.person()));  // reset form
+    this.formDirty.set(false);
+    this.formData.set(convertPersonToForm(this.person()));  // reset the form
   }
 
-  protected setFormIsValid(isValid: boolean): void {
-    this.personEditStore.setFormIsValid(isValid);
+  protected onFormDataChange(formData: PersonFormModel): void {
+    this.formData.set(formData);
   }
 
   /**
@@ -127,22 +129,8 @@ export class PersonEditPageComponent {
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   public async onImageSelected(photo: Photo): Promise<void> {
-    const _person = this.person();
-    if (!_person) return;
-    const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.tenantId], 'group', _person.bkey, _file.name);
-    const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
-
-    if (_downloadUrl) {
-      await this.avatarService.updateOrCreate(_avatar);
-    }
+    await this.personEditStore.saveAvatar(photo);
   }
-
-  protected onAddressesChanged(): void {
-    this.personEditStore.reloadAddresses();
-  }
-
-
 
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {

@@ -80,7 +80,7 @@ export class PeopleListSectionComponent {
   protected isReadOnly = computed(() => this.readOnly());
   public contentChange = output<string>();
 
-  protected content = computed(() => this.section()?.properties?.content?.htmlContent ?? '<p></p>');
+  protected content = computed(() => this.section()?.properties?.content?.htmlContent || '<p></p>'); // check for undefined or empty content
   protected colSizeImage = computed(() => this.section()?.properties?.content?.colSize ?? 6);
   protected position = computed(() => this.section()?.properties?.content?.position ?? ViewPosition.None);
   protected colSizeText = computed(() => 12 - this.colSizeImage());

@@ -44,3 +44,4 @@ export class PersonalRelModel implements BkModel, SearchableModel, TaggedModel {
 }
 
 export const PersonalRelCollection = 'personal-rels';
+export const PersonalRelModelName = 'personal-rel';

@@ -1,12 +1,12 @@
 import { ResourceModel } from '@bk2/shared-models';
-import { extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@bk2/shared-util-core';
+import { addIndexElement, die, extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@bk2/shared-util-core';
 
 import { ResourceFormModel } from './resource-form.model';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 /* ----------------------------- */
-export function convertResourceToForm(resource: ResourceModel | undefined): ResourceFormModel {
-  if (!resource) return {};
+export function convertResourceToForm(resource?: ResourceModel): ResourceFormModel | undefined {
+  if (!resource) return undefined;
 
   // locker:  name = lockerNr/keyNr, subType = GenderType
   // key:     name = keyNr
@@ -31,7 +31,7 @@ export function convertResourceToForm(resource: ResourceModel | undefined): Reso
     length: resource.length,
     width: resource.width,
     height: resource.height,
-    data: resource.data,
+    data: resource.data ?? [],
     hexColor: resource.color,
     description: resource.description,
     tags: resource.tags,
@@ -50,9 +50,10 @@ function getLockerNr(resource: ResourceModel): number {
   return resource.type === 'locker' ? parseInt(extractFirstPartOfOptionalTupel(resource.name, '/')) : 0;
 }
 
-export function convertFormToResource(resource: ResourceModel | undefined, vm: ResourceFormModel, tenantId: string): ResourceModel {
-  resource ??= new ResourceModel(tenantId);
-
+export function convertFormToResource(vm?: ResourceFormModel, resource?: ResourceModel): ResourceModel {
+  if (!resource) die('resource.util.convertFormToResource: resource is mandatory.');
+  if (!vm) return resource;
+  
   resource.bkey = vm.bkey ?? DEFAULT_KEY;
   resource.name = vm.name ?? DEFAULT_NAME;
   resource.type = vm.type ?? DEFAULT_RESOURCE_TYPE;
@@ -104,3 +105,25 @@ export function getResourceTitle(resourceType: string, operation: string | undef
   const _operation = operation || isResourceAdmin ? 'update' : 'view';
   return `@resource.${resourceType}.operation.${_operation}.label`;
 }
+
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given resource based on its values.
+ * @param resource the resource for which to create the index
+ * @returns the index string
+ */
+export function getResourceIndex(resource: ResourceModel): string {
+  let index = '';
+  index = addIndexElement(index, 'n', resource.name);
+  index = addIndexElement(index, 't', resource.type);
+  index = addIndexElement(index, 'st', resource.subType);
+  return index;
+}
+
+/**
+ * Returns a string explaining the structure of the index.
+ * This can be used in info boxes on the GUI.
+ */
+export function getResourceIndexInfo(): string {
+  return 'n:name c:type st:subtype';
+}  

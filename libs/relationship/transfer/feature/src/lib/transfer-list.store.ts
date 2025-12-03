@@ -95,7 +95,8 @@ export const TransferListStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      async add(): Promise<void> {
+      async add(readOnly = true): Promise<void> {
+        if (readOnly) return;
         const _currentPerson = store.currentPerson();
         const _defaultResource = store.defaultResource();
         if (!_currentPerson || !_defaultResource) return;
@@ -107,13 +108,15 @@ export const TransferListStore = signalStore(
         console.log(`TransferListStore.export(${type}) is not yet implemented.`);
       },
 
-      async edit(transfer?: TransferModel): Promise<void> {
-        await store.transferModalsService.edit(transfer);
-        store.transfersResource.reload();
+      async edit(transfer?: TransferModel, readOnly = true): Promise<void> {
+        if (transfer && !readOnly) {
+          await store.transferModalsService.edit(transfer);
+          store.transfersResource.reload();
+        }
       },
 
-      async delete(transfer?: TransferModel): Promise<void> {
-        if (transfer) {
+      async delete(transfer?: TransferModel, readOnly = true): Promise<void> {
+        if (transfer && !readOnly) {
           await store.transferService.delete(transfer, store.currentUser());
           store.transfersResource.reload();
         }

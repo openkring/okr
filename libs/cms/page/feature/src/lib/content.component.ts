@@ -58,9 +58,9 @@ export class ContentComponent {
 
   constructor() {
     effect(() => {
-      const _id = replaceSubstring(this.id(), '@TID@', this.pageStore.appStore.env.tenantId);
-      debugMessage(`ContentComponent: pageId=${this.id()} -> ${_id}`, this.pageStore.currentUser());
-      this.pageStore.setPageId(_id);
+      const id = replaceSubstring(this.id(), '@TID@', this.pageStore.appStore.env.tenantId);
+      debugMessage(`ContentComponent: pageId=${this.id()} -> ${id}`, this.pageStore.currentUser());
+      this.pageStore.setPageId(id);
     });
   }
 }

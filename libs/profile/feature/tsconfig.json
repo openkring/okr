@@ -21,10 +21,10 @@
     {"path": "../../shared/ui/tsconfig.lib.json"},
     {"path": "../../shared/util-core/tsconfig.lib.json"},
     {"path": "../../subject/address/feature/tsconfig.lib.json"},
+    {"path": "../../subject/person/data-access/tsconfig.lib.json"},
     {"path": "../../avatar/data-access/tsconfig.lib.json"},
     {"path": "../../avatar/feature/tsconfig.lib.json"},
     {"path": "../../avatar/util/tsconfig.lib.json"},
-    {"path": "../../profile/data-access/tsconfig.lib.json"},
     {"path": "../../profile/ui/tsconfig.lib.json"},
     {"path": "../../profile/util/tsconfig.lib.json"}
   ]

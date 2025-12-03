@@ -1,18 +1,16 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
+import { Photo } from '@capacitor/camera';
 
 import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, PersonCollection, PersonModel, ResourceModel } from '@bk2/shared-models';
-import { AppNavigationService } from '@bk2/shared-util-angular';
-import { debugItemLoaded, debugListLoaded } from '@bk2/shared-util-core';
+import { PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models';
+import { debugItemLoaded } from '@bk2/shared-util-core';
 
 import { PersonService } from '@bk2/subject-person-data-access';
 import { convertFormToPerson, PersonFormModel } from '@bk2/subject-person-util';
-import { collection, query } from 'firebase/firestore';
-import { collectionData } from 'rxfire/firestore';
+import { AvatarService } from '@bk2/avatar-data-access';
 
 /**
  * the personEditPage is setting the personKey.
@@ -31,9 +29,8 @@ export const PersonEditStore = signalStore(
   withState(initialState),
   withProps(() => ({
     personService: inject(PersonService),
-    appNavigationService: inject(AppNavigationService),
     appStore: inject(AppStore),
-    modalController: inject(ModalController)
+    avatarService: inject(AvatarService),
   })),
 
   withProps((store) => ({
@@ -42,12 +39,12 @@ export const PersonEditStore = signalStore(
         personKey: store.personKey()
       }),
       stream: ({params}) => {
-        if (!params.personKey?.length) return new Observable<PersonModel>(() => {});
+        if (!params.personKey) return of(undefined);
         const person$ = store.personService.read(params.personKey);
         debugItemLoaded('PersonEditStore.person', person$, store.appStore.currentUser());
         return person$;
       }
-    }),
+    })
   })),
 
   withComputed((state) => {
@@ -57,58 +54,38 @@ export const PersonEditStore = signalStore(
       defaultResource : computed(() => state.appStore.defaultResource() ?? new ResourceModel(state.appStore.env.tenantId)),
       tenantId: computed(() => state.appStore.env.tenantId),
       privacySettings: computed(() => state.appStore.privacySettings()),
-    };
-  }),
-
-  withProps((store) => ({
-    addressesResource: rxResource({
-      params: () => ({
-        person: store.person()
-      }),
-      stream: ({params}) => {
-                if (!params.person) return of([]);
-                const _ref = query(collection(store.appStore.firestore, `${PersonCollection}/${params.person.bkey}/${AddressCollection}`));
-                return collectionData(_ref, { idField: 'bkey' }) as Observable<AddressModel[]>;
-        
-/*         if (!params.person?.bkey?.length) return new Observable<AddressModel[]>(() => {});    
-        const addresses$ = store.personService.listAddresses(params.person);
-        debugListLoaded('PersonEditStore.addresses', addresses$, store.appStore.currentUser());
-        return addresses$; */
-      }
-    }),
-  })),
-
-  withComputed((state) => {
-    return {
-      addresses: computed(() => state.addressesResource.value() ?? []),
-      isLoading: computed(() => state.addressesResource.isLoading() || state.personResource.isLoading()),
+      isLoading: computed(() => state.personResource.isLoading()),
     };
   }),
 
   withMethods((store) => {
     return {
+      reset() {
+        patchState(store, initialState);
+      },
       
       /************************************ SETTERS ************************************* */
       setPersonKey(personKey: string): void {
         patchState(store, { personKey });
       },
 
-      /******************************** getters ******************************************* */
+      /******************************** GETTERS ******************************************* */
       getTags(): string {
-        return store.appStore.getTags('person');
+        return store.appStore.getTags(PersonModelName);
       },
 
       /************************************ ACTIONS ************************************* */
-      reloadAddresses(): void {
-        store.addressesResource.reload();
+      async save(formData?: PersonFormModel): Promise<void> {
+        const person = convertFormToPerson(formData, store.person());
+        await (!person.bkey ? 
+          store.personService.create(person, store.currentUser()) : 
+          store.personService.update(person, store.currentUser()));
       },
 
-      async save(vm: PersonFormModel): Promise<void> {
-        const _person = convertFormToPerson(store.person(), vm, store.appStore.env.tenantId);
-        await (!_person.bkey ? 
-          store.personService.create(_person, store.currentUser()) : 
-          store.personService.update(_person, store.currentUser()));
-        store.appNavigationService.back();
+      async saveAvatar(photo: Photo): Promise<void> {
+        const person = store.person();
+        if (!person) return;
+        await store.avatarService.saveAvatarPhoto(photo, person.bkey, store.appStore.env.tenantId, PersonModelName);
       }
     }
   }),

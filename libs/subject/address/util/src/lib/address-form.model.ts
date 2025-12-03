@@ -1,8 +1,6 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
 import { AddressChannel, AddressUsage } from '@bk2/shared-models';
 
-export type AddressFormModel = DeepPartial<{
+export type AddressFormModel = {
   bkey: string,
   channelType: AddressChannel,
   channelLabel: string,
@@ -25,9 +23,9 @@ export type AddressFormModel = DeepPartial<{
   tags: string,
   description: string,
   parentKey: string
-}>;
+};
 
-export const addressFormModelShape: DeepRequired<AddressFormModel> = {
+export const ADDRESS_FORM_SHAPE: AddressFormModel = {
   bkey: '',
   channelType: AddressChannel.Phone,
   channelLabel: '',

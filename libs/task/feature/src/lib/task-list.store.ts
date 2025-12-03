@@ -9,7 +9,9 @@ import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQu
 
 import { TaskService } from '@bk2/task-data-access';
 
-import { TaskModalsService } from './task-modals.service';
+import { ModalController } from '@ionic/angular/standalone';
+import { TaskEditModalComponent } from 'libs/task/feature/src/lib/task-edit.modal';
+import { isTask } from '@bk2/task-util';
 
 export type TaskListState = {
   calendarName: string;
@@ -31,9 +33,9 @@ export const TaskListStore = signalStore(
   withState(initialTaskListState),
   withProps(() => ({
     taskService: inject(TaskService),
-    taskModalsService: inject(TaskModalsService),
     appStore: inject(AppStore),
-    firestoreService: inject(FirestoreService)
+    firestoreService: inject(FirestoreService),
+    modalController: inject(ModalController),
   })),
   withProps((store) => ({
     tasksResource: rxResource({
@@ -104,31 +106,45 @@ export const TaskListStore = signalStore(
 
       /******************************* actions *************************************** */
       async add(readOnly = true): Promise<void> {
-          if(!readOnly) {
-          const currentPerson = getAvatarInfoFromCurrentUser(store.currentUser());
-          if (!currentPerson) return;
-          await store.taskModalsService.add(currentPerson, store.calendarName());
-          store.tasksResource.reload();
+        if (readOnly) return;
+        const author = getAvatarInfoFromCurrentUser(store.currentUser());
+        if (!author) return;
+        const task = new TaskModel(store.appStore.tenantId());
+        task.author = author;
+        task.calendars = [store.calendarName()];
+        await this.edit(task, readOnly);
+      },
+
+      async edit(task: TaskModel, readOnly = true): Promise<void> {
+        const modal = await store.modalController.create({
+          component: TaskEditModalComponent,
+          componentProps: {
+            task: task,
+            readOnly
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data) {
+          if (isTask(data, store.tenantId())) {
+             data.bkey?.length > 0 ? 
+              await store.taskService.create(data, store.currentUser()) : 
+              await store.taskService.update(data, store.currentUser());
+          }
         }
+        store.tasksResource.reload();
       },
 
       async addName(task: TaskModel): Promise<void> {
         await store.taskService.create(task, store.currentUser());
       },
 
-      async export(): Promise<void> {
-        console.log('TaskListStore.export ist not yet implemented');
+      async export(type: string): Promise<void> {
+        console.log(`TaskListStore.export(${type}) ist not yet implemented`);
       },
 
-      async edit(task?: TaskModel, readOnly = true): Promise<void> {
-        if (!readOnly) {
-          await store.taskModalsService.edit(task);
-          store.tasksResource.reload();
-        }
-      },
-
-      async delete(task?: TaskModel): Promise<void> {
-        if (task) {
+      async delete(task?: TaskModel, readOnly = true): Promise<void> {
+        if (task && !readOnly) {
           await store.taskService.delete(task);
           store.tasksResource.reload();
         }

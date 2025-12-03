@@ -4,7 +4,7 @@ import { Suite } from 'vest';
 
 import { BkFormModel } from '@bk2/shared-models';
 import { PrettyjsonPipe } from '@bk2/shared-pipes';
-import { coerceBoolean } from 'libs/shared/util-core/src/lib/type.util';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-form-debug',
@@ -54,11 +54,11 @@ export class FormDebugComponent {
   public suite = input<Suite<string, string>>();
 
   protected validate(): void {
-    const _suite = this.suite();
-    if (_suite) {
-      const _result = _suite(this.formValue, '');
-      console.log('FormDebugComponent.validate: hasErrors = ' + _result.hasErrors());
-      console.log('                               result    =', _result);  
+    const suite = this.suite();
+    if (suite) {
+      const result = suite(this.formValue, '');
+      console.log('FormDebugComponent.validate: hasErrors = ' + result.hasErrors());
+      console.log('                               result    =', result);  
     }
   }
 }

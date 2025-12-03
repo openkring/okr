@@ -6,7 +6,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { ReservationCollection, ReservationModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
-import { getReservationSearchIndex, getReservationSearchIndexInfo } from '@bk2/relationship-reservation-util';
+import { getReservationIndex } from '@bk2/relationship-reservation-util';
 
 @Injectable({
   providedIn: 'root'
@@ -23,7 +23,7 @@ export class ReservationService {
    * @returns the document id of the stored reservation in the database
    */
   public async create(reservation: ReservationModel, currentUser?: UserModel): Promise<string | undefined> {
-    reservation.index = this.getSearchIndex(reservation);
+    reservation.index = getReservationIndex(reservation);
     return await this.firestoreService.createModel<ReservationModel>(ReservationCollection, reservation, '@reservation.operation.create', currentUser);
   }
 
@@ -44,7 +44,7 @@ export class ReservationService {
    * @returns the document id of the updated reservation or undefined if the operation failed
    */
   public async update(reservation: ReservationModel, currentUser?: UserModel, confirmMessage = '@reservation.operation.update'): Promise<string | undefined> {
-    reservation.index = this.getSearchIndex(reservation);
+    reservation.index = getReservationIndex(reservation);
     return await this.firestoreService.updateModel<ReservationModel>(ReservationCollection, reservation, false, confirmMessage, currentUser);
   }
 
@@ -118,7 +118,7 @@ export class ReservationService {
   }
 
   /*  private async selectExportType(): Promise<number | undefined> {
-     const _modal = await this.modalController.create({
+     const modal = await this.modalController.create({
        component: BkLabelSelectModalComponent,
        componentProps: {
          labels: [
@@ -129,8 +129,8 @@ export class ReservationService {
          title: '@reservation.select.title'
        }
      });
-     _modal.present();
-     const { data, role } = await _modal.onDidDismiss();
+     modal.present();
+     const { data, role } = await modal.onDidDismiss();
      if (role === 'confirm') {
        if (data !== undefined) {
          console.log('ReservationService.selectExportType: data: ' + data);
@@ -139,13 +139,4 @@ export class ReservationService {
      }
      return undefined;
    } */
-
-  /*-------------------------- search index --------------------------------*/
-  public getSearchIndex(reservation: ReservationModel): string {
-    return getReservationSearchIndex(reservation);
-  }
-
-  public getSearchIndexInfo(): string {
-    return getReservationSearchIndexInfo();
-  }
 }

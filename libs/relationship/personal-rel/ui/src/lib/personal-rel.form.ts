@@ -1,16 +1,16 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { PersonalRelFormModel, personalRelFormModelShape, personalRelFormValidations } from '@bk2/relationship-personal-rel-util';
+import { PERSONAL_REL_FORM_SHAPE, PersonalRelFormModel, personalRelFormValidations } from '@bk2/relationship-personal-rel-util';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe } from '@bk2/shared-pipes';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 @Component({
@@ -23,13 +23,14 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton,
     TextInputComponent
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   <form scVestForm
     [formShape]="shape"
-    [formValue]="vm()"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
   
     <ion-card>
       <ion-card-header>
@@ -54,11 +55,11 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME,
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="types()!" selectedItemName="type()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('type', $event)" />
+              <bk-cat-select [category]="types()!" selectedItemName="type()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('type', $event)" />
             </ion-col>
             @if(type() === 'custom') {
               <ion-col size="12" size-md="6">
-                  <bk-text-input name="label" [value]="label()" [readOnly]="readOnly()" (changed)="onChange('label', $event)" />
+                  <bk-text-input name="label" [value]="label()" [readOnly]="isReadOnly()" (changed)="onFieldChange('label', $event)" />
               </ion-col>
             }
           </ion-row>
@@ -89,10 +90,10 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME,
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-date-input name="validFrom" [storeDate]="validFrom()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('validFrom', $event)" />
+              <bk-date-input name="validFrom" [storeDate]="validFrom()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('validFrom', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-date-input name="validTo" [storeDate]="validTo()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('validTo', $event)" />
+              <bk-date-input name="validTo" [storeDate]="validTo()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('validTo', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -100,11 +101,11 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME,
     </ion-card>
 
     @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
     }
 
     @if(hasRole('admin')) {
-      <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
+      <bk-notes [value]="notes()" [readOnly]="isReadOnly()" (changed)="onFieldChange('notes', $event)" />
     }
   </form>
   `
@@ -113,49 +114,58 @@ export class PersonalRelFormComponent {
   private readonly router = inject(Router);
   private readonly modalController = inject(ModalController);
 
-  public selectPerson = output<boolean>();
 
-  public vm = model.required<PersonalRelFormModel>();
+  // inputs
+  public formData = model.required<PersonalRelFormModel>();
   public currentUser = input<UserModel | undefined>();
   public types = input.required<CategoryListModel>();
   public allTags = input.required<string>();
-  public readOnly = input(true);
+  public readonly readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected subjectKey = computed(() => this.vm().subjectKey ?? DEFAULT_KEY);
-  protected subjectFirstName = computed(() => this.vm().subjectFirstName ?? DEFAULT_NAME);
-  protected subjectLastName = computed(() => this.vm().subjectLastName ?? DEFAULT_NAME);
-  protected subjectGender = computed(() => this.vm().subjectGender ?? DEFAULT_GENDER);
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
+  public selectPerson = output<boolean>();
 
-  protected objectKey = computed(() => this.vm().objectKey ?? DEFAULT_KEY);
-  protected objectFirstName = computed(() => this.vm().objectFirstName ?? DEFAULT_NAME);
-  protected objectLastName = computed(() => this.vm().objectLastName ?? DEFAULT_NAME);
-  protected objectGender = computed(() => this.vm().objectGender ?? DEFAULT_GENDER);
+  // validation and errors
+  protected readonly suite = personalRelFormValidations;
+  protected readonly shape = PERSONAL_REL_FORM_SHAPE;
+  private readonly validationResult = computed(() => personalRelFormValidations(this.formData()));
 
-  protected type = computed(() => this.vm().type ?? DEFAULT_PERSONAL_REL);
-  protected label = computed(() => this.vm().label ?? DEFAULT_LABEL);
-  protected validFrom = computed(() => this.vm().validFrom ?? DEFAULT_DATE);
-  protected validTo = computed(() => this.vm().validTo ?? DEFAULT_DATE);
-  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
-  protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES
+  // fields
+  protected subjectKey = computed(() => this.formData().subjectKey ?? DEFAULT_KEY);
+  protected subjectFirstName = computed(() => this.formData().subjectFirstName ?? DEFAULT_NAME);
+  protected subjectLastName = computed(() => this.formData().subjectLastName ?? DEFAULT_NAME);
+  protected subjectGender = computed(() => this.formData().subjectGender ?? DEFAULT_GENDER);
+
+  protected objectKey = computed(() => this.formData().objectKey ?? DEFAULT_KEY);
+  protected objectFirstName = computed(() => this.formData().objectFirstName ?? DEFAULT_NAME);
+  protected objectLastName = computed(() => this.formData().objectLastName ?? DEFAULT_NAME);
+  protected objectGender = computed(() => this.formData().objectGender ?? DEFAULT_GENDER);
+
+  protected type = computed(() => this.formData().type ?? DEFAULT_PERSONAL_REL);
+  protected label = computed(() => this.formData().label ?? DEFAULT_LABEL);
+  protected validFrom = computed(() => this.formData().validFrom ?? DEFAULT_DATE);
+  protected validTo = computed(() => this.formData().validTo ?? DEFAULT_DATE);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES
 );
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-
-  protected readonly suite = personalRelFormValidations;
-  protected readonly shape = personalRelFormModelShape;
-  private readonly validationResult = computed(() => personalRelFormValidations(this.vm()));
-
-  protected onValueChange(value: PersonalRelFormModel): void {
-    this.vm.update((_vm) => ({ ..._vm, ...value }));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('PersonalRelForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: PersonalRelFormModel): void {
+    this.formData.update((vm) => ({ ...vm, ...value }));
+    debugFormErrors('PersonalRelForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('PersonalRelForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

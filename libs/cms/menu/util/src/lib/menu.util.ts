@@ -4,7 +4,7 @@ import { Browser } from '@capacitor/browser';
 
 import { MenuItemModel, RoleName } from '@bk2/shared-models';
 import { navigateByUrl } from '@bk2/shared-util-angular';
-import { getPropertyValue, isType, warn } from '@bk2/shared-util-core';
+import { die, getPropertyValue, isType, warn } from '@bk2/shared-util-core';
 
 import { MenuItemFormModel } from './menu-item-form.model';
 import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@bk2/shared-constants';
@@ -17,32 +17,8 @@ export function menuActionBrowse(url: string, target = '_blank'): Promise<void> 
   return Browser.open({ url: url, windowName: target });
 }
 
-export function getMenuItemTitle(menuItemKey: string | undefined): string {
-  const _operation = !menuItemKey ? 'create' : 'update';
-  return `@content.menuItem.operation.${_operation}.label`;
-}
-
-export function newMenuItemFormModel(): MenuItemFormModel {
-  return {
-    bkey: DEFAULT_KEY,
-    name: DEFAULT_NAME,
-    index: DEFAULT_INDEX,
-    action: 'navigate',
-    url: DEFAULT_URL,
-    label: DEFAULT_LABEL,
-    icon: 'help-circle',
-    data: [],
-    menuItems: [],
-    roleNeeded: 'none',
-    tenants: DEFAULT_TENANTS,
-    description: DEFAULT_NOTES,
-    tags: DEFAULT_TAGS,
-    isArchived: false,
-  };
-}
-
-export function convertMenuItemToForm(menuItem: MenuItemModel | undefined): MenuItemFormModel {
-  if (!menuItem) return newMenuItemFormModel();
+export function convertMenuItemToForm(menuItem?: MenuItemModel): MenuItemFormModel | undefined {
+  if (!menuItem) return undefined;
   return {
     bkey: menuItem.bkey ?? DEFAULT_KEY,
     name: menuItem.name ?? DEFAULT_NAME,
@@ -53,7 +29,7 @@ export function convertMenuItemToForm(menuItem: MenuItemModel | undefined): Menu
     icon: menuItem.icon ?? '',
     data: menuItem.data ?? [],
     menuItems: menuItem.menuItems ?? [],
-    roleNeeded: menuItem.roleNeeded,
+    roleNeeded: menuItem.roleNeeded ?? DEFAULT_ROLE,
     tenants: menuItem.tenants ?? DEFAULT_TENANTS,
     description: menuItem.description ?? DEFAULT_NOTES,
     tags: menuItem.tags ?? DEFAULT_TAGS,
@@ -61,8 +37,9 @@ export function convertMenuItemToForm(menuItem: MenuItemModel | undefined): Menu
   };
 }
 
-export function convertFormToMenuItem(menuItem: MenuItemModel | undefined, vm: MenuItemFormModel, tenantId: string): MenuItemModel {
-  menuItem ??= new MenuItemModel(tenantId);
+export function convertFormToMenuItem(vm?: MenuItemFormModel, menuItem?: MenuItemModel): MenuItemModel {
+  if (!menuItem) die('menu.util.convertFormToMenuItem: menuItem is mandatory.');
+  if (!vm) return menuItem;
   menuItem.name = vm.name ?? DEFAULT_NAME;
   menuItem.bkey = !vm.bkey || vm.bkey.length === 0 ? vm.name ?? DEFAULT_NAME : vm.bkey; // we want to use the name as the key of the menu item in the database
   menuItem.action = vm.action ?? DEFAULT_MENU_ACTION;
@@ -76,7 +53,7 @@ export function convertFormToMenuItem(menuItem: MenuItemModel | undefined, vm: M
   menuItem.description = vm.description ?? DEFAULT_NOTES;
   menuItem.tags = vm.tags ?? DEFAULT_TAGS;
   menuItem.isArchived = vm.isArchived ?? false;
-  menuItem.index = getSearchIndex(menuItem);
+  menuItem.index = getMenuIndex(menuItem);
   return menuItem;
 }
 
@@ -95,10 +72,10 @@ export function isMenuItem(menuItem: unknown, tenantId: string): menuItem is Men
 }
 
 /*-------------------------- SEARCH --------------------------------*/
-export function getSearchIndex(menuItem: MenuItemModel): string {
+export function getMenuIndex(menuItem: MenuItemModel): string {
   return 'n:' + menuItem.name + ' a:' + menuItem.action + ' k:' + menuItem.bkey;
 }
 
-export function getSearchIndexInfo(): string {
+export function getMenuIndexInfo(): string {
   return 'n:ame a:ction k:ey';
 }

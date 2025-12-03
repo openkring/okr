@@ -5,11 +5,11 @@ import { IonContent, Platform } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { UserCollection } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
-import { debugFormModel, getFullPersonName, hasRole } from '@bk2/shared-util-core';
+import { UserModelName } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent } from '@bk2/shared-ui';
+import { debugFormModel, getFullName, hasRole } from '@bk2/shared-util-core';
 
-import { AvatarService } from '@bk2/avatar-data-access';
+import { AvatarService, UploadService } from '@bk2/avatar-data-access';
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
 import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
 import { CommentsCardComponent } from '@bk2/comment-feature';
@@ -17,6 +17,7 @@ import { CommentsCardComponent } from '@bk2/comment-feature';
 import { UserAuthFormComponent, UserDisplayFormComponent, UserModelFormComponent, UserNotificationFormComponent, UserPrivacyFormComponent } from '@bk2/user-ui';
 import { convertAuthFormToUser, convertDisplayFormToUser, convertModelFormToUser, convertNotificationFormToUser, convertPrivacyFormToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, UserAuthFormModel, UserDisplayFormModel, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@bk2/user-util';
 import { UserEditStore } from './user-edit.store';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-user-page',
@@ -30,20 +31,20 @@ import { UserEditStore } from './user-edit.store';
   providers: [UserEditStore],
   template: `
     <bk-header title="{{ headerTitle() | translate | async }}" [showCloseButton]="false" />
-    @if(formIsValid()) {
-        <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
     <ion-content>
-      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" title="{{ avatarTitle() }}"/>
+      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" title="{{ toolbarTitle() }}"/>
       @if(user(); as user) {
-        <bk-user-model-form [(vm)]="userModelVm" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
-        <bk-user-auth-form [(vm)]="userAuthVm" [allRoles]="allRoles()" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
-        <bk-user-display-form [(vm)]="userDisplayVm" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
-        <bk-user-privacy-form [(vm)]="userPrivacyVm" [readOnly]="readOnly()" [currentUser]="currentUser()" (validChange)="formIsValid.set($event)" />
-        <bk-user-notification-form [(vm)]="userNotificationVm" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
-        <bk-chips chipName="tag" [storedChips]="user.tags" [readOnly]="readOnly()" [allChips]="userTags()" chipName="tag" (changed)="onTagsChanged($event)" />
+        <bk-user-model-form [formData]="userModelVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <bk-user-auth-form [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <bk-user-display-form [formData]="userDisplayVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <bk-user-privacy-form [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (onFormDataChange)="log($event)" />
+        <bk-user-notification-form [formData]="userNotificationVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
+        <bk-chips chipName="tag" [storedChips]="tags()" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" (changed)="onTagsChanged($event)" />
       }
-      <bk-comments-card [collectionName]="userCollection" [parentKey]="userKey()" />
+      <bk-comments-card [parentKey]="parentKey()" />
     </ion-content>
   `
 })
@@ -54,26 +55,32 @@ export class UserPageComponent{
   private readonly platform = inject(Platform);
   private readonly env = inject(ENV);
 
+  // inputs
   protected userKey = input.required<string>();
 
-  protected readonly user = computed(() => this.userEditStore.user());
-  protected readonly headerTitle = computed(() => this.user()?.bkey ? '@user.operation.update.label' : '@user.operation.create.label');
-  protected readonly avatarTitle = computed(() => getFullPersonName(this.user().firstName, this.user().lastName));
-  protected readonly avatarKey = computed(() => `person.${this.user().bkey}`);
-  protected readonly userTags = computed(() => this.userEditStore.getTags());
-  protected readonly currentUser = computed(() => this.userEditStore.currentUser());
-  protected readonly readOnly = computed(() => !hasRole('admin', this.currentUser()));
-  protected readonly allRoles = computed(() => this.userEditStore.appStore.getCategory('roles'));
-
+  // formData
   protected userAuthVm = linkedSignal(() => convertUserToAuthForm(this.user()));
   protected userDisplayVm = linkedSignal(() => convertUserToDisplayForm(this.user()));
   protected userModelVm = linkedSignal(() => convertUserToModelForm(this.user()));
   protected userPrivacyVm = linkedSignal(() => convertUserToPrivacyForm(this.user()));
   protected userNotificationVm = linkedSignal(() => convertUserToNotificationForm(this.user()));
-  protected tags = linkedSignal(() => this.user().tags);
 
-  protected formIsValid = signal(false);
-  protected userCollection = UserCollection;
+   // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+
+  // derived signals
+  protected readonly headerTitle = computed(() => getTitleLabel('user', this.user()?.bkey, this.readOnly()));
+  protected readonly toolbarTitle = computed(() => getFullName(this.user().firstName, this.user().lastName, this.user().nameDisplay));
+  protected readonly parentKey = computed(() => `${UserModelName}.${this.userKey()}`);
+  protected readonly user = computed(() => this.userEditStore.user());
+  protected readonly avatarKey = computed(() => `person.${this.user().bkey}`);
+  protected readonly allTags = computed(() => this.userEditStore.getTags());
+  protected readonly currentUser = computed(() => this.userEditStore.currentUser());
+  protected readonly readOnly = computed(() => !hasRole('admin', this.currentUser()));
+  protected readonly allRoles = computed(() => this.userEditStore.appStore.getCategory('roles'));
+  protected tags = linkedSignal(() => this.user().tags);
 
   constructor() {
     effect(() => { this.userEditStore.setUserKey(this.userKey()); });
@@ -86,13 +93,23 @@ export class UserPageComponent{
 
   /******************************* actions *************************************** */
   protected async save(): Promise<void> {
-    this.formIsValid.set(false);
+    this.formDirty.set(false);
     let user = convertAuthFormToUser(this.userAuthVm(), this.user());
     user = convertDisplayFormToUser(this.userDisplayVm(), this.user());
     user = convertModelFormToUser(this.userModelVm(), this.user());
     user = convertNotificationFormToUser(this.userNotificationVm(), this.user());
     user = convertPrivacyFormToUser(this.userPrivacyVm(), this.user());
     this.userEditStore.save(user);
+  }
+
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    // reset the forms
+    this.userModelVm.set(convertUserToModelForm(this.user()));
+    this.userDisplayVm.set(convertUserToDisplayForm(this.user()));
+    this.userNotificationVm.set(convertUserToNotificationForm(this.user()));
+    this.userPrivacyVm.set(convertUserToPrivacyForm(this.user()));
+    this.userAuthVm.set(convertUserToAuthForm(this.user()));
   }
 
  /**
@@ -112,6 +129,11 @@ export class UserPageComponent{
   }
 
   protected onTagsChanged(tags: string): void {
+    this.formDirty.set(true);
     this.tags.set(tags);
-    this.formIsValid.set(true);
-  }}
+  }
+
+  protected log(formData: any): void {
+    console.log('UserModelFormData changed:', formData, typeof formData);
+  }
+}

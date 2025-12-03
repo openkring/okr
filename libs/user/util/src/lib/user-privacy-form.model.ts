@@ -1,5 +1,3 @@
-import { DeepRequired } from 'ngx-vest-forms';
-
 import { PrivacyUsage } from '@bk2/shared-models';
 
 export type UserPrivacyFormModel = {
@@ -12,8 +10,7 @@ export type UserPrivacyFormModel = {
   srvEmail: boolean;
 };
 
-
-export const userPrivacyFormModelShape: DeepRequired<UserPrivacyFormModel> = {
+export const USER_PRIVACY_FORM_SHAPE: UserPrivacyFormModel = {
   usageImages: PrivacyUsage.Public,          
   usageDateOfBirth: PrivacyUsage.Restricted,
   usagePostalAddress: PrivacyUsage.Restricted,

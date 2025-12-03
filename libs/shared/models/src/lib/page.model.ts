@@ -20,4 +20,5 @@ export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedMo
   }
 }
 
-export const PageCollection = 'pages2';
+export const PageCollection = 'pages';
+export const PageModelName = 'page';

@@ -56,3 +56,4 @@ export class WorkrelModel implements BkModel, NamedModel, SearchableModel, Tagge
 }
 
 export const WorkrelCollection = 'workrels';
+export const WorkrelModelName = 'workrel';

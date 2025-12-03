@@ -1,7 +1,6 @@
 import { DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 
-export type GroupFormModel = DeepPartial<{
+export type GroupFormModel = {
   bkey: string,
   name: string,
   id: string,
@@ -17,9 +16,9 @@ export type GroupFormModel = DeepPartial<{
   parentKey: string,
   parentName: string,
   parentModelType: 'org' | 'group',
-}>;
+};
 
-export const groupFormModelShape: DeepRequired<GroupFormModel> = {
+export const GROUP_FORM_SHAPE: GroupFormModel = {
   bkey: DEFAULT_KEY,
   name: DEFAULT_NAME,
   id: DEFAULT_ID,

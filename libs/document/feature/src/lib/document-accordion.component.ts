@@ -1,15 +1,14 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, input } from '@angular/core';
-import { Browser } from '@capacitor/browser';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { DocumentModel, RoleName } from '@bk2/shared-models';
+import { DocumentModel } from '@bk2/shared-models';
 import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, SpinnerComponent, UploadService } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
+import { EmptyListComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { DocumentListStore } from 'libs/document/feature/src/lib/document-list.store';
 
 @Component({
   selector: 'bk-documents-accordion',
@@ -19,12 +18,13 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
     SpinnerComponent, EmptyListComponent,
     IonItem, IonLabel, IonButton, IonIcon, IonList, IonAccordion
   ],
+  providers: [DocumentListStore],
   template: `
   <ion-accordion toggle-icon-slot="start" value="documents">
     <ion-item slot="header" [color]="color()">
       <ion-label>{{ title() | translate | async }}</ion-label>
-      @if(hasRole('contentAdmin') && !readOnly()) {
-        <ion-button fill="outline" (click)="upload()">
+      @if(!isReadOnly()) {
+        <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
       }
@@ -52,39 +52,29 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   `,
 })
 export class DocumentsAccordionComponent {
-  public appStore = inject(AppStore);
-  public modalController = inject(ModalController); 
-  private readonly uploadService = inject(UploadService);
+  protected readonly documentListStore = inject(DocumentListStore);
   private actionSheetController = inject(ActionSheetController);
 
-  public documents = input.required<DocumentModel[]>();
-  public readonly path = input.required<string>();
-  public readonly color = input('primary');
+  public parentKey = input.required<string>();
+  public readonly color = input('light');
   public readonly title = input('@document.plural');
-  public readonly readOnly = input(true);
+  public readonly readOnly = input<boolean>(true);
+  protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
+  protected readonly currentUser = computed(() => this.documentListStore.appStore.currentUser());
+  protected readonly documents = computed(() => this.documentListStore.documentsOfParent() ?? []);
 
-  private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.documentListStore.appStore.env.services.imgixBaseUrl;
 
-   /**
-   * Show a modal to upload a file.
-   */
-  public async upload(): Promise<void> {
-    const file = await this.uploadService.pickFile([
-      'image/png', 
-      'image/jpg', 
-      'application/pdf', 
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-    ]);
-    if (file) {
-        await this.uploadService.uploadFile(file, this.path(), '@document.operation.upload.single.title');
-    }
+  constructor() {
+    effect(() => {
+      this.documentListStore.setParentKey(this.parentKey());
+    });
   }
+
+  protected async add(): Promise<void> {
+   await this.documentListStore.add(this.parentKey());
+  } 
 
   /**
    * Displays an ActionSheet with all possible actions on a Document. Only actions are shown, that the user has permission for.
@@ -102,11 +92,19 @@ export class DocumentsAccordionComponent {
    * @param document 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, document: DocumentModel): void {
-    if (hasRole('privileged', this.appStore.currentUser()) || hasRole('eventAdmin', this.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'document'));
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.preview', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.imgixBaseUrl, 'download'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.imgixBaseUrl, 'timeline'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.imgixBaseUrl, 'upload'));
+    }
+    if (hasRole('admin', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -120,39 +118,33 @@ export class DocumentsAccordionComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.delete(document);
+        case 'document.delete':
+          await this.documentListStore.delete(document, this.readOnly());
           break;
-        case 'edit':
-          await this.edit(document);
+        case 'document.download':
+          await this.documentListStore.download(document, this.readOnly());
           break;
-        case 'show':
-          await this.show(document);
+        case 'document.update':
+          await this.documentListStore.update(document, this.readOnly());
+          break;
+        case 'document.edit':
+          await this.documentListStore.edit(document, this.readOnly());
+          break;
+        case 'document.view':
+          await this.documentListStore.edit(document, true);
+          break;
+        case 'document.preview':
+          await this.documentListStore.preview(document, true);
+          break;
+        case 'document.showRevisions':
+          const revisions = await this.documentListStore.getRevisions(document);
+          for (const rev of revisions) {
+            console.log(` - revision: ${rev.bkey} / version: ${rev.version} / last update: ${rev.dateOfDocLastUpdate}`);
+          }
           break;
       }
     }
-  }
-
-  public async show(doc: DocumentModel): Promise<void> {
-    await Browser.open({ url: doc.url, windowName: '_blank' });
-  }
-
-  protected async edit(doc?: DocumentModel): Promise<void> {
-    if (!this.readOnly()) {
-      console.log('DocumentAccordion.edit is not yet implemented.', document);
-      // tbd: modal to edit the document
-    }
-  }
-
-  protected async delete(doc?: DocumentModel): Promise<void> {
-    if (!this.readOnly()) {
-      console.log('DocumentAccordion.delete is not yet implemented.', document);
-      // this.documentService.delete(document);
-    }
-  }
-
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.appStore.currentUser());
   }
 }

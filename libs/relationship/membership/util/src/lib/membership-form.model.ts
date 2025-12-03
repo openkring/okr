@@ -1,8 +1,6 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS } from '@bk2/shared-constants';
 
-export type MembershipFormModel = DeepPartial<{
+export type MembershipFormModel = {
   bkey: string,
   tags: string,
   notes: string
@@ -35,9 +33,9 @@ export type MembershipFormModel = DeepPartial<{
   price: number,
   currency: string,
   periodicity: string
-}>;
+};
 
-export const membershipFormModelShape: DeepRequired<MembershipFormModel> = {
+export const MEMBERSHIP_FORM_SHAPE: MembershipFormModel = {
   bkey: DEFAULT_KEY,
   tags: DEFAULT_TAGS,
   notes: DEFAULT_NOTES,

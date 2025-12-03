@@ -9,8 +9,8 @@ import { searchData } from './search.util';
  * @returns an array of ownerships for the given person.
  */
 export async function getAllOwnershipsOfOwner(firestore: Firestore, ownerId: string): Promise<OwnershipModel[]> {
-  const _query = [{ key: 'ownerKey', operator: '==', value: ownerId }];
-  return await searchData<OwnershipModel>(firestore, OwnershipCollection, _query, 'resourceName', 'asc');
+  const query = [{ key: 'ownerKey', operator: '==', value: ownerId }];
+  return await searchData<OwnershipModel>(firestore, OwnershipCollection, query, 'resourceName', 'asc');
 }
 
 /**
@@ -20,6 +20,6 @@ export async function getAllOwnershipsOfOwner(firestore: Firestore, ownerId: str
  * @returns an array of ownerships for the given resource.
  */
 export async function getAllOwnershipsOfResource(firestore: Firestore, resourceId: string): Promise<OwnershipModel[]> {
-  const _query = [{ key: 'objectKey', operator: '==', value: resourceId }];
-  return await searchData<OwnershipModel>(firestore, OwnershipCollection, _query, 'ownerName2', 'asc');
+  const query = [{ key: 'objectKey', operator: '==', value: resourceId }];
+  return await searchData<OwnershipModel>(firestore, OwnershipCollection, query, 'ownerName2', 'asc');
 }

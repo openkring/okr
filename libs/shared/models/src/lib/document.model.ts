@@ -21,6 +21,9 @@ export class DocumentModel implements BkModel, SearchableModel, TaggedModel {
   public isArchived = false;
   public index = DEFAULT_INDEX;
   public tags = DEFAULT_TAGS;
+  public parents: string[] = []; // a document can belong to more than one parent entity.
+  // for each such parent, an entry modelType.key is entered here
+  // this enables to find all documents for a given parent entity.
 
   public fullPath = DEFAULT_PATH; // {/dir}/baseName.extension in firebase storage
   public description = DEFAULT_NOTES; // a human-readable, translatable file name (i18n)
@@ -37,21 +40,17 @@ export class DocumentModel implements BkModel, SearchableModel, TaggedModel {
   public dateOfDocCreation = DEFAULT_DATE; // the date the document was created
   public dateOfDocLastUpdate = DEFAULT_DATE; // the date the document was last updated
   public locationKey = DEFAULT_KEY; // the location where an image was taken
-  public md5hash = ''; // md5hash value of the file
-  public priorVersionKey = DEFAULT_KEY;
-  public version = '';
+  public hash = ''; // hash value of the file (SHA-256)
+  public priorVersionKey = DEFAULT_KEY; // this links to prior version of the document
+  public version = '';  // this is an arbitrary version string, e.g. a timestamp that can be user defined
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }
 }
 
-// tbd: add md5hash
-// { name: 'md5hash', label: 'model.document.field.md5hash', value: false },
-//   public md5hash: string;  // from firestorage
-
-export const DocumentCollection = 'documents';
-
+export const DocumentCollection = 'docs';
+export const DocumentModelName = 'document';
 
 // tbd: Protocol can be derived for external files (absolute link: protocol)
 // ftp/s, http/s, webdav, etc.

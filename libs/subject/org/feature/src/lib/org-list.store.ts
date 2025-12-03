@@ -86,6 +86,8 @@ export const OrgListStore = signalStore(
       console.log('  tenantId: ' + store.tenantId());
       console.log('------------------------------------');
     },
+
+    /******************************** setters (filter) ******************************************* */
     setSearchTerm(searchTerm: string) {
       patchState(store, { searchTerm });
     },
@@ -95,13 +97,19 @@ export const OrgListStore = signalStore(
     setSelectedTag(selectedTag: string) {
       patchState(store, { selectedTag });
     },
+
+    /******************************** getters ******************************************* */
     getOrgTags(): string {
       return store.appStore.getTags('org');
     },
+
+    /******************************** actions ******************************************* */
     async export(type: string): Promise<void> {
       console.log(`OrgListStore.export(${type}) is not yet implemented.`);
     },
-    async add(): Promise<void> {
+
+    async add(readOnly = true): Promise<void> {
+      if (readOnly) return;
       const modal = await store.modalController.create({
         component: OrgNewModalComponent,
         componentProps: {
@@ -145,18 +153,19 @@ export const OrgListStore = signalStore(
      * @param org 
      * @returns 
      */
-    async edit(org?: OrgModel): Promise<void> {
-      console.log('OrgListStore.edit: ' + JSON.stringify(org));
-      if (!org?.bkey || org.bkey.length === 0) return;
+    async edit(org?: OrgModel, readOnly = true): Promise<void> {
+      if (!org || readOnly) return;
       store.appNavigationService.pushLink('/org/all');
-      await navigateByUrl(store.router, `/org/${org.bkey}`);
+      await navigateByUrl(store.router, `/org/${org.bkey}`, { readOnly });
       // store.orgsResource.reload();
     },
-    async delete(org?: OrgModel): Promise<void> {
+
+    async delete(org?: OrgModel, readOnly = true): Promise<void> {
       if (!org) return;
       await store.orgService.delete(org, store.currentUser());
       this.reset();
     },
+
     async copyEmailAddresses(): Promise<void> {
       const allEmails = store.filteredOrgs().map((org) => org.favEmail);
       const emails = allEmails.filter((e) => e);

@@ -52,8 +52,8 @@ export class AuthService {
       await signInWithEmailAndPassword(this.auth, credentials.loginEmail, credentials.loginPassword);
       showToast(this.toastController, '@auth.operation.login.confirmation');
       await navigateByUrl(this.router, rootUrl);
-    } catch (_ex) {
-      console.error('AuthService.login: error: ', _ex);
+    } catch (ex) {
+      console.error('AuthService.login: error: ', ex);
       await showToast(this.toastController, '@auth.operation.login.error');
       await navigateByUrl(this.router, loginUrl);
     }
@@ -64,8 +64,8 @@ export class AuthService {
       await signInWithCustomToken(this.auth, token);
       showToast(this.toastController, '@auth.operation.login.confirmation');
       await navigateByUrl(this.router, url);
-    } catch (_ex) {
-      console.error('AuthService.loginWithToken: error: ', _ex);
+    } catch (ex) {
+      console.error('AuthService.loginWithToken: error: ', ex);
       await showToast(this.toastController, '@auth.operation.login.error');
       await navigateByUrl(this.router, url);
     }
@@ -82,8 +82,8 @@ export class AuthService {
       await sendPasswordResetEmail(this.auth, loginEmail);
       await showToast(this.toastController, bkTranslate('@auth.operation.pwdreset.confirmation') + loginEmail);
       await navigateByUrl(this.router, loginUrl);
-    } catch (_ex) {
-      console.error('AuthService.resetPassword: error: ', _ex);
+    } catch (ex) {
+      console.error('AuthService.resetPassword: error: ', ex);
       await showToast(this.toastController, '@auth.operation.pwdreset.error');
       await navigateByUrl(this.router, loginUrl);
     }
@@ -94,8 +94,8 @@ export class AuthService {
       await signOut(this.auth);
       await showToast(this.toastController, '@auth.operation.logout.confirmation');
       return Promise.resolve(true);
-    } catch (_ex) {
-      console.error('AuthService.logout: error: ', _ex);
+    } catch (ex) {
+      console.error('AuthService.logout: error: ', ex);
       await showToast(this.toastController, '@auth.operation.logout.error');
       return Promise.resolve(false);
     }
@@ -114,8 +114,8 @@ export class AuthService {
     try {
       const _fbCredentials = await signInWithEmailAndPassword(this.auth, credentials.loginEmail, credentials.loginPassword);
       return _fbCredentials.user.uid;
-    } catch (_ex) {
-      warn(`AuthService.getFirebaseUid: error: ${_ex}`);
+    } catch (ex) {
+      warn(`AuthService.getFirebaseUid: error: ${ex}`);
       return undefined;
     }
   }

@@ -7,6 +7,6 @@ import { Pipe, PipeTransform } from '@angular/core';
 export class FavoriteColorPipe implements PipeTransform {
 
   transform(isFavorite: boolean): string {
-      return isFavorite ? 'primary' : '';
+      return isFavorite ? 'primary' : 'light';
   }
 }

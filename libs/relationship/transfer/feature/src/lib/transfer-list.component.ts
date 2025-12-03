@@ -5,13 +5,14 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCo
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TransferModel } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { AvatarDisplayComponent, EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
+import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { getYearList, hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { TransferListStore } from './transfer-list.store';
+import { AvatarDisplayComponent } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-transfer-list',
@@ -103,6 +104,8 @@ export class TransferListComponent {
   protected tags = computed(() => this.transferListStore.getTags());
   protected types = computed(() => this.transferListStore.appStore.getCategory('transfer_type'));
   protected states = computed(() => this.transferListStore.appStore.getCategory('transfer_state'));
+  protected currentUser = computed(() => this.transferListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected years = getYearList();
   private imgixBaseUrl = this.transferListStore.appStore.env.services.imgixBaseUrl;
@@ -111,7 +114,7 @@ export class TransferListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.transferListStore.add(); break;
+      case 'add':  await this.transferListStore.add(this.readOnly()); break;
       case 'exportRaw': await this.transferListStore.export("raw"); break;
       default: error(undefined, `TransferListComponent.call: unknown method ${selectedMethod}`);
     }
@@ -133,10 +136,11 @@ export class TransferListComponent {
    * @param transfer 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, transfer: TransferModel): void {
-    if (hasRole('resourceAdmin', this.transferListStore.appStore.currentUser())) {
+    if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
+    actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     if (hasRole('admin', this.transferListStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
@@ -152,12 +156,16 @@ export class TransferListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
-          await this.transferListStore.delete(transfer);
+          await this.transferListStore.delete(transfer, this.readOnly());
           break;
         case 'edit':
-          await this.transferListStore.edit(transfer);
+          await this.transferListStore.edit(transfer, this.readOnly());
+          break;
+        case 'view':
+          await this.transferListStore.edit(transfer, true);
           break;
       }
     }

@@ -53,15 +53,15 @@ export async function createFirebaseAccount(toastController: ToastController, lo
     //if (store.appStore.env.useEmulators) {
     //  connectFunctionsEmulator(functions, 'localhost', 5001);
     //}
-    const _createFirebaseUserFunction = httpsCallable(functions, 'createFirebaseUser');
-    const _result = await _createFirebaseUserFunction({ email: loginEmail, password, displayName });
-    const _data = _result.data as { uid: string };
+    const createFirebaseUserFunction = httpsCallable(functions, 'createFirebaseUser');
+    const result = await createFirebaseUserFunction({ email: loginEmail, password, displayName });
+    const data = result.data as { uid: string };
 
     await showToast(toastController, '@auth.operation.create.confirmation');
-    console.log(`adminops.util.createFirebaseAccount: successfully created user ${_data.uid} for ${loginEmail}`);
-    return _data.uid;
-  } catch (_ex) {
-    error(toastController, 'adminops.util.createFirebaseAccount:  -> error: ' + JSON.stringify(_ex));
+    console.log(`adminops.util.createFirebaseAccount: successfully created user ${data.uid} for ${loginEmail}`);
+    return data.uid;
+  } catch (ex) {
+    error(toastController, 'adminops.util.createFirebaseAccount:  -> error: ' + JSON.stringify(ex));
   }
 }
 
@@ -77,11 +77,11 @@ export async function getUidByEmail(loginEmail: string): Promise<string | undefi
     //if (store.appStore.env.useEmulators) {
     //  connectFunctionsEmulator(functions, 'localhost', 5001);
     //}
-    const _getUidByEmailFunction = httpsCallable(functions, 'getUidByEmail');
-    const _result = await _getUidByEmailFunction({ email: loginEmail });
-    const _data = _result.data as { uid: string };
-    console.log(`adminops.util.getUidByEmail: received uid ${_data.uid} for ${loginEmail}`);
-    return _data.uid;
+    const getUidByEmailFunction = httpsCallable(functions, 'getUidByEmail');
+    const result = await getUidByEmailFunction({ email: loginEmail });
+    const data = result.data as { uid: string };
+    console.log(`adminops.util.getUidByEmail: received uid ${data.uid} for ${loginEmail}`);
+    return data.uid;
   } catch (error) {
     console.error('adminops.util.getUidByEmail:  -> error: ' + JSON.stringify(error));
   }
@@ -99,11 +99,11 @@ export async function getFirebaseUser(uid: string): Promise<FirebaseUserModel | 
     //if (store.appStore.env.useEmulators) {
     //  connectFunctionsEmulator(functions, 'localhost', 5001);
     //}
-    const _getFirebaseUserFunction = httpsCallable(functions, 'getFirebaseUser');
-    const _result = await _getFirebaseUserFunction({ uid });
-    const _fbUser = _result.data as FirebaseUserModel;
-    console.log(`adminops.util.getFirebaseUser: received firebase user`, _fbUser);
-    return _fbUser;
+    const getFirebaseUserFunction = httpsCallable(functions, 'getFirebaseUser');
+    const result = await getFirebaseUserFunction({ uid });
+    const fbUser = result.data as FirebaseUserModel;
+    console.log(`adminops.util.getFirebaseUser: received firebase user`, fbUser);
+    return fbUser;
   } catch (error) {
     console.error('adminops.util.getFirebaseUser:  -> error: ' + JSON.stringify(error));
   }
@@ -140,8 +140,8 @@ export async function setLoginEmail(uid: string, email: string): Promise<void> {
     //if (store.appStore.env.useEmulators) {
     //  connectFunctionsEmulator(functions, 'localhost', 5001);
     //}
-    const _setLoginEmailFunction = httpsCallable(functions, 'setLoginEmail');
-    await _setLoginEmailFunction({ uid, email });
+    const setLoginEmailFunction = httpsCallable(functions, 'setLoginEmail');
+    await setLoginEmailFunction({ uid, email });
     console.log(`adminops.util.setLoginEmail: setting new email for user ${uid}`);
   } catch (error) {
     console.error('adminops.util.setLoginEmail:  -> error: ' + JSON.stringify(error));
@@ -159,8 +159,8 @@ export async function updateFirebaseUser(fbUser: FirebaseUserModel, useEmulator 
     if (useEmulator) {
       connectFunctionsEmulator(functions, 'localhost', 5001);
     }
-    const _updateFirebaseUserFunction = httpsCallable(functions, 'updateFirebaseUser');
-    await _updateFirebaseUserFunction(fbUser);
+    const updateFirebaseUserFunction = httpsCallable(functions, 'updateFirebaseUser');
+    await updateFirebaseUserFunction(fbUser);
     console.log(`adminops.util.updateFirebaseUser: user ${fbUser.uid} updated.`);
   } catch (error) {
     console.error('adminops.util.updateFirebaseUser:  -> error: ' + JSON.stringify(error));
@@ -184,23 +184,23 @@ export function generatePassword(password?: string): string {
  */
 export function createUserFromPerson(person: PersonModel, tenantId: string): UserModel {
   if (!person.bkey) die('AdminOpsUtil.createUserFromPerson: person must have a bkey.');
-  const _user = new UserModel(tenantId);
-  _user.loginEmail = person.favEmail;
-  _user.personKey = person.bkey;
-  _user.firstName = person.firstName;
-  _user.lastName = person.lastName;
-  _user.gravatarEmail = person.favEmail;
-  _user.roles = { registered: true };
-  return _user;
+  const user = new UserModel(tenantId);
+  user.loginEmail = person.favEmail;
+  user.personKey = person.bkey;
+  user.firstName = person.firstName;
+  user.lastName = person.lastName;
+  user.gravatarEmail = person.favEmail;
+  user.roles = { registered: true };
+  return user;
 }
 
 /*
   export const validateFunction = (sig: OpSignature): Promise<void> => {
     if (!sig.modelValidationType) return Promise.resolve();
-    const _validationResults = validateModel(sig.modelValidationType, sig.model);
-  if (_validationResults && _validationResults.hasErrors()) {
-    console.log(`validation errors on ${sig.model.bkey}: `, _validationResults.getErrors());
-    sig.logInfo.push(getLogInfo(sig.model.bkey, sig.model.name, `${_validationResults.errorCount} validation errors`));
+    const validationResults = validateModel(sig.modelValidationType, sig.model);
+  if (validationResults && validationResults.hasErrors()) {
+    console.log(`validation errors on ${sig.model.bkey}: `, validationResults.getErrors());
+    sig.logInfo.push(getLogInfo(sig.model.bkey, sig.model.name, `${validationResults.errorCount} validation errors`));
   } else {
     sig.logInfo.push(getLogInfo(sig.model.bkey, sig.model.name, 'ok'));
   }
@@ -212,31 +212,31 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
 // do not forget to adapt the modelValidationType in the calling function adminops.fixModels()
 /* export const fixFunction = async (sig: OpSignature): Promise<void> => {
   if (!sig.dataService) return Promise.resolve()
-  const _membership = sig.model;
-  if (isMembership(_membership) && _membership.modelType === 'relationship' 
-    && _membership.category === 'membership' && _membership.bkey) {
-      const _bexioId = _membership.properties.bexioId;
+  const membership = sig.model;
+  if (isMembership(membership) && membership.modelType === 'relationship' 
+    && membership.category === 'membership' && membership.bkey) {
+      const bexioId = membership.properties.bexioId;
     // if the membership has a bexioId
-    if (_bexioId) {
+    if (bexioId) {
       // get the corresponding subject
-      const _subject = await firstValueFrom(sig.dataService.readModel(CollectionNames.Subject, _membership.subjectKey)) as SubjectModel;
+      const subject = await firstValueFrom(sig.dataService.readModel(CollectionNames.Subject, membership.subjectKey)) as SubjectModel;
       // add the bexioID into the subject
-      _subject.bexioId = _bexioId;
+      subject.bexioId = bexioId;
       try {
-        console.log(`AOC.fixFunction: updating subject ${_subject.bkey} with bexioId ${_subject.bexioId}`);
-        //await sig.dataService.updateModel(ModelValidationType.Subject, _subject);
+        console.log(`AOC.fixFunction: updating subject ${subject.bkey} with bexioId ${subject.bexioId}`);
+        //await sig.dataService.updateModel(ModelValidationType.Subject, subject);
       }
       catch(error) {
-        console.log(`AOC.fixFunction: error updating subject ${_subject.bkey}: `, error);
+        console.log(`AOC.fixFunction: error updating subject ${subject.bkey}: `, error);
       }
       // delete the property bexioId from the memberships
-      _membership.properties.bexioId = deleteField() as unknown as string;
+      membership.properties.bexioId = deleteField() as unknown as string;
       try {
-        console.log(`AOC.fixFunction: deleting bexioId ${_bexioId} from membership ${_membership.bkey}` )
-        //await sig.dataService.updateModel(ModelValidationType.Membership, _membership);
+        console.log(`AOC.fixFunction: deleting bexioId ${bexioId} from membership ${membership.bkey}` )
+        //await sig.dataService.updateModel(ModelValidationType.Membership, membership);
       }
       catch(error) {
-        console.log(`AOC.fixFunction: error updating membership ${_membership.bkey}: `, error);
+        console.log(`AOC.fixFunction: error updating membership ${membership.bkey}: `, error);
       }
     }
   }
@@ -247,22 +247,22 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
    try {
      if (modelValidationType === ModelValidationType.Address) { // CollectionGroup
        // BEWARE: this is destructive !
-       //await setDoc(doc(getFirestore(), `${CollectionNames.Subject}/${_newModel.parentKey}/${modelValidationType}`, oldModel['bkey']), _newModel);
-       // usually, do it non-destructive like this (in this case, _newModel must contain a bkey. This is removed in the updateModel function): 
-       // await dataService.updateModel(`${CollectionNames.Subject}/${_newModel.parentKey}/${modelValidationType}`, _newModel);
+       //await setDoc(doc(getFirestore(), `${CollectionNames.Subject}/${newModel.parentKey}/${modelValidationType}`, oldModel['bkey']), newModel);
+       // usually, do it non-destructive like this (in this case, newModel must contain a bkey. This is removed in the updateModel function): 
+       // await dataService.updateModel(`${CollectionNames.Subject}/${newModel.parentKey}/${modelValidationType}`, newModel);
      } else if (modelValidationType === ModelValidationType.Comment) { // CollectionGroup
-       console.log(`set comment on ${_newModel.parentCollection}/${_newModel.parentKey}/${modelValidationType}/${oldModel['bkey']}`);
+       console.log(`set comment on ${newModel.parentCollection}/${newModel.parentKey}/${modelValidationType}/${oldModel['bkey']}`);
        // BEWARE: this is destructive !
-       //await setDoc(doc(getFirestore(), `${_newModel.parentCollection}/${_newModel.parentKey}/${modelValidationType}`, oldModel['bkey']), _newModel);
-       // usually, do it non-destructive like this (in this case, _newModel must contain a bkey. This is removed in the updateModel function):
-       // await dataService.updateModel(`${_newModel.parentCollection}/${_newModel.parentKey}/${modelValidationType}`, _newModel);
-     } else {    // Collection (in this case, _newModel must contain a bkey. This is removed in the updateModel function)
+       //await setDoc(doc(getFirestore(), `${newModel.parentCollection}/${newModel.parentKey}/${modelValidationType}`, oldModel['bkey']), newModel);
+       // usually, do it non-destructive like this (in this case, newModel must contain a bkey. This is removed in the updateModel function):
+       // await dataService.updateModel(`${newModel.parentCollection}/${newModel.parentKey}/${modelValidationType}`, newModel);
+     } else {    // Collection (in this case, newModel must contain a bkey. This is removed in the updateModel function)
        // await dataService.updateModel(modelValidationType, model);
      }
      // logInfo.push(getLogInfo(model.bkey, model.name, 'fixed'));  
    }
    catch (error) {
-     console.log('error on ' + _newModel.parentKey + '/' + oldModel['bkey'] + ': ', error);
+     console.log('error on ' + newModel.parentKey + '/' + oldModel['bkey'] + ': ', error);
    }
  }
  return Promise.resolve();
@@ -273,9 +273,9 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
   const _env = inject(ENV);
   if (isSubject(sig.model)) {
     const _collName = CollectionNames.Subject + '/' + sig.model.bkey + '/' + CollectionNames.Address;
-    const _addresses = await firstValueFrom(listModelsBySingleQuery(getFirestore(), _collName, _env.auth.tenantId, 'category', AddressChannel.BankAccount, '==', 'name', 'asc')) as AddressModel[];
-    if (_addresses?.length > 0) {
-      for (const element of _addresses) {
+    const addresses = await firstValueFrom(listModelsBySingleQuery(getFirestore(), _collName, _env.auth.tenantId, 'category', AddressChannel.BankAccount, '==', 'name', 'asc')) as AddressModel[];
+    if (addresses?.length > 0) {
+      for (const element of addresses) {
         console.log(sig.model.bkey, sig.model.firstName + ' ' + sig.model.name, element.name);
         sig.logInfo.push(getLogInfo(sig.model.bkey, sig.model.firstName + ' ' + sig.model.name, element.name));
       }
@@ -286,27 +286,27 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
 /* 
 export const checkJuniorEntryFunction = async (sig: OpSignature): Promise<void> => {
   if (isMembership(sig.model) && sig.model.subjectType === 'person' && sig.model.priority === 1 && sig.model.subType != ScsMemberType.Junioren) {
-    const _refYear = parseInt(sig.model.validFrom.substring(0, 4));
-    const _dateOfBirth = sig.model.properties.dateOfBirth;
-    if (!_dateOfBirth) {
+    const refYear = parseInt(sig.model.validFrom.substring(0, 4));
+    const dateOfBirth = sig.model.properties.dateOfBirth;
+    if (!dateOfBirth) {
       sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), 'SCS member has no dateOfBirth'));
-    } else if(getAge(_dateOfBirth, false, _refYear) < 19) {
-      const _mCat = getCategoryAbbreviation(ScsMemberTypes, sig.model.subType);
-      const _birthYear = parseInt(_dateOfBirth.substring(0, 4));
-      const _activEntry = _birthYear + 19 + '0101';
-      const _prefix = _mCat + ':' + sig.model.validFrom + '-' + sig.model.validTo + '/A:' + _activEntry + ' -> ';
+    } else if(getAge(dateOfBirth, false, refYear) < 19) {
+      const mCat = getCategoryAbbreviation(ScsMemberTypes, sig.model.subType);
+      const birthYear = parseInt(dateOfBirth.substring(0, 4));
+      const activEntry = birthYear + 19 + '0101';
+      const prefix = mCat + ':' + sig.model.validFrom + '-' + sig.model.validTo + '/A:' + activEntry + ' -> ';
       if (sig.model.validTo === END_FUTURE_DATE_STR) {
-        // if _activEntry > today, then the membership is still active
-        if (compareDate(_activEntry, getTodayStr(DateFormat.StoreDate)) > 0) {
-          sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), _prefix + 'J:' + sig.model.validFrom + '-99991231'));
+        // if activEntry > today, then the membership is still active
+        if (compareDate(activEntry, getTodayStr(DateFormat.StoreDate)) > 0) {
+          sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + '-99991231'));
         } else {
-          sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), _prefix + 'J:' + sig.model.validFrom + ', ' + _mCat + ':' + _activEntry + '-99991231'));
+          sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + ', ' + mCat + ':' + activEntry + '-99991231'));
         }
       } else 
-      if (compareDate(sig.model.validTo, _activEntry) > 0) {    // validTo > _activEntry
-        sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), _prefix + 'J:' + sig.model.validFrom + ', ' + _mCat + ':' + _activEntry + '-' + sig.model.validTo));
+      if (compareDate(sig.model.validTo, activEntry) > 0) {    // validTo > _activEntry
+        sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + ', ' + mCat + ':' + activEntry + '-' + sig.model.validTo));
       } else {
-        sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), _prefix + 'J:' + sig.model.validFrom + '-' + sig.model.validTo));
+        sig.logInfo.push(getLogInfo(sig.model.bkey, getFullPersonName(sig.model.subjectName2, sig.model.subjectName), prefix + 'J:' + sig.model.validFrom + '-' + sig.model.validTo));
       }  
     }
   }
@@ -330,65 +330,64 @@ export const checkJuniorEntryFunction = async (sig: OpSignature): Promise<void> 
 } */
 /* 
 export const updateMembershipAttributes = async (sig: OpSignature): Promise<void> => {
-  const _dataService = sig.dataService;
-  if (!_dataService) return Promise.resolve()
+  const dataService = sig.dataService;
+  if (!dataService) return Promise.resolve()
   if (isSubject(sig.model) && sig.model.modelType === 'person' && sig.model.bkey) {
 
     // 1) get all relationships of the subject
-    _dataService.listModelsBySingleQuery(CollectionNames.Membership, 'subjectKey', sig.model.bkey, '==', 'validFrom', 'asc').pipe(take(1))
-      .subscribe(async (_relationships: BaseModel[]) => {
+    dataService.listModelsBySingleQuery(CollectionNames.Membership, 'subjectKey', sig.model.bkey, '==', 'validFrom', 'asc').pipe(take(1))
+      .subscribe(async (relationships: BaseModel[]) => {
         console.log('fixing person: ' + sig.model.bkey + '/' + sig.model.firstName + ' ' + sig.model.name);
 
         console.log('  SCS:');
-        updateMembershipAttributesPerOrg(_relationships as RelationshipModel[], OrgKey.SCS, _dataService);
-
+        updateMembershipAttributesPerOrg(relationships as RelationshipModel[], OrgKey.SCS, dataService);
         console.log('  SRV:');
-        updateMembershipAttributesPerOrg(_relationships as RelationshipModel[], OrgKey.SRV, _dataService);
+        updateMembershipAttributesPerOrg(relationships as RelationshipModel[], OrgKey.SRV, dataService);
 
         console.log('  Other:');
-        updateMembershipAttributesPerOrg(_relationships as RelationshipModel[], OrgKey.Other, _dataService);
+        updateMembershipAttributesPerOrg(relationships as RelationshipModel[], OrgKey.Other, dataService);
       });
   }
 } */
 
 /*    private async executeAocOperation(modelValidationType: ModelValidationType, opLabel: string, op: (sig: OpSignature) => Promise<void>): Promise<void> {
       this.logInfo = [];
-      let _counter = 0;
-      this._logTitle.next(`Reading collection ${modelValidationType}`);
-      const _snapshot =  (modelValidationType === ModelValidationType.Address || modelValidationType === ModelValidationType.Comment) ?
+      let counter = 0;
+      this.logTitle.next(`Reading collection ${modelValidationType}`);
+      const snapshot =  (modelValidationType === ModelValidationType.Address || modelValidationType === ModelValidationType.Comment) ?
         await getDocs(collectionGroup(this.firestore, modelValidationType.toString())) :
         await getDocs(collection(this.firestore, modelValidationType.toString()));
-      const _collName = (modelValidationType === ModelValidationType.Address || modelValidationType === ModelValidationType.Comment) ? 'collectionGroup' : 'collection';
-      this._logTitle.next(`${opLabel} ${_snapshot.size} items in ${_collName} ${modelValidationType}`);
-      _snapshot.forEach((_doc) => {
-        //if (_counter > 3) return;
-        const _model = _doc.data();
-        _model['bkey'] = _doc.id;
+      const collName = (modelValidationType === ModelValidationType.Address || modelValidationType === ModelValidationType.Comment) ? 'collectionGroup' : 'collection';
+      this.logTitle.next(`${opLabel} ${snapshot.size} items in ${collName} ${modelValidationType}`);
+      snapshot.forEach((doc) => {
+        //if (counter > 3) return;
+        const model = doc.data();
+        model['bkey'] = doc.id;
         if (modelValidationType === ModelValidationType.Address) {
           // check for parentCollections (we want to ensure that we do not change anything in old Collection subjects. 
           // Only Collection subjects2 should be changed.)
-          if (_doc.ref.parent.parent?.parent?.id === CollectionNames.Subject) {
-            _counter++;
+          if (doc.ref.parent.parent?.parent?.id === CollectionNames.Subject) {
+            counter++;
             op({ modelValidationType: modelValidationType, model: _model, logInfo: this.logInfo, dataService: this.dataService });
           }
         }  else if (modelValidationType === ModelValidationType.Comment) {          
           // CHECK FOR ONLY NEW COLLECTIONS !! (before updating the data))
           // subjects2, resources6, memberships3, ownerships2, applications
-          const _parentKey = _doc.ref.parent.parent?.id;
-          const _parentCollection = _doc.ref.parent.parent?.parent?.id;
-          if (_parentCollection === PersonCollection || _parentCollection === ResourceCollection || 
-              _parentCollection === MembershipCollection || _parentCollection === OwnershipCollection) {
-            _counter++;
-            _model['parentKey'] = _parentKey;
-            _model['parentCollection'] = _parentCollection;
-            op({ modelValidationType: modelValidationType, model: _model, logInfo: this.logInfo, dataService: this.dataService });
+          const parentKey = doc.ref.parent.parent?.id;
+          const parentCollection = doc.ref.parent.parent?.parent?.id;
+          if (parentCollection === PersonCollection || parentCollection === ResourceCollection || 
+              parentCollection === MembershipCollection || parentCollection === OwnershipCollection) {
+            counter++;
+            model['parentKey'] = parentKey;
+            model['parentCollection'] = parentCollection;
+            op({ modelValidationType: modelValidationType, model: model, logInfo: this.logInfo, dataService: this.dataService });
           }
   
         } else {
-          _counter++;
-          op({ modelValidationType: modelValidationType, model: _model, logInfo: this.logInfo, dataService: this.dataService });
+          counter++;
+          op({ modelValidationType: modelValidationType, model: model, logInfo: this.logInfo, dataService: this.dataService });
         }
       });
-      console.log(_counter + ' models processed.');
+      console.log(counter + ' models processed.');
       this.logInfo.push(getLogInfo('', '', 'DONE'));
     } */

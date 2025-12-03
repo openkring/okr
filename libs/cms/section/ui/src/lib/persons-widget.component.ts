@@ -5,9 +5,10 @@ import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, ColorIonic, NameDisplay, SectionModel } from '@bk2/shared-models';
-import { AvatarLabelComponent } from '@bk2/shared-ui';
 import { navigateByUrl } from '@bk2/shared-util-angular';
-import { getFullPersonName } from '@bk2/shared-util-core';
+import { getFullName } from '@bk2/shared-util-core';
+
+import { AvatarLabelComponent } from '@bk2/avatar-ui';
 
 import { newAvatar } from '@bk2/cms-section-util';
 
@@ -54,7 +55,10 @@ import { newAvatar } from '@bk2/cms-section-util';
 export class PersonsWidgetComponent {
   private readonly router = inject(Router);
   
+  // inputs
   public section = input<SectionModel>();
+
+  // signals
   protected persons = computed(() => this.section()?.properties.persons ?? []);
   protected avatar = computed(() => this.section()?.properties.avatar ?? newAvatar());
   protected cols = computed(() => this.avatar().cols ?? 2);
@@ -66,7 +70,7 @@ export class PersonsWidgetComponent {
 
   protected getPersonLabel(person: AvatarInfo): string {
     if (!this.showName()) return '';
-    const name = getFullPersonName(person.name1 ?? '', person.name2 ?? '', '', this.nameDisplay());
+    const name = getFullName(person.name1, person.name2, this.nameDisplay());
     return (this.showLabel() && person.label && person.label.length > 0) ? `${name} (${person.label})` : name;
   }
 

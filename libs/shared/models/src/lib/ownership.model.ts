@@ -55,4 +55,5 @@ export class OwnershipModel implements BkModel, SearchableModel, TaggedModel {
   }
 }
 
-export const OwnershipCollection = 'ownerships2';
+export const OwnershipCollection = 'ownerships';
+export const OwnershipModelName = 'ownership';

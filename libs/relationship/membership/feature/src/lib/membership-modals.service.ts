@@ -7,7 +7,7 @@ import { selectDate } from "@bk2/shared-ui";
 import { convertDateFormatToString, DateFormat, isMembership } from "@bk2/shared-util-core";
 
 import { MembershipService } from "@bk2/relationship-membership-data-access";
-import { convertFormToNewMembership, MembershipNewFormModel, newMembershipForPerson } from "@bk2/relationship-membership-util";
+import { convertFormToNewMembership, getMembershipIndex, MembershipNewFormModel, newMembershipForPerson } from "@bk2/relationship-membership-util";
 
 import { CategoryChangeModalComponent } from "./membership-category-change.modal";
 import { MembershipEditModalComponent } from "./membership-edit.modal";
@@ -31,7 +31,7 @@ export class MembershipModalsService {
    */
   public async add(member?: PersonModel | OrgModel, org?: OrgModel, modelType?: 'person' | 'org'): Promise<void> {
     if (org && member && modelType) {
-      const _modal = await this.modalController.create({
+      const modal = await this.modalController.create({
         component: MembershipNewModalComponent,
         cssClass: 'small-modal',
         componentProps: {
@@ -40,11 +40,11 @@ export class MembershipModalsService {
           modelType: modelType,
         }
       });
-      _modal.present();
-      const { data, role } = await _modal.onDidDismiss();
+      modal.present();
+      const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm') {
-        const _membership = convertFormToNewMembership(data as MembershipNewFormModel, this.tenantId);
-        await this.membershipService.create(_membership, this.appStore.currentUser());
+        const membership = convertFormToNewMembership(data as MembershipNewFormModel, this.tenantId);
+        await this.membershipService.create(membership, this.appStore.currentUser());
       }
     }
   }  
@@ -54,18 +54,17 @@ export class MembershipModalsService {
    * @param membership the membership to edit
    */
   public async edit(membership?: MembershipModel, readOnly = true): Promise<void> {
-    let _membership = membership;
-    _membership ??= new MembershipModel(this.tenantId);
-    const _modal = await this.modalController.create({
+    membership ??= new MembershipModel(this.tenantId);
+    const modal = await this.modalController.create({
       component: MembershipEditModalComponent,
       componentProps: {
-        membership: _membership,
+        membership: membership,
         currentUser: this.appStore.currentUser(),
         readOnly: readOnly
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
+    modal.present();
+    const { data, role } = await modal.onDidDismiss();
     if (role === 'confirm') {
       if (isMembership(data, this.tenantId)) {
         await (!data.bkey ? 
@@ -81,24 +80,25 @@ export class MembershipModalsService {
    * @param org the organization to add a member to
    */
    public async addPersonAsMember(person: PersonModel, org: OrgModel): Promise<void> {
-      const _date = await selectDate(this.modalController);
-      if (!_date) return;
-      const _validFrom = convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate);
-      const _membership = newMembershipForPerson(person, org.bkey, org.name, new CategoryItemModel('active', 'A', 'member_active'), _validFrom);
-      _membership.index = this.membershipService.getSearchIndex(_membership);
-      await this.membershipService.create(_membership, this.appStore.currentUser());
+      const date = await selectDate(this.modalController);
+      if (!date) return;
+      const validFrom = convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate);
+      const membership = newMembershipForPerson(person, org.bkey, org.name, new CategoryItemModel('active', 'A', 'member_active'), validFrom);
+      membership.index = getMembershipIndex(membership);
+      await this.membershipService.create(membership, this.appStore.currentUser());
   } 
     
   public async changeMembershipCategory(oldMembership: MembershipModel, membershipCategory: CategoryListModel): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: CategoryChangeModalComponent,
       componentProps: {
         membership: oldMembership,
-        membershipCategory: membershipCategory
+        membershipCategory: membershipCategory,
+        currentUser: this.appStore.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
+    modal.present();
+    const { data, role } = await modal.onDidDismiss();
     if (role === 'confirm' && data !== undefined) {   // result is vm: CategoryChangeFormModel
       await this.membershipService.saveMembershipCategoryChange(oldMembership, data, membershipCategory, this.appStore.currentUser());
     }

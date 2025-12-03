@@ -1,1 +1,1 @@
-export * from './lib/profile.page';
+export * from './lib/profile-edit.page';

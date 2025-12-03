@@ -50,7 +50,7 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   public relLog = ''; // log of changes e.g.  20200715:K->A->P
   public relIsLast = true; // is this the last membership of the same kind ? (building a linked list of memberships, ordered by priority)
 
-  public price = DEFAULT_PRICE; // overwrites the default membership price MembershipCategories[_membership.membershipCategory].price
+  public price = DEFAULT_PRICE; // overwrites the default membership price MembershipCategories[membership.membershipCategory].price
   public currency = DEFAULT_CURRENCY;
   public periodicity = 'yearly';
 
@@ -59,4 +59,5 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   }
 }
 
-export const MembershipCollection = 'memberships3';
+export const MembershipCollection = 'memberships';
+export const MembershipModelName = 'membership';

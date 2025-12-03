@@ -2,11 +2,11 @@ import { AsyncPipe } from "@angular/common";
 import { Component, computed, input } from "@angular/core";
 import { IonAvatar, IonChip, IonImg, IonLabel } from "@ionic/angular/standalone";
 
-import { AvatarInfo } from "@bk2/shared-models";
+import { AvatarInfo, OrgModelName, PersonModelName } from "@bk2/shared-models";
 import { FullNamePipe } from '@bk2/shared-pipes';
-
-import { AvatarPipe } from '@bk2/avatar-ui';
 import { coerceBoolean } from "@bk2/shared-util-core";
+
+import { AvatarPipe } from './avatar.pipe';
 
 @Component({
   selector: 'bk-avatar-display',
@@ -35,13 +35,13 @@ import { coerceBoolean } from "@bk2/shared-util-core";
             @if(shouldShowName()) {
               <ion-chip>
                 <ion-avatar>
-                  <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:defaultIcon() | async }}" alt="Avatar of person or org" />
+                  <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) | async }}" alt="Avatar of person or org" />
                 </ion-avatar>
                   <ion-label><small>{{ avatars[0].name1 | fullName:avatars[0].name2 }}</small></ion-label>
               </ion-chip>   
             } @else {
               <ion-avatar>
-                <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:defaultIcon() | async }}" alt="Avatar of person or org" />
+                <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) | async }}" alt="Avatar of person or org" />
               </ion-avatar>
             }
           } @else {
@@ -54,7 +54,7 @@ import { coerceBoolean } from "@bk2/shared-util-core";
               @for(avatar of avatars; track $index) {
                 @if(avatar.key && avatar.key.length > 0) {
                   <ion-avatar [class.stacked-avatar]="true" [style.zIndex]="avatars.length - $index">
-                    <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:defaultIcon() | async }}" alt="Avatar of person or org" />
+                    <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) | async }}" alt="Avatar of person or org" />
                   </ion-avatar>
                 } 
               }
@@ -69,7 +69,21 @@ import { coerceBoolean } from "@bk2/shared-util-core";
 })
 export class AvatarDisplayComponent {
   public avatars = input<AvatarInfo[]>([]);
-  public defaultIcon = input('other');
   public showName = input(true);
   protected shouldShowName = computed(() => coerceBoolean(this.showName()));
+
+  protected getDefaultIcon(modelType: string): string {
+    switch (modelType) {
+      case 'person':
+        return PersonModelName;
+      case 'org':
+        return OrgModelName;
+      case 'account':
+        return 'bank_account';
+      case 'resource': 
+        return 'resource';
+      default:
+        return 'other';
+    }
+  }
 }

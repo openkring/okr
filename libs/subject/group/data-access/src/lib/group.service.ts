@@ -4,7 +4,9 @@ import { Observable } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { GroupCollection, GroupModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+
+import { getGroupIndex } from '@bk2/subject-group-util';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +23,7 @@ export class GroupService  {
    * @returns the document id of the newly created Group or undefined if the operation failed
    */ 
   public async create(group: GroupModel, currentUser?: UserModel): Promise<string | undefined> {
-    group.index = this.getSearchIndex(group);
+    group.index = getGroupIndex(group);
     return await this.firestoreService.createModel<GroupModel>(GroupCollection, group, '@subject.group.operation.create', currentUser);
   }
   
@@ -42,7 +44,7 @@ export class GroupService  {
    * @returns the key of the updated group or undefined if the operation failed
    */
   public async update(group: GroupModel, currentUser?: UserModel, confirmMessage = '@subject.group.operation.update'): Promise<string | undefined > {
-    group.index = this.getSearchIndex(group);
+    group.index = getGroupIndex(group);
     return await this.firestoreService.updateModel<GroupModel>(GroupCollection, group, false, confirmMessage, currentUser);
   }
 
@@ -65,26 +67,5 @@ export class GroupService  {
    */
   public list(orderBy = 'id', sortOrder = 'asc'): Observable<GroupModel[]> {
     return this.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
-  }
-
-  /*-------------------------- search index --------------------------------*/
-  /**
-   * Create an index entry for a given group based on its values.
-   * @param group the group to generate the index for 
-   * @returns the index string
-   */
-  public getSearchIndex(group: GroupModel): string {
-    let index = '';
-    index = addIndexElement(index, 'n', group.name);
-    index = addIndexElement(index, 'id', group.id);
-    return index;
-  }
-
-  /**
-   * Returns a string explaining the structure of the index.
-   * This can be used in info boxes on the GUI.
-   */
-  public getSearchIndexInfo(): string {
-    return 'n:name id:id';
   }
 }

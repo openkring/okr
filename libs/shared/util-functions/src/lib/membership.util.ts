@@ -9,8 +9,8 @@ import { searchData } from './search.util';
  * @returns an array of memberships for the given member.
  */
 export async function getAllMembershipsOfMember(firestore: Firestore, memberId: string): Promise<MembershipModel[]> {
-  const _query = [{ key: 'memberKey', operator: '==', value: memberId }];
-  return await searchData<MembershipModel>(firestore, MembershipCollection, _query, 'orgName', 'asc');
+  const query = [{ key: 'memberKey', operator: '==', value: memberId }];
+  return await searchData<MembershipModel>(firestore, MembershipCollection, query, 'orgName', 'asc');
 }
 
 /**
@@ -20,6 +20,6 @@ export async function getAllMembershipsOfMember(firestore: Firestore, memberId: 
  * @returns an array of memberships for the given organization.
  */
 export async function getAllMembershipsOfOrg(firestore: Firestore, orgId: string): Promise<MembershipModel[]> {
-  const _query = [{ key: 'orgKey', operator: '==', value: orgId }];
-  return await searchData<MembershipModel>(firestore, MembershipCollection, _query, 'memberName2', 'asc');
+  const query = [{ key: 'orgKey', operator: '==', value: orgId }];
+  return await searchData<MembershipModel>(firestore, MembershipCollection, query, 'memberName2', 'asc');
 }

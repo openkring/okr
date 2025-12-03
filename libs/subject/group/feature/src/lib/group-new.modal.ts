@@ -1,14 +1,15 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { GroupNewFormComponent } from '@bk2/subject-group-ui';
-import { createNewGroupFormModel } from '@bk2/subject-group-util';
+import { GROUP_NEW_FORM_SHAPE, GroupNewFormModel } from '@bk2/subject-group-util';
 
 @Component({
   selector: 'bk-group-new-modal',
@@ -20,11 +21,17 @@ import { createNewGroupFormModel } from '@bk2/subject-group-util';
   ],
   template: `
     <bk-header title="{{ '@subject.group.operation.create.label' | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content>
-      <bk-group-new-form [(vm)]="vm" [currentUser]="currentUser()" [groupTags]="groupTags()" [readOnly]="readOnly()" (validChange)="onValidChange($event)" />
+    <ion-content no-padding>
+      <bk-group-new-form
+        [formData]="formData()"
+        [currentUser]="currentUser()"
+        [allTags]="tags()"
+        [readOnly]="isReadOnly()"
+        (formDataChange)="onFormDataChange($event)" 
+      />
     </ion-content>
   `
 })
@@ -32,19 +39,32 @@ export class GroupNewModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
+  // inputs
   public currentUser = input<UserModel | undefined>();
   public readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public vm = linkedSignal(() => createNewGroupFormModel());
-  protected readonly groupTags = computed(() => this.appStore.getTags('group'));
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = signal(GROUP_NEW_FORM_SHAPE);
 
-  protected formIsValid = signal(false);
+  // fields
+  protected readonly tags = computed(() => this.appStore.getTags('group'));
 
-  public async save(): Promise<boolean> {
-    return this.modalController.dismiss(this.vm(), 'confirm');
+  /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(this.formData(), 'confirm');
   }
 
-  protected onValidChange(valid: boolean): void {
-    this.formIsValid.set(valid);
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(GROUP_NEW_FORM_SHAPE);  // reset the form
+  }
+
+  protected onFormDataChange(formData: GroupNewFormModel): void {
+    this.formData.set(formData);
   }
 }

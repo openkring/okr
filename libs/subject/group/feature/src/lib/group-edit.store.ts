@@ -3,17 +3,18 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
+import { Photo } from '@capacitor/camera';
 
-import { ENV } from '@bk2/shared-config';
 import { DEFAULT_KEY, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { MembershipModel } from '@bk2/shared-models';
-import { AppNavigationService } from '@bk2/shared-util-angular';
+import { GroupModelName, MembershipModel } from '@bk2/shared-models';
 import { debugData, debugItemLoaded, getTodayStr, isPerson } from '@bk2/shared-util-core';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { GroupService } from '@bk2/subject-group-data-access';
 import { convertFormToGroup, GroupFormModel } from '@bk2/subject-group-util';
+import { getMembershipIndex } from '@bk2/relationship-membership-util';
+import { AvatarService } from '@bk2/avatar-data-access';
 
 export type GroupEditState = {
   groupKey: string | undefined;
@@ -29,11 +30,10 @@ export const GroupEditStore = signalStore(
   withState(initialState),
   withProps(() => ({
     groupService: inject(GroupService),
-    appNavigationService: inject(AppNavigationService),
     appStore: inject(AppStore),
-    env: inject(ENV),
     membershipService: inject(MembershipService),
-    modalController: inject(ModalController),    
+    modalController: inject(ModalController),
+    avatarService: inject(AvatarService), 
   })),
 
   withProps((store) => ({
@@ -54,7 +54,7 @@ export const GroupEditStore = signalStore(
       group: computed(() => state.groupResource.value()),
       currentUser: computed(() => state.appStore.currentUser()),
       defaultResource : computed(() => state.appStore.defaultResource()),
-      tenantId: computed(() => state.env.tenantId),
+      tenantId: computed(() => state.appStore.env.tenantId),
       isLoading: computed(() => state.groupResource.isLoading()),
       segment: computed(() => state.selectedSegment()),
     };
@@ -62,6 +62,10 @@ export const GroupEditStore = signalStore(
 
   withMethods((store) => {
     return {
+      reset() {
+        patchState(store, initialState);
+      },
+
       /************************************ SETTERS ************************************* */      
       setGroupKey(groupKey: string): void {
         patchState(store, { groupKey });
@@ -78,13 +82,17 @@ export const GroupEditStore = signalStore(
       
       /************************************ ACTIONS ************************************* */
 
-      async save(vm: GroupFormModel): Promise<void> {
-        const group = convertFormToGroup(store.group(), vm, store.env.tenantId);
+      async save(formData?: GroupFormModel): Promise<void> {
+        const group = convertFormToGroup(formData, store.group());
         await (!group.bkey ? 
           store.groupService.create(group, store.currentUser()) : 
           store.groupService.update(group, store.currentUser()));
-        store.appNavigationService.logLinkHistory();
-        store.appNavigationService.back();
+      },
+
+      async saveAvatar(photo: Photo): Promise<void> {
+        const group = store.group();
+        if (!group) return;
+        await store.avatarService.saveAvatarPhoto(photo, group.bkey, store.tenantId(), GroupModelName);
       },
 
       addSection(): void {
@@ -133,7 +141,7 @@ export const GroupEditStore = signalStore(
             membership.orgName = store.group()?.name ?? DEFAULT_NAME;
             membership.dateOfEntry = getTodayStr();
             membership.dateOfExit = END_FUTURE_DATE_STR;
-            membership.index = store.membershipService.getSearchIndex(membership);
+            membership.index = getMembershipIndex(membership);
             membership.order = 1; // default priority for the first membership
             membership.relIsLast = true; // this is the last membership of this person in
             debugData(`GroupEditStore.addMember: new membership: `, membership, store.currentUser());

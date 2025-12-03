@@ -5,7 +5,7 @@ import { AppStore } from "@bk2/shared-feature";
 import { OrgModel, PersonModel, ReservationModel, ResourceModel } from "@bk2/shared-models";
 
 import { ReservationService } from "@bk2/relationship-reservation-data-access";
-import { convertFormToNewReservation, isReservation, ReservationNewFormModel } from "@bk2/relationship-reservation-util";
+import { convertFormToNewReservation, isReservation, ReservationFormModel } from "@bk2/relationship-reservation-util";
 
 import { ReservationEditModalComponent } from "./reservation-edit.modal";
 import { ReservationNewModalComponent } from "./reservation-new.modal";
@@ -27,7 +27,7 @@ export class ReservationModalsService {
    * @param modelType the type of the reserver (Person or Org)
    */
   public async add(reserver: PersonModel | OrgModel, modelType: 'person' | 'org', resource: ResourceModel): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: ReservationNewModalComponent,
       cssClass: 'small-modal',
       componentProps: {
@@ -36,11 +36,11 @@ export class ReservationModalsService {
         modelType: modelType
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
+    modal.present();
+    const { data, role } = await modal.onDidDismiss();
     if (role === 'confirm') {
-      const _reservation = convertFormToNewReservation(data as ReservationNewFormModel, this.tenantId);
-      await this.reservationService.create(_reservation, this.appStore.currentUser());
+      const reservation = convertFormToNewReservation(data as ReservationFormModel, this.tenantId);
+      await this.reservationService.create(reservation, this.appStore.currentUser());
     }
   } 
   
@@ -49,18 +49,17 @@ export class ReservationModalsService {
    * @param reservation the reservation to edit
    */
   public async edit(reservation?: ReservationModel): Promise<void> {
-    let _reservation = reservation;
-    _reservation ??= new ReservationModel(this.tenantId);
+    reservation ??= new ReservationModel(this.tenantId);
     
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: ReservationEditModalComponent,
       componentProps: {
-        reservation: _reservation,
+        reservation: reservation,
         currentUser: this.appStore.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
+    modal.present();
+    const { data, role } = await modal.onDidDismiss();
     if (role === 'confirm') {
       if (isReservation(data, this.tenantId)) {
         await (!data.bkey ? 

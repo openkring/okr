@@ -1,15 +1,15 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, inject, input, model, output, signal } from "@angular/core";
+import { Component, computed, effect, inject, input, model, output, signal } from "@angular/core";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
 import { TranslatePipe } from "@bk2/shared-i18n";
-import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, UserModel } from "@bk2/shared-models";
+import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@bk2/shared-models";
 import { CategoryComponent, CheckboxComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared-ui";
-import { debugFormErrors } from "@bk2/shared-util-core";
+import { coerceBoolean, debugFormErrors, hasRole } from "@bk2/shared-util-core";
 
-import { SettingsFormModel, settingsFormModelShape, settingsFormValidations } from "@bk2/profile-util";
+import { SETTINGS_FORM_SHAPE, SettingsFormModel, settingsFormValidations } from "@bk2/profile-util";
 
 @Component({
   selector: 'bk-profile-settings-accordion',
@@ -34,10 +34,10 @@ import { SettingsFormModel, settingsFormModelShape, settingsFormValidations } fr
     <div slot="content">
       <form scVestForm
           [formShape]="shape"
-          [formValue]="vm()"
+          [formValue]="formData()"
           [suite]="suite" 
-          (dirtyChange)="dirtyChange.set($event)"
-          (formValueChange)="onValueChange($event)">
+          (dirtyChange)="dirty.emit($event)"
+          (formValueChange)="onFormChange($event)">
         <ion-grid>        
           <ion-row>
             <ion-col>
@@ -47,53 +47,52 @@ import { SettingsFormModel, settingsFormModelShape, settingsFormValidations } fr
             </ion-col>
           </ion-row>
           <ion-row> 
-            <ion-col size="12">
-              <bk-cat name="language" [value]="language()" [categories]="languages" [readOnly]="readOnly()" (changed)="onChange('language', $event)" />                                                             
-            </ion-col>
+            @if(hasRole('admin')) {
+              <ion-col size="12">
+                <bk-cat name="language" [value]="language()" [categories]="languages" [readOnly]="isReadOnly()" (changed)="onFieldChange('language', $event)" />                                                             
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-checkbox name="showDebugInfo" [isChecked]="showDebugInfo()" [showHelper]="showHelper()" [readOnly]="isReadOnly()" (changed)="onFieldChange('showDebugInfo', $event)" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-checkbox name="showArchivedData" [isChecked]="showArchivedData()" [readOnly]="isReadOnly()" [showHelper]="showHelper()" (changed)="onFieldChange('showArchivedData', $event)" />
+              </ion-col>
+            }
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="showDebugInfo" [isChecked]="showDebugInfo()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('showDebugInfo', $event)" />
+              <bk-checkbox name="showHelpers" [isChecked]="showHelpers()" [showHelper]="showHelper()" [readOnly]="isReadOnly()" (changed)="onFieldChange('showHelpers', $event)" />
             </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-checkbox name="showArchivedData" [isChecked]="showArchivedData()" [readOnly]="readOnly()" [showHelper]="true" (changed)="onChange('showArchivedData', $event)" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-checkbox name="showHelpers" [isChecked]="showHelpers()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('showHelpers', $event)" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-checkbox name="useTouchId" [isChecked]="useTouchId()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('useTouchId', $event)" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <bk-checkbox name="useFaceId" [isChecked]="useFaceId()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('useFaceId', $event)" />
-            </ion-col>
+            @if(hasRole('admin')) {
+              <ion-col size="12" size-md="6">
+                <bk-checkbox name="useTouchId" [isChecked]="useTouchId()" [showHelper]="showHelper()" [readOnly]="isReadOnly()" (changed)="onFieldChange('useTouchId', $event)" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-checkbox name="useFaceId" [isChecked]="useFaceId()" [showHelper]="showHelper()" [readOnly]="isReadOnly()" (changed)="onFieldChange('useFaceId', $event)" />
+              </ion-col>
+            }
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat name="avatarUsage" [value]="avatarUsage()" [categories]="avatarUsages" [readOnly]="readOnly()" [showHelper]="true" (changed)="onChange('avatarUsage', $event)" />  
+              <bk-cat name="avatarUsage" [value]="avatarUsage()" [categories]="avatarUsages" [readOnly]="isReadOnly()" [showHelper]="showHelper()" (changed)="onFieldChange('avatarUsage', $event)" />  
             </ion-col>
             @if(avatarUsage() === avatarUsageEnum.GravatarFirst || avatarUsage() === avatarUsageEnum.PhotoFirst) {
               <ion-col size="12" size-md="6">
-                <bk-text-input name="gravatarEmail" [value]="gravatarEmail()" [showHelper]=true [copyable]=true [readOnly]="readOnly()" (changed)="onChange('gravatarEmail', $event)" /> 
+                <bk-text-input name="gravatarEmail" [value]="gravatarEmail()" [showHelper]="showHelper()" [copyable]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('gravatarEmail', $event)" /> 
                 <bk-error-note [errors]="gravatarEmailErrors()" />                                                 
               </ion-col>
             }
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat name="nameDisplay" [value]="nameDisplay()" [categories]="nameDisplays" [readOnly]="readOnly()"  [showHelper]="true" (changed)="onChange('nameDisplay', $event)"/>  
+              <bk-cat name="nameDisplay" [value]="nameDisplay()" [categories]="nameDisplays" [readOnly]="isReadOnly()"  [showHelper]="showHelper()" (changed)="onFieldChange('nameDisplay', $event)"/>  
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat name="personSortCriteria" [value]="personSortCriteria()" [categories]="personSortCriterias" [readOnly]="readOnly()" [showHelper]="true" (changed)="onChange('personSortCriteria', $event)"/>  
+              <bk-cat name="personSortCriteria" [value]="personSortCriteria()" [categories]="personSortCriterias" [readOnly]="isReadOnly()" [showHelper]="showHelper()" (changed)="onFieldChange('personSortCriteria', $event)"/>  
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="useDisplayName" [isChecked]="useDisplayName()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('useDisplayName', $event)" />
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col size="12" size-md="6">
-              <bk-cat name="newsDelivery" [value]="newsDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" [showHelper]="true" (changed)="onChange('newsDelivery', $event)"/>  
+              <bk-cat name="newsDelivery" [value]="newsDelivery()" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" (changed)="onFieldChange('newsDelivery', $event)"/>  
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" [showHelper]="true" (changed)="onChange('invoiceDelivery', $event)"/>  
+              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" (changed)="onFieldChange('invoiceDelivery', $event)"/>  
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -105,34 +104,41 @@ import { SettingsFormModel, settingsFormModelShape, settingsFormValidations } fr
 export class ProfileSettingsAccordionComponent {
   protected readonly modalController = inject(ModalController);
 
-  public vm = model.required<SettingsFormModel>();
+  // inputs
+  public formData = model.required<SettingsFormModel>();
   public color = input('light'); // color of the accordion
   public title = input('@profile.settings.title'); // title of the accordion
   public currentUser = input<UserModel | undefined>();
-  public readonly readOnly = input(true);
+  public readonly readOnly = input<boolean>(true);
+  public readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-  private readonly validationResult = computed(() => settingsFormValidations(this.vm()));
-  protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
 
-  protected language = computed(() => this.vm().language ?? DefaultLanguage);
-  protected showDebugInfo = computed(() => this.vm().showDebugInfo ?? false);
-  protected showArchivedData = computed(() => this.vm().showArchivedData ?? false);
-  protected showHelpers = computed(() => this.vm().showHelpers ?? true);
-  protected useTouchId = computed(() => this.vm().useTouchId ?? false);
-  protected useFaceId = computed(() => this.vm().useFaceId ?? false);
-  protected avatarUsage = computed(() => this.vm().avatarUsage ?? AvatarUsage.PhotoFirst);
-  protected gravatarEmail = computed(() => this.vm().gravatarEmail ?? '');
-  protected nameDisplay = computed(() => this.vm().nameDisplay ?? NameDisplay.FirstLast);
-  protected personSortCriteria = computed(() => this.vm().personSortCriteria ?? PersonSortCriteria.Fullname);
-  protected useDisplayName = computed(() => this.vm().useDisplayName ?? false);
-  protected newsDelivery = computed(() => this.vm().newsDelivery ?? DeliveryType.EmailAttachment);
-  protected invoiceDelivery = computed(() => this.vm().invoiceDelivery ?? DeliveryType.EmailAttachment);
-
+  // validation and errors
   protected readonly suite = settingsFormValidations;
-  protected readonly shape = settingsFormModelShape;
+  protected readonly shape = SETTINGS_FORM_SHAPE;
+  private readonly validationResult = computed(() => settingsFormValidations(this.formData()));
+  protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
+  protected showHelper = computed(() => this.currentUser()?.showHelpers ?? true);
 
+  // fields
+  protected language = computed(() => this.formData().language ?? DefaultLanguage);
+  protected showDebugInfo = computed(() => this.formData().showDebugInfo ?? false);
+  protected showArchivedData = computed(() => this.formData().showArchivedData ?? false);
+  protected showHelpers = computed(() => this.formData().showHelpers ?? true);
+  protected useTouchId = computed(() => this.formData().useTouchId ?? false);
+  protected useFaceId = computed(() => this.formData().useFaceId ?? false);
+  protected avatarUsage = computed(() => this.formData().avatarUsage ?? AvatarUsage.PhotoFirst);
+  protected gravatarEmail = computed(() => this.formData().gravatarEmail ?? '');
+  protected nameDisplay = computed(() => this.formData().nameDisplay ?? NameDisplay.FirstLast);
+  protected personSortCriteria = computed(() => this.formData().personSortCriteria ?? PersonSortCriteria.Fullname);
+  protected useDisplayName = computed(() => this.formData().useDisplayName ?? false);
+  protected newsDelivery = computed(() => this.formData().newsDelivery ?? DeliveryType.EmailAttachment);
+  protected invoiceDelivery = computed(() => this.formData().invoiceDelivery ?? DeliveryType.EmailAttachment);
+
+  // passing constants to template
   protected avatarUsages = AvatarUsages;
   protected avatarUsageEnum = AvatarUsage;
   protected nameDisplays = NameDisplays;
@@ -140,16 +146,26 @@ export class ProfileSettingsAccordionComponent {
   protected deliveryTypes = DeliveryTypes;
   protected languages = Languages;
   
-  protected onValueChange(value: SettingsFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
+  protected onFormChange(value: SettingsFormModel): void {
+    this.formData.update(vm => ({...vm, ...value}));
+    debugFormErrors('ProfileSettings.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, value: string | string[] | number | boolean): void {
+    this.dirty.emit(true);
+    this.formData.update(vm => ({ ...vm, [fieldName]: value }));
     debugFormErrors('ProfileSettings', this.validationResult().errors, this.currentUser());
     // tbd: if language:   this.i18nService.setActiveLang(language);
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  }
+
+  /******************************* helpers *************************************** */
+  protected hasRole(role: RoleName): boolean {
+    return hasRole(role, this.currentUser());
   }
 }

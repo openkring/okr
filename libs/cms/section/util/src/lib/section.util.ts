@@ -1,6 +1,6 @@
 import { bkTranslate } from '@bk2/shared-i18n';
 import { AlbumConfig, AlbumStyle, Avatar, ChatConfig, ColorIonic, ContentConfig, GalleryEffect, NameDisplay, newButton, newDefaultImageConfig, newIcon, newImage, SectionModel, Table, TableConfig, ViewPosition } from '@bk2/shared-models';
-import { isType } from '@bk2/shared-util-core';
+import { die, isType } from '@bk2/shared-util-core';
 
 import { SectionFormModel } from './section-form.model';
 
@@ -47,7 +47,7 @@ export function convertSectionToForm(section: SectionModel): SectionFormModel {
     tags: section.tags,
     description: section?.description,
     roleNeeded: section.roleNeeded,
-    color: section.color,
+    color: section.color ?? ColorIonic.Primary,
     title: section.title,
     subTitle: section.subTitle,
     type: section.type,
@@ -55,8 +55,10 @@ export function convertSectionToForm(section: SectionModel): SectionFormModel {
   };
 }
 
-export function convertFormToSection(section: SectionModel | undefined, vm: SectionFormModel, tenantId: string): SectionModel {
-  section ??= new SectionModel(tenantId);
+export function convertFormToSection(vm?: SectionFormModel, section?: SectionModel): SectionModel {
+  if (!section) die('section.util.convertFormToSection: section is mandatory.');
+  if (!vm) return section;
+  
   section.name = vm.name ?? '';
   section.bkey = !vm.bkey || vm.bkey.length === 0 ? section.name : vm.bkey; // we want to use the name as the key of the menu item in the database
   section.tags = vm.tags ?? '';
@@ -147,4 +149,18 @@ export function newTable(): Table {
 
 export function isSection(section: unknown, tenantId: string): section is SectionModel {
   return isType(section, new SectionModel(tenantId));
+}
+
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given section based on its values.
+ * @param section the section for which to create the index
+ * @returns the index string
+ */
+export function getSectionIndex(section: SectionModel): string {
+  return 'n:' + section.name + ' t:' + section.type;
+}
+
+export function getSectionIndexInfo(): string {
+  return 'n:name t:type';
 }

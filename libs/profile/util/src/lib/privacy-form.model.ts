@@ -1,9 +1,7 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
 import { PrivacyUsage } from '@bk2/shared-models';
 
 // privacy restriction attributes are from UserModel
-export type PrivacyFormModel = DeepPartial<{
+export type PrivacyFormModel = {
   usageImages: PrivacyUsage,
   usageDateOfBirth: PrivacyUsage,
   usagePostalAddress: PrivacyUsage,
@@ -11,9 +9,9 @@ export type PrivacyFormModel = DeepPartial<{
   usagePhone: PrivacyUsage,
   usageName: PrivacyUsage,
   srvEmail: boolean,
-}>;
+};
 
-export const privacyFormModelShape: DeepRequired<PrivacyFormModel> = {
+export const PRIVACY_FORM_SHAPE: PrivacyFormModel = {
   usageImages: PrivacyUsage.Public,
   usageDateOfBirth: PrivacyUsage.Restricted,
   usagePostalAddress: PrivacyUsage.Restricted,

@@ -1,5 +1,3 @@
-import { DeepRequired } from 'ngx-vest-forms';
-
 import { Roles } from '@bk2/shared-models';
 
 export type UserAuthFormModel = {
@@ -8,7 +6,7 @@ export type UserAuthFormModel = {
   useFaceId: boolean;
 };
 
-export const userAuthFormModelShape: DeepRequired<UserAuthFormModel> = {
+export const USER_AUTH_FORM_SHAPE: UserAuthFormModel = {
   roles: {
     anonymous: false,
     registered: true,

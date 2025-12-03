@@ -1,14 +1,14 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, input, model, output, signal } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { UserModel } from "@bk2/shared-models";
-import { EmailInputComponent, TextInputComponent } from "@bk2/shared-ui";
-import { debugFormErrors } from "@bk2/shared-util-core";
+import { EmailInputComponent, NotesInputComponent, TextInputComponent } from "@bk2/shared-ui";
+import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
-import { UserModelFormModel, userModelFormModelShape, userModelFormValidations } from "@bk2/user-util";
+import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-model-form',
@@ -16,17 +16,18 @@ import { UserModelFormModel, userModelFormModelShape, userModelFormValidations }
   imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
-    TextInputComponent, EmailInputComponent,
+    TextInputComponent, EmailInputComponent, NotesInputComponent,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   viewProviders: [vestFormsViewProviders],
   template: `
     <form scVestForm
       [formShape]="shape"
-      [formValue]="vm()"
+      [formValue]="formData()"
       [suite]="suite" 
-      (dirtyChange)="dirtyChange.set($event)"
-      (formValueChange)="onValueChange($event)">
+      (dirtyChange)="dirty.emit($event)"
+      (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@user.model.title' | translate | async }}</ion-card-title>
@@ -36,66 +37,76 @@ import { UserModelFormModel, userModelFormModelShape, userModelFormValidations }
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="bkey" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="bkey()" [readOnly]="readOnly()" [copyable]=true />
+                <bk-text-input name="bkey" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="bkey()" [readOnly]="true" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="personKey" [value]="personKey()" [readOnly]="readOnly()" [copyable]=true />
+                <bk-text-input name="personKey" [value]="personKey()" [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="firstName" [value]="firstName()" [copyable]=true [readOnly]="readOnly()" (changed)="onChange('firstName', $event)" />
+                <bk-text-input name="firstName" [value]="firstName()" [copyable]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('firstName', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="lastName" [value]="lastName()" [copyable]=true [readOnly]="readOnly()" (changed)="onChange('lastName', $event)" />
+                <bk-text-input name="lastName" [value]="lastName()" [copyable]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('lastName', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email name="loginEmail" [value]="loginEmail()" [readOnly]="readOnly()" />
+                <bk-email name="loginEmail" [value]="loginEmail()" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email name="gravatarEmail" [value]="gravatarEmail()" [readOnly]="readOnly()" (changed)="onChange('gravatarEmail', $event)"  />
+                <bk-email name="gravatarEmail" [value]="gravatarEmail()" [readOnly]="isReadOnly()" (changed)="onFieldChange('gravatarEmail', $event)"  />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="tenants" [value]="tenants()" [readOnly]="readOnly()" [copyable]=true />
+                <bk-text-input name="tenants" [value]="tenants()" [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
+      <bk-notes [value]="notes()" [readOnly]="isReadOnly()" (changed)="onFieldChange('notes', $event)" />
     </form>
   `
 })
 export class UserModelFormComponent {
-  public vm = model.required<UserModelFormModel>();
+  // inputs
+  public formData = model.required<UserModelFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public readOnly = input.required<boolean>();
+  public readonly readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected bkey = computed(() => this.vm().bkey);
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
+
+  // validation and errors
+  protected readonly suite = userModelFormValidations;
+  protected readonly shape = USER_FORM_SHAPE;
+  private readonly validationResult = computed(() => userModelFormValidations(this.formData()));
+
+  // fields
+  protected bkey = computed(() => this.formData().bkey);
   protected tenants = computed(() => {
-    const tenants = this.vm().tenants;
+    const tenants = this.formData().tenants;
     return Array.isArray(tenants) ? tenants.join(',') : tenants;
   });
-  protected personKey = computed(() => this.vm().personKey);
-  protected firstName = computed(() => this.vm().firstName);
-  protected lastName = computed(() => this.vm().lastName);
-  protected loginEmail = computed(() => this.vm().loginEmail);
-  protected gravatarEmail = computed(() => this.vm().gravatarEmail);
-  // tbd: notes
+  protected personKey = computed(() => this.formData().personKey);
+  protected firstName = computed(() => this.formData().firstName);
+  protected lastName = computed(() => this.formData().lastName);
+  protected loginEmail = computed(() => this.formData().loginEmail);
+  protected gravatarEmail = computed(() => this.formData().gravatarEmail);
+  protected notes = computed(() => this.formData().notes);
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-  private readonly validationResult = computed(() => userModelFormValidations(this.vm()));
-
-  protected readonly suite = userModelFormValidations;
-  protected readonly shape = userModelFormModelShape;
-
-  protected onValueChange(value: UserModelFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('UserModelForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: UserModelFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('UserModelForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('UserModelForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 }

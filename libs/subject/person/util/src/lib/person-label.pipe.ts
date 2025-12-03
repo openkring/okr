@@ -12,8 +12,8 @@ import { Pipe, PipeTransform } from '@angular/core';
 export class PersonLabelPipe implements PipeTransform {
   transform(name: string): string {
     if (name.indexOf('@') === -1) return name;
-    const _parts = name.split('@');
-    if (_parts.length !== 2) return name;
-    return _parts[1] ?? '';
+    const parts = name.split('@');
+    if (parts.length !== 2) return name;
+    return parts[1] ?? '';
   }
 }

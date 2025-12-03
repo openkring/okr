@@ -1,5 +1,3 @@
-import { DeepRequired } from 'ngx-vest-forms';
-
 import { DeliveryType } from '@bk2/shared-models';
 
 export type UserNotificationFormModel = {
@@ -7,7 +5,7 @@ export type UserNotificationFormModel = {
   invoiceDelivery: DeliveryType;
 };
 
-export const userNotificationFormModelShape: DeepRequired<UserNotificationFormModel> = {
+export const USER_NOTIFICATION_FORM_SHAPE: UserNotificationFormModel = {
   newsDelivery: DeliveryType.EmailAttachment,
   invoiceDelivery: DeliveryType.EmailAttachment,
 };

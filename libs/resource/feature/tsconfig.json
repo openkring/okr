@@ -29,6 +29,7 @@
     {"path": "../../category/util/tsconfig.lib.json"},
     {"path": "../../resource/ui/tsconfig.lib.json"},
     {"path": "../../resource/util/tsconfig.lib.json"},
-    {"path": "../../resource/data-access/tsconfig.lib.json"}
+    {"path": "../../resource/data-access/tsconfig.lib.json"},
+    {"path": "../../relationship/reservation/feature/tsconfig.lib.json"}
   ]
 }

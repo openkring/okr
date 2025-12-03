@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -12,7 +12,7 @@ import { ButtonCopyComponent, CategorySelectComponent, ChipsComponent, ErrorNote
 import { debugFormErrors, hasRole, isPerson } from '@bk2/shared-util-core';
 
 import { AlbumSectionConfigComponent, ArticleSectionConfigComponent, ButtonSectionConfigComponent, IframeSectionFormComponent, ImageConfigFormComponent, MapSectionFormComponent, PeopleListFormComponent, TableSectionFormComponent, VideoSectionFormComponent } from '@bk2/cms-section-ui';
-import { newTable, SectionFormModel, sectionFormValidations } from '@bk2/cms-section-util';
+import { newTable, SECTION_FORM_SHAPE, SectionFormModel, sectionFormValidations } from '@bk2/cms-section-util';
 
 import { ImageListComponent } from './image-list.component';
 import { SingleImageComponent } from './single-image.component';
@@ -35,10 +35,11 @@ import { DEFAULT_ROLE } from '@bk2/shared-constants';
 ],
   template: `
   <form scVestForm
-    [formValue]="vm()"
+    [formShape]="shape"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
 
     <ion-grid>
       <!---------------------------------------------------
@@ -52,7 +53,7 @@ import { DEFAULT_ROLE } from '@bk2/shared-constants';
             </ion-card-header>
             <ion-card-content>
               <ion-item lines="none">
-                <ion-label>{{ '@content.section.default.type' | translate | async }}: {{ vm().type }}</ion-label>
+                <ion-label>{{ '@content.section.default.type' | translate | async }}: {{ formData().type }}</ion-label>
               </ion-item>
               @if(bkey(); as bkey) {
                 <ion-item lines="none">
@@ -60,28 +61,28 @@ import { DEFAULT_ROLE } from '@bk2/shared-constants';
                   <bk-button-copy [value]="bkey" />
                 </ion-item>
               }
-              <bk-text-input name="name" [value]="vm().name ?? ''" [readOnly]="isReadOnly()" [showHelper]=true />
+              <bk-text-input name="name" [value]="formData().name" [readOnly]="isReadOnly()" [showHelper]=true />
               <bk-error-note [errors]="nameErrors()" />
                 
-              <bk-cat-select [category]="roles()!" selectedItemName="roleNeeded()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onChange('roleNeeded', $event)" />
+              <bk-cat-select [category]="roles()!" selectedItemName="roleNeeded()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('roleNeeded', $event)" />
             </ion-card-content>
           </ion-card>
         </ion-col>
       </ion-row>
 
       <!-- section specific settings must be defined within ion-row -->
-      @switch(vm().type) {
+      @switch(formData().type) {
         @case('album') { 
-          <bk-album-section-config [vm]="vm()" (changed)="onChange()" />
-          <bk-image-config-form [vm]="vm()" />
+          <bk-album-section-config [vm]="formData()" (changed)="onFieldChange()" />
+          <bk-image-config-form [vm]="formData()" />
         }
         @case('article') {
-          <bk-single-image [vm]="vm()" />
-          <bk-article-section-config [vm]="vm()" />
+          <bk-single-image [vm]="formData()" />
+          <bk-article-section-config [vm]="formData()" />
         }
         @case('gallery') {
-          <bk-image-list [vm]="vm()" />
-          <bk-image-config-form [vm]="vm()" />
+          <bk-image-list [vm]="formData()" />
+          <bk-image-config-form [vm]="formData()" />
         }             
         @case('hero') {
           <ion-row>
@@ -89,38 +90,40 @@ import { DEFAULT_ROLE } from '@bk2/shared-constants';
               <ion-label>{{ '@content.section.forms.imageConfig.heroInfo' | translate | async }}</ion-label>
             </ion-col>
           </ion-row>
-          <bk-image-list [vm]="vm()" />
+          <bk-image-list [vm]="formData()" />
         }
         @case('map') {
-          <bk-map-section-form [vm]="vm()" />
+          <bk-map-section-form [vm]="formData()" />
         }
         @case('peopleList') {
-          <bk-people-list-form [vm]="vm()" (changed)="onChange()" (selectClicked)="selectPerson()" />
+          @if(currentUser(); as currentUser) {
+          <bk-people-list-form [vm]="formData()" [currentUser]="currentUser" (changed)="onFieldChange()" (selectClicked)="selectPerson()" />
+          }
         }
         @case('slider') {
-          <bk-image-list [vm]="vm()" />
-          <bk-image-config-form [vm]="vm()" />
+          <bk-image-list [vm]="formData()" />
+          <bk-image-config-form [vm]="formData()" />
         }
         @case('video') {
-          <bk-video-section-form [vm]="vm()" />
+          <bk-video-section-form [vm]="formData()" />
         }
         @case('button') {
-          <bk-button-section-config [vm]="vm()" />
+          <bk-button-section-config [vm]="formData()" />
         }
         @case('table') {
-          <bk-table-section-form [table]="table()!" (changed)="onChange('table', $event)" />  
+          <bk-table-section-form [table]="table()!" (changed)="onFieldChange('table', $event)" />  
         }
         @case('iframe') {     
-          <bk-iframe-section-form [vm]="vm()" />
+          <bk-iframe-section-form [vm]="formData()" />
         }
         <!-- tbd: not yet implemented: Calendar, List, Chart -->
       }
     </ion-grid>
     @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="vm().tags ?? ''" [readOnly]="isReadOnly()" [allChips]="sectionTags()" />
+      <bk-chips chipName="tag" [storedChips]="formData().tags" [readOnly]="isReadOnly()" [allChips]="allTags()" />
     }
     @if(hasRole('admin')) {
-      <bk-notes [value]="vm().description ?? ''" [readOnly]="isReadOnly()" />
+      <bk-notes [value]="formData().description" [readOnly]="isReadOnly()" />
     }
   </form>
   `
@@ -129,41 +132,52 @@ export class SectionFormComponent {
   protected modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
-  public readonly vm = model.required<SectionFormModel>();
+  // inputs
+  public readonly formData = model.required<SectionFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public readonly sectionTags = input.required<string>();
+  public readonly allTags = input.required<string>();
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => this.readOnly());
   
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
   
+  // validation and errors
   protected readonly suite = sectionFormValidations;
-  private readonly validationResult = computed(() => sectionFormValidations(this.vm()));
+  protected readonly shape = SECTION_FORM_SHAPE;
+  private readonly validationResult = computed(() => sectionFormValidations(this.formData()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+
+  // fields
   protected roles = computed(() => this.appStore.getCategory('roles'));
+  public table = computed(() => this.formData().properties?.table ?? newTable());
+  public icon = computed(() => this.formData().properties?.icon ?? newIcon());
+  public button = computed(() => this.formData().properties?.button ?? newButton()); 
+  protected roleNeeded = computed(() => this.formData().roleNeeded ?? DEFAULT_ROLE);
+  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected persons = computed(() => this.formData().properties?.persons ?? []);
 
-  public table = computed(() => this.vm().properties?.table ?? newTable());
-  public icon = computed(() => this.vm().properties?.icon ?? newIcon());
-  public button = computed(() => this.vm().properties?.button ?? newButton()); 
-  protected roleNeeded = computed(() => this.vm().roleNeeded ?? DEFAULT_ROLE);
-  protected bkey = computed(() => this.vm().bkey ?? '');
-  protected persons = computed(() => this.vm().properties?.persons ?? []);
-
+  // passing constants to template
   public viewPositions = ViewPositions;
 
-  protected onValueChange(value: SectionFormModel): void {
-    this.vm.update((vm) => ({...vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName?: string, $event?: string | string[] | number | Table): void {
+  protected onFormChange(value: SectionFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('SectionForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName?: string, $event?: string | string[] | number | Table): void {
     if (fieldName) {
-      this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
+      this.dirty.emit(true);
+      this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
+      debugFormErrors('SectionForm.onFieldChange', this.validationResult().errors, this.currentUser());
     }
-    debugFormErrors('SectionForm (onChange)', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
   }
 
   protected hasRole(role: RoleName): boolean {
@@ -191,10 +205,8 @@ export class SectionFormComponent {
           label: '',
           modelType: 'person'
         });
-        this.vm.update((vm) => ({ ...vm, properties: { ...vm.properties, persons } }));
+        this.formData.update((vm) => ({ ...vm, properties: { ...vm.properties, persons } }));
         debugFormErrors('SectionForm (modal)', this.validationResult().errors, this.currentUser());
-        this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());    
       }
     }
   }

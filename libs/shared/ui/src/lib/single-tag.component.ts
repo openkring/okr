@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, input, output } from '@angular/core';
-import { IonButton, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { IonButton, IonIcon, IonLabel, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -12,22 +12,20 @@ import { ChipSelectModalComponent } from './chip-select.modal';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    IonButton, IonIcon, IonLabel, IonItem
+    IonButton, IonIcon, IonLabel
   ],
   template: `
-  <ion-item lines="none">
   @if (tag) {
-    <ion-button color="light" size="default" (click)="remove()">
+    <ion-button color="light" (click)="remove()">
       <ion-icon src="{{'close_cancel_circle' | svgIcon }}" />
       <ion-label>{{ tag | translate | async }}</ion-label>
     </ion-button>
   } @else {
-    <ion-button color="light" size="default" (click)="addTag()">
+    <ion-button color="light" (click)="addTag()">
       <ion-icon src="{{'search' | svgIcon }}" />
       <ion-label>{{ searchLabel() | translate | async }}</ion-label>
     </ion-button>
   }
-  </ion-item>
   `
 })
 export class SingleTagComponent {
@@ -44,7 +42,7 @@ export class SingleTagComponent {
   }
 
   public async addTag() {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: ChipSelectModalComponent,
       cssClass: 'tag-modal',
       componentProps: {
@@ -52,8 +50,8 @@ export class SingleTagComponent {
         chipName: 'tag'
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       this.tag = data as string;
       this.selectedTag.emit(this.tag);

@@ -1,16 +1,17 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ReservationCollection, ReservationModel, RoleName } from '@bk2/shared-models';
+import { ReservationModel, ReservationModelName, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { ReservationFormComponent } from '@bk2/relationship-reservation-ui';
-import { convertFormToReservation, convertReservationToForm, getReserverName } from '@bk2/relationship-reservation-util';
+import { convertFormToReservation, convertReservationToForm, getReserverName, ReservationFormModel } from '@bk2/relationship-reservation-util';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-reservation-edit-modal',
@@ -19,29 +20,35 @@ import { convertFormToReservation, convertReservationToForm, getReserverName } f
     TranslatePipe, AsyncPipe,
     CommentsAccordionComponent, RelationshipToolbarComponent, HeaderComponent,
     ChangeConfirmationComponent, ReservationFormComponent,
-    IonContent, IonAccordionGroup
+    IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
+  styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header title="{{ modalTitle() | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    <bk-header title="{{ headerTitle() | translate | async }}" [isModal]="true" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content>
       <bk-relationship-toolbar title="@reservation.reldesc" [titleArguments]="titleArguments()" icon="reservation" relLabel="Reservation" />
-      <bk-reservation-form [(vm)]="vm"
+      <bk-reservation-form
+        [formData]="formData()"
         [currentUser]="currentUser()"
         [allTags]="tags()"
         [reasons]="reasons()"
         [states]="states()"
         [readOnly]="readOnly()"
         [periodicities]="periodicities()"
-        (validChange)="formIsValid.set($event)"
+        (formDataChange)="onFormDataChange($event)"
       />
 
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
-        <ion-accordion-group value="comments">
-          <bk-comments-accordion [collectionName]="reservationCollection" [parentKey]="reservationKey()" />
-        </ion-accordion-group>
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <ion-accordion-group value="comments">
+              <bk-comments-accordion [parentKey]="parentKey()" />
+            </ion-accordion-group>
+          </ion-card-content>
+        </ion-card>
       }
     </ion-content>
   `
@@ -50,8 +57,16 @@ export class ReservationEditModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
+  // inputs
   public reservation = input.required<ReservationModel>();
 
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = linkedSignal(() => convertReservationToForm(this.reservation()));
+
+  protected readonly parentKey = computed(() => `${ReservationModelName}.${this.reservationKey()}`);
   public currentUser = computed(() => this.appStore.currentUser());
   protected tags = computed(() => this.appStore.getTags('reservation'));
   protected reasons = computed(() => this.appStore.getCategory('reservation_reason'));
@@ -59,15 +74,14 @@ export class ReservationEditModalComponent {
   protected periodicities = computed(() => this.appStore.getCategory('periodicity'));
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   
-  public vm = linkedSignal(() => convertReservationToForm(this.reservation()));
-
+  // derived signals
+  protected readonly headerTitle = computed(() => getTitleLabel('reservation', this.reservation()?.bkey, this.readOnly()));
   protected readonly reservationKey = computed(() => this.reservation().bkey ?? '');
   protected readonly name = computed(() => getReserverName(this.reservation()) ?? '');
-  private readonly subjectIcon = computed(() => this.vm().reserverModelType === 'person' ? 'person' : 'org');
-  private readonly subjectUrl = computed(() => this.vm().reserverModelType === 'person' ? `/person/${this.vm().reserverKey}` : `/org/${this.vm().reserverKey}`);
-  private readonly objectUrl = computed(() => `/resource/${this.vm().resourceKey}`);
-  private readonly objectName = computed(() => this.vm().resourceName ?? '');
-  protected readonly modalTitle = computed(() => `@reservation.operation.${hasRole('resourceAdmin', this.currentUser()) ? 'update' : 'view'}.label`);
+  private readonly subjectIcon = computed(() => this.formData().reserverModelType === 'person' ? 'person' : 'org');
+  private readonly subjectUrl = computed(() => this.formData().reserverModelType === 'person' ? `/person/${this.formData().reserverKey}` : `/org/${this.formData().reserverKey}`);
+  private readonly objectUrl = computed(() => `/resource/${this.formData().resourceKey}`);
+  private readonly objectName = computed(() => this.formData().resourceName ?? '');
 
   protected titleArguments = computed(() => ({
     relationship: 'reservation',
@@ -79,11 +93,19 @@ export class ReservationEditModalComponent {
     subjectUrl: this.objectUrl()
   }));
 
-  protected formIsValid = signal(false);
-  public reservationCollection = ReservationCollection;
+ /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(convertFormToReservation(this.formData(), this.reservation()), 'confirm');
+  }
 
-  public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToReservation(this.reservation(), this.vm(), this.appStore.tenantId()), 'confirm');
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertReservationToForm(this.reservation()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: ReservationFormModel): void {
+    this.formData.set(formData);
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

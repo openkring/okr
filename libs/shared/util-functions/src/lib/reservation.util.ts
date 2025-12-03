@@ -9,8 +9,8 @@ import { searchData } from './search.util';
  * @returns an array of reservations for the given reserver.
  */
 export async function getAllReservationsOfReserver(firestore: Firestore, reserverId: string): Promise<ReservationModel[]> {
-  const _query = [{ key: 'reserverKey', operator: '==', value: reserverId }];
-  return await searchData<ReservationModel>(firestore, ReservationCollection, _query, 'resourceName', 'asc');
+  const query = [{ key: 'reserverKey', operator: '==', value: reserverId }];
+  return await searchData<ReservationModel>(firestore, ReservationCollection, query, 'resourceName', 'asc');
 }
 
 /**
@@ -20,6 +20,6 @@ export async function getAllReservationsOfReserver(firestore: Firestore, reserve
  * @returns an array of reservations for the given resource.
  */
 export async function getAllReservationsOfResource(firestore: Firestore, resourceId: string): Promise<ReservationModel[]> {
-  const _query = [{ key: 'resourceKey', operator: '==', value: resourceId }];
-  return await searchData<ReservationModel>(firestore, ReservationCollection, _query, 'reserverName2', 'asc');
+  const query = [{ key: 'resourceKey', operator: '==', value: resourceId }];
+  return await searchData<ReservationModel>(firestore, ReservationCollection, query, 'reserverName2', 'asc');
 }

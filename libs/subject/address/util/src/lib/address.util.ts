@@ -2,28 +2,11 @@ import { Browser } from '@capacitor/browser';
 import { ToastController } from '@ionic/angular';
 
 import { bkTranslate } from '@bk2/shared-i18n';
-import { AddressChannel, AddressCollection, AddressModel, AddressUsage, OrgCollection, PersonCollection } from '@bk2/shared-models';
+import { AddressChannel, AddressModel, AddressUsage } from '@bk2/shared-models';
 import { copyToClipboard, formatIban, IbanFormat, showToast } from '@bk2/shared-util-angular';
-import { die, getCountryName, getModelAndKey } from '@bk2/shared-util-core';
+import { getCountryName } from '@bk2/shared-util-core';
 
 /***************************  helpers *************************** */
-export function getAddressModalTitle(addressKey: string | undefined): string {
-  const operation = !addressKey ? 'create' : 'update';
-  return `@subject.address.operation.${operation}.label`;
-}
-
-/**
- * Analyzes the given key and constructs a collection name:    PersonCollection|OrgCollection/parentId/AddressCollection
- * @param parentId  of format:  Modeltype.key
- * @returns the hierarchical collection name
- */
-export function getAddressCollection(parentId: string): string {
-  if (parentId?.length === 0) die('AddressService.read: parentId is mandatory');
-  if (parentId.indexOf('.') === -1) die(`AddressService.read: invalid key ${parentId} (expected Modeltype.key)`);
-  const [parentModelType, parentKey] = getModelAndKey(parentId);
-  const parentCollection = parentModelType === 'org' ? OrgCollection : PersonCollection;
-  return `${parentCollection}/${parentKey}/${AddressCollection}`;
-}
 
 /**
  * Create a favorite email address.
@@ -166,6 +149,30 @@ export function stringifyPostalAddress(address: AddressModel, lang: string): str
  * @param url
  * @param prefix a URL prefix that is defined by the channel type (e.g. https://twitter.com for type Twitter)
  */
-export async function browseUrl(url: string, prefix: string): Promise<void> {
+export async function browseUrl(url: string, prefix = ''): Promise<void> {
   return Browser.open({ url: prefix + url });
+}
+
+
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given person based on its values.
+ * @param person the person for which to create the index
+ * @returns the index string
+ */
+export function getAddressIndex(address: AddressModel): string {
+  switch (address.channelType) {
+    case AddressChannel.Phone: 
+      return `n:${address.phone}`;
+    case AddressChannel.Email: 
+      return `n:${address.email}`;
+    case AddressChannel.Postal: 
+      return `n:${address.streetName} + ${address.streetNumber}, ${address.countryCode} ${address.zipCode} ${address.city}`;
+    default:
+      return `n:${address.url}`;
+  }
+}
+
+export function getAddressIndexInfo(): string {
+  return 'n:addressValue';
 }

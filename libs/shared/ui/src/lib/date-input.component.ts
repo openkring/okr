@@ -1,6 +1,6 @@
 
-import { Component, computed, inject, input, model, output } from '@angular/core';
-import { IonIcon, IonItem, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, input, model, output, viewChild } from '@angular/core';
+import { IonIcon, IonItem } from '@ionic/angular/standalone';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
@@ -9,22 +9,22 @@ import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared-util-core';
 
-import { DateSelectModalComponent } from './date-select.modal';
 import { ViewDateInputComponent } from './viewdate-input.component';
+import { DatePickerModalComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-date-input',
   standalone: true,
   imports: [
     SvgIconPipe,
-    ViewDateInputComponent,
+    ViewDateInputComponent, DatePickerModalComponent,
     IonItem, IonIcon
   ],
   viewProviders: [vestFormsViewProviders],
   template: `
     <ion-item lines="none">
       @if(shouldShowDateSelect() && !isReadOnly()) {
-        <ion-icon src="{{'calendar' | svgIcon }}" slot="start" (click)="selectDate()" />
+        <ion-icon src="{{'calendar' | svgIcon }}" slot="start" (click)="datePicker.open()" />
       }
       <bk-viewdate-input (changed)="onChange($event)"
         [name]="name()" 
@@ -38,10 +38,12 @@ import { ViewDateInputComponent } from './viewdate-input.component';
         [showHelper]="shouldShowHelper()"
        />
     </ion-item>
+
+    <bk-date-picker-modal #datePicker [isoDate]="isoDate()" (dateSelected)="onDateSelected($event)" />
   `
 })
 export class DateInputComponent {
-  protected modalController = inject(ModalController);
+  protected datePickerModal = viewChild.required<DatePickerModalComponent>(DatePickerModalComponent);
 
   // storeDate is the interface to the parent components (forms), because it is how the date is stored in the database.
   // for the DateSelection component, we need to convert into isoDate format.
@@ -49,7 +51,7 @@ export class DateInputComponent {
   // optional date in StoreDate format (yyyyMMdd); default is today
   public storeDate = model(getTodayStr(DateFormat.StoreDate));
   public name = input.required<string>(); // mandatory name of the input field
-  public readOnly = input.required<boolean | string>();
+  public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public clearInput = input(true); // show an icon to clear the input field
   protected shouldShowClearInput = computed(() => coerceBoolean(this.clearInput()));
@@ -62,36 +64,27 @@ export class DateInputComponent {
   public showDateSelect = input(true);
   protected shouldShowDateSelect = computed(() => coerceBoolean(this.showDateSelect()));
   public locale = input('de-ch'); // mandatory locale for the input field, used for formatting
+  public header = input('@general.operation.select.date');
 
   protected viewDate = computed(() => convertDateFormatToString(this.storeDate(), DateFormat.StoreDate, DateFormat.ViewDate, false));
-  // the date in the calendar must be in ISO format (used as input into datetime picker), it may not be empty, instead default is today
-  protected isoDate = computed(() => convertDateFormatToString(this.storeDate(), DateFormat.StoreDate, DateFormat.IsoDate, false));
+  protected isoDate = computed(() => this.getIsoDate(this.storeDate()));
   public changed = output<string>(); // output event when the value changes
-
-  protected async selectDate(): Promise<void> {
-    if (this.readOnly()) return;
-    const _modal = await this.modalController.create({
-      component: DateSelectModalComponent,
-      cssClass: 'date-modal',
-      componentProps: {
-        isoDate: this.isoDate(),
-        locale: this.locale(),
-      }
-    });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
-    if (role === 'confirm') {
-      if (typeof(data) === 'string') {
-        this.storeDate.set(convertDateFormatToString(data.substring(0,10), DateFormat.IsoDate, DateFormat.StoreDate, false));
-        this.changed.emit(this.storeDate());
-      } else {
-        console.error('DateInputComponent.selectDate: type of returned data is not string: ', data);
-      }
-    }
-  }
 
   protected onChange(viewDate: string): void {
     this.storeDate.set(convertDateFormatToString(viewDate, DateFormat.ViewDate, DateFormat.StoreDate, false));
+    this.changed.emit(this.storeDate());
+  }
+
+  // the date must be in ISO format (used as input into datetime picker), it may not be empty, instead default is today
+  private getIsoDate(storeDate: string): string {
+    let isoDate = convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.IsoDate, false);
+    return isoDate || getTodayStr(DateFormat.IsoDate);
+  }
+
+  protected onDateSelected(isoDate: string): void {
+    this.storeDate.set(
+      convertDateFormatToString(isoDate, DateFormat.IsoDate, DateFormat.StoreDate, false)
+    );
     this.changed.emit(this.storeDate());
   }
 

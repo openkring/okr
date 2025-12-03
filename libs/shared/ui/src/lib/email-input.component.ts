@@ -63,8 +63,8 @@ export class EmailInputComponent {
   public changed = output<string>();
 
   public onChange(event: CustomEvent): void {
-    const _email = event.detail.value;
+    const email = event.detail.value;
     this.value.set(event.detail.value);
-    this.changed.emit(_email);
+    this.changed.emit(email);
   }
 }

@@ -2,6 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { Router } from '@angular/router';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
@@ -11,6 +12,7 @@ import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/
 import { CalEventService } from '@bk2/calevent-data-access';
 import { isCalEvent } from '@bk2/calevent-util';
 import { CalEventEditModalComponent } from './calevent-edit.modal';
+import { navigateByUrl } from '@bk2/shared-util-angular';
 
 export type CalEventListState = {
   calendarName: string;
@@ -32,7 +34,8 @@ export const CalEventListStore = signalStore(
     calEventService: inject(CalEventService),
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
-    modalController: inject(ModalController),    
+    modalController: inject(ModalController),
+    router: inject(Router)
   })),
   withProps((store) => ({
     calEventResource: rxResource({
@@ -100,35 +103,20 @@ export const CalEventListStore = signalStore(
       },
 
       /******************************* actions *************************************** */
-      async add(): Promise<void> {
-        const calEvent = new CalEventModel(store.appStore.tenantId());
+      async edit(calEvent?: CalEventModel, readOnly = true): Promise<void> {
+        let calevent = calEvent ? calEvent : new CalEventModel(store.appStore.tenantId());
         const modal = await store.modalController.create({
           component: CalEventEditModalComponent,
           componentProps: {
-            calevent: calEvent
+            calevent,
+            readOnly
           }
         });
         modal.present();
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm') {
           if (isCalEvent(data, store.appStore.tenantId())) {
-            await store.calEventService.create(data, store.currentUser());
-          }
-        }
-      },
-
-      async edit(calEvent: CalEventModel): Promise<void> {
-        const modal = await store.modalController.create({
-          component: CalEventEditModalComponent,
-          componentProps: {
-            calevent: calEvent
-          }
-        });
-        modal.present();
-        const { data, role } = await modal.onDidDismiss();
-        if (role === 'confirm') {
-          if (isCalEvent(data, store.appStore.tenantId())) {
-            await store.calEventService.update(data, store.currentUser());
+            await calEvent ? store.calEventService.update(data, store.currentUser()): store.calEventService.create(data,  store.currentUser());
           }
         }
       },
@@ -137,10 +125,17 @@ export const CalEventListStore = signalStore(
         console.log(`CalEventListStore.export(${type}) is not yet implemented.`);
       },
 
-      async delete(event: CalEventModel): Promise<void> {
+      async delete(event: CalEventModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
         await store.calEventService.delete(event, store.currentUser());
         this.reset();
       },
+
+      async showAlbum(albumUrl: string): Promise<void> {
+        if (albumUrl.length > 0) {
+          await navigateByUrl(store.router, albumUrl)
+        } 
+      }
     }
   })
 );

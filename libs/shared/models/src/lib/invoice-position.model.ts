@@ -25,4 +25,5 @@ export class InvoicePositionModel implements BkModel, NamedModel, SearchableMode
   }
 }
 
-export const InvoicePositionCollection = 'invoice-positions2';
+export const InvoicePositionCollection = 'invoice-positions';
+export const InvoicePositionModelName = 'invoice-position';

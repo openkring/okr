@@ -37,3 +37,4 @@ export class AddressModel implements BkModel, TaggedModel {
 }
 
 export const AddressCollection = 'addresses';
+export const AddressModelName = 'address';

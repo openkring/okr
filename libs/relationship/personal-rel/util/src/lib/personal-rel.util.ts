@@ -58,11 +58,10 @@ export function convertPersonalRelToForm(personalRel: PersonalRelModel | undefin
  * @param vm the view model, ie. the form data with the updated values.
  * @returns the updated membership.
  */
-export function convertFormToPersonalRel(personalRel: PersonalRelModel | undefined, vm: PersonalRelFormModel, tenantId: string): PersonalRelModel {
-  if (!personalRel) {
-    personalRel = new PersonalRelModel(tenantId);
-    personalRel.bkey = vm.bkey ?? DEFAULT_KEY;
-  }
+export function convertFormToPersonalRel(vm?: PersonalRelFormModel, personalRel?: PersonalRelModel): PersonalRelModel {
+  if (!personalRel) die('personal-rel.util.convertFormToPersonalRel: personalRel is mandatory.');
+  if (!vm) return personalRel;
+  
   personalRel.tags = vm.tags ?? DEFAULT_TAGS;
   personalRel.notes = vm.notes ?? DEFAULT_NOTES;
 
@@ -104,29 +103,35 @@ export function convertPersonsToNewForm(subject: PersonModel, object: PersonMode
   };
 }
 
-export function convertFormToNewPersonalRel(vm: PersonalRelFormModel, tenantId: string): PersonalRelModel {
-  const _personalRel = new PersonalRelModel(tenantId);
-  _personalRel.tenants = [tenantId];
-  _personalRel.isArchived = false;
-  _personalRel.tags = vm.tags ?? DEFAULT_TAGS;
-  _personalRel.notes = vm.notes ?? DEFAULT_NOTES;
+export function convertFormToNewPersonalRel(vm: PersonalRelNewFormModel, tenantId: string): PersonalRelModel {
+  const personalRel = new PersonalRelModel(tenantId);
+  personalRel.tenants = [tenantId];
+  personalRel.isArchived = false;
+  personalRel.tags = vm.tags ?? DEFAULT_TAGS;
+  personalRel.notes = vm.notes ?? DEFAULT_NOTES;
 
-  _personalRel.subjectKey = vm.subjectKey ?? DEFAULT_KEY;
-  _personalRel.subjectFirstName = vm.subjectFirstName ?? DEFAULT_NAME;
-  _personalRel.subjectLastName = vm.subjectLastName ?? DEFAULT_NAME;
-  _personalRel.subjectGender = vm.subjectGender ?? DEFAULT_GENDER;
-  _personalRel.objectKey = vm.objectKey ?? DEFAULT_KEY;
-  _personalRel.objectFirstName = vm.objectFirstName ?? DEFAULT_NAME;
-  _personalRel.objectLastName = vm.objectLastName ?? DEFAULT_NAME;
-  _personalRel.objectGender = vm.objectGender ?? DEFAULT_GENDER;
-  _personalRel.type = vm.type ?? DEFAULT_PERSONAL_REL;
-  _personalRel.label = vm.label ?? DEFAULT_LABEL;
-  _personalRel.validFrom = vm.validFrom ?? getTodayStr();
-  _personalRel.validTo = vm.validTo ?? END_FUTURE_DATE_STR;
-  return _personalRel;
+  personalRel.subjectKey = vm.subjectKey ?? DEFAULT_KEY;
+  personalRel.subjectFirstName = vm.subjectFirstName ?? DEFAULT_NAME;
+  personalRel.subjectLastName = vm.subjectLastName ?? DEFAULT_NAME;
+  personalRel.subjectGender = vm.subjectGender ?? DEFAULT_GENDER;
+  personalRel.objectKey = vm.objectKey ?? DEFAULT_KEY;
+  personalRel.objectFirstName = vm.objectFirstName ?? DEFAULT_NAME;
+  personalRel.objectLastName = vm.objectLastName ?? DEFAULT_NAME;
+  personalRel.objectGender = vm.objectGender ?? DEFAULT_GENDER;
+  personalRel.type = vm.type ?? DEFAULT_PERSONAL_REL;
+  personalRel.label = vm.label ?? DEFAULT_LABEL;
+  personalRel.validFrom = vm.validFrom ?? getTodayStr();
+  personalRel.validTo = vm.validTo ?? END_FUTURE_DATE_STR;
+  return personalRel;
 }
 
-export function getPersonalRelSearchIndex(personalRel: PersonalRelModel): string {
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given personal relationship based on its values.
+ * @param personalRel the personal relationship for which to create the index
+ * @returns the index string
+ */
+export function getPersonalRelIndex(personalRel: PersonalRelModel): string {
   let _index = '';
   _index = addIndexElement(_index, 'sk', personalRel.subjectKey);
   _index = addIndexElement(_index, 'sn', personalRel.subjectFirstName + ' ' + personalRel.subjectLastName);
@@ -139,6 +144,6 @@ export function getPersonalRelSearchIndex(personalRel: PersonalRelModel): string
  * Returns a string explaining the structure of the index.
  * This can be used in info boxes on the GUI.
  */
-export function getPersonalRelSearchIndexInfo(): string {
+export function getPersonalRelIndexInfo(): string {
   return 'sk:subjectKey, sn:subjectName, ok:objectKey, on:objectName';
 }

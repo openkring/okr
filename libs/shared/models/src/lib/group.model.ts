@@ -37,3 +37,4 @@ export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedM
 }
 
 export const GroupCollection = 'groups';
+export const GroupModelName = 'group';

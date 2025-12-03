@@ -97,15 +97,15 @@ export const GroupListStore = signalStore(
      * Adds a new group.
      */
     async add(readOnly = true): Promise<void> {
-      const _modal = await store.modalController.create({
+      const modal = await store.modalController.create({
         component: GroupNewModalComponent,
         componentProps: {
           currentUser: store.currentUser(),
           readOnly
         }
       });
-      _modal.present();
-      const { data, role } = await _modal.onDidDismiss();
+      modal.present();
+      const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm') {
         const vm = data as GroupNewFormModel;
         await this.saveGroup(vm);

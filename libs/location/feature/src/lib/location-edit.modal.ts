@@ -6,10 +6,11 @@ import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { LocationModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { coerceBoolean } from '@bk2/shared-util-core';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { LocationFormComponent } from '@bk2/location-ui';
-import { convertFormToLocation, convertLocationToForm, getLocationTitle } from '@bk2/location-util';
-import { hasRole } from '@bk2/shared-util-core';
+import { convertFormToLocation, convertLocationToForm, LocationFormModel } from '@bk2/location-util';
 
 
 @Component({
@@ -21,17 +22,19 @@ import { hasRole } from '@bk2/shared-util-core';
     IonContent
   ],
   template: `
-    <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-        <bk-change-confirmation (okClicked)="save()" />
+    <bk-header title="{{ headerTitle() | translate | async }}" [isModal]="true" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
     <ion-content>
-      <bk-location-form [(vm)]="vm" 
+      <bk-location-form
+        [formData]="formData()" 
         [currentUser]="currentUser()"
         [types]="types()"
         [allTags]="tags()"
-        [readOnly]="readOnly()"
-        (validChange)="formIsValid.set($event)" />
+        [readOnly]="isReadOnly()"
+        (formDataChange)="onFormDataChange($event)"
+      />
     </ion-content>
   `
 })
@@ -39,17 +42,35 @@ export class LocationEditModalComponent {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
 
+  // inputs
   public location = input.required<LocationModel>();
   public currentUser = input<UserModel | undefined>();
-  protected title = computed(() => getLocationTitle(this.location().bkey));
-  protected vm = linkedSignal(() => convertLocationToForm(this.location()));
+  public readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  public formData = linkedSignal(() => convertLocationToForm(this.location()));
+
+  // derived signals
+  protected headerTitle = computed(() => getTitleLabel('location', this.location().bkey, this.isReadOnly()));
   protected tags = computed(() => this.appStore.getTags('location'));
   protected types = computed(() => this.appStore.getCategory('location_type'));
-  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
-  protected formIsValid = signal(false);
+ /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(convertFormToLocation(this.formData(), this.location()), 'confirm');  
+  }
 
-  public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToLocation(this.location(), this.vm(), this.appStore.tenantId()), 'confirm');
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertLocationToForm(this.location()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: LocationFormModel): void {
+    this.formData.set(formData);
   }
 }

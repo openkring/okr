@@ -21,8 +21,8 @@ export async function navigateByUrl(router: Router, url: string | undefined, que
         await router.navigate([url], { queryParams });
       }
     }
-    catch (_ex: unknown) {
-        console.error(`route.util.navigateByUrl(${url}, ${JSON.stringify(queryParams)}) -> FAILED`, _ex);
+    catch (ex: unknown) {
+        console.error(`route.util.navigateByUrl(${url}, ${JSON.stringify(queryParams)}) -> FAILED`, ex);
     }
 }
 

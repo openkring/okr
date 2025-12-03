@@ -2,12 +2,12 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { OrgModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { getItemLabel, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -135,6 +135,8 @@ export class OrgListComponent {
   protected isLoading = computed(() => this.orgListStore.isLoading());
   protected tags = computed(() => this.orgListStore.getOrgTags());
   protected types = computed(() => this.orgListStore.appStore.getCategory('org_type'));
+  protected currentUser = computed(() => this.orgListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.orgListStore.appStore.env.services.imgixBaseUrl;
 
@@ -179,11 +181,14 @@ export class OrgListComponent {
    * @param org 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, org: OrgModel): void {
-    if (hasRole('memberAdmin', this.orgListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
-    if (hasRole('memberAdmin', this.orgListStore.appStore.currentUser())) {
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    if (hasRole('admin', this.orgListStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
@@ -198,12 +203,16 @@ export class OrgListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
-          await this.orgListStore.delete(org);
+          await this.orgListStore.delete(org, this.readOnly());
           break;
         case 'edit':
-          await this.orgListStore.edit(org);
+          await this.orgListStore.edit(org, this.readOnly());
+          break;
+        case 'view':
+          await this.orgListStore.edit(org, true);
           break;
       }
     }

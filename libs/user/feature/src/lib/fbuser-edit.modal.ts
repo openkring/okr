@@ -19,26 +19,45 @@ import { hasRole } from "@bk2/shared-util-core";
   ],
   template: `
     <bk-header title="{{ '@user.fbuser.edit.title' | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-        <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
     <ion-content>
-      <bk-fbuser-form [(vm)]="vm" [currentUser]="currentUser()" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
+      <bk-fbuser-form
+        [formData]="formData()"
+        [currentUser]="currentUser()"
+        [readOnly]="readOnly()"
+          (formDataChange)="onFormDataChange($event)"
+      />
     </ion-content>
   `
 })
 export class FbuserEditModalComponent {
   private readonly modalController = inject(ModalController);
 
+  // inputs
   public fbuser = input.required<FirebaseUserModel>();
   public currentUser = input.required<UserModel | undefined>();
   protected readonly readOnly = computed(() => !hasRole('admin', this.currentUser()));
 
-  public vm = linkedSignal(() => this.fbuser()); 
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  public formData = linkedSignal(() => this.fbuser()); 
 
-  protected formIsValid = signal(false);
+  /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(this.formData(), 'confirm');  
+  }
 
-  public save(): Promise<boolean> {
-    return this.modalController.dismiss(this.vm(), 'confirm');
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(this.fbuser());  // reset the form
+  }
+
+  protected onFormDataChange(formData: FirebaseUserModel): void {
+    this.formData.set(formData);
   }
 }

@@ -1,24 +1,25 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonContent, IonDatetime, IonImg, IonItem, IonLabel, IonList, IonModal, IonThumbnail } from '@ionic/angular/standalone';
 
 import { MembershipModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, FullNamePipe } from '@bk2/shared-pipes';
-import { EmptyListComponent } from '@bk2/shared-ui';
-import { hasRole, isOngoing } from '@bk2/shared-util-core';
+import { EmptyListComponent, HeaderComponent } from '@bk2/shared-ui';
+import { DateFormat, getTodayStr, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 import { MembersAccordionStore } from './members-accordion.store';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-members',
   standalone: true,
   imports: [
-    DurationPipe, AsyncPipe, CategoryLogPipe, AvatarPipe, FullNamePipe,
-    EmptyListComponent,
-    IonItem, IonLabel, IonList, IonImg, IonThumbnail, IonContent
+    DurationPipe, AsyncPipe, CategoryLogPipe, AvatarPipe, FullNamePipe, TranslatePipe,
+    EmptyListComponent, HeaderComponent,
+    IonItem, IonLabel, IonList, IonImg, IonThumbnail, IonContent, IonModal, IonDatetime
   ],
   providers: [MembersAccordionStore],
   styles: [`
@@ -42,6 +43,29 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
         </ion-list>
       }
     </ion-content>
+  <ion-modal  [isOpen]="isModalOpen()" [keepContentsMounted]="true">
+    <ng-template>
+      <bk-header title="{{ '@general.operation.select.date' | translate | async }}" [isModal]="true" />
+      <ion-content class="ion-padding">
+        <ion-datetime
+          min="1900-01-01" max="2100-12-31"
+          presentation="date"
+          [value]="isoDate()"
+          locale="de-ch"
+          firstDayOfWeek="1"
+          [showDefaultButtons]="true"
+          [showAdjacentDays]="true"
+          doneText="{{'@general.operation.change.ok' | translate | async}}"
+          cancelText="{{'@general.operation.change.cancel' | translate | async}}"
+          size="cover"
+          [preferWheel]="false"
+          style="height: 380px; --padding-start: 0;"
+          (ionCancel)="cancel()"
+          (ionChange)="onDateSelected($event)"
+        />
+      </ion-content>
+    </ng-template>
+  </ion-modal>
   `,
 })
 export class MembersComponent {
@@ -52,6 +76,8 @@ export class MembersComponent {
   public readonly readOnly = input(true);
 
   protected members = computed(() => this.membersStore.members());
+  protected isModalOpen = signal(false);
+  protected isoDate = signal(getTodayStr(DateFormat.IsoDate));
 
   private imgixBaseUrl = this.membersStore.appStore.env.services.imgixBaseUrl;
 
@@ -112,7 +138,8 @@ export class MembersComponent {
           await this.membersStore.edit(member, this.readOnly());
           break;
         case 'endMembership':
-          await this.membersStore.end(member, this.readOnly());
+          this.membersStore.setCurrentMembership(member);
+          this.isModalOpen.set(true);
           break;
         case 'changeMcat':
           await this.membersStore.changeMembershipCategory(member, this.readOnly());
@@ -128,5 +155,16 @@ export class MembersComponent {
 
   protected isOngoing(membership: MembershipModel): boolean {
     return isOngoing(membership.dateOfExit);
+  }
+
+
+  protected cancel(): void { 
+    this.isModalOpen.set(false);
+  }
+
+  protected async onDateSelected(event: CustomEvent): Promise<void> {
+    this.isModalOpen.set(false);
+    const iso = event.detail.value.substring(0, 10);
+    await this.membersStore.end(iso);
   }
 }

@@ -46,8 +46,8 @@ export function getImgixUrl(path: string | undefined, params = 'auto=compress,en
 }
 
 export function getImgixUrlWithAutoParams(path: string, imgixParams?: string): string {
-  const _params = imgixParams ?? getImgixParamsByExtension(path);
-  return getImgixUrl(path, _params);
+  const params = imgixParams ?? getImgixParamsByExtension(path);
+  return getImgixUrl(path, params);
 }
 
 export type UrlType = 'https' | 'http' | 'assets' | 'storage' | 'imgix' | 'key';
@@ -102,12 +102,12 @@ export function fixHttpUrl(url: string | undefined): string | undefined {
  * @returns 
  */
 export function getThumbnailUrl(path: string, width: number, height: number): string {
-  const _params = getSizedImgixParamsByExtension(path, width, height);
-  if (_params.length === 0) {   // neither image nor pdf -> return path to file icon
-    const _extension = fileExtension(path);
-    return fileLogo(_extension);
+  const params = getSizedImgixParamsByExtension(path, width, height);
+  if (params.length === 0) {   // neither image nor pdf -> return path to file icon
+    const extension = fileExtension(path);
+    return fileLogo(extension);
   } else {
-    return getImgixUrl(path, _params);
+    return getImgixUrl(path, params);
   }
 }
 
@@ -120,13 +120,13 @@ export function getThumbnailUrl(path: string, width: number, height: number): st
  */
 export function getSizedImgixParamsByExtension(pathOrExtension: string | undefined, width: number, height: number): string {
   if (!pathOrExtension || pathOrExtension.length === 0) return '';
-  const _arParams = `ar=${width}:${height}`;
-  const _params = getImgixParamsByExtension(pathOrExtension);
+  const arParams = `ar=${width}:${height}`;
+  const params = getImgixParamsByExtension(pathOrExtension);
   if (isPdf(pathOrExtension)) {
-    return _params + '&' + _arParams;
+    return params + '&' + arParams;
   }
   if (isImage(pathOrExtension)) {
-    return _arParams + '&' + _params;
+    return arParams + '&' + params;
   }
   return '';
 }
@@ -153,22 +153,22 @@ export function getImgixParamsByExtension(pathOrExtension: string): string {
 * This functionality is using imgix.
 */
 export function addImgixParams(path: string, size: number, withFaceReco = true): string {
-  let _params = '';
+  let params = '';
   if (isPdf(path)) {
-    _params = 'page=1&ar=1:1';
+    params = 'page=1&ar=1:1';
   }
   if (isImage(path)) {
     if (withFaceReco) {
-      _params = 'w=' + size + '&h=' + size + '&fit=crop&crop=faces';
+      params = 'w=' + size + '&h=' + size + '&fit=crop&crop=faces';
       // older implementations: 
       // 
       // '&fit=clamp&auto=compress,enhance'
       // '&fit=facearea&faceindex=2&facepad=1.5&mask=ellipse'
     } else {
-      _params = 'auto=format,compress,enhance&ar=1:1&fit=clamp'
+      params = 'auto=format,compress,enhance&ar=1:1&fit=clamp'
     }
   }
-  return getImgixUrl(path, _params);
+  return getImgixUrl(path, params);
 }
 
 export const IMGIX_PDF_PARAMS = 'page=1';
@@ -179,8 +179,8 @@ export const IMGIX_JSON_PARAMS = 'fm=json';
 
 export function getImgixUrlFromImage(image: Image): string {
   if (!image.width || !image.height) die('img.util.getImgixUrlFromImage -> image width and height must be set');
-  const _params = getSizedImgixParamsByExtension(image.url ?? '', image.width, image.height);
-  return getImgixUrl(image.url, _params);
+  const params = getSizedImgixParamsByExtension(image.url ?? '', image.width, image.height);
+  return getImgixUrl(image.url, params);
 }
 
 

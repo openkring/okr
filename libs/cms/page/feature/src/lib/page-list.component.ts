@@ -114,6 +114,8 @@ export class PageAllListComponent {
   protected isLoading = computed(() => this.pageListStore.isLoading());
   protected pageTags = computed(() => this.pageListStore.getTags());
   protected pageTypes = computed(() => this.pageListStore.appStore.getCategory('page_type'));
+  protected currentUser = computed(() => this.pageListStore.currentUser());
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.pageListStore.appStore.env.services.imgixBaseUrl;
 
@@ -147,10 +149,15 @@ export class PageAllListComponent {
    * @param page 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, page: PageModel): void {
-    if (hasRole('contentAdmin', this.pageListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('registered', this.pageListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('page.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('page.edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    if (hasRole('admin', this.pageListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('page.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -165,11 +172,14 @@ export class PageAllListComponent {
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
-        case 'delete':
-          await this.delete(page);
+        case 'page.delete':
+          await this.pageListStore.delete(page, this.readOnly());
           break;
-        case 'edit':
-          await this.edit(page);
+        case 'page.edit':
+          await this.pageListStore.edit(page, this.readOnly());
+          break;
+        case 'page.view':
+          await this.pageListStore.edit(page, true);
           break;
       }
     }
@@ -178,18 +188,10 @@ export class PageAllListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.pageListStore.add(); break;
+      case 'add':  await this.pageListStore.add(this.readOnly()); break;
       case 'exportRaw': await this.pageListStore.export("raw"); break;
       default: error(undefined, `PageListComponent.call: unknown method ${selectedMethod}`);
     }
-  }
-
-  public async delete(page: PageModel): Promise<void> {
-    await this.pageListStore.delete(page);
-  }
-
-  public async edit(page?: PageModel): Promise<void> {
-    if (page) await this.pageListStore.edit(page);
   }
 
   /******************************* helpers *************************************** */

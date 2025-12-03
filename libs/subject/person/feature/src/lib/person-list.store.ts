@@ -7,16 +7,17 @@ import { of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, MembershipCollection, MembershipModel, PersonModel } from '@bk2/shared-models';
-import { AppNavigationService, confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
+import { AddressChannel, AddressModel, MembershipCollection, MembershipModel, PersonModel, PersonModelName } from '@bk2/shared-models';
+import { confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugListLoaded, hasRole, nameMatches } from '@bk2/shared-util-core';
 
-import { CategoryService } from '@bk2/category-data-access';
 import { AddressService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/subject-person-util';
 
 import { PersonNewModalComponent } from './person-new.modal';
+import { send } from 'process';
+import { browseUrl } from '@bk2/subject-address-util';
 
 export type PersonListState = {
   orgId: string;
@@ -37,8 +38,6 @@ export const PersonListStore = signalStore(
   withProps(() => ({
     personService: inject(PersonService),
     addressService: inject(AddressService),
-    categoryService: inject(CategoryService),
-    appNavigationService: inject(AppNavigationService),
     router: inject(Router),
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
@@ -74,7 +73,7 @@ export const PersonListStore = signalStore(
       }),  
       stream: ({params}) => {
         if (!params.mcatId || params.mcatId.length === 0) return of(undefined);
-        return store.categoryService.read(params.mcatId);
+        return of(store.appStore.getCategory(params.mcatId));
       }
     }),
   })),
@@ -128,43 +127,43 @@ export const PersonListStore = signalStore(
 
       /******************************** getters ******************************************* */
       getTags(): string {
-        return store.appStore.getTags('person');
+        return store.appStore.getTags(PersonModelName);
       },
 
       /******************************* actions *************************************** */
       async add(readOnly = true): Promise<void> {
-        const _modal = await store.modalController.create({
+        const modal = await store.modalController.create({
           component: PersonNewModalComponent,
           componentProps: {
             readOnly
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onWillDismiss();
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm') {
-          const _vm = data as PersonNewFormModel;
+          const vm = data as PersonNewFormModel;
 
-          if (store.personService.checkIfExists(store.persons(), _vm.firstName, _vm.lastName)) {
+          if (store.personService.checkIfExists(store.persons(), vm.firstName, vm.lastName)) {
             if (!confirm(store.alertController, '@subject.person.operation.create.exists.error', true)) return;           
           }
 
-          const _personKey = await store.personService.create(convertFormToNewPerson(_vm, store.tenantId()), store.currentUser());
-          const _avatarKey = `person.${_personKey}`;
-          if ((_vm.email ?? '').length > 0) {
-            this.saveAddress(convertNewPersonFormToEmailAddress(_vm, store.tenantId()), _avatarKey);
+          const personKey = await store.personService.create(convertFormToNewPerson(vm, store.tenantId()), store.currentUser());
+          const avatarKey = `person.${personKey}`;
+          if ((vm.email ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToEmailAddress(vm, store.tenantId()), avatarKey);
           }
-          if ((_vm.phone ?? '').length > 0) {
-            this.saveAddress(convertNewPersonFormToPhoneAddress(_vm, store.tenantId()), _avatarKey);
+          if ((vm.phone ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToPhoneAddress(vm, store.tenantId()), avatarKey);
           }
-          if ((_vm.web ?? '').length > 0) {
-            this.saveAddress(convertNewPersonFormToWebAddress(_vm, store.tenantId()), _avatarKey);
+          if ((vm.web ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToWebAddress(vm, store.tenantId()), avatarKey);
           }
-          if ((_vm.city ?? '').length > 0) {
-            this.saveAddress(convertNewPersonFormToPostalAddress(_vm, store.tenantId()), _avatarKey);
+          if ((vm.city ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToPostalAddress(vm, store.tenantId()), avatarKey);
           }
-          if (_vm.shouldAddMembership) {
-            if ((_vm.orgKey ?? '').length > 0 && (_vm.membershipCategory ?? '').length > 0) {
-              await this.saveMembership(_vm, _personKey);
+          if (vm.shouldAddMembership) {
+            if ((vm.orgKey ?? '').length > 0 && (vm.membershipCategory ?? '').length > 0) {
+              await this.saveMembership(vm, personKey);
             }
           }
         }
@@ -182,9 +181,9 @@ export const PersonListStore = signalStore(
           console.warn('PersonListStore.saveMembership: personKey is empty, cannot save membership');
           return undefined;
         }
-        const _membership = convertNewPersonFormToMembership(vm, personKey, store.tenantId());
-        _membership.index = 'mn:' + _membership.memberName1 + ' ' + _membership.memberName2 + ' mk:' + _membership.memberKey + ' ok:' + _membership.orgKey;
-        return await store.firestoreService.createModel<MembershipModel>(MembershipCollection, _membership, '@membership.operation.create', store.appStore.currentUser());
+        const membership = convertNewPersonFormToMembership(vm, personKey, store.tenantId());
+        membership.index = 'mn:' + membership.memberName1 + ' ' + membership.memberName2 + ' mk:' + membership.memberKey + ' ok:' + membership.orgKey;
+        return await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', store.appStore.currentUser());
       },
 
       saveAddress(address: AddressModel, avatarKey: string): void {
@@ -196,27 +195,53 @@ export const PersonListStore = signalStore(
         console.log(`PersonListStore.export(${type}) ist not yet implemented`);
       },
 
-      async edit(person: PersonModel, readOnly = true): Promise<void> {
-        store.appNavigationService.pushLink('/person/all' );
+      async edit(person?: PersonModel, readOnly = true): Promise<void> {
+        if (!person) return; // we pass readonly to the edit form
+        store.appStore.appNavigationService.pushLink('/person/all' );
         await navigateByUrl(store.router, `/person/${person.bkey}`, { readOnly });
         store.personsResource.reload();
       },
 
-      async delete(person: PersonModel, readOnly = true): Promise<void> {
-        if (!readOnly) {
-          const result = await confirm(store.alertController, '@subject.person.operation.delete.confirm', true);
-          if (result === true) {
-            await store.personService.delete(person, store.currentUser());
-            this.reset();
-          }
+      async delete(person?: PersonModel, readOnly = true): Promise<void> {
+        if (!person || readOnly) return;
+        const result = await confirm(store.alertController, '@subject.person.operation.delete.confirm', true);
+        if (result === true) {
+          await store.personService.delete(person, store.currentUser());
+          this.reset();
         }
       },
 
       async copyEmailAddresses(): Promise<void> {
-        const _allEmails = store.filteredPersons().map(_person => _person.favEmail);
-        const _emails = _allEmails.filter(e => e); // this filters all empty emails, because '' is a falsy value
-        await copyToClipboardWithConfirmation(store.toastController, _emails.toString() ?? '', '@subject.address.operation.emailCopy.conf');
-      }
+        const allEmails = store.filteredPersons().map(person => person.favEmail);
+        const emails = allEmails.filter(e => e); // this filters all empty emails, because '' is a falsy value
+        await copyToClipboardWithConfirmation(store.toastController, emails.toString() ?? '', '@subject.address.operation.emailCopy.conf');
+      },
+
+      async copy(value: string, label: string): Promise<void> {
+        await copyToClipboardWithConfirmation(store.toastController, value ?? '', label);
+      },
+
+      async sendEmail(email: string): Promise<void> {
+        return await browseUrl(`mailto:${email}`, '');
+      },
+      
+      async call(phone: string): Promise<void> {
+        return await browseUrl(`tel:${phone}`, '');
+      },
+      
+/*  tbd:     async showPostalAddress(postalAddress: string): Promise<void> {
+        const coordinates = await this.geocodeService.geocodeAddress(postalAddress);
+        if (!coordinates) return;
+        const modal = await this.modalController.create({
+          component: MapViewModalComponent,
+          componentProps: {
+            title: postalAddress,
+            initialPosition: coordinates
+          }
+        });
+        modal.present();
+        await modal.onWillDismiss();
+      } */
     }
   }),
 

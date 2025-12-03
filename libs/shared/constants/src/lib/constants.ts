@@ -67,6 +67,7 @@ export const DEFAULT_OSTATE = 'active';
 export const DEFAULT_PAGE_TYPE = 'content';
 export const DEFAULT_PERIODICITY = 'once';
 export const DEFAULT_PERSONAL_REL = 'parentChild';
+export const DEFAULT_PET_TYPE = 'cat';
 export const DEFAULT_PRIORITY = 'medium';
 export const DEFAULT_RBOAT_TYPE = 'b1x';
 export const DEFAULT_RBOAT_USAGE = 'breitensport';
@@ -96,6 +97,7 @@ export const DEFAULT_TITLE = '';
 export const DEFAULT_SECTIONS: string[] = [];
 export const DEFAULT_TENANTS: string[] = [];
 export const DEFAULT_DATE = '';
+export const DEFAULT_DATETIME = '';
 export const DEFAULT_TIME = '';
 export const DEFAULT_ID = '';
 export const DEFAULT_INDEX = '';
@@ -106,7 +108,32 @@ export const DEFAULT_URL = '';
 export const DEFAULT_PATH = '';
 export const DEFAULT_EMAIL = '';
 export const DEFAULT_PHONE = '';
+export const DEFAULT_ZIP = '';
+export const DEFAULT_STREETNAME = '';
+export const DEFAULT_STREETNUMBER = '';
+export const DEFAULT_CITY = '';
+export const DEFAULT_COUNTRY = 'CH';
 export const DEFAULT_ORDER = 1;
+export const DEFAULT_MIMETYPES = [
+    'image/png', 
+    'image/jpg', 
+    'application/pdf', 
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.apple.pages',
+    'application/vnd.apple.numbers',
+    'application/vnd.apple.keynote',
+    'com.apple.iwork.pages.pages',
+    'com.apple.iwork.numbers.numbers',
+    'com.apple.iwork.keynote.key',
+    'public.zip-archive',
+    'public.data'
+    ];
+
 
 /**-------------------------------------------------------------------------
  * Styling

@@ -1,12 +1,12 @@
-import { Component, computed, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
 import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
-import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subject-org-util';
+import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { ORG_FORM_SHAPE, OrgFormModel, orgFormValidations } from '@bk2/subject-org-util';
 
 @Component({
   selector: 'bk-org-form',
@@ -16,43 +16,46 @@ import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subjec
     CategorySelectComponent, DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
+   styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+  `],
   template: `
   <form scVestForm
     [formShape]="shape"
-    [formValue]="vm()"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
 
     <ion-card>
       <ion-card-content>
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="types()!" selectedItemName="type()" [readOnly]="readOnly()"  (changed)="onChange('type', $event)" />
+              <bk-cat-select [category]="types()!" selectedItemName="type()" [readOnly]="isReadOnly()"  (changed)="onFieldChange('type', $event)" />
             </ion-col>
           </ion-row>
           <ion-row> 
             <ion-col size="12">
-              <bk-text-input name="orgName" [value]="name()" autocomplete="organization" [maxLength]=50 [readOnly]="readOnly()" (changed)="onChange('name', $event)" />
+              <bk-text-input name="name" [value]="name()" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-date-input name="dateOfFoundation" [storeDate]="dateOfFoundation()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfFoundation', $event)" />
+              <bk-date-input name="dateOfFoundation" [storeDate]="dateOfFoundation()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfFoundation', $event)" />
             </ion-col>
     
             <ion-col size="12" size-md="6">
-              <bk-date-input name="dateOfLiquidation" [storeDate]="dateOfLiquidation()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfLiquidation', $event)" />
+              <bk-date-input name="dateOfLiquidation" [storeDate]="dateOfLiquidation()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfLiquidation', $event)" />
             </ion-col>
           </ion-row>      
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-text-input name="taxId" [value]="taxId()" [mask]="vatMask" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('taxId', $event)" />
+              <bk-text-input name="taxId" [value]="taxId()" [mask]="vatMask" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('taxId', $event)" />
             </ion-col>
             @if(hasRole('admin')) { 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('bexioId', $event)" />                                        
+                <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('bexioId', $event)" />                                        
               </ion-col>
             }
           </ion-row>
@@ -60,53 +63,62 @@ import { OrgFormModel, orgFormModelShape, orgFormValidations } from '@bk2/subjec
       </ion-card-content>
     </ion-card>
 
-    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
 
     @if(hasRole('admin')) { 
-      <bk-notes name="notes" [readOnly]="readOnly()" [value]="notes()" />
+      <bk-notes name="notes" [readOnly]="isReadOnly()" [value]="notes()" />
     }
   </form>
   `
 })
 export class OrgFormComponent {
-  public vm = model.required<OrgFormModel>();
+  // inputs
+  public formData = model.required<OrgFormModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly allTags = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));  
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-  
+  // validation and errors
   protected readonly suite = orgFormValidations;
-  protected readonly shape = orgFormModelShape;
+  protected readonly shape = ORG_FORM_SHAPE;
+  private readonly validationResult = computed(() => orgFormValidations(this.formData()));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
-  protected type = computed(() => this.vm().type ?? 'association');
-  protected name = computed(() => this.vm().name ?? '');
-  protected dateOfFoundation = computed(() => this.vm().dateOfFoundation ?? '');
-  protected dateOfLiquidation = computed(() => this.vm().dateOfLiquidation ?? '');
-  protected taxId = computed(() => this.vm().taxId ?? '');
-  protected bexioId = computed(() => this.vm().bexioId ?? '');
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
+  // fields
+  protected type = computed(() => this.formData().type ?? 'association');
+  protected name = computed(() => this.formData().name ?? '');
+  protected dateOfFoundation = computed(() => this.formData().dateOfFoundation ?? '');
+  protected dateOfLiquidation = computed(() => this.formData().dateOfLiquidation ?? '');
+  protected taxId = computed(() => this.formData().taxId ?? '');
+  protected bexioId = computed(() => this.formData().bexioId ?? '');
+  protected tags = computed(() => this.formData().tags ?? '');
+  protected notes = computed(() => this.formData().notes ?? '');
 
-  private readonly validationResult = computed(() => orgFormValidations(this.vm()));
-  protected nameErrors = computed(() => this.validationResult().getErrors('orgName'));
-
+  // passing constants to template
   protected bexioMask = BexioIdMask;
   protected vatMask = ChVatMask;
 
-  protected onValueChange(value: OrgFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('OrgForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: OrgFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('OrgForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('OrgForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

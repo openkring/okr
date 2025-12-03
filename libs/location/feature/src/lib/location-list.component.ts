@@ -113,6 +113,8 @@ export class LocationListComponent {
   protected tags = computed(() => this.locationListStore.getTags());
   protected types = computed(() => this.locationListStore.appStore.getCategory('location_type'))
   protected popupId = computed(() => 'c_locations_' + this.listId());
+  protected currentUser = computed(() => this.locationListStore.currentUser());
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.locationListStore.appStore.env.services.imgixBaseUrl;
 
@@ -142,14 +144,18 @@ export class LocationListComponent {
    * @param location 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, location: LocationModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'location'));
-    actionSheetOptions.buttons.push(createActionSheetButton('copy', this.imgixBaseUrl, 'copy'));
-    if (hasRole('contentAdmin', this.locationListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'location'));
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('location.showOnMap', this.imgixBaseUrl, 'location'));
+      actionSheetOptions.buttons.push(createActionSheetButton('location.copy', this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('location.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('location.edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    if (hasRole('admin', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('location.delete', this.imgixBaseUrl, 'trash_delete'));
+    }
   }
 
   /**
@@ -162,37 +168,25 @@ export class LocationListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.delete(location);
+        case 'location.delete':
+          await this.locationListStore.delete(location, this.readOnly());
           break;
-        case 'edit':
-          await this.edit(location);
+        case 'location.edit':
+          await this.locationListStore.edit(location, this.readOnly());
           break;
-        case 'show':
-          await this.show(location);
+        case 'location.view':
+          await this.locationListStore.edit(location, true);
           break;
-        case 'copy':
-          await this.copy(location);
+        case 'location.showOnMap':
+          await this.locationListStore.showOnMap(location);
+          break;
+        case 'location.copy':
+          await this.locationListStore.copy(location);
           break;
       }
     }
-  }
-
-  public async edit(location?: LocationModel): Promise<void> {
-    if (location) await this.locationListStore.edit(location);
-  }
-  
-  public async delete(location?: LocationModel): Promise<void> {
-    if (location) await this.locationListStore.delete(location);
-  }
-
-   public async show(location?: LocationModel): Promise<void> {
-    if (location) await this.locationListStore.delete(location);
-  }
-
-   public async copy(location?: LocationModel): Promise<void> {
-    if (location) await this.locationListStore.delete(location);
   }
 
   /******************************* change notifications *************************************** */

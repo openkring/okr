@@ -17,6 +17,7 @@ import { ReservationModalsService } from './reservation-modals.service';
 export type ReservationsAccordionState = {
   reserver: PersonModel | OrgModel | undefined;
   reserverModelType: 'person' | 'org';
+  resource: ResourceModel | undefined;
   showOnlyCurrent: boolean;
 };
 
@@ -24,6 +25,7 @@ const initialState: ReservationsAccordionState = {
   reserver: undefined,
   reserverModelType: 'person',
   showOnlyCurrent: true,
+  resource: undefined,
 };
 
 /** 
@@ -43,13 +45,21 @@ export const ReservationsAccordionStore = signalStore(
       // load all the reservations of the given reserver (person or org)
      reservationsResource: rxResource({
       params: () => ({
-        reserver: store.reserver()
+        reserver: store.reserver(),
+        resource: store.resource()
       }),
       stream: ({params}) => {
-        if (!params.reserver) return of([]);
-        const reservations$ = store.reservationService.listReservationsOfReserver(params.reserver.bkey, store.reserverModelType());
-        debugListLoaded('ReservationAccordionStore.reservations', reservations$, store.appStore.currentUser());
-        return reservations$;
+        if (params.reserver) {  // return reservations of the reserver
+          const reservations$ = store.reservationService.listReservationsOfReserver(params.reserver.bkey, store.reserverModelType());
+          debugListLoaded('ReservationAccordionStore.reservationsOfReserver', reservations$, store.appStore.currentUser());
+          return reservations$;
+        } else if (params.resource) { // return reservations of the resource
+          const reservations$ = store.reservationService.listReservationsForResource(params.resource.bkey);
+          debugListLoaded('ReservationAccordionStore.reservationsForResource', reservations$, store.appStore.currentUser());
+          return reservations$;
+        } else {
+          return of([]); // no reserver nor resource defined
+        }
       }
     }),
   })),
@@ -70,6 +80,11 @@ export const ReservationsAccordionStore = signalStore(
       /******************************** setters ******************************************* */
       setReserver(reserver: PersonModel | OrgModel, reserverModelType: 'person' | 'org') {
         patchState(store, { reserver, reserverModelType });
+        store.reservationsResource.reload();
+      },
+
+      setResource(resource: ResourceModel | undefined) {
+        patchState(store, { resource });
         store.reservationsResource.reload();
       },
 
@@ -98,9 +113,9 @@ export const ReservationsAccordionStore = signalStore(
 
       async end(reservation?: ReservationModel, readOnly = true): Promise<void> {
         if (reservation && readOnly === false) {
-          const _date = await selectDate(store.modalController);
-          if (!_date) return;
-          await store.reservationService.endReservationByDate(reservation, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false));    
+          const date = await selectDate(store.modalController);
+          if (!date) return;
+          await store.reservationService.endReservationByDate(reservation, convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false));    
           store.reservationsResource.reload();  
         }
       },
@@ -108,8 +123,8 @@ export const ReservationsAccordionStore = signalStore(
 
       async delete(reservation?: ReservationModel, readOnly = true): Promise<void> {
         if (reservation && readOnly === false) {
-          const _result = await confirm(store.alertController, '@reservation.operation.delete.confirm', true);
-          if (_result === true) {
+          const result = await confirm(store.alertController, '@reservation.operation.delete.confirm', true);
+          if (result === true) {
             await store.reservationService.delete(reservation);
             store.reservationsResource.reload();
           } 

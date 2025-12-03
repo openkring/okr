@@ -1,29 +1,29 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonContent, Platform } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { OrgCollection, RoleName } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent, UploadService } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
+import { OrgModelName, RoleName } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_TITLE } from '@bk2/shared-constants';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { AvatarService } from '@bk2/avatar-data-access';
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
-import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { MembersAccordionComponent, MembershipAccordionComponent } from '@bk2/relationship-membership-feature';
 import { OwnershipAccordionComponent } from '@bk2/relationship-ownership-feature';
+import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
+import { DocumentsAccordionComponent } from '@bk2/document-feature';
 
 import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
 import { OrgFormComponent } from '@bk2/subject-org-ui';
-import { convertOrgToForm } from '@bk2/subject-org-util';
+import { convertOrgToForm, OrgFormModel } from '@bk2/subject-org-util';
 
 import { OrgEditStore } from './org-edit.store';
-import { DEFAULT_TITLE } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-org-edit-page',
@@ -32,72 +32,76 @@ import { DEFAULT_TITLE } from '@bk2/shared-constants';
     HeaderComponent, ChangeConfirmationComponent,
     AvatarToolbarComponent, AddressesAccordionComponent, CommentsAccordionComponent,
     OwnershipAccordionComponent, OrgFormComponent, MembershipAccordionComponent, MembersAccordionComponent,
+    ReservationsAccordionComponent, DocumentsAccordionComponent,
     TranslatePipe, AsyncPipe,
-    IonContent, IonAccordionGroup
+    IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   providers: [OrgEditStore],
+  styles: [` @media (width <= 600px) { ion-card { margin: 5px;} } `],
   template: `
-    <bk-header title="{{ '@subject.org.operation.update.label' | translate | async }}" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    <bk-header title="{{ headerTitle() | translate | async }}" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content>
-      <bk-avatar-toolbar key="{{avatarKey()}}" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" title="{{ title() }}"/>
-      @if(org(); as org) {
-        <bk-org-form [(vm)]="vm"
+    <ion-content no-padding>
+      <bk-avatar-toolbar key="{{parentKey()}}" title="{{ toolbarTitle() }}" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
+      @if(formData(); as formData) {
+        <bk-org-form
+          [formData]="formData"
           [currentUser]="currentUser()"
-          [allTags]="tags()"
           [types]="types()"
-          (validChange)="formIsValid.set($event)" />
-
-        <ion-accordion-group value="members" [multiple]="true">
-          <bk-addresses-accordion [parentKey]="orgKey()" [readOnly]="readOnly()" parentModelType="org" [addresses]="addresses()" 
-            [readOnly]="!hasRole('memberAdmin')" (addressesChanged)="onAddressesChanged()" />
-          <bk-membership-accordion [member]="org" modelType="org" />
-          @if(hasRole('privileged') || hasRole('memberAdmin')) {
-            @if(defaultResource(); as defaultResource) {
-              <bk-ownerships-accordion [owner]="org" ownerModelType="org" [defaultResource]="defaultResource" />
-              <!--
-              <bk-reservations-accordion [reserver]="org" reserverModelType="org" [defaultResource]="defaultResource" />
-            -->
-            }
-            <bk-members-accordion [orgKey]="orgKey()" />
-            <bk-comments-accordion [collectionName]="orgCollection" [parentKey]="orgKey()" />
-          }
-        </ion-accordion-group>
+          [allTags]="tags()"
+          [readOnly]="isReadOnly()"
+          (formDataChange)="onFormDataChange($event)"
+        />
       }
+      @if(org(); as org) {
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <ion-accordion-group value="members" [multiple]="true">
+              <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <bk-membership-accordion [member]="org" [readOnly]="isReadOnly()" modelType="org" />
 
-    <!--   
-          @if(hasRole('privileged') || hasRole('memberAdmin')) {
-            <bk-documents-accordion [documents]="[]" [path]="vm().bkey!" />
-          }
-         -->
+              @if(hasRole('privileged') || !isReadOnly()) {
+                @if(defaultResource(); as defaultResource) {
+                  <bk-ownerships-accordion [owner]="org" [defaultResource]="defaultResource" ownerModelType="org" [readOnly]="isReadOnly()" />
+                  <bk-reservations-accordion [reserver]="org" [readOnly]="isReadOnly()" reserverModelType="org" [resource]="defaultResource" />
+                  <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
+                }
+                <bk-members-accordion [orgKey]="orgKey()" [readOnly]="isReadOnly()" />
+                <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              }
+            </ion-accordion-group>
+          </ion-card-content>
+        </ion-card>
+      }
     </ion-content>
   `
 })
 export class OrgEditPageComponent {
-  private readonly avatarService = inject(AvatarService);
   private readonly orgEditStore = inject(OrgEditStore);
-  private readonly uploadService = inject(UploadService);
-  private readonly platform = inject(Platform);
-  private readonly env = inject(ENV);
 
+  // inputs
   public orgKey = input.required<string>();
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  public formData = linkedSignal(() => convertOrgToForm(this.org()));
+
+  // derived signals and fields
+  protected headerTitle = computed(() => getTitleLabel('subject.org', this.org()?.bkey, this.isReadOnly()));
+  protected toolbarTitle = computed(() => this.org()?.name ?? DEFAULT_TITLE);
+  protected readonly parentKey = computed(() => `${OrgModelName}.${this.orgKey()}`);
   protected currentUser = computed(() => this.orgEditStore.currentUser());
-  protected readOnly = computed(() => !hasRole('memberAdmin', this.orgEditStore.currentUser()));
   protected org = computed(() => this.orgEditStore.org());
   protected defaultResource = computed(() => this.orgEditStore.defaultResource());
-  protected addresses = computed(() => this.orgEditStore.addresses());
-  public vm = linkedSignal(() => convertOrgToForm(this.org()));
   protected path = computed(() => getDocumentStoragePath(this.orgEditStore.tenantId(), 'org', this.org()?.bkey));
-  protected avatarKey = computed(() => `org.${this.orgKey()}`);
-  protected title = computed(() => this.org()?.name ?? DEFAULT_TITLE);
-  protected tags = computed(() => this.orgEditStore.getOrgTags());
+  protected tags = computed(() => this.orgEditStore.getTags());
   protected types = computed(() => this.orgEditStore.appStore.getCategory('org_type'));
-
-  protected formIsValid = signal(false);
-  protected orgCollection = OrgCollection;
 
   constructor() {
     effect(() => {
@@ -105,8 +109,19 @@ export class OrgEditPageComponent {
     });
   }
 
+  /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.orgEditStore.save(this.vm());
+    this.formDirty.set(false);
+    await this.orgEditStore.save(this.formData());
+  }
+
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertOrgToForm(this.org()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: OrgFormModel): void {
+    this.formData.set(formData);
   }
 
   /**
@@ -114,21 +129,10 @@ export class OrgEditPageComponent {
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   public async onImageSelected(photo: Photo): Promise<void> {
-    const _org = this.org();
-    if (!_org) return;
-    const _file = await readAsFile(photo, this.platform);
-    const _avatar = newAvatarModel([this.env.tenantId], 'org', _org.bkey, _file.name);
-    const _downloadUrl = await this.uploadService.uploadFile(_file, _avatar.storagePath, '@document.operation.upload.avatar.title')
-
-    if (_downloadUrl) {
-      await this.avatarService.updateOrCreate(_avatar);
-    }
+    await this.orgEditStore.saveAvatar(photo);
   }
 
-  protected onAddressesChanged(): void {
-    this.orgEditStore.reloadAddresses();
-  }
-
+  /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
   }

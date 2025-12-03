@@ -6,6 +6,8 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { getSystemQuery } from '@bk2/shared-util-core';
 
+import { getPersonIndex } from '@bk2/subject-person-util';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -20,18 +22,20 @@ export class ProfileService {
   }
 
   /**
-   * Update the currentUser's profile data in the database with new values.
+   * Update the currentUser and the corresponding person with the changed profile data.
    * The method does two updates (person and user), saves two comments, and shows one confirmation toast.
    * @param person the PersonModel corresponding to the currentUser.
    * @param user the UserModel corresponding to the currentUser.
-   * @param currentUser the UserModel of the currently logged in user, used for logging and confirmation messages.
    * @returns a Promise of the key of the updated person or undefined if the operation failed.
    */
-  public async update(person: PersonModel, user: UserModel, currentUser?: UserModel): Promise<string | undefined> {
-    // tbd: update person index
-    await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, currentUser);
-    // tbd: update user index
-    return await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, '@profile.operation.update.conf', currentUser);
+  public async update(person: PersonModel, user: UserModel): Promise<string | undefined> {
+    let uid: string | undefined = undefined;
+    if (person && user) {
+      person.index = getPersonIndex(person);
+      uid = await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, user);
+      await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, '@profile.operation.update', user);
+    }
+    return uid;
   }
 
   /** Profile can not be deleted. */

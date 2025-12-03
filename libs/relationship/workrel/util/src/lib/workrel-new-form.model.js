@@ -1,6 +1,6 @@
 import { DEFAULT_CURRENCY, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE, END_FUTURE_DATE_STR } from "@bk2/shared-constants";
 import { getTodayStr } from "@bk2/shared-util-core";
-export const workrelNewFormModelShape = {
+export const WORKREL_NEW_FORM_SHAPE = {
     tags: DEFAULT_TAGS,
     notes: DEFAULT_NOTES,
     subjectKey: DEFAULT_KEY,

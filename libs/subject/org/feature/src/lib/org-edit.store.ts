@@ -1,17 +1,16 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
+import { Photo } from '@capacitor/camera';
 
-import { ENV } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, OrgModel } from '@bk2/shared-models';
-import { AppNavigationService } from '@bk2/shared-util-angular';
+import { OrgModel, OrgModelName } from '@bk2/shared-models';
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
 import { OrgService } from '@bk2/subject-org-data-access';
 import { convertFormToOrg, OrgFormModel } from '@bk2/subject-org-util';
+import { AvatarService } from '@bk2/avatar-data-access';
 
 export type OrgEditState = {
   orgKey: string | undefined;
@@ -25,10 +24,8 @@ export const OrgEditStore = signalStore(
   withState(initialState),
   withProps(() => ({
     orgService: inject(OrgService),
-    appNavigationService: inject(AppNavigationService),
     appStore: inject(AppStore),
-    env: inject(ENV),
-    modalController: inject(ModalController),    
+    avatarService: inject(AvatarService),
   })),
 
   withProps((store) => ({
@@ -37,44 +34,21 @@ export const OrgEditStore = signalStore(
         orgKey: store.orgKey()
       }),
       stream: ({params}) => {
-        let org$: Observable<OrgModel | undefined> = of(undefined);
-        if (params.orgKey) {
-          org$ = store.orgService.read(params.orgKey);
-          debugItemLoaded('OrgEditStore.org', org$, store.appStore.currentUser());
-        }
+        if (!params.orgKey) return of(undefined);
+        const org$ = store.orgService.read(params.orgKey);
+        debugItemLoaded('OrgEditStore.org', org$, store.appStore.currentUser());
         return org$;
       }
     }),
   })),
+
   withComputed((state) => {
     return {
       org: computed(() => state.orgResource.value()),
       currentUser: computed(() => state.appStore.currentUser()),
       defaultResource : computed(() => state.appStore.defaultResource()),
-      tenantId: computed(() => state.env.tenantId),
-    };
-  }),
-
-
-  withProps((store) => ({
-    addressesResource: rxResource({
-      params: () => ({
-        org: store.org()
-      }),
-      stream: ({params}) => {
-        let addresses$: Observable<AddressModel[]> = of([]);
-        if (params.org) {
-          addresses$ = store.orgService.listAddresses(params.org);
-        }
-        return addresses$;
-      }
-    }),    
-  })),
-
-  withComputed((state) => {
-    return {
-      addresses: computed(() => state.addressesResource.value() ?? []),
-      isLoading: computed(() => state.addressesResource.isLoading() || state.orgResource.isLoading()),
+      tenantId: computed(() => state.appStore.env.tenantId),
+      isLoading: computed(() => state.orgResource.isLoading()),
     };
   }),
 
@@ -82,7 +56,6 @@ export const OrgEditStore = signalStore(
     return {
       reset() {
         patchState(store, initialState);
-        store.addressesResource.reload();
       },
 
       /************************************ SETTERS ************************************* */      
@@ -91,21 +64,22 @@ export const OrgEditStore = signalStore(
       },
 
       /******************************** getters ******************************************* */
-      getOrgTags(): string {
-        return store.appStore.getTags('org');
+      getTags(): string {
+        return store.appStore.getTags(OrgModelName);
       },
       
       /************************************ ACTIONS ************************************* */
-      reloadAddresses() {
-        store.addressesResource.reload();
+      async save(formData?: OrgFormModel): Promise<void> {
+        const org = convertFormToOrg(formData, store.org());
+        await (!org.bkey ? 
+          store.orgService.create(org, store.currentUser()) : 
+          store.orgService.update(org, store.currentUser()));
       },
 
-      async save(vm: OrgFormModel): Promise<void> {
-        const _org = convertFormToOrg(store.org(), vm, store.env.tenantId);
-        await (!_org.bkey ? 
-          store.orgService.create(_org, store.currentUser()) : 
-          store.orgService.update(_org, store.currentUser()));
-        store.appNavigationService.back();
+      async saveAvatar(photo: Photo): Promise<void> {
+        const org = store.org();
+        if (!org) return;
+        await store.avatarService.saveAvatarPhoto(photo, org.bkey, store.tenantId(), OrgModelName);
       }
     }
   }),

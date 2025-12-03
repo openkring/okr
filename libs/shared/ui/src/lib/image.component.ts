@@ -154,9 +154,9 @@ export class ImageComponent {
   private getValue(key: string, defaultValue: string): string {
     const _el = this.imageContainer();
     if (_el) {
-      const _value = _el.nativeElement[key] ?? defaultValue;
-      console.log(`ImageComponent.getValue -> element found: ${key} -> value: ${_value}`);
-      return _value;
+      const value = _el.nativeElement[key] ?? defaultValue;
+      console.log(`ImageComponent.getValue -> element found: ${key} -> value: ${value}`);
+      return value;
     }
     console.log(`ImageComponent.getValue -> element not found: ${key} -> using default value: ${defaultValue}`);
     return defaultValue;

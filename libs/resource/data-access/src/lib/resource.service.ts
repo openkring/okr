@@ -4,7 +4,9 @@ import { Observable } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { ResourceCollection, ResourceModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+
+import { getResourceIndex } from '@bk2/resource-util';
 
 @Injectable({
     providedIn: 'root'
@@ -21,7 +23,7 @@ export class ResourceService {
    * @returns the document id of the created resource or undefined if the operation failed
    */
   public async create(resource: ResourceModel, currentUser?: UserModel): Promise<string | undefined> {
-    resource.index = this.getSearchIndex(resource);
+    resource.index = getResourceIndex(resource);
     return await this.firestoreService.createModel<ResourceModel>(ResourceCollection, resource, `@resource.${resource.type}.operation.create`, currentUser);
   }
 
@@ -42,7 +44,7 @@ export class ResourceService {
    * @returns the document id of the updated Resource or undefined if the operation failed
    */
   public async update(resource: ResourceModel, currentUser?: UserModel, confirmMessage = `@resource.${resource.type}.operation.update`): Promise<string | undefined> {
-    resource.index = this.getSearchIndex(resource);
+    resource.index = getResourceIndex(resource);
     return await this.firestoreService.updateModel<ResourceModel>(ResourceCollection, resource, false, confirmMessage, currentUser);
   }
 
@@ -60,21 +62,4 @@ export class ResourceService {
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<ResourceModel[]> {
     return this.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
-
-  /*-------------------------- search index --------------------------------*/
-  public getSearchIndex(resource: ResourceModel): string {
-    let index = '';
-    index = addIndexElement(index, 'n', resource.name);
-    index = addIndexElement(index, 't', resource.type);
-    index = addIndexElement(index, 'st', resource.subType);
-    return index;
-  }
-
-  /**
-   * Returns a string explaining the structure of the index.
-   * This can be used in info boxes on the GUI.
-   */
-  public getSearchIndexInfo(): string {
-    return 'n:name c:type st:subtype';
-  }  
 }

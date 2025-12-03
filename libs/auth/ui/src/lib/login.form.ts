@@ -43,9 +43,9 @@ export class LoginFormComponent {
 
   protected onValueChange(value: AuthCredentials): void {
     this.vm.set(value);
-    const _result = authCredentialsValidations(this.vm());
-    this.emailErrors.set(_result.getErrors('loginEmail'));
-    this.passwordErrors.set(_result.getErrors('loginPassword'));
-    this.validChange.emit(_result.isValid());
+    const result = authCredentialsValidations(this.vm());
+    this.emailErrors.set(result.getErrors('loginEmail'));
+    this.passwordErrors.set(result.getErrors('loginPassword'));
+    this.validChange.emit(result.isValid());
   }
 }

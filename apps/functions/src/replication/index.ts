@@ -8,7 +8,7 @@ import {
   getAllOwnershipsOfOwner, getAllOwnershipsOfResource,
   getAllPersonalRelsOfObject, getAllPersonalRelsOfSubject,
   getAllReservationsOfReserver, getAllReservationsOfResource,
-  getAllWorkingRelsOfObject, getAllWorkingRelsOfSubject,
+  getAllWorkrelsOfObject, getAllWorkrelsOfSubject,
   updateFavoriteAddressInfo
 } from "@bk2/shared-util-functions";
 
@@ -154,19 +154,19 @@ export const onPersonChange = onDocumentWritten(
 
         // synchronize the personalRels (by subject)
         const personalRels = await getAllPersonalRelsOfSubject(firestore, personId);
-        for (const _personalRel of personalRels) {
-          const personalRelRef = admin.firestore().doc(`${PersonalRelCollection}/${_personalRel.bkey}`);
+        for (const personalRel of personalRels) {
+          const personalRelRef = admin.firestore().doc(`${PersonalRelCollection}/${personalRel.bkey}`);
           await personalRelRef.update({
             subjectFirstName: person.firstName,
             subjectLastName: person.lastName,
             subjectGender: person.gender,
           });
-          logger.info(`Successfully updated personalRel ${_personalRel.bkey} for person ${personId} (subject)`);
+          logger.info(`Successfully updated personalRel ${personalRel.bkey} for person ${personId} (subject)`);
         }
 
         // synchronize the personalRels (by object)
-        const _personalRelsByObject = await getAllPersonalRelsOfObject(firestore, personId);
-        for (const personalRel of _personalRelsByObject) {
+        const personalRelsByObject = await getAllPersonalRelsOfObject(firestore, personId);
+        for (const personalRel of personalRelsByObject) {
           const personalRelRef = admin.firestore().doc(`${PersonalRelCollection}/${personalRel.bkey}`);
           await personalRelRef.update({
             objectFirstName: person.firstName,
@@ -177,7 +177,7 @@ export const onPersonChange = onDocumentWritten(
         }
 
         // synchronize the workRels (by subject)
-        const workRels = await getAllWorkingRelsOfSubject(firestore, personId);
+        const workRels = await getAllWorkrelsOfSubject(firestore, personId);
         for (const workRel of workRels) {
           const workRelRef = admin.firestore().doc(`${WorkingRelCollection}/${workRel.bkey}`);
           await workRelRef.update({
@@ -228,14 +228,14 @@ export const onOrgChange = onDocumentWritten(
 
         // synchronize the ownerships
         const ownerships = await getAllOwnershipsOfOwner(firestore, orgId);
-        for (const _ownership of ownerships) {
-          const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${_ownership.bkey}`);
+        for (const ownership of ownerships) {
+          const ownershipRef = admin.firestore().doc(`${OwnershipCollection}/${ownership.bkey}`);
           await ownershipRef.update({
             ownerName1: '',
             ownerName2: org.name,
             ownerType: org.type,
           });
-          logger.info(`Successfully updated ownership ${_ownership.bkey} for org ${orgId} (owner)`);
+          logger.info(`Successfully updated ownership ${ownership.bkey} for org ${orgId} (owner)`);
         }
 
         // synchronize the memberships of the member org
@@ -265,7 +265,7 @@ export const onOrgChange = onDocumentWritten(
         }
 
         // synchronize the workingRels (by object)
-        const workRels = await getAllWorkingRelsOfObject(firestore, orgId);
+        const workRels = await getAllWorkrelsOfObject(firestore, orgId);
         for (const workRel of workRels) {
           const workRelRef = admin.firestore().doc(`${WorkrelCollection}/${workRel.bkey}`);
           await workRelRef.update({

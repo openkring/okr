@@ -93,7 +93,7 @@ export type BkFormModel = Partial<{
   locations: string[];
   locationType: number;
   lockerNr: number;
-  md5hash: string;
+  hash: string;
   membershipId: string;
   memberCategory: string;
   memberKey: string;

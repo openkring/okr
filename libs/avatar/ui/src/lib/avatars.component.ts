@@ -4,10 +4,10 @@ import { AlertController, IonButton, IonCard, IonCardContent, IonCardHeader, Ion
 
 import { NAME_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AvatarInfo } from '@bk2/shared-models';
+import { AvatarInfo, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { coerceBoolean, getFullPersonName, newAvatarInfo } from '@bk2/shared-util-core';
+import { coerceBoolean, getFullName, newAvatarInfo } from '@bk2/shared-util-core';
 
 import { AvatarDisplayComponent } from './avatar-display.component';
 
@@ -41,7 +41,7 @@ import { AvatarDisplayComponent } from './avatar-display.component';
         }
         @if(isReadOnly()) {
           <ion-item lines="none">
-            <bk-avatar-display [avatars]="avatars()" [defaultIcon]="defaultIcon()" [showName]="false" />
+            <bk-avatar-display [avatars]="avatars()" [showName]="false" />
           </ion-item>
         } @else {
           <ion-item lines="none">
@@ -65,7 +65,7 @@ import { AvatarDisplayComponent } from './avatar-display.component';
                 @for(avatar of avatars; track $index) {
                   <ion-item>
                     <ion-reorder slot="start" />
-                    <ion-label>{{ getNameFromAvatar(avatar) }}</ion-label>
+                    <ion-label>{{ getAvatarName(avatar) }}</ion-label>
                     <ion-icon src="{{'close_cancel_circle' | svgIcon }}" (click)="remove($index)" slot="end" />
                     @if (isCopyable()) {
                       <ion-icon slot="end" src="{{'copy' | svgIcon }}" (click)="copy(avatar)" />
@@ -87,7 +87,9 @@ export class AvatarsComponent {
   private readonly toastController = inject(ToastController);
   private readonly alertController = inject(AlertController);
 
+  // inputs
   public avatars = model.required<AvatarInfo[]>(); // the keys of the menu items
+  public currentUser = input.required<UserModel>();
   public name = input('avatars'); // the name of the menu
   public copyable = input(false);
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
@@ -97,7 +99,6 @@ export class AvatarsComponent {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public description = input<string>();
   public maxLength = input(NAME_LENGTH);
-  public defaultIcon = input('other');
 
   public changed = output<AvatarInfo[]>();
   public stringInput = viewChild<IonInput>('stringInput');
@@ -107,38 +108,38 @@ export class AvatarsComponent {
   protected addLabel = computed(() => `@input.${this.name()}.addString`);
 
   public save($event: CustomEvent): void {
-    const _name = $event?.detail?.value as string;
+    const name = $event?.detail?.value as string;
     this.resetInput();
-    if (_name && _name.length > 0) {    // we have a valid name, either of one or two parts
-      const _avatars = this.avatars();
-      _avatars.push(this.getAvatarFromName(_name));
-      this.updateAvatars(_avatars);
+    if (name && name.length > 0) {    // we have a valid name, either of one or two parts
+      const avatars = this.avatars();
+      avatars.push(this.getAvatarFromName(name));
+      this.updateAvatars(avatars);
     }
   }
 
   private resetInput(): void {
-    const _input = this.stringInput();
-    if (_input) {
-      _input.value = '';
+    const input = this.stringInput();
+    if (input) {
+      input.value = '';
     }
   }
 
   public remove(index: number): void {
-    const _avatars = this.avatars();
-    _avatars.splice(index, 1);
-    this.updateAvatars(_avatars);
+    const avatars = this.avatars();
+    avatars.splice(index, 1);
+    this.updateAvatars(avatars);
   }
 
   public async copy(avatar: AvatarInfo, confirmation?: string): Promise<void> {
-    await copyToClipboardWithConfirmation(this.toastController, getFullPersonName(avatar.name1, avatar.name2), confirmation);
+    await copyToClipboardWithConfirmation(this.toastController, this.getAvatarName(avatar), confirmation);
   }
 
   public async edit(avatar: AvatarInfo, index: number): Promise<void> {
-    const _changedName = await bkPrompt(this.alertController, '@input.avatars.edit', getFullPersonName(avatar.name1, avatar.name2));
-    if (_changedName) {
-      const _avatars = this.avatars();
-      _avatars[index] = this.getAvatarFromName(_changedName);
-      this.updateAvatars(_avatars);
+    const changedName = await bkPrompt(this.alertController, '@input.avatars.edit', this.getAvatarName(avatar));
+    if (changedName) {
+      const avatars = this.avatars();
+      avatars[index] = this.getAvatarFromName(changedName);
+      this.updateAvatars(avatars);
     }
   }
 
@@ -149,15 +150,15 @@ export class AvatarsComponent {
 
   private getAvatarFromName(name: string): AvatarInfo {
     if (name.includes(' ')) {
-      const _nameParts = name.split(' ');
-      return newAvatarInfo(_nameParts[0], _nameParts[1]);  
+      const nameParts = name.split(' ');
+      return newAvatarInfo(nameParts[0], nameParts[1]);  
     } else {
       return newAvatarInfo('', name);
     }
   }
 
-  protected getNameFromAvatar(avatar: AvatarInfo): string {
-    return getFullPersonName(avatar.name1, avatar.name2);
+  protected getAvatarName(avatar: AvatarInfo): string {
+    return getFullName(avatar.name1, avatar.name2, this.currentUser()?.nameDisplay);
   }
 
   /**

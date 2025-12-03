@@ -1,14 +1,13 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { Browser } from '@capacitor/browser';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { DocumentModel, RoleName } from '@bk2/shared-models';
-import { FileExtensionPipe, FileLogoPipe, FileNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { DocumentModel, DocumentModelName, RoleName } from '@bk2/shared-models';
+import { FileExtensionPipe, FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { getItemLabel, hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
@@ -18,7 +17,7 @@ import { DocumentListStore } from './document-list.store';
   selector: 'bk-document-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, FileNamePipe, FileLogoPipe, FileExtensionPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, FileNamePipe, FileLogoPipe, FileSizePipe, PrettyDatePipe,
     SpinnerComponent, ListFilterComponent,
     EmptyListComponent, MenuComponent,
     IonToolbar, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
@@ -30,7 +29,7 @@ import { DocumentListStore } from './document-list.store';
     <!-- title and actions -->
   <ion-toolbar color="secondary">
     <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-    <ion-title>{{ selectedDocumentsCount()}}/{{allDocumentsCount()}} {{ '@document.plural' | translate | async }}</ion-title>
+    <ion-title>{{ filteredDocumentsCount()}}/{{documentsCount()}} {{ '@document.plural' | translate | async }}</ion-title>
     @if(hasRole('privileged') || hasRole('contentAdmin')) {
       <ion-buttons slot="end">
         <ion-button id="c-docs">
@@ -49,25 +48,23 @@ import { DocumentListStore } from './document-list.store';
 
   <!-- search and filters -->
   <bk-list-filter 
-    [tags]="documentTags()"
-    [type]="types()"
+    [tags]="tags()" (tagChanged)="onTagSelected($event)"
+    [type]="types()" (typeChanged)="onTypeSelected($event)"
     (searchTermChanged)="onSearchtermChange($event)"
-    (tagChanged)="onTagSelected($event)"
-    (typeChanged)="onTypeSelected($event)"
   />
 
   <!-- list header -->
-  <ion-toolbar color="primary">
+  <ion-toolbar color="light" class="ion-hide-sm-down">
     <ion-grid>
       <ion-row>
-        <ion-col size="12" size-sm="8">
-          <ion-label color="light"><strong>{{ '@document.list.header.name' | translate | async }}</strong></ion-label>
+        <ion-col size="8">
+          <ion-label><strong>{{ '@document.list.header.name' | translate | async }}</strong></ion-label>
         </ion-col>
-        <ion-col size="2" class="ion-hide-sm-down">
-          <ion-label color="light"><strong>{{ '@document.list.header.type' | translate | async }}</strong></ion-label>
+        <ion-col size="2">
+          <ion-label><strong>{{ '@document.list.header.size' | translate | async }}</strong></ion-label>
         </ion-col>
-        <ion-col size="2" class="ion-hide-sm-down">
-          <ion-label color="light"><strong>{{ '@document.list.header.extension' | translate | async }}</strong></ion-label>
+        <ion-col size="2">
+          <ion-label><strong>{{ '@document.list.header.lastUpdate' | translate | async }}</strong></ion-label>
         </ion-col>
       </ion-row>
     </ion-grid>
@@ -76,54 +73,56 @@ import { DocumentListStore } from './document-list.store';
 
 <!-- list data -->
 <ion-content #content>
-  @if(!isLoading()) {
-    @if (documents.length === 0) {
+  @if(isLoading()) {
+    <bk-spinner />
+  } @else {
+    @if (filteredDocumentsCount() === 0) {
       <bk-empty-list message="@content.page.field.empty" />
     } @else {
       <ion-grid>
         <!-- don't use 'document' here as it leads to confusions with HTML document -->
-        @for(doc of documents(); track doc.bkey) {
+        @for(doc of filteredDocuments(); track $index) {
           <ion-row (click)="showActions(doc)">
             <ion-col size="12" size-sm="8">
               <ion-item lines="none">
                 <ion-icon src="{{ doc.fullPath | fileLogo }}" />&nbsp;
-                <ion-label>{{ doc.fullPath | fileName }}</ion-label>
+                <ion-label>{{ doc.fullPath | fileName}}</ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="2" class="ion-hide-sm-down">
               <ion-item lines="none">
-                <ion-label>{{ doc.type }}</ion-label>
+                <ion-label>{{ doc.size | fileSize}}</ion-label>
               </ion-item>
             </ion-col>
             <ion-col size="2" class="ion-hide-sm-down">
               <ion-item lines="none">
-                <ion-label>{{ doc.fullPath | fileExtension }}</ion-label>
+                <ion-label>{{ doc.dateOfDocLastUpdate | prettyDate }}</ion-label>
               </ion-item>
             </ion-col>
           </ion-row>
         }
       </ion-grid>
     }
-  } @else {
-    <bk-spinner />
   }
 </ion-content>
 `
 })
-export class DocumentAllListComponent {
-  protected documentListStore = inject(DocumentListStore);
-  private actionSheetController = inject(ActionSheetController);
+export class DocumentListComponent {
+  protected readonly documentListStore = inject(DocumentListStore);
+  private readonly actionSheetController = inject(ActionSheetController);
 
-  public listId = input.required<string>();
-  public contextMenuName = input.required<string>();
+  public readonly listId = input.required<string>();
+  public readonly contextMenuName = input.required<string>();
 
-  protected documents = computed(() => this.documentListStore.documents() ?? []);
-  protected allDocumentsCount = computed(() => this.documentListStore.allDocumentsCount());
-  protected selectedDocumentsCount = computed(() => this.documents().length);
+  protected documentsCount = computed(() => this.documentListStore.documentsCount());
+  protected filteredDocuments = computed(() => this.documentListStore.filteredDocuments() ?? []);
+  protected filteredDocumentsCount = computed(() => this.filteredDocuments().length);
   protected isLoading = computed(() => this.documentListStore.isLoading());
-  protected documentTags = computed(() => this.documentListStore.getTags());
-  protected types = computed(() => this.documentListStore.docTypes());
-  protected sources = computed(() => this.documentListStore.docSources());
+  protected tags = computed(() => this.documentListStore.getTags());
+  protected types = computed(() => this.documentListStore.appStore.getCategory('document_type'));
+  protected sources = computed(() => this.documentListStore.appStore.getCategory('document_source'));
+  protected readonly currentUser = computed(() => this.documentListStore.appStore.currentUser());
+  private readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.documentListStore.appStore.env.services.imgixBaseUrl;
 
@@ -132,7 +131,7 @@ export class DocumentAllListComponent {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
       case 'add':  await this.documentListStore.add(); break;
-      case 'export': await this.documentListStore.export(); break;
+      case 'exportRaw': await this.documentListStore.export('raw'); break;
       default: error(undefined, `DocumentListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -153,13 +152,19 @@ export class DocumentAllListComponent {
    * @param document 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, document: DocumentModel): void {
-    if (hasRole('contentAdmin', this.documentListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      // tbd: download the document
-      // tbd: replace it with a new version
-      // tbd: show version history
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.preview', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.imgixBaseUrl, 'download'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.imgixBaseUrl, 'timeline'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.imgixBaseUrl, 'upload'));
+    }
+    if (hasRole('admin', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -173,33 +178,37 @@ export class DocumentAllListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.delete(document);
+        case 'document.delete':
+          await this.documentListStore.delete(document, this.readOnly());
           break;
-        case 'edit':
-          await this.edit(document);
+        case 'document.download':
+          await this.documentListStore.download(document, this.readOnly());
           break;
-        case 'show':
-          await this.show(document);
+        case 'document.update':
+          await this.documentListStore.update(document, this.readOnly());
+          break;
+        case 'document.edit':
+          await this.documentListStore.edit(document, this.readOnly());
+          break;
+        case 'document.view':
+          await this.documentListStore.edit(document, true);
+          break;
+        case 'document.preview':
+          await this.documentListStore.preview(document, true);
+          break;
+        case 'document.showRevisions':
+          const revisions = await this.documentListStore.getRevisions(document);
+          for (const rev of revisions) {
+            console.log(` - revision: ${rev.bkey} / version: ${rev.version} / last update: ${rev.dateOfDocLastUpdate}`);
+          }
           break;
       }
     }
   }
 
-  public async show(document: DocumentModel): Promise<void> {
-    await Browser.open({ url: document.url, windowName: '_blank' });
-  }
-
-  protected async delete(doc?: DocumentModel): Promise<void> {
-    if (doc) await this.documentListStore.delete(doc);
-  }
-
-  public async edit(doc?: DocumentModel): Promise<void> {
-    if (doc) await this.documentListStore.edit(doc);
-  }
-
-  /******************************* change notifications *************************************** */
+  /******************************* filter setters *************************************** */
   public onSearchtermChange(searchTerm: string): void {
     this.documentListStore.setSearchTerm(searchTerm);
   }

@@ -10,3 +10,4 @@ export class AvatarModel implements BkModel {
 
 export const AvatarDirectory = 'avatar';
 export const AvatarCollection = 'avatars';
+export const AvatarModelName = 'avatar';

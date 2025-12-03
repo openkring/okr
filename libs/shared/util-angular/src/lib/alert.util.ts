@@ -49,7 +49,7 @@ export async function confirm(
   isCancellable = false,
   cssClass?: string
 ): Promise<boolean> {
-  const _alertConfig: AlertOptions = isCancellable === false ? {
+  const alertConfig: AlertOptions = isCancellable === false ? {
     message: bkTranslate(message),
     buttons: [bkTranslate('@general.operation.change.ok')]
   } : {
@@ -64,12 +64,12 @@ export async function confirm(
   };
   if (cssClass) {
     // tslint:disable-next-line: no-string-literal
-    _alertConfig['cssClass'] = cssClass;
+    alertConfig['cssClass'] = cssClass;
   }
-  const _alert = await alertController.create(_alertConfig);
-  await _alert.present();
+  const alert = await alertController.create(alertConfig);
+  await alert.present();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { role } = await _alert.onWillDismiss();
+  const { role } = await alert.onWillDismiss();
   return role === 'confirm';
 }
 
@@ -82,24 +82,24 @@ export type PromptInputType = 'text' | 'number' | 'password';
 * @param cssClass optional styling attributes
 */
 export async function bkPrompt(alertController: AlertController, header: string, placeholder: string): Promise<string | undefined> {
-  const _buttons = [{
+  const buttons = [{
       text: bkTranslate('@general.operation.change.cancel'),
       role: 'cancel'
     }, {
       text: bkTranslate('@general.operation.change.ok'),
       role: 'confirm'
     }];
-  const _inputs = [{
-    placeholder: bkTranslate(placeholder)
-  }];
     
-  const _alert = await alertController.create({
+  const alert = await alertController.create({
     header: bkTranslate(header),
-    buttons: _buttons,
-    inputs: _inputs
+    buttons: buttons,
+    inputs: [{
+      type: 'textarea',
+      placeholder: bkTranslate(placeholder)
+    }]
   });
-  await _alert.present();
-  const { data, role } = await _alert.onWillDismiss();
+  await alert.present();
+  const { data, role } = await alert.onWillDismiss();
   if (data?.values?.length === 0) return undefined;
   if (role === 'confirm') {
     return data?.values[0] as string;

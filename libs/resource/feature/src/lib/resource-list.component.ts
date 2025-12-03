@@ -2,12 +2,12 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { getItemLabel, hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
@@ -101,7 +101,9 @@ export class ResourceListComponent {
   protected isLoading = computed(() => this.resourceListStore.isLoading());
   protected readonly tags = computed(() => this.resourceListStore.getResourceTags());
   protected readonly types = computed(() => this.resourceListStore.appStore.getCategory('resource_type'));
-  
+  protected currentUser = computed(() => this.resourceListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
@@ -153,11 +155,15 @@ export class ResourceListComponent {
    * @param resource 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, resource: ResourceModel): void {
-    if (hasRole('resourceAdmin', this.resourceListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
-    if (hasRole('admin', this.resourceListStore.appStore.currentUser())) {
+
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
@@ -172,13 +178,18 @@ export class ResourceListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
-          await this.resourceListStore.delete(resource);
+          await this.resourceListStore.delete(resource, this.readOnly());
           break;
         case 'edit':
-          await this.resourceListStore.edit(resource);
+          await this.resourceListStore.edit(resource, this.readOnly());
           break;
+        case 'view':
+          await this.resourceListStore.edit(resource, true);
+          break;
+
       }
     }
   }

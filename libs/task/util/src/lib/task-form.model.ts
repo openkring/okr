@@ -1,5 +1,3 @@
-import { DeepRequired } from 'ngx-vest-forms';
-
 import { AvatarInfo } from '@bk2/shared-models';
 import { DEFAULT_CALENDARS, DEFAULT_DATE, DEFAULT_IMPORTANCE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRIORITY, DEFAULT_TAGS, DEFAULT_TASK_STATE } from '@bk2/shared-constants';
 
@@ -22,7 +20,7 @@ export type TaskFormModel = {
   calendars: string[];
 };
 
-export const taskFormModelShape: DeepRequired<TaskFormModel> = {
+export const TASK_FORM_SHAPE: TaskFormModel = {
   bkey: DEFAULT_KEY,
   name: DEFAULT_NAME,
   tags: DEFAULT_TAGS,

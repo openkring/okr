@@ -12,3 +12,4 @@ export class TagModel {
 }
 
 export const TagCollection = 'tags';
+export const TagModelName = 'tag';

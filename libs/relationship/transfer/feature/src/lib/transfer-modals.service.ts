@@ -30,7 +30,7 @@ export class TransferModalsService {
    * @param resource the resource object that is transferred
    */
    public async add(subject: PersonModel | OrgModel, subjectModelType: 'person' | 'org', object: PersonModel | OrgModel, objectModelType: 'person' | 'org', resource: ResourceModel): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: TransferNewModalComponent,
       cssClass: 'small-modal',
       componentProps: {
@@ -41,8 +41,8 @@ export class TransferModalsService {
         resource: resource
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
+    modal.present();
+    const { data, role } = await modal.onDidDismiss();
     if (role === 'confirm') {
       if (isTransfer(data, this.tenantId)) {
         await this.transferService.create(data, this.appStore.currentUser());
@@ -57,14 +57,14 @@ export class TransferModalsService {
   public async edit(transfer?: TransferModel): Promise<void> {
     transfer ??= new TransferModel(this.tenantId);
     
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: TransferEditModalComponent,
       componentProps: {
         transfer: transfer
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
+    modal.present();
+    const { data, role } = await modal.onDidDismiss();
     if (role === 'confirm') {
       if (isTransfer(data, this.tenantId)) {
         await (!data.bkey ? 

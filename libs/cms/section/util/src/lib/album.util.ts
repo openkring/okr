@@ -171,23 +171,23 @@ export async function getImageMetaData(httpClient: HttpClient, imgixBaseUrl: str
   const data = await firstValueFrom(httpClient.get<ImageMetaDataResponse>(url));
   debugData('album.util.getMetaData -> data: ', data);
   const metaData: ImageMetaData = {
-    altitude: data.GPS?.Altitude,
-    latitude: data.GPS?.Latitude,
-    longitude: data.GPS?.Longitude,
-    speed: data.GPS?.Speed,
-    direction: data.GPS?.ImgDirection,
-    size: data['Content-Length'],
-    height: data.PixelHeight,
-    width: data.PixelWidth,
-    cameraMake: data.TIFF?.Make,
-    cameraModel: data.TIFF?.Model,
-    software: data.TIFF?.Software,
-    focalLength: data.Exif?.FocalLength,
-    focalLengthIn35mmFilm: data.Exif?.FocalLengthIn35mmFilm,
-    aperture: data.Exif?.FNumber,
-    exposureTime: data.Exif?.ExposureTime,
-    iso: data.Exif?.ISOSpeedRatings,
-    lensModel: data.Exif?.LensModel
+    altitude: data.GPS?.Altitude ?? 0,
+    latitude: data.GPS?.Latitude ?? 0,
+    longitude: data.GPS?.Longitude ?? 0,
+    speed: data.GPS?.Speed ?? 0,
+    direction: data.GPS?.ImgDirection ?? 0,
+    size: data['Content-Length'] ?? 0,
+    height: data.PixelHeight ?? 0,
+    width: data.PixelWidth ?? 0,
+    cameraMake: data.TIFF?.Make ?? '',
+    cameraModel: data.TIFF?.Model ?? '',
+    software: data.TIFF?.Software ?? '',
+    focalLength: data.Exif?.FocalLength ?? 0,
+    focalLengthIn35mmFilm: data.Exif?.FocalLengthIn35mmFilm ?? 0,
+    aperture: data.Exif?.FNumber ?? 0,
+    exposureTime: data.Exif?.ExposureTime ?? 0,
+    iso: data.Exif?.ISOSpeedRatings ?? 0,
+    lensModel: data.Exif?.LensModel ?? ''
   };
   debugData('album.util.getMetaData -> metaData: ', metaData);
   return metaData;

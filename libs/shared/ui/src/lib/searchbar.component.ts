@@ -8,6 +8,12 @@ import { IonSearchbar } from '@ionic/angular/standalone';
   imports: [
     IonSearchbar
   ],
+  styles: [`
+    ion-searchbar {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+    }
+  `],
   template: `
       <ion-searchbar  #bksearch
           type="search" 

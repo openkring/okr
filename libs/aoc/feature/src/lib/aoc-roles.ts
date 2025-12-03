@@ -3,15 +3,17 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
-import { flattenRoles, structureRoles } from '@bk2/user-util';
-
 import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { AvatarDisplayComponent, ChipsComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
-import { AocRolesStore } from './aoc-roles.store';
+import { ChipsComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
 import { getCategoryItemNames } from '@bk2/shared-util-core';
 import { AvatarInfo } from '@bk2/shared-models';
+
+import { flattenRoles, structureRoles } from '@bk2/user-util';
+import { AvatarDisplayComponent } from '@bk2/avatar-ui';
+
+import { AocRolesStore } from './aoc-roles.store';
 
 @Component({
   selector: 'bk-aoc-roles',
@@ -290,12 +292,12 @@ export class AocRolesComponent {
   protected roles = computed(() => flattenRoles(this.selectedUser()?.roles ?? { 'registered': true }));
 
   protected avatar = computed(() => {
-    const _person = this.aocRolesStore.selectedPerson();
-    if (_person) {
+    const person = this.aocRolesStore.selectedPerson();
+    if (person) {
       return {
-        key: _person.bkey,
-        name1: _person.firstName,
-        name2: _person.lastName,
+        key: person.bkey,
+        name1: person.firstName,
+        name2: person.lastName,
         label: '',
         modelType: 'person',
       } as AvatarInfo;
@@ -365,10 +367,10 @@ export class AocRolesComponent {
   }
 
   protected onRoleChange($event: string): void {
-    const _user = this.selectedUser();
-    if (_user) {
-      _user.roles = structureRoles($event);
-      this.aocRolesStore.updateUser(_user);
+    const user = this.selectedUser();
+    if (user) {
+      user.roles = structureRoles($event);
+      this.aocRolesStore.updateUser(user);
     }    
   }
 }
@@ -380,5 +382,5 @@ export class AocRolesComponent {
  * loginEmail -> auch email auf user und person ändern
  * find all persons that do not have a user model
  * find all persons that do not have a firebase account
- * find all persons where the login email ist not the same on firebase user, user model and person fav_email
+ * find all persons where the login email ist not the same on firebase user, user model and person favEmail
  */

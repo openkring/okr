@@ -102,8 +102,8 @@ export const PersonalRelAccordionStore = signalStore(
             modal.present();
             const { data, role } = await modal.onDidDismiss();
             if (role === 'confirm') {
-              const _personalRel = convertFormToNewPersonalRel(data as PersonalRelNewFormModel, store.appStore.tenantId());
-              await store.personalRelService.create(_personalRel, store.appStore.currentUser());
+              const personalRel = convertFormToNewPersonalRel(data as PersonalRelNewFormModel, store.appStore.tenantId());
+              await store.personalRelService.create(personalRel, store.appStore.currentUser());
             }
           }
           store.personalRelsResource.reload();
@@ -111,13 +111,12 @@ export const PersonalRelAccordionStore = signalStore(
       },
 
       async edit(personalRel?: PersonalRelModel, readOnly = true): Promise<void> {
-        let _personalRel = personalRel;
-        _personalRel ??= new PersonalRelModel(store.appStore.tenantId());
+        personalRel ??= new PersonalRelModel(store.appStore.tenantId());
         
         const modal = await store.modalController.create({
           component: PersonalRelEditModalComponent,
           componentProps: {
-            personalRel: _personalRel,
+            personalRel: personalRel,
             currentUser: store.appStore.currentUser(),
             readOnly
           }

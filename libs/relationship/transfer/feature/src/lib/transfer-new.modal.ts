@@ -4,11 +4,11 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { OrgModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
+import { OrgModel, PersonModel, ResourceModel, RoleName, TransferModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
-import { convertFormToTransfer, newTransferFormModel } from '@bk2/relationship-transfer-util';
+import { convertFormToTransfer, newTransferFormModel, TransferFormModel } from '@bk2/relationship-transfer-util';
 
 import { TransferFormComponent } from './transfer.form';
 
@@ -22,11 +22,15 @@ import { TransferFormComponent } from './transfer.form';
   ],
   template: `
     <bk-header title="{{ '@transfer.operation.create.label' | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content>
-      <bk-transfer-form [(vm)]="vm" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
+      <bk-transfer-form
+        [formData]="formData()"
+        [readOnly]="readOnly()"
+        (formDataChange)="onFormDataChange($event)"
+      />
     </ion-content>
   `
 })
@@ -34,23 +38,39 @@ export class TransferNewModalComponent {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
 
+  // inputs
   public subject = input.required<PersonModel | OrgModel>();
   public subjectModelType = input.required<'person' | 'org'>();
   public object = input.required<PersonModel | OrgModel>();
   public objectModelType = input.required<'person' | 'org'>();
   public resource = input.required<ResourceModel>();
 
-  public vm = linkedSignal(() => newTransferFormModel(this.subject(), this.subjectModelType(), this.object(), this.objectModelType(), this.resource()));
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(true); // new form is prefilled and valid
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = linkedSignal(() => newTransferFormModel(this.subject(), this.subjectModelType(), this.object(), this.objectModelType(), this.resource()));
+
+  // derived signals
   private currentUser = computed(() => this.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
-  // as we prepared everything with currentPerson and defaultResource, we already have a valid form, so we need to signal this here.
-  protected formIsValid = signal(true);
-
-  public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToTransfer(undefined, this.vm(), this.appStore.tenantId()), 'confirm');
+ /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(convertFormToTransfer(this.formData(), new TransferModel(this.appStore.tenantId())), 'confirm');
   }
 
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(newTransferFormModel(this.subject(), this.subjectModelType(), this.object(), this.objectModelType(), this.resource()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: TransferFormModel): void {
+    this.formData.set(formData);
+  }
+
+  /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.currentUser());
   }

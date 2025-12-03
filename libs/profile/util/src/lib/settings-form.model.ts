@@ -1,10 +1,8 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
 import { AvatarUsage, DefaultLanguage, DeliveryType, Language, NameDisplay, PersonSortCriteria } from '@bk2/shared-models';
 import { DEFAULT_EMAIL, DEFAULT_KEY } from '@bk2/shared-constants';
 
 // attributes from UserModel
-export type SettingsFormModel = DeepPartial<{
+export type SettingsFormModel = {
   language: Language;
   showDebugInfo: boolean;
   showArchivedData: boolean;
@@ -19,9 +17,9 @@ export type SettingsFormModel = DeepPartial<{
   personSortCriteria: PersonSortCriteria;
   newsDelivery: DeliveryType;
   invoiceDelivery: DeliveryType;
-}>;
+};
 
-export const settingsFormModelShape: DeepRequired<SettingsFormModel> = {
+export const SETTINGS_FORM_SHAPE: SettingsFormModel = {
   language: DefaultLanguage,
   showDebugInfo: false,
   showArchivedData: false,

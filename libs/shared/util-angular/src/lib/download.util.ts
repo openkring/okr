@@ -113,8 +113,8 @@ export async function downloadTextFile(data: string, filename: string): Promise<
        } else {
         error(toastController, `download.util/download: ERROR: wrong platform: ${platform.platforms}`);
       }
-    } catch (_ex) {
-      error(toastController, `download.util/download failed: ${JSON.stringify(_ex)}`);
+    } catch (ex) {
+      error(toastController, `download.util/download failed: ${JSON.stringify(ex)}`);
     }
   }
   */
@@ -163,8 +163,8 @@ export function downloadFileAndStore(file: File) {
       const _storage = Inject(STORAGE);
       return await getDownloadURL(ref(_storage, path));
     }
-    catch(_ex) {
-      error(toastController, 'download.util/downloadFileFromStorage(' + path + ') -> ERROR: ' + JSON.stringify(_ex));  
+    catch(ex) {
+      error(toastController, 'download.util/downloadFileFromStorage(' + path + ') -> ERROR: ' + JSON.stringify(ex));  
       return '';
     }
   }
@@ -176,8 +176,8 @@ export function downloadFileAndStore(file: File) {
       deleteObject(_ref);
       showToast(toastController, '@document.operation.delete.conf');
     }
-    catch(_ex) {
-      error(toastController, 'download.util/deleteFileFromStorage(' + path + ') -> ERROR: ' + JSON.stringify(_ex));
+    catch(ex) {
+      error(toastController, 'download.util/deleteFileFromStorage(' + path + ') -> ERROR: ' + JSON.stringify(ex));
     }
   }
 

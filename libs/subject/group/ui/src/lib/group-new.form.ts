@@ -1,12 +1,12 @@
-import { Component, computed, input, model, output, signal } from '@angular/core';
+import { Component, computed, input, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { RoleName, SwissCity, UserModel } from '@bk2/shared-models';
 import { CheckboxComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
-import { GroupFormModel, GroupNewFormModel, groupNewFormModelShape, groupNewFormValidations } from '@bk2/subject-group-util';
+import { GROUP_NEW_FORM_SHAPE, GroupFormModel, GroupNewFormModel, groupNewFormValidations } from '@bk2/subject-group-util';
 
 @Component({
   selector: 'bk-group-new-form',
@@ -19,107 +19,108 @@ import { GroupFormModel, GroupNewFormModel, groupNewFormModelShape, groupNewForm
   template: `
   <form scVestForm
     [formShape]="shape"
-    [formValue]="vm()"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
 
     <ion-card>
       <ion-card-content>
         <ion-grid>
           <ion-row> 
             <ion-col size="12" size-md="6">
-              <bk-text-input name="name" [value]="name()" [maxLength]=50 [readOnly]="readOnly()" (changed)="onChange('name', $event)" />
+              <bk-text-input name="name" [value]="name()" [maxLength]=50 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
               <bk-error-note [errors]="nameErrors()" />                                                                                                                     
             </ion-col>
             <ion-col size="12" size-md="6">
               <!-- tbd: add word mask and check uniqueness -->
-              <bk-text-input name="id" [value]="id()" [maxLength]=50 [readOnly]="readOnly()" (changed)="onChange('id', $event)" />
+              <bk-text-input name="id" [value]="id()" [maxLength]=50 [readOnly]="isReadOnly()" (changed)="onFieldChange('id', $event)" />
               <bk-error-note [errors]="idErrors()" />                                                                                                                     
             </ion-col>
           </ion-row>
           <ion-row> 
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasContent" [isChecked]="hasContent()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasContent', $event)"/>
+              <bk-checkbox name="hasContent" [isChecked]="hasContent()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasContent', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasChat" [isChecked]="hasChat()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasChat', $event)"/>
+              <bk-checkbox name="hasChat" [isChecked]="hasChat()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasChat', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasCalendar" [isChecked]="hasCalendar()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasCalendar', $event)"/>
+              <bk-checkbox name="hasCalendar" [isChecked]="hasCalendar()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasCalendar', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasTasks" [isChecked]="hasTasks()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasTasks', $event)"/>
+              <bk-checkbox name="hasTasks" [isChecked]="hasTasks()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasTasks', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasFiles" [isChecked]="hasFiles()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasFiles', $event)"/>
+              <bk-checkbox name="hasFiles" [isChecked]="hasFiles()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasFiles', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasAlbum" [isChecked]="hasAlbum()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasAlbum', $event)"/>
+              <bk-checkbox name="hasAlbum" [isChecked]="hasAlbum()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasAlbum', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasMembers" [isChecked]="hasMembers()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasMembers', $event)"/>
+              <bk-checkbox name="hasMembers" [isChecked]="hasMembers()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasMembers', $event)"/>
             </ion-col>
-
-            <!-- tbd: hierarchy comes later 
-              select an org or group, fill in parentKey, parentName, parentModelType
-            -->
+            <!-- tbd: group hierarchy:  select an org or group, fill in parentKey, parentName, parentModelType -->
           </ion-row>
 
         </ion-grid>
       </ion-card-content>
     </ion-card>
-    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="groupTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
 
     @if(hasRole('admin')) { 
-      <bk-notes name="notes" [value]="notes()" [readOnly]="readOnly()" />
+      <bk-notes name="notes" [value]="notes()" [readOnly]="isReadOnly()" />
     }
   </form>
   `
 })
 export class GroupNewFormComponent {
-  public vm = model.required<GroupNewFormModel>();
-
+  // inputs
+  public formData = model.required<GroupNewFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public groupTags = input.required<string>();
+  public allTags = input.required<string>();
   public readOnly = input(true); 
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
+ // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
   
+  // validation and errors
   protected readonly suite = groupNewFormValidations;
-  protected readonly shape = groupNewFormModelShape;
-
-  protected name = computed(() => this.vm().name ?? '');
-  protected id = computed(() => this.vm().id ?? '');
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
-  protected hasContent = computed(() => this.vm().hasContent ?? true);
-  protected hasChat = computed(() => this.vm().hasChat ?? true);
-  protected hasCalendar = computed(() => this.vm().hasCalendar ?? true);
-  protected hasTasks = computed(() => this.vm().hasTasks ?? true);
-  protected hasFiles = computed(() => this.vm().hasFiles ?? true);
-  protected hasAlbum = computed(() => this.vm().hasAlbum ?? true);
-  protected hasMembers = computed(() => this.vm().hasMembers ?? true);
-
-  private readonly validationResult = computed(() => groupNewFormValidations(this.vm()));
+  protected readonly shape = GROUP_NEW_FORM_SHAPE;
+  private readonly validationResult = computed(() => groupNewFormValidations(this.formData()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected idErrors = computed(() => this.validationResult().getErrors('id'));
 
+  // fields
+  protected name = computed(() => this.formData().name ?? '');
+  protected id = computed(() => this.formData().id ?? '');
+  protected tags = computed(() => this.formData().tags ?? '');
+  protected notes = computed(() => this.formData().notes ?? '');
+  protected hasContent = computed(() => this.formData().hasContent ?? true);
+  protected hasChat = computed(() => this.formData().hasChat ?? true);
+  protected hasCalendar = computed(() => this.formData().hasCalendar ?? true);
+  protected hasTasks = computed(() => this.formData().hasTasks ?? true);
+  protected hasFiles = computed(() => this.formData().hasFiles ?? true);
+  protected hasAlbum = computed(() => this.formData().hasAlbum ?? true);
+  protected hasMembers = computed(() => this.formData().hasMembers ?? true);
+
+  protected onFormChange(value: GroupNewFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('GroupNewForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, $event: string | string[] | number | boolean): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
+    debugFormErrors('GroupNewForm.onFieldChange', this.validationResult().errors, this.currentUser());
+  }
+
   protected onCitySelected(city: SwissCity): void {
-    this.vm.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
-  }
-
-  protected onValueChange(value: GroupFormModel): void {
-    this.vm.update((vm) => ({...vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
-  }
-
-  protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('GroupNewForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
+    debugFormErrors('GroupNewForm.onCitySelected', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

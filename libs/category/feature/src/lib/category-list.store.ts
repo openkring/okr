@@ -76,48 +76,43 @@ export const CategoryListStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      async add(defaultCategoryName?: string): Promise<void> {
-        let _defaultCategory: CategoryListModel | undefined;
+      async add(defaultCategoryName?: string, readOnly = true): Promise<void> {
+        let defaultCategory: CategoryListModel | undefined;
           if (defaultCategoryName) {
-            _defaultCategory = await firstValueFrom(store.categoryService.read(defaultCategoryName));
+            defaultCategory = await firstValueFrom(store.categoryService.read(defaultCategoryName));
           }
-          const _newCategory = structuredClone(_defaultCategory) ?? new CategoryListModel(store.appStore.tenantId());
-          const _modal = await store.modalController.create({
-            component: CategoryEditModalComponent,
-            componentProps: {
-              category: _newCategory,
-              currentUser: store.currentUser()
-            }
-          });
-          _modal.present();
-          const { data, role } = await _modal.onDidDismiss();
-          if (role === 'confirm') {
-            if (isCategoryList(data, store.appStore.env.tenantId)) {
-              await store.categoryService.create(data, store.currentUser());
-            }
-          }
-          store.categoriesResource.reload();
+          const newCategory = this.duplicateCategory(defaultCategory);
+          await this.edit(newCategory, readOnly);
       },
 
-      async edit(category: CategoryListModel): Promise<void> {
-        const _modal = await store.modalController.create({
+      duplicateCategory(category?: CategoryListModel): CategoryListModel {
+        if (!category) return new CategoryListModel(store.appStore.tenantId());
+        const duplicatedCategory = structuredClone(category);
+        duplicatedCategory.bkey = '';
+        return duplicatedCategory;
+      },
+
+      async edit(category: CategoryListModel, readOnly = true): Promise<void> {
+        const modal = await store.modalController.create({
           component: CategoryEditModalComponent,
           componentProps: {
-            category: category,
+            category,
+            readOnly,
             currentUser: store.currentUser()
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onDidDismiss();
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm') {
           if (isCategoryList(data, store.appStore.tenantId())) {
-            await store.categoryService.update(data, store.currentUser());
+            category.bkey === '' ? await store.categoryService.create(data, store.currentUser()) : await store.categoryService.update(data, store.currentUser());
           }
         }
         store.categoriesResource.reload();
       },
 
-      async delete(cat: CategoryListModel): Promise<void> {
+      async delete(cat: CategoryListModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
         await store.categoryService.delete(cat, store.currentUser());
         this.reset();
       },

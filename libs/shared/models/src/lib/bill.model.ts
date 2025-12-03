@@ -44,3 +44,4 @@ export class BillModel implements BkModel, NamedModel, SearchableModel, TaggedMo
 }
 
 export const BillCollection = 'bills';
+export const BillModelName = 'bill';

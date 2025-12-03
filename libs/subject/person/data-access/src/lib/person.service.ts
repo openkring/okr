@@ -3,8 +3,10 @@ import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
+import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+
+import {getPersonIndex} from '@bk2/subject-person-util'
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +23,7 @@ export class PersonService {
    * @returns the unique key of the created person or undefined if creation failed
    */
   public async create(person: PersonModel, currentUser?: UserModel): Promise<string | undefined> {
-    person.index = this.getSearchIndex(person);
+    person.index = getPersonIndex(person);
     return await this.firestoreService.createModel<PersonModel>(PersonCollection, person, '@subject.person.operation.create', currentUser);
   }
   
@@ -56,7 +58,7 @@ export class PersonService {
    * @returns the unique key of the updated person or undefined if update failed
    */
   public async update(person: PersonModel, currentUser?: UserModel, confirmMessage = '@subject.person.operation.update'): Promise<string | undefined> {
-    person.index = this.getSearchIndex(person);
+    person.index = getPersonIndex(person);
     return await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, confirmMessage, currentUser);
   }
 
@@ -99,41 +101,5 @@ export class PersonService {
    */
   public list(orderBy = 'lastName', sortOrder = 'asc'): Observable<PersonModel[]> {
     return this.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
-  }
-
-  /*-------------------------- addresses  --------------------------------*/
-  /**
-   * Lists all addresses for a given person.
-   * @param person the person whose addresses to list
-   * @returns an Observable of the list of addresses
-   */
-  public listAddresses(person: PersonModel): Observable<AddressModel[]> {
-    const collection = `${PersonCollection}/${person.bkey}/${AddressCollection}`;
-    return this.firestoreService.searchData<AddressModel>(collection, getSystemQuery(this.env.tenantId));
-  }
-
-  /*-------------------------- search index --------------------------------*/
-
-  /**
-   * Create an index entry for a given person based on its values.
-   * @param person the person for which to create the index
-   * @returns the index string
-   */
-  public getSearchIndex(person: PersonModel): string {
-    let _index = '';
-    _index = addIndexElement(_index, 'n', person.lastName);
-    _index = addIndexElement(_index, 'c', person.favCity);
-    _index = addIndexElement(_index, 'fn', person.firstName);
-    _index = addIndexElement(_index, 'bx', person.bexioId);
-    _index = addIndexElement(_index, 'dob', person.dateOfBirth);
-    return _index;
-  }
-
-  /**
-   * Returns a string explaining the structure of the index.
-   * This can be used in info boxes on the GUI.
-   */
-  public getSearchIndexInfo(): string {
-    return 'n:name c:city fn:firstName dob:dateOfBirth bx:bexioId';
   }
 }

@@ -7,7 +7,6 @@ import { firstValueFrom, of } from 'rxjs';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryCollection, CategoryListModel, MembershipModel, OrgCollection, OrgModel } from '@bk2/shared-models';
-import { selectDate } from '@bk2/shared-ui';
 import { confirm } from '@bk2/shared-util-angular';
 import { convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, isValidAt } from '@bk2/shared-util-core';
 
@@ -18,11 +17,13 @@ import { MembershipModalsService } from './membership-modals.service';
 export type MembersAccordionState = {
   orgKey: string | undefined;
   showOnlyCurrent: boolean;
+  currentMembership: MembershipModel | undefined;
 };
 
 const initialState: MembersAccordionState = {
   orgKey: undefined,
   showOnlyCurrent: true,
+  currentMembership: undefined,
 };
 
 export const MembersAccordionStore = signalStore(
@@ -86,6 +87,10 @@ export const MembersAccordionStore = signalStore(
         patchState(store, { showOnlyCurrent });
       },
 
+      setCurrentMembership(currentMembership: MembershipModel | undefined) {
+        patchState(store, { currentMembership });
+      },
+
       /******************************** actions ******************************************* */
       async addMember(readOnly = true): Promise<void> {
         if (!readOnly) {
@@ -101,11 +106,10 @@ export const MembersAccordionStore = signalStore(
         }
       },
 
-      async end(membership?: MembershipModel, readOnly = true): Promise<void> {
-        if (!readOnly && membership) {
-          const date = await selectDate(store.modalController);
-          if (!date) return;
-          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());
+      async end(endDate?: string): Promise<void> {
+        const membership = store.currentMembership();
+        if (membership && endDate) {
+          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(endDate, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());
           store.membersResource.reload();
         }
       },

@@ -14,17 +14,17 @@ export function ahvn2string(ahvn13value: number | string): string {
   const _ahvstr = ahvn13value.toString();
 
   // Remove all non-digit characters from the string
-  const _digits = _ahvstr.replace(/\D/g, '');
-  if (_digits.length !== 13) {
-    console.warn(`ahv.util.ahvn2string(${_digits}) must contain 13 digits.`);
+  const digits = _ahvstr.replace(/\D/g, '');
+  if (digits.length !== 13) {
+    console.warn(`ahv.util.ahvn2string(${digits}) must contain 13 digits.`);
     return '';
   }
 
   // Split the string into groups of 3, 4, 4, and 2 digits
-  const _parts = [_digits.substring(0, 3), _digits.substring(3, 7), _digits.substring(7, 11), _digits.substring(11)];
+  const parts = [digits.substring(0, 3), digits.substring(3, 7), digits.substring(7, 11), digits.substring(11)];
 
   // Join the groups with dots and return the result
-  return _parts.join('.');
+  return parts.join('.');
 }
 
 export function checkAhv(ahvn13value: number | string): boolean {
@@ -32,45 +32,45 @@ export function checkAhv(ahvn13value: number | string): boolean {
     console.warn(`ahv.util.checkAhv(${ahvn13value}) is not a valid ahv number (empty or null).`);
     return false;
   }
-  const _ahvstr = ahvn13value.toString();
+  const ahvstr = ahvn13value.toString();
   // Remove all non-digit characters from the string
-  const _ahvn13value = _ahvstr.replace(/\D/g, '');
+  const ahvn13valueStr = ahvstr.replace(/\D/g, '');
 
-  if (_ahvn13value.length !== 13) {
-    console.warn(`ahv.util.checkAhv(${_ahvn13value}) must contain 13 digits.`);
+  if (ahvn13valueStr.length !== 13) {
+    console.warn(`ahv.util.checkAhv(${ahvn13valueStr}) must contain 13 digits.`);
     return false;
   }
-  if (!_ahvn13value.startsWith('756')) {
-    console.warn(`ahv.util.checkAhv(${_ahvn13value}) must start with Swiss country code 756.`);
+  if (!ahvn13valueStr.startsWith('756')) {
+    console.warn(`ahv.util.checkAhv(${ahvn13valueStr}) must start with Swiss country code 756.`);
     return false;
   }
-  const _checksum = computeAhvn13checkDigit(_ahvn13value);
-  if (_checksum === parseInt(_ahvn13value.substring(12, 13))) {
+  const checksum = computeAhvn13checkDigit(ahvn13valueStr);
+  if (checksum === parseInt(ahvn13valueStr.substring(12, 13))) {
     return true;
   } else {
-    console.warn(`ahv.util.checkAhv(${_ahvn13value}) has invalid checksum.`);
+    console.warn(`ahv.util.checkAhv(${ahvn13valueStr}) has invalid checksum.`);
     return false;
   }
 }
 
 export function computeAhvn13checkDigit(ahvn13str: string): number {
   // EAN13: remove non-digits, remove last character, reverse the order of the string
-  const _chars = ahvn13str.replace(/\D/g, '').split('').slice(0, 12).reverse();
+  const chars = ahvn13str.replace(/\D/g, '').split('').slice(0, 12).reverse();
 
   // EAN13: first*3 + second + third*3 + fourth etc.
-  let _crosssum = 0;
-  for (let i = 0; i < _chars.length; i++) {
+  let crosssum = 0;
+  for (let i = 0; i < chars.length; i++) {
     if (0 == i % 2) {
       // even
-      _crosssum += parseInt(_chars[i]) * 3;
+      crosssum += parseInt(chars[i]) * 3;
     } else {
       // odd
-      _crosssum += parseInt(_chars[i]);
+      crosssum += parseInt(chars[i]);
     }
   }
 
   // EAN13: checkdigit is the difference of crosssum to the next multiple of 10
-  return 10 - (_crosssum % 10);
+  return 10 - (crosssum % 10);
 }
 
 /**
@@ -86,14 +86,14 @@ export function computeAhvn13checkDigit(ahvn13str: string): number {
 export function formatAhv(sourceAhv: string, format = AhvFormat.Friendly): string {
   if (sourceAhv === undefined || sourceAhv === null) die(`ahv.util.formatAhv(${sourceAhv}) is not a valid ahv number (null or undefined).`);
   if (sourceAhv.length === 0) return ''; // empty string is ok (ahv is an optional field)
-  const _src = sourceAhv.trim().replace(/\./g, '');
-  if (_src.length !== 13 && _src.length !== 0) die(`ahv.util.formatAhv(${_src}) is not a valid ahv number (needs to be 13 digits).`);
+  const src = sourceAhv.trim().replace(/\./g, '');
+  if (src.length !== 13 && src.length !== 0) die(`ahv.util.formatAhv(${src}) is not a valid ahv number (needs to be 13 digits).`);
 
   if (format === AhvFormat.Electronic) {
-    return _src;
+    return src;
   } else {
     // Friendly
-    return `756.${_src.substring(3, 7)}.${_src.substring(7, 11)}.${_src.substring(11, 13)}`;
+    return `756.${src.substring(3, 7)}.${src.substring(7, 11)}.${src.substring(11, 13)}`;
   }
 }
 

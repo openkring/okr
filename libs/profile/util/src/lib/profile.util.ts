@@ -2,22 +2,14 @@ import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonModel, P
 import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 import { die } from '@bk2/shared-util-core';
 
+import { DEFAULT_EMAIL } from '@bk2/shared-constants';
+
 import { PersonalDataFormModel } from './personal-data-form.model';
 import { PrivacyFormModel } from './privacy-form.model';
 import { SettingsFormModel } from './settings-form.model';
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME } from '@bk2/shared-constants';
 
-export function convertPersonToDataForm(person?: PersonModel): PersonalDataFormModel {
-  if (!person) {
-    return {
-      personKey: DEFAULT_KEY, 
-      firstName: DEFAULT_NAME,
-      lastName: DEFAULT_NAME,
-      gender: DEFAULT_GENDER,
-      dateOfBirth: DEFAULT_DATE,
-      ssnId: DEFAULT_ID,
-    };
-  }
+export function convertPersonToDataForm(person?: PersonModel): PersonalDataFormModel | undefined {
+  if (!person) return undefined;
   return {
     personKey: person.bkey,
     firstName: person.firstName,
@@ -28,8 +20,8 @@ export function convertPersonToDataForm(person?: PersonModel): PersonalDataFormM
   };
 }
 
-export function convertUserToSettingsForm(user?: UserModel): SettingsFormModel {
-  if (!user) die('profile.util.convertUserToSettingsForm: User is mandatory.');
+export function convertUserToSettingsForm(user?: UserModel): SettingsFormModel | undefined {
+  if (!user) return undefined;
   return {
     language: user.userLanguage,
     showDebugInfo: user.showDebugInfo,
@@ -48,8 +40,8 @@ export function convertUserToSettingsForm(user?: UserModel): SettingsFormModel {
   };
 }
 
-export function convertUserToPrivacyForm(user?: UserModel): PrivacyFormModel {
-  if (!user) die('profile.util.convertUserToPrivacyForm: User is mandatory.');
+export function convertUserToPrivacyForm(user?: UserModel): PrivacyFormModel | undefined {
+  if (!user) return undefined;
   return {
     usageImages: user.usageImages,
     usageDateOfBirth: user.usageDateOfBirth,
@@ -61,14 +53,16 @@ export function convertUserToPrivacyForm(user?: UserModel): PrivacyFormModel {
   };
 }
 
-export function convertPersonalDataFormToPerson(vm: PersonalDataFormModel, person?: PersonModel): PersonModel {
+export function convertPersonalDataFormToPerson(vm?: PersonalDataFormModel, person?: PersonModel): PersonModel {
   if (!person) die('profile.util.convertPersonalDataFormToPerson: Person is mandatory.');
+  if (!vm) return person;
   person.ssnId = formatAhv(vm.ssnId ?? '', AhvFormat.Electronic);
   return person;
 }
 
-export function convertSettingsFormToUser(vm: SettingsFormModel, user?: UserModel): UserModel {
+export function convertSettingsFormToUser(vm?: SettingsFormModel, user?: UserModel): UserModel {
   if (!user) die('profile.util.convertSettingsFormToUser: User is mandatory.');
+  if (!vm) return user;
   user.userLanguage = vm.language ?? DefaultLanguage;
   user.showDebugInfo = vm.showDebugInfo ?? false;
   user.showArchivedData = vm.showArchivedData ?? false;
@@ -85,7 +79,9 @@ export function convertSettingsFormToUser(vm: SettingsFormModel, user?: UserMode
   return user;
 }
 
-export function convertPrivacyFormToUser(vm: PrivacyFormModel, user: UserModel): UserModel {
+export function convertPrivacyFormToUser(vm?: PrivacyFormModel, user?: UserModel): UserModel {
+  if (!user) die('profile.util.convertPrivacyFormToUser: User is mandatory.');
+  if (!vm) return user;
   user.usageImages = vm.usageImages ?? PrivacyUsage.Public;
   user.usageDateOfBirth = vm.usageDateOfBirth ?? PrivacyUsage.Restricted;
   user.usagePostalAddress = vm.usagePostalAddress ?? PrivacyUsage.Restricted;

@@ -1,7 +1,7 @@
 import { only, staticSuite } from 'vest';
 
 import { PrivacyUsage } from '@bk2/shared-models';
-import { categoryValidations } from '@bk2/shared-util-core';
+import { booleanValidations, categoryValidations } from '@bk2/shared-util-core';
 
 import { PrivacyFormModel } from './privacy-form.model';
 
@@ -13,5 +13,6 @@ export const privacyFormValidations = staticSuite((model: PrivacyFormModel, fiel
   categoryValidations('usageEmail', model.usageEmail, PrivacyUsage);
   categoryValidations('usagePhone', model.usagePhone, PrivacyUsage);
   categoryValidations('usageName', model.usageName, PrivacyUsage);
+  booleanValidations('srvEmail', model.srvEmail);
 });
 

@@ -1,10 +1,72 @@
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
-import { DOCUMENT_DIR } from '@bk2/shared-models';
-import { checkUrlType, warn } from '@bk2/shared-util-core';
+import { DOCUMENT_DIR, DocumentModel } from '@bk2/shared-models';
+import { addIndexElement, checkUrlType, die, warn } from '@bk2/shared-util-core';
 
 import { readAsFile } from '@bk2/avatar-util';
+import { DocumentFormModel } from 'libs/document/util/src/lib/document-form.model';
+import { DEFAULT_DATE, DEFAULT_DOCUMENT_SOURCE, DEFAULT_DOCUMENT_TYPE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_TITLE } from '@bk2/shared-constants';
+
+/* ---------------------- Form Conversions -------------------------*/
+export function convertDocumentToForm(document?: DocumentModel): DocumentFormModel | undefined {
+  if (!document) return undefined;
+  return {
+    bkey: document.bkey, // readonly
+    fullPath: document.fullPath,
+    title: document.title,
+    altText: document.altText,
+    type: document.type,
+    source: document.source,
+    url: document.url,
+    mimeType: document.mimeType,
+    size: document.size,
+    authorKey: document.authorKey,
+    authorName: document.authorName,
+    dateOfDocCreation: document.dateOfDocCreation,
+    dateOfDocLastUpdate: document.dateOfDocLastUpdate,
+    locationKey: document.locationKey,
+    hash: document.hash,
+    priorVersionKey: document.priorVersionKey,
+    version: document.version,
+    description: document.description,
+    tags: document.tags,
+    parents: document.parents,
+    tenants: document.tenants,
+  };
+}
+
+/**
+ * Only convert back the fields that can be changed by the user.
+ * @param document  the document to be updated.
+ * @param vm  the view model, ie. the form data with the updated values.
+ * @returns the updated document.
+ */
+export function convertFormToDocument(vm?: DocumentFormModel, document?: DocumentModel | undefined): DocumentModel {
+  if (!document) die('document.util.convertFormToDocument: document is mandatory.');
+  if (!vm) return document;
+  
+  document.fullPath = vm.fullPath ?? '';
+  document.title = vm.title ?? DEFAULT_TITLE;
+  document.altText = vm.altText ?? '';
+  document.type = vm.type ?? DEFAULT_DOCUMENT_TYPE;
+  document.source = vm.source ?? DEFAULT_DOCUMENT_SOURCE;
+  document.url = vm.url ?? '';
+  document.mimeType = vm.mimeType ?? '';
+  document.size = vm.size ?? 0;
+  document.authorKey = vm.authorKey ?? DEFAULT_KEY;
+  document.authorName = vm.authorName ?? DEFAULT_NAME;
+  document.dateOfDocCreation = vm.dateOfDocCreation ?? DEFAULT_DATE;
+  document.dateOfDocLastUpdate = vm.dateOfDocLastUpdate ?? DEFAULT_DATE;
+  document.locationKey = vm.locationKey ?? DEFAULT_KEY;
+  document.hash = vm.hash ?? '';
+  document.priorVersionKey = vm.priorVersionKey ?? DEFAULT_KEY;
+  document.version = vm.version ?? '';
+  document.description = vm.description ?? DEFAULT_NOTES;
+  document.priorVersionKey = vm.priorVersionKey ?? DEFAULT_KEY;
+  document.tags = vm.tags ?? DEFAULT_TAGS;
+  return document;
+}
 
 /* ---------------------- Camera -------------------------*/
 /**
@@ -76,4 +138,27 @@ export function getStoragePath(url: string | undefined, modelType: string, tenan
     return getDocumentStoragePath(tenant, modelType, url);
   }
   return undefined;
+}
+
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given document based on its values.
+ * @param document the document for which to create the index
+ * @returns the index string
+ */
+export function getDocumentIndex(document: DocumentModel): string {
+  let index = '';
+  index = addIndexElement(index, 'n', document.title);
+  index = addIndexElement(index, 'h', document.hash);
+  index = addIndexElement(index, 'm', document.mimeType);
+  index = addIndexElement(index, 'p', document.parents.join(' '));
+  return index;
+}
+
+/**
+ * Returns a string explaining the structure of the index.
+ * This can be used in info boxes on the GUI.
+ */
+export function getDocumentIndexInfo(): string {
+  return 'n:filename h:ash m:imeType p:arents';
 }

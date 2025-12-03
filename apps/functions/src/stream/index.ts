@@ -147,10 +147,10 @@ export const revokeOtherStreamUserToken = onCall({
   }
 
   try {
-    const _client = getStreamClient();
-    const _result = await _client.revokeUserToken(request.data.uid);
-    logger.log("revokeOtherStreamUserToken: stream user token revoked", { result: _result });
-    return _result;
+    const client = getStreamClient();
+    const result = await client.revokeUserToken(request.data.uid);
+    logger.log("revokeOtherStreamUserToken: stream user token revoked", { result: result });
+    return result;
   } catch (error) {
     console.error(`revokeOtherStreamUserToken: unable to revoke stream user token with ID ${request.data.uid}`, { error });
     throw new HttpsError("aborted", "Could not revoke Stream user token");
@@ -183,8 +183,8 @@ export const createOtherStreamUser = onCall({
   }
 
   try {
-    const _client = getStreamClient();
-    const response = await _client.upsertUser({
+    const client = getStreamClient();
+    const response = await client.upsertUser({
       id: request.data.uid,
       name: request.data.name,
       image: request.data.image,

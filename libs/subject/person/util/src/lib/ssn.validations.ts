@@ -9,7 +9,7 @@ export function ssnValidations(fieldName: string, ssn: unknown ) {
   stringValidations(fieldName, ssn, SSN_LENGTH);
 
   omitWhen(ssn === '', () => {
-    test(fieldName, '@validSSN', () => {
+    test(fieldName, '@validation.validSSN', () => {
       enforce(checkAhv(ssn as string)).isTruthy();
     });
   });

@@ -1,6 +1,6 @@
-import { WorkingRelCollection, WorkingRelModel } from '@bk2/shared-models';
 import { Firestore } from 'firebase-admin/firestore';
 import { searchData } from './search.util';
+import { WorkrelCollection, WorkrelModel } from '@bk2/shared-models';
 
 /**
  * Retrieves all workingRels for a given person (subject).
@@ -8,9 +8,9 @@ import { searchData } from './search.util';
  * @param subjectId the id of the person to retrieve its workingRels for
  * @returns an array of personalrels for the given person (as subject).
  */
-export async function getAllWorkingRelsOfSubject(firestore: Firestore, subjectId: string): Promise<WorkingRelModel[]> {
-  const _query = [{ key: 'subjectKey', operator: '==', value: subjectId }];
-  return await searchData<WorkingRelModel>(firestore, WorkingRelCollection, _query, 'objectName', 'asc');
+export async function getAllWorkrelsOfSubject(firestore: Firestore, subjectId: string): Promise<WorkrelModel[]> {
+  const query = [{ key: 'subjectKey', operator: '==', value: subjectId }];
+  return await searchData<WorkrelModel>(firestore, WorkrelCollection, query, 'objectName', 'asc');
 }
 
 /**
@@ -19,7 +19,7 @@ export async function getAllWorkingRelsOfSubject(firestore: Firestore, subjectId
  * @param objectId the id of the organization to retrieve its workingRels for
  * @returns an array of workingRels for the given org (as object).
  */
-export async function getAllWorkingRelsOfObject(firestore: Firestore, objectId: string): Promise<WorkingRelModel[]> {
-  const _query = [{ key: 'objectKey', operator: '==', value: objectId }];
-  return await searchData<WorkingRelModel>(firestore, WorkingRelCollection, _query, 'subjectName2', 'asc');
+export async function getAllWorkrelsOfObject(firestore: Firestore, objectId: string): Promise<WorkrelModel[]> {
+  const query = [{ key: 'objectKey', operator: '==', value: objectId }];
+  return await searchData<WorkrelModel>(firestore, WorkrelCollection, query, 'subjectName2', 'asc');
 }

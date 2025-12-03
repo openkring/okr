@@ -5,7 +5,7 @@ import { AppStore } from "@bk2/shared-feature";
 import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from "@bk2/shared-models";
 
 import { OwnershipService } from "@bk2/relationship-ownership-data-access";
-import { convertFormToOwnership, isOwnership, OwnershipNewFormModel } from "@bk2/relationship-ownership-util";
+import { convertFormToOwnership, isOwnership, OwnershipFormModel, OwnershipNewFormModel } from "@bk2/relationship-ownership-util";
 
 import { OwnershipEditModalComponent } from "./ownership-edit.modal";
 import { OwnershipNewModalComponent } from "./ownership-new.modal";
@@ -27,7 +27,7 @@ export class OwnershipModalsService {
      * @param modelType the type of the member (Person or Org)
      */
   public async add(owner: PersonModel | OrgModel, modelType: 'person' | 'org', resource: ResourceModel): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: OwnershipNewModalComponent,
       cssClass: 'small-modal',
       componentProps: {
@@ -36,11 +36,11 @@ export class OwnershipModalsService {
         modelType: modelType,
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
+    modal.present();
+    const { data, role } = await modal.onDidDismiss();
     if (role === 'confirm') {
-      const _ownership = convertFormToOwnership(undefined, data as OwnershipNewFormModel, this.tenantId);
-      await this.ownershipService.create(_ownership, this.appStore.currentUser());
+      const ownership = convertFormToOwnership(data as OwnershipFormModel, new OwnershipModel(this.tenantId));
+      await this.ownershipService.create(ownership, this.appStore.currentUser());
     }
   }  
   
@@ -48,19 +48,19 @@ export class OwnershipModalsService {
    * Show a modal to edit an existing ownership.
    * @param ownership the ownership to edit
    */
-  public async edit(ownership?: OwnershipModel): Promise<void> {
-    let _ownership = ownership;
-    _ownership ??= new OwnershipModel(this.tenantId);
+  public async edit(ownership?: OwnershipModel, readOnly = true): Promise<void> {
+    ownership ??= new OwnershipModel(this.tenantId);
     
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: OwnershipEditModalComponent,
       componentProps: {
-        ownership: _ownership,
-        currentUser: this.appStore.currentUser()
+        ownership: ownership,
+        currentUser: this.appStore.currentUser(),
+        readOnly: readOnly
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onDidDismiss();
+    modal.present();
+    const { data, role } = await modal.onDidDismiss();
     if (role === 'confirm') {
       if (isOwnership(data, this.tenantId)) {
         await (!data.bkey ? 

@@ -33,10 +33,10 @@ import { CategoryComponent, StringSelectComponent, TextInputComponent } from '@b
                     <bk-cat name="color" [(value)]="color" [readOnly]="readOnly()" [categories]="colorsIonic" />
                   </ion-col>
                   <ion-col size="12" size-md="6">                            <!-- button shape --> 
-                    <bk-string-select name="buttonShape"  [selectedString]="button.shape ?? 'default'" [readOnly]="readOnly()" [stringList] = "['default', 'round']" />
+                    <bk-string-select name="buttonShape"  [selectedString]="button.shape" [readOnly]="readOnly()" [stringList] = "['default', 'round']" />
                   </ion-col>
                   <ion-col size="12" size-md="6">                            <!-- button fill -->
-                    <bk-string-select name="buttonFill" [selectedString]="button.fill ?? 'default'" [readOnly]="readOnly()" [stringList] = "['default', 'clear', 'outline', 'solid']" />
+                    <bk-string-select name="buttonFill" [selectedString]="button.fill" [readOnly]="readOnly()" [stringList] = "['default', 'clear', 'outline', 'solid']" />
                   </ion-col>
                   <ion-col size="12" size-md="6">                            <!-- button width -->
                     <bk-text-input name="buttonWidth" [(value)]="width" [mask]="sizeMask"  [readOnly]="readOnly()"[maxLength]=3 [showHelper]=true />                             

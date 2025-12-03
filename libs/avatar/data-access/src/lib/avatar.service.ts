@@ -1,11 +1,16 @@
 import { Inject, Injectable } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
+import { Platform } from '@ionic/angular/standalone';
+import { Photo } from '@capacitor/camera';
 
 import { BkEnvironment, ENV } from '@bk2/shared-config';
 import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AvatarCollection, AvatarModel } from '@bk2/shared-models';
 import { addImgixParams } from '@bk2/shared-util-core';
+
+import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
+import { UploadService } from './upload.service';
 
 export interface UserPhoto {
   filepath: string;
@@ -18,7 +23,12 @@ export interface UserPhoto {
 export class AvatarService {
   // classic DI to enable mocks for testing
   // eslint-disable-next-line @angular-eslint/prefer-inject
-  constructor(private readonly firestoreService: FirestoreService, @Inject(ENV) private readonly env: BkEnvironment) {}
+  constructor(
+    private readonly platform: Platform,
+    private readonly firestoreService: FirestoreService, 
+    private readonly uploadService: UploadService,
+    @Inject(ENV) private readonly env: BkEnvironment
+  ) {}
 
   /**
    * Save a model as a new Firestore document into the database.
@@ -67,5 +77,16 @@ export class AvatarService {
         }
       })
     );
+  }
+
+  public async saveAvatarPhoto(photo: Photo, key: string, tenantId: string, modelName: string): Promise<string | undefined> {
+    const file = await readAsFile(photo, this.platform);
+    const avatar = newAvatarModel([tenantId], modelName, key, file.name);
+    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, '@document.operation.upload.avatar.title')
+
+    if (downloadUrl) {
+      await this.updateOrCreate(avatar);
+    }
+    return downloadUrl;
   }
 }

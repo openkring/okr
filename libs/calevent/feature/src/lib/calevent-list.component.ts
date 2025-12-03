@@ -28,8 +28,8 @@ import { CalEventListStore } from './calevent-list.store';
     <ion-header>
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedCalEventsCount()}}/{{calEventsCount()}} {{ '@calEvent.plural' | translate | async }}</ion-title>
-      @if(hasRole('privileged') || hasRole('eventAdmin')) {
+      <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calEvent.plural' | translate | async }}</ion-title>
+      @if(!readOnly()) {
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
             <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
@@ -53,7 +53,7 @@ import { CalEventListStore } from './calevent-list.store';
     />
 
     <!-- list header -->
-    <ion-toolbar color="primary">
+    <ion-toolbar color="light">
       <ion-grid>
         <ion-row>
           <ion-col size="12" size-md="6">
@@ -72,7 +72,7 @@ import { CalEventListStore } from './calevent-list.store';
     @if(isLoading()) {
       <bk-spinner />
     } @else {
-      @if(selectedCalEventsCount() === 0) {
+      @if(filteredCalEventsCount() === 0) {
         <bk-empty-list message="@calEvent.field.empty" />
       } @else {
         <ion-list lines="inset">
@@ -95,14 +95,15 @@ export class CalEventListComponent {
   public listId = input.required<string>();     // calendar name
   public contextMenuName = input.required<string>();
 
-  protected filteredCalEvents = computed(() => this.calEventListStore.filteredCalEvents() ?? []);
   protected calEventsCount = computed(() => this.calEventListStore.calEventsCount());
-  protected selectedCalEventsCount = computed(() => this.filteredCalEvents().length);
+  protected filteredCalEvents = computed(() => this.calEventListStore.filteredCalEvents() ?? []);
+  protected filteredCalEventsCount = computed(() => this.filteredCalEvents().length);
   protected isLoading = computed(() => this.calEventListStore.isLoading());
   protected tags = computed(() => this.calEventListStore.getTags());
   protected popupId = computed(() => `c_calevent_${this.listId}`);
   protected types = computed(() => this.calEventListStore.appStore.getCategory('calevent_type'));
   private currentUser = computed(() => this.calEventListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
 
   private imgixBaseUrl = this.calEventListStore.appStore.env.services.imgixBaseUrl;
 
@@ -114,7 +115,7 @@ export class CalEventListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.calEventListStore.add(); break;
+      case 'add':  await this.calEventListStore.edit(undefined, this.readOnly()); break;
       case 'exportRaw': await this.calEventListStore.export("raw"); break;
       default: error(undefined, `CalEventListComponent.call: unknown method ${selectedMethod}`);
     }
@@ -136,10 +137,15 @@ export class CalEventListComponent {
    * @param calEvent 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): void {
-    if (hasRole('privileged', this.currentUser()) || hasRole('eventAdmin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('registered', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    if (hasRole('admin', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -153,12 +159,16 @@ export class CalEventListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.calEventListStore.delete(calEvent);
+        case 'calevent.delete':
+          await this.calEventListStore.delete(calEvent, this.readOnly());
           break;
-        case 'edit':
-          await this.calEventListStore.edit(calEvent);
+        case 'calevent.edit':
+          await this.calEventListStore.edit(calEvent, this.readOnly());
+          break;
+        case 'calevent.view':
+          await this.calEventListStore.edit(calEvent, true);
           break;
       }
     }

@@ -3,12 +3,11 @@ import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { Dimensions, Image } from "@bk2/shared-models";
+import { DocumentModel, DocumentModelName, Image } from "@bk2/shared-models";
 import { error } from "@bk2/shared-util-angular";
-import { warn } from "@bk2/shared-util-core";
-
-import { showZoomedImage } from "./ui.util";
-import { UploadTaskComponent } from "./upload-task.modal";
+import { getFileHash, getTodayStr, warn } from "@bk2/shared-util-core";
+import { DEFAULT_MIMETYPES } from "@bk2/shared-constants";
+import { UploadTaskComponent, showZoomedImage } from "@bk2/shared-ui";
 
 @Injectable({
     providedIn: 'root'
@@ -68,6 +67,48 @@ export class UploadService {
       type: result.files[0].mimeType
     });
     return file;
+  }
+
+  /**
+   * Add a new document:
+   * 1) Let's the user pick a document from the local file system
+   * 2) upload the file into Firestorage in tenant/[tenantId]/document/[hash]
+   * 3) generates an initial document object in the database with attributes derived from the file
+   * 4) return the an initial document model (including the hash as bkey and the download URL)
+   * The idea is that the calling function then navigates to the document details page so that the user can add additional metadata.
+   * @param mimeTypes 
+   * @param storagePath 
+   * @param title 
+   */
+  public async uploadAndCreateDocument(tenantId: string, mimeTypes = DEFAULT_MIMETYPES, storagePath?: string, modalTitle?: string): Promise<DocumentModel | undefined> {
+    // 1) pick file
+    const file = await this.pickFile(mimeTypes);
+    if (!file) return undefined;
+
+    // 2) upload the file into storage - only if it not already exists - if it has the same hash, Firebase Storage ignores the duplicate 
+    const hash = await getFileHash(file);
+    const path = storagePath ? storagePath : `tenant/${tenantId}/${DocumentModelName}/${hash}`;
+    const title = modalTitle ? modalTitle : `Uploading ${file.name}`;
+    const downloadUrl = await this.uploadFile(file, path, title);
+    if ( !downloadUrl ) return undefined;
+
+    // 3) create a new document object
+    const document = new DocumentModel(tenantId);
+    document.bkey = hash;
+    document.title = file.name;
+    document.altText = file.name;
+    document.fullPath = path + '/' + file.name;
+    document.mimeType = file.type;
+    document.size = file.size;
+    document.source = 'storage';
+    document.url = downloadUrl;
+    const now = getTodayStr();
+    document.dateOfDocCreation = now;
+    document.dateOfDocLastUpdate = now;
+    document.hash = hash;
+    document.version = now;
+    // 4) return the document object
+    return document;
   }
 
   /**

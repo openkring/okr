@@ -1,5 +1,5 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, input, model, output, signal } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
@@ -7,9 +7,9 @@ import { DeliveryTypes } from "@bk2/shared-categories";
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { DeliveryType, UserModel } from "@bk2/shared-models";
 import { CategoryComponent } from "@bk2/shared-ui";
-import { debugFormErrors } from "@bk2/shared-util-core";
+import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
-import { UserNotificationFormModel, userNotificationFormModelShape, userNotificationFormValidations } from "@bk2/user-util";
+import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificationFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-notification-form',
@@ -21,14 +21,15 @@ import { UserNotificationFormModel, userNotificationFormModelShape, userNotifica
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonCardSubtitle,
     IonGrid, IonRow, IonCol
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   viewProviders: [vestFormsViewProviders],
   template: `
     <form scVestForm
       [formShape]="shape"
-      [formValue]="vm()"
+      [formValue]="formData()"
       [suite]="suite" 
-      (dirtyChange)="dirtyChange.set($event)"
-      (formValueChange)="onValueChange($event)">
+      (dirtyChange)="dirty.emit($event)"
+      (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@user.notification.title' | translate | async }}</ion-card-title>
@@ -38,10 +39,10 @@ import { UserNotificationFormModel, userNotificationFormModelShape, userNotifica
           <ion-grid>
             <ion-row>
             <ion-col size="12" size-md="6">                                                             
-              <bk-cat name="newsDelivery" [value]="newsDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" (changed)="onChange('newsDelivery', $event)" />
+              <bk-cat name="newsDelivery" [value]="newsDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" (changed)="onFieldChange('newsDelivery', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">                                                             
-              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" (changed)="onChange('invoiceDelivery', $event)" />
+              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" (changed)="onFieldChange('invoiceDelivery', $event)" />
             </ion-col>
             </ion-row>
           </ion-grid>
@@ -51,31 +52,40 @@ import { UserNotificationFormModel, userNotificationFormModelShape, userNotifica
   `
 })
 export class UserNotificationFormComponent {
-  public vm = model.required<UserNotificationFormModel>();
+  public formData = model.required<UserNotificationFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public readOnly = input.required<boolean>();
+  public readonly readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected newsDelivery = computed(() => this.vm().newsDelivery ?? DeliveryType.EmailAttachment);
-  protected invoiceDelivery = computed(() => this.vm().invoiceDelivery ?? DeliveryType.EmailAttachment);
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
 
+  // validation and errors
+  protected readonly suite = userNotificationFormValidations;
+  protected readonly shape = USER_NOTIFICATION_FORM_SHAPE;
+  private readonly validationResult = computed(() => userNotificationFormValidations(this.formData()));
+
+  // computed fields
+  protected newsDelivery = computed(() => this.formData().newsDelivery ?? DeliveryType.EmailAttachment);
+  protected invoiceDelivery = computed(() => this.formData().invoiceDelivery ?? DeliveryType.EmailAttachment);
+
+  // passing constants to template
   protected readonly deliveryTypes = DeliveryTypes;
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-  private readonly validationResult = computed(() => userNotificationFormValidations(this.vm()));
-
-  protected readonly suite = userNotificationFormValidations;
-  protected readonly shape = userNotificationFormModelShape;
-
-  protected onValueChange(value: UserNotificationFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('UserNotificationForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: UserNotificationFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('UserNotificationForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('UserNotificationForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 }

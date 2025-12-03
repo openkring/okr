@@ -33,9 +33,9 @@ export function getBkStorage(): FirebaseStorage {
     }
     return _storage;  
   }
-  catch(_ex) {
-    console.error(`shared/util/storage.getBkStorage(): ERROR: ${JSON.stringify(_ex)}`);
-    throw new Error('shared/util/storage.getBkStorage(): ERROR: ' + JSON.stringify(_ex));
+  catch(ex) {
+    console.error(`shared/util/storage.getBkStorage(): ERROR: ${JSON.stringify(ex)}`);
+    throw new Error('shared/util/storage.getBkStorage(): ERROR: ' + JSON.stringify(ex));
   }
 }
 

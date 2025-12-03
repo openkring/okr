@@ -3,80 +3,58 @@ import { formatIban, IbanFormat } from "@bk2/shared-util-angular";
 import { die, isType, replaceEndingSlash, replaceSubstring } from "@bk2/shared-util-core";
 
 import { AddressFormModel } from "./address-form.model";
+import { DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_EMAIL, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP } from "@bk2/shared-constants";
 
-export function newAddressFormModel(): AddressFormModel {
+export function convertAddressToForm(address?: AddressModel): AddressFormModel | undefined {
+  if (!address) return undefined;
   return {
-    channelType: AddressChannel.Postal,
-    channelLabel: '',
-    usageType: AddressUsage.Home,
-    usageLabel: '',
-    phone: '',
-    email: '',
-    streetName: '',
-    streetNumber: '',
-    addressValue2: '',
-    zipCode: '',
-    city: '',
-    countryCode: 'CH',
-    url: '',
-    iban: '',
-    isFavorite: false,
-    isCc: false,
-    isValidated: false,
-    tags: '',
-    parentKey: ''
-  }
-
-}
-
-export function convertAddressToForm(address: AddressModel | undefined): AddressFormModel {
-  if (!address) return newAddressFormModel();
-  console.log(address);
-  return {
-    bkey: address.bkey,
-    channelType: address.channelType,
-    channelLabel: address.channelLabel,
-    usageType: address.usageType,
-    usageLabel: address.usageLabel,
-    phone: address.phone,
-    email: address.email,
-    streetName: address.streetName,
-    streetNumber: address.streetNumber,
-    addressValue2: address.addressValue2,
-    zipCode: address.zipCode,
-    city: address.city,
-    countryCode: address.countryCode,
-    url: address.url,
+    bkey: address.bkey ?? DEFAULT_KEY,
+    channelType: address.channelType ?? AddressChannel.Phone,
+    channelLabel: address.channelLabel ?? DEFAULT_LABEL,
+    usageType: address.usageType ?? AddressUsage.Home,
+    usageLabel: address.usageLabel ?? DEFAULT_LABEL,
+    phone: address.phone ?? DEFAULT_PHONE,
+    email: address.email ?? DEFAULT_EMAIL,
+    streetName: address.streetName ?? DEFAULT_STREETNAME,
+    streetNumber: address.streetNumber ?? DEFAULT_STREETNUMBER,
+    addressValue2: address.addressValue2 ?? DEFAULT_LABEL,
+    zipCode: address.zipCode ?? DEFAULT_ZIP,
+    city: address.city ?? DEFAULT_CITY,
+    countryCode: address.countryCode ?? DEFAULT_COUNTRY,
+    url: address.url ?? DEFAULT_URL,
     iban: address.channelType === AddressChannel.BankAccount ? formatIban(address.addressValue2, IbanFormat.Friendly) : '',
-    isFavorite: address.isFavorite,
-    isCc: address.isCc,
-    isValidated: address.isValidated,
-    tags: address.tags,
-    parentKey: address.parentKey
+    isFavorite: address.isFavorite ?? false,
+    isCc: address.isCc ?? false,
+    isValidated: address.isValidated ?? false,
+    tags: address.tags ?? DEFAULT_TAGS,
+    parentKey: address.parentKey ?? DEFAULT_KEY,
+    description: address.description ?? DEFAULT_LABEL
   }
 }
 
-export function convertFormToAddress(address: AddressModel | undefined, vm: AddressFormModel, tenantId: string): AddressModel {
-  if (!address) address = new AddressModel(tenantId);
-  address.bkey = vm.bkey ?? '';
+export function convertFormToAddress(vm?: AddressFormModel, address?: AddressModel | undefined): AddressModel {
+  if (!address) die('address-form.util.convertFormToAddress: address is mandatory.');
+  if (!vm) return address;
+  
+  address.bkey = vm.bkey ?? DEFAULT_KEY;
   address.channelType = vm.channelType ?? AddressChannel.Phone;
-  address.channelLabel = vm.channelLabel ?? '';
+  address.channelLabel = vm.channelLabel ?? DEFAULT_LABEL;
   address.usageType = vm.usageType ?? AddressUsage.Mobile;
-  address.usageLabel = vm.usageLabel ?? '';
-  address.phone = vm.phone ?? '';
-  address.email = vm.email ?? '';
-  address.streetName = vm.streetName ?? '';
-  address.streetNumber = vm.streetNumber ?? '';
+  address.usageLabel = vm.usageLabel ?? DEFAULT_LABEL;
+  address.phone = vm.phone ?? DEFAULT_PHONE;
+  address.email = vm.email ?? DEFAULT_EMAIL;
+  address.streetName = vm.streetName ?? DEFAULT_STREETNAME;
+  address.streetNumber = vm.streetNumber ?? DEFAULT_STREETNUMBER;
   address.addressValue2 = vm.channelType === AddressChannel.BankAccount ? vm.iban ?? '' : vm.addressValue2 ?? '';
-  address.zipCode = vm.zipCode ?? '';
-  address.city = vm.city ?? '';
-  address.countryCode = vm.countryCode ?? '';
-  address.url = vm.url ?? '';
+  address.zipCode = vm.zipCode ?? DEFAULT_ZIP;
+  address.city = vm.city ?? DEFAULT_CITY;
+  address.countryCode = vm.countryCode ?? DEFAULT_COUNTRY;
+  address.url = vm.url ?? DEFAULT_URL;
   address.isFavorite = vm.isFavorite ?? false;
   address.isCc = vm.isCc ?? false;
   address.isValidated = vm.isValidated ?? false;
-  address.tags = vm.tags ?? '';
-  address.parentKey = vm.parentKey ?? '';
+  address.tags = vm.tags ?? DEFAULT_TAGS;
+  address.parentKey = vm.parentKey ?? DEFAULT_KEY;
   return address;
 }
 

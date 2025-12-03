@@ -1,6 +1,6 @@
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { CategoryItemModel, MembershipModel, OrgModel, PersonModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, DateFormat, die, getFullPersonName, getTodayStr } from '@bk2/shared-util-core';
+import { addIndexElement, DateFormat, die, getTodayStr } from '@bk2/shared-util-core';
 
 import { CategoryChangeFormModel } from './category-change-form.model';
 import { MembershipFormModel } from './membership-form.model';
@@ -77,11 +77,10 @@ export function convertMembershipToForm(membership: MembershipModel | undefined)
  * @param vm the view model, ie. the form data with the updated values.
  * @returns the updated membership.
  */
-export function convertFormToMembership(membership: MembershipModel | undefined, vm: MembershipFormModel, tenantId: string): MembershipModel {
-  if (!membership) {
-    membership = new MembershipModel(tenantId);
-    membership.bkey = vm.bkey ?? DEFAULT_KEY;
-  }
+export function convertFormToMembership(vm?: MembershipFormModel, membership?: MembershipModel): MembershipModel {
+  if (!membership) die('membership.util.convertFormToMembership: membership is mandatory.');
+  if (!vm) return membership;
+  
   membership.tags = vm.tags ?? DEFAULT_TAGS;
   membership.notes = vm.notes ?? DEFAULT_NOTES;
 
@@ -200,7 +199,6 @@ export function convertMemberAndOrgToNewForm(member: PersonModel | OrgModel, org
       memberKey: person.bkey,
       memberName1: person.firstName,
       memberName2: person.lastName,
-      memberName: getMemberName(person, currentUser),
       memberModelType: 'person',
       memberType: person.gender,
       memberDateOfBirth: person.dateOfBirth,
@@ -221,7 +219,6 @@ export function convertMemberAndOrgToNewForm(member: PersonModel | OrgModel, org
       memberKey: org.bkey,
       memberName1: DEFAULT_NAME,
       memberName2: org.name,
-      memberName: org.name,
       memberModelType: 'org',
       memberType: org.type,
       memberDateOfBirth: org.dateOfFoundation,
@@ -269,27 +266,8 @@ export function convertFormToNewMembership(vm: MembershipNewFormModel, tenantId:
   membership.price = DEFAULT_PRICE;
   membership.currency = DEFAULT_CURRENCY;
   membership.periodicity = 'yearly';
-  membership.index = getMembershipSearchIndex(membership);
+  membership.index = getMembershipIndex(membership);
   return membership;
-}
-
-function getMemberName(person?: PersonModel, currentUser?: UserModel): string {
-  if (person) {
-    return getFullPersonName(person.firstName, person.lastName);
-  } else if (currentUser) {
-    return getFullPersonName(currentUser.firstName, currentUser.lastName);
-  } else {
-    return '';
-  }
-}
-
-export function getMembershipName(membership: MembershipModel): string {
-  // tbd: consider NameDisplay
-  if (membership.memberModelType === 'person') {
-    return `${membership.memberName1} ${membership.memberName2}`;
-  } else {
-    return membership.memberName2;
-  }
 }
 
 /**
@@ -318,16 +296,23 @@ export function getRelLogEntry(priority: number, priorRelLog: string, dateOfEntr
  * @returns a short description of the membership change
  */
 export function getMembershipCategoryChangeComment(oldMembershipCategory?: string, newMembershipCategory?: string): string {
-  const _oldMembershipCategory = oldMembershipCategory ?? 'undefined';
-  const _newMembershipCategory = newMembershipCategory ?? 'undefined';
-  return `${_oldMembershipCategory} -> ${_newMembershipCategory}`;
+  const oldMembershipCat = oldMembershipCategory || 'undefined';
+  const newMembershipCat = newMembershipCategory || 'undefined';
+  return `${oldMembershipCat} -> ${newMembershipCat}`;
 }
 
-export function getMembershipSearchIndex(membership: MembershipModel): string {
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given membership based on its values.
+ * @param membership the membership for which to create the index
+ * @returns the index string
+ */
+export function getMembershipIndex(membership: MembershipModel): string {
   let index = '';
   index = addIndexElement(index, 'mn', membership.memberName1 + ' ' + membership.memberName2);
   index = addIndexElement(index, 'mk', membership.memberKey);
   index = addIndexElement(index, 'ok', membership.orgKey);
+  index = addIndexElement(index, 'on', membership.orgName);
   if (membership?.memberNickName) {
     index = addIndexElement(index, 'nn', membership.memberNickName);
   }
@@ -338,6 +323,6 @@ export function getMembershipSearchIndex(membership: MembershipModel): string {
  * Returns a string explaining the structure of the index.
  * This can be used in info boxes on the GUI.
  */
-export function getMembershipSearchIndexInfo(): string {
-  return 'mn:memberName mk:memberKey ok:orgKey [nn:nickName]';
+export function getMembershipIndexInfo(): string {
+  return 'mn:memberName mk:memberKey ok:orgKey on:orgName [nn:nickName]';
 }

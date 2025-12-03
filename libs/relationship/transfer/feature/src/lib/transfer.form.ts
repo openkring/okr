@@ -1,16 +1,17 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal, model, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, NAME_LENGTH } from '@bk2/shared-constants';
 import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AvatarInfo, DefaultResourceInfo, ResourceInfo, RoleName, UserModel } from '@bk2/shared-models';
-import { AvatarsComponent, CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, getTodayStr, hasRole, isPerson, isResource } from '@bk2/shared-util-core';
+import { AvatarInfo, DefaultResourceInfo, ResourceInfo, RoleName } from '@bk2/shared-models';
+import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { coerceBoolean, debugFormErrors, die, getTodayStr, hasRole, isPerson, isResource } from '@bk2/shared-util-core';
 
-import { TransferFormModel, transferFormModelShape, transferFormValidations } from '@bk2/relationship-transfer-util';
+import { TRANSFER_FORM_SHAPE, TransferFormModel, transferFormValidations } from '@bk2/relationship-transfer-util';
+import { AvatarsComponent } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-transfer-form',
@@ -22,14 +23,21 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
     AvatarsComponent, CategorySelectComponent, ChipsComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonInput, IonButton
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <form scVestForm [formShape]="shape" [formValue]="vm()" [suite]="suite" (dirtyChange)="dirtyChange.set($event)" (formValueChange)="onValueChange($event)">
+    <form scVestForm
+      [formShape]="shape"
+      [formValue]="formData()"
+      [suite]="suite"
+      (dirtyChange)="dirty.emit($event)"
+      (formValueChange)="onFormChange($event)"
+    >
       <!-- subjects -->
       <bk-avatars
-        (changed)="onChange('subjects', $event)" 
+        (changed)="onFieldChange('subjects', $event)" 
         (selectClicked)="selectPerson('subjects')"
         [avatars]="subjects()"
-        defaultIcon="person"
+        [currentUser]="currentUser()"
         [readOnly]="readOnly()"
         title="@transfer.field.subjects"
         addLabel="@transfer.operation.addSubject.label"
@@ -37,10 +45,10 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
 
       <!-- objects -->
       <bk-avatars
-        (changed)="onChange('objects', $event)"
+        (changed)="onFieldChange('objects', $event)"
         (selectClicked)="selectPerson('objects')"
         [avatars]="objects()"
-        defaultIcon="person"
+        [currentUser]="currentUser()"
         [readOnly]="readOnly()"
         title="@transfer.field.objects"
         addLabel="@transfer.operation.addObject.label"
@@ -67,25 +75,25 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
           <ion-grid>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input name="name" [value]="name()" [maxLength]="nameLength" [readOnly]="readOnly()" (changed)="onChange('name', $event)" />
+                <bk-text-input name="name" [value]="name()" [maxLength]="nameLength" [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="types()!" selectedItemName="type()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('type', $event)" />
+                <bk-cat-select [category]="types()!" selectedItemName="type()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('type', $event)" />
               </ion-col>
 
               @if(type() === 'custom') {
               <ion-col size="12" size-md="6">
-                <bk-text-input name="label" [value]="label()" [maxLength]="nameLength" [readOnly]="readOnly()" (changed)="onChange('label', $event)" />
+                <bk-text-input name="label" [value]="label()" [maxLength]="nameLength" [readOnly]="isReadOnly()" (changed)="onFieldChange('label', $event)" />
               </ion-col>
               }
 
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('state', $event)" />
+                <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('state', $event)" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-date-input name="dateOfTransfer" [storeDate]="dateOfTransfer()" [locale]="locale()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('dateOfTransfer', $event)" />
+                <bk-date-input name="dateOfTransfer" [storeDate]="dateOfTransfer()" [locale]="locale()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfTransfer', $event)" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -100,15 +108,15 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-number-input name="price" [value]="price()" [maxLength]="6" [readOnly]="readOnly()" (changed)="onChange('price', $event)" />
+                <bk-number-input name="price" [value]="price()" [maxLength]="6" [readOnly]="isReadOnly()" (changed)="onFieldChange('price', $event)" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="currency" [value]="currency()" [maxLength]="20" [readOnly]="readOnly()" (changed)="onChange('currency', $event)" />
+                <bk-text-input name="currency" [value]="currency()" [maxLength]="20" [readOnly]="isReadOnly()" (changed)="onFieldChange('currency', $event)" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('periodicity', $event)" />
+                <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('periodicity', $event)" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -116,9 +124,9 @@ import { TransferFormModel, transferFormModelShape, transferFormValidations } fr
       </ion-card>
 
       @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
       } @if(hasRole('admin')) {
-      <bk-notes name="notes" [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
+      <bk-notes name="notes" [value]="notes()" [readOnly]="isReadOnly()" (changed)="onFieldChange('notes', $event)" />
       }
     </form>
   `,
@@ -127,60 +135,68 @@ export class TransferFormComponent {
   protected modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
-  public vm = model.required<TransferFormModel>();
+  // inputs
+  public formData = model.required<TransferFormModel>();
   public readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected readonly currentUser = computed(() => this.appStore.currentUser());
+ // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
+
+  // validation and errors
+  protected readonly suite = transferFormValidations;
+  protected readonly shape = TRANSFER_FORM_SHAPE;
+  private readonly validationResult = computed(() => transferFormValidations(this.formData()));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+
+  // fields
+  protected readonly currentUser = computed(() => this.appStore.currentUser() ?? die('TransferForm: current user is required'));
   protected readonly allTags = computed(() => this.appStore.getTags('transfer'));
   protected readonly types = computed(() => this.appStore.getCategory('transfer_type'));
   protected readonly states = computed(() => this.appStore.getCategory('transfer_state'));
   protected readonly periodicities = computed(() => this.appStore.getCategory('periodicity'));
 
-  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
-  protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES);
-  protected name = computed(() => this.vm().name ?? DEFAULT_NAME);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected name = computed(() => this.formData().name ?? DEFAULT_NAME);
 
-  protected subjects = linkedSignal(() => this.vm().subjects ?? []);
-  protected objects = linkedSignal(() => this.vm().objects ?? []);
+  protected subjects = linkedSignal(() => this.formData().subjects ?? []);
+  protected objects = linkedSignal(() => this.formData().objects ?? []);
 
-  protected dateOfTransfer = computed(() => this.vm().dateOfTransfer ?? getTodayStr());
-  protected resourceName = computed(() => this.vm().resource?.name ?? DEFAULT_NAME);
-  protected type = computed(() => this.vm().type ?? DEFAULT_TRANSFER_TYPE);
-  protected state = computed(() => this.vm().state ?? DEFAULT_TRANSFER_STATE);
-  protected label = computed(() => this.vm().label ?? DEFAULT_LABEL);
-  protected price = computed(() => this.vm().price ?? DEFAULT_PRICE);
-  protected currency = computed(() => this.vm().currency ?? DEFAULT_CURRENCY);
-  protected periodicity = computed(() => this.vm().periodicity ?? 'yearly');
+  protected dateOfTransfer = computed(() => this.formData().dateOfTransfer ?? getTodayStr());
+  protected resourceName = computed(() => this.formData().resource?.name ?? DEFAULT_NAME);
+  protected type = computed(() => this.formData().type ?? DEFAULT_TRANSFER_TYPE);
+  protected state = computed(() => this.formData().state ?? DEFAULT_TRANSFER_STATE);
+  protected label = computed(() => this.formData().label ?? DEFAULT_LABEL);
+  protected price = computed(() => this.formData().price ?? DEFAULT_PRICE);
+  protected currency = computed(() => this.formData().currency ?? DEFAULT_CURRENCY);
+  protected periodicity = computed(() => this.formData().periodicity ?? 'yearly');
   protected readonly locale = computed(() => this.appStore.appConfig().locale);
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-
-  protected readonly suite = transferFormValidations;
-  protected readonly shape = transferFormModelShape;
-  private readonly validationResult = computed(() => transferFormValidations(this.vm()));
-  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
-
+  // passing constants to template
   protected nameLength = NAME_LENGTH;
+
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
+  }
 
   protected onResourceNameChange($event: Event): void {
     const resource = DefaultResourceInfo;
     resource.name = ($event.target as HTMLInputElement).value ?? '';
-    this.vm.update(vm => ({ ...vm, resource }));
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+    this.formData.update(vm => ({ ...vm, resource }));
   }
 
-  protected onValueChange(value: TransferFormModel): void {
-    this.vm.update(_vm => ({ ..._vm, ...value }));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: TransferFormModel): void {
+    this.formData.update(vm => ({ ...vm, ...value }));
+    debugFormErrors('TransferForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number | AvatarInfo[] | ResourceInfo): void {
-    this.vm.update(vm => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('TransferForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | AvatarInfo[] | ResourceInfo): void {
+    this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('TransferForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {
@@ -209,7 +225,7 @@ export class TransferFormComponent {
             label: DEFAULT_LABEL,
             modelType: 'person',
           });
-          this.onChange(name, subjects);
+          this.onFieldChange(name, subjects);
         } else {
           const objects = this.objects();
           objects.push({
@@ -219,7 +235,7 @@ export class TransferFormComponent {
             label: DEFAULT_LABEL,
             modelType: 'person',
           });
-          this.onChange(name, objects);
+          this.onFieldChange(name, objects);
         }
       }
     }
@@ -244,7 +260,7 @@ export class TransferFormComponent {
           type: data.type,
           subType: data.subType,
         };
-        this.onChange('resource', resource);
+        this.onFieldChange('resource', resource);
       }
     }
   }

@@ -39,11 +39,11 @@ export class ErrorNoteComponent {
 
   private translate(keys: string[]): Observable<string> {
     if (!keys || keys.length === 0) return of('');
-    const _key = keys[0];
-    if (_key.startsWith('@')) {
-      return this.translocoService.selectTranslate(_key.substring(1));
+    const key = keys[0];
+    if (key.startsWith('@')) {
+      return this.translocoService.selectTranslate(key.substring(1));
     } else {  
-      return of(_key);
+      return of(key);
     } 
   }
 }

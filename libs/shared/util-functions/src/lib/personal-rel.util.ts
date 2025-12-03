@@ -9,8 +9,8 @@ import { searchData } from './search.util';
  * @returns an array of personalrels for the given person (as subject).
  */
 export async function getAllPersonalRelsOfSubject(firestore: Firestore, subjectId: string): Promise<PersonalRelModel[]> {
-  const _query = [{ key: 'subjectKey', operator: '==', value: subjectId }];
-  return await searchData<PersonalRelModel>(firestore, PersonalRelCollection, _query, 'objectLastName', 'asc');
+  const query = [{ key: 'subjectKey', operator: '==', value: subjectId }];
+  return await searchData<PersonalRelModel>(firestore, PersonalRelCollection, query, 'objectLastName', 'asc');
 }
 
 /**
@@ -20,6 +20,6 @@ export async function getAllPersonalRelsOfSubject(firestore: Firestore, subjectI
  * @returns an array of personalRels for the given person (as object).
  */
 export async function getAllPersonalRelsOfObject(firestore: Firestore, objectId: string): Promise<PersonalRelModel[]> {
-  const _query = [{ key: 'objectKey', operator: '==', value: objectId }];
-  return await searchData<PersonalRelModel>(firestore, PersonalRelCollection, _query, 'subjectLastName', 'asc');
+  const query = [{ key: 'objectKey', operator: '==', value: objectId }];
+  return await searchData<PersonalRelModel>(firestore, PersonalRelCollection, query, 'subjectLastName', 'asc');
 }

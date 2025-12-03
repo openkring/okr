@@ -1,15 +1,15 @@
-import { Component, computed, input, model, output, signal } from '@angular/core';
+import { Component, computed, input, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
 import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
 import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
 
-import { OrgFormModel, OrgNewFormModel, orgNewFormModelShape, orgNewFormValidations } from '@bk2/subject-org-util';
+import { ORG_NEW_FORM_SHAPE, OrgFormModel, OrgNewFormModel, orgNewFormValidations } from '@bk2/subject-org-util';
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
 
 @Component({
@@ -24,10 +24,10 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, D
   template: `
   <form scVestForm
     [formShape]="shape"
-    [formValue]="vm()"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
 
     <ion-card>
       <ion-card-content>
@@ -38,25 +38,25 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, D
           @if (isOrgTypeVisible()) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="types()" [selectedItemName]="type()" [withAll]="false" [readOnly]="isOrgTypeReadOnly() || readOnly()" (changed)="onChange('type', $event)" />
+                <bk-cat-select [category]="types()" [selectedItemName]="type()" [withAll]="false" [readOnly]="isOrgTypeReadOnly() || isReadOnly()" (changed)="onFieldChange('type', $event)" />
               </ion-col>
             </ion-row>
           }
 
           <ion-row> 
             <ion-col size="12">
-              <bk-text-input name="orgName" [value]="name()" autocomplete="organization" [maxLength]=50 [readOnly]="readOnly()" (changed)="onChange('name', $event)" />
-              <bk-error-note [errors]="orgNameErrors()" />                                                                                                                     
+              <bk-text-input name="name" [value]="name()" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
+              <bk-error-note [errors]="nameErrors()" />                                                                                                                     
             </ion-col>
           </ion-row>
 
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-date-input name="dateOfFoundation" [storeDate]="dateOfFoundation()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfFoundation', $event)" />
+              <bk-date-input name="dateOfFoundation" [storeDate]="dateOfFoundation()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfFoundation', $event)" />
             </ion-col>
     
             <ion-col size="12" size-md="6">
-              <bk-date-input name="dateOfLiquidation" [storeDate]="dateOfLiquidation()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('dateOfLiquidation', $event)" />
+              <bk-date-input name="dateOfLiquidation" [storeDate]="dateOfLiquidation()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfLiquidation', $event)" />
             </ion-col>
           </ion-row>
 
@@ -65,11 +65,11 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, D
           --------------------------------------------------->
           <ion-row>
             <ion-col size="10">
-              <bk-text-input name="streetName" [value]="streetName()" autocomplete="street-address" [readOnly]="readOnly()" (changed)="onChange('streetName', $event)" />
+              <bk-text-input name="streetName" [value]="streetName()" autocomplete="street-address" [readOnly]="isReadOnly()" (changed)="onFieldChange('streetName', $event)" />
               <bk-error-note [errors]="streetNameErrors()" />                                                                                                                     
             </ion-col>
             <ion-col size="2">
-              <bk-text-input name="streetNumber" [value]="streetNumber()" [readOnly]="readOnly()" (changed)="onChange('streetNumber', $event)" />
+              <bk-text-input name="streetNumber" [value]="streetNumber()" [readOnly]="isReadOnly()" (changed)="onFieldChange('streetNumber', $event)" />
               <bk-error-note [errors]="streetNumberErrors()" />                                                                                                                     
             </ion-col>
           </ion-row>
@@ -78,40 +78,40 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, D
 
           <ion-row>
             <ion-col size="12" size-md="3">
-              <bk-text-input name="countryCode" [value]="countryCode()" [readOnly]="readOnly()" (changed)="onChange('countryCode', $event)" />
+              <bk-text-input name="countryCode" [value]="countryCode()" [readOnly]="isReadOnly()" (changed)="onFieldChange('countryCode', $event)" />
             </ion-col>
     
             <ion-col size="12" size-md="3">
-              <bk-text-input name="zipCode" [value]="zipCode()" [readOnly]="readOnly()" (changed)="onChange('zipCode', $event)" />
+              <bk-text-input name="zipCode" [value]="zipCode()" [readOnly]="isReadOnly()" (changed)="onFieldChange('zipCode', $event)" />
             </ion-col>
             
             <ion-col size="12" size-md="6">
-              <bk-text-input name="city" [value]="city()" [readOnly]="readOnly()" (changed)="onChange('city', $event)" />
+              <bk-text-input name="city" [value]="city()" [readOnly]="isReadOnly()" (changed)="onFieldChange('city', $event)" />
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-phone [value]="phone()" [readOnly]="readOnly()" (changed)="onChange('phone', $event)" />
+              <bk-phone [value]="phone()" [readOnly]="isReadOnly()" (changed)="onFieldChange('phone', $event)" />
               <bk-error-note [errors]="phoneErrors()" />                                                                                                                     
             </ion-col>
             <ion-col size="12">
-              <bk-email [value]="email()" [readOnly]="readOnly()" (changed)="onChange('email', $event)" />
+              <bk-email [value]="email()" [readOnly]="isReadOnly()" (changed)="onFieldChange('email', $event)" />
               <bk-error-note [errors]="emailErrors()" />                                                                                                                     
             </ion-col>
             <ion-col size="12">
-              <bk-text-input name="url" [value]="url()" [readOnly]="readOnly()" (changed)="onChange('url', $event)" />
+              <bk-text-input name="url" [value]="url()" [readOnly]="isReadOnly()" (changed)="onFieldChange('url', $event)" />
               <bk-error-note [errors]="urlErrors()" />                                                                                                                     
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-text-input name="taxId" [value]="taxId()" [mask]="vatMask" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('taxId', $event)" />
+              <bk-text-input name="taxId" [value]="taxId()" [mask]="vatMask" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('taxId', $event)" />
             </ion-col>
           </ion-row>
           @if(hasRole('admin')) {
             <ion-row>
               <ion-col size="12">
-                <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('bexioId', $event)" />                                        
+                <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('bexioId', $event)" />                                        
               </ion-col>
             </ion-row>
           }
@@ -119,74 +119,78 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, D
       </ion-card-content>
     </ion-card>
 
-    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="orgTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
 
     @if(hasRole('admin')) { 
-      <bk-notes name="notes" [readOnly]="readOnly()" [value]="notes()" />
+      <bk-notes name="notes" [readOnly]="isReadOnly()" [value]="notes()" (changed)="onFieldChange('notes', $event)" />
     }
   </form>
   `
 })
 export class OrgNewFormComponent {
-  public vm = model.required<OrgNewFormModel>();
+
+  // inputs
+  public formData = model.required<OrgNewFormModel>();
   public currentUser = input.required<UserModel | undefined>();
   public isOrgTypeReadOnly = input(false);
   public isOrgTypeVisible = input(true);
-  public orgTags = input.required<string>();
-  public types = input.required<CategoryListModel>();
-
+  public readonly allTags = input.required<string>();
+  public readonly types = input.required<CategoryListModel>();
   public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));  
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
+ // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
   
+  // validation and errors
   protected readonly suite = orgNewFormValidations;
-  protected readonly shape = orgNewFormModelShape;
-
-  protected type = computed(() => this.vm().type ?? DEFAULT_ORG_TYPE);
-  protected name = computed(() => this.vm().name ?? DEFAULT_NAME);
-  protected dateOfFoundation = computed(() => this.vm().dateOfFoundation ?? DEFAULT_DATE);
-  protected dateOfLiquidation = computed(() => this.vm().dateOfLiquidation ?? DEFAULT_DATE);
-
-  protected streetName = computed(() => this.vm().streetName ?? DEFAULT_NAME);
-  protected streetNumber = computed(() => this.vm().streetNumber ?? '');
-  protected zipCode = computed(() => this.vm().zipCode ?? '');
-  protected city = computed(() => this.vm().city ?? '');
-  protected countryCode = computed(() => this.vm().countryCode ?? '');
-  protected phone = computed(() => this.vm().phone ?? DEFAULT_PHONE);
-  protected email = computed(() => this.vm().email ?? DEFAULT_EMAIL);
-  protected url = computed(() => this.vm().url ?? DEFAULT_URL);
-
-  protected taxId = computed(() => this.vm().taxId ?? DEFAULT_ID);
-  protected bexioId = computed(() => this.vm().bexioId ?? DEFAULT_ID);
-  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
-  protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES);
-
-  private readonly validationResult = computed(() => orgNewFormValidations(this.vm()));
-  protected orgNameErrors = computed(() => this.validationResult().getErrors('orgName'));
+  protected readonly shape = ORG_NEW_FORM_SHAPE;
+  private readonly validationResult = computed(() => orgNewFormValidations(this.formData()));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected streetNameErrors = computed(() => this.validationResult().getErrors('streetName'));
   protected streetNumberErrors = computed(() => this.validationResult().getErrors('streetNumber'));
   protected phoneErrors = computed(() => this.validationResult().getErrors('phone'));
   protected emailErrors = computed(() => this.validationResult().getErrors('email'));
   protected urlErrors = computed(() => this.validationResult().getErrors('url'));
 
+  // fields
+  protected type = computed(() => this.formData().type ?? DEFAULT_ORG_TYPE);
+  protected name = computed(() => this.formData().name ?? DEFAULT_NAME);
+  protected dateOfFoundation = computed(() => this.formData().dateOfFoundation ?? DEFAULT_DATE);
+  protected dateOfLiquidation = computed(() => this.formData().dateOfLiquidation ?? DEFAULT_DATE);
+  protected streetName = computed(() => this.formData().streetName ?? DEFAULT_NAME);
+  protected streetNumber = computed(() => this.formData().streetNumber ?? '');
+  protected zipCode = computed(() => this.formData().zipCode ?? '');
+  protected city = computed(() => this.formData().city ?? '');
+  protected countryCode = computed(() => this.formData().countryCode ?? '');
+  protected phone = computed(() => this.formData().phone ?? DEFAULT_PHONE);
+  protected email = computed(() => this.formData().email ?? DEFAULT_EMAIL);
+  protected url = computed(() => this.formData().url ?? DEFAULT_URL);
+  protected taxId = computed(() => this.formData().taxId ?? DEFAULT_ID);
+  protected bexioId = computed(() => this.formData().bexioId ?? DEFAULT_ID);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+
+  // passing constants to template
   protected bexioMask = BexioIdMask;
   protected vatMask = ChVatMask;
 
+  protected onFormChange(value: OrgNewFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('OrgNewForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('OrgNewForm.onFieldChange', this.validationResult().errors, this.currentUser());
+  }
+
   protected onCitySelected(city: SwissCity): void {
-    this.vm.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
-  }
-
-  protected onValueChange(value: OrgFormModel): void {
-    this.vm.update((vm) => ({...vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
-  }
-
-  protected onChange(fieldName: string, $event: string | string[] | number): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('OrgNewForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
+    debugFormErrors('OrgNewForm.onCitySelected', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

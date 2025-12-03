@@ -76,27 +76,30 @@ export const PageListStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      async add(): Promise<void> {
+      async add(readOnly = true): Promise<void> {
+        if (readOnly) return;
         await store.pageService.addPage(store.currentUser());
         store.pageResource.reload();
       },
 
-      async delete(page: PageModel): Promise<void> {
+      async delete(page: PageModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
         await store.pageService.delete(page, store.currentUser());
         store.pageResource.reload();
       },
 
-      async edit(page: PageModel): Promise<void> {
+      async edit(page: PageModel, readOnly = true): Promise<void> {
         // we need to clone the page to avoid changing the original object (NG0100: ExpressionChangeAfterItHasBeenCheckedError)
-        const _modal = await store.modalController.create({
+        const modal = await store.modalController.create({
           component: PageEditModalComponent,
           componentProps: {
             page: structuredClone(page),
-            currentUser: store.currentUser()
+            currentUser: store.currentUser(),
+            readOnly
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onWillDismiss();
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm') {
           if (isPage(data, store.appStore.tenantId())) {
             await store.pageService.update(data, store.currentUser());

@@ -15,7 +15,7 @@ export class TransferSelectorsService {
   private readonly tenantId = this.appStore.tenantId();
 
   public async selectResource(): Promise<ResourceModel | undefined> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: ResourceSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -23,8 +23,8 @@ export class TransferSelectorsService {
         currentUser: this.appStore.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isResource(data, this.tenantId)) {
         return data;
@@ -34,7 +34,7 @@ export class TransferSelectorsService {
   }
 
   public async selectPerson(): Promise<PersonModel | undefined> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: PersonSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -42,8 +42,8 @@ export class TransferSelectorsService {
         currentUser: this.appStore.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isPerson(data, this.tenantId)) {
         return data;

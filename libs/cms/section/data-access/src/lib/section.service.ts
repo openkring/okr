@@ -6,6 +6,8 @@ import { FirestoreService } from "@bk2/shared-data-access";
 import { DbQuery, SectionCollection, SectionModel, UserModel } from "@bk2/shared-models";
 import { addSystemQueries, findByKey, getSystemQuery } from "@bk2/shared-util-core";
 
+import { getSectionIndex } from "@bk2/cms-section-util";
+
 @Injectable({
     providedIn: 'root'
 })
@@ -20,7 +22,7 @@ export class SectionService {
    * @returns the key of the newly created SectionModel
    */
   public async create(section: SectionModel, currentUser?: UserModel): Promise<string | undefined> {
-    section.index = this.getSearchIndex(section);
+    section.index = getSectionIndex(section);
     return await this.firestoreService.createModel<SectionModel>(SectionCollection, section, '@content.section.operation.create', currentUser);
   }
 
@@ -38,7 +40,7 @@ export class SectionService {
    * @param toastController 
    */
   public async update(section: SectionModel, currentUser?: UserModel, confirmMessage = '@content.section.operation.update'): Promise<string | undefined> {
-    section.index = this.getSearchIndex(section);
+    section.index = getSectionIndex(section);
     return await this.firestoreService.updateModel<SectionModel>(SectionCollection, section, false, confirmMessage, currentUser);
   }
 
@@ -75,21 +77,13 @@ export class SectionService {
 
     // read all sections
     // we need to use first() on each read() in order to make sure that each observable completes
-    const _sectionObservables: Observable<SectionModel | undefined>[] = sectionKeys.map(key => this.read(key).pipe(first()));
+    const sectionObservables: Observable<SectionModel | undefined>[] = sectionKeys.map(key => this.read(key).pipe(first()));
    // Use forkJoin to wait for all read operations to complete
-   return forkJoin(_sectionObservables).pipe(
+   return forkJoin(sectionObservables).pipe(
     // After forkJoin emits the array of results (including potential undefined values)
     // filter out the undefined values
     map(results => results.filter((section): section is SectionModel => !!section))
   );
-  }
-
-  public getSearchIndex(item: SectionModel): string {
-    return 'n:' + item.name + ' t:' + item.type;
-  }
-
-  public getSearchIndexInfo(): string {
-    return 'n:ame t:ype';
   }
 }
 

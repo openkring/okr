@@ -1,6 +1,7 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
-import { AvatarService } from '@bk2/avatar-data-access';
 import { Observable } from 'rxjs';
+
+import { AvatarService } from '@bk2/avatar-data-access';
 
 @Pipe({
   name: 'avatar',

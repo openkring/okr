@@ -5,15 +5,14 @@ import { ModalController, Platform } from "@ionic/angular/standalone";
 import { Languages } from "@bk2/shared-categories";
 import { AppStore } from "@bk2/shared-feature";
 import { AddressChannel, AddressModel, DefaultLanguage, EZS_DIR, ImageAction, newImage } from "@bk2/shared-models";
-import { getImageDimensionsFromMetadata, MapViewModalComponent, showZoomedImage, updateImageDimensions, UploadService } from "@bk2/shared-ui";
+import { getImageDimensionsFromMetadata, MapViewModalComponent, showZoomedImage, updateImageDimensions } from "@bk2/shared-ui";
 import { getModelAndKey, warn } from "@bk2/shared-util-core";
 
 import { readAsFile } from "@bk2/avatar-util";
+import { UploadService } from "@bk2/avatar-data-access";
 
-import { AddressService, GeocodingService } from "@bk2/subject-address-data-access";
-import { browseUrl, stringifyPostalAddress, isAddress } from "@bk2/subject-address-util";
-
-import { AddressEditModalComponent } from "./address-edit.modal";
+import { GeocodingService } from "@bk2/subject-address-data-access";
+import { browseUrl, stringifyPostalAddress } from "@bk2/subject-address-util";
 
 @Injectable({
     providedIn: 'root'
@@ -21,32 +20,12 @@ import { AddressEditModalComponent } from "./address-edit.modal";
 export class AddressModalsService {
   private readonly modalController = inject(ModalController);
   public readonly appStore = inject(AppStore);
-  private readonly addressService = inject(AddressService);
   private readonly geocodeService = inject(GeocodingService);
   private readonly platform = inject(Platform);
   private readonly uploadService = inject(UploadService);
 
   public readonly tenantId = this.appStore.env.tenantId;
 
-  /***************************  edit modal  *************************** */
-  public async edit(address: AddressModel): Promise<void> {
-    const modal = await this.modalController.create({
-      component: AddressEditModalComponent,
-      componentProps: {
-        address: address,
-        currentUser: this.appStore.currentUser()
-      }
-    });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm') {
-      if (isAddress(data, this.tenantId)) {
-        await (!data.bkey ? 
-          this.addressService.create(data, this.appStore.currentUser()) : 
-          this.addressService.update(data, this.appStore.currentUser()));
-      }
-    }
-  }
 
   /***************************  use an address *************************** */
   /**

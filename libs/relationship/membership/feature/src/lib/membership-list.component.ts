@@ -1,26 +1,26 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { MembershipModel, RoleName } from '@bk2/shared-models';
-import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { MembershipModel, MembershipModelName, NameDisplay, PersonModelName, RoleName } from '@bk2/shared-models';
+import { DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { DatePickerModalComponent, EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { coerceBoolean, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { DateFormat, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
-import { CategoryLogPipe, getMembershipName } from '@bk2/relationship-membership-util';
+import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 import { MembershipListStore } from './membership-list.store';
 
 @Component({
   selector: 'bk-membership-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryLogPipe, AvatarPipe,
-    SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
+    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryLogPipe, AvatarPipe, FullNamePipe,
+    SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent, DatePickerModalComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover,
     IonBackdrop
@@ -82,9 +82,9 @@ import { MembershipListStore } from './membership-list.store';
           @for(membership of filteredMemberships(); track $index) {
               <ion-item (click)="showActions(membership)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ 'person.' + membership.memberKey | avatar:'membership' | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ personModelName + '.' + membership.memberKey | avatar:membershipDefaultIcon() | async }}" alt="Avatar Logo" />
                 </ion-avatar>
-                <ion-label>{{getMembershipName(membership)}}</ion-label>      
+                <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>      
                 <ion-label>{{membership.relLog | duration:membership.dateOfExit}}</ion-label>      
                 <ion-label class="ion-hide-md-down">{{membership.relLog|categoryLog}}</ion-label>
               </ion-item>
@@ -93,15 +93,19 @@ import { MembershipListStore } from './membership-list.store';
       }
     }
   </ion-content>
+  <bk-date-picker-modal #datePicker [isoDate]="isoDate()" (dateSelected)="onDateSelected($event)" />
     `
 })
 export class MembershipListComponent {
   protected membershipListStore = inject(MembershipListStore);
   private actionSheetController = inject(ActionSheetController);
+  protected datePickerModal = viewChild.required<DatePickerModalComponent>(DatePickerModalComponent);
 
   public listId = input.required<string>();
   public orgId = input.required<string>();
   public contextMenuName = input.required<string>();
+
+  protected isoDate = signal(getTodayStr(DateFormat.IsoDate));
 
   protected membershipCategory = computed(() => this.membershipListStore.membershipCategory());
   protected genders = computed(() => this.membershipListStore.genders());
@@ -112,7 +116,9 @@ export class MembershipListComponent {
   protected types = computed(() => this.listId() === 'orgs' ? this.orgTypes() : this.genders());
   protected years = computed(() => this.listId() === 'entries' || this.listId() === 'exits' ? getYearList() : undefined);
   protected currentUser = computed(() => this.membershipListStore.appStore.currentUser());
+  protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
+  protected membershipDefaultIcon = computed(() => this.membershipListStore.appStore.getDefaultIcon(MembershipModelName));
 
   protected filteredMemberships = computed(() => {
     switch (this.listId()) {
@@ -160,7 +166,8 @@ export class MembershipListComponent {
   protected isLoading = computed(() => this.membershipListStore.isLoading());
 
   private imgixBaseUrl = this.membershipListStore.appStore.env.services.imgixBaseUrl;
-
+  protected personModelName = PersonModelName;
+  
   constructor() {
     effect(() => this.membershipListStore.setOrgId(this.orgId()));
   }
@@ -227,10 +234,12 @@ export class MembershipListComponent {
           await this.membershipListStore.edit(membership, this.readOnly());
           break;
         case 'view':
-          await this.membershipListStore.view(membership);
+          await this.membershipListStore.edit(membership, true);
           break;
         case 'endMembership':
-          await this.membershipListStore.end(membership, this.readOnly());
+          this.membershipListStore.setCurrentMembership(membership);
+          console.log('MembershipList.executeActions - opening date picker modal');
+          this.datePickerModal().open();
           break;
         case 'changeMcat':
           await this.membershipListStore.changeMembershipCategory(membership, this.readOnly());
@@ -273,7 +282,8 @@ export class MembershipListComponent {
     return isOngoing(membership.dateOfExit);
   }
 
-  protected getMembershipName(membership: MembershipModel): string {
-    return getMembershipName(membership);
+  protected async onDateSelected(isoDate: string): Promise<void> {
+    console.log(`MembershipList.onDateSelected → isoDate: ${isoDate}`);
+    await this.membershipListStore.end(isoDate);
   }
 }

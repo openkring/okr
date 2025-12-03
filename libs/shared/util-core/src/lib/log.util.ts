@@ -21,8 +21,8 @@ export function warn(message: string): void {
  * @param ms milliseconds
  */
 export async function sleep(ms: number): Promise<unknown> {
-  return new Promise(_resolve => {
-    setTimeout(_resolve, ms);
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
   });
 }
 

@@ -1,14 +1,14 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, input, model, output, signal } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { CategoryListModel, UserModel } from "@bk2/shared-models";
 import { CheckboxComponent, ChipsComponent } from "@bk2/shared-ui";
-import { debugFormErrors, getCategoryItemNames } from "@bk2/shared-util-core";
+import { coerceBoolean, debugFormErrors, getCategoryItemNames } from "@bk2/shared-util-core";
 
-import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormValidations } from "@bk2/user-util";
+import { flattenRoles, USER_AUTH_FORM_SHAPE, UserAuthFormModel, userAuthFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-auth-form',
@@ -19,14 +19,15 @@ import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormVa
     CheckboxComponent, ChipsComponent,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   viewProviders: [vestFormsViewProviders],
   template: `
     <form scVestForm
       [formShape]="shape"
-      [formValue]="vm()"
+      [formValue]="formData()"
       [suite]="suite" 
-      (dirtyChange)="dirtyChange.set($event)"
-      (formValueChange)="onValueChange($event)">
+      (dirtyChange)="dirty.emit($event)"
+      (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@user.auth.title' | translate | async }}</ion-card-title>
@@ -36,10 +37,10 @@ import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormVa
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="useTouchId" [isChecked]="useTouchId()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('useTouchId', $event)" />
+                <bk-checkbox name="useTouchId" [isChecked]="useTouchId()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('useTouchId', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="useFaceId" [isChecked]="useFaceId()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('useFaceId', $event)" />
+                <bk-checkbox name="useFaceId" [isChecked]="useFaceId()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('useFaceId', $event)" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -47,37 +48,46 @@ import { flattenRoles, UserAuthFormModel, userAuthFormModelShape, userAuthFormVa
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoleNames()" [readOnly]="readOnly()" (changed)="onChange('roles', $event)" />
+      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoleNames()" [readOnly]="isReadOnly()" (changed)="onFieldChange('roles', $event)" />
     </form>
   `
 })
 export class UserAuthFormComponent {
-  public vm = model.required<UserAuthFormModel>();
+  // inputs
+  public formData = model.required<UserAuthFormModel>();
   public currentUser = input<UserModel | undefined>();
   public allRoles = input.required<CategoryListModel>();
-  public readOnly = input.required<boolean>();
+  public readonly readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected useTouchId = computed(() => this.vm().useTouchId ?? false);
-  protected useFaceId = computed(() => this.vm().useFaceId ?? false);
-  protected roles = computed(() => flattenRoles(this.vm().roles ?? { 'registered': true }));
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
+
+  // validation and errors
+  protected readonly suite = userAuthFormValidations;
+  protected readonly shape = USER_AUTH_FORM_SHAPE;
+  private readonly validationResult = computed(() => userAuthFormValidations(this.formData()));
+
+  // fields
+  protected useTouchId = computed(() => this.formData().useTouchId ?? false);
+  protected useFaceId = computed(() => this.formData().useFaceId ?? false);
+  protected roles = computed(() => flattenRoles(this.formData().roles ?? { 'registered': true }));
   protected allRoleNames = computed(() => getCategoryItemNames(this.allRoles()));
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-  private readonly validationResult = computed(() => userAuthFormValidations(this.vm()));
-
-  protected readonly suite = userAuthFormValidations;
-  protected readonly shape = userAuthFormModelShape;
-
-  protected onValueChange(value: UserAuthFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | number | boolean): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('UserAuthForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: UserAuthFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('UserAuthForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('UserAuthForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 }

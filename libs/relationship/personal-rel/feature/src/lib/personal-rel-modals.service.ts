@@ -13,7 +13,7 @@ export class PersonalRelModalsService {
   private readonly appStore = inject(AppStore);
 
   public async selectPerson(): Promise<PersonModel | undefined> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: PersonSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -21,8 +21,8 @@ export class PersonalRelModalsService {
         currentUser: this.appStore.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isPerson(data, this.appStore.tenantId())) {
         return data;

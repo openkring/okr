@@ -1,9 +1,7 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
 import { DEFAULT_CURRENCY, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_RBOAT_TYPE, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TIME, END_FUTURE_DATE_STR } from "@bk2/shared-constants";
 import { getTodayStr } from "@bk2/shared-util-core";
 
-export type ReservationFormModel = DeepPartial<{
+export type ReservationFormModel = {
   bkey: string,
   tags: string,
   notes: string
@@ -35,9 +33,9 @@ export type ReservationFormModel = DeepPartial<{
   price: number,
   currency: string,
   periodicity: string
-}>;
+};
 
-export const reservationFormModelShape: DeepRequired<ReservationFormModel> = {
+export const RESERVATION_FORM_SHAPE: ReservationFormModel = {
   bkey: DEFAULT_KEY,
   tags: DEFAULT_TAGS,
   notes: DEFAULT_NOTES,

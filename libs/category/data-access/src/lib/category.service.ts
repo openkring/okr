@@ -4,7 +4,9 @@ import { Observable } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { CategoryCollection, CategoryListModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+
+import { getCategoryIndex } from '@bk2/category-util';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +23,7 @@ export class CategoryService {
    * @returns the document id of the newly created category or undefined if the operation failed
    */
   public async create(category: CategoryListModel, currentUser?: UserModel): Promise<string | undefined> {
-    category.index = this.getSearchIndex(category);
+    category.index = getCategoryIndex(category);
     return await this.firestoreService.createModel<CategoryListModel>(CategoryCollection, category, '@category.operation.create', currentUser);
   }
 
@@ -39,7 +41,7 @@ export class CategoryService {
    * @param category the CategoryListModel with the new values. Its key must be valid (in order to find it in the database)
    */
   public async update(category: CategoryListModel, currentUser?: UserModel, confirmMessage = '@category.operation.update'): Promise<string | undefined> {
-      category.index = this.getSearchIndex(category);
+      category.index = getCategoryIndex(category);
       return await this.firestoreService.updateModel<CategoryListModel>(CategoryCollection, category, false, confirmMessage, currentUser);
   }
 
@@ -56,25 +58,4 @@ export class CategoryService {
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<CategoryListModel[]> {
     return this.firestoreService.searchData<CategoryListModel>(CategoryCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
-
-  /*-------------------------- search index --------------------------------*/
-  /**
-   * Create an index entry for a given category based on its values.
-   * @param category 
-   * @returns the index string
-   */
-  public getSearchIndex(category: CategoryListModel): string {
-    let _index = '';
-    _index = addIndexElement(_index, 'n', category.name);
-    return _index;
-  }
-
-  /**
-   * Returns a string explaining the structure of the index.
-   * This can be used in info boxes on the GUI.
-   */
-  public getSearchIndexInfo(): string {
-    return 'n:name';
-  }
-
 }

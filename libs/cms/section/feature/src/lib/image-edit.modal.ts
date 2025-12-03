@@ -64,7 +64,7 @@ import { ImageConfigFormComponent } from '@bk2/document-ui';
             </ion-col>
           </ion-row>
           <ion-row>
-            <bk-image-config-form [(vm)]="image" (validChange)="validChange.set($event)" />
+            <bk-image-config-form [formData]="image()" (formDataChange)="image.set($event)" />
           </ion-row>
         </ion-grid>
       </ion-content>

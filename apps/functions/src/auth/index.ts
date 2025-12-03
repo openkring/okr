@@ -140,16 +140,16 @@ export const getFirebaseUser = functions.onCall(
     checkStringField(request, 'getFirebaseUser', 'uid');
 
     try {
-      const _user = await getAuth().getUser(request.data.uid);
+      const user = await getAuth().getUser(request.data.uid);
       console.log('getFirebaseUser: OK');
       return {
-        uid: _user.uid,
-        email: _user.email,
-        displayName: _user.displayName,
-        emailVerified: _user.emailVerified,
-        disabled: _user.disabled,
-        phone: _user.phoneNumber,
-        photoUrl: _user.photoURL,
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        emailVerified: user.emailVerified,
+        disabled: user.disabled,
+        phone: user.phoneNumber,
+        photoUrl: user.photoURL,
       };
       // tbd: customClaims, multiFactor
     } catch (error: any) {

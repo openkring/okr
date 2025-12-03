@@ -6,7 +6,7 @@ import { Observable, of } from 'rxjs';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { BkModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
-import { compareDate, getAge, getEndOfYear, getFullPersonName, getSystemQuery, getYear, isMembership } from '@bk2/shared-util-core';
+import { compareDate, getAge, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@bk2/shared-util-core';
 
 export type AocAdminOpsState = {
   modelType: string | undefined;
@@ -67,30 +67,30 @@ export const AocAdminOpsStore = signalStore(
 
       listJuniorsOlderThan(age = 18, orgKey = 'scs', refYear = getYear()): void {
         if (store.modelType() === 'membership') {
-          const _log = store
+          const log = store
             .data()
             .filter(model => {
               if (isMembership(model, store.appStore.env.tenantId)) {
                 if (model.membershipCategory === 'junior' && model.orgKey === orgKey && model.relIsLast === true && compareDate(model.dateOfExit, getEndOfYear() + '')) {
                   // we have all current juniors of the given org
                   // now we filter the ones that are older than the given age or have no dateOfBirth
-                  const _age = getAge(model.memberDateOfBirth, false, refYear);
-                  if (_age < 0 || _age > age) return true;
+                  const age = getAge(model.memberDateOfBirth, false, refYear);
+                  if (age < 0 || age > age) return true;
                 }
               }
               return false;
             })
             .map(model => {
               if (isMembership(model, store.appStore.env.tenantId)) {
-                const _name = getFullPersonName(model.memberName1, model.memberName2);
-                const _age = getAge(model.memberDateOfBirth, false, refYear);
-                const _message = _age < 0 ? 'no dateOfBirth' : `old junior: ${model.memberDateOfBirth} -> ${_age}`;
-                if (_age < 0) return { id: model.bkey, name: _name, message: 'no dateOfBirth' };
-                return { id: model.bkey, name: _name, message: _message };
+                const name = getFullName(model.memberName1, model.memberName2);
+                const age = getAge(model.memberDateOfBirth, false, refYear);
+                const message = age < 0 ? 'no dateOfBirth' : `old junior: ${model.memberDateOfBirth} -> ${age}`;
+                if (age < 0) return { id: model.bkey, name: name, message: 'no dateOfBirth' };
+                return { id: model.bkey, name: name, message: message };
               }
               return { id: model.bkey, name: '', message: 'not a membership ?' };
             });
-          patchState(store, { log: _log, logTitle: 'old juniors' });
+          patchState(store, { log: log, logTitle: 'old juniors' });
         }
       },
 

@@ -46,14 +46,14 @@ export class AlbumPageComponent {
   protected title = computed(() => extractFirstPartOfOptionalTupel(this.id(), '@'));
 
   protected section = computed(() => {
-    const _section = createSection('album', this.env.tenantId);
-    const _id = this.id();
-    if (_id.indexOf('@') === -1) {   // show the default album of the current tenant
-      _section.properties.album = newAlbumConfig(this.env.tenantId, _id);
+    const section = createSection('album', this.env.tenantId);
+    const id = this.id();
+    if (id.indexOf('@') === -1) {   // show the default album of the current tenant
+      section.properties.album = newAlbumConfig(this.env.tenantId, id);
     } else {                         // show the album from a different tenant
-      const [_key, _tenantId] = getPartsOfTupel(_id, '@');
-      _section.properties.album = newAlbumConfig(_tenantId, _key);
+      const [key, tenantId] = getPartsOfTupel(id, '@');
+      section.properties.album = newAlbumConfig(tenantId, key);
     }
-    return _section;
+    return section;
   });
 }

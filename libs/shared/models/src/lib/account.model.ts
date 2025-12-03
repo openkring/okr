@@ -19,3 +19,4 @@ export class AccountModel implements BkModel, NamedModel, SearchableModel, Tagge
 }
 
 export const AccountCollection = 'accounts';
+export const AccountModelName = 'account';

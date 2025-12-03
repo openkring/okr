@@ -76,7 +76,7 @@ export function checkString(
  * BEWARE: the password policy should be the same as Firebase's (when setting the password)
 * @param control the password to validate
 
-    const _result = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).8,20}$/.test(control.value);
+    const result = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).8,20}$/.test(control.value);
  */
 export function checkPassword(value: unknown): boolean {
     if (!value) die('validate.util/checkPassword: invalid value');

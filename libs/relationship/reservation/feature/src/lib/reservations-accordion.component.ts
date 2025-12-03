@@ -1,14 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { OrgModel, PersonModel, ReservationModel, ResourceModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
-import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared-util-core';
-
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { getAvatarKey, getCategoryIcon, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { ReservationsAccordionStore } from './reservations-accordion.store';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
@@ -17,13 +15,13 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   selector: 'bk-reservations-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, DurationPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe,
     EmptyListComponent,
-    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonThumbnail, IonImg, IonList
+    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonAvatar, IonImg, IonList
   ],
   providers: [ReservationsAccordionStore],
   styles: [`
-    ion-thumbnail { width: 30px; height: 30px; }
+    ion-avatar { width: 30px; height: 30px; }
   `],
   template: `
   <ion-accordion toggle-icon-slot="start" value="reservations">
@@ -42,9 +40,10 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
         <ion-list lines="inset">
           @for(reservation of reservations(); track $index) {
             <ion-item (click)="showActions(reservation)">
-              <ion-thumbnail slot="start">
-                <ion-img [src]="getAvatarKey(reservation) | avatar | async" alt="resource avatar" />
-              </ion-thumbnail>
+                <ion-avatar slot="start">
+                  <ion-img src="{{ getIcon(reservation) | svgIcon }}" alt="resource avatar" />
+                </ion-avatar>
+
               <ion-label>{{reservation.resourceName}}</ion-label>  
               <ion-label>{{ reservation.startDate | duration:reservation.endDate }}</ion-label>
             </ion-item>
@@ -63,15 +62,27 @@ export class ReservationsAccordionComponent {
   public title = input('@reservation.plural');
   public readOnly = input(true);
 
-  public reserver = input.required<PersonModel | OrgModel>();
+  public reserver = input<PersonModel | OrgModel>();
+  public resource = input<ResourceModel>();
   public reserverModelType = input<'person' | 'org'>('person');
-  public defaultResource = input<ResourceModel>();
   protected reservations = computed(() => this.reservationsStore.reservations());
+  private currentUser = this.reservationsStore.currentUser;
 
   private imgixBaseUrl = this.reservationsStore.appStore.env.services.imgixBaseUrl;
+  protected readonly resourceTypes = this.reservationsStore.appStore.getCategory('resource_type');
+    private readonly rboatTypes = this.reservationsStore.appStore.getCategory('rboat_type');
 
   constructor() {
-    effect(() => this.reservationsStore.setReserver(this.reserver(), this.reserverModelType()));
+    effect(() => {
+      const reserver = this.reserver();
+      if (reserver) {
+        this.reservationsStore.setReserver(reserver, this.reserverModelType());
+      }
+      const resource = this.resource();
+      if (resource) {
+        this.reservationsStore.setResource(resource);
+      }
+    });
   }
 
   /******************************* getters *************************************** */
@@ -82,9 +93,10 @@ export class ReservationsAccordionComponent {
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    const resource = this.defaultResource();
-    if (resource) {
-      await this.reservationsStore.add(this.reserver(), this.reserverModelType(), resource);
+    const resource = this.resource();
+    const reserver = this.reserver();
+    if (resource && reserver) {
+      await this.reservationsStore.add(reserver, this.reserverModelType(), resource);
     }
   }
 
@@ -103,18 +115,21 @@ export class ReservationsAccordionComponent {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param reservation 
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {
-    if (hasRole('resourceAdmin', this.reservationsStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      if (isOngoing(reservation.endDate)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('endres', this.imgixBaseUrl, 'stop-circle'));
+   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {  
+      if (hasRole('registered', this.currentUser())) {
+        actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      if (!this.readOnly()) {
+        actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+        if (isOngoing(reservation.endDate)) {
+          actionSheetOptions.buttons.push(createActionSheetButton('endres', this.imgixBaseUrl, 'stop-circle'));
+        }
+      }
+      if (hasRole('admin', this.currentUser())) {
+        actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      }
     }
-    if (hasRole('admin', this.reservationsStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
-    }
-  }
 
   /**
    * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
@@ -126,12 +141,16 @@ export class ReservationsAccordionComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
           await this.reservationsStore.delete(reservation, this.readOnly());
           break;
         case 'edit':
           await this.reservationsStore.edit(reservation, this.readOnly());
+          break;
+        case 'view':
+          await this.reservationsStore.edit(reservation, true);
           break;
         case 'endres':
           await this.reservationsStore.end(reservation, this.readOnly());
@@ -147,5 +166,13 @@ export class ReservationsAccordionComponent {
 
   protected isOngoing(reservation: ReservationModel): boolean {
     return isOngoing(reservation.endDate);
+  }
+
+  protected getIcon(reservation: ReservationModel): string {
+    if (reservation.resourceType === 'rboat') {
+      return getCategoryIcon(this.rboatTypes, reservation.resourceSubType);
+    } else {
+      return getCategoryIcon(this.resourceTypes, reservation.resourceType);
+    }
   }
 }

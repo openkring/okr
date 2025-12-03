@@ -1,0 +1,24 @@
+export type DocumentFormModel = {
+    bkey: string;
+    fullPath: string;
+    title: string;
+    altText: string;
+    type: string;
+    source: string;
+    url: string;
+    mimeType: string;
+    size: number;
+    authorKey: string;
+    authorName: string;
+    dateOfDocCreation: string;
+    dateOfDocLastUpdate: string;
+    locationKey: string;
+    hash: string;
+    priorVersionKey: string;
+    version: string;
+    description: string;
+    tags: string;
+    parents: string[];
+    tenants: string[];
+};
+export declare const DOCUMENT_FORM_SHAPE: DocumentFormModel;

@@ -29,3 +29,4 @@ export class PersonModel implements BkModel, AddressableModel, SearchableModel, 
 }
 
 export const PersonCollection = 'persons';
+export const PersonModelName = 'person';

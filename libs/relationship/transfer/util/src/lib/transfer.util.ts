@@ -1,5 +1,5 @@
 import { DefaultResourceInfo, OrgModel, PersonModel, ResourceInfo, ResourceModel, TransferModel } from '@bk2/shared-models';
-import { addIndexElement, getAvatarInfoArray, getAvatarKeys, getAvatarNames, getTodayStr, isType } from '@bk2/shared-util-core';
+import { addIndexElement, die, getAvatarInfoArray, getAvatarKeys, getAvatarNames, getTodayStr, isType } from '@bk2/shared-util-core';
 
 import { TransferFormModel } from './transfer-form.model';
 import { DEFAULT_CURRENCY, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TASK_STATE, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE } from '@bk2/shared-constants';
@@ -63,11 +63,10 @@ export function convertTransferToForm(transfer: TransferModel | undefined): Tran
   };
 }
 
-export function convertFormToTransfer(transfer: TransferModel | undefined, vm: TransferFormModel, tenantId: string): TransferModel {
-  if (!transfer) {
-    transfer = new TransferModel(tenantId);
-    transfer.bkey = vm.bkey ?? DEFAULT_KEY;
-  }
+export function convertFormToTransfer(vm?: TransferFormModel, transfer?: TransferModel): TransferModel {
+  if (!transfer) die('transfer.util.convertFormToTransfer: transfer is mandatory.');
+  if (!vm) return transfer;
+
   transfer.tags = vm.tags ?? DEFAULT_TAGS;
   transfer.notes = vm.notes ?? DEFAULT_NOTES;
   transfer.name = vm.name ?? DEFAULT_NAME;
@@ -94,7 +93,6 @@ export function isTransfer(transfer: unknown, tenantId: string): transfer is Tra
   return isType(transfer, new TransferModel(tenantId));
 }
 
-/************************************************* Search Index ********************************************************** */
 export function getName(modelType: 'person' | 'org', name1: string, name2: string): string {
   // tbd: consider NameDisplay
   if (modelType === 'person') {
@@ -104,8 +102,13 @@ export function getName(modelType: 'person' | 'org', name1: string, name2: strin
   }
 }
 
-/************************************************* Search Index ********************************************************** */
-export function getTransferSearchIndex(transfer: TransferModel): string {
+  /*-------------------------- search index --------------------------------*/
+  /**
+   * Create an index entry for a given organization based on its values.
+   * @param org the organization to generate the index for 
+   * @returns the index string
+   */
+export function getTransferIndex(transfer: TransferModel): string {
   let _index = '';
   _index = addIndexElement(_index, 'sn', getAvatarNames(transfer.subjects));
   _index = addIndexElement(_index, 'sk', getAvatarKeys(transfer.subjects));
@@ -120,6 +123,6 @@ export function getTransferSearchIndex(transfer: TransferModel): string {
  * Returns a string explaining the structure of the index.
  * This can be used in info boxes on the GUI.
  */
-export function getTransferSearchIndexInfo(): string {
+export function getTransferIndexInfo(): string {
   return 'sn:subjectName sk:subjectKey ok:objectKey on:objectName rk:resourceKey rn:resourceName';
 }

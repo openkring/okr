@@ -49,9 +49,9 @@ export const PageDetailStore = signalStore(
         if (!params.pageId || params.pageId.length === 0) {
           return of(undefined);
         }
-        const _page$ = store.pageService.read(params.pageId);
-        debugItemLoaded<PageModel>(`PageDetailStore.pageResource`, _page$, store.currentUser());
-        return _page$;
+        const page$ = store.pageService.read(params.pageId);
+        debugItemLoaded<PageModel>(`PageDetailStore.pageResource`, page$, store.currentUser());
+        return page$;
       }
     })
   })),
@@ -85,9 +85,9 @@ export const PageDetailStore = signalStore(
        * @param sectionKey the id of the section to remove.
        */
       deleteSectionFromPage: (sectionKey: string) => {
-        const _page = store.page() ?? die('PageStore.deleteSectionFromPage: page is mandatory.');
-        _page.sections.splice(_page.sections.indexOf(sectionKey), 1);
-        store.pageService.update(_page, store.currentUser());
+        const page = store.page() ?? die('PageStore.deleteSectionFromPage: page is mandatory.');
+        page.sections.splice(page.sections.indexOf(sectionKey), 1);
+        store.pageService.update(page, store.currentUser());
       },
       /**
        * Sort the sections of the page.
@@ -96,20 +96,20 @@ export const PageDetailStore = signalStore(
       async sortSections() {
         if (store.sections().length === 0) return;
         // convert the list of sectionKeys to a list of SectionModels
-        const _sections = await firstValueFrom(store.sectionService.searchByKeys(store.sections()));
-        const _modal = await store.modalController.create({
+        const sections = await firstValueFrom(store.sectionService.searchByKeys(store.sections()));
+        const modal = await store.modalController.create({
           component: PageSortModalComponent,
           componentProps: {
-            sections: _sections
+            sections: sections
           }
         });
-        _modal.present();
-        const { data, role } = await _modal.onWillDismiss();
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm') {
-          const _sortedSections = (data as SectionModel[]).map((_section: SectionModel) => _section.bkey ?? die('PageDetailStore.sortSections: sectionKey is mandatory.'));
-          const _page = store.page() ?? die('PageDetailStore.sortSections: page is mandatory.');
-          _page.sections = _sortedSections;
-          store.pageService.update(_page, store.currentUser());
+          const sortedSections = (data as SectionModel[]).map((section: SectionModel) => section.bkey ?? die('PageDetailStore.sortSections: sectionKey is mandatory.'));
+          const page = store.page() ?? die('PageDetailStore.sortSections: page is mandatory.');
+          page.sections = sortedSections;
+          store.pageService.update(page, store.currentUser());
           store.pageResource.reload();
         }
       },
@@ -129,10 +129,10 @@ export const PageDetailStore = signalStore(
         modal.present();
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm') { // data = selected Category
-          const _section = createSection(data, store.tenantId());
-          const _sectionKey = await store.sectionService.create(_section);
-          if (_sectionKey) {
-            page.sections.push(_sectionKey);
+          const section = createSection(data, store.tenantId());
+          const sectionKey = await store.sectionService.create(section);
+          if (sectionKey) {
+            page.sections.push(sectionKey);
             store.pageService.update(page, store.currentUser());
             store.pageResource.reload();
           }

@@ -1,4 +1,4 @@
-import { DEFAULT_CURRENCY, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRIORITY, DEFAULT_SALARY, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_SALARY, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { OrgModel, PersonModel, UserModel, WorkrelModel } from '@bk2/shared-models';
 import { addIndexElement, die, getTodayStr, isType } from '@bk2/shared-util-core';
 
@@ -68,11 +68,10 @@ export function convertWorkrelToForm(workrel: WorkrelModel | undefined): Workrel
  * @param vm the view model, ie. the form data with the updated values.
  * @returns the updated membership.
  */
-export function convertFormToWorkrel(workrel: WorkrelModel | undefined, vm: WorkrelFormModel, tenantId: string): WorkrelModel {
-  if (!workrel) {
-    workrel = new WorkrelModel(tenantId);
-    workrel.bkey = vm.bkey ?? DEFAULT_KEY;
-  }
+export function convertFormToWorkrel(vm?: WorkrelFormModel, workrel?: WorkrelModel): WorkrelModel {
+    if (!workrel) die('workrel.util.convertFormToWorkrel: workrel is mandatory.');
+  if (!vm) return workrel;
+  
   workrel.tags = vm.tags ?? DEFAULT_TAGS;
   workrel.notes = vm.notes ?? DEFAULT_NOTES;
 
@@ -124,7 +123,7 @@ export function convertPersonAndOrgToNewForm(subject: PersonModel, object: OrgMo
   };
 }
 
-export function convertFormToNewWorkrel(vm: WorkrelFormModel, tenantId: string): WorkrelModel {
+export function convertFormToNewWorkrel(vm: WorkrelNewFormModel, tenantId: string): WorkrelModel {
   const workRel = new WorkrelModel(tenantId);
   workRel.tenants = [tenantId];
   workRel.isArchived = false;
@@ -155,7 +154,14 @@ export function isWorkrel(workrel: unknown, tenantId: string): workrel is Workre
   return isType(workrel, new WorkrelModel(tenantId));
 }
 
-export function getWorkrelSearchIndex(workrel: WorkrelModel): string {
+
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given work relationship based on its values.
+ * @param workrel the work relationship for which to create the index
+ * @returns the index string
+ */
+export function getWorkrelIndex(workrel: WorkrelModel): string {
   let _index = '';
   _index = addIndexElement(_index, 'sk', workrel.subjectKey);
   _index = addIndexElement(_index, 'sn', workrel.subjectName1 + ' ' + workrel.subjectName2);
@@ -168,6 +174,6 @@ export function getWorkrelSearchIndex(workrel: WorkrelModel): string {
  * Returns a string explaining the structure of the index.
  * This can be used in info boxes on the GUI.
  */
-export function getWorkrelSearchIndexInfo(): string {
+export function getWorkrelIndexInfo(): string {
   return 'sk:subjectKey, sn:subjectName, ok:objectKey, on:objectName';
 }

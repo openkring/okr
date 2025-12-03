@@ -8,7 +8,7 @@ import { OrgNewFormModel } from './org-new-form.model';
 export const orgNewFormValidations = staticSuite((model: OrgNewFormModel, field?: string) => {
   if (field) only(field);
 
-  stringValidations('orgName', model.name, SHORT_NAME_LENGTH, 3, true);
+  stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);
   stringValidations('type', model.type, WORD_LENGTH);
   dateValidations('dateOfFoundation', model.dateOfFoundation);
   dateValidations('dateOfLiquidation', model.dateOfLiquidation);

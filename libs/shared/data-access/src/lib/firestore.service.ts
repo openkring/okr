@@ -24,14 +24,14 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
-import { collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, query, setDoc, updateDoc } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
-import { BehaviorSubject, from, interval, map, Observable, of, shareReplay, startWith, switchMap } from 'rxjs';
+import { Observable, of, shareReplay } from 'rxjs';
 
-import { ENV, FIRESTORE, isFirestoreInitializedCheck, isSafari } from '@bk2/shared-config';
+import { ENV, FIRESTORE, isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { BkModel, CommentCollection, CommentModel, DbQuery, UserModel } from "@bk2/shared-models";
 import { error, showToast } from '@bk2/shared-util-angular';
-import { debugMessage, generateRandomString, getFullPersonName, getQuery, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
+import { debugMessage, generateRandomString, getFullName, getQuery, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
 
 import { createComment } from '@bk2/comment-util';
 
@@ -45,7 +45,6 @@ export class FirestoreService {
   private readonly toastController = inject(ToastController);
     // Cache for query Observables to avoid duplicate listeners
   private readonly queryCache = new Map<string, Observable<unknown>>();
-  private readonly safariCache = new Map<string, BehaviorSubject<any[]>>();
 
   /**
    * Save a model as a new Firestore document into the database. 
@@ -90,7 +89,7 @@ export class FirestoreService {
       }
       if (currentUser) {
         debugMessage(`FirestoreService.createModel(${collectionName}/${ref.id}) -> OK`, currentUser);
-        const comment = createComment(currentUser.bkey, getFullPersonName(currentUser.firstName, currentUser.lastName), '@comment.operation.initial.conf', collectionName, ref.id, this.env.tenantId);
+        const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), '@comment.operation.initial.conf', collectionName + '.' +ref.id, this.env.tenantId);
         await this.saveComment(collectionName, ref.id, comment);
       }
       return Promise.resolve(ref.id);
@@ -147,7 +146,7 @@ export class FirestoreService {
 
   /**
    * Lookup a model in the Firestore database and return it as an Observable.
-   * @param collectionName the name of the Firestore collection (this can be a path e.g. subjects/SUBJECTKEY/addresses)
+   * @param collectionName the name of the Firestore collection (this can be a path)
    * @param key the key of the document in the database
    * @return an Observable of the model, or undefined if the model could not be found or an error occurred
    */
@@ -238,8 +237,10 @@ export class FirestoreService {
     const updateModel = removeUndefinedFields(storedModel);
     try {
       if (forceOverwrite) {
+        console.log(`FirestoreService.updateModel: overwriting ${collectionName}/${key}.`, updateModel);
         await setDoc(doc(this.firestore, `${collectionName}/${key}`), structuredClone(updateModel));
       } else {
+        console.log(`FirestoreService.updateModel: updating ${collectionName}/${key}.`, updateModel);
         await updateDoc(doc(this.firestore, `${collectionName}/${key}`), structuredClone(updateModel));
       }
       if (confirmMessage) {
@@ -247,7 +248,7 @@ export class FirestoreService {
       }
       if (currentUser) {
         debugMessage(`FirestoreService.updateModel(${collectionName}/${key}) -> OK`, currentUser);
-        const comment = createComment(currentUser.bkey, getFullPersonName(currentUser.firstName, currentUser.lastName), '@comment.operation.update.conf', collectionName, key, this.env.tenantId);
+        const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), '@comment.operation.update.conf', collectionName + '.' + key, this.env.tenantId);
         await this.saveComment(collectionName, key, comment);
       }
       return Promise.resolve(key);
@@ -381,6 +382,43 @@ export class FirestoreService {
     orderByParam = 'name',
     sortOrderParam = 'asc'
   ): Observable<T[]> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of([]);
+    }
+
+    if (!isFirestoreInitializedCheck()) {
+      return of([]);
+    }
+
+    const cacheKey = JSON.stringify({ collectionName, dbQuery, orderByParam, sortOrderParam });
+
+    // Return cached observable if exists (shared across all subscribers)
+    if (this.queryCache.has(cacheKey)) {
+      return this.queryCache.get(cacheKey)! as Observable<T[]>;
+    }
+
+    try {
+      const queries = getQuery(dbQuery, orderByParam, sortOrderParam);
+      const collectionRef = collection(this.firestore, collectionName);
+      const q = query(collectionRef, ...queries);
+
+      const data$ = collectionData(q, { idField: 'bkey' }).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      ) as Observable<T[]>;
+
+      this.queryCache.set(cacheKey, data$);
+      return data$;
+    } catch (err) {
+      console.error('FirestoreService.searchData error:', err);
+      return of([]);
+    }
+  }
+/*   public searchData<T>(
+    collectionName: string,
+    dbQuery: DbQuery[],
+    orderByParam = 'name',
+    sortOrderParam = 'asc'
+  ): Observable<T[]> {
     // ensure that the method is only called in the browser context; returns [] in SSR context
     if (!isPlatformBrowser(this.platformId)) {
       console.warn('FirestoreService.searchData: Called in non-browser context, returning empty array.');
@@ -452,7 +490,7 @@ export class FirestoreService {
       console.error(`Firestore query error for ${collectionName}:`, error);
       return of([]); // Return empty array on error
     }
-  }
+  } */
 
   /**
    * One-time query using getDocs/query. This is only used by Safari browsers, because of its WebSocket limitations.
@@ -462,7 +500,7 @@ export class FirestoreService {
    * @param sortOrderParam 
    * @returns 
    */
-  private async getSnapshot<T>(collectionName: string, dbQuery: DbQuery[], orderByParam: string, sortOrderParam: string): Promise<T[]> {
+/*   private async getSnapshot<T>(collectionName: string, dbQuery: DbQuery[], orderByParam: string, sortOrderParam: string): Promise<T[]> {
     try {
       const queries = getQuery(dbQuery, orderByParam, sortOrderParam);
       const collectionRef = collection(this.firestore, collectionName);
@@ -487,7 +525,7 @@ export class FirestoreService {
       console.log(`FirestoreService.saveToSessionStorage(${cacheKey})`);
       sessionStorage.setItem(cacheKey, JSON.stringify(data));
     }
-  }
+  } */
 
   public listAllObjects<T>(collectionName: string): Observable<T[]> {
     const collectionRef = collection(this.firestore, collectionName);

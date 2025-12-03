@@ -82,11 +82,10 @@ export function convertReservationToForm(reservation: ReservationModel | undefin
  * @param vm the view model, ie. the form data with the updated values.
  * @returns the updated membership.
  */
-export function convertFormToReservation(reservation: ReservationModel | undefined, vm: ReservationFormModel, tenantId: string): ReservationModel {
-  if (!reservation) {
-    reservation = new ReservationModel(tenantId);
-    reservation.bkey = vm.bkey ?? DEFAULT_KEY;
-  }
+export function convertFormToReservation(vm?: ReservationFormModel, reservation?: ReservationModel): ReservationModel {
+  if (!reservation) die('reservation.util.convertFormToReservation: reservation is mandatory.');
+  if (!vm) return reservation ;
+  
   reservation.tags = vm.tags ?? DEFAULT_TAGS;
   reservation.notes = vm.notes ?? DEFAULT_NOTES;
   reservation.name = vm.name ?? DEFAULT_NAME;
@@ -238,8 +237,13 @@ export function isReservation(reservation: unknown, tenantId: string): reservati
   return isType(reservation, new ReservationModel(tenantId));
 }
 
-/************************************************* Search Index ********************************************************** */
-export function getReservationSearchIndex(reservation: ReservationModel): string {
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given person based on its values.
+ * @param person the person for which to create the index
+ * @returns the index string
+ */
+export function getReservationIndex(reservation: ReservationModel): string {
   let index = '';
   index = addIndexElement(index, 'rn', reservation.reserverName + ' ' + reservation.reserverName2);
   index = addIndexElement(index, 'rk', reservation.reserverKey);
@@ -252,6 +256,6 @@ export function getReservationSearchIndex(reservation: ReservationModel): string
  * Returns a string explaining the structure of the index.
  * This can be used in info boxes on the GUI.
  */
-export function getReservationSearchIndexInfo(): string {
+export function getReservationIndexInfo(): string {
   return 'rn:reserverName rk:reserverKey resn:resourceName resk:resourceKey ';
 }

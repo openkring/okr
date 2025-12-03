@@ -22,8 +22,8 @@ export function getSystemQuery(tenant: string): DbQuery[] {
  * @returns The updated database query array with system queries added.
  */
 export function addSystemQueries(dbQuery: DbQuery[], tenant: string): DbQuery[] {
-  for (const _query of getSystemQuery(tenant)) {
-    dbQuery.push(_query);
+  for (const query of getSystemQuery(tenant)) {
+    dbQuery.push(query);
   }
   return dbQuery;
 }

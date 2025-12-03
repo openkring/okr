@@ -1,5 +1,5 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, input, model, output, signal } from "@angular/core";
+import { Component, computed, effect, input, model, output, signal } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
@@ -8,8 +8,8 @@ import { TranslatePipe } from "@bk2/shared-i18n";
 import { DeliveryType, UserModel } from "@bk2/shared-models";
 import { CategoryComponent, CheckboxComponent } from "@bk2/shared-ui";
 
-import { debugFormErrors } from "@bk2/shared-util-core";
-import { UserDisplayFormModel, userDisplayFormModelShape, userDisplayFormValidations } from "@bk2/user-util";
+import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
+import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-user-display-form',
@@ -20,14 +20,15 @@ import { UserDisplayFormModel, userDisplayFormModelShape, userDisplayFormValidat
     CategoryComponent, CheckboxComponent,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonCardSubtitle, IonGrid, IonRow, IonCol
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   viewProviders: [vestFormsViewProviders],
   template: `
     <form scVestForm
       [formShape]="shape"
-      [formValue]="vm()"
+      [formValue]="formData()"
       [suite]="suite" 
-      (dirtyChange)="dirtyChange.set($event)"
-      (formValueChange)="onValueChange($event)">
+      (dirtyChange)="dirty.emit($event)"
+      (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@user.display.title' | translate | async }}</ion-card-title>
@@ -37,28 +38,28 @@ import { UserDisplayFormModel, userDisplayFormModelShape, userDisplayFormValidat
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="avatarUsage" [value]="avatarUsage()" [categories]="avatarUsages" (changed)="onChange('avatarUsage', $event)" [readOnly]="readOnly()" />
+                <bk-cat name="avatarUsage" [value]="avatarUsage()" [categories]="avatarUsages" (changed)="onFieldChange('avatarUsage', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="personSortCriteria" [value]="personSortCriteria()" [categories]="personSortCriterias"  [readOnly]="readOnly()" (changed)="onChange('personSortCriteria', $event)" [readOnly]="false" />
+                <bk-cat name="personSortCriteria" [value]="personSortCriteria()" [categories]="personSortCriterias"  [readOnly]="isReadOnly()" (changed)="onFieldChange('personSortCriteria', $event)" [readOnly]="false" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="userLanguage" [value]="userLanguage()" [categories]="languages" (changed)="onChange('userLanguage', $event)"  [readOnly]="readOnly()" />
+                <bk-cat name="userLanguage" [value]="userLanguage()" [categories]="languages" (changed)="onFieldChange('userLanguage', $event)"  [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="nameDisplay" [value]="nameDisplay()" [categories]="nameDisplays" (changed)="onChange('nameDisplay', $event)"  [readOnly]="readOnly()" />
+                <bk-cat name="nameDisplay" [value]="nameDisplay()" [categories]="nameDisplays" (changed)="onFieldChange('nameDisplay', $event)"  [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="useDisplayName" [isChecked]="useDisplayName()" [showHelper]="showHelpers()"  [readOnly]="readOnly()" (changed)="onChange('useDisplayName', $event)" />
+                <bk-checkbox name="useDisplayName" [isChecked]="useDisplayName()" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" (changed)="onFieldChange('useDisplayName', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showArchivedData" [isChecked]="showArchivedData()" [showHelper]="showHelpers()"  [readOnly]="readOnly()" (changed)="onChange('showArchivedData', $event)" />
+                <bk-checkbox name="showArchivedData" [isChecked]="showArchivedData()" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" (changed)="onFieldChange('showArchivedData', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showDebugInfo" [isChecked]="showDebugInfo()" [showHelper]="showHelpers()"  [readOnly]="readOnly()" (changed)="onChange('showDebugInfo', $event)" />
+                <bk-checkbox name="showDebugInfo" [isChecked]="showDebugInfo()" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" (changed)="onFieldChange('showDebugInfo', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="showHelpers" [isChecked]="showHelpers()" [showHelper]="showHelpers()"  [readOnly]="readOnly()" (changed)="onChange('showHelpers', $event)" />
+                <bk-checkbox name="showHelpers" [isChecked]="showHelpers()" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" (changed)="onFieldChange('showHelpers', $event)" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -68,19 +69,32 @@ import { UserDisplayFormModel, userDisplayFormModelShape, userDisplayFormValidat
   `
 })
 export class UserDisplayFormComponent {
-  public vm = model.required<UserDisplayFormModel>();
+  // inputs
+  public formData = model.required<UserDisplayFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public readOnly = input.required<boolean>();
+  public readonly readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected avatarUsage = computed(() => this.vm().avatarUsage);
-  protected personSortCriteria = computed(() => this.vm().personSortCriteria);
-  protected userLanguage = computed(() => this.vm().userLanguage);
-  protected nameDisplay = computed(() => this.vm().nameDisplay);
-  protected useDisplayName = computed(() => this.vm().useDisplayName);
-  protected showArchivedData = computed(() => this.vm().showArchivedData);
-  protected showDebugInfo = computed(() => this.vm().showDebugInfo);
-  protected showHelpers = computed(() => this.vm().showHelpers);
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
 
+  // validation and errors
+  protected readonly suite = userDisplayFormValidations;
+  protected readonly shape = USER_DISPLAY_FORM_SHAPE;
+  private readonly validationResult = computed(() => userDisplayFormValidations(this.formData()));
+
+  // fields
+  protected avatarUsage = computed(() => this.formData().avatarUsage);
+  protected personSortCriteria = computed(() => this.formData().personSortCriteria);
+  protected userLanguage = computed(() => this.formData().userLanguage);
+  protected nameDisplay = computed(() => this.formData().nameDisplay);
+  protected useDisplayName = computed(() => this.formData().useDisplayName);
+  protected showArchivedData = computed(() => this.formData().showArchivedData);
+  protected showDebugInfo = computed(() => this.formData().showDebugInfo);
+  protected showHelpers = computed(() => this.formData().showHelpers);
+
+  // passing constants to template
   protected readonly deliveryTypes = DeliveryTypes;
   protected readonly DT = DeliveryType;
   protected readonly avatarUsages = AvatarUsages;
@@ -88,21 +102,18 @@ export class UserDisplayFormComponent {
   protected readonly languages = Languages;
   protected readonly nameDisplays = NameDisplays;
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-  private readonly validationResult = computed(() => userDisplayFormValidations(this.vm()));
-
-  protected readonly suite = userDisplayFormValidations;
-  protected readonly shape = userDisplayFormModelShape;
-
-  protected onValueChange(value: UserDisplayFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('UserDisplayForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: UserDisplayFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('UserDisplayForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('UserDisplayForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }}

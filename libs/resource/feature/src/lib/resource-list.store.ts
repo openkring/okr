@@ -153,13 +153,14 @@ export const ResourceListStore = signalStore(
         store.resourceResource.reload();
       },
 
-      async edit(resource: ResourceModel, isTypeEditable = false): Promise<void> {
+      async edit(resource: ResourceModel, isTypeEditable = false, readOnly = true): Promise<void> {
         store.appNavigationService.pushLink('/resource/all' );
-        await navigateByUrl(store.router, `/resource/${resource.bkey}`, { isTypeEditable});
+        await navigateByUrl(store.router, `/resource/${resource.bkey}`, { isTypeEditable, readOnly });
         store.resourceResource.reload();        
       },
 
-      async delete(resource: ResourceModel): Promise<void> {
+      async delete(resource: ResourceModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
         await store.resourceService.delete(resource, store.currentUser());
         store.resourceResource.reload();
       },

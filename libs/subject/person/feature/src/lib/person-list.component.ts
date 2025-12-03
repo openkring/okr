@@ -3,7 +3,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { PersonModel, RoleName } from '@bk2/shared-models';
+import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -30,7 +30,7 @@ import { PersonListStore } from './person-list.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedPersonsCount()}}/{{personsCount()}} {{ '@subject.person.plural' | translate | async }}</ion-title>
+      <ion-title>{{ filteredPersonsCount()}}/{{personsCount()}} {{ '@subject.person.plural' | translate | async }}</ion-title>
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c-persons">
@@ -55,7 +55,7 @@ import { PersonListStore } from './person-list.store';
     />
 
     <!-- list header -->
-    <ion-toolbar color="primary" class="ion-hide-sm-down">
+    <ion-toolbar color="light" class="ion-hide-sm-down">
       <ion-grid>
         <ion-row>
           <ion-col size="5">
@@ -77,16 +77,16 @@ import { PersonListStore } from './person-list.store';
     @if(isLoading()) {
       <bk-spinner />
     } @else {
-      @if(selectedPersonsCount() === 0) {
+      @if(filteredPersonsCount() === 0) {
         <bk-empty-list message="@subject.person.field.empty" />
       } @else {
         <ion-list lines="inset">
           @for(person of filteredPersons(); track $index) {
             <ion-item (click)="showActions(person)">
               <ion-avatar slot="start">
-                <ion-img src="{{ 'person.' + person.bkey | avatar:'person' | async }}" alt="Avatar Logo" />
+                <ion-img src="{{ personModelName + '.' + person.bkey | avatar:personModelName | async }}" alt="Avatar Logo" />
               </ion-avatar>
-              <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>      
+              <ion-label>{{person.firstName | fullName:person.lastName:nameDisplay()}}</ion-label>      
               <ion-label>
                 @if(person.favPhone) {
                   <a href="tel:{{person.favPhone}}" style="text-decoration:none;">
@@ -111,20 +111,23 @@ import { PersonListStore } from './person-list.store';
 })
 export class PersonListComponent {
   protected readonly personListStore = inject(PersonListStore);
-  private actionSheetController = inject(ActionSheetController);
+  private readonly actionSheetController = inject(ActionSheetController);
 
-  public listId = input.required<string>();
-  public contextMenuName = input.required<string>();
+  public readonly listId = input.required<string>();
+  public readonly contextMenuName = input.required<string>();
 
-  protected filteredPersons = computed(() => this.personListStore.filteredPersons() ?? []);
   protected personsCount = computed(() => this.personListStore.personsCount());
-  protected selectedPersonsCount = computed(() => this.filteredPersons().length);
+  protected filteredPersons = computed(() => this.personListStore.filteredPersons() ?? []);
+  protected filteredPersonsCount = computed(() => this.filteredPersons().length);
   protected isLoading = computed(() => this.personListStore.isLoading());
   protected readonly tags = computed(() => this.personListStore.getTags());
   protected readonly types = computed(() => this.personListStore.appStore.getCategory('gender'));
   protected readonly currentUser = computed(() => this.personListStore.appStore.currentUser());
-  private imgixBaseUrl = this.personListStore.appStore.env.services.imgixBaseUrl;
+  protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   private readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
+
+  private imgixBaseUrl = this.personListStore.appStore.env.services.imgixBaseUrl;
+  protected personModelName = PersonModelName;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -165,16 +168,33 @@ export class PersonListComponent {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param person 
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): void {    
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
+      if (person.favEmail) {
+        actionSheetOptions.buttons.push(createActionSheetButton('address.email.copy', this.imgixBaseUrl, 'copy'));
+        actionSheetOptions.buttons.push(createActionSheetButton('address.email.send', this.imgixBaseUrl, 'email'));
+      }
+      if (person.favPhone) {
+        actionSheetOptions.buttons.push(createActionSheetButton('address.phone.copy', this.imgixBaseUrl, 'copy'));
+        //tbd: actionSheetOptions.buttons.push(createActionSheetButton('address.phone.sms', this.imgixBaseUrl, 'chatbubble'));
+        actionSheetOptions.buttons.push(createActionSheetButton('address.phone.call', this.imgixBaseUrl, 'tel'));
+      }
+/*   tbd:    if (person.favCity && person.favStreetName && person.favZipCode) {
+        actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.imgixBaseUrl, 'location'));
+      } */
+     /*
+       tbd: if person isUser:  send direct message
+      actionSheetOptions.buttons.push(createActionSheetButton('address.chat.start', this.imgixBaseUrl, 'chatbubble'));
+
+     */
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'create_edit'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -189,18 +209,29 @@ export class PersonListComponent {
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
-      if (data) {
-        switch (data.action) {
-          case 'view':
-            await this.personListStore.edit(person, true);
-            break;
-          case 'delete':
-            await this.personListStore.delete(person, this.readOnly());
-            break;
-          case 'edit':
-            await this.personListStore.edit(person, this.readOnly());
-            break;
-        }
+      console.log('PersonListComponent.executeActions', data);
+      switch (data.action) {
+        case 'person.view':
+          await this.personListStore.edit(person, true);
+          break;
+        case 'address.email.copy':
+          await this.personListStore.copy(person.favEmail, '@subject.person.operation.copy.email.conf');
+          break;
+        case 'address.phone.copy':
+          await this.personListStore.copy(person.favPhone, '@subject.person.operation.copy.phone.conf');
+          break;
+        case 'address.email.send':
+          await this.personListStore.sendEmail(person.favEmail);
+          break;
+        case 'address.phone.call':
+          await this.personListStore.call(person.favPhone);
+          break;
+        case 'person.delete':
+          await this.personListStore.delete(person, this.readOnly());
+          break;
+        case 'person.edit':
+          await this.personListStore.edit(person, this.readOnly());
+          break;
       }
     }
   }

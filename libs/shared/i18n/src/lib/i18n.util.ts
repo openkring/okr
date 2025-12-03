@@ -2,15 +2,15 @@ import { HashMap, getBrowserLang, translate } from '@jsverse/transloco';
 
 export function bkTranslate(key: string | null | undefined, argument?: HashMap): string {
   if (!key || key.length === 0) return '';
-  const _key = structuredClone(key);
-  if (_key.startsWith('@')) {
+  const clonedKey = structuredClone(key);
+  if (clonedKey.startsWith('@')) {
     if (argument) {
-      return translate(_key.substring(1), argument);
+      return translate(clonedKey.substring(1), argument);
     } else {
-      return translate(_key.substring(1));
+      return translate(clonedKey.substring(1));
     }
   } else {
-    return _key;
+    return clonedKey;
   }
 }
 

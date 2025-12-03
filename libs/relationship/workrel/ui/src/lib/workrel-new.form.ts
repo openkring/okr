@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -7,11 +7,11 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe } from '@bk2/shared-pipes';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { WorkrelFormModel, workrelFormModelShape, WorkrelNewFormModel, workrelNewFormValidations } from '@bk2/relationship-workrel-util';
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_PRIORITY, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@bk2/shared-constants';
+import { WORKREL_NEW_FORM_SHAPE, WorkrelNewFormModel, workrelNewFormValidations } from '@bk2/relationship-workrel-util';
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-workrel-new-form',
@@ -22,13 +22,14 @@ import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LA
     DateInputComponent, ChipsComponent, NotesInputComponent, CategorySelectComponent, TextInputComponent, NumberInputComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   <form scVestForm
     [formShape]="shape"
-    [formValue]="vm()"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
   
     <ion-card>
       <ion-card-header>
@@ -53,11 +54,11 @@ import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LA
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6"> 
-              <bk-cat-select [category]="types()!" selectedItemName="type()" [readOnly]="readOnly()" [withAll]="false" (changed)="onChange('type', $event)" />
+              <bk-cat-select [category]="types()!" selectedItemName="type()" [readOnly]="isReadOnly()" [withAll]="false" (changed)="onFieldChange('type', $event)" />
             </ion-col>
             @if(type() === 'custom') {
               <ion-col size="12" size-md="6">
-                  <bk-text-input name="label" [value]="label()" [readOnly]="readOnly()" (changed)="onChange('label', $event)" />
+                  <bk-text-input name="label" [value]="label()" [readOnly]="isReadOnly()" (changed)="onFieldChange('label', $event)" />
               </ion-col>
             }
           </ion-row>
@@ -88,16 +89,16 @@ import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LA
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-date-input name="validFrom" [storeDate]="validFrom()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('validFrom', $event)" />
+              <bk-date-input name="validFrom" [storeDate]="validFrom()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('validFrom', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-date-input name="validTo" [storeDate]="validTo()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('validTo', $event)" />
+              <bk-date-input name="validTo" [storeDate]="validTo()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('validTo', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-number-input name="order" [value]="order()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('order', $event)" />
+              <bk-number-input name="order" [value]="order()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('order', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('state', $event)" />
+              <bk-cat-select [category]="states()!" selectedItemName="state()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('state', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -112,13 +113,13 @@ import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LA
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-            <bk-number-input name="price" [value]="price()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('price', $event)" />
+            <bk-number-input name="price" [value]="price()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('price', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-            <bk-text-input name="currency" [value]="currency()" [readOnly]="readOnly()" (changed)="onChange('currency', $event)" />
+            <bk-text-input name="currency" [value]="currency()" [readOnly]="isReadOnly()" (changed)="onFieldChange('currency', $event)" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" [readOnly]="readOnly()" (changed)="onChange('periodicity', $event)" />
+              <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('periodicity', $event)" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -126,65 +127,73 @@ import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LA
     </ion-card>
       
     @if(hasRole('privileged')) {
-          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
     }
 
     @if(hasRole('admin')) {
-          <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
+          <bk-notes [value]="notes()" [readOnly]="isReadOnly()" (changed)="onFieldChange('notes', $event)" />
     }
   </form>
   `
 })
 export class WorkrelNewFormComponent {
-  public vm = model.required<WorkrelNewFormModel>();
+  // inputs
+  public formData = model.required<WorkrelNewFormModel>();
   public currentUser = input<UserModel | undefined>();
   public allTags = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
   public readonly periodicities = input.required<CategoryListModel>();
   public readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
   public selectPerson = output<void>();
   public selectOrg = output<void>();
 
-  protected subjectKey = computed(() => this.vm().subjectKey ?? DEFAULT_KEY);
-  protected subjectName1 = computed(() => this.vm().subjectName1 ?? DEFAULT_NAME);
-  protected subjectName2 = computed(() => this.vm().subjectName2 ?? DEFAULT_NAME);
-  protected subjectType = computed(() => this.vm().subjectType ?? DEFAULT_GENDER);
-
-  protected objectKey = computed(() => this.vm().objectKey ?? DEFAULT_KEY);
-  protected objectName = computed(() => this.vm().objectName ?? DEFAULT_NAME);
-  protected objectType = computed(() => this.vm().objectType ?? DEFAULT_GENDER);
-
-  protected type = computed(() => this.vm().type ?? DEFAULT_WORKREL_TYPE);
-  protected label = computed(() => this.vm().label ?? DEFAULT_LABEL);
-  protected validFrom = computed(() => this.vm().validFrom ?? DEFAULT_DATE);
-  protected validTo = computed(() => this.vm().validTo ?? DEFAULT_DATE);
-  protected tags = computed(() => this.vm().tags ?? DEFAULT_TAGS);
-  protected notes = computed(() => this.vm().notes ?? DEFAULT_NOTES);
-  protected price = computed(() => this.vm().price ?? 6000);
-  protected currency = computed(() => this.vm().currency ?? DEFAULT_CURRENCY);
-  protected periodicity = computed(() => this.vm().periodicity ?? 'monthly');
-  protected order = computed(() => this.vm().order ?? DEFAULT_ORDER);
-  protected state = computed(() => this.vm().state ?? DEFAULT_WORKREL_STATE);
-
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-
+  // validation and errors
   protected readonly suite = workrelNewFormValidations;
-  protected readonly shape = workrelFormModelShape;
-  private readonly validationResult = computed(() => workrelNewFormValidations(this.vm()));
+  protected readonly shape = WORKREL_NEW_FORM_SHAPE;
+  private readonly validationResult = computed(() => workrelNewFormValidations(this.formData()));
 
-  protected onValueChange(value: WorkrelFormModel): void {
-    this.vm.update((_vm) => ({ ..._vm, ...value }));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  // fields
+  protected subjectKey = computed(() => this.formData().subjectKey ?? DEFAULT_KEY);
+  protected subjectName1 = computed(() => this.formData().subjectName1 ?? DEFAULT_NAME);
+  protected subjectName2 = computed(() => this.formData().subjectName2 ?? DEFAULT_NAME);
+  protected subjectType = computed(() => this.formData().subjectType ?? DEFAULT_GENDER);
+
+  protected objectKey = computed(() => this.formData().objectKey ?? DEFAULT_KEY);
+  protected objectName = computed(() => this.formData().objectName ?? DEFAULT_NAME);
+  protected objectType = computed(() => this.formData().objectType ?? DEFAULT_GENDER);
+
+  protected type = computed(() => this.formData().type ?? DEFAULT_WORKREL_TYPE);
+  protected label = computed(() => this.formData().label ?? DEFAULT_LABEL);
+  protected validFrom = computed(() => this.formData().validFrom ?? DEFAULT_DATE);
+  protected validTo = computed(() => this.formData().validTo ?? DEFAULT_DATE);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected price = computed(() => this.formData().price ?? 6000);
+  protected currency = computed(() => this.formData().currency ?? DEFAULT_CURRENCY);
+  protected periodicity = computed(() => this.formData().periodicity ?? 'monthly');
+  protected order = computed(() => this.formData().order ?? DEFAULT_ORDER);
+  protected state = computed(() => this.formData().state ?? DEFAULT_WORKREL_STATE);
+
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('WorkrelForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: WorkrelNewFormModel): void {
+    this.formData.update((vm) => ({ ...vm, ...value }));
+    debugFormErrors('WorkrelForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('WorkrelForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

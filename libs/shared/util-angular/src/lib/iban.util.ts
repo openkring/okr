@@ -42,8 +42,8 @@ export function parseIban(value: string | undefined, allowQrIban = true): string
     if (ibantools.isValidIBAN(_iban, { allowQRIBAN: allowQrIban }) === false) {
       console.warn('IbanUtil.parseIban: <' + _iban + '> is not a valid iban number; returning empty string');
       // show the reason why the IBAN is invalid
-      const _errorCodes = ibantools.validateIBAN(value, { allowQRIBAN: allowQrIban }).errorCodes;
-      for (const element of _errorCodes) {
+      const errorCodes = ibantools.validateIBAN(value, { allowQRIBAN: allowQrIban }).errorCodes;
+      for (const element of errorCodes) {
         console.log(getIbanValidationError(element) + ' ');
       }
       return '';

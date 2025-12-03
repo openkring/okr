@@ -1,7 +1,6 @@
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+import { DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP } from '@bk2/shared-constants';
 
-export type OrgNewFormModel = DeepPartial<{
+export type OrgNewFormModel = {
   name: string,
   type: string,
   dateOfFoundation: string,
@@ -19,24 +18,24 @@ export type OrgNewFormModel = DeepPartial<{
   membershipCategoryKey: string,
   tags: string,
   notes: string
-}>;
+};
 
-export const orgNewFormModelShape: DeepRequired<OrgNewFormModel> = {
+export const ORG_NEW_FORM_SHAPE: OrgNewFormModel = {
   name: DEFAULT_NAME,
   type: DEFAULT_ORG_TYPE,
   dateOfFoundation: DEFAULT_DATE,
   dateOfLiquidation: DEFAULT_DATE,
-  streetName: DEFAULT_NAME,
-  streetNumber: '',
-  zipCode: '',
-  city: '',
-  countryCode: '',
+  streetName: DEFAULT_STREETNAME,
+  streetNumber: DEFAULT_STREETNUMBER,
+  zipCode: DEFAULT_ZIP,
+  city: DEFAULT_CITY,
+  countryCode: DEFAULT_COUNTRY,
   phone: DEFAULT_PHONE,
   email: DEFAULT_EMAIL,
   url: DEFAULT_URL,
   taxId: DEFAULT_ID,
   bexioId: DEFAULT_ID,
-  membershipCategoryKey: DEFAULT_KEY,
+  membershipCategoryKey: 'mcat_default',
   tags: DEFAULT_TAGS,
   notes: DEFAULT_NOTES
 };

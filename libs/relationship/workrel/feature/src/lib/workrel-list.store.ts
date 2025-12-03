@@ -1,11 +1,12 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
 import { WorkrelModel } from '@bk2/shared-models';
 import { chipMatches, debugListLoaded, die, nameMatches } from '@bk2/shared-util-core';
+import { confirm } from '@bk2/shared-util-angular';
 
 import { WorkrelService } from '@bk2/relationship-workrel-data-access';
 import { convertFormToNewWorkrel, isWorkrel, WorkrelNewFormModel } from '@bk2/relationship-workrel-util';
@@ -33,6 +34,7 @@ export const WorkrelListStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     modalController: inject(ModalController),
+    alertController: inject(AlertController),
     workrelService: inject(WorkrelService),
     workrelModalsService: inject(WorkrelModalsService),
   })),
@@ -127,7 +129,7 @@ export const WorkrelListStore = signalStore(
        * Show a modal to edit an existing work relationship.
        * @param workrel the work relationship to edit
        */
-      async edit(workrel?: WorkrelModel): Promise<void> {
+      async edit(workrel?: WorkrelModel, readOnly = true): Promise<void> {
         let _workrel = workrel;
         workrel ??= new WorkrelModel(store.appStore.tenantId());
 
@@ -136,12 +138,13 @@ export const WorkrelListStore = signalStore(
           componentProps: {
             workrel: _workrel,
             currentUser: store.appStore.currentUser(),
+            readOnly
           }
         });
         modal.present();
         await modal.onWillDismiss();
         const { data, role } = await modal.onDidDismiss();
-        if (role === 'confirm') {
+        if (role === 'confirm' && !readOnly) {
           if (isWorkrel(data, store.appStore.tenantId())) {
             await (!data.bkey ?
               store.workrelService.create(data, store.appStore.currentUser()) :
@@ -151,17 +154,20 @@ export const WorkrelListStore = signalStore(
         }
       },
 
-      async end(workrel?: WorkrelModel): Promise<void> {
-        if (workrel) {
+      async end(workrel?: WorkrelModel, readOnly = true): Promise<void> {
+        if (workrel && !readOnly) {
           await store.workrelModalsService.end(workrel);
           store.workrelsResource.reload();
         }
       },
 
-      async delete(workrel?: WorkrelModel): Promise<void> {
-        if (workrel) {
-          await store.workrelService.delete(workrel, store.appStore.currentUser());
-          store.workrelsResource.reload();
+      async delete(workrel?: WorkrelModel, readOnly = true): Promise<void> {
+        if (workrel && !readOnly) {
+          const result = await confirm(store.alertController, '@workrel.operation.delete.confirm', true);
+          if (result === true) {
+            await store.workrelService.delete(workrel, store.appStore.currentUser());
+            store.workrelsResource.reload();
+          }
         }
       },
     }

@@ -1,33 +1,36 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { IonAccordion, IonGrid, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonAccordion, IonButton, IonGrid, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 
-import { CommentHeaderComponent, CommentInputComponent, CommentsListComponent } from '@bk2/comment-ui';
+import { CommentsListComponent } from '@bk2/comment-ui';
 
 import { CommentListStore } from './comment-list.store';
+import { coerceBoolean } from '@bk2/shared-util-core';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-comments-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
-    IonAccordion, IonItem, IonLabel, IonGrid,
-    CommentInputComponent, CommentHeaderComponent, CommentsListComponent
+    TranslatePipe, AsyncPipe, SvgIconPipe,
+    IonAccordion, IonItem, IonLabel, IonGrid, IonButton, IonIcon,
+    CommentsListComponent
   ],
   providers: [CommentListStore],
   template: `
     <ion-accordion toggle-icon-slot="start" value="comments">
       <ion-item slot="header" [color]="color()">
         <ion-label>{{ '@comment.plural' | translate | async }}</ion-label>
+        @if(!isReadOnly()) {
+          <ion-button fill="clear" (click)="add()" size="default">
+            <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+        </ion-button>
+      }
       </ion-item>
     <div slot="content">
       <ion-grid style="width: 100%; height: 100%;">
-        @if (!readOnly()) {
-          <bk-comment-input [name]="name()" [value]="" (changed)="addComment($event)" />
-        }
-        <bk-comment-header />
         <bk-comments-list [comments]="comments()" />
       </ion-grid>
     </div>
@@ -37,9 +40,9 @@ export class CommentsAccordionComponent {
   private readonly commentListStore = inject(CommentListStore);
 
   public name = input('comment'); // mandatory name for the form control
-  public collectionName = input.required<string>();
-  public parentKey = input.required<string>();
-  public readOnly = input(true);
+  public parentKey = input.required<string>();  // modelType.key of the parent model
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public color = input('light');
 
   public comments = computed(() => this.commentListStore.comments() ?? []);
@@ -47,12 +50,12 @@ export class CommentsAccordionComponent {
 
   constructor() {
     effect(() => {
-      this.commentListStore.setCollection(this.collectionName(), this.parentKey());
+      this.commentListStore.setParentKey(this.parentKey());
     });
   }
 
-  public async addComment(comment: string): Promise<void> {
-    await this.commentListStore.add(comment);
+  public async add(): Promise<void> {
+    await this.commentListStore.add();
     this.value.set('');  // reset input field
   }
 }

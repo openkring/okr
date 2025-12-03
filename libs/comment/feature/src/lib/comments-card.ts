@@ -40,8 +40,7 @@ export class CommentsCardComponent {
   private readonly commentListStore = inject(CommentListStore);
 
   public name = input('comment'); // mandatory name for the form control
-  public collectionName = input.required<string>();
-  public parentKey = input.required<string>();
+  public parentKey = input.required<string>();  // modelType.key of the parent model
   public readOnly = input(true);
   
   public comments$: Observable<CommentModel[]> | undefined
@@ -50,7 +49,7 @@ export class CommentsCardComponent {
 
   constructor() {
     effect(() => {
-      this.commentListStore.setCollection(this.collectionName(), this.parentKey());
+      this.commentListStore.setParentKey(this.parentKey());
     });
   }
 

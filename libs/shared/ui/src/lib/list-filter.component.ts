@@ -31,37 +31,43 @@ import { coerceBoolean } from '@bk2/shared-util-core';
     SearchbarComponent, SingleTagComponent, CategorySelectComponent, YearSelectComponent,
     IonToolbar, IonGrid, IonRow, IonCol
   ],
+  styles: [`
+    .no-padding {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+    }
+  `],
   template: `
     <ion-toolbar>
-      <ion-grid>
-        <ion-row>
+      <ion-grid class="no-padding ion-align-items-center">
+        <ion-row class="ion-align-items-center">
           @if(shouldShowSearch()) {
-            <ion-col size="6" size-md="3">
+            <ion-col size="6" size-md="3" size="auto" class="ion-no-padding">
               <bk-searchbar placeholder="{{ '@general.operation.search.placeholder' | translate | async  }}" (ionInput)="onSearchTermChange($event)" />
             </ion-col>
           }
           @if(showTags()) {
-            <ion-col size="6" size-md="2">
+            <ion-col size="6" size-md="2" size="auto" class="ion-no-padding">
               <bk-single-tag [tags]="tags()!" (selectedTag)="tagChanged.emit($event)" />
             </ion-col>
           }
           @if(showCategory()) {
-            <ion-col size="6" size-md="3">
+            <ion-col size="6" size-md="3" size="auto" class="ion-no-padding">
               <bk-cat-select [category]="category()!" selectedItemName="all" [withAll]="true" [readOnly]="false" (changed)="categoryChanged.emit($event)" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
           @if(showType()) {
-            <ion-col size="6" size-md="3">
+            <ion-col size="6" size-md="3" size="auto" class="ion-no-padding">
               <bk-cat-select [category]="type()!" selectedItemName="all" [withAll]="true" [readOnly]="false" (changed)="typeChanged.emit($event)" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }                                                  
           @if(showYear()) {
-            <ion-col size="6" size-md="2">
+            <ion-col size="6" size-md="2" size="auto" class="ion-no-padding">
               <bk-year-select [label]="yearLabel()!" (changed)="yearChanged.emit($event)" [readOnly]="false" [showAllYears]="true" />
             </ion-col>
           }
           @if(showState()) {
-            <ion-col size="6" size-md="2">
+            <ion-col size="6" size-md="2" size="auto" class="ion-no-padding">
               <bk-cat-select [category]="state()!" selectedItemName="all" [withAll]="true" [readOnly]="false" (changed)="stateChanged.emit($event)" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }

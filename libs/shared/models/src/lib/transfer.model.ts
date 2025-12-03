@@ -46,3 +46,4 @@ export class TransferModel implements BkModel, NamedModel, SearchableModel, Tagg
 }
 
 export const TransferCollection = 'transfers';
+export const TransferModelName = 'transfer';

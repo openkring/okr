@@ -28,3 +28,4 @@ export class CalEventModel implements BkModel, NamedModel, SearchableModel, Tagg
 }
 
 export const CalEventCollection = 'calevents'; // collection name for CalEventModel
+export const CalEventModelName = 'calevent';

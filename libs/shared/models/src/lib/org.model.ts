@@ -37,3 +37,4 @@ export class OrgModel implements BkModel, NamedModel, AddressableModel, Searchab
 }
 
 export const OrgCollection = 'orgs';
+export const OrgModelName = 'org';

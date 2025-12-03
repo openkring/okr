@@ -8,9 +8,9 @@ import { WORD_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, UserModel } from '@bk2/shared-models';
 import { CheckboxComponent, ChipsComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
 
-import { GroupFormModel, groupFormModelShape, groupFormValidations } from '@bk2/subject-group-util';
+import { GROUP_FORM_SHAPE, GroupFormModel, groupFormValidations } from '@bk2/subject-group-util';
 
 @Component({
   selector: 'bk-group-form',
@@ -21,13 +21,16 @@ import { GroupFormModel, groupFormModelShape, groupFormValidations } from '@bk2/
     TextInputComponent, ChipsComponent, NotesInputComponent, CheckboxComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle
   ],
+   styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+  `],
   template: `
   <form scVestForm
     [formShape]="shape"
-    [formValue]="vm()"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
 
     <ion-card>
       <ion-card-header>
@@ -37,10 +40,10 @@ import { GroupFormModel, groupFormModelShape, groupFormValidations } from '@bk2/
         <ion-grid>
           <ion-row> 
             <ion-col size="12" size-md="6">
-              <bk-text-input name="name" [value]="name()" [maxLength]=50 [readOnly]="readOnly()" (changed)="onChange('name', $event)" />
+              <bk-text-input name="name" [value]="name()" [maxLength]=50 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
             </ion-col>
               <ion-col size="12" size-md="">
-                <bk-text-input name="id" [value]="id()" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('id', $event)" />                                        
+                <bk-text-input name="id" [value]="id()" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('id', $event)" />                                        
               </ion-col>
           </ion-row>
         </ion-grid>
@@ -54,84 +57,85 @@ import { GroupFormModel, groupFormModelShape, groupFormValidations } from '@bk2/
         <ion-grid>
           <ion-row> 
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasContent" [isChecked]="hasContent()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasContent', $event)"/>
+              <bk-checkbox name="hasContent" [isChecked]="hasContent()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasContent', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasChat" [isChecked]="hasChat()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasChat', $event)"/>
+              <bk-checkbox name="hasChat" [isChecked]="hasChat()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasChat', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasCalendar" [isChecked]="hasCalendar()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasCalendar', $event)"/>
+              <bk-checkbox name="hasCalendar" [isChecked]="hasCalendar()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasCalendar', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasTasks" [isChecked]="hasTasks()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasTasks', $event)"/>
+              <bk-checkbox name="hasTasks" [isChecked]="hasTasks()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasTasks', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasFiles" [isChecked]="hasFiles()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasFiles', $event)"/>
+              <bk-checkbox name="hasFiles" [isChecked]="hasFiles()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasFiles', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasAlbum" [isChecked]="hasAlbum()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasAlbum', $event)"/>
+              <bk-checkbox name="hasAlbum" [isChecked]="hasAlbum()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasAlbum', $event)"/>
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="hasMembers" [isChecked]="hasMembers()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('hasMembers', $event)"/>
+              <bk-checkbox name="hasMembers" [isChecked]="hasMembers()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('hasMembers', $event)"/>
             </ion-col>
           </ion-row>
         </ion-grid>
       </ion-card-content>
     </ion-card>
 
-            <!-- tbd: hierarchy comes later 
-              select an org or group, fill in parentKey, parentName, parentModelType
-            -->
+    <!-- tbd: group hierarchy: select an org or group, fill in parentKey, parentName, parentModelType -->
 
-    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="groupTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
 
     @if(hasRole('admin')) { 
-      <bk-notes name="notes" [readOnly]="readOnly()" [value]="notes()" />
+      <bk-notes name="notes" [readOnly]="isReadOnly()" [value]="notes()" />
     }
   </form>
   `
 })
 export class GroupFormComponent {
-  public vm = model.required<GroupFormModel>();
-
+  // inputs
+  public formData = model.required<GroupFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public readonly groupTags = input.required<string>();
+  public readonly allTags = input.required<string>();
   public readOnly = input(true);  
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
+ // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
   
+  // validation and errors
   protected readonly suite = groupFormValidations;
-  protected readonly shape = groupFormModelShape;
+  protected readonly shape = GROUP_FORM_SHAPE;
+  private readonly validationResult = computed(() => groupFormValidations(this.formData()));
+  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
-  protected name = computed(() => this.vm().name ?? '');
-  protected id = computed(() => this.vm().id ?? '');
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
-  protected hasContent = computed(() => this.vm().hasContent ?? true);
-  protected hasChat = computed(() => this.vm().hasChat ?? true);
-  protected hasCalendar = computed(() => this.vm().hasCalendar ?? true);
-  protected hasTasks = computed(() => this.vm().hasTasks ?? true);
-  protected hasFiles = computed(() => this.vm().hasFiles ?? true);
-  protected hasAlbum = computed(() => this.vm().hasAlbum ?? true);
-  protected hasMembers = computed(() => this.vm().hasMembers ?? true);
+  // fields
+  protected name = computed(() => this.formData().name ?? '');
+  protected id = computed(() => this.formData().id ?? '');
+  protected tags = computed(() => this.formData().tags ?? '');
+  protected notes = computed(() => this.formData().notes ?? '');
+  protected hasContent = computed(() => this.formData().hasContent ?? true);
+  protected hasChat = computed(() => this.formData().hasChat ?? true);
+  protected hasCalendar = computed(() => this.formData().hasCalendar ?? true);
+  protected hasTasks = computed(() => this.formData().hasTasks ?? true);
+  protected hasFiles = computed(() => this.formData().hasFiles ?? true);
+  protected hasAlbum = computed(() => this.formData().hasAlbum ?? true);
+  protected hasMembers = computed(() => this.formData().hasMembers ?? true);
 
+  // passing constants to template
   protected mask = LowercaseWordMask;
   protected readonly maxWordLength = WORD_LENGTH;
 
-  private readonly validationResult = computed(() => groupFormValidations(this.vm()));
-  protected nameErrors = computed(() => this.validationResult().getErrors('name'));
-
-  protected onValueChange(value: GroupFormModel): void {
-    this.vm.update((vm) => ({...vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: GroupFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('GroupForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number | boolean): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('GroupForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('GroupForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

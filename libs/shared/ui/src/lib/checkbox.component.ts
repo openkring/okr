@@ -1,12 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCheckbox, IonItem, IonNote } from '@ionic/angular/standalone';
+import { IonCheckbox, IonIcon, IonItem, IonLabel, IonNote } from '@ionic/angular/standalone';
 
 import { ColorsIonic } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ColorIonic } from '@bk2/shared-models';
-import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
+import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from '@bk2/shared-util-core';
 export type CheckboxLabelPlacement = 'start' | 'end' | 'fixed';
 export type CheckboxJustification = 'start' | 'end' | 'space-between';
@@ -15,13 +15,19 @@ export type CheckboxJustification = 'start' | 'end' | 'space-between';
   selector: 'bk-checkbox',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, CategoryPlainNamePipe,
+    TranslatePipe, AsyncPipe, CategoryPlainNamePipe, SvgIconPipe,
     FormsModule,
-    IonItem, IonCheckbox, IonNote
+    IonItem, IonCheckbox, IonNote, IonIcon, IonLabel
   ],
   template: `
     <ion-item lines="none">
-      <ion-checkbox required
+      @if (isReadOnly()) {
+        <ion-label>
+          <ion-icon slot="start" [src]="this.checkedIcon() | svgIcon" />
+          {{ this.label() | translate | async }}
+        </ion-label>
+      } @else {
+        <ion-checkbox required
           [name]="name()"
           [labelPlacement]="labelPlacement()"
           [justify]="justify()"
@@ -31,9 +37,10 @@ export type CheckboxJustification = 'start' | 'end' | 'space-between';
           [indeterminate]="isIndeterminate()"
           (ionChange)="onChange()">
           <div class="ion-text-wrap">
-          {{ label() | translate | async }}
+            {{ label() | translate | async }}
           </div>
-      </ion-checkbox>
+        </ion-checkbox>
+      }
     </ion-item>
     @if(shouldShowHelper()) {
       <ion-item lines="none">
@@ -46,6 +53,7 @@ export class CheckboxComponent {
   public name = input.required<string>();   // mandatory name of the form control
   public isChecked = input<boolean>(false);    // initial value
   protected showChecked = computed(() => coerceBoolean(this.isChecked()));
+  protected checkedIcon = computed(() => this.showChecked() ? 'checkbox-circle' : 'radio-button-off');
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public color = input<ColorIonic>(ColorIonic.Secondary);

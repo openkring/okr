@@ -141,7 +141,7 @@ export class SimpleTaskListComponent {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
       case 'add': await this.taskListStore.add(this.readOnly()); break;
-      case 'export': await this.taskListStore.export(); break;
+      case 'export': await this.taskListStore.export('raw'); break;
       default: error(undefined, `TaskListComponent.call: unknown method ${selectedMethod}`);
     }
   }

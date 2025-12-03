@@ -76,42 +76,53 @@ export const AocStatisticsStore = signalStore(
        * @returns {Promise<void>} A promise that resolves when the statistics have been updated.
        */
       async updateAgeByGender(sectionKey: string): Promise<void> {
-        const _log: LogInfo[] = [];
-        patchState(store, { log: logMessage(_log, 'aoc-statistics.updateAgeByGender: default updating age by gender statistics...') });
-        const _ageByGenderStats = initializeAgeByGenderStatistics();
-        const _activeMembers = await firstValueFrom(this.getActiveMembersOfDefaultOrg(_log));
+        const log: LogInfo[] = [];
+        patchState(store, { log: logMessage(log, 'aoc-statistics.updateAgeByGender: default updating age by gender statistics...') });
+        const ageByGenderStats = initializeAgeByGenderStatistics();
+        const activeMembers = await firstValueFrom(this.getActiveMembersOfDefaultOrg(log));
 
-        for (const _member of _activeMembers) {
-          updateAgeByGenderStats(_ageByGenderStats, _member.memberType, _member.memberDateOfBirth);
+        for (const member of activeMembers) {
+          updateAgeByGenderStats(ageByGenderStats, member.memberType, member.memberDateOfBirth);
         }
-        patchState(store, { log: logMessage(_log, `aoc-statistics.updateAgeByGender: saving updated statistics to ${SectionCollection}/${sectionKey}...`) });
+        patchState(store, { log: logMessage(log, `aoc-statistics.updateAgeByGender: saving updated statistics to ${SectionCollection}/${sectionKey}...`) });
 
-        let _section = await firstValueFrom(store.firestoreService.readModel<SectionModel>(SectionCollection, sectionKey));
-        const _isNew = !_section;
-        if (_isNew) {
+        let section = await firstValueFrom(store.firestoreService.readModel<SectionModel>(SectionCollection, sectionKey));
+        const isNew = !section;
+        if (isNew) {
           // section does not exist -> create a new section
-          _section = new SectionModel(store.appStore.env.tenantId);
-          _section.bkey = sectionKey;
-          _section.title = 'aoc.statistics.ageByGender.title';
+          section = new SectionModel(store.appStore.env.tenantId);
+          section.bkey = sectionKey;
+          section.title = 'aoc.statistics.ageByGender.title';
         }
-        _section!.subTitle = getTodayStr(DateFormat.ViewDate);
-        _section!.properties = {
+        section!.subTitle = getTodayStr(DateFormat.ViewDate);
+        section!.properties = {
           table: {
             config: {
               gridTemplate: '20% 20% 20% 20% 20%',
+              gridGap: '5px',
+              gridBackgroundColor: 'var(--ion-color-light-shade)',
+              gridPadding: '10px',
               headerBackgroundColor: 'var(--ion-color-light)',
+              headerTextAlign: 'center',
               headerFontSize: '1rem',
               headerFontWeight: 'bold',
               headerPadding: '5px',
-              headerTextAlign: 'center',
+              cellBackgroundColor: 'var(--ion-color-light)',
+              cellTextAlign: 'center',
+              cellFontSize: '1rem',
+              cellFontWeight: 'normal',
+              cellPadding: '5px'
             },
-            data: _ageByGenderStats.flatMap(e => [e.rowTitle, e.m + '', e.f + '', e.d + '', e.total + '']),
+            data: ageByGenderStats.flatMap(e => [e.rowTitle, e.m + '', e.f + '', e.d + '', e.total + '']),
             header: ['Kat.', 'M', 'W', 'D', 'Total'],
+            title: 'aoc.statistics.ageByGender.title',
+            subTitle: 'aoc.statistics.ageByGender.subTitle',
+            description: ''
           },
         };
-        _isNew
-          ? store.firestoreService.createModel<SectionModel>(SectionCollection, _section!, 'aoc.statistics.ageByGender.conf', store.appStore.currentUser())
-          : store.firestoreService.updateModel<SectionModel>(SectionCollection, _section!, false, 'aoc.statistics.ageByGender.conf', store.appStore.currentUser());
+        isNew
+          ? store.firestoreService.createModel<SectionModel>(SectionCollection, section!, 'aoc.statistics.ageByGender.conf', store.appStore.currentUser())
+          : store.firestoreService.updateModel<SectionModel>(SectionCollection, section!, false, 'aoc.statistics.ageByGender.conf', store.appStore.currentUser());
       },
 
       /**
@@ -122,22 +133,22 @@ export const AocStatisticsStore = signalStore(
       async updateCategoryByGender(sectionKey: string): Promise<void> {
         error(undefined, 'aoc-statistics.updateCategoryByGender: updating member-category by gender statistics is not yet adapted');
         /*        
-        const _log: LogInfo[] = [];
-        patchState(store, { log: logMessage(_log, 'aoc-statistics.updateCategoryByGender: updating member-category by gender statistics...') });
-        const _categoryByGenderStats = initializeCategoryByGenderStatistics(this.appStore.defaultOrg().memberCategory);
-        const _activeMembers = await firstValueFrom(this.getActiveMembersOfDefaultOrg(_log));
+        const log: LogInfo[] = [];
+        patchState(store, { log: logMessage(log, 'aoc-statistics.updateCategoryByGender: updating member-category by gender statistics...') });
+        const categoryByGenderStats = initializeCategoryByGenderStatistics(this.appStore.defaultOrg().memberCategory);
+        const activeMembers = await firstValueFrom(this.getActiveMembersOfDefaultOrg(log));
 
-        for (const _member of _activeMembers) {
-          updateCategoryByGenderStats(_categoryByGenderStats, _member.memberType, _member.memberCategory);
+        for (const member of activeMembers) {
+          updateCategoryByGenderStats(categoryByGenderStats, member.memberType, member.memberCategory);
         }
-        patchState(store, { log: logMessage(_log, `aoc-statistics.updateupdateCategoryByGenderAgeByGender: saving updated statistics to ${SectionCollection}/${sectionKey}...`) });
-        const _section = await firstValueFrom(store.firestoreService.readModel<SectionModel>(SectionCollection, sectionKey));
-        if (!_section) { // section does not exist -> create a new section 
-          _section = new SectionModel(store.appStore.env.tenantId);
-          _section.bkey = sectionKey;
-          _section.title = 'aoc.statistics.categoryByGender.title';
-          _section.subTitle = getTodayStr(DateFormat.ViewDate)
-          _section.properties.table.config = {
+        patchState(store, { log: logMessage(log, `aoc-statistics.updateupdateCategoryByGenderAgeByGender: saving updated statistics to ${SectionCollection}/${sectionKey}...`) });
+        const section = await firstValueFrom(store.firestoreService.readModel<SectionModel>(SectionCollection, sectionKey));
+        if (!section) { // section does not exist -> create a new section 
+          section = new SectionModel(store.appStore.env.tenantId);
+          section.bkey = sectionKey;
+          section.title = 'aoc.statistics.categoryByGender.title';
+          section.subTitle = getTodayStr(DateFormat.ViewDate)
+          section.properties.table.config = {
             "gridTemplate": "20% 20% 20% 20% 20%",
             "headerBackgroundColor": "var(--ion-color-light)",
             "headerFontSize": "1rem",
@@ -145,63 +156,63 @@ export const AocStatisticsStore = signalStore(
             "headerPadding": "5px",
             "headerTextAlign": "center"
           };
-          _section.properties.table.data = _categoryByGenderStats.flatMap(e => [e.rowTitle, e.m, e.f, e.d, e.total]);
-          _section.properties.table.header = ['Kat.', 'M', 'W', 'D', 'Total'];
-          store.firestoreService.createModel<SectionModel>(SectionCollection, _section, 'aoc.statistics.categoryByGender.conf', store.appStore.currentUser());
+          section.properties.table.data = categoryByGenderStats.flatMap(e => [e.rowTitle, e.m, e.f, e.d, e.total]);
+          section.properties.table.header = ['Kat.', 'M', 'W', 'D', 'Total'];
+          store.firestoreService.createModel<SectionModel>(SectionCollection, section, 'aoc.statistics.categoryByGender.conf', store.appStore.currentUser());
         } else {    // update the existing section
-          _section.subTitle = getTodayStr(DateFormat.ViewDate)
-          _section.properties.table.data = _categoryByGenderStats.flatMap(e => [e.rowTitle, e.m, e.f, e.d, e.total]);
-          store.firestoreService.updateModel<SectionModel>(SectionCollection, _section, false, 'aoc.statistics.categoryByGender.conf', store.appStore.currentUser());
+          section.subTitle = getTodayStr(DateFormat.ViewDate)
+          section.properties.table.data = categoryByGenderStats.flatMap(e => [e.rowTitle, e.m, e.f, e.d, e.total]);
+          store.firestoreService.updateModel<SectionModel>(SectionCollection, section, false, 'aoc.statistics.categoryByGender.conf', store.appStore.currentUser());
         }
  */
       },
 
       async updateLocationByCategory(): Promise<void> {
-        const _log: LogInfo[] = [];
-        patchState(store, { log: logMessage(_log, 'aoc-statistics.updateLocationByCategory: default updating location by category statistics...') });
-        const _activeMembers$ = this.getActiveMembersOfDefaultOrg(_log);
+        const log: LogInfo[] = [];
+        patchState(store, { log: logMessage(log, 'aoc-statistics.updateLocationByCategory: default updating location by category statistics...') });
+        const activeMembers$ = this.getActiveMembersOfDefaultOrg(log);
 
-        const _zipCodes$: Observable<string[]> = _activeMembers$.pipe(
+        const zipCodes$: Observable<string[]> = activeMembers$.pipe(
           map((memberships: MembershipModel[]) => {
-            return memberships.map((_membership: MembershipModel) => {
-              return _membership.memberZipCode;
+            return memberships.map((membership: MembershipModel) => {
+              return membership.memberZipCode;
               // tbd: add the membership category
             });
           })
         );
-        const _zipCodes = await firstValueFrom(_zipCodes$);
+        const zipCodes = await firstValueFrom(zipCodes$);
         //console.log('zipCodes (raw): ', _zipCodes);
         // compute the number of occurrences of each word,https://stackoverflow.com/questions/36008637/sort-array-by-frequency
-        const _counter = Object.create(null);
-        _zipCodes.forEach(function (_zip) {
-          if (_zip) {
-            _counter[_zip] = (_counter[_zip] || 0) + 1;
+        const counter = Object.create(null);
+        zipCodes.forEach(function (zip) {
+          if (zip) {
+            counter[zip] = (counter[zip] || 0) + 1;
             // tbd: save it for the membercategory, too:
           }
         });
-        /*       _zipCodes.sort(function(x, y) {
-                if (x && y) return _counter[y] - _counter[x];
+        /*       zipCodes.sort(function(x, y) {
+                if (x && y) return counter[y] - counter[x];
                 return 0;
               });
-              console.log('zipCodes (condensed): ', _zipCodes); */
-        console.log('counter: ', _counter);
+              console.log('zipCodes (condensed): ', zipCodes); */
+        console.log('counter: ', counter);
         // tbd: write the result into the database
         // tbd: show a table with the results
       },
 
       getActiveMembersOfDefaultOrg(log: LogInfo[]): Observable<MembershipModel[]> {
-        const _defaultOrg = store.appStore.defaultOrg();
-        if (!_defaultOrg) {
+        const defaultOrg = store.appStore.defaultOrg();
+        if (!defaultOrg) {
           patchState(store, { log: logMessage(log, 'aoc-statistics.getActiveMembersOfDefaultOrg: default organisation is missing') });
           return of([]);
         }
-        patchState(store, { log: logMessage(log, `aoc-statistics.getActiveMembersOfDefaultOrg: getting active members for org ${_defaultOrg.name}`) });
+        patchState(store, { log: logMessage(log, `aoc-statistics.getActiveMembersOfDefaultOrg: getting active members for org ${defaultOrg.name}`) });
 
         // get the zipcodes of all active members of the default organisation...
-        const _query = getSystemQuery(store.appStore.env.tenantId);
-        _query.push({ key: 'objectKey', operator: '==', value: _defaultOrg.bkey });
-        _query.push({ key: 'membershipState', operator: '==', value: 'active' });
-        return store.firestoreService.searchData<MembershipModel>(MembershipCollection, _query, 'memberZipCode', 'asc');
+        const query = getSystemQuery(store.appStore.env.tenantId);
+        query.push({ key: 'objectKey', operator: '==', value: defaultOrg.bkey });
+        query.push({ key: 'membershipState', operator: '==', value: 'active' });
+        return store.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberZipCode', 'asc');
       },
 
       updateCompetitionLevels(): void {
@@ -217,35 +228,34 @@ export const AocStatisticsStore = signalStore(
 
 /*   public async updateCompetitionLevels(): Promise<void> {
     console.log('competition-levels aktualisieren...');
-    let _counterCreated = 0;
+    let counterCreated = 0;
     console.log('not yet implemented');
 
     // phase 1: for each active member (mid): create it in cl if it does not yet exist
-    const _activeScsMembers = await firstValueFrom(this.dataService.searchData(CollectionNames.Membership, [
+    const activeScsMembers = await firstValueFrom(this.dataService.searchData(CollectionNames.Membership, [
       { key: 'objectKey', operator: '==', value: OrgKey.SCS },
       { key: 'state', operator: '==', value: MembershipState.Active }
     ]));
-    for (const _scsMember of _activeScsMembers) {
-      if (isMembership(_scsMember)) {
-        _counterCreated += await this.checkAndCreateMissingCompetitionLevels(_scsMember);
+    for (const scsMember of activeScsMembers) {
+      if (isMembership(scsMember)) {
+        counterCreated += await this.checkAndCreateMissingCompetitionLevels(scsMember);
       }
     }
-    console.log(`checked ${_activeScsMembers.length} members and created ${_counterCreated} competitionLevelItems`);
-
+    console.log(`checked ${activeScsMembers.length} members and created ${counterCreated} competitionLevelItems`);
     // phase 2: check each cl item and update/delete if necessary
-    const _clItems = await firstValueFrom(this.dataService.searchData(CollectionNames.CompetitionLevel, []));
+    const clItems = await firstValueFrom(this.dataService.searchData(CollectionNames.CompetitionLevel, []));
 
-    for (const _clItem of _clItems) {
-      if (isCompetitionLevel(_clItem)) {
-        //let _isDirty = TripleBoolType.False;
+    for (const clItem of clItems) {
+      if (isCompetitionLevel(clItem)) {
+        //let isDirty = TripleBoolType.False;
 
         // tbd: optimize these checks, are they really needed ?
-        // if (await checkMembershipInformation(this.afs, _clItem) === TripleBoolType.True) _isDirty = TripleBoolType.True;
-        // if (await checkLicenseInformation(this.afs, _clItem) === true) _isDirty = TripleBoolType.True;
-        //if (_isDirty === TripleBoolType.True) {
-          await this.dataService.updateModel(CollectionNames.CompetitionLevel, _clItem);
+        // if (await checkMembershipInformation(this.afs, clItem) === TripleBoolType.True) isDirty = TripleBoolType.True;
+        // if (await checkLicenseInformation(this.afs, clItem) === true) isDirty = TripleBoolType.True;
+        //if (isDirty === TripleBoolType.True) {
+          await this.dataService.updateModel(CollectionNames.CompetitionLevel, clItem);
         //}
-        this.updateCLStatisticsWithSingleValue(_clItem);
+        this.updateCLStatisticsWithSingleValue(clItem);
       }
     }
     if (this.clStats) {
@@ -257,12 +267,12 @@ export const AocStatisticsStore = signalStore(
  */
 /*   private async checkAndCreateMissingCompetitionLevels(scsMember: RelationshipModel): Promise<number> {
     console.log('checking ' + scsMember.bkey + '/' + scsMember.subjectName2 + ' ' + scsMember.subjectName);
-    const _clItem = await firstValueFrom(this.dataService.readModel(CollectionNames.CompetitionLevel, scsMember.subjectKey));
-    if (_clItem === undefined) {
-      const _birthdate = scsMember.properties.dateOfBirth;
-      if (!_birthdate) return 0;
-      const _clModel = createCompetitionLevelFromScsMembership(scsMember, _birthdate);
-      await this.dataService.createModel(CollectionNames.CompetitionLevel, _clModel);
+    const clItem = await firstValueFrom(this.dataService.readModel(CollectionNames.CompetitionLevel, scsMember.subjectKey));
+    if (clItem === undefined) {
+      const birthdate = scsMember.properties.dateOfBirth;
+      if (!birthdate) return 0;
+      const clModel = createCompetitionLevelFromScsMembership(scsMember, birthdate);
+      await this.dataService.createModel(CollectionNames.CompetitionLevel, clModel);
       return 1;
     }
     return 0;
@@ -270,12 +280,12 @@ export const AocStatisticsStore = signalStore(
 
 /*   public async updateCLStatistics(): Promise<void> {
     this.clStats = initializeCLStatistics();
-    const _clItems = await firstValueFrom(this.dataService.searchData(CollectionNames.CompetitionLevel, []));
+    const clItems = await firstValueFrom(this.dataService.searchData(CollectionNames.CompetitionLevel, []));
     
     // tbd: gender other is not yet considered
-    for (const _clItem of _clItems) {
-      if (isCompetitionLevel(_clItem)) {
-        this.updateCLStatisticsWithSingleValue(_clItem);
+    for (const clItem of clItems) {
+      if (isCompetitionLevel(clItem)) {
+        this.updateCLStatisticsWithSingleValue(clItem);
       }
     }
     console.log('bk3migration.updateCLStatistics: saving updated statistics:');

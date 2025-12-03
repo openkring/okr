@@ -43,8 +43,8 @@ export function dirName(fullPath: string, dirSep = '/'): string {
  * @param fullPath the baseName of the fileName
  */
 export function baseName(fullPath: string, fileSep = '.', dirSep = '/'): string {
-  const _fn = fileName(fullPath, dirSep);
-  return _fn.substring(0, _fn.lastIndexOf(fileSep));
+  const fn = fileName(fullPath, dirSep);
+  return fn.substring(0, fn.lastIndexOf(fileSep));
 }
 
 /**
@@ -63,33 +63,38 @@ export function fileExtension(fullPath: string, fileSep = '.'): string {
  * @returns the svg icon name of the logo
  */
 export function fileLogo(fullPath: string): string {
-  const _ext = fileExtension(fullPath);
-  switch(_ext) {
-    case 'pdf': return 'assets/filetypes/pdf.svg';
-    case 'csv': return 'assets/filetypes/csv.svg';
+  const ext = fileExtension(fullPath);
+  const logoName = reduceLogoName(ext);
+  return `assets/filetypes/${logoName}.svg`;
+}
+
+export function reduceLogoName(ext: string): string {
+  switch(ext) {
+    case 'pdf': return 'pdf';
+    case 'csv': return 'csf';
     case 'xls': 
     case 'xltx':
     case 'xlt':
-    case 'xlsx': return 'assets/filetypes/xls.svg';
-    case 'pages': return 'assets/filetypes/pages.svg';
-    case 'key': return 'assets/filetypes/key.svg';
-    case 'numbers': return 'assets/filetypes/numbers.svg';
+    case 'xlsx': return 'xls';
+    case 'pages': return 'pages';
+    case 'key': return 'key';
+    case 'numbers': return 'numbers';
     case 'jpg': 
     case 'jpeg':
     case 'png':
     case 'gif':
-    case 'tif': return 'assets/filetypes/image.svg';
-    case 'html': return 'assets/filetypes/html.svg';
+    case 'tif': return 'image';
+    case 'html': return 'html';
     case 'md':
-    case 'txt': return 'assets/filetypes/txt.svg';
+    case 'txt': return 'txt';
     case 'doc': 
     case 'dot':
     case 'dotx':
-    case 'docx': return 'assets/filetypes/doc.svg';
+    case 'docx': return 'doc';
     case 'mov':
     case 'mp4':
-    case 'mpg': return 'assets/filetypes/video.svg';
-    case 'zip': return 'assets/filetypes/zip.svg';
+    case 'mpg': return 'video';
+    case 'zip': return 'zip';
     case 'php':
     case 'scss':
     case 'css':
@@ -98,10 +103,10 @@ export function fileLogo(fullPath: string): string {
     case 'java':
     case 'js':
     case 'py':
-    case 'json': return 'assets/filetypes/code.svg';
+    case 'json': return 'code';
     case 'pptx':
-    case 'ppt': return 'assets/filetypes/ppt.svg';
-    default: return 'assets/filetypes/file.svg';
+    case 'ppt': return 'ppt';
+    default: return 'file';
   }
 }
 
@@ -125,12 +130,12 @@ export const FileSizeUnits = [
 */
 export function fileSizeUnit(bytes = 0, precision = 2): string {
     if (isNaN(parseFloat(String(bytes))) || !isFinite(bytes)) return '?';
-    let _unit = 0;
+    let unit = 0;
     while (bytes >= 1024) {
         bytes /= 1024;
-        _unit++;
+        unit++;
     }
-    return bytes.toFixed(+ precision) + ' ' + FileSizeUnits[_unit];
+    return bytes.toFixed(+ precision) + ' ' + FileSizeUnits[unit];
 }
 
 export function getMimeType(pathOrExtension: string): string {
@@ -277,3 +282,14 @@ export function convertBase64ToBlob(base64Image: string) {
   return new Blob([uInt8Array], { type: imageType });
 }
 
+/**
+ * Generate a hash from a file (SHA-256)
+ * @param file the file to hash
+ * @returns the SHA-256 hash as hex string
+ */
+export async function getFileHash(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}

@@ -3,8 +3,8 @@
   "files": [],
   "include": [],
   "references": [
-    { "path": "../../../shared/models/tsconfig.lib.json" },
-    { "path": "../../../shared/util-core/tsconfig.lib.json" },
-    { "path": "../../../shared/constants/tsconfig.lib.json" }
+    { "path": "../models/tsconfig.lib.json" },
+    { "path": "../util-core/tsconfig.lib.json" },
+    { "path": "../constants/tsconfig.lib.json" },
   ]
 }

@@ -43,12 +43,12 @@ export enum DatePart {
  */
 export function convertDateFormat(value: string, fromFormat: DateFormat, toFormat = DateFormat.StoreDate, isStrict=true): string|Date
 {
-    const _date = parseDate(value, fromFormat, isStrict);
-    if (!_date) {
+    const date = parseDate(value, fromFormat, isStrict);
+    if (!date) {
         if (isStrict === true) die('date.util/convertDateFormat: invalid date');
         else return '';
     }
-    return format(_date, toFormat);
+    return format(date, toFormat);
 }
 
 export function convertDateFormatToString(value: string | undefined, fromFormat: DateFormat, toFormat = DateFormat.StoreDate, isStrict=true): string {
@@ -81,10 +81,10 @@ export function convertIsoDateWithDefaultToday(isoDate: string | undefined): str
  * @returns 
  */
 export function convertDateFromAnyFormatToString(value: string, toFormat = DateFormat.StoreDate): string | undefined {
-  const _format = getFormatFromDateLength(value);
-  if (!_format || value.startsWith('9999')) return undefined;
-  const _date = parseDate(value, _format, false);
-  return !_date ? undefined : format(_date, toFormat);
+  const dateFormat = getFormatFromDateLength(value);
+  if (!dateFormat || value.startsWith('9999')) return undefined;
+  const date = parseDate(value, dateFormat, false);
+  return !date ? undefined : format(date, toFormat);
 }
 
 /**
@@ -119,8 +119,8 @@ export function parseDate(value: string, fromFormat: DateFormat, isStrict=true):
             return null;
         }
     }
-    const _date =  parse(value, fromFormat, new Date());
-    return (!_date || isEndFutureDate(_date)) ? null : _date;
+    const date =  parse(value, fromFormat, new Date());
+    return (!date || isEndFutureDate(date)) ? null : date;
 }
 
 export function isEndFutureDate(date: Date): boolean {
@@ -156,9 +156,9 @@ export function extractFromDate(value: unknown, part: DatePart): number {
  */
 export function getAge(dateOfBirth: string, byDecade = false, refYear = getYear()): number {
   if (!dateOfBirth || dateOfBirth.length !== 8) return -1;
-  const _birthYear = Number(convertDateFormat(dateOfBirth, DateFormat.StoreDate, DateFormat.Year));
-  const _ageInYears =  refYear - _birthYear;
-  return byDecade === true ? Math.floor(_ageInYears / 10) : _ageInYears;
+  const birthYear = Number(convertDateFormat(dateOfBirth, DateFormat.StoreDate, DateFormat.Year));
+  const ageInYears =  refYear - birthYear;
+  return byDecade === true ? Math.floor(ageInYears / 10) : ageInYears;
 }
 
 export function getDifferenceInHours(date1: Date, date2: Date): number {
@@ -197,8 +197,8 @@ export function getWeekdayI18nKey(date: Date | number): string {
  * @param isStrict for optional fields the field may be empty
  */
 export function checkDate(fieldName: string, value: string, dateFormat: DateFormat, minYear: number, maxYear: number, isStrict: boolean): boolean {
-    const _date = parseDate(value, dateFormat, isStrict);
-    if (!_date) {
+    const date = parseDate(value, dateFormat, isStrict);
+    if (!date) {
         if (isStrict === true) {
             warn(`date.util/checkDate: date ${fieldName} is mandatory`);
             return false;
@@ -206,11 +206,11 @@ export function checkDate(fieldName: string, value: string, dateFormat: DateForm
             return true;
         }
     }
-    if (!isValid(_date)) {
+    if (!isValid(date)) {
         warn(`date.util/checkDate: date ${fieldName} is not valid`);
         return false;
     }
-    if (checkYearRange(extractFromDate(_date, DatePart.Year), minYear, maxYear) === true) {
+    if (checkYearRange(extractFromDate(date, DatePart.Year), minYear, maxYear) === true) {
         return true;
     } else {
         warn(`date.util/checkDate: date ${fieldName} is out of range`);
@@ -291,10 +291,9 @@ export function getEndOfYear(yearDiff = 0): number {
  * @returns The difference in years between the two dates. A positive value indicates date2 is later than date1, and a negative value indicates date2 is earlier than date1.
  */
 export function getYearDiff(date1: string, dateFormat = DateFormat.StoreDate, date2?: string): number {
-  let _date2 = getTodayStr(dateFormat);
-  if (date2 && date2.length > 0) _date2 = date2;
+  date2 = date2 || getTodayStr(dateFormat); // use default for undefined or empty string
   const _year1 = Number(convertDateFormat(date1, dateFormat, DateFormat.Year))
-  const _year2 = Number(convertDateFormat(_date2, dateFormat, DateFormat.Year))
+  const _year2 = Number(convertDateFormat(date2, dateFormat, DateFormat.Year))
   return _year2 - _year1;
 }
 
@@ -308,9 +307,9 @@ export function getYearDiff(date1: string, dateFormat = DateFormat.StoreDate, da
 export function compareDate(date1: string, date2: string, dateFormat = DateFormat.StoreDate): number {
   if (date1 === END_FUTURE_DATE_STR) return 1;
   if (date2 === END_FUTURE_DATE_STR) return -1;
-  const _date1 = parseDate(date1, dateFormat, false) ?? die('date.util/compareDate: invalid date ' + date1);
-  const _date2 = parseDate(date2, dateFormat, false) ?? die('date.util/compareDate: invalid date ' + date2);
-  return compareAsc(_date1, _date2);
+  const date1Parsed = parseDate(date1, dateFormat, false) ?? die('date.util/compareDate: invalid date ' + date1);
+  const date2Parsed = parseDate(date2, dateFormat, false) ?? die('date.util/compareDate: invalid date ' + date2);
+  return compareAsc(date1Parsed, date2Parsed);
 }
 
 /**
@@ -324,15 +323,15 @@ export function compareDate(date1: string, date2: string, dateFormat = DateForma
  * @returns a new storeDate with the added days in dateFormat format
  */
 export function addDuration(storeDate: string, duration: Duration, dateFormat = DateFormat.StoreDate): string {
-  const _date = parseDate(storeDate, dateFormat, false) ?? die('date.util/addDays: invalid date ' + storeDate);
-  const _date2 = add(_date, duration);
-  return format(_date2, dateFormat);
+  const date = parseDate(storeDate, dateFormat, false) ?? die('date.util/addDays: invalid date ' + storeDate);
+  const dateAfterDuration = add(date, duration);
+  return format(dateAfterDuration, dateFormat);
 }
 
 export function getTodayStr(dateFormat = DateFormat.StoreDate, yearDiff = 0): string {
-    const _date = new Date();
-    _date.setFullYear(getYear(yearDiff));
-    return format(_date, dateFormat);
+    const date = new Date();
+    date.setFullYear(getYear(yearDiff));
+    return format(date, dateFormat);
 }
 
 /**
@@ -352,10 +351,10 @@ export function getCurrentTime(): string {
  */
 export function addTime(time?: string, hours = 1, minutes = 0): string {
   if (!time || time.length !== 5) return '';    // time is optional
-  const _date = parse(time, DateFormat.Time, new Date());
-  if (!_date) die('date.util/addTime: invalid time ' + time);
-  const _date2 = add(_date, { hours, minutes });
-  return format(_date2, DateFormat.Time);
+  const date = parse(time, DateFormat.Time, new Date());
+  if (!date) die('date.util/addTime: invalid time ' + time);
+  const dateAfterDuration = add(date, { hours, minutes });
+  return format(dateAfterDuration, DateFormat.Time);
 }
 
 /**
@@ -364,14 +363,14 @@ export function addTime(time?: string, hours = 1, minutes = 0): string {
  * @returns the number of calendar days until the next birthday
  */
 export function getBirthdayDiff(storeDate: string): number {
-    const _currentYear = getTodayStr(DateFormat.Year);
-    let _nextBirthdateStr = _currentYear + storeDate.substring(4);
-    if (_nextBirthdateStr <= getTodayStr(DateFormat.StoreDate)) {
-        _nextBirthdateStr = (Number(_currentYear) + 1) + storeDate.substring(4);
+    const currentYear = getTodayStr(DateFormat.Year);
+    let nextBirthdateStr = currentYear + storeDate.substring(4);
+    if (nextBirthdateStr <= getTodayStr(DateFormat.StoreDate)) {
+        nextBirthdateStr = (Number(currentYear) + 1) + storeDate.substring(4);
     }
-    const _today = new Date();
-    const _nextBirthdate = parseDate(_nextBirthdateStr, DateFormat.StoreDate);
-    return !_nextBirthdate ? -1 : differenceInCalendarDays(_nextBirthdate, _today);
+    const today = new Date();
+    const _nextBirthdate = parseDate(nextBirthdateStr, DateFormat.StoreDate);
+    return !_nextBirthdate ? -1 : differenceInCalendarDays(_nextBirthdate, today);
 }
 
 /**
@@ -381,9 +380,9 @@ export function getBirthdayDiff(storeDate: string): number {
  * @returns the number of days between fromDate and toDate
  */
 export function getDayDiff(fromDate: string, toDate: string): number {
-    const _fromDate = parseDate(fromDate, DateFormat.StoreDate);
-    const _toDate = parseDate(toDate, DateFormat.StoreDate);
-    return !_fromDate || !_toDate ? -1 : differenceInCalendarDays(_toDate, _fromDate);
+    const fromStoreDate = parseDate(fromDate, DateFormat.StoreDate);
+    const toStoreDate = parseDate(toDate, DateFormat.StoreDate);
+    return !fromStoreDate || !toStoreDate ? -1 : differenceInCalendarDays(toStoreDate, fromStoreDate);
 }
 
 /**
@@ -394,9 +393,9 @@ export function getDayDiff(fromDate: string, toDate: string): number {
  */
 export function isFutureDate(date: string, dateFormat = DateFormat.StoreDate): boolean {
     if (date === END_FUTURE_DATE_STR) return true;
-    const _parsedDate = parseDate(date, dateFormat);
-    if (!_parsedDate) die('date.util/isFutureDate: could not parse date ' + date);
-    return isFuture(_parsedDate);
+    const parsedDate = parseDate(date, dateFormat);
+    if (!parsedDate) die('date.util/isFutureDate: could not parse date ' + date);
+    return isFuture(parsedDate);
 }
 
 /**
@@ -408,10 +407,10 @@ export function isFutureDate(date: string, dateFormat = DateFormat.StoreDate): b
 export function isAfterDate(date1: string, date2:string): boolean {
   // END_FUTURE_DATE_STR is always after any date
   if (date1 === END_FUTURE_DATE_STR) return true;
-  const _date1 = parseDate(date1, DateFormat.StoreDate);
-  const _date2 = parseDate(date2, DateFormat.StoreDate);
-  if (!_date1 || !_date2) return false;
-  return isAfter(_date1, _date2);
+  const date1StoreDate = parseDate(date1, DateFormat.StoreDate);
+  const date2StoreDate = parseDate(date2, DateFormat.StoreDate);
+  if (!date1StoreDate || !date2StoreDate) return false;
+  return isAfter(date1StoreDate, date2StoreDate);
 }
 
 export function isAfterOrEqualDate(date1: string, date2:string): boolean {
@@ -420,9 +419,9 @@ export function isAfterOrEqualDate(date1: string, date2:string): boolean {
 }
 
 export function copyDate(origDate: Date): Date {
-    const _copiedDate = new Date();
-    _copiedDate.setTime(origDate.getTime());
-    return _copiedDate;
+    const copiedDate = new Date();
+    copiedDate.setTime(origDate.getTime());
+    return copiedDate;
 }
 
 /**
@@ -434,11 +433,11 @@ export function copyDate(origDate: Date): Date {
  * @returns the array of years
  */
 export function getYearList(startYear = getYear(), numberOfYears = 8): number[] {
-    const _yearList: number[] = [];
+    const yearList: number[] = [];
     for (let i = 0; i < numberOfYears; i++) {
-        _yearList.push(startYear - i);
+        yearList.push(startYear - i);
     }
-    return _yearList;
+    return yearList;
 }
 
 export function migrateDate(dateStr: string, isOptional: boolean): string {
@@ -468,14 +467,14 @@ export function getFormatFromDateLength(dateStr: string): DateFormat | undefined
  * @param toFormat the format to convert that date to, default is just a year (YYYY).
  */
 export function getDuration(fromDate: string, toDate: string, toFormat = DateFormat.Year): string {
-  const _fromDate = convertDateFromAnyFormatToString(fromDate, toFormat);
-  const _toDate = convertDateFromAnyFormatToString(toDate, toFormat);
-  if (!_fromDate) {
-    return !_toDate ? '' : '? - ' + _toDate;
-  } else if (!_toDate || _toDate === END_FUTURE_DATE_STR) {
-      return _fromDate + ' - ...';
+  const fromDateStr = convertDateFromAnyFormatToString(fromDate, toFormat);
+  const toDateStr = convertDateFromAnyFormatToString(toDate, toFormat);
+  if (!fromDateStr) {
+    return !toDateStr ? '' : '? - ' + toDateStr;
+  } else if (!toDateStr || toDateStr === END_FUTURE_DATE_STR) {
+      return fromDateStr + ' - ...';
   } else {
-    return _fromDate + ' - ' + _toDate;
+    return fromDateStr + ' - ' + toDateStr;
   }
 }
 

@@ -9,7 +9,7 @@ export const commentValidations = staticSuite((model: CommentModel, field?: stri
 
   baseValidations(model, field);
   stringValidations('authorKey', model.authorKey, SHORT_NAME_LENGTH, 5, true);
-  dateValidations('creationDate', model.creationDate);
+  dateValidations('creationDateTime', model.creationDateTime);
   stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH, 5, true);
   stringValidations('parentCollection', model.parentCollection, SHORT_NAME_LENGTH, 5, true);
   

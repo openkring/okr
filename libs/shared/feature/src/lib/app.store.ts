@@ -12,6 +12,7 @@ import { AddressCollection, AddressModel, AppConfig, CategoryCollection, Categor
 import { die, getSystemQuery } from '@bk2/shared-util-core';
 
 import { AppConfigService } from './app-config.service';
+import { AppNavigationService } from '@bk2/shared-util-angular';
 
 export type AppState = {
   tenantId: string;
@@ -64,7 +65,8 @@ export const AppStore = signalStore(
     firestore: inject(FIRESTORE),
     auth: inject(AUTH),
     env: inject(ENV),
-    fbUser: toSignal(authState(inject(AUTH)))
+    fbUser: toSignal(authState(inject(AUTH))),
+    appNavigationService: inject(AppNavigationService)
   })),
   
   withProps((store) => ({
@@ -161,31 +163,15 @@ export const AppStore = signalStore(
     loginEmail: computed(() => state.fbUser()?.email ?? undefined),
     roles: computed(() => state.currentUser()?.roles ?? []),
     showDebugInfo: computed(() => state.currentUser()?.showDebugInfo ?? state.appConfig().showDebugInfo ?? false),
+    isLoading: computed(() => state.usersResource.isLoading() || state.personsResource.isLoading() || state.orgsResource.isLoading() || 
+        state.resourcesResource.isLoading() || state.tagsResource.isLoading()),
   })),
-
-  withProps((store) => ({
-    addressesResource: rxResource({
-      params: () => ({
-        person: store.currentPerson()
-      }),
-      stream: ({params}) => {
-        if (!params.person) return of([]);
-        const ref = query(collection(store.firestore, `${PersonCollection}/${params.person.bkey}/${AddressCollection}`));
-        return collectionData(ref, { idField: 'bkey' }) as Observable<AddressModel[]>;
-      }
-    })
-  })),
-
-  withComputed((state) => {
-    return {
-      addresses: computed(() => state.addressesResource.value() ?? []),
-      isLoading: computed(() => state.usersResource.isLoading() || state.personsResource.isLoading() || state.orgsResource.isLoading() || 
-        state.resourcesResource.isLoading() || state.tagsResource.isLoading() || state.addressesResource.isLoading()),
-    };
-  }),
 
   withMethods((store) => {
     return {
+      resetCurrentUser() {
+        store.usersResource.reload();
+      },
       /************************************ GETTERS ************************************* */
       getUser(key: string) {
         if (!key) return undefined;

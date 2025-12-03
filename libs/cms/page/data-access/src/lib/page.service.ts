@@ -8,6 +8,8 @@ import { PageCollection, PageModel, UserModel } from "@bk2/shared-models";
 import { bkPrompt } from "@bk2/shared-util-angular";
 import { findByKey, getSystemQuery } from "@bk2/shared-util-core";
 
+import { getPageIndex } from "@bk2/cms-page-util";
+
 @Injectable({
     providedIn: 'root'
 })
@@ -24,7 +26,7 @@ export class PageService {
    * @returns the document id of the newly created page
    */
   public async create(page: PageModel, currentUser: UserModel | undefined): Promise<string | undefined> {
-    page.index = this.getSearchIndex(page);
+    page.index = getPageIndex(page);
     return await this.firestoreService.createModel<PageModel>(PageCollection, page, '@content.page.operation.create', currentUser);
   }
 
@@ -42,7 +44,7 @@ export class PageService {
    * @param page the PageModel with the new values. Its key must be valid (in order to find it in the database)
    */
   public async update(page: PageModel, currentUser?: UserModel, confirmMessage = '@content.page.operation.update'): Promise<string | undefined> {
-    page.index = this.getSearchIndex(page);
+    page.index = getPageIndex(page);
     return await this.firestoreService.updateModel<PageModel>(PageCollection, page, false, confirmMessage, currentUser);
   }
 
@@ -60,23 +62,13 @@ export class PageService {
     return this.firestoreService.searchData<PageModel>(PageCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
-  /*-------------------------- SEARCH --------------------------------*/
-  public getSearchIndex(page: PageModel): string {
-    return 'n:' + page.name + ' k:' + page.bkey;
-  }
-
-  public getSearchIndexInfo(): string {
-    return 'n:ame k:ey';
-  }
-
   /*-------------------------- section handling --------------------------------*/
   public async addPage(currentUser?: UserModel): Promise<void> {
-    const _pageName = await bkPrompt(this.alertController, '@content.page.operation.add.label', '@content.page.field.name');
-    if (_pageName) {
-      const _page = new PageModel(this.env.tenantId);
-      _page.name = _pageName;
-      _page.index = this.getSearchIndex(_page);
-      await this.create(_page, currentUser);
+    const pageName = await bkPrompt(this.alertController, '@content.page.operation.add.label', '@content.page.field.name');
+    if (pageName) {
+      const page = new PageModel(this.env.tenantId);
+      page.name = pageName;
+      await this.create(page, currentUser);
     }
   }
 }

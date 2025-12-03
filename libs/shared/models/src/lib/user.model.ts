@@ -52,4 +52,5 @@ export class UserModel implements BkModel, TaggedModel, SearchableModel {
   }
 }
 
-export const UserCollection = 'users3';
+export const UserCollection = 'users';
+export const UserModelName = 'user';

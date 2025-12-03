@@ -144,10 +144,16 @@ export class MenuListComponent {
    * @param menuItem 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, menuItem: MenuItemModel): void {
-    if (hasRole('contentAdmin', this.menuStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('registered', this.menuStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (hasRole('admin', this.menuStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -162,11 +168,14 @@ export class MenuListComponent {
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
-        case 'delete':
+        case 'menu.delete':
           await this.menuItemListStore.delete(menuItem, this.readOnly());
           break;
-        case 'edit':
+        case 'menu.edit':
           await this.menuItemListStore.edit(menuItem, this.readOnly());
+          break;
+        case 'menu.view':
+          await this.menuItemListStore.edit(menuItem, true);
           break;
       }
     }

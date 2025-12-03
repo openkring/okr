@@ -13,12 +13,12 @@ import { warn } from './log.util';
  * @returns an array of Firestore QueryConstraints
  */
 export function getQuery(dbQuery: DbQuery[], orderByParam = 'name', sortOrderParam = 'asc'): QueryConstraint[] {
-  const _queries: QueryConstraint[] = [];
-  for (const _dbQuery of dbQuery) {
-    _queries.push(where(_dbQuery.key, _dbQuery.operator as WhereFilterOp, _dbQuery.value));
+  const queries: QueryConstraint[] = [];
+  for (const queryItem of dbQuery) {
+    queries.push(where(queryItem.key, queryItem.operator as WhereFilterOp, queryItem.value));
   }
-  _queries.push(orderBy(orderByParam, sortOrderParam as OrderByDirection));
-  return _queries;
+  queries.push(orderBy(orderByParam, sortOrderParam as OrderByDirection));
+  return queries;
 }
 
 /** 

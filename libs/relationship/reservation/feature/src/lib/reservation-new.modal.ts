@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
@@ -8,7 +8,7 @@ import { OrgModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-mode
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
-import { convertReserverAndResourceToNewForm } from '@bk2/relationship-reservation-util';
+import { convertReserverAndResourceToNewForm, ReservationNewFormModel } from '@bk2/relationship-reservation-util';
 
 import { ReservationNewFormComponent } from './reservation-new.form';
 
@@ -23,43 +23,53 @@ import { ReservationNewFormComponent } from './reservation-new.form';
   ],
   template: `
     <bk-header title="{{ '@reservation.operation.create.label' | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content>
-      <bk-reservation-new-form [(vm)]="vm" [readOnly]="readOnly()" (validChange)="onValidChange($event)" />
+      <bk-reservation-new-form
+        [formData]="formData()"
+        [readOnly]="readOnly()"
+        (formDataChange)="onFormDataChange($event)"
+      />
     </ion-content>
   `
 })
-export class ReservationNewModalComponent implements OnInit {
+export class ReservationNewModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
+  // inputs
   public reserver = input.required<PersonModel | OrgModel>();
   public resource = input.required<ResourceModel>(); 
   public modelType = input.required<string>();
 
-  public vm = linkedSignal(() => convertReserverAndResourceToNewForm(this.reserver(), this.resource(), this.currentUser(), this.modelType()));
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = linkedSignal(() => convertReserverAndResourceToNewForm(this.reserver(), this.resource(), this.currentUser(), this.modelType()));
 
+  // derived signals
   public currentUser = computed(() => this.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
-  protected formIsValid = signal(false);
-
-  ngOnInit() {
-    // as we prepared everything with defaultMember and defaultOrg, we already have a valid form, so we need to signal this here.
-    this.onValidChange(true);
+  /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(this.formData(), 'confirm');
   }
 
-  public async save(): Promise<boolean> {
-    return this.modalController.dismiss(this.vm(), 'confirm');
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertReserverAndResourceToNewForm(this.reserver(), this.resource(), this.currentUser(), this.modelType()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: ReservationNewFormModel): void {
+    this.formData.set(formData);
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
-  }
-
-  protected onValidChange(valid: boolean): void {
-    this.formIsValid.set(valid);
   }
 }

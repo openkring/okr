@@ -1,13 +1,8 @@
 import { LocationModel } from '@bk2/shared-models';
-import { isType } from '@bk2/shared-util-core';
+import { die, isType } from '@bk2/shared-util-core';
 
 import { LocationFormModel } from './location-form.model';
 import { DEFAULT_KEY, DEFAULT_LOCATION_TYPE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-
-export function getLocationTitle(locationKey: string | undefined): string {
-  const _operation = !locationKey ? 'create' : 'update';
-  return `@location.operation.${_operation}.label`;
-}
 
 export function newLocationFormModel(): LocationFormModel {
   return {
@@ -46,8 +41,10 @@ export function convertLocationToForm(location: LocationModel | undefined): Loca
   };
 }
 
-export function convertFormToLocation(location: LocationModel | undefined, vm: LocationFormModel, tenantId: string): LocationModel {
-  location ??= new LocationModel(tenantId);
+export function convertFormToLocation(vm?: LocationFormModel, location?: LocationModel): LocationModel {
+  if (!location) die('location.util.convertFormToLocation: location is mandatory.');
+  if (!vm) return location;
+  
   location.bkey = vm.bkey ?? DEFAULT_KEY;
   location.name = vm.name ?? DEFAULT_NAME;
   location.address = vm.address ?? '';
@@ -66,4 +63,19 @@ export function convertFormToLocation(location: LocationModel | undefined, vm: L
 
 export function isLocation(location: unknown, tenantId: string): location is LocationModel {
   return isType(location, new LocationModel(tenantId));
+}
+
+
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given person based on its values.
+ * @param person the person for which to create the index
+ * @returns the index string
+ */
+export function getLocationIndex(location: LocationModel): string {
+  return 'n:' + location.name + ' w:' + location.what3words;
+}
+
+export function getLocationIndexInfo(): string {
+  return 'n:ame w:hat3words';
 }

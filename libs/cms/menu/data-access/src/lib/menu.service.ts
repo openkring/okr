@@ -6,7 +6,7 @@ import { FirestoreService } from "@bk2/shared-data-access";
 import { MenuItemCollection, MenuItemModel, UserModel } from "@bk2/shared-models";
 import { findByKey, getSystemQuery } from "@bk2/shared-util-core";
 
-import { getSearchIndex } from "@bk2/cms-menu-util";
+import { getMenuIndex } from "@bk2/cms-menu-util";
 
 @Injectable({
     providedIn: 'root'
@@ -22,7 +22,7 @@ export class MenuService {
    * @returns the document id of the newly created menuitem
    */
   public async create(menuItem: MenuItemModel, currentUser: UserModel | undefined): Promise<string | undefined> {
-      menuItem.index = getSearchIndex(menuItem);
+      menuItem.index = getMenuIndex(menuItem);
       return await this.firestoreService.createModel<MenuItemModel>(MenuItemCollection, menuItem, '@content.menuItem.operation.create', currentUser);
   }
 
@@ -40,7 +40,7 @@ export class MenuService {
    * @param menuItem the MenuItemModel with the new values. Its key must be valid (in order to find it in the database)
    */
   public async update(menuItem: MenuItemModel, currentUser?: UserModel, confirmMessage = '@content.menuItem.operation.update'): Promise<string | undefined> {
-    menuItem.index = getSearchIndex(menuItem);
+    menuItem.index = getMenuIndex(menuItem);
     return await this.firestoreService.updateModel<MenuItemModel>(MenuItemCollection, menuItem, false, confirmMessage, currentUser);
   }
 

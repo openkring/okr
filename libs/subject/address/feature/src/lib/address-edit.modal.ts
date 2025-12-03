@@ -7,10 +7,11 @@ import { TranslatePipe } from "@bk2/shared-i18n";
 import { AddressModel, UserModel } from "@bk2/shared-models";
 import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared-ui";
 
-import { convertAddressToForm, convertFormToAddress, getAddressModalTitle } from "@bk2/subject-address-util";
+import { AddressFormModel, convertAddressToForm, convertFormToAddress } from "@bk2/subject-address-util";
 
 import { AddressFormComponent } from "./address.form";
-import { hasRole } from "@bk2/shared-util-core";
+import { coerceBoolean } from "@bk2/shared-util-core";
+import { getTitleLabel } from "@bk2/shared-util-angular";
 
 @Component({
   selector: 'bk-address-edit-modal',
@@ -22,11 +23,20 @@ import { hasRole } from "@bk2/shared-util-core";
   ],
   template: `
     <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-        <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+        <bk-change-confirmation [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
     <ion-content>
-      <bk-address-form [(vm)]="vm" [currentUser]="currentUser()" [readOnly]="readOnly()" (validChange)="formIsValid.set($event)" />
+      @if(formData(); as formData) {
+        <bk-address-form
+          [formData]="formData" 
+          [currentUser]="currentUser()" 
+          [readOnly]="isReadOnly()"
+          (formDataChange)="onFormDataChange($event)"
+          (valid)="formValid.set($event)" 
+          (dirty)="formDirty.set($event)"
+        />
+      }
     </ion-content>
   `
 })
@@ -34,16 +44,33 @@ export class AddressEditModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly env = inject(ENV);
 
+  // inputs
   public address = input.required<AddressModel>();
   public currentUser = input.required<UserModel | undefined>();
-  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
+  public readOnly = input.required<boolean>();
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   
-  public title = computed(() => getAddressModalTitle(this.address().bkey));
-  public vm = linkedSignal(() => convertAddressToForm(this.address())); 
 
-  protected formIsValid = signal(false);
-
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = linkedSignal(() => convertAddressToForm(this.address())); 
+  protected title = computed(() => getTitleLabel('subject.address', this.address().bkey, this.isReadOnly()));
+  
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToAddress(this.address(), this.vm(), this.env.tenantId), 'confirm');
+    this.formDirty.set(false);
+    return this.modalController.dismiss(convertFormToAddress(this.formData(), this.address()), 'confirm');
+  }
+
+  public cancel(): void {
+    this.formData.set(convertAddressToForm(this.address()));
+    this.formDirty.set(false);
+  }
+
+  protected onFormDataChange(formData: AddressFormModel): void {
+    this.formData.set(formData);
+    console.log('AddressEditModalComponent.onFormDataChange → formData:', this.formData());
+    console.log(`AddressEditModalComponent.onFormDataChange → valid=${this.formValid()}, dirty=${this.formDirty()}`);
   }
 }

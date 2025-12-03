@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { OrgModel, UserModel } from '@bk2/shared-models';
+import { OrgModel, OrgModelName, UserModel } from '@bk2/shared-models';
 import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -60,7 +60,7 @@ export class OrgSelectModalComponent {
   protected selectedOrgsCount = computed(() => this.filteredOrgs().length);
   protected isLoading = computed(() => this.orgSelectStore.isLoading());
 
-  protected defaultIcon = this.orgSelectStore.appStore.getCategoryIcon('model_type', 'org');
+  protected defaultIcon = this.orgSelectStore.appStore.getCategoryIcon('model_type', OrgModelName);
 
   constructor() {
     effect(() => {

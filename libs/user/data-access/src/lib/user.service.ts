@@ -6,6 +6,8 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { UserCollection, UserModel } from '@bk2/shared-models';
 import { findAllByField, findByField, findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
+import { getUserIndex, getUserIndexInfo } from '@bk2/user-util';
+
 @Injectable({
     providedIn: 'root'
 })
@@ -22,7 +24,7 @@ export class UserService  {
    * @returns a Promise of the key of the newly stored model or undefined if the operation
    */
   public async create(user: UserModel, currentUser?: UserModel): Promise<string | undefined> {
-    user.index = this.getSearchIndex(user);
+    user.index = this.getIndex(user);
     return await this.firestoreService.createModel<UserModel>(UserCollection, user, '@user.operation.create', currentUser);
   }
 
@@ -66,7 +68,7 @@ export class UserService  {
    * @returns a Promise of the key of the updated model or undefined if the operation failed
    */
   public async update(user: UserModel, currentUser?: UserModel, confirmMessage = '@user.operation.update'): Promise<string | undefined> {
-    user.index = this.getSearchIndex(user);
+    user.index = this.getIndex(user);
     return await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, confirmMessage, currentUser);  
   }
 
@@ -87,12 +89,12 @@ export class UserService  {
     return this.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
-  /*-------------------------- SEARCH --------------------------------*/
-  public getSearchIndex(user: UserModel): string {
-    return `n:${user.firstName} ${user.lastName} le:${user.loginEmail} pk:${user.personKey}`;
+  /*-------------------------- search index  --------------------------------*/
+  public getIndex(user: UserModel): string {
+    return getUserIndex(user);
   }
 
-  public getSearchIndexInfo(): string {
-    return 'n:ame le:oginEmail pk:personKey';
+  public getIndexInfo(): string {
+    return getUserIndexInfo();
     }
 }

@@ -62,7 +62,7 @@ describe('Category Utils', () => {
         items: [],
       } as CategoryListFormModel;
 
-      const updatedList = convertFormToCategoryList(categoryList, formModel, tenantId);
+      const updatedList = convertFormToCategoryList(formModel, categoryList);
       expect(updatedList.name).toBe('Updated Name');
       expect(updatedList.tags).toBe('updated-tag');
       expect(updatedList.translateItems).toBe(false);
@@ -70,7 +70,7 @@ describe('Category Utils', () => {
 
     it('convertFormToCategoryList should create a new model if none is provided', () => {
       const formModel: CategoryListFormModel = { name: 'New List' } as CategoryListFormModel;
-      const newList = convertFormToCategoryList(undefined, formModel, tenantId);
+      const newList = convertFormToCategoryList(formModel, undefined);
       expect(newList).toBeInstanceOf(CategoryListModel);
       expect(newList.name).toBe('New List');
       expect(newList.tenants[0]).toBe(tenantId);

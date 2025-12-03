@@ -15,7 +15,7 @@ export class DocumentModalsService {
 
   /*-------------------------- UPLOAD -------------------------------*/
   public async pickAndUploadImage(key: string): Promise<Image | undefined> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: ImageSelectModalComponent,
       cssClass: 'wide-modal',
       componentProps: {
@@ -23,9 +23,9 @@ export class DocumentModalsService {
         currentUser: this.appStore.currentUser()
       }
     });
-    _modal.present();
+    modal.present();
 
-    const { data, role } = await _modal.onWillDismiss();
+    const { data, role } = await modal.onWillDismiss();
     if(role === 'confirm') {
       return data as Image;
     }

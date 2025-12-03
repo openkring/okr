@@ -3,32 +3,10 @@ import { GroupModel } from '@bk2/shared-models';
 import { GroupFormModel } from './group-form.model';
 import { GroupNewFormModel } from './group-new-form.model';
 import { DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { addIndexElement, die } from '@bk2/shared-util-core';
 
-/*-------------------------- ORG --------------------------------*/
-export function newGroupFormModel(): GroupFormModel {
-  return {
-    bkey: DEFAULT_KEY,
-    name: DEFAULT_NAME,
-    id: DEFAULT_ID,
-    tags: DEFAULT_TAGS,
-    notes: DEFAULT_NOTES,
-
-    hasContent: true,
-    hasChat: true,
-    hasCalendar: true,
-    hasTasks: true,
-    hasFiles: true,
-    hasAlbum: true,
-    hasMembers: true,
-
-    parentKey: DEFAULT_KEY,
-    parentName: DEFAULT_NAME,
-    parentModelType: 'org',
-  };
-}
-
-export function convertGroupToForm(group?: GroupModel): GroupFormModel {
-  if (!group) return {};
+export function convertGroupToForm(group?: GroupModel): GroupFormModel | undefined {
+  if (!group) return undefined;
   return {
     bkey: group.bkey ?? DEFAULT_KEY,
     name: group.name ?? DEFAULT_NAME,
@@ -50,8 +28,10 @@ export function convertGroupToForm(group?: GroupModel): GroupFormModel {
   };
 }
 
-export function convertFormToGroup(group: GroupModel | undefined, vm: GroupFormModel, tenantId: string): GroupModel {
-  group ??= new GroupModel(tenantId);
+export function convertFormToGroup(vm?: GroupFormModel, group?: GroupModel): GroupModel {
+  if (!group) die('group.util.convertFormToGroup: group is mandatory.');
+  if (!vm) return group;
+  
   group.bkey = vm.bkey ?? DEFAULT_KEY;
   group.name = vm.name ?? DEFAULT_NAME;
   group.id = vm.id ?? DEFAULT_ID;
@@ -73,27 +53,6 @@ export function convertFormToGroup(group: GroupModel | undefined, vm: GroupFormM
 }
 
 /*-------------------------- NEW GROUP --------------------------------*/
-export function createNewGroupFormModel(): GroupNewFormModel {
-  return {
-    name: DEFAULT_NAME,
-    id: DEFAULT_ID,
-    tags: DEFAULT_TAGS,
-    notes: DEFAULT_NOTES,
-
-    hasContent: true,
-    hasChat: true,
-    hasCalendar: true,
-    hasTasks: true,
-    hasFiles: true,
-    hasAlbum: true,
-    hasMembers: true,
-
-    parentKey: DEFAULT_KEY,
-    parentName: DEFAULT_NAME,
-    parentModelType: 'org',
-  };
-}
-
 export function convertFormToNewGroup(vm: GroupNewFormModel, tenantId: string): GroupModel {
   const group = new GroupModel(tenantId);
   group.bkey = DEFAULT_KEY;
@@ -115,4 +74,26 @@ export function convertFormToNewGroup(vm: GroupNewFormModel, tenantId: string): 
   group.parentModelType = vm.parentModelType ?? 'org';
 
   return group;
+}
+
+
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given group based on its values.
+ * @param group the group to generate the index for 
+ * @returns the index string
+ */
+export function getGroupIndex(group: GroupModel): string {
+  let index = '';
+  index = addIndexElement(index, 'n', group.name);
+  index = addIndexElement(index, 'id', group.id);
+  return index;
+}
+
+/**
+ * Returns a string explaining the structure of the index.
+ * This can be used in info boxes on the GUI.
+ */
+export function getGroupIndexInfo(): string {
+  return 'n:name id:id';
 }

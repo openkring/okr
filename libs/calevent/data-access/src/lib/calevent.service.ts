@@ -5,7 +5,9 @@ import { Observable } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { CalEventCollection, CalEventModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, die, findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { die, findByKey, getSystemQuery } from '@bk2/shared-util-core';
+
+import { getCaleventIndex } from '@bk2/calevent-util';
 
 @Injectable({
   providedIn: 'root',
@@ -22,7 +24,7 @@ export class CalEventService {
    * @returns the document id of the newly created CalEvent or undefined if the operation failed
    */
   public async create(calEvent: CalEventModel, currentUser?: UserModel): Promise<string | undefined> {
-    calEvent.index = this.getSearchIndex(calEvent);
+    calEvent.index = getCaleventIndex(calEvent);
     return await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, '@calEvent.operation.create', currentUser);
   }
 
@@ -43,7 +45,7 @@ export class CalEventService {
    * @returns the key of the updated CalEvent or undefined if the operation failed
    */
   public async update(calEvent: CalEventModel, currentUser?: UserModel, confirmMessage = '@calEvent.operation.update'): Promise<string | undefined> {
-    calEvent.index = this.getSearchIndex(calEvent);
+    calEvent.index = getCaleventIndex(calEvent);
     return await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, confirmMessage, currentUser);
   }
 
@@ -66,29 +68,6 @@ export class CalEventService {
    */
   public list(orderBy = 'startDate', sortOrder = 'asc'): Observable<CalEventModel[]> {
     return this.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
-  }
-
-  /*-------------------------- search index --------------------------------*/
-  /**
-   * Create an index entry for a given CalEvent based on its values.
-   * @param calEvent
-   * @returns the index string
-   */
-  public getSearchIndex(calEvent: CalEventModel): string {
-    let index = '';
-    index = addIndexElement(index, 'n', calEvent.name);
-    index = addIndexElement(index, 'sd', calEvent.startDate);
-    // tbd: calendar name
-    index = addIndexElement(index, 'et', calEvent.type);
-    return index;
-  }
-
-  /**
-   * Returns a string explaining the structure of the index.
-   * This can be used in info boxes on the GUI.
-   */
-  public getEventIndexInfo(): string {
-    return 'n:name sd:startDate et:eventType';
   }
 
   /*-------------------------- event helpers --------------------------------*/
@@ -114,20 +93,20 @@ export class CalEventService {
       }
     } else {
       // not a fullday event
-      const _endTime = !calEvent.endTime || calEvent.endTime.length !== 4 ? this.getDefaultEndTime(calEvent.startTime) : calEvent.endTime;
+      const endTime = !calEvent.endTime || calEvent.endTime.length !== 4 ? this.getDefaultEndTime(calEvent.startTime) : calEvent.endTime;
       if (!calEvent.endDate || calEvent.endDate.length !== 8) {
         // same day event
         return {
           title: calEvent.name,
           start: this.getIsoDateTime(calEvent.startDate, calEvent.startTime),
-          end: this.getIsoDateTime(calEvent.startDate, _endTime),
+          end: this.getIsoDateTime(calEvent.startDate, endTime),
           eventKey: calEvent.bkey,
         };
       } else {
         return {
           title: calEvent.name,
           start: this.getIsoDateTime(calEvent.startDate, calEvent.startTime),
-          end: this.getIsoDateTime(calEvent.endDate, _endTime),
+          end: this.getIsoDateTime(calEvent.endDate, endTime),
           eventKey: calEvent.bkey,
         };
       }
@@ -147,9 +126,9 @@ export class CalEventService {
   }
 
   private getDefaultEndTime(startTime: string): string {
-    const _startTime = parseInt(startTime);
-    let _endTime = _startTime + 100;
-    if (_endTime >= 2400) _endTime = _endTime - 2400;
-    return _endTime + '';
+    const startTimeInt = parseInt(startTime);
+    let endTime = startTimeInt + 100;
+    if (endTime >= 2400) endTime = endTime - 2400;
+    return endTime + '';
   }
 }

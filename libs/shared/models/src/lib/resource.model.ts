@@ -34,7 +34,8 @@ export class ResourceModel implements BkModel, NamedModel, SearchableModel, Tagg
   }
 }
 
-export const ResourceCollection = 'resources6';
+export const ResourceCollection = 'resources';
+export const ResourceModelName = 'resource';
 
 // model type is implicitly always Resource
 export interface ResourceInfo {

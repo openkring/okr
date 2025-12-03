@@ -1,4 +1,6 @@
 import { AddressModel, AddressUsage, OrgModel } from '@bk2/shared-models';
+import { addIndexElement, die } from '@bk2/shared-util-core';
+import { DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP } from '@bk2/shared-constants';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
 
@@ -6,109 +8,98 @@ import { OrgFormModel } from './org-form.model';
 import { OrgNewFormModel } from './org-new-form.model';
 
 /*-------------------------- ORG --------------------------------*/
-export function newOrgFormModel(): OrgFormModel {
+export function convertOrgToForm(org?: OrgModel): OrgFormModel | undefined {
+  if (!org) return undefined;
   return {
-    bkey: '',
-    name: '',
-    type: 'association',
-    dateOfFoundation: '',
-    dateOfLiquidation: '',
-    membershipCategoryKey: 'mcat_default',
-    taxId: '',
-    bexioId: '',
-    tags: '',
-    notes: '',
-  };
-}
-
-export function convertOrgToForm(org?: OrgModel): OrgFormModel {
-  if (!org) return {};
-  return {
-    bkey: org.bkey ?? '',
-    name: org.name ?? '',
-    type: org.type ?? 'association',
-    dateOfFoundation: org.dateOfFoundation ?? '',
-    dateOfLiquidation: org.dateOfLiquidation ?? '',
+    bkey: org.bkey ?? DEFAULT_KEY,
+    name: org.name ?? DEFAULT_NAME,
+    type: org.type ?? DEFAULT_ORG_TYPE,
+    dateOfFoundation: org.dateOfFoundation ?? DEFAULT_DATE,
+    dateOfLiquidation: org.dateOfLiquidation ?? DEFAULT_DATE,
     membershipCategoryKey: org.membershipCategoryKey ?? 'mcat_default',
-    taxId: org.taxId ?? '',
-    bexioId: org.bexioId ?? '',
-    tags: org.tags ?? '',
-    notes: org.notes ?? '',
+    taxId: org.taxId ?? DEFAULT_ID,
+    bexioId: org.bexioId ?? DEFAULT_ID,
+    tags: org.tags ?? DEFAULT_TAGS,
+    notes: org.notes ?? DEFAULT_NOTES,
   };
 }
 
-export function convertFormToOrg(org: OrgModel | undefined, vm: OrgFormModel, tenantId: string): OrgModel {
-  org ??= new OrgModel(tenantId);
-  org.bkey = vm.bkey ?? '';
-  org.name = vm.name ?? '';
-  org.type = vm.type ?? 'association';
-  org.dateOfFoundation = vm.dateOfFoundation ?? '';
-  org.dateOfLiquidation = vm.dateOfLiquidation ?? '';
+export function convertFormToOrg(vm?: OrgFormModel, org?: OrgModel): OrgModel {
+  if (!org) die('org.util.convertFormToOrg: org is mandatory.');
+  if (!vm) return org;
+  
+  org.bkey = vm.bkey ?? DEFAULT_KEY;
+  org.name = vm.name ?? DEFAULT_NAME;
+  org.type = vm.type ?? DEFAULT_ORG_TYPE;
+  org.dateOfFoundation = vm.dateOfFoundation ?? DEFAULT_DATE;
+  org.dateOfLiquidation = vm.dateOfLiquidation ?? DEFAULT_DATE;
   org.membershipCategoryKey = vm.membershipCategoryKey ?? 'mcat_default';
-  org.taxId = vm.taxId ?? '';
-  org.notes = vm.notes ?? '';
-  org.bexioId = vm.bexioId ?? '';
-  org.tags = vm.tags ?? '';
+  org.taxId = vm.taxId ?? DEFAULT_ID;
+  org.notes = vm.notes ?? DEFAULT_NOTES;
+  org.bexioId = vm.bexioId ?? DEFAULT_ID;
+  org.tags = vm.tags ?? DEFAULT_TAGS;
   return org;
 }
 
 /*-------------------------- NEW ORG --------------------------------*/
-export function createNewOrgFormModel(): OrgNewFormModel {
-  return {
-    name: '',
-    type: 'association',
-    dateOfFoundation: '',
-    dateOfLiquidation: '',
-    streetName: '',
-    streetNumber: '',
-    zipCode: '',
-    city: '',
-    countryCode: 'CH',
-    phone: '',
-    email: '',
-    url: '',
-    taxId: '',
-    bexioId: '',
-    membershipCategoryKey: 'mcat_default',
-    tags: '',
-    notes: '',
-  };
-}
-
 export function convertFormToNewOrg(vm: OrgNewFormModel, tenantId: string): OrgModel {
   const org = new OrgModel(tenantId);
-  org.bkey = '';
-  org.name = vm.name ?? '';
-  org.type = vm.type ?? 'association';
-  org.dateOfFoundation = vm.dateOfFoundation ?? '';
-  org.dateOfLiquidation = vm.dateOfLiquidation ?? '';
-  org.taxId = vm.taxId ?? '';
-  org.notes = vm.notes ?? '';
-  org.bexioId = vm.bexioId ?? '';
-  org.tags = vm.tags ?? '';
+  org.bkey = DEFAULT_KEY;
+  org.name = vm.name ?? DEFAULT_NAME;
+  org.type = vm.type ?? DEFAULT_ORG_TYPE;
+  org.dateOfFoundation = vm.dateOfFoundation ?? DEFAULT_DATE;
+  org.dateOfLiquidation = vm.dateOfLiquidation ?? DEFAULT_DATE;
+  org.taxId = vm.taxId ?? DEFAULT_ID;
+  org.notes = vm.notes ?? DEFAULT_NOTES;
+  org.bexioId = vm.bexioId ?? DEFAULT_ID;
+  org.tags = vm.tags ?? DEFAULT_TAGS;
 
-  org.favEmail = vm.email ?? '';
-  org.favPhone = vm.phone ?? '';
-  org.favStreetName = vm.streetName ?? '';
-  org.favStreetNumber = vm.streetNumber ?? '';
-  org.favZipCode = vm.zipCode ?? '';
-  org.favCity = vm.city ?? '';
-  org.favCountryCode = vm.countryCode ?? '';
+  org.favEmail = vm.email ?? DEFAULT_EMAIL;
+  org.favPhone = vm.phone ?? DEFAULT_PHONE;
+  org.favStreetName = vm.streetName ?? DEFAULT_STREETNAME;
+  org.favStreetNumber = vm.streetNumber ?? DEFAULT_STREETNUMBER;
+  org.favZipCode = vm.zipCode ?? DEFAULT_ZIP;
+  org.favCity = vm.city ?? DEFAULT_CITY;
+  org.favCountryCode = vm.countryCode ?? DEFAULT_COUNTRY;
   return org;
 }
 
 export function convertNewOrgFormToEmailAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoriteEmailAddress(AddressUsage.Work, vm.email ?? '', tenantId);
+  return createFavoriteEmailAddress(AddressUsage.Work, vm.email ?? DEFAULT_EMAIL, tenantId);
 }
 
 export function convertNewOrgFormToPhoneAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoritePhoneAddress(AddressUsage.Work, vm.phone ?? '', tenantId);
+  return createFavoritePhoneAddress(AddressUsage.Work, vm.phone ?? DEFAULT_PHONE, tenantId);
 }
 
 export function convertNewOrgFormToWebAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoriteWebAddress(AddressUsage.Work, vm.url ?? '', tenantId);
+  return createFavoriteWebAddress(AddressUsage.Work, vm.url ?? DEFAULT_URL, tenantId);
 }
 
 export function convertNewOrgFormToPostalAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoritePostalAddress(AddressUsage.Work, vm.streetName ?? '', vm.streetNumber ?? '', vm.zipCode ?? '', vm.city ?? '', vm.countryCode ?? '', tenantId);
+  return createFavoritePostalAddress(AddressUsage.Work, vm.streetName ?? DEFAULT_STREETNAME, vm.streetNumber ?? DEFAULT_STREETNUMBER, vm.zipCode ?? DEFAULT_ZIP, vm.city ?? DEFAULT_CITY, vm.countryCode ?? DEFAULT_COUNTRY, tenantId);
+}
+
+
+/*-------------------------- search index --------------------------------*/
+/**
+ * Create an index entry for a given organization based on its values.
+ * @param org the organization to generate the index for 
+ * @returns the index string
+ */
+export function getOrgIndex(org: OrgModel): string {
+  let _index = '';
+  _index = addIndexElement(_index, 'n', org.name);
+  _index = addIndexElement(_index, 'c', org.favCity);
+  _index = addIndexElement(_index, 'ot', org.type);
+  _index = addIndexElement(_index, 'dof', org.dateOfFoundation);
+  return _index;
+}
+
+/**
+ * Returns a string explaining the structure of the index.
+ * This can be used in info boxes on the GUI.
+ */
+export function getOrgIndexInfo(): string {
+  return 'n:name c:city ot:orgType dof:dateOfFoundation';
 }

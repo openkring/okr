@@ -61,3 +61,4 @@ export class ReservationModel implements BkModel, NamedModel, SearchableModel, T
 }
 
 export const ReservationCollection = 'reservations';
+export const ReservationModelName = 'reservation';

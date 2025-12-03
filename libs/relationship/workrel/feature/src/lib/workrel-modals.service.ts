@@ -19,7 +19,7 @@ export class WorkrelModalsService {
   private readonly tenantId = this.appStore.tenantId();
 
   public async selectPerson(): Promise<PersonModel | undefined> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: PersonSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -27,8 +27,8 @@ export class WorkrelModalsService {
         currentUser: this.appStore.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isPerson(data, this.tenantId)) {
         return data;
@@ -38,7 +38,7 @@ export class WorkrelModalsService {
   }
 
   public async selectOrg(): Promise<OrgModel | undefined> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: OrgSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -46,8 +46,8 @@ export class WorkrelModalsService {
         currentUser: this.appStore.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isOrg(data, this.tenantId)) {
         return data;
@@ -61,10 +61,10 @@ export class WorkrelModalsService {
    * @param workrel the work relationship to delete, its bkey needs to be valid so that we can find it in the database. 
    */
   public async end(workrel: WorkrelModel): Promise<void> {
-    const _date = await selectDate(this.modalController);
-    if (!_date) return;
-    const _endDate = convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false);
-    await this.workrelService.endWorkrelByDate(workrel, _endDate, this.appStore.currentUser());
+    const date = await selectDate(this.modalController);
+    if (!date) return;
+    const endDate = convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false);
+    await this.workrelService.endWorkrelByDate(workrel, endDate, this.appStore.currentUser());
   }
 
 }

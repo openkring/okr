@@ -1,11 +1,12 @@
-import { Component, computed, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { CategoryListFormModel, categoryListFormModelShape, categoryListFormValidations } from '@bk2/category-util';
+import { CATEGORY_LIST_FORM_SHAPE, CategoryListFormModel, categoryListFormValidations } from '@bk2/category-util';
 import { CategoryItemModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategoryItemsComponent, CheckboxComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-category-list-form',
@@ -15,82 +16,91 @@ import { hasRole } from '@bk2/shared-util-core';
     ChipsComponent, NotesInputComponent,
     TextInputComponent, ChipsComponent, ErrorNoteComponent, CategoryItemsComponent, CheckboxComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
-],
+  ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   <form scVestForm 
     [formShape]="shape"
-    [formValue]="vm()"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
 
     <ion-card>
       <ion-card-content>
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-text-input name="name" [value]="name()" [autofocus]="true" [copyable]="true" [readOnly]="readOnly()" (changed)="onChange('name', $event)" /> 
+              <bk-text-input name="name" [value]="name()" [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" /> 
               <bk-error-note [errors]="nameErrors()" />                                                                               
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-text-input name="i18nBase" [value]="i18nBase()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('i18nBase', $event)" /> 
+              <bk-text-input name="i18nBase" [value]="i18nBase()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('i18nBase', $event)" /> 
               <bk-error-note [errors]="i18nBaseErrors()" />                                                                               
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-checkbox name="translateItems" [isChecked]="translateItems()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('translateItems', $event)"/>
+              <bk-checkbox name="translateItems" [isChecked]="translateItems()" [showHelper]="true" [readOnly]="isReadOnly()" (changed)="onFieldChange('translateItems', $event)"/>
             </ion-col>
           </ion-row>
         </ion-grid>
       </ion-card-content>
     </ion-card>
 
-    <bk-category-items [items]="items()" (changed)="onChange('items', $event)" />
+    <bk-category-items [items]="items()" (changed)="onFieldChange('items', $event)" />
 
     @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="categoryTags()" [readOnly]="readOnly()" (changed)="onChange('tags', $event)" />
+      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="categoryTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
     }
 
     @if(hasRole('admin')) {
-      <bk-notes [value]="notes()" [readOnly]="readOnly()" (changed)="onChange('notes', $event)" />
+      <bk-notes [value]="notes()" [readOnly]="isReadOnly()" (changed)="onFieldChange('notes', $event)" />
     }
   </form>
 `
 })
 export class CategoryListFormComponent {
-  public vm = model.required<CategoryListFormModel>();
+  public formData = model.required<CategoryListFormModel>();
   public currentUser = input<UserModel | undefined>();
   public categoryTags = input.required<string>();
   public readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
+ // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
 
+  // validation and errors
   protected readonly suite = categoryListFormValidations;
-  protected readonly shape = categoryListFormModelShape;
-
-  protected name = computed(() => this.vm().name ?? '');
-  protected i18nBase = computed(() => this.vm().i18nBase ?? '');
-  protected notes = computed(() => this.vm().notes ?? '');
-  protected tags = computed(() => this.vm().tags ?? '');
-  protected items = computed(() => this.vm().items ?? []);
-  protected translateItems = computed(() => this.vm().translateItems ?? false);
-
-  private readonly validationResult = computed(() => categoryListFormValidations(this.vm()));
+  protected readonly shape = CATEGORY_LIST_FORM_SHAPE;
+  private readonly validationResult = computed(() => categoryListFormValidations(this.formData()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected i18nBaseErrors = computed(() => this.validationResult().getErrors('i18nBase'));
-    
-  protected onValueChange(value: CategoryListFormModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+
+  // fields
+  protected name = computed(() => this.formData().name ?? DEFAULT_NAME);
+  protected i18nBase = computed(() => this.formData().i18nBase ?? '');
+  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected items = computed(() => this.formData().items ?? []);
+  protected translateItems = computed(() => this.formData().translateItems ?? false);
+
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number | CategoryItemModel[] | boolean): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    console.log(this.validationResult().errors)
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: CategoryListFormModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('CategoryForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | CategoryItemModel[] | boolean): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('CategoryForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

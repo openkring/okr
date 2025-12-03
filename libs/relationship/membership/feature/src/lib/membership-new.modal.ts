@@ -2,7 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, OnInit, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { convertMemberAndOrgToNewForm } from '@bk2/relationship-membership-util';
+import { convertMemberAndOrgToNewForm, MembershipNewFormModel } from '@bk2/relationship-membership-util';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { OrgModel, PersonModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
@@ -22,12 +22,18 @@ import { MembershipNewStore } from './membership-new.store';
   providers: [MembershipNewStore],
   template: `
     <bk-header title="{{ '@membership.operation.create.label' | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content>
       @if(mcat(); as mcat) {
-        <bk-membership-new-form [(vm)]="vm" [membershipCategories]="mcat" [currentUser]="currentUser()" [readOnly]="readOnly()" (validChange)="onValidChange($event)" />
+        <bk-membership-new-form
+          [formData]="formData()"
+          [membershipCategories]="mcat"
+          [currentUser]="currentUser()"
+          [readOnly]="readOnly()"
+          (formDataChange)="onFormDataChange($event)"
+        />
       }
     </ion-content>
   `
@@ -36,13 +42,19 @@ export class MembershipNewModalComponent implements OnInit {
   private readonly modalController = inject(ModalController);
   protected readonly membershipNewStore = inject(MembershipNewStore);
 
+  // inputs
   public member = input.required<PersonModel | OrgModel>();
   public org = input.required<OrgModel>(); 
   public currentUser = input<UserModel | undefined>();
-  public modelType = input.required<'person' | 'org' | 'group'>();
+  public modelType = input.required<'person' | 'org' | 'group'>();  
 
-  public vm = linkedSignal(() => convertMemberAndOrgToNewForm(this.member(), this.org(), this.membershipNewStore.currentUser(), this.modelType()));
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  public formData = linkedSignal(() => convertMemberAndOrgToNewForm(this.member(), this.org(), this.membershipNewStore.currentUser(), this.modelType()));
 
+  // derived signals
   protected mcat = computed(() => this.membershipNewStore.membershipCategory());
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
@@ -53,8 +65,19 @@ export class MembershipNewModalComponent implements OnInit {
     this.onValidChange(true);
   }
 
-  public async save(): Promise<boolean> {
-    return this.modalController.dismiss(this.vm(), 'confirm');
+  /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(this.formData(), 'confirm');  
+  }
+
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertMemberAndOrgToNewForm(this.member(), this.org(), this.membershipNewStore.currentUser(), this.modelType()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: MembershipNewFormModel): void {
+    this.formData.set(formData);
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
@@ -63,7 +86,7 @@ export class MembershipNewModalComponent implements OnInit {
 
   protected onValidChange(valid: boolean): void {
     this.formIsValid.set(valid);
-    const _orgId = this.vm().orgKey;
+    const _orgId = this.formData().orgKey;
     if (_orgId && _orgId !== this.membershipNewStore.orgId()) {
       this.membershipNewStore.setOrgId(_orgId);
     }

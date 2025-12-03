@@ -14,8 +14,6 @@
     "@bk2/shared-constants": "*",
     "@bk2/shared-util-core": "*",
     "@bk2/shared-util-angular": "*",
-    "@bk2/shared-config": "*",
-    "@bk2/avatar-ui": "*",
-    "@bk2/avatar-data-access": "*"
+    "@bk2/shared-config": "*"
   }
 }

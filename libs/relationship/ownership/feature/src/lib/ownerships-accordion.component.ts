@@ -1,27 +1,26 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { OrgModel, OwnershipModel, PersonModel, ResourceModel, RoleName } from '@bk2/shared-models';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { OrgModel, OwnershipModel, PersonModel, ReservationModel, ResourceModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
-import { getAvatarKey, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { getAvatarKey, getCategoryIcon, getItemLabel, hasRole, isOngoing } from '@bk2/shared-util-core';
 import { OwnershipAccordionStore } from './ownerships-accordion.store';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-ownerships-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, AvatarPipe, AsyncPipe, DurationPipe, SvgIconPipe, EmptyListComponent,
-    IonAccordion, IonItem, IonLabel, IonList, IonButton, IonIcon, IonThumbnail, IonImg
+    TranslatePipe, AsyncPipe, DurationPipe, SvgIconPipe, EmptyListComponent,
+    IonAccordion, IonItem, IonLabel, IonList, IonButton, IonIcon, IonAvatar, IonImg
   ],
   providers: [OwnershipAccordionStore],
   styles: [`
-      ion-thumbnail { width: 30px; height: 30px; }
+      ion-avatar { width: 30px; height: 30px; }
     `],
   template: `
     <ion-accordion toggle-icon-slot="start" value="ownerships">
@@ -40,9 +39,9 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
           <ion-list lines="inset">
             @for(ownership of ownerships(); track $index) {
               <ion-item (click)="showActions(ownership)">
-                <ion-thumbnail slot="start">
-                  <ion-img [src]="getAvatarKey(ownership) | avatar | async" alt="resource avatar" />
-                </ion-thumbnail>
+                <ion-avatar slot="start">
+                  <ion-img src="{{ getIcon(ownership.resourceType) | svgIcon }}" alt="Avatar Logo" />
+                </ion-avatar>
                 <ion-label>{{ownership.resourceName}}</ion-label>
                 <ion-label>{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>
               </ion-item>
@@ -65,6 +64,8 @@ export class OwnershipAccordionComponent {
   public readonly readOnly = input(true);
 
   protected ownerships = computed(() => this.ownershipStore.ownerships());
+  private readonly currentUser = computed(() => this.ownershipStore.currentUser());
+  protected readonly resourceTypes = this.ownershipStore.appStore.getCategory('resource_type');
 
   private imgixBaseUrl = this.ownershipStore.appStore.env.services.imgixBaseUrl;
 
@@ -102,15 +103,16 @@ export class OwnershipAccordionComponent {
    * @param ownership 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
-    if (hasRole('resourceAdmin', this.ownershipStore.appStore.currentUser())) {
+    if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
       if (isOngoing(ownership.validTo)) {
         actionSheetOptions.buttons.push(createActionSheetButton('endownership', this.imgixBaseUrl, 'stop-circle'));
       }
     }
-    if (hasRole('admin', this.ownershipStore.appStore.currentUser())) {
+    if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
+    actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
   }
 
@@ -124,12 +126,16 @@ export class OwnershipAccordionComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
           await this.ownershipStore.delete(ownership, this.readOnly());
           break;
         case 'edit':
           await this.ownershipStore.edit(ownership, this.readOnly());
+          break;
+        case 'view':
+          await this.ownershipStore.edit(ownership, true);
           break;
         case 'endownership':
           await this.ownershipStore.end(ownership, this.readOnly());
@@ -141,5 +147,9 @@ export class OwnershipAccordionComponent {
   /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.ownershipStore.currentUser());
+  }
+
+  protected getIcon(resourceType: string): string {
+    return getCategoryIcon(this.resourceTypes, resourceType);
   }
 }

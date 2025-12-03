@@ -2,13 +2,12 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
-import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ChangeConfirmationComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { ChangeConfirmationComponent } from '@bk2/shared-ui';
 import { AppNavigationService } from '@bk2/shared-util-angular';
 
 import { SectionService } from '@bk2/cms-section-data-access';
@@ -20,9 +19,12 @@ import { SectionFormComponent } from './section.form';
 @Component({
   selector: 'bk-section-page',
   standalone: true,
-  imports: [TranslatePipe, AsyncPipe, SvgIconPipe, ChangeConfirmationComponent, SectionFormComponent, SpinnerComponent, HeaderComponent, IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon],
+  imports: [
+    TranslatePipe, AsyncPipe, SvgIconPipe, 
+    ChangeConfirmationComponent, SectionFormComponent, 
+    IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon
+  ],
   template: `
-    @if(vm()) {
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-title>{{ '@content.section.operation.update.label' | translate | async }}</ion-title>
@@ -36,20 +38,19 @@ import { SectionFormComponent } from './section.form';
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    @if(formIsValid()) {
-    <bk-change-confirmation [showCancel]="true" (okClicked)="save()" (cancelClicked)="cancel()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancelChange()" (okClicked)="save()" />
     }
-    <ion-content>
+    <ion-content no-padding>
       <div style="width: 100%">
-        <bk-section-form [(vm)]="vm" [currentUser]="appStore.currentUser()" [sectionTags]="sectionTags()" (validChange)="formIsValid.set($event)" />
+        <bk-section-form
+          [formData]="formData()"
+          [currentUser]="appStore.currentUser()"
+          [allTags]="tags()"
+          (formDataChange)="onFormDataChange($event)"
+        />
       </div>
     </ion-content>
-    } @else {
-    <bk-header title="" />
-    <ion-content>
-      <bk-spinner />
-    </ion-content>
-    }
   `,
 })
 export class SectionPageComponent {
@@ -58,26 +59,39 @@ export class SectionPageComponent {
   private readonly appNavigationService = inject(AppNavigationService);
   protected appStore = inject(AppStore);
 
+  // inputs
   public id = input.required<string>();
+
+ // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  public formData = linkedSignal(() => convertSectionToForm(this.originalSection() ?? new SectionModel(this.appStore.tenantId())));
 
   private readonly sectionRef = rxResource({
     params: () => this.id(),
     stream: () => this.sectionService.read(this.id()),
   });
-  public section = computed(() => this.sectionRef.value());
-  public vm = linkedSignal(() => convertSectionToForm(this.section() ?? new SectionModel(this.appStore.tenantId())));
-  protected sectionTags = computed(() => this.appStore.getTags('section'));
-  protected formIsValid = signal(false);
+  public originalSection = computed(() => this.sectionRef.value());
+  protected tags = computed(() => this.appStore.getTags('section'));
 
+  /******************************* actions *************************************** */
   /**
    * Save the changes to the section into the database.
    */
   public async save(): Promise<void> {
-    const originalSection = await firstValueFrom(this.sectionService.read(this.id()));
-    const section = convertFormToSection(originalSection, this.vm(), this.appStore.tenantId());
-    await this.sectionService.update(section, this.appStore.currentUser());
-    this.formIsValid.set(false);
-    this.appNavigationService.back();
+    this.formDirty.set(false);
+    const newSection = convertFormToSection(this.formData(), this.originalSection());
+    await this.sectionService.update(newSection, this.appStore.currentUser());
+  }
+
+  public async cancelChange(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertSectionToForm(this.originalSection() ?? new SectionModel(this.appStore.tenantId())));  // reset the form
+  }
+
+  protected onFormDataChange(formData: SectionFormModel): void {
+    this.formData.set(formData);
   }
 
   public async cancel(): Promise<void> {
@@ -85,12 +99,11 @@ export class SectionPageComponent {
   }
 
   public async previewSection(): Promise<void> {
-    const originalSection = await firstValueFrom(this.sectionService.read(this.id()));
     const modal = await this.modalController.create({
       component: PreviewModalComponent,
       cssClass: 'full-modal',
       componentProps: {
-        section: convertFormToSection(originalSection, this.vm() as SectionFormModel, this.appStore.tenantId()),
+        section: convertFormToSection(this.formData(), this.originalSection()),
       },
     });
     modal.present();

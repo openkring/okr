@@ -1,5 +1,5 @@
 import { CategoryItemModel, CategoryListModel } from '@bk2/shared-models';
-import { isType } from '@bk2/shared-util-core';
+import { addIndexElement, die, isType } from '@bk2/shared-util-core';
 
 import { CategoryItemFormModel, CategoryListFormModel } from './category-form.model';
 import { DEFAULT_CURRENCY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS } from '@bk2/shared-constants';
@@ -20,8 +20,10 @@ export function convertCategoryListToForm(cat: CategoryListModel): CategoryListF
   };
 }
 
-export function convertFormToCategoryList(cat: CategoryListModel | undefined, vm: CategoryListFormModel, tenantId: string): CategoryListModel {
-  cat ??= new CategoryListModel(tenantId);
+export function convertFormToCategoryList(vm?: CategoryListFormModel, cat?: CategoryListModel): CategoryListModel {
+  if (!cat) die('category.util.convertFormToCategoryList: category list is mandatory.');
+  if (!vm) return cat;
+
   cat.name = vm.name ?? DEFAULT_NAME;
   cat.tags = vm.tags ?? DEFAULT_TAGS;
 
@@ -79,3 +81,22 @@ export function getCategoryAbbreviation(cat: CategoryListModel | undefined, catN
   if (!cat) return '';
   return getCategoryAttribute(cat, catName, 'abbreviation') + '';
 }
+
+/**
+ * Create an index entry for a given category based on its values.
+ * @param category 
+ * @returns the index string
+ */
+export function getCategoryIndex(category: CategoryListModel): string {
+  let _index = '';
+  _index = addIndexElement(_index, 'n', category.name);
+  return _index;
+}
+
+  /**
+   * Returns a string explaining the structure of the index.
+   * This can be used in info boxes on the GUI.
+   */
+  export function getCategoryIndexInfo(): string {
+    return 'n:name';
+  }

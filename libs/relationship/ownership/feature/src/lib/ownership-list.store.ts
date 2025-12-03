@@ -13,6 +13,7 @@ import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, di
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
 import { OwnershipModalsService } from './ownership-modals.service';
 import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
+import { read } from 'fs';
 
 export type OwnershipListState = {
   ownerKey: string;
@@ -255,17 +256,20 @@ export const OwnershipListStore = signalStore(
       },
 
       /******************************* actions *************************************** */
-      async add(): Promise<void> {
-        const _currentPerson = store.appStore.currentPerson();
-        const _defaultResource = store.appStore.defaultResource();
-        if (!_currentPerson || !_defaultResource) return;
-        await store.ownershipModalsService.add(_currentPerson, 'person', _defaultResource);
+      async add(readOnly = true): Promise<void> {
+        if (readOnly) return;
+        const currentPerson = store.appStore.currentPerson();
+        const defaultResource = store.appStore.defaultResource();
+        if (!currentPerson || !defaultResource) return;
+        await store.ownershipModalsService.add(currentPerson, 'person', defaultResource);
         store.ownershipsResource.reload();
       },
 
-      async edit(ownership?: OwnershipModel): Promise<void> {
-        await store.ownershipModalsService.edit(ownership);
-        store.ownershipsResource.reload();
+      async edit(ownership?: OwnershipModel, readOnly = true): Promise<void> {
+        if (!readOnly && ownership) {
+          await store.ownershipModalsService.edit(ownership);
+          store.ownershipsResource.reload();
+        }
       },
 
       /**
@@ -274,11 +278,11 @@ export const OwnershipListStore = signalStore(
        * Therefore, we end an ownership by setting its validTo date.
        * @param ownership the Ownership to delete, its bkey needs to be valid so that we can find it in the database. 
        */
-      async end(ownership: OwnershipModel): Promise<void> {
-        if (ownership) {
-          const _date = await selectDate(store.modalController);
-          if (!_date) return;
-          await store.ownershipService.endOwnershipByDate(ownership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
+      async end(ownership: OwnershipModel, readOnly = true): Promise<void> {
+        if (!readOnly && ownership) {
+          const date = await selectDate(store.modalController);
+          if (!date) return;
+          await store.ownershipService.endOwnershipByDate(ownership, convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
           store.ownershipsResource.reload();  
         }
       },   
@@ -287,10 +291,10 @@ export const OwnershipListStore = signalStore(
         console.log(`OwnershipListStore.export(${type}) is not yet implemented.`);
       },
 
-      async delete(ownership?: OwnershipModel): Promise<void> {
-        if (ownership) {
-          const _result = await confirm(store.alertController, '@ownership.operation.delete.confirm', true);
-          if (_result === true) {
+      async delete(ownership?: OwnershipModel, readOnly = true): Promise<void> {
+        if (!readOnly && ownership) {
+          const result = await confirm(store.alertController, '@ownership.operation.delete.confirm', true);
+          if (result === true) {
             await store.ownershipService.delete(ownership);
             store.ownershipsResource.reload(); 
           }

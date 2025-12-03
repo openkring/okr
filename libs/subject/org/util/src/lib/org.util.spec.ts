@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { OrgModel } from '@bk2/shared-models';
-import { newOrgFormModel, convertOrgToForm, convertFormToOrg, createNewOrgFormModel, convertFormToNewOrg } from './org.util';
-import { OrgFormModel } from './org-form.model';
-import { OrgNewFormModel } from './org-new-form.model';
+import { convertOrgToForm, convertFormToOrg, convertFormToNewOrg } from './org.util';
+import { ORG_FORM_SHAPE } from './org-form.model';
+import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from './org-new-form.model';
 
 // Mock any problematic external dependencies to isolate the test
 vi.mock('@bk2/shared-i18n', () => ({
@@ -27,16 +27,11 @@ describe('Org Utils', () => {
   });
 
   describe('OrgFormModel functions', () => {
-    it('newOrgFormModel should return a default form model', () => {
-      const formModel = newOrgFormModel();
-      expect(formModel.name).toBe('');
-    });
-
     it('convertOrgToForm should convert an OrgModel to an OrgFormModel', () => {
       const formModel = convertOrgToForm(org);
-      expect(formModel.bkey).toBe('org-key-1');
-      expect(formModel.name).toBe('Test Org');
-      expect(formModel.tags).toBe('test,org');
+      expect(formModel!.bkey).toBe('org-key-1');
+      expect(formModel!.name).toBe('Test Org');
+      expect(formModel!.tags).toBe('test,org');
     });
 
     it('convertOrgToForm should return an empty object if org is undefined', () => {
@@ -45,39 +40,38 @@ describe('Org Utils', () => {
     });
 
     it('convertFormToOrg should update an existing OrgModel', () => {
-      const formModel: OrgFormModel = {
-        bkey: 'org-key-1',
-        name: 'Updated Org Name',
-        tags: 'updated,tags',
-        notes: 'Updated notes.',
-      };
-      const updatedOrg = convertFormToOrg(org, formModel, tenantId);
+      const formModel = ORG_FORM_SHAPE;
+      formModel.bkey = 'org-key-1';
+      formModel.name = 'Updated Org Name';
+      formModel.tags = 'updated,tags';
+      formModel.notes = 'Updated notes.';
+      const updatedOrg = convertFormToOrg(formModel, org);
       expect(updatedOrg.name).toBe('Updated Org Name');
       expect(updatedOrg.tags).toBe('updated,tags');
       expect(updatedOrg.bkey).toBe('org-key-1'); // Should not be changed
     });
 
     it('convertFormToOrg should create a new OrgModel if one is not provided', () => {
-      const formModel: OrgFormModel = { name: 'New Org' };
-      const newOrg = convertFormToOrg(undefined, formModel, tenantId);
+      const formModel = ORG_FORM_SHAPE; 
+      formModel.name = 'New Org';
+      const newOrg = convertFormToOrg(formModel, undefined);
       expect(newOrg).toBeInstanceOf(OrgModel);
       expect(newOrg.name).toBe('New Org');
-      expect(newOrg.tenants[0]).toBe(tenantId);
     });
   });
 
   describe('OrgNewFormModel functions', () => {
     it('createNewOrgFormModel should return a default new-org form model', () => {
-      const formModel = createNewOrgFormModel();
+      const formModel = ORG_NEW_FORM_SHAPE;
       expect(formModel.name).toBe('');
     });
 
     it('convertFormToNewOrg should create a new OrgModel from a OrgNewFormModel', () => {
-      const formModel: OrgNewFormModel = {
-        name: 'Brand New Org',
-        bexioId: 'BNO1',
-        notes: 'Notes for the new org',
-      };
+      const formModel = ORG_NEW_FORM_SHAPE;
+      formModel.name = 'Brand New Org';
+      formModel.bexioId = 'BNO1';
+      formModel.notes = 'Notes for the new org';
+      
       const newOrg = convertFormToNewOrg(formModel, tenantId);
       expect(newOrg).toBeInstanceOf(OrgModel);
       expect(newOrg.bkey).toBe('');

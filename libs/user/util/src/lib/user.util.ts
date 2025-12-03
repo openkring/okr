@@ -144,11 +144,16 @@ export function isUser(user: unknown, tenantId: string): user is UserModel {
   return isType(user, new UserModel(tenantId));
 }
 
-/*------------------------------index ---------------------------*/
-export function getUserIndex(model: UserModel): string {
-  return `l:${model.loginEmail} p:${model.personKey}`;
+  /*-------------------------- search index --------------------------------*/
+  /**
+   * Create an index entry for a given user based on its values.
+   * @param user the user for which to create the index
+   * @returns the index string
+   */
+export function getUserIndex(user: UserModel): string {
+  return `n:${user.firstName} ${user.lastName} l:${user.loginEmail} p:${user.personKey}`;
 }
 
 export function getUserIndexInfo(): string {
-  return 'l:loginEmail p:personKey';
+  return 'n:ame l:oginEmail p:ersonKey';
 }

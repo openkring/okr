@@ -1,16 +1,19 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { RoleName, UserModel, WorkrelCollection, WorkrelModel } from '@bk2/shared-models';
+import { RoleName, UserModel, WorkrelModel, WorkrelModelName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { getFullPersonName, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
+
 import { WorkrelFormComponent } from '@bk2/relationship-workrel-ui';
-import { convertFormToWorkrel, convertWorkrelToForm } from '@bk2/relationship-workrel-util';
+import { convertFormToWorkrel, convertWorkrelToForm, WorkrelFormModel } from '@bk2/relationship-workrel-util';
+
 import { WorkrelModalsService } from './workrel-modals.service';
 
 @Component({
@@ -20,30 +23,36 @@ import { WorkrelModalsService } from './workrel-modals.service';
     TranslatePipe, AsyncPipe,
     CommentsAccordionComponent, HeaderComponent,
     ChangeConfirmationComponent, WorkrelFormComponent,
-    IonContent, IonAccordionGroup
+    IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
+  styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header title="{{ modalTitle() | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    <bk-header title="{{ headerTitle() | translate | async }}" [isModal]="true" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content>
-      <bk-workrel-form [(vm)]="vm" 
+    <ion-content no-padding>
+      <bk-workrel-form
+        [formData]="formData()" 
         [currentUser]="currentUser()"
         [allTags]="tags()"
         [types]="types()"
         [states]="states()" 
-        [readOnly]="readOnly()"
+        [readOnly]="isReadOnly()"
         [periodicities]="periodicities()" 
         (selectPerson)="selectPerson()"
         (selectOrg)="selectOrg()"
-        (validChange)="formIsValid.set($event)"
+        (formDataChange)="onFormDataChange($event)"
       />
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
-        <ion-accordion-group value="comments">
-          <bk-comments-accordion [collectionName]="workrelCollection" [parentKey]="workrelKey()" />
-        </ion-accordion-group>
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <ion-accordion-group value="comments">
+              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+            </ion-accordion-group>
+          </ion-card-content>
+        </ion-card>
       }
     </ion-content>
   `
@@ -53,31 +62,42 @@ export class WorkrelEditModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
+  // inputs
   public workrel = input.required<WorkrelModel>();
   public currentUser = input<UserModel | undefined>();
+  public readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public vm = linkedSignal(() => convertWorkrelToForm(this.workrel()));
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = linkedSignal(() => convertWorkrelToForm(this.workrel()));
+
+  // derived signals
+  protected readonly headerTitle = computed(() => getTitleLabel('workrel', this.workrel().bkey, this.isReadOnly()));
+  protected readonly parentKey = computed(() => `${WorkrelModelName}.${this.workrel().bkey}`);
   protected tags = computed(() => this.appStore.getTags('workrel'));
   protected types = computed(() => this.appStore.getCategory('workrel_type'));
   protected states = computed(() => this.appStore.getCategory('workrel_state'));
   protected periodicities = computed(() => this.appStore.getCategory('periodicity'));
-  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
-  protected readonly workrelKey = computed(() => this.workrel().bkey ?? '');
-  protected readonly subjectUrl = computed(() => `/person/${this.vm().subjectKey}`);
-  protected readonly subjectName = computed(() => getFullPersonName(this.vm().subjectName1 ?? '', this.vm().subjectName2 ?? ''));
-  protected readonly objectName = computed(() => this.vm().objectName ?? '');
-  protected readonly objectUrl = computed(() => `/org/${this.vm().objectKey}`);
-
-  protected readonly modalTitle = computed(() => `@workrel.operation.${hasRole('memberAdmin', this.currentUser()) ? 'update' : 'view'}.label`);
-
-  protected formIsValid = signal(false);
-  public workrelCollection = WorkrelCollection;
-
-  public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToWorkrel(this.workrel(), this.vm(), this.appStore.env.tenantId), 'confirm');
+  /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(convertFormToWorkrel(this.formData(), this.workrel()), 'confirm');
   }
 
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertWorkrelToForm(this.workrel()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: WorkrelFormModel): void {
+    this.formData.set(formData);
+  }
+
+  /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
   }
@@ -85,8 +105,8 @@ export class WorkrelEditModalComponent {
   protected async selectPerson(): Promise<void> {
     const person = await this.workrelModalsService.selectPerson();
     if (!person) return;
-    this.vm.update((_vm) => ({
-      ..._vm, 
+    this.formData.update((vm) => ({
+      ...vm, 
       subjectKey: person.bkey, 
       subjectName1: person.firstName,
       subjectName2: person.lastName,
@@ -97,8 +117,8 @@ export class WorkrelEditModalComponent {
   protected async selectOrg(): Promise<void> {
     const org = await this.workrelModalsService.selectOrg();
     if (!org) return;
-    this.vm.update((_vm) => ({
-      ..._vm, 
+    this.formData.update((vm) => ({
+      ...vm, 
       objectKey: org.bkey, 
       objectName: org.name,
       objectType: org.type,

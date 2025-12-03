@@ -1,15 +1,7 @@
-import { DeepRequired } from 'ngx-vest-forms';
-
 import { BaseProperty } from '@bk2/shared-models';
 import { DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS } from '@bk2/shared-constants';
 
-// can not use the DeepPartial from ngx-vest-forms because it is not compatible with BaseProperty[].
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type DeepPartial<T> = T extends any[]? T : T extends Record<string, any> ? {
-  [P in keyof T]?: DeepPartial<T[P]>;
-} : T;
-
-export type ResourceFormModel = DeepPartial<{
+export type ResourceFormModel = {
   bkey: string,
   name: string,
   keyNr: number,
@@ -31,9 +23,9 @@ export type ResourceFormModel = DeepPartial<{
   data: BaseProperty[],
   description: string,
   tags: string,
-}>;
+};
 
-export const resourceFormShape: DeepRequired<ResourceFormModel> = {
+export const RESOURCE_FORM_SHAPE: ResourceFormModel = {
   bkey: DEFAULT_KEY,
   name: DEFAULT_NAME,
   keyNr: 0,

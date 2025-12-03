@@ -5,9 +5,10 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 import { NameDisplays, ViewPositions } from '@bk2/shared-categories';
 import { CaseInsensitiveWordMask } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AvatarInfo, NameDisplay, ViewPosition } from '@bk2/shared-models';
-import { AvatarsComponent, CategoryComponent, CheckboxComponent, EditorComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { AvatarInfo, NameDisplay, UserModel, ViewPosition } from '@bk2/shared-models';
+import { CategoryComponent, CheckboxComponent, EditorComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
 
+import { AvatarsComponent } from '@bk2/avatar-ui';
 import { SectionFormModel } from '@bk2/cms-section-util';
 
 @Component({
@@ -23,8 +24,8 @@ import { SectionFormModel } from '@bk2/cms-section-util';
     @if(vm(); as vm) {
       <bk-avatars (changed)="onPeopleListChange($event)" (selectClicked)="selectClicked.emit()"
             [avatars]="persons()"
-            defaultIcon="person"
             [readOnly]="readOnly()"
+            [currentUser]="currentUser()"
             title="@content.type.peopleList.label"
             addLabel="@content.type.peopleList.addLabel" />
 
@@ -75,6 +76,7 @@ import { SectionFormModel } from '@bk2/cms-section-util';
 })
 export class PeopleListFormComponent {
   public vm = model.required<SectionFormModel>();
+  public currentUser = input.required<UserModel>();
   public readonly readOnly = input(true);
 
   protected avatarConfig = computed(() => this.vm().properties?.avatar);

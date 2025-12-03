@@ -19,7 +19,7 @@ export const documentValidations = staticSuite((model: DocumentModel, field?: st
   dateValidations('dateOfDocCreation', model.dateOfDocCreation);
   dateValidations('dateOfDocLastUpdate', model.dateOfDocLastUpdate);
   stringValidations('locationKey', model.locationKey, SHORT_NAME_LENGTH);
-  stringValidations('md5hash', model.md5hash, SHORT_NAME_LENGTH);
+  stringValidations('hash', model.hash, LONG_NAME_LENGTH);
   stringValidations('priorVersionKey', model.priorVersionKey, SHORT_NAME_LENGTH);
   stringValidations('version', model.version, SHORT_NAME_LENGTH);
 

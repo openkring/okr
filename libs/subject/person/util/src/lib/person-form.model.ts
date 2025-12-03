@@ -1,6 +1,4 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
-export type PersonFormModel = DeepPartial<{
+export type PersonFormModel = {
   bkey: string,
   firstName: string,
   lastName: string,
@@ -12,9 +10,9 @@ export type PersonFormModel = DeepPartial<{
   tags: string,
   bexioId: string,
   tenants: string[]
-}>;
+};
 
-export const personFormModelShape: DeepRequired<PersonFormModel> = {
+export const PERSON_FORM_SHAPE: PersonFormModel = {
   bkey: '',
   firstName: '',
   lastName: '',

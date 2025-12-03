@@ -1,6 +1,6 @@
 import { Component, effect, inject, input, output } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAvatar, IonIcon, IonImg, IonItem, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonAvatar, IonIcon, IonImg, IonItem, IonLabel, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { ColorsIonic } from '@bk2/shared-categories';
 import { ColorIonic } from '@bk2/shared-models';
@@ -11,7 +11,7 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
 @Component({
   selector: 'bk-avatar-toolbar',
   standalone: true,
-  imports: [CategoryPlainNamePipe, SvgIconPipe, IonToolbar, IonAvatar, IonImg, IonTitle, IonIcon, IonItem],
+  imports: [CategoryPlainNamePipe, SvgIconPipe, IonToolbar, IonAvatar, IonImg, IonTitle, IonIcon, IonItem, IonLabel],
   providers: [AvatarToolbarStore],
   template: `
     <ion-toolbar [color]="color() | categoryPlainName : colorsIonic">
@@ -23,12 +23,13 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
       </ion-avatar>
 
       @if(title()) {
-        <ion-item style="padding:0px !important; --min-height: 30px;" color="primary" lines="none">
-          <ion-title style="padding:0px !important;" (click)="avatarToolbarStore.showZoomedImage()">{{ title() }}</ion-title>
+        <ion-item [color]="color() | categoryPlainName : colorsIonic" lines="none">
+          <ion-title (click)="avatarToolbarStore.showZoomedImage()">{{ title() }}</ion-title>
         </ion-item>
-      } @if(subTitle()) {
-        <ion-item style="padding:0px !important; --min-height: 30px;" color="primary" lines="none">
-          <ion-title style="padding:0px !important;"><small>{{ subTitle() }}</small></ion-title>
+      }
+      @if(subTitle()) {
+        <ion-item [color]="color() | categoryPlainName : colorsIonic" lines="none">
+          <ion-label><small>{{ subTitle() }}</small></ion-label>
         </ion-item>
       }
     </ion-toolbar>
@@ -46,9 +47,9 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
       ion-title {
         margin: auto;
         width: 100%;
-        text-align: center;
-        padding: 10px;
+        text-align: center; 
       }
+      ion-label { margin: auto; width: 100%; text-align: center; }
       ion-icon {
         font-size: 24px;
         position: absolute;
@@ -64,7 +65,7 @@ export class AvatarToolbarComponent {
   public key = input.required<string>(); // = ModelType.ModelKey e.g. person.1asdfölj
   public readOnly = input(true);
   public alt = input('Avatar');
-  public color = input<ColorIonic>(ColorIonic.Primary);
+  public color = input<ColorIonic>(ColorIonic.Light);
   public title = input<string | undefined>();
   public subTitle = input<string | undefined>();
 

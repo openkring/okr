@@ -6,7 +6,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { UserModel, WorkrelCollection, WorkrelModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
-import { getWorkrelSearchIndex, getWorkrelSearchIndexInfo } from '@bk2/relationship-workrel-util';
+import { getWorkrelIndex } from '@bk2/relationship-workrel-util';
 
 @Injectable({
     providedIn: 'root'
@@ -23,7 +23,7 @@ export class WorkrelService {
    * @returns the document id of the stored workrel in the database or undefined if the operation failed
    */
   public async create(workrel: WorkrelModel, currentUser?: UserModel): Promise<string | undefined> {
-    workrel.index = this.getSearchIndex(workrel);
+    workrel.index = getWorkrelIndex(workrel);
     return await this.firestoreService.createModel<WorkrelModel>(WorkrelCollection, workrel, '@workrel.operation.create', currentUser);
   }
 
@@ -44,7 +44,7 @@ export class WorkrelService {
    * @returns the document id of the updated workrel or undefined if the operation failed  
    */
   public async update(workrel: WorkrelModel, currentUser?: UserModel, confirmMessage = '@workrel.operation.update'): Promise<string | undefined> {
-    workrel.index = this.getSearchIndex(workrel);
+    workrel.index = getWorkrelIndex(workrel);
     return await this.firestoreService.updateModel<WorkrelModel>(WorkrelCollection, workrel, false, confirmMessage, currentUser);
   }
 
@@ -117,14 +117,5 @@ export class WorkrelService {
   /*-------------------------- export --------------------------------*/
   public export(): void {
     console.log('workrelService.export: not yet implemented.');
-  }
- 
-  /*-------------------------- search index --------------------------------*/
-  public getSearchIndex(workrel: WorkrelModel): string {
-    return getWorkrelSearchIndex(workrel);
-  }
-
-  public getSearchIndexInfo(): string {
-    return getWorkrelSearchIndexInfo();
   }
 }

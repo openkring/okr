@@ -29,7 +29,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
       <ion-title>{{ selectedSectionsCount() }}/{{ sectionsCount() }} {{ '@content.section.plural' | translate | async }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('contentAdmin')) {
-          <ion-button (click)="edit()">
+          <ion-button (click)="add()">
             <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
           </ion-button>
         }
@@ -101,6 +101,7 @@ export class SectionAllListComponent {
   protected isLoading = computed(() => this.sectionListStore.isLoading());
   protected types = computed(() => this.sectionListStore.appStore.getCategory('section_type'));
   private currentUser = computed(() => this.sectionListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.sectionListStore.appStore.env.services.imgixBaseUrl;
 
@@ -128,10 +129,15 @@ export class SectionAllListComponent {
    * @param section 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
-    if (hasRole('contentAdmin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    if (hasRole('registered', this.currentUser())) {
+            actionSheetOptions.buttons.push(createActionSheetButton('section.view', this.imgixBaseUrl, 'create_edit'));
+            actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (!this.readOnly()) {
+            actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    if (hasRole('admin', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('section.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -145,23 +151,23 @@ export class SectionAllListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.delete(section);
+        case 'section.delete':
+          await this.sectionListStore.delete(section, this.readOnly());
           break;
-        case 'edit':
-          await this.edit(section);
+        case 'section.edit':
+          await this.sectionListStore.edit(section, this.readOnly());
+          break;
+        case 'section.view':
+          await this.sectionListStore.edit(section, true);
           break;
       }
     }
   }
 
-  public async edit(section?: SectionModel) { 
-    this.sectionListStore.edit(section?.bkey);
-  } 
-  
-  public async delete(section: SectionModel): Promise<void> {
-    await this.sectionListStore.delete(section);
+  protected async add(): Promise<void> {
+    await this.sectionListStore.add(this.readOnly());
   }
 
   protected hasRole(role: RoleName): boolean {

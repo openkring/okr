@@ -76,7 +76,7 @@ export class TimeInputComponent {
   protected async selectTime(time?: string): Promise<void> {
     const _time = time && time.length === 5 ? time : getCurrentTime();
     if (this.readOnly() === true) return;
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: TimeSelectModalComponent,
       cssClass: 'time-modal',
       componentProps: {
@@ -84,8 +84,8 @@ export class TimeInputComponent {
         locale: this.locale()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (typeof(data) === 'string' && data.length === 5) {
         this.value.set(data);

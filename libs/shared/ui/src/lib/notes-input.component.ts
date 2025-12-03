@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, model, output } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
@@ -24,6 +24,7 @@ import { ButtonCopyComponent } from './button-copy.component';
     IonIcon, IonTextarea, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonNote,
     ButtonCopyComponent
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   viewProviders: [vestFormsViewProviders],
   styles: [`
     ion-item.helper { --min-height: 0; }
@@ -116,7 +117,7 @@ export class NotesInputComponent {
 
   public async dencrypt(): Promise<void> {
     if (!this.password || this.password.length === 0) {
-      const _alert = await this.alertController.create({
+      const alert = await this.alertController.create({
         header: 'Passwort eingeben',
         message: 'Achtung: wenn du das Passwort vergisst, kann der Text nicht mehr entschlüsselt werden !',
         inputs: [{
@@ -129,26 +130,26 @@ export class NotesInputComponent {
           role: 'cancel'
         }, {
           text: bkTranslate('@general.operation.change.ok'),
-          handler: (_data) => {
-            this.password = _data['PasswordPrompt'];
+          handler: (data) => {
+            this.password = data['PasswordPrompt'];
             this.dencryptWithPassword(this.password);
           }
         }]
       });
-      await _alert.present();
+      await alert.present();
     } else { // we already have a password
       this.dencryptWithPassword(this.password);
     }
   }
 
   private async dencryptWithPassword(password: string) {
-    let _value = this.value();
-    if (_value.startsWith('**')) { // text is encrypted -> decrypt it
-      _value = await decrypt(_value.substring(2), password);
+    let value = this.value();
+    if (value.startsWith('**')) { // text is encrypted -> decrypt it
+      value = await decrypt(value.substring(2), password);
     }  else {  // text is plain -> encrypt it
-      _value = '**' + await encrypt(_value, password);
+      value = '**' + await encrypt(value, password);
     } 
-    this.value.set(_value);
+    this.value.set(value);
     this.changed.emit(this.value());
   }
 }

@@ -5,21 +5,21 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonSpi
 
 import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupCollection, RoleName } from '@bk2/shared-models';
+import { GroupModelName, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ChangeConfirmationComponent, UploadService } from '@bk2/shared-ui';
+import { ChangeConfirmationComponent } from '@bk2/shared-ui';
 import { error } from '@bk2/shared-util-angular';
-import { debugData, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugData, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 
-import { AvatarService } from '@bk2/avatar-data-access';
-import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
+import { AvatarService, UploadService } from '@bk2/avatar-data-access';
 import { GroupMenuComponent } from '@bk2/cms-menu-ui';
 import { ContentComponent } from '@bk2/cms-page-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { MembersComponent } from '@bk2/relationship-membership-feature';
 import { SimpleTaskListComponent } from '@bk2/task-feature';
 
-import { convertGroupToForm } from '@bk2/subject-group-util';
+import { convertGroupToForm, GroupFormModel } from '@bk2/subject-group-util';
 
 import { GroupEditStore } from './group-edit.store';
 
@@ -93,56 +93,56 @@ import { GroupEditStore } from './group-edit.store';
       </ion-segment>
       </ion-toolbar>
     </ion-header>
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-padding">
       @switch (selectedSegment()) {
         @case ('content') {
           @defer (on immediate) {
-            <bk-content id="{{id() + '_content'}}" [readOnly]="readOnly()" />
+            <bk-content id="{{id() + '_content'}}" [readOnly]="isReadOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('chat') {
           @defer (on immediate) {
-            <bk-content id="{{id() + '_chat'}}" [readOnly]="readOnly()" />
+            <bk-content id="{{id() + '_chat'}}" [readOnly]="isReadOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('calendar') {
           @defer (on immediate) {
-            <bk-content id="{{id() + '_calendar'}}" [readOnly]="readOnly()" />
+            <bk-content id="{{id() + '_calendar'}}" [readOnly]="isReadOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('tasks') {
           @defer (on immediate) {
-            <bk-simple-task-list [listId]="id()" [readOnly]="readOnly()" />
+            <bk-simple-task-list [listId]="id()" [readOnly]="isReadOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('files') {
           @defer (on immediate) {
-            <bk-content id="{{id() + '_files'}}" [readOnly]="readOnly()" />
+            <bk-content id="{{id() + '_files'}}" [readOnly]="isReadOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('album') {
           @defer (on immediate) {
-            <bk-content id="{{id() + '_album'}}" [readOnly]="readOnly()" />
+            <bk-content id="{{id() + '_album'}}" [readOnly]="isReadOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
         }
         @case ('members') {
           @defer (on immediate) {
-            <bk-members [orgKey]="groupKey()" [readOnly]="readOnly()" />
+            <bk-members [orgKey]="groupKey()" [readOnly]="isReadOnly()" />
           } @placeholder {
             <div class="placeholder-center"><ion-spinner /></div>
           }
@@ -158,30 +158,34 @@ export class GroupViewPageComponent {
   private readonly platform = inject(Platform);
   private readonly env = inject(ENV);
 
+  // inputs
   public groupKey = input.required<string>();
   public readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
+ // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  public formData = linkedSignal(() => convertGroupToForm(this.group()));
+
+  // derived signals and fields
+  protected readonly avatarTitle = computed(() => this.name() ?? DEFAULT_NAME);
+  protected readonly parentKey = computed(() => `${GroupModelName}.${this.groupKey()}`);
   protected currentUser = computed(() => this.groupEditStore.currentUser());
   protected selectedSegment = computed(() => this.groupEditStore.segment());
   protected group = computed(() => this.groupEditStore.group());
-  protected name = computed(() => this.vm().name ?? '');
-  protected id = computed(() => this.vm().id ?? '');
-  protected hasContent = computed(() => this.vm().hasContent ?? true);
-  protected hasChat = computed(() => this.vm().hasChat ?? true);
-  protected hasCalendar = computed(() => this.vm().hasCalendar ?? true);
-  protected hasTasks = computed(() => this.vm().hasTasks ?? true);
-  protected hasFiles = computed(() => this.vm().hasFiles ?? true);
-  protected hasAlbum = computed(() => this.vm().hasAlbum ?? true);
-  protected hasMembers = computed(() => this.vm().hasMembers ?? true);
-
-  public vm = linkedSignal(() => convertGroupToForm(this.group()));
+  protected name = computed(() => this.formData()?.name ?? DEFAULT_NAME);
+  protected id = computed(() => this.formData()?.id ?? DEFAULT_ID);
+  protected hasContent = computed(() => this.formData()?.hasContent ?? true);
+  protected hasChat = computed(() => this.formData()?.hasChat ?? true);
+  protected hasCalendar = computed(() => this.formData()?.hasCalendar ?? true);
+  protected hasTasks = computed(() => this.formData()?.hasTasks ?? true);
+  protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
+  protected hasAlbum = computed(() => this.formData()?.hasAlbum ?? true);
+  protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
   protected path = computed(() => getDocumentStoragePath(this.groupEditStore.tenantId(), 'group', this.group()?.bkey));
-  protected avatarKey = computed(() => `group.${this.groupKey()}`);
-  protected title = computed(() => this.group()?.name ?? '');
   protected groupTags = computed(() => this.groupEditStore.getTags());
-
-  protected formIsValid = signal(false);
-  protected groupCollection = GroupCollection;
 
   constructor() {
     effect(() => {
@@ -189,31 +193,35 @@ export class GroupViewPageComponent {
     });
   }
 
-  public async save(): Promise<void> {
-    await this.groupEditStore.save(this.vm());
+  /******************************* actions *************************************** */
+  protected async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.groupEditStore.save(this.formData());
+  }
+
+  protected async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertGroupToForm(this.group()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: GroupFormModel): void {
+    this.formData.set(formData);
   }
 
   /**
    * Uploads an image to Firebase storage and saves it as an avatar model in the database.
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
-  public async onImageSelected(photo: Photo): Promise<void> {
-    const group = this.group();
-    if (!group) return;
-    const file = await readAsFile(photo, this.platform);
-    const avatar = newAvatarModel([this.env.tenantId], 'group', group.bkey, file.name);
-    const downloadUrl = await this.uploadService.uploadFile(file, avatar.storagePath, '@document.operation.upload.avatar.title')
-
-    if (downloadUrl) {
-      await this.avatarService.updateOrCreate(avatar);
-    }
+  protected async onImageSelected(photo: Photo): Promise<void> {
+    await this.groupEditStore.saveAvatar(photo);    
   }
 
+  /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
   }
 
-  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+  protected async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     debugData(`GroupViewPageComponent.onPopoverDismiss: ${selectedMethod}`, $event, this.groupEditStore.currentUser());
      switch(selectedMethod) {
@@ -228,7 +236,7 @@ export class GroupViewPageComponent {
     } 
   }
 
-  onSegmentChanged($event: CustomEvent): void {
+  protected onSegmentChanged($event: CustomEvent): void {
     const selectedSegment = $event.detail.value;
     this.groupEditStore.setSelectedSegment(selectedSegment);
   }

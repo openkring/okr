@@ -5,7 +5,7 @@ export interface SwissCity {
   countryCode: string;
 }
 
-export const SwissCitiesCollection = 'swissCities2';
+export const SwissCitiesCollection = 'swissCities';
 
 export const emptySwissCityList = [
   {

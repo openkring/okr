@@ -21,7 +21,8 @@ import { PrettyDatePipe } from '@bk2/shared-pipes';
     } @else {
       @for (comment of comments(); track comment.bkey) {
         <ion-row>
-          <ion-col size="4"><small>{{ comment.creationDate | prettyDate }}/{{ comment.authorName }}</small></ion-col>
+          <ion-col size="4" class="ion-hide-md-up"><small>{{ comment.creationDateTime | prettyDate }}</small></ion-col>
+          <ion-col size="4" class="ion-hide-md-down"><small>{{ comment.creationDateTime | prettyDate }}/{{ comment.authorName }}</small></ion-col>
           <ion-col size="8"><small>{{ comment.description | translate | async }}</small></ion-col>  
         </ion-row>
       }

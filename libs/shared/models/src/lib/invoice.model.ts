@@ -50,3 +50,4 @@ export class InvoiceModel implements BkModel, SearchableModel, TaggedModel {
 }
 
 export const InvoiceCollection = 'invoices';
+export const InvoiceModelName = 'invoice';

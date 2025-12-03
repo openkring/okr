@@ -44,3 +44,4 @@ export class ExpenseModel implements BkModel, NamedModel, SearchableModel, Tagge
 }
 
 export const ExpenseCollection = 'expenses';
+export const ExpenseModelName = 'expense';

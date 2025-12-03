@@ -28,7 +28,7 @@ export async function readAsFile(photo: Photo, platform: Platform): Promise<File
   } else {
     // Fetch the photo, read as a blob, then convert to base64 format
     if (!photo.webPath) die('ProfilePage.readAsBase64: webPath is mandatory.');
-    const _response = await fetch(photo.webPath);
-    return blobToFile(await _response.blob(), new Date().getTime() + '.' + photo.format);
+    const response = await fetch(photo.webPath);
+    return blobToFile(await response.blob(), new Date().getTime() + '.' + photo.format);
   }
 }

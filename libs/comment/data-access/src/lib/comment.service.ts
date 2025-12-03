@@ -5,7 +5,7 @@ import { ENV } from "@bk2/shared-config";
 import { FirestoreService } from "@bk2/shared-data-access";
 import { CommentCollection, CommentModel, UserModel } from "@bk2/shared-models";
 import { error } from "@bk2/shared-util-angular";
-import { DateFormat, getFullPersonName, getSystemQuery, getTodayStr } from "@bk2/shared-util-core";
+import { getFullName, getSystemQuery } from "@bk2/shared-util-core";
 
 import { createComment } from "@bk2/comment-util";
 
@@ -28,32 +28,31 @@ export class CommentService {
    */
   /**
    * Save a new comment into the database to a given model.
-   * @param collectionName the  name of the parent collection
-   * @param parentKey the key of the parent object
-   * @param comment the new comment to save
+   * @param parentCollection the  name of the parent collection
+   * @param parentKey the key of the parent object (format: modelType.key)
+   * @param message the new comment to save
    * @param currentUser the current user (used as the author of the initial comment)
    * @returns the document id of the newly created comment or undefined if the operation failed
    */
-  public async create(collectionName: string, parentKey: string, comment: string, currentUser?: UserModel): Promise<string | undefined> {
+  public async create(parentKey: string, message: string, currentUser?: UserModel): Promise<string | undefined> {
     if (!currentUser) {
       return error(undefined, 'CommentService.create: inconsistent app state: there is no current user.');
     }
-    const _comment = createComment(currentUser.personKey, getFullPersonName(currentUser.firstName, currentUser.lastName), comment, collectionName, parentKey, this.tenantId);
-    _comment.creationDate = getTodayStr(DateFormat.StoreDateTime);
-    _comment.index = `${collectionName}/${parentKey} ${_comment.creationDate}`;
+    const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), message, parentKey, this.tenantId);
     // Save the comment to the database, but do neither set the confirmMessage nor the currentUser to avoid adding a comment to the comment.
-    return await this.firestoreService.createModel<CommentModel>(`${collectionName}/${parentKey}/${CommentCollection}`, _comment);
+    return await this.firestoreService.createModel<CommentModel>(`${CommentCollection}`, comment);
   }
   
   /**
-   * Return all comments in the collection as an Observable.
-   * @param collectionName the  name of the parent collection
-   * @param parentKey the key of the parent object
+   * Return all comments for a given model as an Observable.
+   * @param parentKey the key of the parent object (modelType.key)
    */
-  public list(collectionName: string, parentKey: string): Observable<CommentModel[]> {
-    if (collectionName?.length === 0 || parentKey?.length === 0) {
+  public list(parentKey: string): Observable<CommentModel[]> {
+    if (parentKey?.length === 0) {
       return of([]);
     }
-    return this.firestoreService.searchData<CommentModel>(`${collectionName}/${parentKey}/${CommentCollection}`, getSystemQuery(this.tenantId), 'creationDate', 'desc');
+    const query = getSystemQuery(this.tenantId);
+    query.push({ key: 'parentKey', operator: '==', value: parentKey });
+    return this.firestoreService.searchData<CommentModel>(`${CommentCollection}`, query, 'creationDateTime', 'desc');
   }
 }

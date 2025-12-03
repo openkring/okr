@@ -47,23 +47,23 @@ export class ColorComponent {
 
   public async selectColor(): Promise<void> {
     if (!this.isReadOnly()) {
-      const _modal = await this.modalController.create({
+      const modal = await this.modalController.create({
         component: ColorSelectModalComponent,
         cssClass: 'color-modal',
         componentProps: {
           hexColor: this.hexColor()
         }
       });
-      _modal.present();
+      modal.present();
       try {
-        const { data, role} = await _modal.onWillDismiss();
+        const { data, role} = await modal.onWillDismiss();
         if (role === 'confirm') {
           this.hexColor.set(data);
           this.changed.emit(data);
         }
       }
-      catch (_ex) {
-        error(undefined, 'BkColorComponent.selectColor -> ERROR: ' + JSON.stringify(_ex));
+      catch (ex) {
+        error(undefined, 'BkColorComponent.selectColor -> ERROR: ' + JSON.stringify(ex));
       }
     }
   }

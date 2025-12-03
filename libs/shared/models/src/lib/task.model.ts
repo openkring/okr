@@ -34,3 +34,4 @@ export class TaskModel implements BkModel, PersistedModel, NamedModel, Searchabl
 }
 
 export const TaskCollection = 'tasks';
+export const TaskModelName = 'task';

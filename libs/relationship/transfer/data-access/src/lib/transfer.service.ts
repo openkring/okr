@@ -6,7 +6,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { TransferCollection, TransferModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
-import { getTransferSearchIndex, getTransferSearchIndexInfo } from '@bk2/relationship-transfer-util';
+import { getTransferIndex } from '@bk2/relationship-transfer-util';
 
 @Injectable({
   providedIn: 'root'
@@ -23,7 +23,7 @@ export class TransferService  {
    * @returns the document id of the stored transfer in the database or undefined if the operation failed
    */
   public async create(transfer: TransferModel, currentUser?: UserModel): Promise<string | undefined> {
-    transfer.index = this.getSearchIndex(transfer);
+    transfer.index = getTransferIndex(transfer);
     return await this.firestoreService.createModel<TransferModel>(TransferCollection, transfer, '@transfer.operation.create', currentUser);
   }
   
@@ -44,7 +44,7 @@ export class TransferService  {
    * @returns the document id of the updated transfer or undefined if the operation failed
    */
   public async update(transfer: TransferModel, currentUser?: UserModel, confirmMessage = '@transfer.operation.update'): Promise<string | undefined> {
-    transfer.index = this.getSearchIndex(transfer);
+    transfer.index = getTransferIndex(transfer);
     return await this.firestoreService.updateModel<TransferModel>(TransferCollection, transfer, false, confirmMessage, currentUser);
   }
 
@@ -66,23 +66,5 @@ export class TransferService  {
   /*-------------------------- export --------------------------------*/
   public export(): void {
     console.log('TransferService.export: not yet implemented.');
-  }
-
-  /*-------------------------- search index --------------------------------*/
-  /**
-   * Create an index entry for a given organization based on its values.
-   * @param org the organization to generate the index for 
-   * @returns the index string
-   */
-  public getSearchIndex(transfer: TransferModel): string {
-    return getTransferSearchIndex(transfer);
-  }
-
-  /**
-   * Returns a string explaining the structure of the index.
-   * This can be used in info boxes on the GUI.
-   */
-  public getTransferSearchIndexInfo(): string {
-    return getTransferSearchIndexInfo();
   }
 }

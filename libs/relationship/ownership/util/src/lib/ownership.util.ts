@@ -4,40 +4,8 @@ import { addIndexElement, die, getTodayStr, isPerson, isResource, isType } from 
 
 import { OwnershipFormModel } from './ownership-form.model';
 
-export function newOwnershipFormModel(): OwnershipFormModel {
-  return {
-    bkey: DEFAULT_KEY,
-    tags: DEFAULT_TAGS,
-    notes: DEFAULT_NOTES,
-
-    ownerKey: DEFAULT_KEY,
-    ownerName1: DEFAULT_NAME,
-    ownerName2: DEFAULT_NAME,
-    ownerModelType: 'person',
-    ownerType: DEFAULT_GENDER,
-
-    resourceKey: DEFAULT_KEY,
-    resourceName: DEFAULT_NAME,
-    resourceModelType: 'resource',
-    resourceType: DEFAULT_RESOURCE_TYPE,
-    resourceSubType: DEFAULT_RBOAT_TYPE,
-
-    validFrom: getTodayStr(),
-    validTo: END_FUTURE_DATE_STR,
-    ownershipCategory: DEFAULT_OCAT,
-    ownershipState: DEFAULT_OSTATE,
-
-    count: DEFAULT_COUNT,
-    order: 1,
-
-    price: DEFAULT_PRICE,
-    currency: DEFAULT_CURRENCY,
-    periodicity: 'yearly',
-  };
-}
-
-export function convertOwnershipToForm(ownership: OwnershipModel | undefined): OwnershipFormModel {
-  if (!ownership) return newOwnershipFormModel();
+export function convertOwnershipToForm(ownership: OwnershipModel | undefined): OwnershipFormModel | undefined {
+  if (!ownership) return undefined;
   return {
     bkey: ownership.bkey ?? DEFAULT_KEY,
     tags: ownership.tags ?? DEFAULT_TAGS,
@@ -75,13 +43,9 @@ export function convertOwnershipToForm(ownership: OwnershipModel | undefined): O
  * @param vm the view model, ie. the form data with the updated values.
  * @returns the updated ownership.
  */
-export function convertFormToOwnership(ownership?: OwnershipModel, vm?: OwnershipFormModel, tenantId?: string): OwnershipModel {
-  if (!tenantId) die('ownership.util.convertFormToOwnership(): tenantId is mandatory.');
-  if (!vm) return ownership ?? new OwnershipModel(tenantId);
-  if (!ownership) {
-    ownership = new OwnershipModel(tenantId);
-    ownership.bkey = vm.bkey ?? DEFAULT_KEY;
-  }
+export function convertFormToOwnership(vm?: OwnershipFormModel, ownership?: OwnershipModel): OwnershipModel {
+  if (!ownership) die('ownership.util.convertFormToOwnership: ownership is mandatory.');
+  if (!vm) return ownership;
 
   ownership.validFrom = vm.validFrom ?? DEFAULT_DATE;
   ownership.validTo = vm.validTo ?? DEFAULT_DATE;
@@ -98,6 +62,41 @@ export function convertFormToOwnership(ownership?: OwnershipModel, vm?: Ownershi
   return ownership;
 }
 
+// new Ownership
+export function newOwnershipFormModel(): OwnershipFormModel {
+  return {
+    bkey: DEFAULT_KEY,
+    tags: DEFAULT_TAGS,
+    notes: DEFAULT_NOTES,
+
+    ownerKey: DEFAULT_KEY,
+    ownerName1: DEFAULT_NAME,
+    ownerName2: DEFAULT_NAME,
+    ownerModelType: 'person',
+    ownerType: DEFAULT_GENDER,
+
+    resourceKey: DEFAULT_KEY,
+    resourceName: DEFAULT_NAME,
+    resourceModelType: 'resource',
+    resourceType: DEFAULT_RESOURCE_TYPE,
+    resourceSubType: DEFAULT_RBOAT_TYPE,
+
+    validFrom: getTodayStr(),
+    validTo: END_FUTURE_DATE_STR,
+    ownershipCategory: DEFAULT_OCAT,
+    ownershipState: DEFAULT_OSTATE,
+
+    count: DEFAULT_COUNT,
+    order: 1,
+
+    price: DEFAULT_PRICE,
+    currency: DEFAULT_CURRENCY,
+    periodicity: 'yearly',
+  };
+}
+
+
+
 /**
  * Creates a new ownership between a person or org and a resource or account for the current tenant.
  * @param owner
@@ -109,36 +108,36 @@ export function convertFormToOwnership(ownership?: OwnershipModel, vm?: Ownershi
  */
 export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceModel | AccountModel, tenantId: string, validFrom = getTodayStr()): OwnershipModel {
   if (!owner.bkey) die('ownership.util.newOwnership(): owner.bkey is mandatory.');
-  const _ownership = new OwnershipModel(tenantId);
+  const ownership = new OwnershipModel(tenantId);
 
-  _ownership.validFrom = validFrom;
-  _ownership.validTo = END_FUTURE_DATE_STR;
+  ownership.validFrom = validFrom;
+  ownership.validTo = END_FUTURE_DATE_STR;
 
-  _ownership.ownerKey = owner.bkey;
+  ownership.ownerKey = owner.bkey;
   if (isPerson(owner, tenantId)) {
-    _ownership.ownerModelType = 'person';
-    _ownership.ownerName1 = owner.firstName;
-    _ownership.ownerName2 = owner.lastName;
-    _ownership.ownerType = owner.gender;
+    ownership.ownerModelType = 'person';
+    ownership.ownerName1 = owner.firstName;
+    ownership.ownerName2 = owner.lastName;
+    ownership.ownerType = owner.gender;
   } else {
-    _ownership.ownerModelType = 'org';
-    _ownership.ownerName1 = '';
-    _ownership.ownerName2 = owner.name;
-    _ownership.ownerType = owner.type;
+    ownership.ownerModelType = 'org';
+    ownership.ownerName1 = '';
+    ownership.ownerName2 = owner.name;
+    ownership.ownerType = owner.type;
   }
 
-  _ownership.resourceKey = resource.bkey;
-  _ownership.resourceName = resource.name;
+  ownership.resourceKey = resource.bkey;
+  ownership.resourceName = resource.name;
   if (isResource(resource, tenantId)) {
-    _ownership.resourceModelType = 'resource';
-    _ownership.resourceType = resource.type;
-    _ownership.resourceSubType = resource.subType;
+    ownership.resourceModelType = 'resource';
+    ownership.resourceType = resource.type;
+    ownership.resourceSubType = resource.subType;
   } else {
-    _ownership.resourceModelType = 'account';
-    _ownership.resourceType = resource.type;
-    _ownership.resourceSubType = '';
+    ownership.resourceModelType = 'account';
+    ownership.resourceType = resource.type;
+    ownership.resourceSubType = '';
   }
-  return _ownership;
+  return ownership;
 }
 
 export function getOwnerName(ownership: OwnershipModel): string {
@@ -159,7 +158,7 @@ export function isOwnership(ownership: unknown, tenantId: string): ownership is 
 }
 
 /************************************************* Search Index ********************************************************** */
-export function getOwnershipSearchIndex(ownership: OwnershipModel): string {
+export function getOwnershipIndex(ownership: OwnershipModel): string {
   let _index = '';
   _index = addIndexElement(_index, 'on', getOwnerName(ownership));
   _index = addIndexElement(_index, 'rn', ownership.resourceName);
@@ -170,6 +169,6 @@ export function getOwnershipSearchIndex(ownership: OwnershipModel): string {
  * Returns a string explaining the structure of the index.
  * This can be used in info boxes on the GUI.
  */
-export function getOwnershipSearchIndexInfo(): string {
+export function getOwnershipIndexInfo(): string {
   return 'on:ownerName rn:resourceName';
 }

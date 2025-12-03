@@ -34,23 +34,24 @@ export class CategoryItemModel {
   name = DEFAULT_NAME;
   abbreviation = '';
   icon = '';
-  state? = DEFAULT_MSTATE;
-  price? = DEFAULT_PRICE;
-  currency? = DEFAULT_CURRENCY;
-  periodicity? = DEFAULT_PERIODICITY;
+  state = DEFAULT_MSTATE;
+  price = DEFAULT_PRICE;
+  currency = DEFAULT_CURRENCY;
+  periodicity = DEFAULT_PERIODICITY;
 
   constructor(name: string, abbreviation: string, icon: string, state?: string, price?: number, currency?: string, periodicity?: string) {
     this.name = name;
     this.abbreviation = abbreviation;
     this.icon = icon;
-    this.state = state;
-    this.price = price;
-    this.currency = currency;
-    this.periodicity = periodicity;
+    this.state = state ?? DEFAULT_MSTATE;
+    this.price = price ?? DEFAULT_PRICE;
+    this.currency = currency ?? DEFAULT_CURRENCY;
+    this.periodicity = periodicity ?? DEFAULT_PERIODICITY ;
   }
 }
 
 export const CategoryCollection = 'categories';
+export const CategoryModelName = 'category';
 
 export function getDefaultMembershipCategory(tenantId: string): CategoryListModel {
   const cat = new CategoryListModel(tenantId);

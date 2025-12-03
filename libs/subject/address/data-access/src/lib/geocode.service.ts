@@ -50,9 +50,9 @@ export class GeocodingService {
         return undefined;
       }  
     }
-    catch (_ex) {
+    catch (ex) {
       error(this.toastController, 'Error geocoding address');
-      console.error('GeocodingService.geocodeAddress -> ERROR: ', _ex);
+      console.error('GeocodingService.geocodeAddress -> ERROR: ', ex);
       return undefined;
     }
   }

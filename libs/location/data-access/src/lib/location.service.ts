@@ -6,6 +6,8 @@ import { FirestoreService } from "@bk2/shared-data-access";
 import { LocationCollection, LocationModel, UserModel } from "@bk2/shared-models";
 import { findByKey, getSystemQuery } from "@bk2/shared-util-core";
 
+import { getLocationIndex } from "@bk2/location-util";
+
 @Injectable({
     providedIn: 'root'
 })
@@ -22,7 +24,7 @@ export class LocationService {
    * @returns the document id of the newly created location
    */
   public async create(location: LocationModel, currentUser?: UserModel): Promise<string | undefined> {
-    location.index = this.getSearchIndex(location);
+    location.index = getLocationIndex(location);
     return await this.firestoreService.createModel<LocationModel>(LocationCollection, location, '@location.operation.create', currentUser);
   }
 
@@ -43,7 +45,7 @@ export class LocationService {
    * @returns the document id of the updated location or undefined if the operation failed
    */
   public async update(location: LocationModel, currentUser?: UserModel, confirmMessage = '@location.operation.update'): Promise<string | undefined> {
-    location.index = this.getSearchIndex(location);
+    location.index = getLocationIndex(location);
     return await this.firestoreService.updateModel<LocationModel>(LocationCollection, location, false, confirmMessage, currentUser);
   }
 
@@ -60,14 +62,5 @@ export class LocationService {
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
   public list(orderBy = 'startDate', sortOrder = 'asc'): Observable<LocationModel[]> {
     return this.firestoreService.searchData<LocationModel>(LocationCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
-  }
-  
-  /*-------------------------- search index --------------------------------*/
-  public getSearchIndex(location: LocationModel): string {
-    return 'n:' + location.name + ' w:' + location.what3words;
-  }
-
-  public getSearchIndexInfo(): string {
-    return 'n:ame w:hat3words';
   }
 }

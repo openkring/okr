@@ -1,5 +1,4 @@
 import { DEFAULT_EMAIL, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
-import { DeepRequired } from 'ngx-vest-forms';
 
 export type UserModelFormModel = {
   bkey: string,         // user key
@@ -14,7 +13,7 @@ export type UserModelFormModel = {
 };
 
 
-export const userModelFormModelShape: DeepRequired<UserModelFormModel> = {
+export const USER_FORM_SHAPE: UserModelFormModel = {
 
   bkey: DEFAULT_KEY,
   personKey: DEFAULT_KEY,

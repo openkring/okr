@@ -24,6 +24,7 @@ export type MembershipListState = {
   selectedGender: string;
   selectedOrgType: string;
   yearField: 'dateOfEntry' | 'dateOfExit';
+  currentMembership: MembershipModel | undefined;
 };
 
 const initialState: MembershipListState = {
@@ -35,6 +36,7 @@ const initialState: MembershipListState = {
   selectedGender: 'all',
   selectedOrgType: 'all',
   yearField: 'dateOfEntry',
+  currentMembership: undefined,
 };
 
 export const MembershipListStore = signalStore(
@@ -300,6 +302,10 @@ export const MembershipListStore = signalStore(
         patchState(store, { selectedTag });
       },
 
+     setCurrentMembership(currentMembership: MembershipModel | undefined) {
+        patchState(store, { currentMembership });
+      },
+
       /******************************** getters ******************************************* */
       getTags(): string {
         return store.appStore.getTags('membership');
@@ -320,18 +326,10 @@ export const MembershipListStore = signalStore(
         }
       },
 
-      async view(membership?: MembershipModel): Promise<void> {
-        if (membership) {
-          await store.membershipModalsService.edit(membership);
-          store.membershipsResource.reload();
-        }
-      },
-
-      async end(membership?: MembershipModel, readOnly = true): Promise<void> {
-        if (!readOnly && membership) {
-          const date = await selectDate(store.modalController);
-          if (!date) return;
-          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
+      async end(endDate?: string): Promise<void> {
+        const membership = store.currentMembership();
+        if (membership && endDate) {
+          await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(endDate, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
           store.membershipsResource.reload();  
         }
       },

@@ -1,9 +1,6 @@
-import { DeepRequired } from 'ngx-vest-forms';
-
 import { AvatarInfo } from '@bk2/shared-models';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL } from '@bk2/shared-constants';
 
-// a form model is always deep partial because angular will create it over time organically
 export type CalEventFormModel = {
   bkey: string,
   tenants: string[],
@@ -23,7 +20,7 @@ export type CalEventFormModel = {
   tags: string,
 };
 
-export const calEventFormModelShape: DeepRequired<CalEventFormModel> = {
+export const CAL_EVENT_FORM_SHAPE: CalEventFormModel = {
   bkey: DEFAULT_KEY,
   tenants: DEFAULT_TENANTS,
   name: DEFAULT_NAME,

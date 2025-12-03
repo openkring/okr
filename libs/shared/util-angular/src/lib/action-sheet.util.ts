@@ -1,6 +1,6 @@
-import { ActionSheetButton, ActionSheetOptions } from "@ionic/angular";
 import { getSvgIconUrl } from "@bk2/shared-pipes";
 import { bkTranslate } from "@bk2/shared-i18n";
+import { ActionSheetButton, ActionSheetOptions } from "@ionic/angular";
 
 export function createActionSheetOptions(
     header: string,
@@ -26,7 +26,7 @@ export function createActionSheetOptions(
 
 /**
  * 
- * @param name  cancel, call, copy, delete, edit, send, show, upload, view
+ * @param name  [model.]action
  * @param imgixBaseUrl 
  * @param iconName 
  * @returns 
@@ -34,24 +34,20 @@ export function createActionSheetOptions(
 export function createActionSheetButton(
     name: string,
     imgixBaseUrl: string,
-    iconName?: string,
-    prefix?: string
+    iconName?: string
 ): ActionSheetButton {
-    const nameLC = name.toLowerCase();
-    const nameT = bkTranslate(`@actionsheet.${nameLC}`);
-    const text = prefix ? prefix + ' ' + nameT.toLowerCase() : nameT;
     return {
-        text: text,
+        text: bkTranslate(`@actionsheet.${name}`),
         icon: iconName ? getSvgIconUrl(imgixBaseUrl, iconName) : undefined,
-        role: getRole(nameLC),
+        role: getRole(name),
         data: {
-            action: nameLC
+            action: name
         }
     };
 }
 
 function getRole(text: string): string | undefined {
-    if (text === 'delete') return 'destructive';
-    if (text === 'cancel') return 'cancel';
+    if (text.endsWith('delete')) return 'destructive';
+    if (text.endsWith('cancel')) return 'cancel';
     return undefined;
 }

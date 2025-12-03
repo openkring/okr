@@ -4,7 +4,9 @@ import { Observable } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { TaskCollection, TaskModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+
+import { getTaskIndex } from '@bk2/task-util';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +23,7 @@ export class TaskService {
    * @returns the document id of the newly created task or undefined if the operation failed
    */
   public async create(task: TaskModel, currentUser: UserModel | undefined): Promise<string | undefined> {
-    task.index = this.getSearchIndex(task);
+    task.index = getTaskIndex(task);
     return await this.firestoreService.createModel<TaskModel>(TaskCollection, task, '@task.operation.create', currentUser);
   }
 
@@ -42,7 +44,7 @@ export class TaskService {
    * @returns the key of the updated task or undefined if the operation failed
    */
   public async update(task: TaskModel, currentUser?: UserModel, confirmMessage = '@task.operation.update'): Promise<string | undefined> {
-    task.index = this.getSearchIndex(task);
+    task.index = getTaskIndex(task);
     return await this.firestoreService.updateModel<TaskModel>(TaskCollection, task, false, confirmMessage, currentUser);
   }
 
@@ -74,33 +76,4 @@ export class TaskService {
   public export(): void {
     console.log('TaskService.export: not yet implemented.');
   }
-
-  /*-------------------------- search index --------------------------------*/
-  /**
-   * Create an index entry for a given task based on its values.
-   * @param task 
-   * @returns the index string
-   */
-  public getSearchIndex(task: TaskModel): string {
-    let index = '';
-    index = addIndexElement(index, 'n', task.name);
-    if (task.author) {
-      index = addIndexElement(index, 'an', task.author.name1 + ' ' + task.author.name2);
-      index = addIndexElement(index, 'ak', task.author.key);
-    }
-    if (task.assignee) {
-      index = addIndexElement(index, 'asn', task.assignee.name1 + ' ' + task.assignee.name2);
-      index = addIndexElement(index, 'ask', task.assignee.key);
-    }
-    return index;
-  }
-
-  /**
-   * Returns a string explaining the structure of the index.
-   * This can be used in info boxes on the GUI.
-   */
-  public getTaskIndexInfo(): string {
-    return 'n:name, an:authorname, ak:authorKey, asn:assigneeName, ask:assigneeKey';
-  }
-
 }

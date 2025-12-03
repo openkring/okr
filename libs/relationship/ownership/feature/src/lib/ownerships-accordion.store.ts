@@ -98,17 +98,17 @@ export const OwnershipAccordionStore = signalStore(
        */
       async end(ownership: OwnershipModel, readOnly = true): Promise<void> {
         if (ownership && !readOnly) {
-          const _date = await selectDate(store.modalController);
-          if (!_date) return;
-          await store.ownershipService.endOwnershipByDate(ownership, convertDateFormatToString(_date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
+          const date = await selectDate(store.modalController);
+          if (!date) return;
+          await store.ownershipService.endOwnershipByDate(ownership, convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
           store.ownershipsResource.reload();  
         }
       },  
 
       async delete(ownership?: OwnershipModel, readOnly = true): Promise<void> {
         if (ownership && !readOnly) {
-          const _result = await confirm(store.alertController, '@ownership.operation.delete.confirm', true);
-          if (_result === true) {
+          const result = await confirm(store.alertController, '@ownership.operation.delete.confirm', true);
+          if (result === true) {
             await store.ownershipService.delete(ownership);
             store.ownershipsResource.reload(); 
           }

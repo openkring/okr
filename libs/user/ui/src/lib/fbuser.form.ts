@@ -1,14 +1,14 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, input, model, output, signal } from "@angular/core";
+import { Component, computed, effect, input, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
 import { CheckboxComponent, EmailInputComponent, ErrorNoteComponent, PhoneInputComponent, TextInputComponent } from "@bk2/shared-ui";
-import { debugFormErrors } from "@bk2/shared-util-core";
+import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
 
-import { firebaseUserFormValidations, FirebaseUserShape } from "@bk2/user-util";
+import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util";
 
 @Component({
   selector: 'bk-fbuser-form',
@@ -19,14 +19,15 @@ import { firebaseUserFormValidations, FirebaseUserShape } from "@bk2/user-util";
     CheckboxComponent, TextInputComponent, EmailInputComponent, PhoneInputComponent, ErrorNoteComponent,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   viewProviders: [vestFormsViewProviders],
   template: `
     <form scVestForm
       [formShape]="shape"
-      [formValue]="vm()"
+      [formValue]="formData()"
       [suite]="suite" 
-      (dirtyChange)="dirtyChange.set($event)"
-      (formValueChange)="onValueChange($event)">
+      (dirtyChange)="dirty.emit($event)"
+      (formValueChange)="onFormChange($event)">
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@user.auth.title' | translate | async }}</ion-card-title>
@@ -36,27 +37,27 @@ import { firebaseUserFormValidations, FirebaseUserShape } from "@bk2/user-util";
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="uid" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="uid()"  [readOnly]="readOnly()" [copyable]=true />
+                <bk-text-input name="uid" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="uid()"  [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="displayName" label="@input.displayName.label" placeholder="@input.displayName.placeholder"  [readOnly]="readOnly()" [value]="displayName()" [copyable]=true />
+                <bk-text-input name="displayName" label="@input.displayName.label" placeholder="@input.displayName.placeholder"  [readOnly]="isReadOnly()" [value]="displayName()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email [value]="email()" (changed)="onChange('email', $event)"  [readOnly]="readOnly()"/>
+                <bk-email [value]="email()" (changed)="onFieldChange('email', $event)"  [readOnly]="isReadOnly()"/>
                 <bk-error-note [errors]="emailError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6"> 
-                <bk-phone [value]="phone()" (changed)="onChange('phone', $event)"  [readOnly]="readOnly()"/>
+                <bk-phone [value]="phone()" (changed)="onFieldChange('phone', $event)"  [readOnly]="isReadOnly()"/>
                 <bk-error-note [errors]="phoneError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="emailVerified" [isChecked]="emailVerified()" [showHelper]="true"  [readOnly]="readOnly()" (changed)="onChange('emailVerified', $event)" />
+                <bk-checkbox name="emailVerified" [isChecked]="emailVerified()" [showHelper]="true"  [readOnly]="isReadOnly()" (changed)="onFieldChange('emailVerified', $event)" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="disabled" [isChecked]="disabled()" [showHelper]="true"  [readOnly]="readOnly()" (changed)="onChange('disabled', $event)" />
+                <bk-checkbox name="disabled" [isChecked]="disabled()" [showHelper]="true"  [readOnly]="isReadOnly()" (changed)="onFieldChange('disabled', $event)" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input name="photoUrl" label="@input.photoUrl.label" placeholder="@input.photoUrl.placeholder"  [readOnly]="readOnly()" [value]="photoUrl()" [copyable]=true />
+                <bk-text-input name="photoUrl" label="@input.photoUrl.label" placeholder="@input.photoUrl.placeholder"  [readOnly]="isReadOnly()" [value]="photoUrl()" [copyable]=true />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -68,37 +69,46 @@ import { firebaseUserFormValidations, FirebaseUserShape } from "@bk2/user-util";
   `
 })
 export class FbuserFormComponent {
-  public vm = model.required<FirebaseUserModel>();
+  // inputs
+  public formData = model.required<FirebaseUserModel>();
   public currentUser = input<UserModel | undefined>();
-  public readOnly = input.required<boolean>();
+  public readonly readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected uid = computed(() => this.vm().uid ?? '');
-  protected email = computed(() => this.vm().email ?? '');
-  protected displayName = computed(() => this.vm().displayName ?? '');
-  protected emailVerified = computed(() => this.vm().emailVerified ?? false);
-  protected disabled = computed(() => this.vm().disabled ?? false);
-  protected phone = computed(() => this.vm().phone ?? '');
-  protected photoUrl = computed(() => this.vm().photoUrl ?? '');
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
+
+  // validation and errors
+  protected readonly suite = firebaseUserFormValidations;
+  protected readonly shape = FIREBASE_USER_SHAPE;
+  private readonly validationResult = computed(() => firebaseUserFormValidations(this.formData()));
+
+  // fields
+  protected uid = computed(() => this.formData().uid ?? '');
+  protected email = computed(() => this.formData().email ?? '');
+  protected displayName = computed(() => this.formData().displayName ?? '');
+  protected emailVerified = computed(() => this.formData().emailVerified ?? false);
+  protected disabled = computed(() => this.formData().disabled ?? false);
+  protected phone = computed(() => this.formData().phone ?? '');
+  protected photoUrl = computed(() => this.formData().photoUrl ?? '');
   protected emailError = computed(() => this.validationResult().getErrors('email'));
   protected phoneError = computed(() => this.validationResult().getErrors('phone'));
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(false);
-  private readonly validationResult = computed(() => firebaseUserFormValidations(this.vm()));
-
-  protected readonly suite = firebaseUserFormValidations;
-  protected readonly shape = FirebaseUserShape;
-
-  protected onValueChange(value: FirebaseUserModel): void {
-    this.vm.update((_vm) => ({..._vm, ...value}));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | boolean): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('FbuserForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: FirebaseUserModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormErrors('FbuserForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | boolean): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('FbuserForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 }
 

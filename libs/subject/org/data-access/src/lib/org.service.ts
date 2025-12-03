@@ -3,8 +3,10 @@ import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AddressCollection, AddressModel, OrgCollection, OrgModel, UserModel } from '@bk2/shared-models';
-import { addIndexElement, findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { OrgCollection, OrgModel, UserModel } from '@bk2/shared-models';
+import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+
+import { getOrgIndex } from '@bk2/subject-org-util';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +23,7 @@ export class OrgService  {
    * @returns the unique key of the created organization or undefined if the operation failed
    */
   public async create(org: OrgModel, currentUser?: UserModel): Promise<string | undefined> {
-    org.index = this.getSearchIndex(org);
+    org.index = getOrgIndex(org);
     return await this.firestoreService.createModel<OrgModel>(OrgCollection, org, '@subject.org.operation.create', currentUser);
   }
   
@@ -56,7 +58,7 @@ export class OrgService  {
    * @returns the unique key of the updated organization or undefined if the operation failed
    */
   public async update(org: OrgModel, currentUser?: UserModel, confirmMessage = '@subject.org.operation.update'): Promise<string | undefined> {
-    org.index = this.getSearchIndex(org);
+    org.index = getOrgIndex(org);
     return await this.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, confirmMessage, currentUser);
   }
 
@@ -79,39 +81,5 @@ export class OrgService  {
    */
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<OrgModel[]> {
     return this.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
-  }
-
-  /**
-   * This function retrieves all addresses associated with a given organization.
-   * The addresses are returned as an Observable array of AddressModel.
-   * @param org the organization for which to list addresses
-   * @returns an Observable array of AddressModel
-   */
-  public listAddresses(org: OrgModel): Observable<AddressModel[]> {
-    const _collection = `${OrgCollection}/${org.bkey}/${AddressCollection}`;
-    return this.firestoreService.searchData<AddressModel>(_collection, getSystemQuery(this.env.tenantId));
-  }
-
-  /*-------------------------- search index --------------------------------*/
-  /**
-   * Create an index entry for a given organization based on its values.
-   * @param org the organization to generate the index for 
-   * @returns the index string
-   */
-  public getSearchIndex(org: OrgModel): string {
-    let _index = '';
-    _index = addIndexElement(_index, 'n', org.name);
-    _index = addIndexElement(_index, 'c', org.favCity);
-    _index = addIndexElement(_index, 'ot', org.type);
-    _index = addIndexElement(_index, 'dof', org.dateOfFoundation);
-    return _index;
-  }
-
-  /**
-   * Returns a string explaining the structure of the index.
-   * This can be used in info boxes on the GUI.
-   */
-  public getSearchIndexInfo(): string {
-    return 'n:name c:city ot:orgType dof:dateOfFoundation';
   }
 }

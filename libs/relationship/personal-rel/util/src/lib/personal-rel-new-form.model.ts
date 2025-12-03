@@ -1,9 +1,7 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-
 import { DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS, END_FUTURE_DATE_STR } from "@bk2/shared-constants";
 import { getTodayStr } from "@bk2/shared-util-core";
 
-export type PersonalRelNewFormModel = DeepPartial<{
+export type PersonalRelNewFormModel = {
   tags: string,
   notes: string
 
@@ -21,9 +19,9 @@ export type PersonalRelNewFormModel = DeepPartial<{
   label: string,
   validFrom: string,
   validTo: string,
-}>;
+};
 
-export const personalRelNewFormModelShape: DeepRequired<PersonalRelNewFormModel> = {
+export const PERSONAL_REL_NEW_FORM_SHAPE: PersonalRelNewFormModel = {
   tags: DEFAULT_TAGS,
   notes: DEFAULT_NOTES,
 

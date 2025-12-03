@@ -1,27 +1,25 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, inject, input, model, output } from "@angular/core";
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList, ModalController } from "@ionic/angular/standalone";
+import { Component, computed, effect, inject, input } from "@angular/core";
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
 
 import { AddressChannels, AddressUsages, getCategoryIcon } from "@bk2/shared-categories";
-import { AppStore } from "@bk2/shared-feature";
-import { bkTranslate, TranslatePipe } from "@bk2/shared-i18n";
+import { TranslatePipe } from "@bk2/shared-i18n";
 import { AddressChannel, AddressModel, AddressUsage } from "@bk2/shared-models";
 import { SvgIconPipe } from "@bk2/shared-pipes";
 import { EmptyListComponent } from "@bk2/shared-ui";
 
-import { AddressService } from "@bk2/subject-address-data-access";
-import { FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe } from "@bk2/subject-address-util";
+import { FavoriteColorPipe, FormatAddressPipe } from "@bk2/subject-address-util";
 
-import { AddressModalsService } from "./address-modals.service";
 import { createActionSheetButton, createActionSheetOptions } from "@bk2/shared-util-angular";
-import { coerceBoolean, getItemLabel, hasRole } from "@bk2/shared-util-core";
+import { coerceBoolean, hasRole } from "@bk2/shared-util-core";
+import { AddressAccordionStore } from "libs/subject/address/feature/src/lib/addresses-accordion.store";
 
 @Component({
   selector: 'bk-addresses-accordion',
   standalone: true,
   imports: [ 
     TranslatePipe, AsyncPipe,
-    FavoriteColorPipe, FavoriteIconPipe, FormatAddressPipe, SvgIconPipe,
+    FavoriteColorPipe, FormatAddressPipe, SvgIconPipe,
     EmptyListComponent,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList
   ],
@@ -30,6 +28,7 @@ import { coerceBoolean, getItemLabel, hasRole } from "@bk2/shared-util-core";
       padding-right: 5px;
     }
   `],
+  providers: [AddressAccordionStore],
   template: `
   <ion-accordion toggle-icon-slot="start" value="addresses">
     <ion-item slot="header" [color]="color()">
@@ -41,6 +40,11 @@ import { coerceBoolean, getItemLabel, hasRole } from "@bk2/shared-util-core";
         }
     </ion-item>
     <div slot="content">
+      @if(description(); as description) {
+        <ion-item lines="none">
+          <ion-label>{{ description | translate | async }}</ion-label>
+        </ion-item>
+      }  
       @if(addresses().length === 0) {
         <bk-empty-list message="@general.noData.addresses" />
       } @else {
@@ -48,7 +52,7 @@ import { coerceBoolean, getItemLabel, hasRole } from "@bk2/shared-util-core";
           @for(address of addresses(); track $index) {
             <ion-item (click)="showActions(address)">
               <ion-label>
-                <ion-icon src="{{ address.isFavorite | favoriteIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
                 @if(address.isCc) {
                   <ion-icon src="{{ 'cc-circle' | svgIcon }}" />
                 }
@@ -68,31 +72,29 @@ import { coerceBoolean, getItemLabel, hasRole } from "@bk2/shared-util-core";
   `,
 })
 export class AddressesAccordionComponent {
-  protected readonly modalController = inject(ModalController);
-  private actionSheetController = inject(ActionSheetController);
-  public readonly addressService = inject(AddressService);
-  private readonly addressModalsService = inject(AddressModalsService);
-  private readonly appStore = inject(AppStore);
+  protected readonly addressAccordionStore = inject(AddressAccordionStore);
+  private readonly actionSheetController = inject(ActionSheetController);
 
-  public addresses = model.required<AddressModel[]>(); // the addresses shown in the accordion
-  public parentKey = input.required<string>(); // the parent key of the addresses
-  public parentModelType = input.required<'person' | 'org'>(); // the parent model type of the addresses
+  // inputs
+  public parentKey = input.required<string>(); // modelType.key of the parent model of the addresses person or org
+  public description = input<string>(); // description shown in the accordion header
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public color = input('light'); // color of the accordion
   public label = input('@subject.address.plural'); // label of the accordion
 
-  public addressesChanged = output(); // event emitted when the addresses have changed
-  private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
+  // signals
+  protected addresses = computed(() => this.addressAccordionStore.addresses() ?? []);
+  private currentUser = computed(() => this.addressAccordionStore.currentUser());
 
-  // we need to solve the access with an input parameter (instead of using the authorizationService),
-  // in order to support the profile use case (where the current user is allowed to edit addresses even if she does not have memberAdmin role)
+  // passing constants
+  private imgixBaseUrl = this.addressAccordionStore.imgixBaseUrl();
   protected addressChannel = AddressChannel; 
 
-  public async toggleFavorite(address: AddressModel): Promise<void> {
-    if (!this.isReadOnly()) {
-      await this.addressService.toggleFavorite(address, this.appStore.currentUser());
-    }
+  constructor() {
+    effect(() => {
+      this.addressAccordionStore.setParentKey(this.parentKey());
+    });
   }
 
   protected getChannelIcon(channelType: AddressChannel): string {
@@ -123,33 +125,32 @@ export class AddressesAccordionComponent {
    * @param address 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
-    const cat = this.appStore.getCategory('model_type');
-    const prefix = bkTranslate(getItemLabel(cat, 'address'));
-    if (hasRole('admin', this.appStore.currentUser()) && !this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete', prefix));
+    if (hasRole('admin', this.currentUser()) && !this.isReadOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('address.delete', this.imgixBaseUrl, 'trash_delete'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('copy', this.imgixBaseUrl, 'copy', prefix));
+    actionSheetOptions.buttons.push(createActionSheetButton('address.copy', this.imgixBaseUrl, 'copy'));
+    actionSheetOptions.buttons.push(createActionSheetButton('address.view', this.imgixBaseUrl, 'eye-on'));
     if (!this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit', prefix));
+      actionSheetOptions.buttons.push(createActionSheetButton('address.edit', this.imgixBaseUrl, 'create_edit'));
     }
     switch(address.channelType) {
       case AddressChannel.BankAccount:
-        actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'qrcode', 'QR EZS'));
+        actionSheetOptions.buttons.push(createActionSheetButton('address.iban.view', this.imgixBaseUrl, 'qrcode'));
         if (!this.isReadOnly()) {
-          actionSheetOptions.buttons.push(createActionSheetButton('upload', this.imgixBaseUrl, 'qrcode', 'QR EZS'));
+          actionSheetOptions.buttons.push(createActionSheetButton('address.iban.upload', this.imgixBaseUrl, 'qrcode'));
         }
         break;
       case AddressChannel.Email:
-        actionSheetOptions.buttons.push(createActionSheetButton('send', this.imgixBaseUrl, 'email', 'E-Mail'));
+        actionSheetOptions.buttons.push(createActionSheetButton('address.email.send', this.imgixBaseUrl, 'email'));
         break;
       case AddressChannel.Phone:
-        actionSheetOptions.buttons.push(createActionSheetButton('call', this.imgixBaseUrl, 'tel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('address.phone.call', this.imgixBaseUrl, 'tel'));
         break;
       case AddressChannel.Postal:
-        actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'location', prefix));
+        actionSheetOptions.buttons.push(createActionSheetButton('address.postal.view', this.imgixBaseUrl, 'location'));
         break;
       case AddressChannel.Web:
-        actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'link'));
+        actionSheetOptions.buttons.push(createActionSheetButton('address.web.open', this.imgixBaseUrl, 'link'));
         break;
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
@@ -167,37 +168,41 @@ export class AddressesAccordionComponent {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.addressService.delete(address, this.appStore.currentUser());
-          this.addressesChanged.emit();
+        case 'address.delete':
+          await this.addressAccordionStore.delete(address, this.isReadOnly());
           break;
-        case 'copy':
-          await this.addressService.copy(address);
+        case 'address.copy':
+          await this.addressAccordionStore.copy(address);
           break;
-        case 'edit':
-          await this.addressModalsService.edit(address);
-          this.addressesChanged.emit();
+        case 'address.view':
+          await this.addressAccordionStore.edit(address, true);
           break;
-        case 'upload':
-          const url = await this.addressModalsService.uploadEzs(address);
-          if (url) {
-            address.url = url;
-            await this.addressService.update(address, this.appStore.currentUser());
-          }
+        case 'address.edit':
+          await this.addressAccordionStore.edit(address, this.isReadOnly());
           break;
-        case 'show':
-        case 'send':
-        case 'call':
-          await this.addressModalsService.use(address);
+        case 'address.iban.view':
+          await this.addressAccordionStore.showQrEzs(address);
+          break;
+        case 'address.iban.upload':
+          await this.addressAccordionStore.uploadQrEzs(address);
+          break;
+        case 'address.email.send':
+          await this.addressAccordionStore.sendEmail(address.email);
+          break;
+        case 'address.phone.call':
+          await this.addressAccordionStore.call(address.phone);
+          break;
+        case 'address.postal.view':
+          await this.addressAccordionStore.showPostalAddress(address);
+          break;
+        case 'address.web.open':
+          await this.addressAccordionStore.openUrl(address);
           break;
       }
     }
   }
 
   public async add(): Promise<void> {
-    const newAddress = new AddressModel(this.addressModalsService.tenantId);
-    newAddress.parentKey = this.parentModelType() + '.' + this.parentKey();
-    await this.addressModalsService.edit(newAddress);
-    this.addressesChanged.emit();
+    this.addressAccordionStore.add(this.isReadOnly());
   }
 }

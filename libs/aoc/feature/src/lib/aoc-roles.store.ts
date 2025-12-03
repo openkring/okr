@@ -90,10 +90,10 @@ export const AocRolesStore = signalStore(
         person: store.selectedPerson(),
       }),
       stream: ({ params }) => {
-        const _users = store.users();
-        const _person = params.person;
-        if (!_person || !_users) return of(undefined);
-        return of(findUserByPersonKey(_users, _person.bkey));
+        const users = store.users();
+        const person = params.person;
+        if (!person || !users) return of(undefined);
+        return of(findUserByPersonKey(users, person.bkey));
       },
     }),
   })),
@@ -102,11 +102,11 @@ export const AocRolesStore = signalStore(
     return {
       selectedUser: computed(() => state.userResource.value()),
       chatUser: computed(() => {
-        const _user = state.userResource.value();
-        if (!_user) return undefined;
+        const user = state.userResource.value();
+        if (!user) return undefined;
         return {
-          id: _user.bkey,
-          name: _user.loginEmail,
+          id: user.bkey,
+          name: user.loginEmail,
           imageUrl: '',
         };
       }),
@@ -119,9 +119,9 @@ export const AocRolesStore = signalStore(
         selectedUser: store.selectedUser(),
       }),
       stream: ({ params }) => {
-        const _selectedUser = params.selectedUser;
-        if (!_selectedUser) return of(undefined);
-        return from(getFirebaseUser(_selectedUser.bkey));
+        const selectedUser = params.selectedUser;
+        if (!selectedUser) return of(undefined);
+        return from(getFirebaseUser(selectedUser.bkey));
       },
     }),
   })),
@@ -141,7 +141,7 @@ export const AocRolesStore = signalStore(
 
       /******************************* actions *************************************** */
       async selectPerson(): Promise<void> {
-        const _modal = await store.modalController.create({
+        const modal = await store.modalController.create({
           component: PersonSelectModalComponent,
           cssClass: 'list-modal',
           componentProps: {
@@ -149,8 +149,8 @@ export const AocRolesStore = signalStore(
             currentUser: store.currentUser(),
           },
         });
-        _modal.present();
-        const { data, role } = await _modal.onWillDismiss();
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm') {
           if (isPerson(data, store.appStore.env.tenantId)) {
             console.log('RolesStore: selected person: ', data);
@@ -170,48 +170,48 @@ export const AocRolesStore = signalStore(
        * @param password - optional password for the new user account. If not given, a random password is generated.
        */
       async createAccountAndUser(password?: string): Promise<void> {
-        const _password = generatePassword(password);
+        const generatedPwd = generatePassword(password);
 
-        const _person = store.selectedPerson();
-        if (!_person) {
+        const person = store.selectedPerson();
+        if (!person) {
           warn('RolesStore.createAccountAndUser: please select a person first.');
           return;
         }
         try {
-          patchState(store, { log: [], logTitle: `creating account for ${_person.firstName} ${_person.lastName}/${_person.bkey}/${_person.favEmail}` });
-          const _user = createUserFromPerson(_person, store.appStore.env.tenantId);
-          if (!_user.loginEmail || _user.loginEmail.length === 0 || !isValidEmail(_user.loginEmail)) {
+          patchState(store, { log: [], logTitle: `creating account for ${person.firstName} ${person.lastName}/${person.bkey}/${person.favEmail}` });
+          const user = createUserFromPerson(person, store.appStore.env.tenantId);
+          if (!user.loginEmail || user.loginEmail.length === 0 || !isValidEmail(user.loginEmail)) {
             console.warn('RolesStore.createAccountAndUser: loginEmail is missing or invalid - can not register this user');
             return;
           }
-          let _uid = await getUidByEmail(_user.loginEmail);
-          if (!_uid) {
-            _uid = await createFirebaseAccount(store.toastController, _user.loginEmail, _password);
-            console.log(`RolesStore.createAccountAndUser: Firebase user <${_uid}/${_user.loginEmail}> created.`);
+          let uid = await getUidByEmail(user.loginEmail);
+          if (!uid) {
+            uid = await createFirebaseAccount(store.toastController, user.loginEmail, generatedPwd);
+            console.log(`RolesStore.createAccountAndUser: Firebase user <${uid}/${user.loginEmail}> created.`);
           } else {
-            console.log(`RolesStore.createAccountAndUser: Firebase user <${_uid}/${_user.loginEmail}> already exists.`);
+            console.log(`RolesStore.createAccountAndUser: Firebase user <${uid}/${user.loginEmail}> already exists.`);
           }
 
-          if (_uid) {
+          if (uid) {
             // the Firebase account exists, now create the user
             // check whether this user already exists
-            const _existingUser = await firstValueFrom(store.userService.read(_uid));
-            console.log(`RolesStore.createAccountAndUser: read user ${_uid}`, _existingUser);
-            if (!_existingUser) {
-              _user.bkey = _uid;
-              console.log('RolesStore.createAccountAndUser: creating user: ', _user);
-              await store.userService.create(_user, store.currentUser());
+            const existingUser = await firstValueFrom(store.userService.read(uid));
+            console.log(`RolesStore.createAccountAndUser: read user ${uid}`, existingUser);
+            if (!existingUser) {
+              user.bkey = uid;
+              console.log('RolesStore.createAccountAndUser: creating user: ', user);
+              await store.userService.create(user, store.currentUser());
               store.usersResource.reload();
               store.userResource.reload();
-              console.log(`RolesStore.createAccountAndUser: user ${_uid} was created.`);
+              console.log(`RolesStore.createAccountAndUser: user ${uid} was created.`);
             } else {
-              console.log(`RolesStore.createAccountAndUser: user ${_uid} already exists.`);
+              console.log(`RolesStore.createAccountAndUser: user ${uid} already exists.`);
             }
           } else {
             console.error('RolesStore.createAccountAndUser: did not receive a valid firebase uid.');
           }
-        } catch (_ex) {
-          error(store.toastController, 'RolesStore.createAccountAndUser -> error: ' + JSON.stringify(_ex));
+        } catch (ex) {
+          error(store.toastController, 'RolesStore.createAccountAndUser -> error: ' + JSON.stringify(ex));
         }
       },
 
@@ -220,8 +220,8 @@ export const AocRolesStore = signalStore(
        * This is only possible if the user account has been created before.
        */
       async resetPassword(): Promise<void> {
-        const _user = store.selectedUser();
-        if (!_user) {
+        const user = store.selectedUser();
+        if (!user) {
           if (store.selectedPerson()) {
             patchState(store, { log: [], logTitle: 'user is missing.' });
             warn('RolesStore.resetPassword: user is missing.');
@@ -232,13 +232,13 @@ export const AocRolesStore = signalStore(
           // a user is selected
           try {
             // we send the password reset email to the selected user (in prod) or to the current user (in dev)
-            const _email = store.appStore.env.production ? _user.loginEmail : store.appStore.currentUser()?.loginEmail;
-            patchState(store, { log: [], logTitle: `sending reset password email to ${_email}` });
-            if (_email) {
-              store.authService.resetPassword(_email, 'aoc/roles');
+            const email = store.appStore.env.production ? user.loginEmail : store.appStore.currentUser()?.loginEmail;
+            patchState(store, { log: [], logTitle: `sending reset password email to ${email}` });
+            if (email) {
+              store.authService.resetPassword(email, 'aoc/roles');
             }
-          } catch (_ex) {
-            error(store.toastController, 'RolesStore.resetPassword -> error: ' + JSON.stringify(_ex));
+          } catch (ex) {
+            error(store.toastController, 'RolesStore.resetPassword -> error: ' + JSON.stringify(ex));
           }
         }
       },
@@ -250,10 +250,10 @@ export const AocRolesStore = signalStore(
        * @param password - optional password. If not given, a random password is generated.
        */
       async setPassword(password?: string): Promise<void> {
-        const _password = generatePassword(password);
+        const generatedPwd = generatePassword(password);
 
-        const _user = store.selectedUser();
-        if (!_user) {
+        const user = store.selectedUser();
+        if (!user) {
           if (store.selectedPerson()) {
             patchState(store, { log: [], logTitle: 'user is missing' });
             warn('RolesStore.setPassword: user is missing');
@@ -264,10 +264,10 @@ export const AocRolesStore = signalStore(
         } else {
           // a user is selected
           try {
-            patchState(store, { log: [], logTitle: `setting new password for user ${_user.bkey}` });
-            setPassword(_user.bkey, _password, store.appStore.env.useEmulators);
-          } catch (_ex) {
-            error(store.toastController, 'RolesStore.setPassword -> error: ' + JSON.stringify(_ex));
+            patchState(store, { log: [], logTitle: `setting new password for user ${user.bkey}` });
+            setPassword(user.bkey, generatedPwd, store.appStore.env.useEmulators);
+          } catch (ex) {
+            error(store.toastController, 'RolesStore.setPassword -> error: ' + JSON.stringify(ex));
           }
         }
       },
@@ -276,68 +276,68 @@ export const AocRolesStore = signalStore(
        * Update the selected firebase user.
        */
       async updateFbuser(): Promise<void> {
-        const _fbuser = store.selectedFbUser();
-        if (!_fbuser) {
+        const fbuser = store.selectedFbUser();
+        if (!fbuser) {
           patchState(store, { log: [], logTitle: 'firebase user is missing' });
           warn('RolesStore.updateFbuser: firebase user is missing');
         } else {
           // a firebase user is selected
           try {
-            patchState(store, { log: [], logTitle: `updating firebase user ${_fbuser.uid}.` });
-            const _modal = await store.modalController.create({
+            patchState(store, { log: [], logTitle: `updating firebase user ${fbuser.uid}.` });
+            const modal = await store.modalController.create({
               component: FbuserEditModalComponent,
               componentProps: {
-                fbuser: _fbuser,
+                fbuser: fbuser,
                 currentUser: store.currentUser(),
               },
             });
-            _modal.present();
-            const { data, role } = await _modal.onWillDismiss();
+            modal.present();
+            const { data, role } = await modal.onWillDismiss();
             if (role === 'confirm') {
               await updateFirebaseUser(data as FirebaseUserModel, store.appStore.env.useEmulators);
             }
-          } catch (_ex) {
-            error(store.toastController, 'RolesStore.updateFbuser -> error: ' + JSON.stringify(_ex));
+          } catch (ex) {
+            error(store.toastController, 'RolesStore.updateFbuser -> error: ' + JSON.stringify(ex));
           }
         }
       },
 
       async checkAuthorisation(): Promise<void> {
-        const _log: LogInfo[] = [];
-        const _person = store.selectedPerson();
-        if (!_person) {
+        const log: LogInfo[] = [];
+        const person = store.selectedPerson();
+        if (!person) {
           patchState(store, { log: [], logTitle: 'please select a person first' });
           return;
         }
-        const _email = _person.favEmail;
-        patchState(store, { log: [], logTitle: `checking authorisation for ${_person.firstName} ${_person.lastName}/${_person.bkey}/${_email}` });
-        patchState(store, { log: logMessage(_log, 'person ID: ' + _person.bkey) });
-        patchState(store, { log: logMessage(_log, 'person tenants: ' + _person.tenants.join(', ')) });
-        if (!_email || _email.length === 0) {
-          patchState(store, { log: logMessage(_log, 'The person does not have an email address. Therefore, an account can not be opened.') });
+        const email = person.favEmail;
+        patchState(store, { log: [], logTitle: `checking authorisation for ${person.firstName} ${person.lastName}/${person.bkey}/${email}` });
+        patchState(store, { log: logMessage(log, 'person ID: ' + person.bkey) });
+        patchState(store, { log: logMessage(log, 'person tenants: ' + person.tenants.join(', ')) });
+        if (!email || email.length === 0) {
+          patchState(store, { log: logMessage(log, 'The person does not have an email address. Therefore, an account can not be opened.') });
         } else {
-          patchState(store, { log: logMessage(_log, 'person email: ' + _email) });
+          patchState(store, { log: logMessage(log, 'person email: ' + email) });
 
-          const _user = store.selectedUser();
-          if (!_user) {
-            patchState(store, { log: logMessage(_log, 'user is missing') });
+          const user = store.selectedUser();
+          if (!user) {
+            patchState(store, { log: logMessage(log, 'user is missing') });
           } else {
-            patchState(store, { log: logMessage(_log, 'user ID: ' + _user.bkey) });
-            patchState(store, { log: logMessage(_log, 'user email: ' + _user.loginEmail) });
-            patchState(store, { log: logMessage(_log, 'isArchived: ' + _user.isArchived) });
-            patchState(store, { log: logMessage(_log, 'user tenants: ' + _user.tenants.join(', ')) });
-            patchState(store, { log: logMessage(_log, 'roles: ' + Object.keys(_user.roles)) });
-            patchState(store, { log: logMessage(_log, 'user-person link: ' + (_user.personKey === _person.bkey ? 'OK' : 'ERROR: ' + _user.personKey + ' != ' + _person.bkey)) });
+            patchState(store, { log: logMessage(log, 'user ID: ' + user.bkey) });
+            patchState(store, { log: logMessage(log, 'user email: ' + user.loginEmail) });
+            patchState(store, { log: logMessage(log, 'isArchived: ' + user.isArchived) });
+            patchState(store, { log: logMessage(log, 'user tenants: ' + user.tenants.join(', ')) });
+            patchState(store, { log: logMessage(log, 'roles: ' + Object.keys(user.roles)) });
+            patchState(store, { log: logMessage(log, 'user-person link: ' + (user.personKey === person.bkey ? 'OK' : 'ERROR: ' + user.personKey + ' != ' + person.bkey)) });
           }
-          const _fbUser = store.selectedFbUser();
-          if (!_fbUser) {
-            patchState(store, { log: logMessage(_log, 'firebase user was not found by id (reason could be that there is no user)') });
+          const fbUser = store.selectedFbUser();
+          if (!fbUser) {
+            patchState(store, { log: logMessage(log, 'firebase user was not found by id (reason could be that there is no user)') });
             // tbd: try to get the user with uid = getuidByEmail(person.email) -> getFirebaseUser(uid)
           } else {
-            patchState(store, { log: logMessage(_log, 'firebase user ID: ' + _fbUser.uid) });
-            patchState(store, { log: logMessage(_log, 'firebase email: ' + _fbUser.email) });
-            if (_user) {
-              patchState(store, { log: logMessage(_log, 'fbUser-user link: ' + (_fbUser.uid === _user.bkey ? 'OK' : 'ERROR: ' + _fbUser.uid + ' != ' + _user.bkey)) });
+            patchState(store, { log: logMessage(log, 'firebase user ID: ' + fbUser.uid) });
+            patchState(store, { log: logMessage(log, 'firebase email: ' + fbUser.email) });
+            if (user) {
+              patchState(store, { log: logMessage(log, 'fbUser-user link: ' + (fbUser.uid === user.bkey ? 'OK' : 'ERROR: ' + fbUser.uid + ' != ' + user.bkey)) });
             }
           }
           // tbd: check for all users that have the same email address (and different tenants)
@@ -345,18 +345,18 @@ export const AocRolesStore = signalStore(
       },
 
       async impersonateUser(): Promise<void> {
-        const _log: LogInfo[] = [];
-        const _user = store.selectedUser();
+        const log: LogInfo[] = [];
+        const user = store.selectedUser();
         if (hasRole('admin', store.currentUser()) === false) {
-          patchState(store, { log: logMessage(_log, 'You are not allowed to impersonate users. Only admin users can do this.') });
+          patchState(store, { log: logMessage(log, 'You are not allowed to impersonate users. Only admin users can do this.') });
           return;
         }
-        patchState(store, { log: [], logTitle: `AocRolesStore.impersonateUser: impersonating user ${_user?.loginEmail}}` });
-        if (!_user) {
-          patchState(store, { log: logMessage(_log, 'AocRolesStore.impersonateUser: no user, please select a person first') });
+        patchState(store, { log: [], logTitle: `AocRolesStore.impersonateUser: impersonating user ${user?.loginEmail}}` });
+        if (!user) {
+          patchState(store, { log: logMessage(log, 'AocRolesStore.impersonateUser: no user, please select a person first') });
           return;
         } else {
-          patchState(store, { log: logMessage(_log, `AocRolesStore.impersonateUser: user <${_user.bkey}/${_user.loginEmail}> exists`) });
+          patchState(store, { log: logMessage(log, `AocRolesStore.impersonateUser: user <${user.bkey}/${user.loginEmail}> exists`) });
         }
         try {
           // Get a reference to the Firebase Functions service.
@@ -364,40 +364,40 @@ export const AocRolesStore = signalStore(
           if (store.appStore.env.useEmulators) {
             connectFunctionsEmulator(functions, 'localhost', 5001);
           }
-          const _createCustomTokenFunction = httpsCallable(functions, 'createCustomToken');
-          const _result = await _createCustomTokenFunction({ uid: _user.bkey });
-          patchState(store, { log: [], logTitle: `AocRolesStore.impersonateUser: createCustomToken was successful: ${_result}` });
-          const _token = _result.data as string;
-          patchState(store, { log: logMessage(_log, `AocRolesStore.impersonateUser: impersonation token <${_token}>`) });
+          const createCustomTokenFunction = httpsCallable(functions, 'createCustomToken');
+          const result = await createCustomTokenFunction({ uid: user.bkey });
+          patchState(store, { log: [], logTitle: `AocRolesStore.impersonateUser: createCustomToken was successful: ${result}` });
+          const token = result.data as string;
+          patchState(store, { log: logMessage(log, `AocRolesStore.impersonateUser: impersonation token <${token}>`) });
           // Now we can use the impersonation token to sign in the user
-          await store.authService.loginWithToken(_token, 'public/welcome');
-          patchState(store, { log: logMessage(_log, `AocRolesStore.impersonateUser: user <${_user.bkey}/${_user.loginEmail}> is now impersonated`) });
-        } catch (_ex) {
-          console.error('AocRolesStore.impersonateUser: Error calling impersonateUser function:', _ex);
+          await store.authService.loginWithToken(token, 'public/welcome');
+          patchState(store, { log: logMessage(log, `AocRolesStore.impersonateUser: user <${user.bkey}/${user.loginEmail}> is now impersonated`) });
+        } catch (ex) {
+          console.error('AocRolesStore.impersonateUser: Error calling impersonateUser function:', ex);
         }
       },
 
       async checkChatUser(): Promise<void> {
-        const _log: LogInfo[] = [];
-        const _user = store.selectedUser();
-        patchState(store, { log: [], logTitle: `checking authorisation for user ${_user?.loginEmail}}` });
-        if (!_user) {
-          patchState(store, { log: logMessage(_log, 'no user, please select a person first') });
+        const log: LogInfo[] = [];
+        const user = store.selectedUser();
+        patchState(store, { log: [], logTitle: `checking authorisation for user ${user?.loginEmail}}` });
+        if (!user) {
+          patchState(store, { log: logMessage(log, 'no user, please select a person first') });
           return;
         } else {
-          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> exists`) });
+          patchState(store, { log: logMessage(log, `user <${user.bkey}/${user.loginEmail}> exists`) });
         }
         if (!isPlatformBrowser(store.platformId)) {
-          patchState(store, { log: logMessage(_log, `wrong platform, should be web`) });
+          patchState(store, { log: logMessage(log, `wrong platform, should be web`) });
           return;
         } else {
-          const _platform = Capacitor.getPlatform();
-          patchState(store, { log: logMessage(_log, `platform is <${_platform}> (should be web)`) });
+          const platform = Capacitor.getPlatform();
+          patchState(store, { log: logMessage(log, `platform is <${platform}> (should be web)`) });
         }
         if (!store.chatUser()) {
-          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> is not yet created`) });
+          patchState(store, { log: logMessage(log, `user <${user.bkey}/${user.loginEmail}> is not yet created`) });
         } else {
-          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> is already created`) });
+          patchState(store, { log: logMessage(log, `user <${user.bkey}/${user.loginEmail}> is already created`) });
         }
         try {
           // Get a reference to the Firebase Functions service.
@@ -406,23 +406,23 @@ export const AocRolesStore = signalStore(
             connectFunctionsEmulator(functions, 'localhost', 5001);
           }
           const getOtherStreamUserToken = httpsCallable(functions, 'getOtherStreamUserToken');
-          const _result = await getOtherStreamUserToken({ uid: _user.bkey });
-          const _token = _result.data as string;
-          patchState(store, { log: logMessage(_log, `stream token <${_token}`) });
-        } catch (_ex) {
-          console.error('AocRolesStore.checkChatUser: Error checking chat user:', _ex);
+          const result = await getOtherStreamUserToken({ uid: user.bkey });
+          const token = result.data as string;
+          patchState(store, { log: logMessage(log, `stream token <${token}`) });
+        } catch (ex) {
+          console.error('AocRolesStore.checkChatUser: Error checking chat user:', ex);
         }
       },
 
       async revokeStreamUserToken(): Promise<void> {
-        const _log: LogInfo[] = [];
-        const _user = store.selectedUser();
-        patchState(store, { log: [], logTitle: `revoking stream user token for user ${_user?.loginEmail}}` });
-        if (!_user) {
-          patchState(store, { log: logMessage(_log, 'no user, please select a person first') });
+        const log: LogInfo[] = [];
+        const user = store.selectedUser();
+        patchState(store, { log: [], logTitle: `revoking stream user token for user ${user?.loginEmail}}` });
+        if (!user) {
+          patchState(store, { log: logMessage(log, 'no user, please select a person first') });
           return;
         } else {
-          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> exists`) });
+          patchState(store, { log: logMessage(log, `user <${user.bkey}/${user.loginEmail}> exists`) });
         }
         try {
           const functions = getFunctions(getApp(), 'europe-west6'); // Use the correct region for your functions.
@@ -430,22 +430,22 @@ export const AocRolesStore = signalStore(
             connectFunctionsEmulator(functions, 'localhost', 5001);
           }
           const revokeOtherStreamUserToken = httpsCallable(functions, 'revokeOtherStreamUserToken');
-          await revokeOtherStreamUserToken({ uid: _user.bkey });
-          patchState(store, { log: logMessage(_log, `stream token revoked for user <${_user.bkey}/${_user.loginEmail}>`) });
-        } catch (_ex) {
-          console.error('AocRolesStore.revokeStreamUserToken: Error revoking stream user token:', _ex);
+          await revokeOtherStreamUserToken({ uid: user.bkey });
+          patchState(store, { log: logMessage(log, `stream token revoked for user <${user.bkey}/${user.loginEmail}>`) });
+        } catch (ex) {
+          console.error('AocRolesStore.revokeStreamUserToken: Error revoking stream user token:', ex);
         }
       },
 
       async createStreamUser(): Promise<void> {
-        const _log: LogInfo[] = [];
-        const _user = store.selectedUser();
-        patchState(store, { log: [], logTitle: `creating stream user for user ${_user?.bkey}/${_user?.loginEmail}}` });
-        if (!_user) {
-          patchState(store, { log: logMessage(_log, 'no user, please select a person first') });
+        const log: LogInfo[] = [];
+        const user = store.selectedUser();
+        patchState(store, { log: [], logTitle: `creating stream user for user ${user?.bkey}/${user?.loginEmail}}` });
+        if (!user) {
+          patchState(store, { log: logMessage(log, 'no user, please select a person first') });
           return;
         } else {
-          patchState(store, { log: logMessage(_log, `user <${_user.bkey}/${_user.loginEmail}> exists`) });
+          patchState(store, { log: logMessage(log, `user <${user.bkey}/${user.loginEmail}> exists`) });
         }
         try {
           const functions = getFunctions(getApp(), 'europe-west6'); // Use the correct region for your functions.
@@ -453,10 +453,10 @@ export const AocRolesStore = signalStore(
             connectFunctionsEmulator(functions, 'localhost', 5001);
           }
           const createOtherStreamUser = httpsCallable(functions, 'createOtherStreamUser');
-          await createOtherStreamUser({ uid: _user.bkey, name: _user.firstName + ' ' + _user.lastName, email: _user.loginEmail, image: '' });
-          patchState(store, { log: logMessage(_log, `stream user created for user <${_user.bkey}/${_user.loginEmail}>`) });
-        } catch (_ex) {
-          console.error('AocRolesStore.createStreamUser: Error creating stream user:', _ex);
+          await createOtherStreamUser({ uid: user.bkey, name: user.firstName + ' ' + user.lastName, email: user.loginEmail, image: '' });
+          patchState(store, { log: logMessage(log, `stream user created for user <${user.bkey}/${user.loginEmail}>`) });
+        } catch (ex) {
+          console.error('AocRolesStore.createStreamUser: Error creating stream user:', ex);
         }
       },
 

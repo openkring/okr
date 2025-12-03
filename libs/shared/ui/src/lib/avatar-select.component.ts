@@ -1,12 +1,11 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
 
 import { ColorsIonic } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ColorIonic } from '@bk2/shared-models';
 import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
-
-import { AsyncPipe } from '@angular/common';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({

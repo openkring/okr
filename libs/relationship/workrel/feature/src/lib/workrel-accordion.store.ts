@@ -150,7 +150,7 @@ export const WorkrelAccordionStore = signalStore(
         modal.present();
         await modal.onWillDismiss();
         const { data, role } = await modal.onDidDismiss();
-        if (role === 'confirm' && readOnly === false) {
+        if (role === 'confirm' && !readOnly) {
           if (isWorkrel(data, store.appStore.tenantId())) {
             await (!data.bkey ?
               store.workrelService.create(data, store.appStore.currentUser()) :
@@ -161,14 +161,14 @@ export const WorkrelAccordionStore = signalStore(
       },
 
       async end(workRel?: WorkrelModel, readOnly = true): Promise<void> {
-        if (workRel && readOnly === false) {
+        if (workRel && !readOnly) {
           await store.workrelModalsService.end(workRel);
           store.workrelsResource.reload();
         }
       },
 
       async delete(workrel?: WorkrelModel, readOnly = true): Promise<void> {
-        if (workrel && readOnly === false) {
+        if (workrel && !readOnly) {
           const result = await confirm(store.alertController, '@workrel.operation.delete.confirm', true);
           if (result === true) {
             await store.workrelService.delete(workrel, store.appStore.currentUser());

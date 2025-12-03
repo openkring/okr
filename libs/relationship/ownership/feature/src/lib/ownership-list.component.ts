@@ -2,12 +2,12 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { OwnershipModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { getItemLabel, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -95,7 +95,7 @@ import { getCategoryIcon } from '@bk2/category-util';
             @else {
               <ion-item (click)="showActions(ownership)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ ownership.ownerModelType + '.' + ownership.ownerKey | avatar:'ownership' | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ ownership.ownerModelType + '.' + ownership.ownerKey | avatar:(ownership.ownerModelType === 'person' ? 'person' : 'org') | async }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{getOwnerName(ownership)}}</ion-label>      
                 <ion-label>{{ownership.resourceName}}</ion-label>      
@@ -115,6 +115,8 @@ export class OwnershipListComponent {
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
+  protected currentUser = computed(() => this.ownershipListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected filteredOwnerships = computed(() => {
     switch (this.listId()) {
@@ -154,13 +156,13 @@ export class OwnershipListComponent {
   });
 
   // if the ownership resource has a subtype, use the subtype, otherwise use the resource type
-  protected resolvedTypes = computed(() => {
+/*   protected resolvedTypes = computed(() => {
     switch (this.listId()) {
       case 'privateBoats':
       case 'scsBoats': return this.ownershipListStore.appStore.getCategory('rboat_type');
       default: return this.ownershipListStore.appStore.getCategory('resource_type');
     }
-  });
+  }); */
   protected readonly years = getYearList();
 
   protected selectedOwnershipsCount = computed(() => this.filteredOwnerships().length);
@@ -169,6 +171,8 @@ export class OwnershipListComponent {
   protected popupId = computed(() => 'c_ownerships_' + this.listId());
 
   private imgixBaseUrl = this.ownershipListStore.appStore.env.services.imgixBaseUrl;
+  private rboatTypes = this.ownershipListStore.appStore.getCategory('rboat_type');
+  private resourceTypes = this.ownershipListStore.appStore.getCategory('resource_type');
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
@@ -205,6 +209,7 @@ export class OwnershipListComponent {
     if (hasRole('admin', this.ownershipListStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
     }
+    actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
   }
 
@@ -218,15 +223,19 @@ export class OwnershipListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'delete':
-          await this.ownershipListStore.delete(ownership);
+          await this.ownershipListStore.delete(ownership, this.readOnly());
           break;
         case 'edit':
-          await this.ownershipListStore.edit(ownership);
+          await this.ownershipListStore.edit(ownership, this.readOnly());
+          break;
+        case 'view':
+          await this.ownershipListStore.edit(ownership, true);
           break;
         case 'endownership':
-          await this.ownershipListStore.end(ownership);
+          await this.ownershipListStore.end(ownership, this.readOnly());
           break;
       }
     }
@@ -269,6 +278,10 @@ export class OwnershipListComponent {
   }
 
   protected getIcon(ownership: OwnershipModel): string {
-    return getCategoryIcon(this.resolvedTypes(), ownership.resourceType === 'rboat' ? ownership.resourceSubType : ownership.resourceType);
+    if (ownership.resourceType === 'rboat') {
+      return getCategoryIcon(this.rboatTypes, ownership.resourceSubType);
+    } else {
+      return getCategoryIcon(this.resourceTypes, ownership.resourceType);
+    }
   }
 }

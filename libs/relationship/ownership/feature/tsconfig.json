@@ -29,6 +29,7 @@
     {"path": "../../../relationship/ownership/ui/tsconfig.lib.json"},
     {"path": "../../../relationship/ownership/util/tsconfig.lib.json"},
     {"path": "../../../avatar/ui/tsconfig.lib.json"},
-    {"path": "../../../cms/menu/feature/tsconfig.lib.json"}
+    {"path": "../../../cms/menu/feature/tsconfig.lib.json"},
+    {"path": "../../../document/feature/tsconfig.lib.json"}
   ]
 }

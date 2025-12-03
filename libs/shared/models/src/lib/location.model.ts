@@ -25,3 +25,4 @@ export class LocationModel implements BkModel, NamedModel, SearchableModel, Tagg
 }
 
 export const LocationCollection = 'locations';
+export const LocationModelName = 'location';

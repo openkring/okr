@@ -1,17 +1,18 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { PersonalRelCollection, PersonalRelModel, RoleName, UserModel } from '@bk2/shared-models';
+import { PersonalRelModel, PersonalRelModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { getFullPersonName, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { PersonalRelFormComponent } from '@bk2/relationship-personal-rel-ui';
-import { convertFormToPersonalRel, convertPersonalRelToForm } from '@bk2/relationship-personal-rel-util';
+import { convertFormToPersonalRel, convertPersonalRelToForm, PersonalRelFormModel } from '@bk2/relationship-personal-rel-util';
 import { PersonalRelModalsService } from './personal-rel-modals.service';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-personal-rel-edit-modal',
@@ -20,25 +21,33 @@ import { PersonalRelModalsService } from './personal-rel-modals.service';
     TranslatePipe, AsyncPipe,
     CommentsAccordionComponent, HeaderComponent,
     ChangeConfirmationComponent, PersonalRelFormComponent,
-    IonContent, IonAccordionGroup
+    IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
+  styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header title="{{ modalTitle() | translate | async }}" [isModal]="true" />
-    @if(formIsValid()) {
-      <bk-change-confirmation (okClicked)="save()" />
+    <bk-header title="{{ headerTitle() | translate | async }}" [isModal]="true" />
+    @if(showConfirmation()) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content>
-      <bk-personal-rel-form [(vm)]="vm" [currentUser]="currentUser()" 
-      [types]="types()"
-      [allTags]="tags()"
-      [readOnly]="readOnly()"
-      (selectPerson)="selectPerson($event)"
-      (validChange)="formIsValid.set($event)" />
+    <ion-content no-padding>
+      <bk-personal-rel-form
+        [formData]="formData()"
+        [currentUser]="currentUser()" 
+        [types]="types()"
+        [allTags]="tags()"
+        [readOnly]="isReadOnly()"
+        (selectPerson)="selectPerson($event)"
+        (formDataChange)="onFormDataChange($event)"
+      />
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
-        <ion-accordion-group value="comments">
-          <bk-comments-accordion [collectionName]="personalRelCollection" [parentKey]="personalRelKey()" [readOnly]="readOnly()" />
-        </ion-accordion-group>
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <ion-accordion-group value="comments">
+              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+            </ion-accordion-group>
+          </ion-card-content>
+        </ion-card>
       }
     </ion-content>
   `
@@ -48,52 +57,62 @@ export class PersonalRelEditModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
+  // inputs
   public personalRel = input.required<PersonalRelModel>();
   public currentUser = input<UserModel | undefined>();
-  public readonly readOnly = input(true);
+  public readonly readOnly = input<boolean>(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  public vm = linkedSignal(() => convertPersonalRelToForm(this.personalRel()));
+  // signals
+  protected formDirty = signal(false);
+  protected formValid = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected formData = linkedSignal(() => convertPersonalRelToForm(this.personalRel()));
+
+  // derived signals
+  protected readonly headerTitle = computed(() => getTitleLabel('personalRel', this.personalRel()?.bkey, this.isReadOnly()));
+  protected readonly parentKey = computed(() => `${PersonalRelModelName}.${this.personalRel().bkey}`);
   protected tags = computed(() => this.appStore.getTags('personalrel'));
   protected types = computed(() => this.appStore.getCategory('personalrel_type'));
 
-  protected readonly personalRelKey = computed(() => this.personalRel().bkey ?? '');
-  protected readonly subjectUrl = computed(() => `/person/${this.vm().subjectKey}`);
-  protected readonly subjectName = computed(() => getFullPersonName(this.vm().subjectFirstName ?? '', this.vm().subjectLastName ?? ''));
-  protected readonly objectName = computed(() => getFullPersonName(this.vm().objectFirstName ?? '', this.vm().objectLastName ?? ''));
-  protected readonly objectUrl = computed(() => `/person/${this.vm().objectKey}`);
-
-  protected readonly modalTitle = computed(() => `@personalRel.operation.${hasRole('memberAdmin', this.currentUser()) ? 'update' : 'view'}.label`);
-
-  protected formIsValid = signal(false);
-  public personalRelCollection = PersonalRelCollection;
-
-  public async save(): Promise<boolean> {
-    return this.modalController.dismiss(convertFormToPersonalRel(this.personalRel(), this.vm(), this.appStore.env.tenantId), 'confirm');
+  /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    this.formDirty.set(false);
+    await this.modalController.dismiss(convertFormToPersonalRel(this.formData(), this.personalRel()), 'confirm');
   }
 
-  protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.currentUser());
+  public async cancel(): Promise<void> {
+    this.formDirty.set(false);
+    this.formData.set(convertPersonalRelToForm(this.personalRel()));  // reset the form
+  }
+
+  protected onFormDataChange(formData: PersonalRelFormModel): void {
+    this.formData.set(formData);
   }
 
  protected async selectPerson(isSubject: boolean): Promise<void> {
-    const _person = await this.personalRelModalsService.selectPerson();
-    if (!_person) return;
+    const person = await this.personalRelModalsService.selectPerson();
+    if (!person) return;
     if (isSubject) {
-      this.vm.update((_vm) => ({
-        ..._vm, 
-        subjectKey: _person.bkey, 
-        subjectFirstName: _person.firstName,
-        subjectLastName: _person.lastName,
-        subjectGender: _person.gender,
+      this.formData.update((vm) => ({
+        ...vm, 
+        subjectKey: person.bkey, 
+        subjectFirstName: person.firstName,
+        subjectLastName: person.lastName,
+        subjectGender: person.gender,
       }));
     } else {
-      this.vm.update((_vm) => ({
-        ..._vm, 
-        objectKey: _person.bkey, 
-        objectFirstName: _person.firstName,
-        objectLastName: _person.lastName,
-        objectGender: _person.gender,
+      this.formData.update((vm) => ({
+        ...vm, 
+        objectKey: person.bkey, 
+        objectFirstName: person.firstName,
+        objectLastName: person.lastName,
+        objectGender: person.gender,
       }));
     }
+  }
+
+ protected hasRole(role: RoleName | undefined): boolean {
+    return hasRole(role, this.currentUser());
   }
 }

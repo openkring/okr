@@ -6,9 +6,9 @@ import { ENV, STORAGE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { DocumentCollection, DocumentModel, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
-import { DateFormat, addIndexElement, convertDateFormatToString, die, dirName, fileExtension, fileName, fileSizeUnit, findByKey, generateRandomString, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
+import { DateFormat, convertDateFormatToString, fileSizeUnit, findByKey, generateRandomString, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
-import { getDocumentStoragePath } from '@bk2/document-util';
+import { getDocumentIndex, getDocumentStoragePath } from '@bk2/document-util';
 import { DEFAULT_DOCUMENT_SOURCE, DEFAULT_DOCUMENT_TYPE, DEFAULT_KEY, DEFAULT_NOTES } from '@bk2/shared-constants';
 
 @Injectable({
@@ -29,7 +29,7 @@ export class DocumentService {
    * @returns the document id of the new DocumentModel in the database
    */
   public async create(document: DocumentModel, currentUser?: UserModel): Promise<string | undefined> {
-    document.index = this.getSearchIndex(document);
+    document.index = getDocumentIndex(document);
     return await this.firestoreService.createModel<DocumentModel>(DocumentCollection, document, '@document.operation.create', currentUser);
   } 
 
@@ -38,6 +38,10 @@ export class DocumentService {
    * @param key the key of the model document
    */
   public read(key: string): Observable<DocumentModel | undefined> {
+    console.log('DocumentService.read', key);
+    this.list().subscribe(docs => {
+      console.log('DocumentService.read: listed documents', docs.map(d => d.bkey));
+    });
     return findByKey<DocumentModel>(this.list(), key);    
   }
 
@@ -46,7 +50,7 @@ export class DocumentService {
    * @param document the DocumentModel with the new values
    */
   public async update(document: DocumentModel, currentUser?: UserModel, confirmMessage = '@document.operation.update'): Promise<string | undefined> {
-    document.index = this.getSearchIndex(document);
+    document.index = getDocumentIndex(document);
     return await this.firestoreService.updateModel<DocumentModel>(DocumentCollection, document, false, confirmMessage, currentUser);
   }
 
@@ -65,7 +69,7 @@ export class DocumentService {
    * @param sortOrder 
    * @returns 
    */
-  public list(orderBy = 'name', sortOrder = 'asc'): Observable<DocumentModel[]> {
+  public list(orderBy = 'dateOfDocLastUpdate', sortOrder = 'asc'): Observable<DocumentModel[]> {
     return this.firestoreService.searchData<DocumentModel>(DocumentCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
   }
 
@@ -74,7 +78,7 @@ export class DocumentService {
     return dir ? this.listDocumentsByDirectory(dir) : of<DocumentModel[]>([]);
   }
 
-  public listDocumentsByDirectory(dir: string, orderBy = 'name', sortOrder = 'asc'): Observable<DocumentModel[]> {
+  public listDocumentsByDirectory(dir: string, orderBy = 'dateOfDocLastUpdate', sortOrder = 'asc'): Observable<DocumentModel[]> {
     const dbQuery = getSystemQuery(this.tenantId);
     dbQuery.push({ key: 'dir', operator: '==', value: dir });
     return this.firestoreService.searchData<DocumentModel>(DocumentCollection, dbQuery, orderBy, sortOrder);
@@ -139,28 +143,8 @@ export class DocumentService {
     doc.priorVersionKey = DEFAULT_KEY;
     doc.version = '1.0.0';
     doc.isArchived = false;
-    doc.md5hash = metadata.md5Hash ?? '';
+    // we do not use metadata.md5Hash as we use the more secure SHA-256 hash
     return doc;
-  }
-  
-  /*-------------------------- SEARCH INDEX --------------------------------*/
-  public getSearchIndex(document: DocumentModel): string {
-    if (document.type === undefined) die('DocumentService.getSearchIndex: ERROR: document.type is mandatory.');
-    let index = '';
-    index = addIndexElement(index, 'n', fileName(document.fullPath));
-    index = addIndexElement(index, 't', document.type);
-    index = addIndexElement(index, 's', document.source);
-    index = addIndexElement(index, 'e', fileExtension(document.fullPath));
-    index = addIndexElement(index, 'd', dirName(document.fullPath));
-    return index;
-    }
-
-  /**
-   * Returns a string explaining the structure of the index.
-   * This can be used in info boxes on the GUI.
-   */
-  public getSearchIndexInfo(): string {
-    return 'n:name t:type s:source e:extension, d:directory';
   }
 
   /*-------------------------- STORAGE --------------------------------*/
@@ -242,7 +226,6 @@ export class DocumentService {
       console.log('    contentType: ' + metadata.contentType);
       console.log('    size: ' + fileSizeUnit(metadata.size));
       console.log('    created: ' + metadata.timeCreated);
-      console.log('    hash: ' + metadata.md5Hash);
     }
     catch(ex) {
       console.log('    no metadata; probably it is a folder.', ex);

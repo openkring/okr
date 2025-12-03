@@ -1,16 +1,16 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { IonAvatar, IonButton, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, IonThumbnail, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { UserModel } from '@bk2/shared-models';
+import { ResourceModelName, UserModel } from '@bk2/shared-models';
 import { DateInputComponent } from '@bk2/shared-ui';
-import { debugFormErrors, getAvatarKey, getFullPersonName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, getAvatarKey, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
 
-import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, ownershipNewFormValidations } from '@bk2/relationship-ownership-util';
+import { OWNERSHIP_FORM_SHAPE, OwnershipFormModel, ownershipFormValidations } from '@bk2/relationship-ownership-util';
 
 
 @Component({
@@ -22,17 +22,14 @@ import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, 
     DateInputComponent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonAvatar, IonImg, IonButton, IonThumbnail
   ],
-  styles: [`
-    ion-thumbnail { width: 30px; height: 30px; }
-  `],
-
+  styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
   template: `
   <form scVestForm
     [formShape]="shape"
-    [formValue]="vm()"
+    [formValue]="formData()"
     [suite]="suite" 
-    (dirtyChange)="dirtyChange.set($event)"
-    (formValueChange)="onValueChange($event)">
+    (dirtyChange)="dirty.emit($event)"
+    (formValueChange)="onFormChange($event)">
   
       <ion-grid>
         <ion-row>
@@ -74,7 +71,7 @@ import { OwnershipFormModel, OwnershipNewFormModel, ownershipNewFormModelShape, 
         </ion-row>
         <ion-row>
           <ion-col size="12"> 
-            <bk-date-input name="validFrom" [storeDate]="validFrom()" [locale]="locale()" [showHelper]=true [readOnly]="readOnly()" (changed)="onChange('validFrom', $event)" />
+            <bk-date-input name="validFrom" [storeDate]="validFrom()" [locale]="locale()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('validFrom', $event)" />
           </ion-col>      
         </ion-row>
       </ion-grid>
@@ -85,37 +82,47 @@ export class OwnershipNewFormComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
 
-  public vm = model.required<OwnershipNewFormModel>();
+  // inputs
+  public formData = model.required<OwnershipFormModel>(); 
   public currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected ownerKey = computed(() => this.vm().ownerKey ?? '');
-  protected ownerName = computed(() => getFullPersonName(this.vm().ownerName1 ?? '', this.vm().ownerName2 ?? ''));
-  protected ownerModelType = computed(() => this.vm().ownerModelType ?? '');
-  protected resourceKey = computed(() => this.vm().resourceKey ?? '');
-  protected resourceType = computed(() => this.vm().resourceType ?? '');
-  protected resourceModelType = computed(() => this.vm().resourceModelType ?? '');
-  protected resourceName = computed(() => this.vm().resourceName ?? '');
-  protected validFrom = computed(() => this.vm().validFrom ?? getTodayStr());
+  // signals
+  public dirty = output<boolean>();
+  public valid = output<boolean>();
+
+  // validation and errors
+  protected readonly suite = ownershipFormValidations;
+  protected readonly shape = OWNERSHIP_FORM_SHAPE;
+  private readonly validationResult = computed(() => ownershipFormValidations(this.formData()));
+
+  // fields
+  protected ownerKey = computed(() => this.formData().ownerKey ?? '');
+  protected ownerName = computed(() => getFullName(this.formData().ownerName1, this.formData().ownerName2, this.currentUser()?.nameDisplay));
+  protected ownerModelType = computed(() => this.formData().ownerModelType ?? '');
+  protected resourceKey = computed(() => this.formData().resourceKey ?? '');
+  protected resourceType = computed(() => this.formData().resourceType ?? '');
+  protected resourceModelType = computed(() => this.formData().resourceModelType ?? '');
+  protected resourceName = computed(() => this.formData().resourceName ?? '');
+  protected validFrom = computed(() => this.formData().validFrom ?? getTodayStr());
   protected locale = computed(() => this.appStore.appConfig().locale);
 
-  public validChange = output<boolean>();
-  protected dirtyChange = signal(true);
-
-  protected readonly suite = ownershipNewFormValidations;
-  protected readonly shape = ownershipNewFormModelShape;
-  private readonly validationResult = computed(() => ownershipNewFormValidations(this.vm()));
-
-  protected onValueChange(value: OwnershipFormModel): void {
-    this.vm.update((_vm) => ({ ..._vm, ...value }));
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  constructor() {
+    effect(() => {
+      this.valid.emit(this.validationResult().isValid());
+    });
   }
 
-  protected onChange(fieldName: string, $event: string | string[] | number): void {
-    this.vm.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('OwnershipNewForm', this.validationResult().errors, this.currentUser());
-    this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-    this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+  protected onFormChange(value: OwnershipFormModel): void {
+    this.formData.update((vm) => ({ ...vm, ...value }));
+    debugFormErrors('OwnershipNewForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    debugFormErrors('OwnershipNewForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }
 
   protected async selectOwner(): Promise<void> {
@@ -127,7 +134,7 @@ export class OwnershipNewFormComponent {
   }
 
   protected async selectPerson(): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: PersonSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -135,12 +142,12 @@ export class OwnershipNewFormComponent {
         currentUser: this.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isPerson(data, this.appStore.tenantId())) {
-        this.vm.update((_vm) => ({
-          ..._vm,
+        this.formData.update((vm) => ({
+          ...vm,
           ownerKey: data.bkey,
           ownerName1: data.firstName,
           ownerName2: data.lastName,
@@ -148,14 +155,13 @@ export class OwnershipNewFormComponent {
           ownerType: data.gender,
         }));
         debugFormErrors('OwnershipNewForm (Person)', this.validationResult().errors, this.currentUser());
-        this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+        this.dirty.emit(true);
       }
     }
   }
 
   protected async selectOrg(): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: OrgSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -163,12 +169,12 @@ export class OwnershipNewFormComponent {
         currentUser: this.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isOrg(data, this.appStore.tenantId())) {
-        this.vm.update((_vm) => ({
-          ..._vm,
+        this.formData.update((vm) => ({
+          ...vm,
           ownerKey: data.bkey,
           ownerName1: '',
           ownerName2: data.name,
@@ -176,14 +182,13 @@ export class OwnershipNewFormComponent {
           ownerType: data.type,
         }));
         debugFormErrors('OwnershipNewForm (Org)', this.validationResult().errors, this.currentUser());
-        this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+        this.dirty.emit(true);
       }
     }
   }
 
   protected async selectResource(): Promise<void> {
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: ResourceSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
@@ -191,12 +196,12 @@ export class OwnershipNewFormComponent {
         currentUser: this.currentUser()
       }
     });
-    _modal.present();
-    const { data, role } = await _modal.onWillDismiss();
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isResource(data, this.appStore.tenantId())) {
-        this.vm.update((_vm) => ({
-          ..._vm,
+        this.formData.update((vm) => ({
+          ...vm,
           resourceKey: data.bkey,
           resourceModelType: 'resource',
           resourceType: data.type,
@@ -204,19 +209,18 @@ export class OwnershipNewFormComponent {
           resourceName: data.name,
         }));
         debugFormErrors('OwnershipNewForm (Resource)', this.validationResult().errors, this.currentUser());
-        this.dirtyChange.set(true); // it seems, that vest is not updating dirty by itself for this change
-        this.validChange.emit(this.validationResult().isValid() && this.dirtyChange());
+        this.dirty.emit(true);
       }
     }
   }
 
   /******************************* getters *************************************** */
-  // 20.0:key for a rowing boat, 20.4:key for a locker
+  // resource.rboat:key for a rowing boat, resource.locker:key for a locker
   protected getAvatarKey(): string {
-    const _ownership = this.vm();
-    if (_ownership.resourceModelType !== undefined && _ownership.resourceKey) {
-      return getAvatarKey(_ownership.resourceModelType, _ownership.resourceKey, _ownership.resourceType, _ownership.resourceSubType);
+    const ownership = this.formData();
+    if (ownership.resourceModelType !== undefined && ownership.resourceKey) {
+      return getAvatarKey(ownership.resourceModelType, ownership.resourceKey, ownership.resourceType, ownership.resourceSubType);
     }
-    return 'resource.' + this.appStore.defaultResource()?.bkey; // default avatar
+    return `${ResourceModelName}.${this.appStore.defaultResource()?.bkey}`; // default avatar
   }
 }

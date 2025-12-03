@@ -25,3 +25,4 @@ export class MenuItemModel implements BkModel, NamedModel, SearchableModel, Tagg
 }
 
 export const MenuItemCollection = 'menuItems';
+export const MenuItemModelName = 'menuItem';

@@ -11,8 +11,8 @@ export function checkAuthorization(allowedRoles: RoleName[], currentUser?: UserM
   if (!currentUser) {
     return allowedRoles.includes('public');
   }
-  for (const _role of allowedRoles) {
-    if (currentUser.roles[_role as keyof Roles] === true) {
+  for (const role of allowedRoles) {
+    if (currentUser.roles[role as keyof Roles] === true) {
       return true;
     }
   }
@@ -26,22 +26,22 @@ export function checkAuthorization(allowedRoles: RoleName[], currentUser?: UserM
  */
 export function hasRole(role: RoleName | undefined, currentUser?: UserModel): boolean {
   if (!role) return true;
-  let _roles: RoleName[] = [];
+  let roles: RoleName[] = [];
   switch(role) {  // add additional roles that also have access
     case 'none': return true;
-    case 'registered': _roles = ['registered', 'privileged', 'contentAdmin', 'resourceAdmin', 'eventAdmin', 'memberAdmin', 'treasurer', 'admin']; break;
-    case 'privileged': _roles = ['privileged', 'admin']; break;
-    case 'memberAdmin': _roles = ['memberAdmin', 'admin']; break;
-    case 'contentAdmin': _roles = ['contentAdmin', 'admin']; break;
-    case 'resourceAdmin': _roles = ['resourceAdmin', 'admin']; break;
-    case 'eventAdmin': _roles = ['eventAdmin', 'admin']; break;
-    case 'treasurer': _roles = ['treasurer', 'admin']; break;
-    case 'admin':  _roles = ['admin']; break;
-    case 'public': _roles = ['public']; break; // only non-authenticated users
-    case 'groupAdmin': _roles = ['groupAdmin', 'admin']; break;
+    case 'registered': roles = ['registered', 'privileged', 'contentAdmin', 'resourceAdmin', 'eventAdmin', 'memberAdmin', 'treasurer', 'admin']; break;
+    case 'privileged': roles = ['privileged', 'admin']; break;
+    case 'memberAdmin': roles = ['memberAdmin', 'admin']; break;
+    case 'contentAdmin': roles = ['contentAdmin', 'admin']; break;
+    case 'resourceAdmin': roles = ['resourceAdmin', 'admin']; break;
+    case 'eventAdmin': roles = ['eventAdmin', 'admin']; break;
+    case 'treasurer': roles = ['treasurer', 'admin']; break;
+    case 'admin':  roles = ['admin']; break;
+    case 'public': roles = ['public']; break; // only non-authenticated users
+    case 'groupAdmin': roles = ['groupAdmin', 'admin']; break;
     default: die('AuthUtil.hasRole: unknown role claimed: ' + role);
   }
-  return checkAuthorization(_roles, currentUser);
+  return checkAuthorization(roles, currentUser);
 }
 
 export function isAdmin(currentUser?: UserModel): boolean {
