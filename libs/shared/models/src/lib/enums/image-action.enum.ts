@@ -1,4 +1,4 @@
-export enum ImageAction {
+export enum ImageActionType {
   Download, // download the image
   Zoom, // show a zoomed version of the image in a modal
   OpenSlider, // open a slider with all images in the list

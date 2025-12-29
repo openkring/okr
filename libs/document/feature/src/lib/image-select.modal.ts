@@ -4,14 +4,13 @@ import { IonButton, IonContent, IonIcon, ModalController, Platform } from '@ioni
 
 import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { Image, newImage, UserModel } from '@bk2/shared-models';
+import { IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
+import { ChangeConfirmationComponent, HeaderComponent, ImageConfigComponent } from '@bk2/shared-ui';
 import { coerceBoolean, getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 
 import { UploadService } from '@bk2/avatar-data-access';
 
-import { ImageConfigFormComponent } from '@bk2/document-ui';
 import { getDocumentStoragePath, pickPhoto } from '@bk2/document-util';
 
 /**
@@ -22,25 +21,20 @@ import { getDocumentStoragePath, pickPhoto } from '@bk2/document-util';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    HeaderComponent, ChangeConfirmationComponent, ImageConfigFormComponent,
+    HeaderComponent, ChangeConfirmationComponent, ImageConfigComponent,
     IonContent, IonButton, IonIcon
   ],
   template: `
-      <bk-header title="{{ '@content.section.operation.selectImage.title' | translate | async }}" [isModal]="true" />
+      <bk-header title="@content.section.operation.selectImage.title" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
-      <ion-content no-padding>
+      <ion-content class="ion-no-padding">
         <ion-button (click)="pickImage()">
           <ion-icon slot="start" src="{{'camera' | svgIcon }}" />
           {{ '@content.section.operation.selectImage.upload' | translate | async }}
         </ion-button>
-        <bk-image-config-form
-          [formData]="formData()"
-          [currentUser]="currentUser()"
-          [readOnly]="isReadOnly()"
-          (formDataChange)="onFormDataChange($event)"
-        />
+        <bk-image-config [formData]="formData()" (formDataChange)="onFormDataChange($event)" [readOnly]="isReadOnly()" />
       </ion-content>
   `
 })
@@ -61,7 +55,7 @@ export class ImageSelectModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = signal(newImage());
+  public formData = signal<ImageConfig>(IMAGE_CONFIG_SHAPE);
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -71,10 +65,10 @@ export class ImageSelectModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(newImage());  // reset the form
+    this.formData.set(IMAGE_CONFIG_SHAPE);  // reset the form
   }
 
-  protected onFormDataChange(formData: Image): void {
+  protected onFormDataChange(formData: ImageConfig): void {
     this.formData.set(formData);
   }
 

@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, input, output } from '@angular/core';
-import { IonItem, IonNote, IonSelect, IonSelectOption, SelectChangeEventDetail } from '@ionic/angular/standalone';
+import { Component, computed, input, model } from '@angular/core';
+import { IonItem, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -17,12 +17,12 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   template: `
     <ion-item lines="none">
       <ion-select [name]="name()"
-        label="{{ '@input.' + name() + '.label' | translate | async }}"
+        label="{{ label() | translate | async }}"
         [disabled]="isReadOnly()"
         label-placement="floating"
         interface="popover"
         [value]="selectedString()"
-        (ionChange)="onChange($event)">
+        (ionChange)="selectedString.set($event.detail.value)">
         @for(stringValue of stringList(); track stringValue) {
           <ion-select-option [value]="stringValue">{{ stringValue }}</ion-select-option>
         }
@@ -31,26 +31,29 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 
       @if(shouldShowHelper()) {
     <ion-item lines="none">
-        <ion-note>{{ '@input.' + name() + '.helper' | translate | async }}</ion-note>
+        <ion-note>{{ helperNote() | translate | async }}</ion-note>
     </ion-item>
       }
-
   `
 })
 export class StringSelectComponent {
+
+  // inputs
   public name = input.required<string>(); // mandatory name of the input field
-  public selectedString = input(''); // initial selection
+  public selectedString = model(''); // initial selection
 
   // if you have a string enum, you may convert it with:
   // Object.values(YourEnum)
   public stringList = input.required<string[]>(); // mandatory view model
   public readOnly = input.required<boolean>();
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public showHelper = input(false);
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
-  public changed = output<string>();
 
-  protected onChange($event: CustomEvent<SelectChangeEventDetail>): void {
-    this.changed.emit($event.detail.value as string);
-  }
+  // coerced boolean inputs
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
+
+  // computed derived fields
+  protected helperNote = computed(() => `@input.${this.name()}.helper`);
+  protected label = computed(() => `@input.${this.name()}.label`);
+
 }

@@ -5,7 +5,7 @@ import { firstValueFrom, map, Observable, of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { BkModel, LogInfo, logMessage, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel, SectionCollection, SectionModel } from '@bk2/shared-models';
+import { BkModel, LogInfo, logMessage, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel, SectionCollection, SectionModel, TABLE_SECTION_SHAPE } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
 import { DateFormat, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
@@ -90,7 +90,8 @@ export const AocStatisticsStore = signalStore(
         const isNew = !section;
         if (isNew) {
           // section does not exist -> create a new section
-          section = new SectionModel(store.appStore.env.tenantId);
+          section = TABLE_SECTION_SHAPE;
+          section.tenants = [store.appStore.env.tenantId];
           section.bkey = sectionKey;
           section.title = 'aoc.statistics.ageByGender.title';
         }

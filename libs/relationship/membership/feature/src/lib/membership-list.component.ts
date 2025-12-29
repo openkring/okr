@@ -1,11 +1,11 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { MembershipModel, MembershipModelName, NameDisplay, PersonModelName, RoleName } from '@bk2/shared-models';
 import { DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { DatePickerModalComponent, EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { DateFormat, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
@@ -13,19 +13,18 @@ import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { CategoryLogPipe } from '@bk2/relationship-membership-util';
-import { MembershipListStore } from './membership-list.store';
+import { MembershipStore } from './membership.store';
 
 @Component({
   selector: 'bk-membership-list',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryLogPipe, AvatarPipe, FullNamePipe,
-    SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent, DatePickerModalComponent,
+    SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover,
     IonBackdrop
 ],
-  providers: [MembershipListStore],
   template: `
     <ion-header>
       <!-- title and context menu -->
@@ -50,12 +49,12 @@ import { MembershipListStore } from './membership-list.store';
 
     <!-- search and filters -->
     @if(membershipCategory(); as cat) {
-      <bk-list-filter 
-        [tags]="tags()" (tagChanged)="onTagSelected($event)"
-        [category]="cat" (categoryChanged)="onCategorySelected($event)"
-        [type]="types()" (typeChanged)="onTypeSelected($event)"
-        [years]="years()" (yearChanged)="onYearSelected($event)"
+      <bk-list-filter
         (searchTermChanged)="onSearchtermChange($event)"
+        (tagChanged)="onTagSelected($event)" [tags]="tags()"
+        (typeChanged)="onTypeSelected($event)" [types]="types()"
+        (categoryChanged)="onCategorySelected($event)" [categories]="membershipCategory()"
+        (yearChanged)="onYearSelected($event)"
       />
     }
 
@@ -93,63 +92,72 @@ import { MembershipListStore } from './membership-list.store';
       }
     }
   </ion-content>
-  <bk-date-picker-modal #datePicker [isoDate]="isoDate()" (dateSelected)="onDateSelected($event)" />
     `
 })
 export class MembershipListComponent {
-  protected membershipListStore = inject(MembershipListStore);
+  protected membershipStore = inject(MembershipStore);
   private actionSheetController = inject(ActionSheetController);
-  protected datePickerModal = viewChild.required<DatePickerModalComponent>(DatePickerModalComponent);
 
+  // inputs
   public listId = input.required<string>();
   public orgId = input.required<string>();
   public contextMenuName = input.required<string>();
 
+  // filters
+  protected searchTerm = linkedSignal(() => this.membershipStore.searchTerm());
+  protected selectedCategory = linkedSignal(() => this.membershipStore.selectedMembershipCategory());
+  protected selectedTag = linkedSignal(() => this.membershipStore.selectedTag());
+  protected selectedYear = linkedSignal(() => this.membershipStore.selectedYear()); 
   protected isoDate = signal(getTodayStr(DateFormat.IsoDate));
 
-  protected membershipCategory = computed(() => this.membershipListStore.membershipCategory());
-  protected genders = computed(() => this.membershipListStore.genders());
-  protected orgTypes = computed(() => this.membershipListStore.orgTypes());
+  // computed
+  protected membershipListUrl = computed(() => 'membership/' + this.listId() + '/' + this.orgId() + '/' + this.contextMenuName());
+  protected membershipCategory = linkedSignal(() => this.membershipStore.membershipCategory());
+  protected genders = computed(() => this.membershipStore.genders());
+  protected orgTypes = computed(() => this.membershipStore.orgTypes());
   protected popupId = computed(() => 'c_memberships_' + this.listId() + '_' + this.orgId());
-  protected orgName = computed(() => this.membershipListStore.defaultOrgName());
-  protected tags = computed(() => this.membershipListStore.getTags());
+  protected orgName = computed(() => this.membershipStore.orgName());
+  protected tags = computed(() => this.membershipStore.getTags());
   protected types = computed(() => this.listId() === 'orgs' ? this.orgTypes() : this.genders());
   protected years = computed(() => this.listId() === 'entries' || this.listId() === 'exits' ? getYearList() : undefined);
-  protected currentUser = computed(() => this.membershipListStore.appStore.currentUser());
+  protected currentUser = computed(() => this.membershipStore.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
-  protected membershipDefaultIcon = computed(() => this.membershipListStore.appStore.getDefaultIcon(MembershipModelName));
+  protected membershipDefaultIcon = computed(() => this.membershipStore.appStore.getDefaultIcon(MembershipModelName));
+  protected selectedType = linkedSignal(() => {
+    return this.listId() === 'orgs' ? this.membershipStore.selectedOrgType() : this.membershipStore.selectedGender();
+  });
 
   protected filteredMemberships = computed(() => {
     switch (this.listId()) {
-      case 'memberships': return this.membershipListStore.filteredMemberships() ?? [];
-      case 'persons': return this.membershipListStore.filteredPersons() ?? [];
-      case 'orgs': return this.membershipListStore.filteredOrgs() ?? [];
-      case 'active': return this.membershipListStore.filteredActive();
-      case 'applied': return this.membershipListStore.filteredApplied();
-      case 'passive': return this.membershipListStore.filteredPassive();
-      case 'cancelled': return this.membershipListStore.filteredCancelled();
-      case 'deceased': return this.membershipListStore.filteredDeceased();
-      case 'entries': return this.membershipListStore.filteredEntries();
-      case 'exits': return this.membershipListStore.filteredExits();
+      case 'memberships': return this.membershipStore.filteredMembers() ?? [];
+      case 'persons': return this.membershipStore.filteredPersons() ?? [];
+      case 'orgs': return this.membershipStore.filteredOrgs() ?? [];
+      case 'active': return this.membershipStore.filteredActive();
+      case 'applied': return this.membershipStore.filteredApplied();
+      case 'passive': return this.membershipStore.filteredPassive();
+      case 'cancelled': return this.membershipStore.filteredCancelled();
+      case 'deceased': return this.membershipStore.filteredDeceased();
+      case 'entries': return this.membershipStore.filteredEntries();
+      case 'exits': return this.membershipStore.filteredExits();
       case 'all':
-      default: return this.membershipListStore.filteredMemberships() ?? [];
+      default: return this.membershipStore.filteredMembers() ?? [];
     }
   });
   protected membershipsCount = computed(() => {
     switch (this.listId()) {
-      case 'memberships': return this.membershipListStore.membershipsCount();
-      case 'persons': return this.membershipListStore.personsCount();
-      case 'orgs': return this.membershipListStore.orgsCount();
-      case 'active': return this.membershipListStore.activeCount();
-      case 'applied': return this.membershipListStore.appliedCount();
-      case 'passive': return this.membershipListStore.passiveCount();
-      case 'cancelled': return this.membershipListStore.cancelledCount();
-      case 'deceased': return this.membershipListStore.deceasedCount();
-      case 'entries': return this.membershipListStore.entriesCount();
-      case 'exits': return this.membershipListStore.exitsCount();
+      case 'memberships': return this.membershipStore.membersCount();
+      case 'persons': return this.membershipStore.personsCount();
+      case 'orgs': return this.membershipStore.orgsCount();
+      case 'active': return this.membershipStore.activeCount();
+      case 'applied': return this.membershipStore.appliedCount();
+      case 'passive': return this.membershipStore.passiveCount();
+      case 'cancelled': return this.membershipStore.cancelledCount();
+      case 'deceased': return this.membershipStore.deceasedCount();
+      case 'entries': return this.membershipStore.entriesCount();
+      case 'exits': return this.membershipStore.exitsCount();
       case 'all':
-      default: return this.membershipListStore.membershipsCount() ?? [];
+      default: return this.membershipStore.membersCount() ?? [];
     }
   });
   protected title = computed(() => {
@@ -163,23 +171,44 @@ export class MembershipListComponent {
     }
   });
   protected selectedMembershipsCount = computed(() => this.filteredMemberships().length);
-  protected isLoading = computed(() => this.membershipListStore.isLoading());
+  protected isLoading = computed(() => this.membershipStore.isLoading());
 
-  private imgixBaseUrl = this.membershipListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
   protected personModelName = PersonModelName;
   
   constructor() {
-    effect(() => this.membershipListStore.setOrgId(this.orgId()));
+    effect(() => this.membershipStore.setOrgId(this.orgId()));
+  }
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.membershipStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.membershipStore.setSelectedTag(tag);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.membershipStore.setSelectedGender(type);
+  }
+
+  protected onCategorySelected(category: string): void {
+    this.membershipStore.setSelectedMembershipCategory(category);
+  }
+
+  protected onYearSelected(year: number): void {
+    this.membershipStore.setSelectedYear(year);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const _selectedMethod = $event.detail.data;
-    switch (_selectedMethod) {
-      case 'add': await this.membershipListStore.add(); break;
-      case 'exportRaw': await this.membershipListStore.export("raw"); break;
-      case 'copyEmailAddresses': await this.membershipListStore.copyEmailAddresses(); break;
-      default: error(undefined, `MembershipListComponent.onPopoverDismiss: unknown method ${_selectedMethod}`);
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
+      case 'add': await this.membershipStore.add(this.readOnly()); break;
+      case 'exportRaw': await this.membershipStore.export("raw"); break;
+      case 'copyEmailAddresses': await this.membershipStore.copyEmailAddresses(this.listId(), this.readOnly()); break;
+      default: error(undefined, `MembershipListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 
@@ -200,18 +229,20 @@ export class MembershipListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'create_edit'));
       if (isOngoing(membership.dateOfExit)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('endMembership', this.imgixBaseUrl, 'stop-circle'));
-        actionSheetOptions.buttons.push(createActionSheetButton('changeMcat', this.imgixBaseUrl, 'member_change'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'member_change'));
       }
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -227,63 +258,37 @@ export class MembershipListComponent {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.membershipListStore.delete(membership, this.readOnly());
+        case 'membership.delete':
+          await this.membershipStore.delete(membership, this.readOnly());
           break;
-        case 'edit':
-          await this.membershipListStore.edit(membership, this.readOnly());
+        case 'membership.edit':
+          await this.membershipStore.edit(membership, this.readOnly());
           break;
-        case 'view':
-          await this.membershipListStore.edit(membership, true);
+        case 'membership.view':
+          await this.membershipStore.edit(membership, true);
           break;
-        case 'endMembership':
-          this.membershipListStore.setCurrentMembership(membership);
-          console.log('MembershipList.executeActions - opening date picker modal');
-          this.datePickerModal().open();
+        case 'person.edit':
+          await this.membershipStore.editPerson(membership, this.membershipListUrl(), this.readOnly());
           break;
-        case 'changeMcat':
-          await this.membershipListStore.changeMembershipCategory(membership, this.readOnly());
+        case 'person.view':
+          await this.membershipStore.editPerson(membership, this.membershipListUrl(), true);
+          break;
+        case 'membership.end':
+          await this.membershipStore.end(membership, undefined, this.readOnly());
+          break;
+        case 'membership.changecat':
+          await this.membershipStore.changeMembershipCategory(membership, this.readOnly());
           break;
       }
     }
   }
 
-  /******************************* change notifications *************************************** */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.membershipListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected(tag: string): void {
-    this.membershipListStore.setSelectedTag(tag);
-  }
-
-  protected onCategorySelected(cat: string): void {
-    this.membershipListStore.setSelectedMembershipCategory(cat);
-  }
-
-  protected onTypeSelected(type: string): void {
-    if (this.listId() === 'orgs') {
-      this.membershipListStore.setSelectedOrgType(type);
-    } else {
-      this.membershipListStore.setSelectedGender(type);
-    }
-  }
-
-  protected onYearSelected(year: number): void {
-    this.membershipListStore.setSelectedYear(year);
-  }
-
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.membershipListStore.currentUser());
+    return hasRole(role, this.membershipStore.currentUser());
   }
 
   protected isOngoing(membership: MembershipModel): boolean {
     return isOngoing(membership.dateOfExit);
-  }
-
-  protected async onDateSelected(isoDate: string): Promise<void> {
-    console.log(`MembershipList.onDateSelected → isoDate: ${isoDate}`);
-    await this.membershipListStore.end(isoDate);
   }
 }

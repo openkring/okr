@@ -24,9 +24,11 @@ import { ColorIonic } from '@bk2/shared-models';
 export class ErrorNoteComponent {
   private readonly translocoService = inject(TranslocoService);
 
+  // inputs
   public errors = input.required<string[]>();
   public color = input<ColorIonic>(ColorIonic.Danger);
 
+  // computed
   protected hasErrors = computed(() => this.errors().length > 0);
   private readonly errorRef = rxResource({
     params: () => ({
@@ -35,6 +37,7 @@ export class ErrorNoteComponent {
     stream: ({params}) => this.translate(params.errors) });
   protected error = computed (() => this.errorRef.value() as string);
   
+  // passing constants to the template
   protected colorsIonic = ColorsIonic;
 
   private translate(keys: string[]): Observable<string> {

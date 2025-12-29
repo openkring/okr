@@ -1,15 +1,16 @@
-import { Component, computed, effect, input, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { vestForms } from 'ngx-vest-forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { BaseProperty, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { BaseProperty, CategoryListModel, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, ColorComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, PropertyListComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS } from '@bk2/shared-constants';
 
-import { RESOURCE_FORM_SHAPE, ResourceFormModel, resourceFormValidations } from '@bk2/resource-util';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AsyncPipe } from '@angular/common';
+
+import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
 
 @Component({
   selector: 'bk-resource-form',
@@ -24,264 +25,268 @@ import { AsyncPipe } from '@angular/common';
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-  <form scVestForm
-    [formShape]="shape"
-    [formValue]="formData()"
-    [suite]="suite" 
-    (dirtyChange)="dirty.emit($event)"
-    (formValueChange)="onFormChange($event)">
- 
-    @switch(formData().type) {
-      <!-- ***************************************** ROWING BOAT ***************************************** -->
-      @case('rboat') {
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ 'resource.type.rboat.formTitle' | translate | async}}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12">
-                  <bk-text-input name="name" [value]="name()" [maxLength]=20 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
-                  <bk-error-note [errors]="nameErrors()" />
-                </ion-col>
-                <ion-col size="12">
-                  <bk-cat-select [category]="subTypes()!" [selectedItemName]="type()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('subType', $event)" />
-                </ion-col>
-                <ion-col size="12">
-                  <bk-cat-select [category]="usages()!" [selectedItemName]="usage()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('usage', $event)" />
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-text-input name="load" [value]="load()" [maxLength]=20 [readOnly]="isReadOnly()" (changed)="onFieldChange('load', $event)" />
-                  <bk-error-note [errors]="loadErrors()" />                                                                                                                                                             
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-number-input name="currentValue" [value]="currentValue()" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('currentValue', $event)" />                                        
-                  <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                             
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-color [hexColor]="hexColor()"  [readOnly]="isReadOnly()" (changed)="onFieldChange('hexColor', $event)" />
-                  <bk-error-note [errors]="hexColorErrors()" />                                                                                  
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>
-      }
+    @if (showForm()) {
+      <form scVestForm
+        [formValue]="formData()"
+        (formValueChange)="onFormChange($event)"
+        [suite]="suite" 
+        (dirtyChange)="dirty.emit($event)"
+        (validChange)="valid.emit($event)"
+      >
+    
+        @switch(resourceType()) {
+          <!-- ***************************************** ROWING BOAT ***************************************** -->
+          @case('rboat') {
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12">
+                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="nameErrors()" />
+                    </ion-col>
+                    <ion-col size="12">
+                      <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                    <ion-col size="12">
+                      <bk-cat-select [category]="usages()!" [selectedItemName]="usage()" (selectedItemNameChange)="onFieldChange('usage', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-text-input name="load" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="loadErrors()" />                                                                                                                                                             
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                      <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                             
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)"  [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="hexColorErrors()" />                                                                                  
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+            </ion-card>
+          }
 
-      <!-- *****************************************  BOAT ***************************************** -->
-      @case('boat') {
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ 'resource.type.boat.formTitle' | translate | async}}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12">
-                  <bk-text-input name="name" [value]="name()" [maxLength]=20 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />                                        
-                  <bk-error-note [errors]="nameErrors()" />                                                                                                                                                             
-                </ion-col>
-                <ion-col size="12">
-                  <bk-cat-select [category]="subTypes()!" [selectedItemName]="type()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('subType', $event)" />
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-text-input name="load" [value]="load()" [maxLength]=20 [readOnly]="isReadOnly()" (changed)="onFieldChange('load', $event)" />                                        
-                  <bk-error-note [errors]="loadErrors()" />                                                                                                                                                             
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-number-input name="currentValue" [value]="currentValue()" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('currentValue', $event)" />                                        
-                  <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                             
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-color [hexColor]="hexColor()" [readOnly]="isReadOnly()" (changed)="onFieldChange('hexColor', $event)" />
-                  <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>        
-      }
+          <!-- *****************************************  BOAT ***************************************** -->
+          @case('boat') {
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12">
+                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
+                      <bk-error-note [errors]="nameErrors()" />                                                                                                                                                             
+                    </ion-col>
+                    <ion-col size="12">
+                      <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-text-input name="load" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
+                      <bk-error-note [errors]="loadErrors()" />                                                                                                                                                             
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                      <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                             
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+            </ion-card>        
+          }
 
-      <!-- ***************************************** CAR ***************************************** -->
-      @case('car') {
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ 'resource.type.car.formTitle' | translate | async}}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12">
-                  <bk-text-input name="name" [value]="name()" [maxLength]=30 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
-                  <bk-error-note [errors]="nameErrors()" />                                                                                                                                                       
-                </ion-col>
-                <ion-col size="12">
-                  <bk-cat-select [category]="subTypes()!" [selectedItemName]="type()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('subType', $event)" />
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-text-input name="load" [value]="load()" [maxLength]=20 [readOnly]="isReadOnly()" (changed)="onFieldChange('load', $event)" />
-                  <bk-error-note [errors]="loadErrors()" />                                                                                                                                                                                                
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-number-input name="currentValue" [value]="currentValue()" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('currentValue', $event)" />
-                  <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                                                                    
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-color [hexColor]="hexColor()" [readOnly]="isReadOnly()" (changed)="onFieldChange('hexColor', $event)" />
-                  <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>        
-      }
+          <!-- ***************************************** CAR ***************************************** -->
+          @case('car') {
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12">
+                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="nameErrors()" />                                                                                                                                                       
+                    </ion-col>
+                    <ion-col size="12">
+                      <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-text-input name="load" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="loadErrors()" />                                                                                                                                                                                                
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                                                                    
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+            </ion-card>        
+          }
 
-      <!-- ***************************************** LOCKER ***************************************** -->
-      @case('locker') {
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ 'resource.type.locker.formTitle' | translate | async}}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12" size-md="6">
-                  <bk-number-input name="lockerNr" [value]="lockerNr()" [maxLength]=3 [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('lockerNr', $event)" />
-                  <bk-error-note [errors]="lockerNrErrors()" />                                                                                                                                                                                                                                
-                </ion-col>
-        
-                <ion-col size="12" size-md="6">
-                  <bk-number-input name="keyNr" [value]="keyNr()" [maxLength]=5 [readOnly]="isReadOnly()" (changed)="onFieldChange('keyNr', $event)" />
-                  <bk-error-note [errors]="keyNrErrors()" />                                                                                                                                                                                                                             
-                </ion-col> 
-                <ion-col size="12">
-                  <bk-cat-select [category]="subTypes()!" [selectedItemName]="type()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('subType', $event)" />
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>        
-      }
+          <!-- ***************************************** LOCKER ***************************************** -->
+          @case('locker') {
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12" size-md="6">
+                      <bk-number-input name="lockerNr" [value]="lockerNr()" (valueChange)="onFieldChange('lockerNr', $event)" [maxLength]=3 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="lockerNrErrors()" />                                                                                                                                                                                                                                
+                    </ion-col>
+            
+                    <ion-col size="12" size-md="6">
+                      <bk-number-input name="keyNr" [value]="keyNr()" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=5 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="keyNrErrors()" />                                                                                                                                                                                                                             
+                    </ion-col> 
+                    <ion-col size="12">
+                      <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+            </ion-card>        
+          }
 
-      <!-- ***************************************** KEY ***************************************** -->
-      @case('key') {
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ 'resource.type.key.formTitle' | translate | async}}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12">
-                <bk-text-input name="keyNr" [value]="name()" [maxLength]=20 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
-                <bk-error-note [errors]="keyNrErrors()" />                                                                                                                                                                                                    
-                </ion-col>        
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>
-      }
+          <!-- ***************************************** KEY ***************************************** -->
+          @case('key') {
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12">
+                    <bk-text-input name="keyNr" [value]="keyNr() + ''" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                    <bk-error-note [errors]="keyNrErrors()" />                                                                                                                                                                                                    
+                    </ion-col>        
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+            </ion-card>
+          }
 
-      <!-- ***************************************** PET ***************************************** -->
-      @case('pet') {
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ 'resource.type.pet.formTitle' | translate | async}}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12">
-                  <bk-text-input name="name" [value]="name()" [maxLength]=30 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
-                  <bk-error-note [errors]="nameErrors()" />                                                                                                                                                                                          
-                </ion-col>
-               <ion-col size="12">
-                  <bk-cat-select [category]="subTypes()!" [selectedItemName]="type()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('subType', $event)" />
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-color [hexColor]="hexColor()" [readOnly]="isReadOnly()" (changed)="onFieldChange('hexColor', $event)" />
-                  <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>        
-      }
+          <!-- ***************************************** PET ***************************************** -->
+          @case('pet') {
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12">
+                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="nameErrors()" />                                                                                                                                                                                          
+                    </ion-col>
+                  <ion-col size="12">
+                      <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+            </ion-card>        
+          }
 
-      <!-- ***************************************** REAL ESTATE ***************************************** -->
-      @case('realestate') {
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ 'resource.type.realestate.formTitle' | translate | async}}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12">
-                  <bk-text-input name="name" [value]="name()" [maxLength]=30 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
-                  <bk-error-note [errors]="nameErrors()" />                                                                                                                                                                                          
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-number-input name="currentValue" [value]="currentValue()" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('currentValue', $event)" />
-                  <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                                                                                                  
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>        
-      }
+          <!-- ***************************************** REAL ESTATE ***************************************** -->
+          @case('realestate') {
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12">
+                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="nameErrors()" />                                                                                                                                                                                          
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                                                                                                  
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+            </ion-card>        
+          }
 
-      <!-- ***************************************** OTHER RESOURCE ***************************************** -->
-      @default {
-       <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ 'resource.type.default.formTitle' | translate | async}}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row >
-                <ion-col size="12">
-                  <bk-text-input name="name" [value]="name()" [maxLength]=30 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
-                  <bk-error-note [errors]="nameErrors()" />                                                                                                                                                    
-                </ion-col>
-                
-                <ion-col size="12" size-md="6">
-                  <bk-text-input name="load" [value]="load()" [maxLength]=20 [readOnly]="isReadOnly()" (changed)="onFieldChange('load', $event)" />
-                  <bk-error-note [errors]="loadErrors()" />                                                                                                                                                                                                                                 
-                </ion-col>
-        
-                <ion-col size="12" size-md="6">
-                  <bk-number-input name="currentValue" [value]="currentValue()" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('currentValue', $event)" />
-                  <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                                                                                                                                  
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-color [hexColor]="hexColor()" [readOnly]="isReadOnly()" (changed)="onFieldChange('hexColor', $event)" />
-                  <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>
-      }
-    }
+          <!-- ***************************************** OTHER RESOURCE ***************************************** -->
+          @default {
+          <ion-card>
+              <ion-card-header>
+                <ion-card-title>{{ cardTitle() | translate | async}}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <ion-grid>
+                  <ion-row >
+                    <ion-col size="12">
+                      <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="nameErrors()" />                                                                                                                                                    
+                    </ion-col>
+                    
+                    <ion-col size="12" size-md="6">
+                      <bk-text-input name="load" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="loadErrors()" />                                                                                                                                                                                                                                 
+                    </ion-col>
+            
+                    <ion-col size="12" size-md="6">
+                      <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                                                                                                                                  
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('hexColor', $event)" [readOnly]="isReadOnly()" />
+                      <bk-error-note [errors]="hexColorErrors()" />                                                                                                                                                             
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+            </ion-card>
+          }
+        }
 
-    <bk-property-list [propertyList]="data()" name="resourceData" (changed)="onFieldChange('propertyList', $event)" />
+        <bk-property-list [(properties)]="data" name="resourceData" />
 
-    @if(hasRole('privileged')) {
-      <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
-    }
-  
-    @if(hasRole('admin')) {
-      <bk-notes name="description" [value]="description()" [readOnly]="isReadOnly()" (changed)="onFieldChange('description', $event)" />
-    }
-</form>
+        @if(hasRole('privileged') || hasRole('resourceAdmin')) {
+          <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+        }
+      
+        @if(hasRole('admin')) {
+          <bk-notes name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+        }
+    </form>
+  }
   `
 })
 export class ResourceFormComponent {
   // inputs
-  public formData = model.required<ResourceFormModel>();
+  public formData = model.required<ResourceModel>();
   public currentUser = input<UserModel | undefined>();
+  public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
   public readonly subTypes = input<CategoryListModel | undefined>();
   public readonly usages = input<CategoryListModel | undefined>();
@@ -293,9 +298,8 @@ export class ResourceFormComponent {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = resourceFormValidations;
-  protected readonly shape = RESOURCE_FORM_SHAPE;
-  private readonly validationResult = computed(() => resourceFormValidations(this.formData()));
+  protected readonly suite = resourceValidations;
+  private readonly validationResult = computed(() => resourceValidations(this.formData()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected loadErrors = computed(() => this.validationResult().getErrors('load'));
   protected currentValueErrors = computed(() => this.validationResult().getErrors('currentValue'));
@@ -304,26 +308,23 @@ export class ResourceFormComponent {
   protected keyNrErrors = computed(() => this.validationResult().getErrors('keyNr'));
   protected lockerNrErrors = computed(() => this.validationResult().getErrors('lockerNr'));
   protected errors = computed(() => this.validationResult().getErrors());
-
+  
   // fields
-  protected name = computed(() => this.formData().name ?? DEFAULT_NAME);
-  protected type = computed(() => this.formData().subType ?? this.getDefaultType(this.formData().type ?? ''));
-  protected usage = computed(() => this.formData().usage ?? DEFAULT_RBOAT_USAGE);
-  protected load = computed(() => this.formData().load ?? '');
-  protected currentValue = computed(() => this.formData().currentValue ?? DEFAULT_PRICE);
-  protected hexColor = computed(() => this.formData().hexColor ?? '');
-  protected keyNr = computed(() => this.formData().keyNr ?? 0);
-  protected lockerNr = computed(() => this.formData().lockerNr ?? 0);
-  protected data = computed(() => this.formData().data ?? []);
-  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected description = computed(() => this.formData().description ?? DEFAULT_NOTES);
+  protected cardTitle = computed(() => `@resource.type.${this.resourceType()}.formTitle` );
+  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
+  protected resourceType = linkedSignal(() => this.formData().type ?? '');
+  protected subType = linkedSignal(() => this.formData().subType ?? this.getDefaultType(this.formData().type ?? ''));
+  protected usage = linkedSignal(() => this.formData().usage ?? DEFAULT_RBOAT_USAGE);
+  protected load = linkedSignal(() => this.formData().load ?? '');
+  protected currentValue = linkedSignal(() => this.formData().currentValue ?? DEFAULT_PRICE);
+  protected hexColor = linkedSignal(() => this.formData().color ?? '');
+  protected keyNr = linkedSignal(() => getKeyNr(this.formData()) ?? 0);
+  protected lockerNr = linkedSignal(() => getLockerNr(this.formData()) ?? 0);
+  protected data = linkedSignal(() => this.formData().data ?? []);
+  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
 
-  constructor() {
-    effect(() => {
-      this.valid.emit(this.validationResult().isValid());
-    });
-  }
-
+  /******************************* actions *************************************** */
   private getDefaultType(type: string): string {
     switch (type) {
       case 'rboat': return DEFAULT_RBOAT_TYPE;
@@ -335,15 +336,15 @@ export class ResourceFormComponent {
     }
   } 
 
-  protected onFormChange(value: ResourceFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormErrors('ResourceForm.onFormChange', this.validationResult().errors, this.currentUser());
-  }
-
-  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | BaseProperty[]): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormErrors('ResourceForm.onFieldChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFormChange(value: ResourceModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormModel('ResourceForm.onFormChange', this.formData(), this.currentUser());
+    debugFormErrors('ResourceForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

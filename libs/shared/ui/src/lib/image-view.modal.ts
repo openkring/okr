@@ -1,19 +1,17 @@
-import { AsyncPipe, NgOptimizedImage, provideImgixLoader } from '@angular/common';
+import { provideImgixLoader } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { Image } from '@bk2/shared-models';
-import { ImgixUrlPipe } from '@bk2/shared-pipes';
+import { ImageStyle } from '@bk2/shared-models';
+import { ENV } from '@bk2/shared-config';
+import { getImgixUrl, getSizedImgixParamsByExtension } from '@bk2/shared-util-core';
 
 import { HeaderComponent } from './header.component';
-import { ENV } from '@bk2/shared-config';
 
 @Component({
   selector: 'bk-image-view-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, ImgixUrlPipe,
     HeaderComponent,
     IonContent
   ],
@@ -39,28 +37,41 @@ import { ENV } from '@bk2/shared-config';
     }
   `],
   template: `
-      <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
+      <bk-header [title]="title()" [isModal]="true" />
       <ion-content>
-        @if(image(); as image) {
           <div class="image-container">
-            <img [src]="(image | imgixUrl:imgixBaseUrl())"
-              [alt]="image.altText"
+            <img [src]="imgixUrl()"
+              [alt]="altText()"
               style="max-width: 100%; max-height: 100%; object-fit: contain;"
             />
           </div>
-        }
       </ion-content>
   `
 })
 export class ImageViewModalComponent {
   private env = inject(ENV);
-  public image = input.required<Image>();
+
+  // inputs
+  public url = input.required<string>();
+  public altText = input('');
   public title = input('');
+  public style = input.required<ImageStyle>();
 
-  protected imgixBaseUrl = computed(() => this.env.services.imgixBaseUrl);
+  // passing constants to the template
+  protected imgixBaseUrl = this.env.services.imgixBaseUrl;
 
+  // computed
+  protected width = computed(() => this.style().width ?? '160');
+  protected height = computed(() => this.style().height ?? '90');
+
+  protected imgixUrl = computed(() => {
+    const params = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
+    const prefix = this.url().startsWith('/') ? this.imgixBaseUrl : this.imgixBaseUrl + '/';
+    return prefix + getImgixUrl(this.url(), params);
+  });
+  
 /*   protected imageContainer = viewChild('.image-container', { read: ElementRef });
-  protected sizes = computed(() => this.image().sizes ?? '(max-width: 768px) 100vw, 50vw');
+  protected sizes = computed(() => this.style().sizes ?? '(max-width: 768px) 100vw, 50vw');
   protected containerStyle = computed(() => {
     const img = this.image();
     if (!img.width || !img.height) return {};

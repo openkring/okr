@@ -1,7 +1,8 @@
 import { Component, input, output, signal } from '@angular/core';
 import { IonModal, IonContent, IonDatetime } from '@ionic/angular/standalone';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AsyncPipe } from '@angular/common';
+
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
 
 @Component({
@@ -35,12 +36,16 @@ import { getTodayStr, DateFormat } from '@bk2/shared-util-core';
   `,
 })
 export class DatePickerModalComponent {
+  // inputs
   isoDate = input<string>(getTodayStr(DateFormat.IsoDate)); // yyyy-MM-dd
 
+  // outputs
   dateSelected = output<string>();  // yyyy-MM-dd
 
+  // signals
   protected isOpen = signal(false);
 
+  // actions
   public open(): void {
     this.isOpen.set(true);
   }

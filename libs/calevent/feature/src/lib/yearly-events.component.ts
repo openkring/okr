@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ActionSheetController } from '@ionic/angular';
 
@@ -8,12 +8,12 @@ import { CalEventModel, RoleName } from '@bk2/shared-models';
 import { LabelPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { getYear, getYearList, hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 import { AvatarDisplayComponent } from '@bk2/avatar-ui';
 
-import { CalEventListStore } from './calevent-list.store';
+import { CalEventStore } from './calevent.store';
 
 @Component({
     selector: 'bk-yearly-events',
@@ -26,12 +26,12 @@ import { CalEventListStore } from './calevent-list.store';
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover,
     AvatarDisplayComponent
 ],
-    providers: [CalEventListStore],
+    providers: [CalEventStore],
     template: `
     <ion-header>
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calEvent.plural' | translate | async }}</ion-title>
+      <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calevent.plural' | translate | async }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
@@ -51,10 +51,11 @@ import { CalEventListStore } from './calevent-list.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onTypeSelected($event)"
+    <bk-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+      (yearChanged)="onYearSelected($event)" [years]="years()"
     />
 
     <!-- list header -->
@@ -62,16 +63,16 @@ import { CalEventListStore } from './calevent-list.store';
       <ion-grid>
         <ion-row>
           <ion-col size="6" size-md="4" size-lg="3">
-            <ion-label><strong>{{ '@calEvent.list.header.year' | translate | async }}</strong></ion-label>
+            <ion-label><strong>{{ '@calevent.list.header.year' | translate | async }}</strong></ion-label>
           </ion-col>
           <ion-col size-md="4" size-lg="3" class="ion-hide-md-down">
-            <ion-label><strong>{{ '@calEvent.list.header.responsible' | translate | async }}</strong></ion-label>
+            <ion-label><strong>{{ '@calevent.list.header.responsible' | translate | async }}</strong></ion-label>
           </ion-col>
           <ion-col size="6" size-md="4" size-lg="3">
-            <ion-label><strong>{{ '@calEvent.list.header.location' | translate | async }}</strong></ion-label>
+            <ion-label><strong>{{ '@calevent.list.header.location' | translate | async }}</strong></ion-label>
           </ion-col>
           <ion-col size-lg="3" class="ion-hide-lg-down">
-            <ion-label><strong>{{ '@calEvent.list.header.description' | translate | async }}</strong></ion-label>
+            <ion-label><strong>{{ '@calevent.list.header.description' | translate | async }}</strong></ion-label>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -84,7 +85,7 @@ import { CalEventListStore } from './calevent-list.store';
       <bk-spinner />
     } @else {
       @if(filteredCalEventsCount() === 0) {
-        <bk-empty-list message="@calEvent.field.empty" />
+        <bk-empty-list message="@calevent.field.empty" />
       } @else {
         <ion-list lines="inset">
           @for(event of filteredCalEvents(); track event.bkey) {
@@ -103,35 +104,42 @@ import { CalEventListStore } from './calevent-list.store';
     `
 })
 export class YearlyEventsComponent {
-  protected calEventListStore = inject(CalEventListStore);
+  protected calEventStore = inject(CalEventStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();     // calendar name
-  public filter = input.required<string>();
   public contextMenuName = input.required<string>();
-  
-  protected calEventsCount = computed(() => this.calEventListStore.calEventsCount());
-  protected filteredCalEvents = computed(() => this.calEventListStore.filteredCalEvents() ?? []);
-  protected filteredCalEventsCount = computed(() => this.filteredCalEvents().length);
-  protected isLoading = computed(() => this.calEventListStore.isLoading());
-  protected tags = computed(() => this.calEventListStore.getTags());
-  protected types = computed(() => this.calEventListStore.appStore.getCategory('calevent_type'));
-  private currentUser = computed(() => this.calEventListStore.appStore.currentUser());
-  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
 
-  private imgixBaseUrl = this.calEventListStore.appStore.env.services.imgixBaseUrl;
+  // filters
+  protected searchTerm = linkedSignal(() => this.calEventStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.calEventStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.calEventStore.selectedCategory());
+
+  // data
+  protected calEventsCount = computed(() => this.calEventStore.calEventsCount());
+  protected filteredCalEvents = computed(() => this.calEventStore.filteredCalEvents() ?? []);
+  protected filteredCalEventsCount = computed(() => this.filteredCalEvents().length);
+  protected isLoading = computed(() => this.calEventStore.isLoading());
+  protected tags = computed(() => this.calEventStore.getTags());
+  protected types = computed(() => this.calEventStore.appStore.getCategory('calevent_type'));
+  private currentUser = computed(() => this.calEventStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
+  protected readonly years = computed(() => getYearList(getYear(), 30));
+
+  private imgixBaseUrl = this.calEventStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.calEventListStore.setCalendarName(this.listId()));
+    effect(() => this.calEventStore.setCalendarName(this.listId()));
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.calEventListStore.edit(undefined, this.readOnly()); break;
-      case 'exportRaw': await this.calEventListStore.export("raw"); break;
-      default: error(undefined, `YearlyEventListComponent.call: unknown method ${selectedMethod}`);
+      case 'add':  await this.calEventStore.edit(undefined, this.readOnly()); break;
+      case 'exportRaw': await this.calEventStore.export("raw"); break;
+      default: error(undefined, `YearlyEvents.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 
@@ -176,16 +184,16 @@ export class YearlyEventsComponent {
       if (!data) return;
       switch (data.action) {
         case 'calevent.delete':
-          await this.calEventListStore.delete(calEvent, this.readOnly());
+          await this.calEventStore.delete(calEvent, this.readOnly());
           break;
         case 'calevent.edit':
-          await this.calEventListStore.edit(calEvent, this.readOnly());
+          await this.calEventStore.edit(calEvent, this.readOnly());
           break;
         case 'calevent.view':
-          await this.calEventListStore.edit(calEvent, true);
+          await this.calEventStore.edit(calEvent, true);
           break;
         case 'album':
-          await this.calEventListStore.showAlbum(calEvent.url);
+          await this.calEventStore.showAlbum(calEvent.url);
           break;
       }
     }
@@ -193,19 +201,23 @@ export class YearlyEventsComponent {
 
   /******************************* change notifications *************************************** */
   protected onSearchtermChange(searchTerm: string): void {
-    this.calEventListStore.setSearchTerm(searchTerm);
+    this.calEventStore.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected($event: string): void {
-    this.calEventListStore.setSelectedTag($event);
+    this.calEventStore.setSelectedTag($event);
   }
 
   protected onTypeSelected(calEventType: string): void {
-    this.calEventListStore.setSelectedCategory(calEventType);
+    this.calEventStore.setSelectedCategory(calEventType);
+  }
+
+  protected onYearSelected(year: number): void {
+    this.calEventStore.setSelectedYear(year);
   }
 
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.calEventListStore.currentUser());
+    return hasRole(role, this.calEventStore.currentUser());
   }
 }

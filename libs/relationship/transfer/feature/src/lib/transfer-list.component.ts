@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -10,9 +10,9 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/s
 import { getYearList, hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
-
-import { TransferListStore } from './transfer-list.store';
 import { AvatarDisplayComponent } from '@bk2/avatar-ui';
+
+import { TransferStore } from './transfer.store';
 
 @Component({
   selector: 'bk-transfer-list',
@@ -23,7 +23,7 @@ import { AvatarDisplayComponent } from '@bk2/avatar-ui';
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonList, IonPopover
   ],
-  providers: [TransferListStore],
+  providers: [TransferStore],
   template: `
   <ion-header>
     <!-- title and actions -->
@@ -49,11 +49,11 @@ import { AvatarDisplayComponent } from '@bk2/avatar-ui';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onTypeChange($event)"
-      [state]="states()" (stateChanged)="onStateChange($event)"
-      [years]="years" (yearChanged)="onYearChange($event)"
-      (searchTermChanged)="onSearchtermChange($event)"
+        (searchTermChanged)="onSearchtermChange($event)"
+        (tagChanged)="onTagSelected($event)" [tags]="tags()"
+        (typeChanged)="onTypeSelected($event)" [types]="types()"
+        (stateChanged)="onStateSelected($event)" [states]="states()"
+        (yearChanged)="onYearSelected($event)"
     />
 
     <!-- list header -->
@@ -80,7 +80,7 @@ import { AvatarDisplayComponent } from '@bk2/avatar-ui';
             <ion-label class="ion-hide-md-down">{{transfer.dateOfTransfer | prettyDate}}</ion-label>
             <ion-label><bk-avatar-display [avatars]="transfer.subjects" /></ion-label>
             <ion-label><bk-avatar-display [avatars]="transfer.objects" /></ion-label>
-            <ion-label>{{transfer.resource.name}}</ion-label>
+            <ion-label>{{transfer.resource.name1}}</ion-label>
             <ion-label class="ion-hide-lg-down">{{transfer.name}}</ion-label>
             <ion-label class="ion-hide-lg-down">{{transfer.state }}</ion-label>
           </ion-item>
@@ -91,31 +91,61 @@ import { AvatarDisplayComponent } from '@bk2/avatar-ui';
     `
 })
 export class TransferListComponent {
-  protected readonly transferListStore = inject(TransferListStore);
+  protected readonly transferStore = inject(TransferStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  protected filteredTransfers = computed(() => this.transferListStore.filteredTransfers() ?? []);
-  protected transfersCount = computed(() => this.transferListStore.transfersCount());
+  // filters
+  protected searchTerm = linkedSignal(() => this.transferStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.transferStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.transferStore.selectedType());
+  protected selectedState = linkedSignal(() => this.transferStore.selectedState());
+  protected selectedYear = linkedSignal(() => this.transferStore.selectedYear());
+  
+  // data
+  protected filteredTransfers = computed(() => this.transferStore.filteredTransfers() ?? []);
+  protected transfersCount = computed(() => this.transferStore.transfersCount());
   protected selectedTransfersCount = computed(() => this.filteredTransfers().length);
-  protected isLoading = computed(() => this.transferListStore.isLoading());
-  protected tags = computed(() => this.transferListStore.getTags());
-  protected types = computed(() => this.transferListStore.appStore.getCategory('transfer_type'));
-  protected states = computed(() => this.transferListStore.appStore.getCategory('transfer_state'));
-  protected currentUser = computed(() => this.transferListStore.appStore.currentUser());
+  protected isLoading = computed(() => this.transferStore.isLoading());
+  protected tags = computed(() => this.transferStore.getTags());
+  protected types = computed(() => this.transferStore.appStore.getCategory('transfer_type'));
+  protected states = computed(() => this.transferStore.appStore.getCategory('transfer_state'));
+  protected currentUser = computed(() => this.transferStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected years = getYearList();
-  private imgixBaseUrl = this.transferListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.transferStore.appStore.env.services.imgixBaseUrl;
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.transferStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.transferStore.setSelectedTag(tag);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.transferStore.setSelectedType(type);
+  }
+
+  protected onStateSelected(state: string): void {
+    this.transferStore.setSelectedState(state);
+  }
+
+  protected onYearSelected(year: number): void {
+    this.transferStore.setSelectedYear(year);
+  }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.transferListStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.transferListStore.export("raw"); break;
+      case 'add':  await this.transferStore.add(this.readOnly()); break;
+      case 'exportRaw': await this.transferStore.export("raw"); break;
       default: error(undefined, `TransferListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -137,12 +167,12 @@ export class TransferListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, transfer: TransferModel): void {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('transfer.edit', this.imgixBaseUrl, 'create_edit'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('transfer.view', this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
-    if (hasRole('admin', this.transferListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('admin', this.transferStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('transfer.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -158,42 +188,21 @@ export class TransferListComponent {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.transferListStore.delete(transfer, this.readOnly());
+        case 'transfer.delete':
+          await this.transferStore.delete(transfer, this.readOnly());
           break;
-        case 'edit':
-          await this.transferListStore.edit(transfer, this.readOnly());
+        case 'transfer.edit':
+          await this.transferStore.edit(transfer, this.readOnly());
           break;
-        case 'view':
-          await this.transferListStore.edit(transfer, true);
+        case 'transfer.view':
+          await this.transferStore.edit(transfer, true);
           break;
       }
     }
   }
 
-  /******************************* change notifications *************************************** */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.transferListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected($event: string): void {
-    this.transferListStore.setSelectedTag($event);
-  }
-
-  protected onStateChange(state: string): void {
-    this.transferListStore.setSelectedState(state);
-  }
-
-  protected onYearChange(year: number): void {
-    this.transferListStore.setSelectedYear(year);
-  }
-
-  protected onTypeChange(transferType: string): void {
-    this.transferListStore.setSelectedType(transferType);
-  }
-
   /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.transferListStore.currentUser());
+    return hasRole(role, this.transferStore.currentUser());
   } 
 }

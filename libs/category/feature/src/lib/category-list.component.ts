@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -8,12 +8,11 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
+import { AppStore } from '@bk2/shared-feature';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
-import { CategoryListStore } from './category-list.store';
-import { AppStore } from '@bk2/shared-feature';
-
+import { CategoryStore } from './category.store';
 
 @Component({
     selector: 'bk-category-list',
@@ -24,7 +23,7 @@ import { AppStore } from '@bk2/shared-feature';
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
       IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
-    providers: [CategoryListStore],
+    providers: [CategoryStore],
     template: `
     <ion-header>
       <!-- title and context menu -->
@@ -48,9 +47,9 @@ import { AppStore } from '@bk2/shared-feature';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
+    <bk-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
      />
 
     <!-- list header -->
@@ -94,12 +93,17 @@ import { AppStore } from '@bk2/shared-feature';
     `
 })
 export class CategoryListComponent {
-  protected categoryListStore = inject(CategoryListStore);
+  protected categoryListStore = inject(CategoryStore);
   private actionSheetController = inject(ActionSheetController);
   private readonly appStore = inject(AppStore);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
+
+  // filters
+  protected searchTerm = linkedSignal(() => this.categoryListStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.categoryListStore.selectedTag());
 
   protected filteredCategories = computed(() => this.categoryListStore.filteredCategories() ?? []);
   protected categoriesCount = computed(() => this.categoryListStore.categoriesCount());
@@ -112,6 +116,15 @@ export class CategoryListComponent {
 
   protected isYearly = false;
   private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.categoryListStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.categoryListStore.setSelectedTag(tag);
+  }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
@@ -173,15 +186,6 @@ export class CategoryListComponent {
           break;
       }
     }
-  }
-
-  /******************************* change notifications *************************************** */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.categoryListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected($event: string): void {
-    this.categoryListStore.setSelectedTag($event);
   }
 
   /******************************* helpers *************************************** */

@@ -1,66 +1,75 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CalEventModel, RoleName } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
+import { getYear, getYearList, hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
+import { AvatarDisplayComponent } from '@bk2/avatar-ui';
 
 import { CalEventDurationPipe } from '@bk2/calevent-util';
-import { CalEventListStore } from './calevent-list.store';
+import { CalEventStore } from './calevent.store';
+
 @Component({
     selector: 'bk-calevent-list',
     standalone: true,
     imports: [
-      TranslatePipe, AsyncPipe, CalEventDurationPipe, SvgIconPipe,
-      SpinnerComponent, EmptyListComponent,
+      TranslatePipe, AsyncPipe, CalEventDurationPipe, SvgIconPipe, PartPipe,
+      SpinnerComponent, EmptyListComponent, AvatarDisplayComponent,
       MenuComponent, ListFilterComponent,
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
       IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
-    providers: [CalEventListStore],
+    providers: [CalEventStore],
     template: `
     <ion-header>
-    <ion-toolbar color="secondary">
-      <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calEvent.plural' | translate | async }}</ion-title>
-      @if(!readOnly()) {
-        <ion-buttons slot="end">
-          <ion-button id="{{ popupId() }}">
-            <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-            <ng-template>
-              <ion-content>
-                <bk-menu [menuName]="contextMenuName()"/>
-              </ion-content>
-            </ng-template>
-          </ion-popover>
-        </ion-buttons>
-      }
-    </ion-toolbar>
+      <ion-toolbar color="secondary">
+        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+        <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calevent.plural' | translate | async }}</ion-title>
+        @if(!readOnly()) {
+          <ion-buttons slot="end">
+            <ion-button id="{{ popupId() }}">
+              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+              <ng-template>
+                <ion-content>
+                  <bk-menu [menuName]="contextMenuName()"/>
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          </ion-buttons>
+        }
+      </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onTypeChange($event)"
+    <bk-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+      (yearChanged)="onYearSelected($event)" [years]="years()"
     />
 
     <!-- list header -->
     <ion-toolbar color="light">
       <ion-grid>
         <ion-row>
-          <ion-col size="12" size-md="6">
-            <ion-label><strong>{{ '@calEvent.list.header.name' | translate | async }}</strong></ion-label>
+          <ion-col size="6" size-md="3">
+            <ion-label><strong>{{ '@calevent.list.header.duration' | translate | async }}</strong></ion-label>
           </ion-col>
-          <ion-col size="12" size-md="6">
-            <ion-label><strong>{{ '@calEvent.list.header.duration' | translate | async }}</strong></ion-label>
+          <ion-col size="6" size-md="4">
+            <ion-label><strong>{{ '@calevent.list.header.name' | translate | async }}</strong></ion-label>
+          </ion-col>
+          <ion-col size="3" class="ion-hide-md-down">
+            <ion-label><strong>{{ '@calevent.list.header.location' | translate | async }}</strong></ion-label>
+          </ion-col>
+          <ion-col size="2" class="ion-hide-md-down">
+            <ion-label><strong>{{ '@calevent.list.header.responsible' | translate | async }}</strong></ion-label>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -73,13 +82,15 @@ import { CalEventListStore } from './calevent-list.store';
       <bk-spinner />
     } @else {
       @if(filteredCalEventsCount() === 0) {
-        <bk-empty-list message="@calEvent.field.empty" />
+        <bk-empty-list message="@calevent.field.empty" />
       } @else {
         <ion-list lines="inset">
           @for(event of filteredCalEvents(); track event.bkey) {
             <ion-item (click)="showActions(event)">
-              <ion-label>{{event.name}}</ion-label>      
               <ion-label>{{ event | calEventDuration }}</ion-label>
+              <ion-label>{{event.name}}</ion-label>
+              <ion-label class="ion-hide-md-down">{{ event.locationKey | part:true }}</ion-label>
+              <ion-label class="ion-hide-md-down"><bk-avatar-display [avatars]="event.responsiblePersons" /></ion-label>
             </ion-item>
           }
         </ion-list>
@@ -89,35 +100,61 @@ import { CalEventListStore } from './calevent-list.store';
     `
 })
 export class CalEventListComponent {
-  protected calEventListStore = inject(CalEventListStore);
+  protected calEventStore = inject(CalEventStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();     // calendar name
   public contextMenuName = input.required<string>();
 
-  protected calEventsCount = computed(() => this.calEventListStore.calEventsCount());
-  protected filteredCalEvents = computed(() => this.calEventListStore.filteredCalEvents() ?? []);
-  protected filteredCalEventsCount = computed(() => this.filteredCalEvents().length);
-  protected isLoading = computed(() => this.calEventListStore.isLoading());
-  protected tags = computed(() => this.calEventListStore.getTags());
-  protected popupId = computed(() => `c_calevent_${this.listId}`);
-  protected types = computed(() => this.calEventListStore.appStore.getCategory('calevent_type'));
-  private currentUser = computed(() => this.calEventListStore.appStore.currentUser());
-  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
+  // filters
+  protected searchTerm = linkedSignal(() => this.calEventStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.calEventStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.calEventStore.selectedCategory());
 
-  private imgixBaseUrl = this.calEventListStore.appStore.env.services.imgixBaseUrl;
+  // data
+  protected calEventsCount = computed(() => this.calEventStore.calEventsCount());
+  protected filteredCalEvents = computed(() => this.calEventStore.filteredCalEvents() ?? []);
+  protected filteredCalEventsCount = computed(() => this.filteredCalEvents().length);
+  protected isLoading = computed(() => this.calEventStore.isLoading());
+  protected tags = computed(() => this.calEventStore.getTags());
+  protected popupId = computed(() => `c_calevent_${this.listId}`);
+  protected types = computed(() => this.calEventStore.appStore.getCategory('calevent_type'));
+  private currentUser = computed(() => this.calEventStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
+  protected readonly years = computed(() => getYearList(getYear(), 30));
+
+  // passing constants to the template
+  private imgixBaseUrl = this.calEventStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.calEventListStore.setCalendarName(this.listId()));
+    effect(() => this.calEventStore.setCalendarName(this.listId()));
+  }
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.calEventStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.calEventStore.setSelectedTag(tag);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.calEventStore.setSelectedCategory(type);
+  }
+
+  protected onYearSelected(year: number): void {
+    this.calEventStore.setSelectedYear(year);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.calEventListStore.edit(undefined, this.readOnly()); break;
-      case 'exportRaw': await this.calEventListStore.export("raw"); break;
-      default: error(undefined, `CalEventListComponent.call: unknown method ${selectedMethod}`);
+      case 'add':  await this.calEventStore.edit(undefined, this.readOnly()); break;
+      case 'exportRaw': await this.calEventStore.export("raw"); break;
+      default: error(undefined, `CalEventListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 
@@ -162,33 +199,20 @@ export class CalEventListComponent {
       if (!data) return;
       switch (data.action) {
         case 'calevent.delete':
-          await this.calEventListStore.delete(calEvent, this.readOnly());
+          await this.calEventStore.delete(calEvent, this.readOnly());
           break;
         case 'calevent.edit':
-          await this.calEventListStore.edit(calEvent, this.readOnly());
+          await this.calEventStore.edit(calEvent, this.readOnly());
           break;
         case 'calevent.view':
-          await this.calEventListStore.edit(calEvent, true);
+          await this.calEventStore.edit(calEvent, true);
           break;
       }
     }
   }
 
-  /******************************* change notifications *************************************** */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.calEventListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected(tag: string): void {
-    this.calEventListStore.setSelectedTag(tag);
-  }
-
-  protected onTypeChange(calEventType: string): void {
-    this.calEventListStore.setSelectedCategory(calEventType);
-  }
-
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.calEventListStore.currentUser());
+    return hasRole(role, this.currentUser());
   }
 }

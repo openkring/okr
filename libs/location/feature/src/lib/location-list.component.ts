@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -54,10 +54,10 @@ import { LocationListStore } from './location-list.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onTypeSelected($event)"
+    <bk-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
     />
 
     <!-- list header -->
@@ -103,12 +103,19 @@ export class LocationListComponent {
   protected locationListStore = inject(LocationListStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
+  // filters
+  protected searchTerm = linkedSignal(() => this.locationListStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.locationListStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.locationListStore.selectedType());
+
+  // fields
   protected filteredLocations = computed(() => this.locationListStore.filteredLocations() ?? []);
   protected locationsCount = computed(() => this.locationListStore.locationsCount());
-  protected selectedLocationsCount = computed(() => this.filteredLocations.length);
+  protected selectedLocationsCount = computed(() => this.filteredLocations().length);
   protected isLoading = computed(() => this.locationListStore.isLoading());
   protected tags = computed(() => this.locationListStore.getTags());
   protected types = computed(() => this.locationListStore.appStore.getCategory('location_type'))
@@ -117,6 +124,19 @@ export class LocationListComponent {
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.locationListStore.appStore.env.services.imgixBaseUrl;
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.locationListStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.locationListStore.setSelectedTag(tag);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.locationListStore.setSelectedType(type);
+  }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
@@ -187,19 +207,6 @@ export class LocationListComponent {
           break;
       }
     }
-  }
-
-  /******************************* change notifications *************************************** */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.locationListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected($event: string): void {
-    this.locationListStore.setSelectedTag($event);
-  }
-
-  protected onTypeSelected(type: string): void {
-    this.locationListStore.setSelectedCategory(type);
   }
 
   protected hasRole(role: RoleName): boolean {

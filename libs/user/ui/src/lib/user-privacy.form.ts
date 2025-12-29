@@ -1,5 +1,5 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, input, model, output } from "@angular/core";
+import { Component, computed, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
@@ -39,22 +39,22 @@ import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidatio
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageImages" [value]="usageImages()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usageImages', $event)" />
+                <bk-cat name="usageImages" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageDateOfBirth" [value]="usageDateOfBirth()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usageDateOfBirth', $event)" />
+                <bk-cat name="usageDateOfBirth" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usagePostalAddress" [value]="usagePostalAddress()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usagePostalAddress', $event)" />
+                <bk-cat name="usagePostalAddress" [value]="usagePostalAddress()" (valueChange)="onFieldChange('usagePostalAddress', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageEmail" [value]="usageEmail()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usageEmail', $event)" />
+                <bk-cat name="usageEmail" [value]="usageEmail()" (valueChange)="onFieldChange('usageEmail', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usagePhone" [value]="usagePhone()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usagePhone', $event)" />
+                <bk-cat name="usagePhone" [value]="usagePhone()" (valueChange)="onFieldChange('usagePhone', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">                                                             
-                <bk-cat name="usageName" [value]="usageName()" [categories]="privacyUsages" [readOnly]="readOnly()" (changed)="onChange('usageName', $event)" />
+                <bk-cat name="usageName" [value]="usageName()" (valueChange)="onFieldChange('usageName', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
               </ion-col>
             </ion-row>
             @if(isScs()) {
@@ -67,7 +67,7 @@ import { USER_PRIVACY_FORM_SHAPE, UserPrivacyFormModel, userPrivacyFormValidatio
               </ion-row>
               <ion-row>
                 <ion-col>
-                  <bk-checkbox name="srvEmail" [isChecked]="srvEmail()" [showHelper]="true" [readOnly]="readOnly()" (changed)="onChange('srvEmail', $event)" />
+                  <bk-checkbox name="srvEmail" [checked]="srvEmail()" (checkedChange)="onFieldChange('srvEmail', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                 </ion-col>
               </ion-row>
             }
@@ -94,24 +94,28 @@ export class UserPrivacyFormComponent {
   private readonly validationResult = computed(() => userPrivacyFormValidations(this.formData()));
 
   // fields
-  protected usageImages = computed(() => this.formData().usageImages ?? PrivacyUsage.Restricted);
-  protected usageDateOfBirth = computed(() => this.formData().usageDateOfBirth ?? PrivacyUsage.Restricted);
-  protected usagePostalAddress = computed(() => this.formData().usagePostalAddress ?? PrivacyUsage.Restricted);
-  protected usageEmail = computed(() => this.formData().usageEmail ?? PrivacyUsage.Restricted);
-  protected usagePhone = computed(() => this.formData().usagePhone ?? PrivacyUsage.Restricted);
-  protected usageName = computed(() => this.formData().usageName ?? PrivacyUsage.Restricted);
+  protected usageImages = linkedSignal(() => this.formData().usageImages ?? PrivacyUsage.Restricted);
+  protected usageDateOfBirth = linkedSignal(() => this.formData().usageDateOfBirth ?? PrivacyUsage.Restricted);
+  protected usagePostalAddress = linkedSignal(() => this.formData().usagePostalAddress ?? PrivacyUsage.Restricted);
+  protected usageEmail = linkedSignal(() => this.formData().usageEmail ?? PrivacyUsage.Restricted);
+  protected usagePhone = linkedSignal(() => this.formData().usagePhone ?? PrivacyUsage.Restricted);
+  protected usageName = linkedSignal(() => this.formData().usageName ?? PrivacyUsage.Restricted);
+  protected srvEmail = linkedSignal(() => this.formData().srvEmail ?? false);
   protected isScs = computed(() => this.currentUser()?.tenants.includes('scs') || this.currentUser()?.tenants.includes('test'));
-  protected srvEmail = computed(() => this.formData().srvEmail ?? true);
 
-  // passing constants to template
+// passing constants to template
   protected privacyUsages = PrivacyUsages;
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
 
   protected onFormChange(value: UserPrivacyFormModel): void {
     this.formData.update((vm) => ({...vm, ...value}));
     debugFormErrors('UserPrivacyForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
-  protected onChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+  protected onChange(fieldName: string, fieldValue: boolean | PrivacyUsage): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     debugFormErrors('UserPrivacyForm.onChange', this.validationResult().errors, this.currentUser());
   }

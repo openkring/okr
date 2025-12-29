@@ -1,8 +1,6 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, inject, input, linkedSignal, signal } from "@angular/core";
 import { IonContent, ModalController } from "@ionic/angular/standalone";
 
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
 import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared-ui";
 
@@ -14,11 +12,10 @@ import { hasRole } from "@bk2/shared-util-core";
   standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent, FbuserFormComponent,
-    IonContent,
-    TranslatePipe, AsyncPipe
+    IonContent
   ],
   template: `
-    <bk-header title="{{ '@user.fbuser.edit.title' | translate | async }}" [isModal]="true" />
+    <bk-header title="@user.fbuser.edit.title" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 

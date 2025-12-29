@@ -1,18 +1,18 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { PersonalRelModel, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getItemLabel, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 import { PersonalRelNamePipe } from '@bk2/relationship-personal-rel-util';
-import { PersonalRelListStore } from './personal-rel-list.store';
+import { PersonalRelStore } from './personal-rel.store';
 
 @Component({
   selector: 'bk-personal-rel-list',
@@ -24,7 +24,7 @@ import { PersonalRelListStore } from './personal-rel-list.store';
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonImg, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover
   ],
-  providers: [PersonalRelListStore],
+  providers: [PersonalRelStore],
   template: `
     <ion-header>
       <!-- title and actions -->
@@ -50,10 +50,10 @@ import { PersonalRelListStore } from './personal-rel-list.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onTypeSelected($event)"
+    <bk-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
       [showIcons]=false
     />
 
@@ -110,31 +110,51 @@ import { PersonalRelListStore } from './personal-rel-list.store';
     `
 })
 export class PersonalRelListComponent {
-  protected personalRelListStore = inject(PersonalRelListStore);
+  protected personalRelStore = inject(PersonalRelStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  protected filteredPersonalRels = computed(() => this.personalRelListStore.filteredPersonalRels());
-  protected allPersonalRels = computed(() => this.personalRelListStore.allPersonalRels());
-  protected personalRelsCount = computed(() => this.personalRelListStore.allPersonalRels()?.length ?? 0);
+  // filter
+  protected searchTerm = linkedSignal(() => this.personalRelStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.personalRelStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.personalRelStore.selectedPersonalRelType());
+
+  // derived values
+  protected filteredPersonalRels = computed(() => this.personalRelStore.filteredPersonalRels());
+  protected allPersonalRels = computed(() => this.personalRelStore.allPersonalRels());
+  protected personalRelsCount = computed(() => this.personalRelStore.allPersonalRels()?.length ?? 0);
   protected selectedPersonalRelsCount = computed(() => this.filteredPersonalRels()?.length ?? 0);
-  protected isLoading = computed(() => this.personalRelListStore.isLoading());
-  protected tags = computed(() => this.personalRelListStore.getTags());
-  protected types = computed(() => this.personalRelListStore.appStore.getCategory('personalrel_type'));
-  protected currentUser = computed(() => this.personalRelListStore.appStore.currentUser());
+  protected isLoading = computed(() => this.personalRelStore.isLoading());
+  protected tags = computed(() => this.personalRelStore.getTags());
+  protected types = computed(() => this.personalRelStore.appStore.getCategory('personalrel_type'));
+  protected currentUser = computed(() => this.personalRelStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.personalRelListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.personalRelStore.appStore.env.services.imgixBaseUrl;
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.personalRelStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.personalRelStore.setSelectedTag(tag);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.personalRelStore.setSelectedPersonalRelType(type);
+  }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.personalRelListStore.add(); break;
-      case 'exportRaw': await this.personalRelListStore.export("raw"); break;
-      default: error(undefined, `PersonalRelListComponent.call: unknown method ${selectedMethod}`);
+      case 'add': await this.personalRelStore.add(this.readOnly()); break;
+      case 'exportRaw': await this.personalRelStore.export("raw"); break;
+      default: error(undefined, `PersonalRelComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
@@ -155,15 +175,15 @@ export class PersonalRelListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, personalRel: PersonalRelModel): void {
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('relationship.edit', this.imgixBaseUrl, 'create_edit'));
       if (isOngoing(personalRel.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('endrel', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('relationship.end', this.imgixBaseUrl, 'stop-circle'));
       }
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('relationship.view', this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
-    if (hasRole('admin', this.personalRelListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('admin', this.personalRelStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('relationship.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -180,39 +200,26 @@ export class PersonalRelListComponent {
       if (!data) return;
       if (data?.action) {
         switch (data.action) {
-            case 'delete':
-              await this.personalRelListStore.delete(personalRel, this.readOnly());
+            case 'relationship.delete':
+              await this.personalRelStore.delete(personalRel, this.readOnly());
               break;
-            case 'edit':
-              await this.personalRelListStore.edit(personalRel, this.readOnly());
+            case 'relationship.edit':
+              await this.personalRelStore.edit(personalRel, this.readOnly());
               break;
-            case 'view':
-              await this.personalRelListStore.edit(personalRel, true);
+            case 'relationship.view':
+              await this.personalRelStore.edit(personalRel, true);
               break;
-            case 'endrel':
-              await this.personalRelListStore.end(personalRel, this.readOnly());
+            case 'relationship.end':
+              await this.personalRelStore.end(personalRel, this.readOnly());
               break;
           }
         }
       }
   }
 
-  /******************************* change notifications *************************************** */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.personalRelListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected(tag: string): void {
-    this.personalRelListStore.setSelectedTag(tag);
-  }
-
-  protected onTypeSelected(personalRelType: string): void {
-    this.personalRelListStore.setSelectedPersonalRelType(personalRelType);
-  }
-
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.personalRelListStore.currentUser());
+    return hasRole(role, this.personalRelStore.currentUser());
   }
 
   protected isOngoing(personalRel: PersonalRelModel): boolean {

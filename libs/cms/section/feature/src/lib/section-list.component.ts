@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -7,9 +7,9 @@ import { RoleName, SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
-
-import { SectionListStore } from './section-list.store';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+
+import { SectionStore } from './section.store';
 
 @Component({
   selector: 'bk-section-all-list',
@@ -20,7 +20,6 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList
   ],
-    providers: [SectionListStore],
   template: `
   <ion-header>
     <!-- page header -->
@@ -45,8 +44,9 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
 
     <!-- search and filters -->
     <bk-list-filter 
-      [type]="types()" (typeChanged)="onTypeChange($event)"
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
      />
 
     <!-- list header -->
@@ -92,27 +92,38 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   `
 })
 export class SectionAllListComponent {
-  protected sectionListStore = inject(SectionListStore);
+  protected sectionStore = inject(SectionStore);
   private actionSheetController = inject(ActionSheetController);
 
-  protected filteredSections = computed(() => this.sectionListStore.filteredSections() ?? []);
-  protected sectionsCount = computed(() => this.sectionListStore.sections()?.length ?? 0);
+  // filters
+  protected searchTerm = linkedSignal(() => this.sectionStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.sectionStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.sectionStore.selectedCategory());
+
+  // fields
+  protected filteredSections = computed(() => this.sectionStore.filteredSections() ?? []);
+  protected sectionsCount = computed(() => this.sectionStore.sections()?.length ?? 0);
   protected selectedSectionsCount = computed(() => this.filteredSections().length);
-  protected isLoading = computed(() => this.sectionListStore.isLoading());
-  protected types = computed(() => this.sectionListStore.appStore.getCategory('section_type'));
-  private currentUser = computed(() => this.sectionListStore.appStore.currentUser());
+  protected isLoading = computed(() => this.sectionStore.isLoading());
+  protected tags = computed(() => this.sectionStore.getTags());
+  protected types = computed(() => this.sectionStore.getTypes());
+  private currentUser = computed(() => this.sectionStore.currentUser());
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.sectionListStore.appStore.env.services.imgixBaseUrl;
-
+  /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.sectionListStore.setSearchTerm(searchTerm);
+    this.sectionStore.setSearchTerm(searchTerm);
   }
 
-  protected onTypeChange(type: string): void {
-    this.sectionListStore.setSelectedCategory(type);
+  protected onTagSelected(tag: string): void {
+    this.sectionStore.setSelectedTag(tag);
   }
 
+  protected onTypeSelected(type: string): void {
+    this.sectionStore.setSelectedCategory(type);
+  }
+
+  /******************************** actions ******************************************* */
   /**
    * Displays an ActionSheet with all possible actions on a Section. Only actions are shown, that the user has permission for.
    * After user selected an action this action is executed.
@@ -130,14 +141,14 @@ export class SectionAllListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
     if (hasRole('registered', this.currentUser())) {
-            actionSheetOptions.buttons.push(createActionSheetButton('section.view', this.imgixBaseUrl, 'create_edit'));
-            actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+            actionSheetOptions.buttons.push(createActionSheetButton('section.view', this.sectionStore.imgixBaseUrl(), 'create_edit'));
+            actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.sectionStore.imgixBaseUrl(), 'close_cancel'));
     }
     if (!this.readOnly()) {
-            actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.imgixBaseUrl, 'create_edit'));
+            actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.sectionStore.imgixBaseUrl(), 'create_edit'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('section.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('section.delete', this.sectionStore.imgixBaseUrl(), 'trash_delete'));
     }
   }
 
@@ -154,20 +165,20 @@ export class SectionAllListComponent {
       if (!data) return;
       switch (data.action) {
         case 'section.delete':
-          await this.sectionListStore.delete(section, this.readOnly());
+          await this.sectionStore.delete(section, this.readOnly());
           break;
         case 'section.edit':
-          await this.sectionListStore.edit(section, this.readOnly());
+          await this.sectionStore.edit(section, this.readOnly());
           break;
         case 'section.view':
-          await this.sectionListStore.edit(section, true);
+          await this.sectionStore.edit(section, true);
           break;
       }
     }
   }
 
   protected async add(): Promise<void> {
-    await this.sectionListStore.add(this.readOnly());
+    await this.sectionStore.add(this.readOnly());
   }
 
   protected hasRole(role: RoleName): boolean {

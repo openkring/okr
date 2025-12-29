@@ -1,4 +1,4 @@
-import { BkModel } from '@bk2/shared-models';
+import { BkModel, MembershipModel, PersonModel } from '@bk2/shared-models';
 import { sortAscending, SortCriteria, sortDescending, SortDirection } from './sort.util';
 
 /*-------------------------SORT --------------------------------------------*/
@@ -22,3 +22,5 @@ export function addIndexElement(index: string, key: string, value: string | numb
   }
   return `${index} ${key}:${value}`;
 }
+
+

@@ -12,19 +12,18 @@ service cloud.firestore {
       allow get: if true;
       allow list: if true;
     }
-    match /pages2/{page} {
+    match /pages/{page} {
       allow get: if true;
       allow list: if true;
     }
-    match /sections3/{section} {
+    match /sections/{section} {
       allow get: if true;
       allow list: if true;
     }
-    match /users3/{uid} {
-      allow get: if true;
-      allow list: if true;
+    match /users/{userId} {
+      allow read: if (request.auth != null) && (request.auth.uid == userId);
     }
-    match /tags/{tagid} {
+    match /tags/{tagid} 
       allow get: if true;
       allow list: if true;
     }
@@ -36,7 +35,7 @@ service cloud.firestore {
       allow get: if true;
       allow list: if true;
     }
-    match /resources6/{uid} {
+    match /resources/{uid} {
       allow get: if true;
       allow list: if true;
     }

@@ -8,11 +8,10 @@ import { catchError, from, map, Observable, of } from 'rxjs';
 import { ChannelService, ChatClientService, StreamI18nService } from 'stream-chat-angular';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ChatConfig, DefaultLanguage } from '@bk2/shared-models';
+import { CHAT_CONFIG_SHAPE, ChatConfig, DefaultLanguage } from '@bk2/shared-models';
 import { debugData, debugItemLoaded, debugMessage, die } from '@bk2/shared-util-core';
 
 import { AvatarService } from '@bk2/avatar-data-access';
-import { newChatConfig } from '@bk2/cms-section-util';
 import { Languages } from '@bk2/shared-categories';
 
 export interface ChatUser {
@@ -143,7 +142,7 @@ export const ChatSectionStore = signalStore(
       /******************************* Setters *************************** */
 
       setConfig(config?: ChatConfig): void {
-        config ??= newChatConfig(store.appStore.env.services.imgixBaseUrl);
+        config ??= CHAT_CONFIG_SHAPE;
         patchState(store, { config });
         debugData<ChatConfig | undefined>(`ChatSectionStore.setConfig:`, config, store.currentUser());
       },
@@ -173,17 +172,42 @@ export const ChatSectionStore = signalStore(
         }
 
         const config = store.config() ?? die('ChatSectionStore.initializeChat: No config found.');
-        const channel = store.chatService.chatClient.channel(config.channelType ?? 'messaging', config.channelId, {
-          image: config.channelImageUrl ?? '',
-          name: config.channelName ?? '',
+        const channel = store.chatService.chatClient.channel(config.type ?? 'messaging', config.id, {
+          image: config.url ?? '',
+          name: config.name ?? '',
         } as any);
         await channel.watch();
 
         store.channelService.init({
-          type: config.channelType ?? 'messaging',
-          id: { $eq: config.channelId ?? 'chat' },
+          type: config.type ?? 'messaging',
+          id: { $eq: config.id ?? 'chat' },
         });
         debugMessage(`ChatSectionStore.initializeChat: Chat initialized for user ${chatUser.id}`);
+      },
+
+      async sendLocationMessage(channelId: string, text: string, latitude: number, longitude: number): Promise<void> {
+        if (!store.isChatInitialized()) return;
+
+        const client = store.chatService.chatClient;
+        const channel = client.channel('messaging', channelId);
+        await channel.watch();
+        // example: https://www.google.com/maps/@47.247628,8.71838,14z
+        // https://www.google.com/maps/search/?api=1&query=47.5951518%2C-122.3316393&zoom=20&basemap=terrain
+        // https://www.google.com/maps/@?api=1&map_action=map&center=47.5951518,-122.3316393&zoom=14&basemap=terrain
+        const message = `${text}: https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}&zoom=20&basemap=terrain`;
+        await this.sendMessage(channelId, message, []);
+
+        debugMessage(`ChatSectionStore.sendLocationMessage: Sent location ${latitude},${longitude} to channel ${channelId}`, store.currentUser());
+      },
+
+      async sendMessage(channelId: string, text: string, attachments: any[] = []): Promise<void> {
+        if (!store.isChatInitialized()) return;
+
+        const client = store.chatService.chatClient;
+        const channel = client.channel('messaging', channelId);
+        await channel.watch();
+
+        await channel.sendMessage({ text, attachments });
       }
     };
   })

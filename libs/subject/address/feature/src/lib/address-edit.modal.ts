@@ -1,40 +1,36 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, inject, input, linkedSignal, signal } from "@angular/core";
 import { IonContent, ModalController } from "@ionic/angular/standalone";
 
-import { ENV } from "@bk2/shared-config";
-import { TranslatePipe } from "@bk2/shared-i18n";
 import { AddressModel, UserModel } from "@bk2/shared-models";
 import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared-ui";
-
-import { AddressFormModel, convertAddressToForm, convertFormToAddress } from "@bk2/subject-address-util";
-
-import { AddressFormComponent } from "./address.form";
 import { coerceBoolean } from "@bk2/shared-util-core";
 import { getTitleLabel } from "@bk2/shared-util-angular";
+
+import { AddressFormComponent } from "@bk2/subject-address-ui";
 
 @Component({
   selector: 'bk-address-edit-modal',
   standalone: true,
   imports: [
     AddressFormComponent, HeaderComponent, ChangeConfirmationComponent,
-    IonContent,
-    TranslatePipe, AsyncPipe
+    IonContent
   ],
   template: `
-    <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
+    <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
-        <bk-change-confirmation [showCancel]="true" (cancelClicked)="cancel()" (okClicked)="save()" />
-      } 
-    <ion-content>
-      @if(formData(); as formData) {
+      <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
+    }
+    <ion-content class="ion-no-padding">
+      @if(currentUser(); as currentUser) {
         <bk-address-form
-          [formData]="formData" 
-          [currentUser]="currentUser()" 
-          [readOnly]="isReadOnly()"
+          [formData]="formData()"
           (formDataChange)="onFormDataChange($event)"
-          (valid)="formValid.set($event)" 
+          [currentUser]="currentUser" 
+          [readOnly]="isReadOnly()"
+          [showForm]="showForm()"
+          [allTags]="tags()"
           (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
         />
       }
     </ion-content>
@@ -42,35 +38,38 @@ import { getTitleLabel } from "@bk2/shared-util-angular";
 })
 export class AddressEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
 
   // inputs
   public address = input.required<AddressModel>();
-  public currentUser = input.required<UserModel | undefined>();
+  public currentUser = input<UserModel | undefined>();
+  public tags = input.required<string>();
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   
-
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => convertAddressToForm(this.address())); 
-  protected title = computed(() => getTitleLabel('subject.address', this.address().bkey, this.isReadOnly()));
-  
-  public save(): Promise<boolean> {
-    this.formDirty.set(false);
-    return this.modalController.dismiss(convertFormToAddress(this.formData(), this.address()), 'confirm');
+  protected formData = linkedSignal(() => structuredClone(this.address()));
+  protected showForm = signal(true);
+
+  // derived signals
+  protected readonly headerTitle = computed(() => getTitleLabel('subject.address', this.address().bkey, this.isReadOnly()));
+
+  /******************************* actions *************************************** */
+  public async save(): Promise<void> {
+    await this.modalController.dismiss(this.formData(), 'confirm');
   }
 
-  public cancel(): void {
-    this.formData.set(convertAddressToForm(this.address()));
+  public async cancel(): Promise<void> {
     this.formDirty.set(false);
+    this.formData.set(structuredClone(this.address()));  // reset the form
+    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: AddressFormModel): void {
+  protected onFormDataChange(formData: AddressModel): void {
     this.formData.set(formData);
-    console.log('AddressEditModalComponent.onFormDataChange → formData:', this.formData());
-    console.log(`AddressEditModalComponent.onFormDataChange → valid=${this.formValid()}, dirty=${this.formDirty()}`);
   }
 }

@@ -43,6 +43,8 @@ class ColorPickerConfiguration implements IColorPickerConfig {
 })
 export class ColorSelectModalComponent implements OnInit{
   private readonly modalController = inject(ModalController);
+
+  // inputs
   public hexColor = input(DEFAULT_COLOR);
   public colorControl = new ColorPickerControl();
 

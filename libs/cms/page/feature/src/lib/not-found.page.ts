@@ -1,14 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { HeaderComponent } from '@bk2/shared-ui';
-import { navigateByUrl } from '@bk2/shared-util-angular';
-import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
+
+import { PageStore } from './page.store';
 
 @Component({
   selector: 'bk-page-not-found',
@@ -46,18 +44,9 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
       text-align: center;
       z-index: 5;
     }
-    .title {
-      text-align: center;
-      font-size: 2rem;
-    }
-    .subtitle {
-      text-align: center;
-      font-size: 1.2rem;
-    }
-    .help { 
-      text-align: center; 
-      font-size: 1rem;
-    }
+    .title { text-align: center; font-size: 2rem; }
+    .subtitle { text-align: center; font-size: 1.2rem; }
+    .help {  text-align: center;  font-size: 1rem; }
     .logo, ion-button {
       max-width: 150px;
       text-align: center;
@@ -69,7 +58,7 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
     }
   `],
   template: `
-    <bk-header title="{{ '@cms.notfound.title' | translate | async }}" [showCloseButton]="false" />
+    <bk-header title="@cms.notfound.title" [showCloseButton]="false" />
     <ion-content>
       <div class="notfound-container">
         <img class="notfound-image" [src]="backgroundImageUrl()" alt="Background" />
@@ -103,15 +92,13 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
   `
 })
 export class PageNotFoundComponent {
-  private readonly router = inject(Router);
-  private readonly appStore = inject(AppStore);
+  private readonly pageStore = inject(PageStore);
 
-  public imgixBaseUrl = computed(() => this.appStore.services.imgixBaseUrl());
-  public backgroundImageUrl = computed(() => `${this.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().notfoundBannerUrl)}`);
-  public logoUrl = computed(() => `${this.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
-  public logoAlt = computed(() => `${this.appStore.tenantId()} Logo`);
+  protected logoUrl = computed (() => this.pageStore.getImgixUrl('logoUrl'));
+  protected backgroundImageUrl = computed(() => this.pageStore.getImgixUrl('notfoundBannerUrl'));
+  protected logoAlt = computed(() => `${this.pageStore.tenantId()} Logo`);
 
-  public async gotoHome(): Promise<void> {
-    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
+  protected async gotoHome(): Promise<void> {
+    await this.pageStore.navigateByUrl(this.pageStore.getConfigAttribute('rootUrl') + '');
   }
 }

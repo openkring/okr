@@ -1,11 +1,11 @@
-import { AsyncPipe, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, inject, input, PLATFORM_ID, computed } from '@angular/core';
 import { GoogleMap, MapType } from '@capacitor/google-maps';
 import { IonContent } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean, die } from '@bk2/shared-util-core';
+
 import { HeaderComponent } from './header.component';
 
 export interface GeoCoordinates {
@@ -24,13 +24,12 @@ export interface GeoCoordinates {
 }
   `],
   imports: [
-    TranslatePipe, AsyncPipe,
     HeaderComponent,
     IonContent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-      <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
+      <bk-header [title]="title()" [isModal]="true" />
       <ion-content>
         <capacitor-google-map id="map" />
       </ion-content>
@@ -40,11 +39,14 @@ export class MapViewModalComponent implements OnInit, OnDestroy {
   private readonly env = inject(ENV);
   private readonly platformId = inject(PLATFORM_ID);
 
+  // inputs
   public initialPosition = input.required<GeoCoordinates>();
   public coordinates = input<GeoCoordinates[]>([]);
   public title = input('@menu.main.info.map');
   public zoom = input(15); // The initial zoom level to be rendered by the map
   public enableTrafficLayer = input(false);
+
+  // coerced boolean inputs
   protected shouldEnableTrafficLayer = computed(() => coerceBoolean(this.enableTrafficLayer()));
 
   private map: GoogleMap | undefined;

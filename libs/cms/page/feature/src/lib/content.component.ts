@@ -6,8 +6,8 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { debugMessage, replaceSubstring } from '@bk2/shared-util-core';
 
-import { SectionComponent } from '@bk2/cms-section-feature';
-import { PageDetailStore } from './page-detail.store';
+import { SectionComponent, SectionStore } from '@bk2/cms-section-feature';
+import { PageStore } from './page.store';
 
 @Component({
   selector: 'bk-content',
@@ -18,10 +18,8 @@ import { PageDetailStore } from './page-detail.store';
     IonButton, IonIcon,
     IonContent, IonList, IonItem, IonLabel
   ],
-  styles: [`
-  bk-section { width: 100%; }
-`],
-  providers: [PageDetailStore],
+  providers: [PageStore, SectionStore],
+  styles: [`bk-section { width: 100%; }`],
   template: `
     <ion-content>
       @if(pageStore.isEmptyPage()) {
@@ -30,7 +28,7 @@ import { PageDetailStore } from './page-detail.store';
         </ion-item>
         @if(!readOnly()) {
           <ion-item lines="none">
-            <ion-button (click)="pageStore.addSection()">
+            <ion-button (click)="addSection()">
               <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" />
               {{ '@content.section.operation.add.label' | translate | async }}
             </ion-button>
@@ -49,18 +47,24 @@ import { PageDetailStore } from './page-detail.store';
   `
 })
 export class ContentComponent {
-  protected pageStore = inject(PageDetailStore);
+  protected pageStore = inject(PageStore);
+  protected sectionStore = inject(SectionStore);
 
   public id = input.required<string>();     // pageId (can contain @TID@ placeholder)
   public readOnly = input(true);
 
-  protected tenantId = this.pageStore.appStore.env.tenantId;
-
   constructor() {
     effect(() => {
-      const id = replaceSubstring(this.id(), '@TID@', this.pageStore.appStore.env.tenantId);
+      const id = replaceSubstring(this.id(), '@TID@', this.pageStore.tenantId());
       debugMessage(`ContentComponent: pageId=${this.id()} -> ${id}`, this.pageStore.currentUser());
       this.pageStore.setPageId(id);
     });
+  }
+
+  protected async addSection(): Promise<void> {
+    const sectionId = await this.sectionStore.add(false);
+    if (sectionId) {
+      this.pageStore.addSectionById(sectionId);
+    }
   }
 }

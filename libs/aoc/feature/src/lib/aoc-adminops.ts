@@ -11,10 +11,14 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
 @Component({
   selector: 'bk-aoc-adminops',
   standalone: true,
-  imports: [TranslatePipe, AsyncPipe, HeaderComponent, ButtonComponent, ResultLogComponent, IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, FormsModule],
+  imports: [
+    TranslatePipe, AsyncPipe, 
+    HeaderComponent, ButtonComponent, ResultLogComponent, 
+    IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, FormsModule
+  ],
   providers: [AocAdminOpsStore],
   template: `
-    <bk-header title="{{ '@aoc.title' | translate | async }}" />
+    <bk-header title="@aoc.title" />
     <ion-content>
       <ion-card>
         <ion-card-header>

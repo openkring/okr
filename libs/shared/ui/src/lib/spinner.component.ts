@@ -29,6 +29,7 @@ export type BkSpinnerName = 'dots' | 'bubbles' | 'circles' | 'crescent' | 'circu
   `]
 })
 export class SpinnerComponent {
+  // inputs
   public name = input<BkSpinnerName>('bubbles');
   public color = input<ColorIonic>(ColorIonic.Primary);
 

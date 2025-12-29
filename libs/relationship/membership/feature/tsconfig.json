@@ -32,6 +32,8 @@
     {"path": "../../../subject/org/data-access/tsconfig.lib.json"},
     {"path": "../../../avatar/ui/tsconfig.lib.json"},
     {"path": "../../../comment/feature/tsconfig.lib.json"},
+    {"path": "../../../document/feature/tsconfig.lib.json"},
+    {"path": "../../../category/util/tsconfig.lib.json"},
     {"path": "../../../cms/menu/feature/tsconfig.lib.json"}
   ]
 }

@@ -1,43 +1,45 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryChangeFormComponent } from '@bk2/relationship-membership-ui';
 import { CategoryChangeFormModel, convertMembershipToCategoryChangeForm } from '@bk2/relationship-membership-util';
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryListModel, MembershipModel, OrgModelName, PersonModelName, UserModel } from '@bk2/shared-models';
+import { AvatarInfo, CategoryListModel, MembershipModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
-import { getFullName } from '@bk2/shared-util-core';
-import { AppStore } from '@bk2/shared-feature';
+import { getFullName, newAvatarInfo } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-category-change-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     HeaderComponent, ChangeConfirmationComponent, CategoryChangeFormComponent, RelationshipToolbarComponent,
     IonContent
 ],
   template: `
-    <bk-header title="{{ title() | translate | async}}" [isModal]="true" />
+    <bk-header [title]="title()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     } 
-    <ion-content no-padding>
-      <bk-relationship-toolbar [titleArguments]="titleArguments()" />
+    <ion-content class="ion-no-padding">
+      @if (currentUser(); as currentUser) {
+        <bk-relationship-toolbar
+          relType="membership"
+          [subjectAvatar]="memberAvatar()"
+          [objectAvatar]="orgAvatar()"
+          [currentUser]="currentUser"
+        />
 
-      <bk-category-change-form
-        [formData]="formData()"
-        [membershipCategory]="membershipCategory()"
-        [readOnly]=false
-        (formDataChange)="onFormDataChange($event)"
-      />
+        <bk-category-change-form
+          [formData]="formData()"
+          [membershipCategory]="membershipCategory()"
+          [readOnly]=false
+          (formDataChange)="onFormDataChange($event)"
+        />
+      }
     </ion-content>
   `,
 })
 export class CategoryChangeModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
 
   // inputs
   public membership = input.required<MembershipModel>();
@@ -53,18 +55,14 @@ export class CategoryChangeModalComponent {
 
   // derived signals
   private readonly name = computed(() => getFullName(this.membership().memberName1, this.membership().memberName2, this.currentUser()?.nameDisplay));
-  private readonly subjectIcon = computed(() => this.appStore.getDefaultIcon(this.membership().memberModelType));
-  private readonly orgIcon = computed(() => this.appStore.getDefaultIcon(OrgModelName));
-  private readonly slug = computed(() => this.membership().memberModelType === 'person' ? PersonModelName : OrgModelName);
-  protected titleArguments = computed(() => ({
-    relationship: 'membership',
-    subjectName: this.name(),
-    subjectIcon: this.subjectIcon(),
-    subjectUrl: `/${this.slug()}/${this.membership().memberKey}`,
-    objectName: this.membership().orgName,
-    objectIcon: this.orgIcon(),
-    objectUrl: `/org/${this.membership().orgKey}`
-  }));
+  protected memberAvatar = computed<AvatarInfo>(() => {
+    const m = this.membership();
+      return newAvatarInfo(m.memberKey, m.memberName1, m.memberName2, m.memberModelType, '', '', this.name());
+  });
+  protected orgAvatar = computed<AvatarInfo>(() => {
+    const m = this.membership();
+      return newAvatarInfo(m.orgKey, '', m.orgName, m.orgModelType, '', '', m.orgName);
+  });
   
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

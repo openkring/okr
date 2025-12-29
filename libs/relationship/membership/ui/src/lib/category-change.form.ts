@@ -1,17 +1,16 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, input, model, output, signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
 import { CategorySelectComponent, DateInputComponent } from '@bk2/shared-ui';
-
-import { CATEGORY_CHANGE_FORM_SHAPE, CategoryChangeFormModel, categoryChangeFormValidations, MembershipFormModel } from '@bk2/relationship-membership-util';
 import { DEFAULT_DATE, DEFAULT_NAME } from '@bk2/shared-constants';
-import { coerceBoolean, debugFormErrors } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, debugFormModel } from '@bk2/shared-util-core';
 
+import {CategoryChangeFormModel, categoryChangeFormValidations } from '@bk2/relationship-membership-util';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-category-change-form',
@@ -25,41 +24,46 @@ import { coerceBoolean, debugFormErrors } from '@bk2/shared-util-core';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   <form scVestForm
-    [formShape]="shape"
     [formValue]="formData()"
     [suite]="suite" 
     (dirtyChange)="dirty.emit($event)"
+    (validChange)="valid.emit($event)"
     (formValueChange)="onFormChange($event)">
   
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
               <ion-row>
-                <ion-col size="12">
+                <ion-col size="4">
                   <ion-item lines="none">
-                    <ion-label>{{ '@membership.changeDesc' | translate | async }}</ion-label>
+                    <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" [readOnly]="true" labelName="labelOld" />
+                  </ion-item>
+                </ion-col>
+                <ion-col size="3" class="ion-align-self-center ion-text-center">
+                    <ion-icon src="{{ 'arrow-forward' | svgIcon }}"></ion-icon>
+                </ion-col>
+                <ion-col size="5">
+                  <ion-item lines="none">
+                    <bk-cat-select [category]="membershipCategory()" [selectedItemName]="newCategory()" (selectedItemNameChange)="onFieldChange('membershipCategoryNew', $event)" labelName="labelNew" [readOnly]="isReadOnly()" />
                   </ion-item>
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="5">
+                <ion-col size="12">
                   <ion-item lines="none">
-                    <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" [readOnly]="true" [showHelper]=true labelName="labelOld" />
+                    <ion-label>{{ '@membership.category.change.helper' | translate | async }}</ion-label>
                   </ion-item>
                 </ion-col>
-                <ion-col size="2">
-                  <ion-item lines="none">
-                    <ion-icon slot="start" color="primary" src="{{'arrow-forward' | svgIcon }}" />
-                  </ion-item>
-                </ion-col>
-                <ion-col size="5">
-                  <ion-item lines="none">
-                    <bk-cat-select [category]="membershipCategory()" [selectedItemName]="oldCategory()" labelName="labelNew" [readOnly]="isReadOnly()" (changed)="onFieldChange('membershipCategoryNew', $event)" />
-                  </ion-item>
-                </ion-col>
+              </ion-row>
+              <ion-row>
                 <ion-col size="12"> 
-                  <bk-date-input name="dateOfChange" [storeDate]="dateOfChange()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfChange', $event)" />
-                </ion-col>      
+                  <bk-date-input name="dateOfChange" [storeDate]="dateOfChange()" (storeDateChange)="onFieldChange('dateOfChange', $event)" [showHelper]="false" [readOnly]="isReadOnly()" />
+                </ion-col>
+                <ion-col size="12">
+                  <ion-item lines="none">
+                    <ion-label>{{ '@membership.category.change.helperDate' | translate | async }}</ion-label>
+                  </ion-item>
+                </ion-col>   
               </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -71,6 +75,7 @@ export class CategoryChangeFormComponent {
   // inputs
   public formData = model.required<CategoryChangeFormModel>();
   public currentUser = input<UserModel | undefined>();
+  public showForm = input(true);   // used for initializing the form and resetting vest validations
   public membershipCategory = input.required<CategoryListModel>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -81,31 +86,24 @@ export class CategoryChangeFormComponent {
 
   // validation and errors
   protected readonly suite = categoryChangeFormValidations;
-  protected readonly shape = CATEGORY_CHANGE_FORM_SHAPE;
   private readonly validationResult = computed(() => categoryChangeFormValidations(this.formData()));
 
   // fields
   protected name = computed(() => this.formData().memberName ?? DEFAULT_NAME); 
   protected orgName = computed(() => this.formData().orgName ?? DEFAULT_NAME);
   protected oldCategory = computed(() => this.formData().membershipCategoryOld ?? '');
-  protected newCategory = computed(() => this.formData().membershipCategoryOld ?? '');
-  protected dateOfChange = computed(() => this.formData().dateOfChange ?? DEFAULT_DATE);
+  protected newCategory = linkedSignal(() => this.formData().membershipCategoryNew ?? '');
+  protected dateOfChange = linkedSignal(() => this.formData().dateOfChange ?? DEFAULT_DATE);
 
-
-  constructor() {
-    effect(() => {
-      this.valid.emit(this.validationResult().isValid());
-    });
+  /******************************* actions *************************************** */
+  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
   protected onFormChange(value: CategoryChangeFormModel): void {
     this.formData.update((vm) => ({...vm, ...value}));
+    debugFormModel('CategoryChangeForm.onFormChange', this.formData(), this.currentUser());
     debugFormErrors('CategoryChangeForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
-  }
-
-  protected onFieldChange(fieldName: string, $event: string | string[] | number): void {
-    this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('CategoryChangeForm.onFieldChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 }

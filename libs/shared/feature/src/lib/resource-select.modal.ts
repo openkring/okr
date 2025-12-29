@@ -1,8 +1,7 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { ResourceModel, UserModel } from '@bk2/shared-models';
 import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { getAvatarKey } from '@bk2/shared-util-core';
@@ -15,7 +14,7 @@ import { ResourceSelectStore } from './resource-select.store';
   standalone: true,
   imports: [
     HeaderComponent, SpinnerComponent,
-    TranslatePipe, AsyncPipe, AvatarPipe, EmptyListComponent,
+    AsyncPipe, AvatarPipe, EmptyListComponent,
     IonContent, IonItem, IonLabel, IonThumbnail, IonImg, IonList,
   ],
   providers: [ResourceSelectStore],
@@ -25,8 +24,12 @@ import { ResourceSelectStore } from './resource-select.store';
     ion-list { padding: 0px; }
   `],
   template: `
-    <bk-header title="{{ '@resource.operation.select.label' | translate | async }}"
-      [isModal]="true" [isSearchable]="true" (searchtermChange)="onSearchChanged($event)" />   
+    <bk-header
+      [(searchTerm)]="searchTerm"
+      [isSearchable]="true"
+      title="@resource.operation.select.label"
+      [isModal]="true"
+    />   
     <ion-content>
       @if(isLoading()) {
         <bk-spinner />
@@ -53,9 +56,13 @@ export class ResourceSelectModalComponent {
   protected readonly resourceSelectStore = inject(ResourceSelectStore);
   private readonly modalController = inject(ModalController);
 
+  // inputs
   public selectedTag = input.required<string>();
   public currentUser = input.required<UserModel>();
 
+  protected searchTerm = linkedSignal(() => this.resourceSelectStore.searchTerm());
+
+  // fields
   protected filteredResources = computed(() => this.resourceSelectStore.filteredResources() ?? []);
   protected resources = computed(() => this.resourceSelectStore.resources() ?? []);
   protected selectedResourcesCount = computed(() => this.resources().length);
@@ -68,10 +75,6 @@ export class ResourceSelectModalComponent {
     effect(() => {
       this.resourceSelectStore.setCurrentUser(this.currentUser());
     });
-  }
-
-  public onSearchChanged(searchTerm: string): void {
-    this.resourceSelectStore.setSearchTerm(searchTerm);
   }
 
   public select(selectedResource: ResourceModel): Promise<boolean> {

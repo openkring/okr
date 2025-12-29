@@ -1,189 +1,273 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE, DEFAULT_URL } from '@bk2/shared-constants';
-import { AvatarInfo } from './avatar-info';
-import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
-import { AlbumStyle } from './enums/album-style.enum';
-import { ButtonAction } from './enums/button-action.enum';
-import { ColorIonic } from './enums/color-ionic.enum';
-import { GalleryEffect } from './enums/gallery-effect.enum';
-import { HorizontalPosition } from './enums/horizontal-position.enum';
-import { ImageAction } from './enums/image-action.enum';
-import { ImageType } from './enums/image-type.enum';
-import { ViewPosition } from './enums/view-position.enum';
+import { CalendarOptions } from '@fullcalendar/core';
+import { EChartsOption } from 'echarts';
 
-export type Slot = 'start' | 'end' | 'icon-only' | 'none';
+import { AlbumStyle, ButtonAction, ColorIonic, GalleryEffect, ViewPosition, RoleName, AvatarInfo, NameDisplay, ImageStyle, ImageConfig, Slot } from "@bk2/shared-models";
 
-export interface AccordionSection {
-  key: string;
-  label: string;
-  value: string;
+export const SectionCollection = 'sections';
+export const SectionModelName = 'section';
+
+export type SectionType = 
+    'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' |'gallery' | 'hero' | 'iframe' | 'map' | 'people' | 'slider' | 'table' | 'tracker' | 'video';
+
+// discriminated union of all section models
+export type SectionModel =
+    AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
+    GallerySection | HeroSection | IframeSection | MapSection | PeopleSection | SliderSection | 
+    TableSection | TrackerSection | VideoSection;
+
+// --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
+export interface BaseSection {
+  bkey: string;
+  type: SectionType;
+  name: string;
+  title: string;
+  subTitle: string;
+  index: string;
+  color: ColorIonic;
+  roleNeeded: RoleName;
+  isArchived: boolean;
+  content: EditorConfig; // content from rich text editor
+  properties?: AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | GalleryConfig | HeroConfig | IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig;
+  notes: string;
+  tags: string;
+  tenants: string[]; // list of tenant ids
 }
 
-export interface Accordion {
-  sections: AccordionSection[]; // a description of all sections that are contained within the accordion
-  value: string; // the selected accordion values
-  multiple: boolean; // if true, multiple sections can be opened at the same time, default is false
-  readonly: boolean; // if true, the accordion is readonly, default is false
+export interface EditorConfig {
+  htmlContent: string; // html content from editor, default is <p></p>
+  colSize: number; // md-size of the first col, 1-6, default is 4
+  position: ViewPosition; // ViewPosition, default is ViewPosition.None
+}
+
+// --------------------------------------- CONCRETE SECTION MODELS ----------------------------------------
+// album
+export interface AlbumSection extends BaseSection {
+  type: 'album';
+  properties: AlbumConfig;
 }
 
 export interface AlbumConfig {
-  directory: string; // the directory in Firebase storage (relative path)
-  albumStyle: AlbumStyle; // the style of the album (grid, list, slider), default is AlbumStyle.Grid
-  defaultImageConfig: DefaultImageConfig; // the configuration of the images
-  recursive: boolean; // if true, the album is shown recursively (several directories deep), default is false
-  showVideos: boolean; // if true, videos are shown, default is false
-  showStreamingVideos: boolean; // if true, streaming videos are shown, default is true
-  showDocs: boolean; // if true, documents are shown, default is false
-  showPdfs: boolean; // if true, pdfs are shown, default is true
-  galleryEffect: GalleryEffect; // the effect used in the gallery, default is GalleryEffect.Slide
+  directory: string;
+  imageStyle: ImageStyle;
+  albumStyle: AlbumStyle;
+  recursive: boolean;
+  showVideos: boolean;
+  showStreamingVideos: boolean;
+  showDocs: boolean;
+  showPdfs: boolean;
+  effect: GalleryEffect;
+}
+
+// article
+export interface ArticleSection extends BaseSection {
+  type: 'article';
+  properties: ArticleConfig;
+}
+
+export interface ArticleConfig {
+    image: ImageConfig;
+    imageStyle: ImageStyle;
+}
+
+// button
+export interface ButtonSection extends BaseSection {
+  type: 'button';
+  properties: ButtonConfig;
+}
+
+export interface ButtonConfig {
+  icon: IconConfig;
+  style: ButtonStyle;
+  action: ButtonActionConfig;
+  imageStyle: ImageStyle;
+}
+
+export interface IconConfig {
+    name: string; // either ion-icon name (e.g. download, contains -) or FileTypeIcon (e.g. pdf) that resolves into assets/filetypes/file-pdf-light.svg
+    size: 'small' | 'default' | 'large'; // default is 'default'
+    slot: Slot; // default is 'start'
+}
+
+export interface ButtonStyle {
+    label: string; // the label on the button
+    shape: 'round' | 'default';
+    fill: 'clear' | 'outline' | 'solid';
+    width: string; // should be bigger than the iconSize, default is same value for width and height (cicle button)
+    height: string;
+    color: ColorIonic; // default is ColorIonic.Primary
+}
+
+export interface ButtonActionConfig {
+  type: ButtonAction; // default is 'none'
+  url: string; // the url to navigate to
+  altText: string; // alt text for the button, default is the label
+}
+
+// calendar
+export interface CalendarSection extends BaseSection {
+  type: 'cal';
+  properties: CalendarOptions;   // from FullCalendar
+}
+
+/*
+{
+  "calendarOptions": {
+    "editable": true,
+    "headerToolbar": {
+      "center": "title",
+      "left": "prev,next,today",
+      "right": "dayGridMonth,timeGridWeek,timeGridDay"
+    },
+    "initialView": "timeGridWeek",
+    "locale": "deLocal",
+    "slotMaxTime": "22:00:00",
+    "slotMinTime": "05:00:00",
+    "weekNumbers": true
+  }
+}
+  see:  https://fullcalendar.io/docs#toc
+*/
+
+// chart
+export interface ChartSection extends BaseSection {
+  type: 'chart';
+  properties: EChartsOption;
+}
+
+/*
+see: https://echarts.apache.org/en/option.html#title
+*/
+
+// chat
+export interface ChatSection extends BaseSection {
+  type: 'chat';
+  properties: ChatConfig;
 }
 
 export interface ChatConfig {
-  channelId: string; // the id of the chat channel, default is 'chat'
-  channelName: string; // the name of the chat channel, default is 'Chat'
-  channelImageUrl: string; // the image of the chat channel, default is ''
-  channelDescription: string; // the description of the chat channel, default is ''
-  channelType: string; // the type of the chat channel, default is 'messaging'
+  id: string; // the id of the chat channel, default is 'chat'
+  name: string; // the name of the chat channel, default is 'Chat'
+  url: string; // the image of the chat channel, default is ''
+  description: string; // the description of the chat channel, default is ''
+  type: string; // the type of the chat channel, default is 'messaging'
+  showChannelList: boolean; // if true, the channel list is shown, default is true
 }
 
-// the configuration of an avatar
-export interface Avatar {
+// gallery
+export interface GallerySection extends BaseSection {
+  type: 'gallery';
+  properties: GalleryConfig;
+}
+
+export interface GalleryConfig {
+  images: ImageConfig[]; // list of images to be shown in the gallery
+  imageStyle: ImageStyle;
+}
+
+// hero
+export interface HeroSection extends BaseSection {
+  type: 'hero';
+  properties: HeroConfig;
+}
+
+export interface HeroConfig {
+  logo: ImageConfig; // the logo image
+  hero: ImageConfig; // the hero background image
+  imageStyle: ImageStyle;
+}
+
+// iframe
+export interface IframeSection extends BaseSection {
+  type: 'iframe';
+  properties: IframeConfig;
+}
+
+export interface IframeConfig {
+  style: string; // css style for the iframe, default is 'width: 100%; min-height:400px; border: none;'
+  url: string; // the url of the iframe
+}
+
+// map
+export interface MapSection extends BaseSection {
+  type: 'map';
+    properties: MapConfig;
+}
+
+export interface MapConfig {
+  centerLatitude: number;
+  centerLongitude: number;
+  zoom: number;
+  useCurrentLocationAsCenter: boolean;
+}
+
+// people
+export interface PeopleSection extends BaseSection {
+  type: 'people';
+  properties: PeopleConfig;
+}
+
+export interface PeopleConfig {
+  avatar: AvatarConfig;
+  persons: AvatarInfo[]; // list of persons to be shown
+}
+
+export interface AvatarConfig {
   cols: number; // number of columns, 0 - 4, default is 2
+  color: ColorIonic; // color of the avatar, default is ColorIonic.Light
   showName: boolean; // if true, the name is displayed, default is true
   showLabel: boolean; // if true, the label is displayed, default is true
-  nameDisplay: number; // NameDisplay enum, default is FirstLast
+  nameDisplay: NameDisplay; // NameDisplay enum, default is FirstLast
   altText: string; // alt text for the image, default is 'avatar'
   title: string;
   linkedSection: string; // this section content will be shown in a modal when the title is clicked
 }
 
-// the configuration of a button
-export interface Button {
-  label: string; // the label on the button
-  shape: string; // 'round' or 'default' (= undefined)
-  fill: string; // 'clear', 'outline', 'solid'
-  width: string; // should be bigger than the iconSize, default is same value for width and height (cicle button)
-  height: string;
-  color: number; // ColorIonic, default is ColorIonic.Primary
-  buttonAction: ButtonAction; // ButtonAction: default is 'none'
-  url: string; // the url to navigate to
-  position: HorizontalPosition; // HorizontalPosition, default is 'left'
-  htmlContent: string; // html content from editor, default is <p></p>
+// slider
+export interface SliderSection extends BaseSection {
+  type: 'slider';
+  properties: SliderConfig;
 }
 
-export interface ContentConfig {
-  htmlContent: string; // html content from editor   , default is <p></p>
-  colSize: number; // md-size of the first col, 1-6, default is 4
-  position: ViewPosition; // ViewPosition, default is ViewPosition.None
+export interface SliderConfig {
+  images: ImageConfig[]; // list of images to be shown in the gallery
+  imageStyle: ImageStyle;
 }
 
-// default configuration valid for all images in a image list
-export interface DefaultImageConfig {
-  imgIxParams: string;
-  width: number;
-  height: number;
-  sizes: string;
-  borderRadius: number;
-  imageAction: number; // ImageAction
-  zoomFactor: number;
-  isThumbnail: boolean;
-  slot: Slot;
-}
-
-// the configuration of an icon
-export interface Icon {
-  name: string; // either ion-icon name (e.g. download, contains -) or FileTypeIcon (e.g. pdf) that resolves into assets/filetypes/file-pdf-light.svg
-  size: string;
-  slot: Slot; // default is 'start'
-}
-
-export interface Iframe {
-  style: string; // css style for the iframe, default is 'width: 100%; min-height:400px; border: none;'
-  url: string; // the url of the iframe
-}
-
-// the configuration of a single image
-export interface Image {
-  // identifies a single image or a specific image in an image list
-  imageLabel: string; // a short title to identify the image (this is shown in lists)
-  imageType: number; // ImageType: the type of the image, default is ImageType.Image
-  url: string; // the url of the image, a relative path to the file in Firebase storage; this is used as a basis to construct the imgix url
-  actionUrl: string; // the url used with the action
-  altText: string; // aria text for the image,
-  imageOverlay: string; // used for text overlays on the imgix image
-  fill: boolean; // if true, the image fills the whole container, default is true
-  hasPriority: boolean; // if true, the image is loaded first, default is true
-  imgIxParams: string;
-  width: number; // the width of the image in pixels, default is 160
-  height: number; // the height of the image in pixels, default is 90
-  sizes: string; // the sizes attribute for the img tag, default is '(max-width: 1240px) 50vw, 300px'
-  borderRadius: number;
-  imageAction: number; // ImageAction: defines the action to start when clicking on an image, default is ImageAction.None
-  zoomFactor: number; // default: 2
-  isThumbnail: boolean; // if true, images are displayed as a thumbnail, default: false
-  slot: Slot; // default is none
-}
-
-// get this from imxig with fm=json
-export interface ImageMetaData {
-  altitude: number; // GPS.Altitude
-  latitude: number; // GPS.Latitude
-  longitude: number; // GPS.Longitude
-  speed: number; // GPS.Speed
-  direction: number; // GPS.ImgDirection
-  size: number; // ContentLength
-  height: number; // PixelHeight
-  width: number; // PixelWidth   -> portrait = height > width, landscape = width > height
-  cameraMake: string; // TIFF.Make
-  cameraModel: string; // TIFF.Model
-  software: string; // TIFF.Software
-  focalLength: number; // EXIF.FocalLength mm
-  focalLengthIn35mmFilm: number; // EXIF.FocalLengthIn35mmFilm 35mm equivalent
-  aperture: number; // EXIF.FNumber  f/2.8
-  exposureTime: number; // EXIF.ExposureTime
-  iso: number; // EXIF.ISOSpeedRatings
-  lensModel: string; // EXIF.LensModel
-}
-
-export interface MapInfo {
-  centerLatitude: string;
-  centerLongitude: string;
-  zoom: string;
-  useCurrentLocationAsCenter: boolean;
-}
-
-// the configuration of any BOM
-export interface ModelInfo {
-  bkey: string;
-  modelType: string;
-  visibleAttributes: string[];
+// table
+export interface TableSection extends BaseSection {
+  type: 'table';
+  properties: TableConfig;
 }
 
 export interface TableConfig {
-  gridTemplate: string;
-  gridGap: string;
-  gridBackgroundColor: string;
-  gridPadding: string;
-  headerBackgroundColor: string;
-  headerTextAlign: string;
-  headerFontSize: string;
-  headerFontWeight: string;
-  headerPadding: string;
-  cellBackgroundColor: string;
-  cellTextAlign: string;
-  cellFontSize: string;
-  cellFontWeight: string;
-  cellPadding: string;
+  data: {
+    header: string[]; // column headers: strings or html, the length determines the number of columns
+    body: string[]; // the content of the fields, from top left to bottom right (row by row)
+  },
+  grid: TableGrid;
+  header: TableStyle;
+  body: TableStyle;
 }
 
-// GuiColumn is header: string, field: string
-export interface Table {
-  config: TableConfig;
-  title: string;
-  subTitle: string;
-  description: string;
-  header: string[]; // column headers: strings or html, the length determines the number of columns
-  data: string[]; // the content of the fields, from top left to bottom right (row by row)
+export interface TableGrid {
+    template: string; 
+    gap: string;
+    backgroundColor: string;
+    padding: string;
+}
+
+export interface TableStyle {
+  backgroundColor: string;
+  textAlign: string;
+  fontSize: string;
+  fontWeight: string;
+  padding: string;
+}
+
+// tracker
+export interface TrackerSection extends BaseSection {
+  type: 'tracker';
+  properties: TrackerConfig;
 }
 
 export interface TrackerConfig {
@@ -194,117 +278,19 @@ export interface TrackerConfig {
   exportFormat: 'kmz' | 'json' | 'csv'; // the format for exporting the data, default is 'kmz'
 }
 
+// video
+export interface VideoSection extends BaseSection {
+  type: 'video';
+  properties: VideoConfig;
+}
+
 export interface VideoConfig {
   url: string; // the url of the video
-  width: number; // the width of the video, default is 100%
-  height: number; // the height of the video, default is auto
-  frameborder: boolean; // default 0
-  baseUrl: boolean; // default is https://www.youtube.com/embed/
+  width: string; // the width of the video, default is 100%
+  height: string; // the height of the video, default is auto
+  frameborder: string; // default 0
+  baseUrl: string; // default is https://www.youtube.com/embed/
 }
 
-export interface SectionProperties {
-  accordion?: Accordion;
-  album?: AlbumConfig;
-  chat?: ChatConfig;
-  calendarOptions?: any; // CalendarOptions, but we don't want to have this dependency here
-  content?: ContentConfig; // used for Article, Button, PeopleList (using editor)
-  avatar?: Avatar;
-  button?: Button;
-  defaultImageConfig?: DefaultImageConfig; // configures the layout and style of the images
-  echarts?: any; // EChartsCoreOption, but we don't want to have this dependency here
-  icon?: Icon;
-  iframe?: Iframe;
-  image?: Image; // single image, e.g. Hero
-  imageList?: Image[]; // list of images, e.g. Album, Slider, Gallery
-  logo?: Image; // logo image
-  map?: MapInfo;
-  modelInfo?: ModelInfo;
-  persons?: AvatarInfo[];
-  table?: Table;
-  trackerConfig?: TrackerConfig;
-  video?: VideoConfig;
-}
 
-export class SectionModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
-  public bkey = DEFAULT_KEY;
-  public tenants = DEFAULT_TENANTS;
-  public isArchived = false;
-  public name = DEFAULT_NAME; // a meaningful name of the section
-  public index = DEFAULT_INDEX;
-  public tags = DEFAULT_TAGS;
-  public description = DEFAULT_NOTES; // a detailed description of the section
-  public roleNeeded = 'privileged'; // RoleName
-  public color: ColorIonic | undefined = undefined;
-  public title = DEFAULT_TITLE;
-  public subTitle = DEFAULT_TITLE;
-  public type = DEFAULT_SECTION_TYPE;
-  public properties: SectionProperties = {};
 
-  constructor(tenantId: string) {
-    this.tenants = [tenantId];
-  }
-}
-
-export const SectionCollection = 'sections';
-export const SectionModelName = 'section';
-
-// -----------------------------------------------------
-
-export function newImage(title = '', url = '', actionUrl = '', altText = '', defaultImageConfig = newDefaultImageConfig()): Image {
-  return {
-    imageLabel: title,
-    imageType: ImageType.Image,
-    url: url,
-    actionUrl: actionUrl,
-    altText: altText,
-    imageOverlay: '',
-    fill: true,
-    hasPriority: false,
-    imgIxParams: defaultImageConfig.imgIxParams,
-    width: defaultImageConfig.width,
-    height: defaultImageConfig.height,
-    sizes: defaultImageConfig.sizes,
-    borderRadius: defaultImageConfig.borderRadius,
-    imageAction: defaultImageConfig.imageAction,
-    zoomFactor: defaultImageConfig.zoomFactor,
-    isThumbnail: defaultImageConfig.isThumbnail,
-    slot: defaultImageConfig.slot,
-  };
-}
-
-export function newDefaultImageConfig(): DefaultImageConfig {
-  return {
-    imgIxParams: '',
-    width: 160,
-    height: 90,
-    sizes: '(max-width: 786px) 50vw, 100vw',
-    borderRadius: 4,
-    imageAction: ImageAction.None,
-    zoomFactor: 2,
-    isThumbnail: false,
-    slot: 'none',
-  };
-}
-
-export function newButton(width = '60px', height = '60px'): Button {
-  return {
-    label: DEFAULT_LABEL,
-    shape: 'round',
-    fill: 'clear',
-    width: width,
-    height: height,
-    color: ColorIonic.Primary,
-    buttonAction: ButtonAction.None,
-    url: DEFAULT_URL,
-    position: HorizontalPosition.Left,
-    htmlContent: '<p></p>',
-  };
-}
-
-export function newIcon(): Icon {
-  return {
-    name: 'pdf',
-    size: '40px',
-    slot: 'start',
-  };
-}

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, input, model, output } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
@@ -8,6 +8,7 @@ import { DESCRIPTION_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe, bkTranslate } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, decrypt, encrypt } from '@bk2/shared-util-core';
+
 import { ButtonCopyComponent } from './button-copy.component';
 
 /**
@@ -42,18 +43,19 @@ import { ButtonCopyComponent } from './button-copy.component';
 
       @if(!isReadOnly()) {
         <ion-item lines="none">
-          <ion-textarea (ionInput)="onChange($event)"
+          <ion-textarea
             type="text"
             [name]="name()"
             [ngModel]="value()"
-            placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
-            aria-label="{{'@input.' + name() + '.label' | translate | async }}"
+            (ngModelChange)="value.set($event)"
+            placeholder="{{ placeholder() | translate | async }}"
+            aria-label="{{ ariaLabel() | translate | async }}"
             inputMode="text"
             [counter]="!isReadOnly()"
             fill="outline"
             [autoGrow]="isAutoGrow()"
             [maxlength]="maxLength()"
-            [rows]="rows()"
+            [rows]="rows()" 
             [readonly]="isReadOnly()"
           />
           <!--
@@ -84,35 +86,33 @@ import { ButtonCopyComponent } from './button-copy.component';
 export class NotesInputComponent {
   private readonly alertController = inject(AlertController);
 
+  // inputs
   public value = model.required<string>(); // mandatory view model
   public name = input('notes'); // name of the input field
   public readOnly = input.required<boolean>();
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public maxLength = input(DESCRIPTION_LENGTH); // max number of characters allowed
   public rows = input(5); // number of rows
   public showTitle = input<boolean>(false);
-  protected doShowTitle = computed(() => coerceBoolean(this.showTitle()));
-
   protected clearable = input(true); // show a button to clear the notes
-  protected isClearable = computed(() => coerceBoolean(this.clearable()));
   protected copyable = input(true); // show a button to copy the notes
-  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected encryptable = input(true); // show a button to encrypt or decrypt the notes
-  protected isEncryptable = computed(() => coerceBoolean(this.encryptable()));
   public autoGrow = input(true); // if true, the input field grows with the content
+
+  // coerced boolean inputs
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected doShowTitle = computed(() => coerceBoolean(this.showTitle()));
+  protected isClearable = computed(() => coerceBoolean(this.clearable()));
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
+  protected isEncryptable = computed(() => coerceBoolean(this.encryptable()));
   protected isAutoGrow = computed(() => coerceBoolean(this.autoGrow()));
 
-  protected changed = output<string>(); // output event when the value changes
-
+  // computed 
+  protected placeholder = computed(() => `@input.${this.name()}.placeholder`);
+  protected ariaLabel = computed(() => `@input.${this.name()}.label`);
   private password = '';
 
   public clearValue(): void {
     this.value.set('');
-  }
-
-  public onChange(event: CustomEvent): void {
-    this.value.set(event.detail.value);
-    this.changed.emit(this.value());
   }
 
   public async dencrypt(): Promise<void> {
@@ -150,6 +150,5 @@ export class NotesInputComponent {
       value = '**' + await encrypt(value, password);
     } 
     this.value.set(value);
-    this.changed.emit(this.value());
   }
 }

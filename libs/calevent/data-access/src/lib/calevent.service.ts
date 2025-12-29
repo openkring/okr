@@ -25,7 +25,7 @@ export class CalEventService {
    */
   public async create(calEvent: CalEventModel, currentUser?: UserModel): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
-    return await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, '@calEvent.operation.create', currentUser);
+    return await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, '@calevent.operation.create', currentUser);
   }
 
   /**
@@ -44,7 +44,7 @@ export class CalEventService {
    * @param confirmMessage an optional confirmation message to show in the UI
    * @returns the key of the updated CalEvent or undefined if the operation failed
    */
-  public async update(calEvent: CalEventModel, currentUser?: UserModel, confirmMessage = '@calEvent.operation.update'): Promise<string | undefined> {
+  public async update(calEvent: CalEventModel, currentUser?: UserModel, confirmMessage = '@calevent.operation.update'): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
     return await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, confirmMessage, currentUser);
   }
@@ -56,7 +56,7 @@ export class CalEventService {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(calEvent: CalEventModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<CalEventModel>(CalEventCollection, calEvent, '@calEvent.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<CalEventModel>(CalEventCollection, calEvent, '@calevent.operation.delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

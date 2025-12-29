@@ -7,12 +7,12 @@ import { TranslatePipe } from "@bk2/shared-i18n";
 import { AddressChannel, AddressModel, AddressUsage } from "@bk2/shared-models";
 import { SvgIconPipe } from "@bk2/shared-pipes";
 import { EmptyListComponent } from "@bk2/shared-ui";
+import { createActionSheetButton, createActionSheetOptions } from "@bk2/shared-util-angular";
+import { coerceBoolean, hasRole } from "@bk2/shared-util-core";
 
 import { FavoriteColorPipe, FormatAddressPipe } from "@bk2/subject-address-util";
 
-import { createActionSheetButton, createActionSheetOptions } from "@bk2/shared-util-angular";
-import { coerceBoolean, hasRole } from "@bk2/shared-util-core";
-import { AddressAccordionStore } from "libs/subject/address/feature/src/lib/addresses-accordion.store";
+import { AddressStore } from "./addresses.store";
 
 @Component({
   selector: 'bk-addresses-accordion',
@@ -28,7 +28,7 @@ import { AddressAccordionStore } from "libs/subject/address/feature/src/lib/addr
       padding-right: 5px;
     }
   `],
-  providers: [AddressAccordionStore],
+  providers: [AddressStore],
   template: `
   <ion-accordion toggle-icon-slot="start" value="addresses">
     <ion-item slot="header" [color]="color()">
@@ -40,9 +40,9 @@ import { AddressAccordionStore } from "libs/subject/address/feature/src/lib/addr
         }
     </ion-item>
     <div slot="content">
-      @if(description(); as description) {
+      @if(intro(); as intro) {
         <ion-item lines="none">
-          <ion-label>{{ description | translate | async }}</ion-label>
+          <ion-label>{{ intro | translate | async }}</ion-label>
         </ion-item>
       }  
       @if(addresses().length === 0) {
@@ -72,28 +72,30 @@ import { AddressAccordionStore } from "libs/subject/address/feature/src/lib/addr
   `,
 })
 export class AddressesAccordionComponent {
-  protected readonly addressAccordionStore = inject(AddressAccordionStore);
+  protected readonly addressStore = inject(AddressStore);
   private readonly actionSheetController = inject(ActionSheetController);
 
   // inputs
   public parentKey = input.required<string>(); // modelType.key of the parent model of the addresses person or org
-  public description = input<string>(); // description shown in the accordion header
+  public intro = input<string>(); // description shown in the accordion header
   public readOnly = input<boolean>(true);
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public color = input('light'); // color of the accordion
   public label = input('@subject.address.plural'); // label of the accordion
 
+  // coerced boolean inputs
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+
   // signals
-  protected addresses = computed(() => this.addressAccordionStore.addresses() ?? []);
-  private currentUser = computed(() => this.addressAccordionStore.currentUser());
+  protected addresses = computed(() => this.addressStore.addresses() ?? []);
+  private currentUser = computed(() => this.addressStore.currentUser());
 
   // passing constants
-  private imgixBaseUrl = this.addressAccordionStore.imgixBaseUrl();
+  private imgixBaseUrl = this.addressStore.imgixBaseUrl();
   protected addressChannel = AddressChannel; 
 
   constructor() {
     effect(() => {
-      this.addressAccordionStore.setParentKey(this.parentKey());
+      this.addressStore.setParentKey(this.parentKey());
     });
   }
 
@@ -169,40 +171,40 @@ export class AddressesAccordionComponent {
       if (!data) return;
       switch (data.action) {
         case 'address.delete':
-          await this.addressAccordionStore.delete(address, this.isReadOnly());
+          await this.addressStore.delete(address, this.isReadOnly());
           break;
         case 'address.copy':
-          await this.addressAccordionStore.copy(address);
+          await this.addressStore.copy(address);
           break;
         case 'address.view':
-          await this.addressAccordionStore.edit(address, true);
+          await this.addressStore.edit(address, true);
           break;
         case 'address.edit':
-          await this.addressAccordionStore.edit(address, this.isReadOnly());
+          await this.addressStore.edit(address, this.isReadOnly());
           break;
         case 'address.iban.view':
-          await this.addressAccordionStore.showQrEzs(address);
+          await this.addressStore.showQrEzs(address);
           break;
         case 'address.iban.upload':
-          await this.addressAccordionStore.uploadQrEzs(address);
+          await this.addressStore.uploadQrEzs(address);
           break;
         case 'address.email.send':
-          await this.addressAccordionStore.sendEmail(address.email);
+          await this.addressStore.sendEmail(address.email);
           break;
         case 'address.phone.call':
-          await this.addressAccordionStore.call(address.phone);
+          await this.addressStore.call(address.phone);
           break;
         case 'address.postal.view':
-          await this.addressAccordionStore.showPostalAddress(address);
+          await this.addressStore.showPostalAddress(address);
           break;
         case 'address.web.open':
-          await this.addressAccordionStore.openUrl(address);
+          await this.addressStore.openUrl(address);
           break;
       }
     }
   }
 
   public async add(): Promise<void> {
-    this.addressAccordionStore.add(this.isReadOnly());
+    this.addressStore.add(this.isReadOnly());
   }
 }

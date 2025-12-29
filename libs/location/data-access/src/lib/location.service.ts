@@ -60,7 +60,7 @@ export class LocationService {
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
-  public list(orderBy = 'startDate', sortOrder = 'asc'): Observable<LocationModel[]> {
+  public list(orderBy = 'address', sortOrder = 'asc'): Observable<LocationModel[]> {
     return this.firestoreService.searchData<LocationModel>(LocationCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
   }
 }

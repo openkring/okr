@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared-models';
+import { VideoSection } from '@bk2/shared-models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 /**
@@ -44,13 +44,13 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 })
 export class VideoSectionComponent {
   private readonly sanitizer = inject(DomSanitizer);
-  public section = input.required<SectionModel>();
+  public section = input.required<VideoSection>();
 
-  protected url = computed(() => this.section().properties?.video?.url ?? '');
-  protected width = computed(() => this.section().properties?.video?.width ?? '100%');
-  protected height = computed(() => this.section().properties?.video?.height ?? 'auto');
-  protected frameborder = computed(() => this.section().properties?.video?.frameborder ?? '0');
-  protected baseUrl = computed(() => this.section().properties?.video?.baseUrl ?? 'https://www.youtube.com/embed/');
+  protected url = computed(() => this.section().properties?.url ?? '');
+  protected width = computed(() => this.section().properties?.width ?? '100%');
+  protected height = computed(() => this.section().properties?.height ?? 'auto');
+  protected frameborder = computed(() => this.section().properties?.frameborder ?? '0');
+  protected baseUrl = computed(() => this.section().properties?.baseUrl ?? 'https://www.youtube.com/embed/');
     // autoplay=1 starts the video automatically
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);  

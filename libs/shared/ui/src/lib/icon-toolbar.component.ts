@@ -36,11 +36,13 @@ import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
   `]
 })
 export class IconToolbarComponent {
+  // inputs
   public icon = input.required<string>();  
   public alt = input('Avatar Icon');
   public color = input<ColorIonic>(ColorIonic.Primary);
   public title = input<string | undefined>();
   public subTitle = input<string | undefined>();
 
+  // passing constants to the template
   protected colorsIonic = ColorsIonic;
 }

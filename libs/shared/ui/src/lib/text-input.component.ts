@@ -3,14 +3,15 @@ import { Component, computed, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 
-import { vestFormsViewProviders } from 'ngx-vest-forms';
+import { MaskitoDirective } from '@maskito/angular';
+import { MaskitoElementPredicate } from '@maskito/core';
 
-import { AnyCharacterMask, MaskPredicate } from '@bk2/shared-config';
-import { AutoComplete, InputMode, SHORT_NAME_LENGTH } from '@bk2/shared-constants';
+import { AnyCharacterMask } from '@bk2/shared-config';
+import { AutoComplete, InputMode, NAME_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopyComponent } from './button-copy.component';
-import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-text-input',
@@ -18,35 +19,30 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   imports: [
     TranslatePipe, AsyncPipe,
     ButtonCopyComponent,
-    FormsModule,
+    FormsModule, MaskitoDirective,
     IonItem, IonNote, IonInput
   ],
-  viewProviders: [vestFormsViewProviders],
-  styles: [`
-    ion-item.helper { --min-height: 0; }
-  `],
+  styles: [`ion-item.helper { --min-height: 0; }`],
   template: `
     <ion-item lines="none">
-      <ion-input (ionInput)="onChange($event)"
+      <ion-input
         type="text"
         [name]="name()" 
         [ngModel]="value()"
+        (ngModelChange)="onChange($event)"
         labelPlacement="floating"
         label="{{label2() | translate | async }}"
         placeholder="{{placeholder2() | translate | async }}"
         [inputMode]="inputMode()"
         [counter]="!isReadOnly()"
         [maxlength]="maxLength()"
+        [maskito]="mask()"
+        [maskitoElement]="maskPredicate"
         [autocomplete]="autocomplete()"
         [clearInput]="shouldClearInput()"
         [readonly]="isReadOnly()"
         [attr.dir]="dir()"
       />
-      <!--
-      11/2025: maskito currently leads to errors (reverse input), therefore disabled for now
-              [maskito]="mask()"
-        [maskitoElement]="maskPredicate"
-  -->
       @if (isCopyable()) {
         <bk-button-copy [value]="value()" />
       }
@@ -59,17 +55,17 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   `
 })
 export class TextInputComponent {
+  // model and explicit output
   public value = model.required<string>(); // mandatory view model
+  public valueChange = output<string>();
+
+  // inputs
   public name = input.required<string>(); // mandatory name of the input field
   public readOnly = input.required<boolean>();
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  public maxLength = input(SHORT_NAME_LENGTH); // max number of characters allowed
+  public maxLength = input(NAME_LENGTH); // max number of characters allowed
   public clearInput = input(true); // show an icon to clear the input field
-  protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   public copyable = input(false); // if true, a button to copy the value of the input field is shown
-  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   public showHelper = input(false);
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public autocomplete = input<AutoComplete>('off'); // Automated input assistance in filling out form field values
   public inputMode = input<InputMode>('text'); // A hint to the browser for which keyboard to display.
   public mask = input(AnyCharacterMask);
@@ -78,18 +74,23 @@ export class TextInputComponent {
   public helper = input<string>(); // optional custom helper text of the input field
   public dir = input<'ltr' | 'rtl' | 'auto'>('ltr');
 
+  // coerced boolean inputs
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
+  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
+
+  // computed
   protected label2 = computed(() => this.label() ?? `@input.${this.name()}.label`);
   protected placeholder2 = computed(() => this.placeholder() ?? `@input.${this.name()}.placeholder`);
   protected helper2 = computed(() => this.helper() ?? `@input.${this.name()}.helper`);  
 
-  public changed = output<string>(); 
+  // passing constants to the template
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
 
-  protected maskPredicate = MaskPredicate;  
-
-  public onChange(event: CustomEvent): void {
-    const text = event.detail.value as string;
-    this.value.set(text);
-    console.log('emitting ', text);
-    this.changed.emit(text);
+// always emit change
+  protected onChange(newValue: string): void {
+    this.value.set(newValue);
+    this.valueChange.emit(newValue);
   }
 }

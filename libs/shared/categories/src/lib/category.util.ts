@@ -147,14 +147,12 @@ export function ownerTypeMatches(ownership: OwnershipModel, selectedModelType: s
   }
 }
 
-export function yearMatches(storeDate: string, givenYear?: string): boolean {
-  if (!storeDate || storeDate.length <= 4) {
-    return true;
-  }
-  if (!givenYear || givenYear.length !== 4) {
-    return true;
-  }
-  return storeDate.startsWith(givenYear);
+export function yearMatches(storeDate: string, givenYear?: number): boolean {
+  if (!storeDate || storeDate.length < 4) return true;
+  if (!givenYear || givenYear < 1000) return true;   // all is 99
+  const storedYear = parseInt(storeDate.substring(0, 4));
+  if (storedYear < 1000 || storedYear > 9999) return true;
+  return storedYear === givenYear;
 }
 
 export function stringArrayMatches(strings: string[], givenString?: string): boolean {

@@ -7,11 +7,10 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopyComponent } from './button-copy.component';
 import { EditorToolbar } from './editor-toolbar.component';
-import { coerceBoolean } from '@bk2/shared-util-core';
-import { inject } from 'vitest';
 
 @Component({
   selector: 'bk-editor',
@@ -66,12 +65,15 @@ import { inject } from 'vitest';
   `
 })
 export class EditorComponent implements OnInit, OnDestroy {
-  public content = model('');
+  // inputs
+  public content = model('<p></p>'); // the HTML content
   public readOnly = input.required<boolean>();
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public clearable = input(true); // show a button to clear the notes
-  protected isClearable = computed(() => coerceBoolean(this.clearable()));
   public copyable = input(true); // show a button to copy the notes
+
+  // coerced boolean inputs
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected isClearable = computed(() => coerceBoolean(this.clearable()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
 
   public editor: Editor | undefined;

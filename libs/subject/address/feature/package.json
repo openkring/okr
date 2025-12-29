@@ -8,16 +8,16 @@
   "dependencies": {
     "tslib": "^2.8.1",
     "@bk2/shared-models": "*",
-    "@bk2/shared-config": "*",
-    "@bk2/shared-categories": "*",
-    "@bk2/shared-feature": "*",
     "@bk2/shared-i18n": "*",
+    "@bk2/shared-util-angular": "*",
     "@bk2/shared-ui": "*",
-    "@bk2/shared-pipes": "*",
+    "@bk2/shared-feature": "*",
+    "@bk2/shared-data-access": "*",
     "@bk2/shared-util-core": "*",
-    "@bk2/subject-address-util": "*",
+    "@bk2/subject-address-ui": "*",
     "@bk2/subject-address-data-access": "*",
     "@bk2/avatar-util": "*",
-    "@bk2/subject-swisscities-ui": "*"
+    "@bk2/avatar-data-access": "*"
   }
 }
+

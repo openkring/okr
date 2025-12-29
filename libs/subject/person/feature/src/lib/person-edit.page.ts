@@ -1,12 +1,10 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
-import { PersonModelName, RoleName } from '@bk2/shared-models';
+import { PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
@@ -19,7 +17,6 @@ import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
 
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
 import { PersonFormComponent } from '@bk2/subject-person-ui';
-import { convertPersonToForm, PersonFormModel } from '@bk2/subject-person-util';
 
 import { PersonEditStore } from './person-edit.store';
 import { getTitleLabel } from '@bk2/shared-util-angular';
@@ -28,7 +25,6 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
   selector: 'bk-person-edit-page',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     HeaderComponent, ChangeConfirmationComponent,
     PersonFormComponent, AvatarToolbarComponent, AddressesAccordionComponent, CommentsAccordionComponent, DocumentsAccordionComponent,
     MembershipAccordionComponent, OwnershipAccordionComponent, ReservationsAccordionComponent,
@@ -38,22 +34,25 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
   providers: [PersonEditStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header title="{{ headerTitle() | translate | async }}" />
+    <bk-header [title]="headerTitle()" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content no-padding>
+    <ion-content class="ion-no-padding">
       <bk-avatar-toolbar key="{{parentKey()}}" title="{{ toolbarTitle() }}" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
 
       @if(formData(); as formData) {
         <bk-person-form
           [formData]="formData" 
+          (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [priv]="priv()"
           [genders]="genders()"
           [allTags]="tags()"
           [readOnly]="isReadOnly()"
-          (formDataChange)="onFormDataChange($event)"
+          [showForm]="showForm()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
         />
       }
 
@@ -90,7 +89,8 @@ export class PersonEditPageComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => convertPersonToForm(this.person()));
+  protected formData = linkedSignal(() => structuredClone(this.person()));
+  protected showForm = signal(true);
 
   // derived signals
   protected headerTitle = computed(() => getTitleLabel('subject.person', this.person()?.bkey, this.isReadOnly()));
@@ -111,16 +111,20 @@ export class PersonEditPageComponent {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    this.formDirty.set(false);
-    await this.personEditStore.save(this.formData());
+    const person = this.formData();
+    if (!person) return;
+    await this.personEditStore.save(person);
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(convertPersonToForm(this.person()));  // reset the form
+    this.formData.set(structuredClone(this.person()));  // reset the form
+    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: PersonFormModel): void {
+  protected onFormDataChange(formData: PersonModel): void {
     this.formData.set(formData);
   }
 

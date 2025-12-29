@@ -1,12 +1,14 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ButtonComponent, CategorySelectComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
-import { AocDataStore } from './aoc-data.store';
 import { hasRole } from '@bk2/shared-util-core';
+
+import { AocDataStore } from './aoc-data.store';
+import { PersonModelName } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-aoc-data',
@@ -19,7 +21,7 @@ import { hasRole } from '@bk2/shared-util-core';
   ],
   providers: [AocDataStore],
   template: `
-    <bk-header title="{{ '@aoc.data.title' | translate | async }}" />
+    <bk-header title="@aoc.data.title" />
     <ion-content>
       <ion-card>
         <ion-card-content>
@@ -59,7 +61,7 @@ import { hasRole } from '@bk2/shared-util-core';
             <ion-row>
               <ion-col>
                 <ion-item lines="none">
-                  <bk-cat-select [category]="types()!" selectedItemName="person" [withAll]="false" [readOnly]="readOnly()" (changed)="onCategoryChange($event)" />
+                  <bk-cat-select [category]="types()!" [selectedItemName]="modelType()" (selectedItemNameChange)="aocDataStore.setModelType($event)" [withAll]="false" [readOnly]="readOnly()" />
                 </ion-item>
               </ion-col>
               <ion-col>
@@ -70,6 +72,28 @@ import { hasRole } from '@bk2/shared-util-core';
         </ion-card-content>
       </ion-card>
 
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ '@aoc.data.createIndex.title' | translate | async }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col>{{ '@aoc.data.createIndex.content' | translate | async }}</ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col>
+                <ion-item lines="none">
+                  <bk-cat-select [category]="types()!" [selectedItemName]="modelType()" (selectedItemNameChange)="aocDataStore.setModelType($event)" [withAll]="false" [readOnly]="readOnly()" />
+                </ion-item>
+              </ion-col>
+              <ion-col>
+                <bk-button label=" {{ '@aoc.data.createIndex.operation.create' | translate | async }}" iconName="warning" (click)="createIndexesOnCollection()" />
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
       <bk-result-log [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
   `,
@@ -77,15 +101,12 @@ import { hasRole } from '@bk2/shared-util-core';
 export class AocDataComponent {
   protected readonly aocDataStore = inject(AocDataStore);
 
+  protected modelType = linkedSignal(() => this.aocDataStore.modelType() ?? PersonModelName);
   protected readonly logTitle = computed(() => this.aocDataStore.logTitle());
   protected readonly logInfo = computed(() => this.aocDataStore.log());
   protected readonly isLoading = computed(() => this.aocDataStore.isLoading());
   protected readonly types = computed(() => this.aocDataStore.appStore.getCategory('model_type'));
-  protected readonly readOnly = computed(() => hasRole('admin', this.aocDataStore.currentUser()));
-
-  protected onCategoryChange($event: string): void {
-    this.aocDataStore.setModelType($event);
-  }
+  protected readonly readOnly = computed(() => !hasRole('admin', this.aocDataStore.currentUser()));
 
   /**
    * Fix models of a given type. THIS CHANGES MANY DATA IN THE DATABASE.
@@ -99,5 +120,9 @@ export class AocDataComponent {
    */
   public async validateModels(): Promise<void> {
     await this.aocDataStore.validateModels();
+  }
+
+  public async createIndexesOnCollection(): Promise<void> {
+    await this.aocDataStore.createIndexesOnCollection();
   }
 }

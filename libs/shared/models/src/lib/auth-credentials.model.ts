@@ -5,7 +5,7 @@ export type AuthCredentials = {
   loginPassword: string;
 };
 
-export const authCredentialsShape: AuthCredentials = {
+export const AUTH_CREDENTIAL_SHAPE: AuthCredentials = {
   loginEmail: DEFAULT_EMAIL,
   loginPassword: '',
 };

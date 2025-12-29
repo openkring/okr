@@ -21,7 +21,7 @@ import { HeaderComponent } from './header.component';
     IonContent, IonLabel, IonItem
   ],
   template: `
-    <bk-header title="{{ '@general.operation.select.category' | translate | async }}" [isModal]="true" />
+    <bk-header title="@general.operation.select.category" [isModal]="true" />
     <ion-content class="ion-padding">
       @for (cat of this.categories(); track cat; let i = $index) {
         <ion-item lines="none" (click)="select(i)">

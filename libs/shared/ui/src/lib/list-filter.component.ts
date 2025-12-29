@@ -4,12 +4,12 @@ import { IonCol, IonGrid, IonRow, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel } from '@bk2/shared-models';
+import { coerceBoolean, getYear, getYearList } from '@bk2/shared-util-core';
 
 import { CategorySelectComponent } from './category-select.component';
 import { SearchbarComponent } from './searchbar.component';
 import { SingleTagComponent } from './single-tag.component';
 import { YearSelectComponent } from './year-select.component';
-import { coerceBoolean } from '@bk2/shared-util-core';
 
 /**
  * This component shows a list of filters in a toolbar at the top of a list.
@@ -31,44 +31,38 @@ import { coerceBoolean } from '@bk2/shared-util-core';
     SearchbarComponent, SingleTagComponent, CategorySelectComponent, YearSelectComponent,
     IonToolbar, IonGrid, IonRow, IonCol
   ],
-  styles: [`
-    .no-padding {
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
-    }
-  `],
   template: `
     <ion-toolbar>
-      <ion-grid class="no-padding ion-align-items-center">
+      <ion-grid class="ion-no-padding ion-align-items-center">
         <ion-row class="ion-align-items-center">
-          @if(shouldShowSearch()) {
-            <ion-col size="6" size-md="3" size="auto" class="ion-no-padding">
-              <bk-searchbar placeholder="{{ '@general.operation.search.placeholder' | translate | async  }}" (ionInput)="onSearchTermChange($event)" />
+          @if(showSearch()) {
+            <ion-col size="6" size-md="3" class="ion-no-padding">
+              <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@general.operation.search.placeholder' | translate | async  }}" />
             </ion-col>
           }
           @if(showTags()) {
-            <ion-col size="6" size-md="2" size="auto" class="ion-no-padding">
-              <bk-single-tag [tags]="tags()!" (selectedTag)="tagChanged.emit($event)" />
+            <ion-col size="6" size-md="2" class="ion-no-padding">
+              <bk-single-tag [selectedTag]="selectedTag()" [tags]="tags()" />
             </ion-col>
           }
           @if(showCategory()) {
-            <ion-col size="6" size-md="3" size="auto" class="ion-no-padding">
-              <bk-cat-select [category]="category()!" selectedItemName="all" [withAll]="true" [readOnly]="false" (changed)="categoryChanged.emit($event)" [showIcons]="shouldShowIcons()" />
+            <ion-col size="6" size-md="3" class="ion-no-padding">
+              <bk-cat-select [selectedItemName]="selectedCategory()" (selectedItemNameChange)="categoryChanged.emit($event)" [category]="categories()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
           @if(showType()) {
-            <ion-col size="6" size-md="3" size="auto" class="ion-no-padding">
-              <bk-cat-select [category]="type()!" selectedItemName="all" [withAll]="true" [readOnly]="false" (changed)="typeChanged.emit($event)" [showIcons]="shouldShowIcons()" />
+            <ion-col size="6" size-md="3" class="ion-no-padding">
+              <bk-cat-select [selectedItemName]="selectedType()" (selectedItemNameChange)="typeChanged.emit($event)" [category]="types()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }                                                  
           @if(showYear()) {
-            <ion-col size="6" size-md="2" size="auto" class="ion-no-padding">
-              <bk-year-select [label]="yearLabel()!" (changed)="yearChanged.emit($event)" [readOnly]="false" [showAllYears]="true" />
+            <ion-col size="6" size-md="2" class="ion-no-padding">
+              <bk-year-select [selectedYear]="selectedYear()" (selectedYearChange)="yearChanged.emit($event)" [years]="yearList()" [label]="yearLabel()!" [readOnly]="false" [showAllYears]="true" />
             </ion-col>
           }
           @if(showState()) {
-            <ion-col size="6" size-md="2" size="auto" class="ion-no-padding">
-              <bk-cat-select [category]="state()!" selectedItemName="all" [withAll]="true" [readOnly]="false" (changed)="stateChanged.emit($event)" [showIcons]="shouldShowIcons()" />
+            <ion-col size="6" size-md="2" class="ion-no-padding">
+              <bk-cat-select [selectedItemName]="selectedState()" (selectedItemNameChange)="stateChanged.emit($event)" [category]="states()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
         </ion-row>
@@ -78,40 +72,49 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   `
 })
 export class ListFilterComponent {
-  // data inputs per filter (optional, if undefined, the filter is not shown)
-  public showSearch = input(true);
-  protected shouldShowSearch = computed(() => coerceBoolean(this.showSearch()));
-  public tags = input<string>();
-  public category = input<CategoryListModel>();
-  public type = input<CategoryListModel>();
+  // inputs
+  // data inputs per filter (optional, if undefined (= not used on the bk-list-filter), the filter is not shown)
+  public tags = input<string>('');
+  public types = input<CategoryListModel>();
+  public categories = input<CategoryListModel>();
   public years = input<number[]>();
-  public state = input<CategoryListModel>();
+  public states = input<CategoryListModel>();
+
+  public selectedTag = input<string>('');
+  public selectedType = input<string>('');
+  public selectedCategory = input<string>('');
+  public selectedYear = input<number>(getYear());
+  public selectedState = input<string>('all');
+
   public showIcons = input(true);
-  protected shouldShowIcons = computed(() => coerceBoolean(this.showIcons()));
+  public showSearch = input(true);
   public yearLabel = input<string>();
 
-  // name the popups per filter name
-  protected catName = computed(() => this.category()?.name);
-  protected typeName = computed(() => this.type()?.name);
-  protected stateName = computed(() => this.state()?.name);
+  // coerced boolean inputs
+  protected shouldShowIcons = computed(() => coerceBoolean(this.showIcons()));
 
- // filter definitions
-  protected showTags = computed(()     => this.tags() !== undefined);
-  protected showCategory = computed(() => this.category() !== undefined);
-  protected showType = computed(()     => this.type() !== undefined);
-  protected showYear = computed(()     => this.years() !== undefined && this.yearLabel);
-  protected showState = computed(()    => this.state() !== undefined && this.stateName);
+  // name the popups per filter name
+  protected catName = computed(() => this.categories()?.name);
+  protected typeName = computed(() => this.types()?.name);
+  protected stateName = computed(() => this.states()?.name);
+
+ // filter visibility
+  protected showTags = computed(()     => this.tags() !== undefined && this.selectedTag() !== undefined);
+  protected showType = computed(()     => this.types() !== undefined && this.selectedType() !== undefined);
+  protected showCategory = computed(() => this.categories() !== undefined && this.selectedCategory() !== undefined);
+  protected showYear = computed(()     => this.years() !== undefined && this.selectedYear() !== undefined);
+  protected showState = computed(()    => this.states() !== undefined && this.selectedState() !== undefined && this.selectedState() !== undefined);
+  protected yearList = computed(()     => this.years() ?? getYearList());   // default is last 8 years
 
   // outputs
   public searchTermChanged = output<string>();
   public tagChanged = output<string>();
-  public categoryChanged = output<string>();
   public typeChanged = output<string>();
+  public categoryChanged = output<string>();
   public yearChanged = output<number>();
   public stateChanged = output<string>();
 
   protected onSearchTermChange($event: Event): void {
-    const searchTerm = ($event.target as HTMLInputElement).value;
-    this.searchTermChanged.emit(searchTerm);
+    this.searchTermChanged.emit(($event.target as HTMLInputElement).value);
   }
 }

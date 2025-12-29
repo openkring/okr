@@ -1,4 +1,4 @@
-import { BaseProperty, BaseType, BkModel, MembershipModel, MetaTag, OrgModel, PersonalRelModel, PersonModel, ResourceModel } from '@bk2/shared-models';
+import { BaseProperty, BaseType, BkModel, GroupModel, MembershipModel, MetaTag, OrgModel, OwnershipModel, PersonalRelModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
 import { die, warn } from './log.util';
 
 /************************************************* Tupel ********************************************************** */
@@ -219,6 +219,26 @@ export function getZipCodeNumber(searchTerm: number): number {
   if (searchTerm < 1000) return searchTerm * 10;
   return searchTerm % 10000;
 }
+
+/**
+ * Compares two objects deeply (recursively).
+ * @param a first object
+ * @param b second object
+ * @returns true if both objects are deeply equal
+ */
+export function deepEqual(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  if (typeof a !== 'object' || typeof b !== 'object') return false;
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  for (const key of keysA) {
+    if (!keysB.includes(key) || !deepEqual(a[key], b[key])) return false;
+  }
+  return true;
+}
+
 /************************************************* Model Type Checks ********************************************************** */
 export function isPerson(person: unknown, tenantId: string): person is PersonModel {
   if(isType<PersonModel>(person, new PersonModel(tenantId))) {
@@ -233,6 +253,15 @@ export function isOrg(org: unknown, tenantId: string): org is OrgModel {
   if(isType<OrgModel>(org, new OrgModel(tenantId))) {
     if (org.tenants) {
       return org.tenants.includes(tenantId);
+    }
+  }
+  return false;
+}
+
+export function isGroup(group: unknown, tenantId: string): group is GroupModel {
+  if(isType<GroupModel>(group, new GroupModel(tenantId))) {
+    if (group.tenants) {
+      return group.tenants.includes(tenantId);
     }
   }
   return false;
@@ -260,6 +289,24 @@ export function isMembership(membership: unknown, tenantId: string): membership 
   if(isType<MembershipModel>(membership, new MembershipModel(tenantId))) {
     if (membership.tenants) {
       return membership.tenants.includes(tenantId);
+    }
+  }
+  return false;
+}
+
+export function isOwnership(ownership: unknown, tenantId: string): ownership is OwnershipModel {
+  if(isType<OwnershipModel>(ownership, new OwnershipModel(tenantId))) {
+    if (ownership.tenants) {
+      return ownership.tenants.includes(tenantId);
+    }
+  }
+  return false;
+}
+
+export function isUser(user: unknown, tenantId: string): user is UserModel {
+  if(isType<UserModel>(user, new UserModel(tenantId))) {
+    if (user.tenants) {
+      return user.tenants.includes(tenantId);
     }
   }
   return false;

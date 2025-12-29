@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { CounterComponent, HeaderComponent } from '@bk2/shared-ui';
 import { IonContent } from '@ionic/angular/standalone';
+
+import { CounterComponent, HeaderComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-counter-page',

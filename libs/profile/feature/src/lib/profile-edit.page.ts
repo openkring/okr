@@ -4,7 +4,7 @@ import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { I18nService, TranslatePipe } from '@bk2/shared-i18n';
+import { I18nService } from '@bk2/shared-i18n';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
 import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
@@ -12,33 +12,31 @@ import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
 
 import { ProfileDataAccordionComponent, ProfilePrivacyAccordionComponent, ProfileSettingsAccordionComponent } from '@bk2/profile-ui';
-import { convertPersonToDataForm, convertUserToPrivacyForm, convertUserToSettingsForm, PersonalDataFormModel, PrivacyFormModel, SettingsFormModel } from '@bk2/profile-util';
-import { PersonModelName } from '@bk2/shared-models';
+import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 import { ProfileEditStore } from './profile-edit.store';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-profile-edit-page',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
+    AsyncPipe,
     AvatarToolbarComponent, HeaderComponent, AddressesAccordionComponent, ProfileDataAccordionComponent,
     ChangeConfirmationComponent, ProfileSettingsAccordionComponent, ProfilePrivacyAccordionComponent,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileEditStore],
-    styles: [`
-    @media (width <= 600px) { ion-card { margin: 5px;} }
-  `],
+    styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-header title="{{ '@profile.operation.update.label' | translate | async }}" [showCloseButton]="false" />
+    <bk-header [title]="headerTitle()" [showCloseButton]="false" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content no-padding>
+    <ion-content class="ion-no-padding">
       <bk-avatar-toolbar
         key="{{ parentKey() }}"
         title="{{ avatarTitle() }}"
-        subTitle="{{ loginEmail() }}"
+        subTitle="{{ 'mailto:' + loginEmail() }}"
         [readOnly]="false"
         (imageSelected)="onImageSelected($event)"
       />
@@ -48,36 +46,36 @@ import { ProfileEditStore } from './profile-edit.store';
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-accordion-group value="addresses" [multiple]="true">
-            @if(personalData(); as personalData) {
+            @if(personFormData(); as personFormData) {
               <bk-profile-data-accordion
-                [formData]="personalData"
+                [formData]="personFormData"
+                (formDataChange)="onPersonChange($event)"
                 [currentUser]="currentUser()"
                 [genders]="genders()"
                 [readOnly]="false"
                 (valid)="formValid.set($event)" 
                 (dirty)="formDirty.set($event)"
-                (formDataChange)="onPersonalChange($event)"
               />
             }
             <bk-addresses-accordion [parentKey]="parentKey()" description="@profile.addresses.description" [readOnly]="false" />
-            @if(settingsFormData(); as settingsFormData) {
+            @if(userFormData(); as userFormData) {
               <bk-profile-settings-accordion
-                [formData]="settingsFormData"
+                [formData]="userFormData"
+                (formDataChange)="onUserChange($event)"
                 [currentUser]="currentUser()"
                 [readOnly]="false"
                 (valid)="formValid.set($event)" 
                 (dirty)="formDirty.set($event)"
-                (formDataChange)="onSettingsChange($event)"
               />
             }
-            @if(privacyFormData(); as privacyFormData) {
+            @if(userFormData(); as userFormData) {
               <bk-profile-privacy-accordion
-                [formData]="privacyFormData"
+                [formData]="userFormData"
+                (formDataChange)="onUserChange($event)"
                 [currentUser]="currentUser()"
                 [readOnly]="false"
                 (valid)="formValid.set($event)" 
                 (dirty)="formDirty.set($event)"
-                (formDataChange)="onPrivacyChange($event)"
               />
             }
           </ion-accordion-group>
@@ -91,24 +89,24 @@ export class ProfileEditPageComponent {
   private readonly i18nService = inject(I18nService);
 
   // inputs
+  // readOnly is always false for profile page as we work with the current user's own profile
 
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected personalData = linkedSignal<PersonalDataFormModel | undefined>(() => convertPersonToDataForm(this.currentPerson())); 
-  protected settingsFormData = linkedSignal<SettingsFormModel | undefined>(() => convertUserToSettingsForm(this.currentUser())); 
-  protected privacyFormData = linkedSignal<PrivacyFormModel | undefined>(() => convertUserToPrivacyForm(this.currentUser())); 
-  // readOnly is always false for profile page as we work with the current user's own profile
+  protected personFormData = linkedSignal(() => structuredClone(this.currentPerson()));
+  protected userFormData = linkedSignal(() => structuredClone(this.currentUser()));
+  protected showForm = signal(true);
 
   // derived signals
+  protected headerTitle = computed(() => getTitleLabel('profile', this.currentUser()?.bkey, false));
   protected currentUser = computed(() => this.profileEditStore.currentUser());
   protected currentPerson = computed(() => this.profileEditStore.person());
   protected personKey = computed(() => this.currentUser()?.personKey || '');
   protected genders = computed(() => this.profileEditStore.appStore.getCategory('gender'));
   protected tenantId = computed(() => this.profileEditStore.tenantId());
   protected loginEmail = computed(() => this.currentUser()?.loginEmail || '');
-
   protected parentKey = computed(() => `${PersonModelName}.${this.personKey()}`);
   protected avatarTitle = computed(() => this.currentPerson()?.firstName + ' ' + this.currentPerson()?.lastName);
   protected introHtml = computed(async () => {
@@ -128,14 +126,16 @@ export class ProfileEditPageComponent {
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     this.formDirty.set(false);
-    await this.profileEditStore.save(this.personalData(), this.settingsFormData(), this.privacyFormData());
+    await this.profileEditStore.save(this.personFormData(), this.userFormData());
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.personalData.set(convertPersonToDataForm(this.currentPerson()));  // reset
-    this.settingsFormData.set(convertUserToSettingsForm(this.currentUser()));  // reset
-    this.privacyFormData.set(convertUserToPrivacyForm(this.currentUser()));  // reset
+    this.personFormData.set(structuredClone(this.currentPerson()));  // reset
+    this.userFormData.set(structuredClone(this.currentUser()));  // reset
+    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);
   }
 
   /**
@@ -146,15 +146,11 @@ export class ProfileEditPageComponent {
     await this.profileEditStore.saveAvatar(photo);
   }
 
-  protected onPersonalChange(formData: PersonalDataFormModel): void {
-    this.personalData.set(formData);
+  protected onPersonChange(formData: PersonModel): void {
+    this.personFormData.set(formData);
   }
 
-  protected onSettingsChange(formData: SettingsFormModel): void {
-    this.settingsFormData.set(formData);
-  }
-
-  protected onPrivacyChange(formData: PrivacyFormModel): void {
-    this.privacyFormData.set(formData);
+  protected onUserChange(formData: UserModel): void {
+    this.userFormData.set(formData);
   }
 }

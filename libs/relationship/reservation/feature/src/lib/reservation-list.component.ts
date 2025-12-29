@@ -1,19 +1,19 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { ReservationModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getItemLabel, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 import { getReserverName } from '@bk2/relationship-reservation-util';
 
-import { ReservationListStore } from './reservation-list.store';
+import { ReservationStore } from './reservation.store';
 
 @Component({
   selector: 'bk-reservation-list',
@@ -24,7 +24,7 @@ import { ReservationListStore } from './reservation-list.store';
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover
   ],
-  providers: [ReservationListStore],
+  providers: [ReservationStore],
   template: `
     <ion-header>
       <!-- title and actions -->
@@ -48,13 +48,13 @@ import { ReservationListStore } from './reservation-list.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-      <bk-list-filter 
-        [tags]="tags()" (tagChanged)="onTagSelected($event)"
-        [type]="reasons()" (typeChanged)="onReasonSelected($event)"
-        [years]="years" (yearChanged)="onYearSelected($event)"
-        [state]="states()" (stateChanged)="onStateSelected($event)"
-        (searchTermChanged)="onSearchtermChange($event)"
-         />
+      <bk-list-filter
+        (searchTermChanged)="searchTerm.set($event)"
+        (tagChanged)="selectedTag.set($event)" [tags]="tags()"
+        (typeChanged)="selectedReason.set($event)" [types]="reasons()"
+        (stateChanged)="selectedState.set($event)" [states]="states()"
+        (yearChanged)="selectedYear.set($event)"
+      />
 
     <!-- list header -->
     <ion-toolbar color="primary">
@@ -90,34 +90,43 @@ import { ReservationListStore } from './reservation-list.store';
     `
 })
 export class ReservationListComponent {
-  protected reservationListStore = inject(ReservationListStore);
+  protected reservationStore = inject(ReservationStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  protected filteredReservations = computed(() => this.reservationListStore.filteredReservations());
-  protected allReservations = computed(() => this.reservationListStore.allReservations());
-  protected reservationsCount = computed(() => this.reservationListStore.allReservations()?.length ?? 0);
+  // filters
+  protected searchTerm = linkedSignal(() => this.reservationStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.reservationStore.selectedTag());
+  protected selectedReason = linkedSignal(() => this.reservationStore.selectedReason());
+  protected selectedYear = linkedSignal(() => this.reservationStore.selectedYear());
+  protected selectedState = linkedSignal(() => this.reservationStore.selectedState());
+
+  // derived values
+  protected filteredReservations = computed(() => this.reservationStore.filteredReservations());
+  protected allReservations = computed(() => this.reservationStore.allReservations());
+  protected reservationsCount = computed(() => this.reservationStore.allReservations()?.length ?? 0);
   protected selectedReservationsCount = computed(() => this.filteredReservations()?.length ?? 0);
-  protected isLoading = computed(() => this.reservationListStore.isLoading());
-  protected tags = computed(() => this.reservationListStore.getTags());
-  protected reasons = computed(() => this.reservationListStore.appStore.getCategory('reservation_reason'));
-  protected states = computed(() => this.reservationListStore.appStore.getCategory('reservation_state'));
+  protected isLoading = computed(() => this.reservationStore.isLoading());
+  protected tags = computed(() => this.reservationStore.getTags());
+  protected reasons = computed(() => this.reservationStore.appStore.getCategory('reservation_reason'));
+  protected states = computed(() => this.reservationStore.appStore.getCategory('reservation_state'));
   protected popupId = computed(() => 'c_reservation_' + this.listId());
-  protected currentUser = computed(() => this.reservationListStore.appStore.currentUser());
+  protected currentUser = computed(() => this.reservationStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   protected years = getYearList();
-  private imgixBaseUrl = this.reservationListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.reservationStore.appStore.env.services.imgixBaseUrl;
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.reservationListStore.add(); break;
-      case 'exportRaw': await this.reservationListStore.export("raw"); break;
-      default: error(undefined, `ReservationListComponent.call: unknown method ${selectedMethod}`);
+      case 'add': await this.reservationStore.add(this.readOnly()); break;
+      case 'exportRaw': await this.reservationStore.export("raw"); break;
+      default: error(undefined, `ReservationComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
@@ -138,17 +147,17 @@ export class ReservationListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.edit', this.imgixBaseUrl, 'create_edit'));
       if (isOngoing(reservation.endDate)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('endres', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('reservation.end', this.imgixBaseUrl, 'stop-circle'));
       }
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('reservation.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -164,46 +173,25 @@ export class ReservationListComponent {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.reservationListStore.delete(reservation, this.readOnly());
+        case 'reservation.delete':
+          await this.reservationStore.delete(reservation, this.readOnly());
           break;
-        case 'edit':
-          await this.reservationListStore.edit(reservation, this.readOnly());
+        case 'reservation.edit':
+          await this.reservationStore.edit(reservation, this.readOnly());
           break;
-        case 'view':
-          await this.reservationListStore.edit(reservation, true);
+        case 'reservation.view':
+          await this.reservationStore.edit(reservation, true);
           break;
-        case 'endres':
-          await this.reservationListStore.end(reservation, this.readOnly());
+        case 'reservation.end':
+          await this.reservationStore.end(reservation, this.readOnly());
           break;
       }
     }
   }
 
-  /******************************* change notifications *************************************** */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.reservationListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected(tag: string): void {
-    this.reservationListStore.setSelectedTag(tag);
-  }
-
-  protected onYearSelected(year: number): void {
-    this.reservationListStore.setSelectedYear(year);
-  }
-
-  protected onReasonSelected(reason: string): void {
-    this.reservationListStore.setSelectedReason(reason);
-  }
-
-  protected onStateSelected(state: string): void {
-    this.reservationListStore.setSelectedState(state);
-  }
-
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.reservationListStore.currentUser());
+    return hasRole(role, this.reservationStore.currentUser());
   }
 
   protected isOngoing(reservation: ReservationModel): boolean {

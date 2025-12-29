@@ -5,7 +5,7 @@ import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { Image, SectionModel } from '@bk2/shared-models';
+import { BACKGROUND_STYLE_SHAPE, BackgroundStyle, GallerySection, IMAGE_STYLE_SHAPE, ImageConfig } from '@bk2/shared-models';
 import { LabelComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { downloadToBrowser } from '@bk2/shared-util-angular';
 import { die, getSizedImgixParamsByExtension } from '@bk2/shared-util-core';
@@ -64,32 +64,32 @@ register(); // globally register Swiper's custom elements.
 export class GallerySectionComponent {
   private readonly appStore = inject(AppStore);
 
-  public section = input<SectionModel>();
+  // inputs
+  public section = input<GallerySection>();
   protected initialSlide = input(2);
   protected imageEffect = input('slide');
 
-  protected readonly imageList = computed(() => this.section()?.properties.imageList ?? []);
+  // derived values
+  protected readonly imageList = computed(() => this.section()?.properties.images ?? []);
+  protected readonly imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
   protected readonly title = computed(() => this.section()?.title);
-  protected readonly subTitle = computed(() => this.section()?.subTitle);  
+  protected readonly subTitle = computed(() => this.section()?.subTitle);
+  private readonly width = computed(() => this.imageStyle().width);
+  private readonly height = computed(() => this.imageStyle().height);
 
-  public show(image: Image): void {
+  public show(image: ImageConfig): void {
     downloadToBrowser(this.getImgixUrlFromImage(image));
   }
 
-  protected getBackgroundStyle(image: Image) {
-    return { 
-      'background-image': `url(${this.getImgixUrlFromImage(image)})`, 
-      'min-height': '200px',
-      'background-size': 'cover',
-      'background-position': 'center',
-      'border': '1px'
-    };
+  protected getBackgroundStyle(image: ImageConfig): BackgroundStyle {
+    const style = BACKGROUND_STYLE_SHAPE;
+    style['background-image'] = `url(${this.getImgixUrlFromImage(image)})`;
+    return style;
   }
 
-  private getImgixUrlFromImage(image: Image): string {
+  private getImgixUrlFromImage(image: ImageConfig): string {
     if (!image.url) die('GallerySectionComponent.getImgixUrlFromImage: image url must be set');
-    if (!image.width || !image.height) die('GallerySectionComponent.getImgixUrlFromImage: image width and height must be set');
-    const params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
+    const params = getSizedImgixParamsByExtension(image.url, this.width(), this.height());
     return this.appStore.services.imgixBaseUrl() + '/' + image.url + '?' + params;
   }
 }

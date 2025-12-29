@@ -1,14 +1,14 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getItemLabel, hasRole } from '@bk2/shared-util-core';
+import { hasRole } from '@bk2/shared-util-core';
 
 import { UserListStore } from './user-list.store';
 
@@ -47,9 +47,8 @@ import { UserListStore } from './user-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="userTags()"
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
      />
 
     <!-- list header -->
@@ -92,18 +91,34 @@ export class UserListComponent {
   protected userListStore = inject(UserListStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
+  // derived signals
+  protected searchTerm = linkedSignal(() => this.userListStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.userListStore.selectedTag());
   protected filteredUsers = computed(() => this.userListStore.filteredUsers() ?? []);
   protected usersCount = computed(() => this.userListStore.usersCount());
   protected selectedUsersCount = computed(() => this.filteredUsers().length);
   protected isLoading = computed(() => this.userListStore.isLoading());
-  protected userTags = computed(() => this.userListStore.getTags());
+  protected tags = computed(() => this.userListStore.getTags());
   protected popupId = computed(() => `c_user_${this.listId}`);
+  protected currentUser = computed(() => this.userListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('admin', this.currentUser()));
 
+  // passing constants to the template
   protected isYearly = false;
   private imgixBaseUrl = this.userListStore.appStore.env.services.imgixBaseUrl;
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.userListStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.userListStore.setSelectedTag(tag);
+  }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
@@ -131,10 +146,13 @@ export class UserListComponent {
    * @param user 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, user: UserModel): void {
-    if (hasRole('admin', this.userListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('privileged', this.userListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('user.view', this.imgixBaseUrl, 'eye_view'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    }
+    if (hasRole('admin', this.userListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -150,23 +168,17 @@ export class UserListComponent {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.userListStore.delete(user);
+        case 'user.delete':
+          await this.userListStore.delete(user, this.readOnly());
           break;
-        case 'edit':
-          await this.userListStore.edit(user);
+        case 'user.edit':
+          await this.userListStore.edit(user, this.readOnly());
+          break;
+        case 'user.view':
+          await this.userListStore.edit(user, true);
           break;
       }
     }
-  }
-
-  /******************************* change notifications *************************************** */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.userListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected($event: string): void {
-    this.userListStore.setSelectedTag($event);
   }
   
   /******************************* helpers *************************************** */

@@ -4,8 +4,6 @@ import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetai
 import { SectionModel } from '@bk2/shared-models';
 import { HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { arrayMove } from '@bk2/shared-util-core';
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { AsyncPipe } from '@angular/common';
 
 /**
  * Modal to sort the sections of a page.
@@ -14,12 +12,11 @@ import { AsyncPipe } from '@angular/common';
   selector: 'bk-page-sort-modal',
   standalone: true,
   imports: [ 
-    TranslatePipe, AsyncPipe,
     SpinnerComponent, HeaderComponent,
     IonContent, IonReorderGroup, IonReorder, IonItem
   ],
   template: `
-    <bk-header title="{{ '@content.page.sort.label' | translate | async }}" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
+    <bk-header title="@content.page.operation.sort.label" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
     <ion-content>
       @if (sections(); as sections) {
         <!-- Casting $event to $any is a temporary fix for this bug https://github.com/ionic-team/ionic-framework/issues/24245 -->
@@ -39,9 +36,14 @@ import { AsyncPipe } from '@angular/common';
 })
 export class PageSortModalComponent {
   private readonly modalController = inject(ModalController);
+
+  // inputs
   public sections = input.required<SectionModel[]>();
+
+  // outputs
   public sectionsChanged = output<SectionModel[]>();
 
+  /******************************** actions ******************************************* */
   public cancel(): Promise<boolean> {
     return this.modalController.dismiss(null, 'cancel');
   }

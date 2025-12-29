@@ -27,8 +27,10 @@
     {"path": "../../shared/pipes/tsconfig.lib.json"},
     {"path": "../../auth/data-access/tsconfig.lib.json"},
     {"path": "../../aoc/util/tsconfig.lib.json"},
+    {"path": "../../calevent/util/tsconfig.lib.json"},
     {"path": "../../user/data-access/tsconfig.lib.json"},
     {"path": "../../user/feature/tsconfig.lib.json"},
-    {"path": "../../user/util/tsconfig.lib.json"}
+    {"path": "../../user/util/tsconfig.lib.json"},
+    {"path": "../../subject/address/util/tsconfig.lib.json"}
   ]
 }

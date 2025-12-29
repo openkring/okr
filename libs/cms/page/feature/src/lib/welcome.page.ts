@@ -1,14 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { IonButton, IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { HeaderComponent } from '@bk2/shared-ui';
-import { navigateByUrl } from '@bk2/shared-util-angular';
-import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
+
+import { PageStore } from './page.store';
 
 @Component({
   selector: 'bk-welcome-page',
@@ -26,7 +24,6 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
   justify-content: center;
   height: 100%;
 }
-
 .background-image {
   filter: blur(8px);
   -webkit-filter: blur(8px);
@@ -39,7 +36,6 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
   opacity: 0.7;
   z-index: 1;
 }
-
 .welcome-form {
   padding: 20px;
   border-radius: 10px;
@@ -49,22 +45,9 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
   text-align: center;
   z-index: 5;
 }
-
-.title {
-  text-align: center;
-  font-size: 2rem;
-}
-
-.subtitle {
-  text-align: center;
-  font-size: 1.2rem;
-}
-
-.help {
-  text-align: center;
-  font-size: 1rem;
-}
-
+.title { text-align: center; font-size: 2rem; }
+.subtitle { text-align: center; font-size: 1.2rem; }
+.help { text-align: center; font-size: 1rem; }
 .logo, ion-button {
   max-width: 150px;
   text-align: center;
@@ -76,7 +59,7 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 }
   `],
   template: `
-    <bk-header title="{{ '@cms.welcome.header' | translate | async }}" [isRoot]="true" />
+    <bk-header title="@cms.welcome.header" [isRoot]="true" />
     <ion-content>
       <div class="welcome-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Background" />
@@ -96,7 +79,7 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
               <ion-label class="subtitle">{{ '@cms.welcome.subTitle' | translate | async }}</ion-label><br />
             </ion-col>
           </ion-row>
-          @if (appStore.isAuthenticated() === false) {
+          @if (isAuthenticated() === false) {
             <br />
             <ion-row>
               <ion-col>
@@ -118,22 +101,18 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
   `
 })
 export class BkWelcomePageComponent {
-  private readonly router = inject(Router);
-  public appStore = inject(AppStore);
+  private readonly pageStore = inject(PageStore);
 
-  public logoUrl = computed (() => {
-    return `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`;
-  });
-  public backgroundImageUrl = computed(() => {
-    return `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`;
-  });
-  public logoAlt = computed(() => `${this.appStore.tenantId()} Logo`);
+  protected logoUrl = computed (() => this.pageStore.getImgixUrl('logoUrl'));
+  protected backgroundImageUrl = computed(() => this.pageStore.getImgixUrl('welcomeBannerUrl'));
+  protected logoAlt = computed(() => `${this.pageStore.tenantId()} Logo`);
+  protected isAuthenticated = computed(() => this.pageStore.appStore.isAuthenticated());
 
-  public async gotoHome(): Promise<void> {
-    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
+  protected async gotoHome(): Promise<void> {
+    await this.pageStore.navigateByUrl(this.pageStore.getConfigAttribute('rootUrl') + '');
   }
 
-  public async login(): Promise<void> {
-    await navigateByUrl(this.router, this.appStore.appConfig().loginUrl);
+  protected async login(): Promise<void> {
+    await this.pageStore.navigateByUrl(this.pageStore.getConfigAttribute('loginUrl') + '');
   }
 }

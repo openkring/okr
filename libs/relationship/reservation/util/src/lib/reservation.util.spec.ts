@@ -1,10 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { OrgModel, PersonModel, ReservationModel, ResourceModel, UserModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 
-import { newReservationFormModel, convertReservationToForm, convertFormToReservation, convertReserverAndResourceToNewForm, convertFormToNewReservation, getReserverName, isReservation, getReservationSearchIndex, getReservationSearchIndexInfo } from './reservation.util';
-import { ReservationFormModel } from './reservation-form.model';
+import { getReservationIndex, getReservationIndexInfo, getReserverName, isReservation } from './reservation.util';
 
 // Mock shared utility functions
 vi.mock('@bk2/shared-util-core', async importOriginal => {
@@ -26,7 +24,6 @@ vi.mock('@bk2/shared-i18n', () => ({
 describe('Reservation Utils', () => {
   const mockIsType = vi.mocked(coreUtils.isType);
   const mockDie = vi.mocked(coreUtils.die);
-  const mockGetTodayStr = vi.mocked(coreUtils.getTodayStr);
 
   const tenantId = 'tenant-1';
   let reservation: ReservationModel;
@@ -69,92 +66,6 @@ describe('Reservation Utils', () => {
     currentUser.bkey = 'user-1';
   });
 
-  describe('newReservationFormModel', () => {
-    it('should return a default form model', () => {
-      const formModel = newReservationFormModel();
-      expect(formModel.bkey).toBe('');
-      expect(formModel.startDate).toBe('20250904');
-      expect(formModel.endDate).toBe(END_FUTURE_DATE_STR);
-      expect(formModel.reservationState).toBe('active');
-    });
-  });
-
-  describe('convertReservationToForm', () => {
-    it('should convert a ReservationModel to a form model', () => {
-      const formModel = convertReservationToForm(reservation);
-      expect(formModel.bkey).toBe('res-1');
-      expect(formModel.name).toBe('Team Training');
-      expect(formModel.reserverKey).toBe('person-1');
-    });
-
-    it('should return a new form model if reservation is undefined', () => {
-      const formModel = convertReservationToForm(undefined);
-      expect(formModel.bkey).toBe('');
-      expect(formModel.startDate).toBe('20250904');
-    });
-  });
-
-  describe('convertFormToReservation', () => {
-    const formModel: ReservationFormModel = {
-      name: 'New Event',
-      startDate: '20260101',
-      reservationState: 'cancelled',
-    } as ReservationFormModel;
-
-    it('should update an existing reservation model', () => {
-      const updated = convertFormToReservation(reservation, formModel, tenantId);
-      expect(updated.name).toBe('New Event');
-      expect(updated.startDate).toBe('20260101');
-      expect(updated.reservationState).toBe('cancelled');
-    });
-
-    it('should create a new reservation model if one is not provided', () => {
-      const created = convertFormToReservation(undefined, formModel, tenantId);
-      expect(created).toBeInstanceOf(ReservationModel);
-      expect(created.name).toBe('New Event');
-    });
-  });
-
-  describe('convertReserverAndResourceToNewForm', () => {
-    it('should create a new form for a Person reserver', () => {
-      const form = convertReserverAndResourceToNewForm(person, resource, currentUser, 'person');
-      expect(form.reserverKey).toBe('person-1');
-      expect(form.reserverName).toBe('Jane');
-      expect(form.reserverName2).toBe('Doe');
-      expect(form.reserverModelType).toBe('person');
-      expect(form.resourceKey).toBe('resource-1');
-    });
-
-    it('should create a new form for an Org reserver', () => {
-      const form = convertReserverAndResourceToNewForm(org, resource, currentUser, 'org');
-      expect(form.reserverKey).toBe('org-1');
-      expect(form.reserverName2).toBe('Rowing Club');
-      expect(form.reserverModelType).toBe('org');
-    });
-
-    it('should call die if currentUser or modelType are missing', () => {
-      convertReserverAndResourceToNewForm(person, resource, undefined, 'person');
-      expect(mockDie).toHaveBeenCalledWith('reservation.util.convertReserverAndResourceToNewForm: currentUser is mandatory');
-
-      convertReserverAndResourceToNewForm(person, resource, currentUser, undefined);
-      expect(mockDie).toHaveBeenCalledWith('reservation.util.convertReserverAndResourceToNewForm: modelType is mandatory');
-    });
-  });
-
-  describe('convertFormToNewReservation', () => {
-    it('should create a new ReservationModel from a form model', () => {
-      const formModel: ReservationFormModel = {
-        name: 'New Reservation',
-        reserverKey: 'person-1',
-        resourceKey: 'resource-1',
-      } as ReservationFormModel;
-      const newReservation = convertFormToNewReservation(formModel, tenantId);
-      expect(newReservation).toBeInstanceOf(ReservationModel);
-      expect(newReservation.name).toBe('New Reservation');
-      expect(newReservation.isArchived).toBe(false);
-    });
-  });
-
   describe('getReserverName', () => {
     it('should return "firstName lastName" for a person', () => {
       reservation.reserverModelType = 'person';
@@ -178,13 +89,13 @@ describe('Reservation Utils', () => {
   });
 
   describe('Search Index functions', () => {
-    it('getReservationSearchIndex should return a formatted index string', () => {
-      const index = getReservationSearchIndex(reservation);
+    it('getReservationIndex should return a formatted index string', () => {
+      const index = getReservationIndex(reservation);
       expect(index).toBe('rn:John Doe rk:person-1 resn:Boat A resk:resource-1');
     });
 
-    it('getReservationSearchIndexInfo should return the info string', () => {
-      expect(getReservationSearchIndexInfo()).toBe('rn:reserverName rk:reserverKey resn:resourceName resk:resourceKey ');
+    it('getReservationIndexInfo should return the info string', () => {
+      expect(getReservationIndexInfo()).toBe('rn:reserverName rk:reserverKey resn:resourceName resk:resourceKey ');
     });
   });
 });

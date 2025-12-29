@@ -39,12 +39,13 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 export class ColorComponent {
   private readonly modalController = inject(ModalController);
 
-  public hexColor = model<string | undefined>('#ffffcc');
+  // inputs
+  public hexColor = model<string>('#ffffcc');
   public label = input('@input.color.label');
-  public changed = output<string>();
   public readOnly = input.required<boolean>();
   protected isReadOnly = inject(computed(() => coerceBoolean(this.readOnly())));
 
+  // actions
   public async selectColor(): Promise<void> {
     if (!this.isReadOnly()) {
       const modal = await this.modalController.create({
@@ -59,11 +60,10 @@ export class ColorComponent {
         const { data, role} = await modal.onWillDismiss();
         if (role === 'confirm') {
           this.hexColor.set(data);
-          this.changed.emit(data);
         }
       }
       catch (ex) {
-        error(undefined, 'BkColorComponent.selectColor -> ERROR: ' + JSON.stringify(ex));
+        error(undefined, 'ColorComponent.selectColor -> ERROR: ' + JSON.stringify(ex));
       }
     }
   }

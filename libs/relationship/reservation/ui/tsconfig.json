@@ -21,6 +21,7 @@
     {"path": "../../../shared/categories/tsconfig.lib.json"},
     {"path": "../../../shared/ui/tsconfig.lib.json"},
     {"path": "../../../shared/util-core/tsconfig.lib.json"},
-    {"path": "../../../relationship/reservation/util/tsconfig.lib.json"}
+    {"path": "../../../relationship/reservation/util/tsconfig.lib.json"},
+    {"path": "../../../avatar/ui/tsconfig.lib.json"}
   ]
 }

@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { TaskCollection, TaskModel } from '@bk2/shared-models';
-import { chipMatches, debugListLoaded, getAvatarInfoFromCurrentUser, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
 
 import { TaskService } from '@bk2/task-data-access';
 
@@ -107,7 +107,7 @@ export const TaskListStore = signalStore(
       /******************************* actions *************************************** */
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
-        const author = getAvatarInfoFromCurrentUser(store.currentUser());
+        const author = getAvatarInfo(store.currentUser(), 'user');
         if (!author) return;
         const task = new TaskModel(store.appStore.tenantId());
         task.author = author;

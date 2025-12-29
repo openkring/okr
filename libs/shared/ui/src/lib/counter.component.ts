@@ -92,7 +92,10 @@ const DEFAULT_COUNTER = {
   `
 })
   export class CounterComponent {
+    // signals
     public counter = signal(DEFAULT_COUNTER);
+
+    // derived signals
     private readonly ticking = computed(() => this.counter().ticking);
     public speed = computed(() => this.counter().speed);
     public diff = computed(() => this.counter().diff);

@@ -1,38 +1,37 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { CaseInsensitiveWordMask } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { CategoryListModel, PageModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ButtonCopyComponent, CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
-import { PAGE_FORM_SHAPE, PageFormModel, pageFormValidations } from '@bk2/cms-page-util';
-import { DEFAULT_CONTENT_STATE, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { pageValidations } from '@bk2/cms-page-util';
+import { DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@bk2/shared-constants';
 
 
 @Component({
   selector: 'bk-page-form',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    TranslatePipe, AsyncPipe,
     vestForms, FormsModule,
     ChipsComponent, NotesInputComponent, TextInputComponent, StringsComponent, ButtonCopyComponent, 
     ErrorNoteComponent, CategorySelectComponent,
-    IonLabel, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonGrid, IonRow, IonCol
+    IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
+  @if (showForm()) {
     <form scVestForm
-      [formShape]="shape"
       [formValue]="formData()"
       [suite]="suite" 
       (dirtyChange)="dirty.emit($event)"
+      (validChange)="valid.emit($event)"
       (formValueChange)="onFormChange($event)">
   
         <!---------------------------------------------------
@@ -42,31 +41,30 @@ import { DEFAULT_CONTENT_STATE, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS }
         <ion-card-header>
           <ion-card-title>{{ '@content.page.forms.title' | translate | async }}</ion-card-title>
         </ion-card-header>
-        <ion-card-content>
+        <ion-card-content class="ion-no-padding">
           <ion-grid>
             <ion-row>
               <ion-col size="12">
                 @if(bkey(); as bkey) {
                   <ion-item lines="none">  
-                    <ion-icon src="{{'login_enter' | svgIcon }}" (click)="gotoPage(bkey)" slot="start"/>
                     <ion-label>Page Key: {{ bkey }}</ion-label>
                     <bk-button-copy [value]="bkey" />
                   </ion-item>
                 }
               </ion-col>
               <ion-col size="12">
-                <bk-text-input name="name" [value]="name()" [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
+                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)"  [readOnly]="isReadOnly()" />
                 <bk-error-note [errors]="nameErrors()" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input name="title" [value]="title()" [readOnly]="isReadOnly()" (changed)="onFieldChange('title', $event)" />
+                <bk-text-input name="title" [value]="title()" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" />
                 <bk-error-note [errors]="titleErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="types()!" [selectedItemName]="type()" [readOnly]="isReadOnly()" [withAll]="false" (changed)="onFieldChange('type', $event)" />
+                <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="states()!" [selectedItemName]="state()" [readOnly]="isReadOnly()" [withAll]="false" (changed)="onFieldChange('state', $event)" />
+                <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -74,30 +72,31 @@ import { DEFAULT_CONTENT_STATE, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS }
       </ion-card>
 
       <!-- sections -->
-      <bk-strings (changed)="onFieldChange('sections', $event)"
+      <bk-strings
           [strings]="sections()"
+          (stringsChange)="onFieldChange('sections', $event)"
           [mask]="mask"
           [maxLength]="40"
+          [copyable]="true"
           [readOnly]="isReadOnly()"
           title="@content.page.forms.section.label"
           addLabel="@content.section.operation.add.label" />
           
       @if(hasRole('privileged')) {
-        <bk-chips chipName="tag" [storedChips]="tags()" [readOnly]="isReadOnly()" [allChips]="allTags()" (changed)="onFieldChange('tags', $event)" />
+        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
       }
       @if(hasRole('admin')) {
-        <bk-notes [value]="notes()" [readOnly]="isReadOnly()" (changed)="onFieldChange('notes', $event)" />
+        <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
+    }
   `
 })
 export class PageFormComponent {
-  private readonly router = inject(Router);
-  private readonly modalController = inject(ModalController);
-
   // inputs
-  public readonly formData = model.required<PageFormModel>();
+  public readonly formData = model.required<PageModel>();
   public currentUser = input<UserModel | undefined>();
+  public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
@@ -109,47 +108,39 @@ export class PageFormComponent {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = pageFormValidations;
-  protected readonly shape = PAGE_FORM_SHAPE;
-  private readonly validationResult = computed(() => pageFormValidations(this.formData()));
+  protected readonly suite = pageValidations;
+  private readonly validationResult = computed(() => pageValidations(this.formData()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
 
   // fields
-  protected bkey = computed(() => this.formData().bkey ?? '');
+  protected bkey = computed(() => this.formData().bkey ?? DEFAULT_KEY);
   protected sections = linkedSignal(() => this.formData().sections ?? []);
-  protected name = computed(() => this.formData().name ?? '');
-  protected title = computed(() => this.formData().title ?? '');
-  protected type = computed(() => this.formData().type ?? DEFAULT_PAGE_TYPE);
-  protected state = computed(() => this.formData().state ?? DEFAULT_CONTENT_STATE);
-  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
+  protected title = linkedSignal(() => this.formData().title ?? DEFAULT_TITLE);
+  protected type = linkedSignal(() => this.formData().type ?? DEFAULT_PAGE_TYPE);
+  protected state = linkedSignal(() => this.formData().state ?? DEFAULT_CONTENT_STATE);
+  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   
   // passing constants to template
   protected mask = CaseInsensitiveWordMask;
 
-  constructor() {
-    effect(() => {
-      this.valid.emit(this.validationResult().isValid());
-    });
-  }
-
   /************************************** actions *********************************************** */
-  protected gotoPage(pageKey?: string): void {
-    if (!pageKey)  return;
-    this.modalController.dismiss(null, 'cancel');
-    this.router.navigateByUrl(`/private/${pageKey}`);
-  }
-
-  protected onFormChange(value: PageFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormErrors('PageForm.onFormChange', this.validationResult().errors, this.currentUser());
-  }
-
-  protected onFieldChange(fieldName: string, $event: string | string[] | number): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
-    debugFormErrors('PageForm.onFieldChange', this.validationResult().errors, this.currentUser());
+    if (fieldName === 'sections') {
+      this.formData.update(vm => ({ ...vm, sections: fieldValue as string[] }));
+    }
+    else {
+      this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    }
+  }
+
+  protected onFormChange(value: PageModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormModel('PageForm.onFormChange', this.formData(), this.currentUser());
+    debugFormErrors('PageForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

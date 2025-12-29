@@ -1,9 +1,8 @@
 import { Component, computed, input } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { ImageAction, SectionModel } from '@bk2/shared-models';
+import { HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
 import { ImageComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { die } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-hero-section',
@@ -23,12 +22,12 @@ import { die } from '@bk2/shared-util-core';
   template: `
     @if(section(); as section) {
       <div class="hero-container">
-        <bk-img class="hero-image" [image]="heroImage()" />
+        <bk-img class="hero-image" [image]="heroImage()" [imageStyle]="imageStyle()" />
         <ion-grid class="hero-form">
-          @if(section.properties.image) {   <!-- logo image -->
+          @if(logoImage(); as logoImage) {
             <ion-row>
               <ion-col>
-                <bk-img class="logo" [image]="logoImage()" />
+                <bk-img class="logo" [image]="logoImage" [imageStyle]="imageStyle()" />
               </ion-col>
             </ion-row>
           }
@@ -40,25 +39,14 @@ import { die } from '@bk2/shared-util-core';
   `
 })
 export class HeroSectionComponent {
-  public section = input<SectionModel>();
-  protected heroImage = computed(() => {
-    const imageList = this.section()?.properties.imageList ?? [];
-    if (imageList.length !== 2) die('HeroSection.heroImage: Hero section must have 2 images');
-    imageList[0].hasPriority = true;
-    imageList[0].imageAction = ImageAction.None;
-    imageList[0].isThumbnail = false;
-    imageList[0].fill = true;
-    imageList[0].altText = 'hero image';
-    return imageList[0];
-  });
-  protected logoImage = computed(() => {
-    const imageList = this.section()?.properties.imageList ?? [];
-    if (imageList.length !== 2) die('HeroSection.logoImage: Hero section must have 2 images');
-    imageList[1].hasPriority = false;
-    imageList[1].imageAction = ImageAction.None;
-    imageList[1].isThumbnail = false;
-    imageList[1].fill = true;
-    imageList[1].altText = 'logo image';
-    return imageList[1];
-  });
+
+  // inputs
+  public section = input<HeroSection>();
+
+  // derived values
+  protected heroImage = computed(() => this.section()?.properties.hero ?? IMAGE_CONFIG_SHAPE);
+  // tbd on heroImage: hasPriority=true, ImageAction.None, isThumbnail=false, fill=true, altText='hero image'
+  protected logoImage = computed(() => this.section()?.properties.logo ?? IMAGE_CONFIG_SHAPE);
+  // tbd on logoImage: hasPriority=false, ImageAction.None, isThumbnail=false, fill=true, altText='logo image'
+  protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
 }

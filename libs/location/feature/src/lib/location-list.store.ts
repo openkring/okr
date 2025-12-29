@@ -18,13 +18,13 @@ import { LocationEditModalComponent } from './location-edit.modal';
 export type LocationListState = {
   searchTerm: string;
   selectedTag: string;
-  selectedCategory: string;
+  selectedType: string;
 };
 
 export const initialState: LocationListState = {
   searchTerm: '',
   selectedTag: '',
-  selectedCategory: 'all',
+  selectedType: 'all',
 };
 
 export const LocationListStore = signalStore(
@@ -50,7 +50,7 @@ export const LocationListStore = signalStore(
       filteredLocations: computed(() => 
         state.locationsResource.value()?.filter((location: LocationModel) => 
           nameMatches(location.index, state.searchTerm()) &&
-          nameMatches(location.type, state.selectedCategory()) &&
+          nameMatches(location.type, state.selectedType()) &&
           chipMatches(location.tags, state.selectedTag()))
       ), 
       currentUser: computed(() => state.appStore.currentUser()),
@@ -70,8 +70,8 @@ export const LocationListStore = signalStore(
         patchState(store, { searchTerm });
       },
 
-      setSelectedCategory(selectedCategory: string) {
-        patchState(store, { selectedCategory });
+      setSelectedType(selectedType: string) {
+        patchState(store, { selectedType });
       },
 
       setSelectedTag(selectedTag: string) {

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -11,7 +11,7 @@ import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
-import { PageListStore } from './page-list.store';
+import { PageStore } from './page.store';
 
 @Component({
   selector: 'bk-page-all-list',
@@ -22,14 +22,12 @@ import { PageListStore } from './page-list.store';
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList, IonPopover
   ],
-  providers: [PageListStore],
   template: `
   <ion-header>
-    <!-- page header -->
-    <ion-toolbar color="secondary" id="bkheader">
+    <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
       <ion-title>{{selectedPagesCount()}}/{{pagesCount()}} {{ '@content.page.plural' | translate | async }}</ion-title>
-        @if(hasRole('privileged') || hasRole('contentAdmin')) {
+        @if(!readOnly()) {
         <ion-buttons slot="end">
           <ion-button id="c_page">
             <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
@@ -53,12 +51,11 @@ import { PageListStore } from './page-list.store';
     </ion-toolbar>
 
   <!-- search and filters -->
-  <bk-list-filter 
-      [tags]="pageTags()"
-      [type]="pageTypes()"
+  <bk-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)"
-      (typeChanged)="onTypeSelected($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+      (stateChanged)="onStateSelected($event)" [states]="states()"
     />
 
     <!-- list header -->
@@ -88,7 +85,7 @@ import { PageListStore } from './page-list.store';
       <bk-empty-list message="@content.field.empty" />
     } @else {
       <ion-list lines="inset">
-        @for(page of filteredPages(); track page.bkey) {
+        @for(page of filteredPages(); track $index) {
           <ion-item (click)="showActions(page)">
             <ion-label class="ion-hide-md-down">{{ page.bkey }}</ion-label>
             <ion-label>{{ page.name }}</ion-label>
@@ -102,37 +99,59 @@ import { PageListStore } from './page-list.store';
   `
 })
 export class PageAllListComponent {
-  protected pageListStore = inject(PageListStore);
+  protected pageStore = inject(PageStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  protected filteredPages = computed(() => this.pageListStore.filteredPages() || []);
-  protected pagesCount = computed(() => this.pageListStore.pagesCount());
+  // filters
+  protected searchTerm = linkedSignal(() => this.pageStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.pageStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.pageStore.selectedType());
+
+  // computed
+  protected filteredPages = computed(() => this.pageStore.filteredPages() || []);
+  protected pagesCount = computed(() => this.pageStore.pagesCount());
   protected selectedPagesCount = computed(() => this.filteredPages().length);
-  protected isLoading = computed(() => this.pageListStore.isLoading());
-  protected pageTags = computed(() => this.pageListStore.getTags());
-  protected pageTypes = computed(() => this.pageListStore.appStore.getCategory('page_type'));
-  protected currentUser = computed(() => this.pageListStore.currentUser());
-  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
+  protected isLoading = computed(() => this.pageStore.isLoading());
+  protected tags = computed(() => this.pageStore.getTags());
+  protected types = computed(() => this.pageStore.appStore.getCategory('page_type'));
+  protected states = computed(() => this.pageStore.appStore.getCategory('content_state'));
+  protected currentUser = computed(() => this.pageStore.currentUser());
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
 
-  private imgixBaseUrl = this.pageListStore.appStore.env.services.imgixBaseUrl;
+  // passing constants to the template
+  private imgixBaseUrl = this.pageStore.appStore.env.services.imgixBaseUrl;
 
-  /******************************* change notifications *************************************** */
-  public onSearchtermChange(searchTerm: string): void {
-    this.pageListStore.setSearchTerm(searchTerm);
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.pageStore.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.pageListStore.setSelectedTag(tag);
+    this.pageStore.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.pageListStore.setSelectedType(type);
+    this.pageStore.setSelectedType(type);
+  }
+
+  protected onStateSelected(state: string): void {
+    this.pageStore.setSelectedState(state);
   }
 
   /******************************* actions *************************************** */
+  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    const selectedMethod = $event.detail.data;
+    switch(selectedMethod) {
+      case 'add':  await this.pageStore.add(this.readOnly()); break;
+      case 'exportRaw': await this.pageStore.export("raw"); break;
+      default: error(undefined, `PageListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
+    }
+  }
+
   /**
    * Displays an ActionSheet with all possible actions on a Page. Only actions are shown, that the user has permission for.
    * After user selected an action this action is executed.
@@ -149,14 +168,15 @@ export class PageAllListComponent {
    * @param page 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, page: PageModel): void {
-    if (hasRole('registered', this.pageListStore.appStore.currentUser())) {
+    if (hasRole('registered', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('page.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('page.show', this.imgixBaseUrl, 'link'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
     if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('page.edit', this.imgixBaseUrl, 'create_edit'));
     }
-    if (hasRole('admin', this.pageListStore.appStore.currentUser())) {
+    if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('page.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
@@ -171,32 +191,27 @@ export class PageAllListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'page.delete':
-          await this.pageListStore.delete(page, this.readOnly());
+          await this.pageStore.delete(page, this.readOnly());
           break;
         case 'page.edit':
-          await this.pageListStore.edit(page, this.readOnly());
+          await this.pageStore.edit(page, this.readOnly());
           break;
         case 'page.view':
-          await this.pageListStore.edit(page, true);
+          await this.pageStore.edit(page, true);
+          break;
+        case 'page.show':
+          await this.pageStore.show(page, this.readOnly());
           break;
       }
     }
   }
 
-  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const selectedMethod = $event.detail.data;
-    switch(selectedMethod) {
-      case 'add':  await this.pageListStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.pageListStore.export("raw"); break;
-      default: error(undefined, `PageListComponent.call: unknown method ${selectedMethod}`);
-    }
-  }
-
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.pageListStore.currentUser());
+    return hasRole(role, this.currentUser());
   }
 }
 

@@ -21,6 +21,7 @@
     {"path": "../../shared/i18n/tsconfig.lib.json"},
     {"path": "../../shared/ui/tsconfig.lib.json"},
     {"path": "../../shared/util-core/tsconfig.lib.json"},
-    {"path": "../../profile/util/tsconfig.lib.json"}
+    {"path": "../../user/util/tsconfig.lib.json"},
+    {"path": "../../subject/person/util/tsconfig.lib.json"}
   ]
 }

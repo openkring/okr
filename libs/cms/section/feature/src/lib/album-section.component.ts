@@ -3,11 +3,11 @@ import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AlbumStyle, Image, ImageAction, ImageType, SectionModel } from '@bk2/shared-models';
+import { AlbumSection, AlbumStyle, BackgroundStyle, ImageActionType, ImageConfig, ImageStyle, ImageType } from '@bk2/shared-models';
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { browse, CategoryComponent, ImageComponent, LabelComponent, showZoomedImage, SpinnerComponent, VideoComponent } from '@bk2/shared-ui';
 import { downloadToBrowser } from '@bk2/shared-util-angular';
-import { debugData, debugMessage } from '@bk2/shared-util-core';
+import { coerceBoolean, debugData, debugMessage } from '@bk2/shared-util-core';
 
 import { AlbumStyles, convertThumbnailToFullImage, getBackgroundStyle } from '@bk2/cms-section-util';
 
@@ -70,7 +70,7 @@ import { AlbumStore } from './album-section.store';
                 }
             </ion-col>
             <ion-col size="6" size-md="4">
-                <bk-cat name="albumStyle" [value]="selectedAlbumStyle()" [categories]="albumStyles" [readOnly]="isReadOnly()" (changed)="onCategoryChange($event)" />
+                <bk-cat name="albumStyle" [value]="albumStyle()" (valueChange)="onAlbumStyleChange($event)" [categories]="albumStyles" [readOnly]="false" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -86,23 +86,23 @@ import { AlbumStore } from './album-section.store';
                     source: https://ionicacademy.com/ionic-image-gallery-responsive/ 
                   -->
                   <div class="pinterest-album">
-                    @for(image of images; track image) {
+                    @for(image of images; track $index) {
                       @if(image.url; as url) {
                         <div class="pinterest-image">
-                          @switch(image.imageType) {
+                          @switch(image.type) {
                             @case(IT.Dir) {
-                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
-                              <ion-label>{{ image.imageLabel }}</ion-label>
+                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
+                              <ion-label>{{ image.label }}</ion-label>
                             } @case(IT.Image) {
-                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
+                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
                             } @case(IT.StreamingVideo) {
                               <bk-video [url]="image.url" />
                             } @case (IT.Pdf) {
-                              <img [src]="url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
+                              <img [src]="url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
                             }
                             @default {
-                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
-                              <ion-label>{{ image.imageLabel }}</ion-label>
+                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
+                              <ion-label>{{ image.label }}</ion-label>
                             }
                           }
                         </div>
@@ -112,23 +112,23 @@ import { AlbumStore } from './album-section.store';
                 }
                 @case(AS.Imgix) {
                   <div class="imgix-album">
-                    @for(image of images; track image) {
+                    @for(image of images; track $index) {
                       @if(image.url; as url) {
                         <div class="imgix-image">
-                          @switch(image.imageType) {
+                          @switch(image.type) {
                             @case(IT.Dir) {
-                              <bk-img [image]="image"  (click)="onImageClicked(image)"/>
-                              <ion-label>{{ image.imageLabel }}</ion-label>
+                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)"/>
+                              <ion-label>{{ image.label }}</ion-label>
                             } @case(IT.Image) {
-                              <bk-img [image]="convertThumbnailToFullImage(image)"  (click)="onImageClicked(image)"/>
+                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)"/>
                             } @case(IT.StreamingVideo) {
                               <bk-video [url]="image.url" />
                             } @case (IT.Pdf) {
-                              <img [src]="image.url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
+                              <img [src]="image.url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
                             }
                             @default {
-                              <bk-img [image]="image"  (click)="onImageClicked(image)"/>
-                              <ion-label>{{ image.imageLabel }}</ion-label>
+                              <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)"/>
+                              <ion-label>{{ image.label }}</ion-label>
                             }
                           }
                         </div>
@@ -141,20 +141,20 @@ import { AlbumStore } from './album-section.store';
                   <ion-list>
                     @for(image of images; track image) {
                       <ion-item (click)="onImageClicked(image)">
-                        <ion-label>{{ image.imageLabel }}</ion-label>
+                        <ion-label>{{ image.label }}</ion-label>
                       </ion-item>
                     }
                   </ion-list>
                 }
                 @case(AS.AvatarList) {
                   <ion-list>
-                    @for(image of images; track image) {
+                    @for(image of images; track $index) {
                       @if(image.url; as url) {
                         <ion-item>
                           <ion-thumbnail slot="start">
-                            <img [src]="url | thumbnailUrl" [alt]="image.altText" (click)="onImageClicked(image)" (keyup.enter)="onImageClicked(image)" tabindex="0"/>
+                            <img [src]="url | thumbnailUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
                           </ion-thumbnail>
-                          <ion-label>{{ image.imageLabel }}</ion-label>
+                          <ion-label>{{ image.label }}</ion-label>
                         </ion-item>
                       }
                     }
@@ -168,24 +168,24 @@ import { AlbumStore } from './album-section.store';
                   -->
                   <ion-grid>
                     <ion-row>
-                      @for(image of images; track image; let i = $index) {
+                      @for(image of images; track $index) {
                         @if(image.url; as url) {
                           <!-- 2 images on small screens, 3 on medium, 4 images on large screens -->
                           <ion-col size="6" size-xl="3" size-md="4">
-                            @switch(image.imageType) {
+                            @switch(image.type) {
                               @case(IT.Dir) {
-                                <bk-img [image]="image" (click)="onImageClicked(image)"/>
-                                <ion-label>{{ image.imageLabel }}</ion-label>
+                                <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)"/>
+                                <ion-label>{{ image.label }}</ion-label>
                               } @case(IT.Image) {
-                                <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image, i)" (keyup.enter)="onImageClicked(image, i)" tabindex="0"></div>
+                                <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image, $index)"></div>
                               } @case(IT.StreamingVideo) {
                                 <bk-video [url]="image.url" />
                               } @case (IT.Pdf) {
-                                <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image, i)" (keyup.enter)="onImageClicked(image, i)" tabindex="0"></div>
+                                <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image, $index)"></div>
                               }
                               @default {
-                                <bk-img [image]="image" (click)="onImageClicked(image)"/>
-                                <ion-label>{{ image.imageLabel }}</ion-label>
+                                <bk-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)"/>
+                                <ion-label>{{ image.label }}</ion-label>
                               }
                             }
                           </ion-col>
@@ -207,61 +207,58 @@ export class AlbumSectionComponent {
   private readonly modalController = inject(ModalController);
   protected albumStore = inject(AlbumStore);
   private readonly platformId = inject(PLATFORM_ID);
-  public readOnly = input<boolean>(true);
-  protected isReadOnly = computed(() => this.readOnly());
 
-  public section = input<SectionModel>();
+  public section = input<AlbumSection>();
 
-  protected selectedAlbumStyle = linkedSignal(() => this.albumStore.albumStyle as unknown as number);
   protected imgixBaseUrl = computed(() => this.albumStore.imgixBaseUrl());
   protected imageContainer = viewChild('.imgix-image', { read: ElementRef });
   protected metaData = computed(() => this.albumStore.metaData());
 
   protected directory = computed(() => this.albumStore.currentDirectory());
-  protected albumStyle = computed(() => this.albumStore.config().albumStyle);
+  protected image = computed(() => this.albumStore.currentImage());
+  protected imageStyle = computed(() => this.albumStore.imageStyle());
+  protected albumStyle = linkedSignal(() => this.albumStore.albumStyle());
   protected images = computed(() => this.albumStore.images());
-  protected isLoading = this.albumStore.isLoading;
-  protected error = this.albumStore.error;
-  protected title = this.albumStore.title;
-  protected currentDirLength = this.albumStore.currentDirLength;
-  protected parentDirectory = this.albumStore.parentDirectory;
+  protected isLoading = computed(() => this.albumStore.isLoading());
+  protected error = computed(() => this.albumStore.error());
+  protected title = computed(() => this.albumStore.title());
+  protected currentDirLength = computed(() => this.albumStore.currentDirLength());
+  protected parentDirectory = computed(() => this.albumStore.parentDirectory());
   protected isTopDirectory = computed(() => this.albumStore.currentDirLength() === this.albumStore.initialDirLength());
 
-  protected IA = ImageAction;
+  // passing constants to template
   protected IT = ImageType;
   protected AS = AlbumStyle;
   protected albumStyles = AlbumStyles;
 
   constructor() {
     effect(() => {
-      const config = this.section()?.properties.album;
-      this.albumStore.setConfig(config); // set the album config from the section properties
-      // this also updates the current directory and the albumStyle in the store
+      this.albumStore.setConfig(this.section()?.properties);  // this also updates the current directory and the albumStyle in the store
     });
   }
   
-  protected async onImageClicked(image: Image, index = 0): Promise<void> {
+  protected async onImageClicked(image: ImageConfig, index = 0): Promise<void> {
     this.albumStore.setImage(image);    // loads metadata
     debugData('AlbumSectionComponent.onImageClicked -> image: ', image, this.albumStore.currentUser());
     debugData('AlbumSectionComponent.onImageClicked -> metaData: ', this.metaData(), this.albumStore.currentUser());
     // tbd: show the metadata to the user, e.g. in a modal or as an overlay
     // tbd: put the following into the store as a method, triggered by an effect each time the image changes
-    switch (image.imageAction) {
-      case ImageAction.Download: await downloadToBrowser(image.actionUrl); break;
-      case ImageAction.Zoom: await showZoomedImage(this.modalController, '@content.type.article.zoomedImage', image, 'full-modal'); break;
-      case ImageAction.OpenSlider: this.albumStore.openGallery(this.images(), this.title(), index); break;
-      case ImageAction.OpenDirectory: this.albumStore.setDirectory(image.actionUrl); break;
-      case ImageAction.FollowLink: browse(image.actionUrl); break;
-      case ImageAction.None: break;
+    switch (this.imageStyle().action) {
+      case ImageActionType.Download: await downloadToBrowser(image.actionUrl); break;
+      case ImageActionType.Zoom: await showZoomedImage(this.modalController, image.url, '@content.type.article.zoomedImage', this.imageStyle(), image.altText, 'full-modal'); break;
+      case ImageActionType.OpenSlider: this.albumStore.openGallery(this.images(), this.title(), index); break;
+      case ImageActionType.OpenDirectory: this.albumStore.setDirectory(image.actionUrl); break;
+      case ImageActionType.FollowLink: browse(image.actionUrl); break;
+      case ImageActionType.None: break;
       default: debugMessage('AlbumSectionComponent.onImageClicked -> no action defined', this.albumStore.currentUser());
     }
   }
 
-  protected getBackgroundStyle(image: Image): { [key: string]: string } {
-    return getBackgroundStyle(this.imgixBaseUrl(), image);
+  protected getBackgroundStyle(image: ImageConfig): BackgroundStyle {
+    return getBackgroundStyle(this.imgixBaseUrl(), this.imageStyle(), image.url);
   }
 
-  protected onCategoryChange(albumStyle: AlbumStyle): void {
+  protected onAlbumStyleChange(albumStyle: AlbumStyle): void {
     this.albumStore.setAlbumStyle(albumStyle);
   }
 
@@ -269,8 +266,8 @@ export class AlbumSectionComponent {
     this.albumStore.goUp();
   }
 
-  protected convertThumbnailToFullImage(image: Image): Image {
-    return convertThumbnailToFullImage(image, this.getValue('width', 900), this.getValue('height', 300));
+  protected convertThumbnailToFullImage(): ImageStyle {
+    return convertThumbnailToFullImage(this.imageStyle(), this.getValue('width', 900), this.getValue('height', 300));
   }
 
   /**

@@ -1,17 +1,14 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { LowercaseWordMask } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TaskModel, TaskModelName } from '@bk2/shared-models';
 import { AvatarSelectComponent, ChangeConfirmationComponent, HeaderComponent, StringsComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 
 import { TaskFormComponent } from '@bk2/task-ui';
-import { convertFormToTask, convertTaskToForm, TaskFormModel } from '@bk2/task-util';
 import { TaskEditStore } from './task-edit.store';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
@@ -19,18 +16,17 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
   selector: 'bk-task-edit-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     HeaderComponent, ChangeConfirmationComponent, TaskFormComponent, CommentsAccordionComponent,
     AvatarSelectComponent, StringsComponent,
     IonContent, IonAccordionGroup
   ],
   providers: [TaskEditStore],
   template: `
-    <bk-header title="{{ headerTitle() | translate | async }}" [isModal]="true" />
+    <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content no-padding>
+    <ion-content class="ion-no-padding">
       <bk-task-form
         [formData]="formData()"
         [currentUser]="taskEditStore.currentUser()"
@@ -41,15 +37,14 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
         [readOnly]="isReadOnly()"
         (formDataChange)="onFormDataChange($event)"
       />
-      <!-- <bk-editor [(content)]="notes" [readOnly]="false" /> -->
 
       <bk-avatar-select title="@task.field.author" [avatarUrl]="authorUrl()" [name]="authorName()" [readOnly]="isReadOnly()" />
       <bk-avatar-select title="@task.field.assignee" [avatarUrl]="assigneeUrl()" [name]="assigneeName()" [readOnly]="isReadOnly()" (selectClicked)="select()" />
       <bk-avatar-select title="@task.field.scope" [avatarUrl]="scopeUrl()" [name]="scopeName()" [readOnly]="isReadOnly()" (selectClicked)="select()" />    
 
       <bk-strings
-        (changed)="onFieldChange('calendars', $event)"
-        [strings]="calendars()" 
+        [strings]="calendars()"
+        (stringsChange)="onFieldChange('calendars', $event)"
         [mask]="calendarMask" 
         [maxLength]="20"
         [readOnly]="readOnly()" 
@@ -78,12 +73,13 @@ export class TaskEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => convertTaskToForm(this.task()));
+  public formData = linkedSignal(() => structuredClone(this.task()));
+  protected showForm = signal(true);
 
   // derived signals
   protected headerTitle = computed(() => getTitleLabel('task', this.task().bkey, this.isReadOnly()));
   protected readonly parentKey = computed(() => `${TaskModelName}.${this.task().bkey}`);
-  protected calendars = computed(() => this.formData().calendars);
+  protected calendars = linkedSignal(() => (this.formData().calendars ?? []) as string[]);
   protected states = computed(() => this.taskEditStore.appStore.getCategory('task_state'));
   protected priorities = computed(() => this.taskEditStore.appStore.getCategory('priority'));
   protected importances = computed(() => this.taskEditStore.appStore.getCategory('importance'));
@@ -112,26 +108,28 @@ export class TaskEditModalComponent {
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    this.formDirty.set(false);
-    await this.modalController.dismiss(convertFormToTask(this.formData(), this.task()), 'confirm');  
+    await this.modalController.dismiss(this.formData(), 'confirm');  
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(convertTaskToForm(this.task()));  // reset the form
+    this.formData.set(structuredClone(this.task()));  // reset the form
+    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: TaskFormModel): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+    this.formDirty.set(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onFormDataChange(formData: TaskModel): void {
     this.formData.set(formData);
   }
 
   protected select(): void {
     console.log('select clicked');
-  }
-
-  protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
-    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormModel<TaskFormModel>('TaskEditModal.onFieldChange', this.formData(), this.currentUser());
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

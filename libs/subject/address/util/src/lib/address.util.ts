@@ -4,9 +4,9 @@ import { ToastController } from '@ionic/angular';
 import { bkTranslate } from '@bk2/shared-i18n';
 import { AddressChannel, AddressModel, AddressUsage } from '@bk2/shared-models';
 import { copyToClipboard, formatIban, IbanFormat, showToast } from '@bk2/shared-util-angular';
-import { getCountryName } from '@bk2/shared-util-core';
+import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } from '@bk2/shared-util-core';
 
-/***************************  helpers *************************** */
+/*-------------------------- address creation --------------------------------*/
 
 /**
  * Create a favorite email address.
@@ -112,14 +112,42 @@ export function createFavoritePostalAddress(usageType: AddressUsage, streetName:
   return createPostalAddress(tenantId, usageType, streetName, streetNumber, '', zipCode, city, countryCode, true);
 }
 
-/**
- * Copy an address to the clipboard.
- * @param toastController used to show a confirmation message
- * @param address the address to copy
- */
-export async function copyAddress(toastController: ToastController, address: AddressModel, lang: string): Promise<void> {
-  await copyToClipboard(stringifyAddress(address, lang));
-  await showToast(toastController, bkTranslate('@subject.address.operation.copy.conf'));
+/*-------------------------- typing and retrieval of address values --------------------------------*/
+export function isAddress(address: unknown, tenantId: string): address is AddressModel {
+  return isType(address, new AddressModel(tenantId));
+}
+
+export function getAddressValueByChannel(address: AddressModel): string {
+  if (address.channelType === undefined) die('AddressUtil.getAddressValueByChannel: addressChannel is mandatory');
+
+  // make some corrections of user input
+  // street:  replace str. with strasse
+  if (address.streetName) {
+    address.streetName = replaceSubstring(address.streetName ?? '', 'str.', 'strasse');
+  }
+  if (address.url) {
+    address.url = replaceSubstring(address.url, 'http://', '');
+    address.url = replaceSubstring(address.url, 'https://', '');
+    address.url = replaceSubstring(address.url, 'twitter.com/', '');
+    address.url = replaceSubstring(address.url, 'www.xing.com/profile/', '');
+    address.url = replaceSubstring(address.url, 'www.facebook.com/', '');
+    address.url = replaceSubstring(address.url, 'www.linkedin.com/in/', '');
+    address.url = replaceSubstring(address.url, 'www.instagram.com/', '');
+    address.url = replaceEndingSlash(address.url);
+  }
+  if (address.phone) {
+    address.phone = replaceSubstring(address.phone, 'tel:', '');
+  }
+  if (address.email) {
+    address.email = replaceSubstring(address.email, 'mailto:', '');
+  }
+  switch (address.channelType) {
+    case AddressChannel.Phone: return address.phone ?? '';
+    case AddressChannel.Email: return address.email ?? '';
+    case AddressChannel.Postal: return address.streetName ?? '' + address.streetNumber ?? '';
+    case AddressChannel.BankAccount: return formatIban(address.iban ?? '', IbanFormat.Electronic);
+    default: return address.url ?? '';
+  }
 }
 
 export function stringifyAddress(address: AddressModel, lang = 'de'): string {
@@ -132,7 +160,7 @@ export function stringifyAddress(address: AddressModel, lang = 'de'): string {
     case AddressChannel.Postal: 
       return stringifyPostalAddress(address, lang);
     case AddressChannel.BankAccount:
-      return formatIban(address.addressValue2, IbanFormat.Friendly)
+      return formatIban(address.iban, IbanFormat.Friendly)
     default: 
       return address.url;
   }
@@ -144,6 +172,8 @@ export function stringifyPostalAddress(address: AddressModel, lang: string): str
   return !countryName ? `${address.streetName} ${address.streetNumber}, ${address.zipCode} ${address.city}` : `${address.streetName} ${address.streetNumber}, ${address.zipCode} ${address.city}, ${countryName}`;
 }
 
+/*-------------------------- action helpers --------------------------------*/
+
 /**
  * Browse to a URL.
  * @param url
@@ -153,21 +183,32 @@ export async function browseUrl(url: string, prefix = ''): Promise<void> {
   return Browser.open({ url: prefix + url });
 }
 
+/**
+ * Copy an address to the clipboard.
+ * @param toastController used to show a confirmation message
+ * @param address the address to copy
+ */
+export async function copyAddress(toastController: ToastController, address: AddressModel, lang: string): Promise<void> {
+  await copyToClipboard(stringifyAddress(address, lang));
+  await showToast(toastController, bkTranslate('@subject.address.operation.copy.conf'));
+}
 
 /*-------------------------- search index --------------------------------*/
 /**
- * Create an index entry for a given person based on its values.
- * @param person the person for which to create the index
+ * Create an index entry for a given address based on its values.
+ * @param address the address for which to create the index
  * @returns the index string
  */
 export function getAddressIndex(address: AddressModel): string {
   switch (address.channelType) {
     case AddressChannel.Phone: 
-      return `n:${address.phone}`;
+      return `n:${address.phone.replace(/\s/g, '')}`;
     case AddressChannel.Email: 
       return `n:${address.email}`;
     case AddressChannel.Postal: 
-      return `n:${address.streetName} + ${address.streetNumber}, ${address.countryCode} ${address.zipCode} ${address.city}`;
+      return `n:${address.streetName}${address.streetNumber}${address.countryCode}${address.zipCode}${address.city}`;
+    case AddressChannel.BankAccount:
+      return `n:${formatIban(address.iban ?? '', IbanFormat.Electronic)}`;
     default:
       return `n:${address.url}`;
   }
@@ -176,3 +217,6 @@ export function getAddressIndex(address: AddressModel): string {
 export function getAddressIndexInfo(): string {
   return 'n:addressValue';
 }
+
+
+

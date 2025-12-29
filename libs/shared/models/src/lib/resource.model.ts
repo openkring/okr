@@ -37,20 +37,6 @@ export class ResourceModel implements BkModel, NamedModel, SearchableModel, Tagg
 export const ResourceCollection = 'resources';
 export const ResourceModelName = 'resource';
 
-// model type is implicitly always Resource
-export interface ResourceInfo {
-  key: string;
-  name: string;
-  type: string;
-  subType: string;
-}
-
-export const DefaultResourceInfo: ResourceInfo = {
-  key: DEFAULT_KEY,
-  name: DEFAULT_NAME,
-  type: DEFAULT_RESOURCE_TYPE,
-  subType: DEFAULT_RBOAT_TYPE,
-};
 
 /*
    tbd: add more resource types:    Bike,

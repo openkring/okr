@@ -1,53 +1,7 @@
 import { EventInput } from '@fullcalendar/core';
 
-import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { AvatarInfo, CalEventModel } from '@bk2/shared-models';
-import { DateFormat, die, getIsoDateTime, getTodayStr, isType } from '@bk2/shared-util-core';
-
-import { CalEventFormModel } from './calevent-form.model';
-
-export function convertCalEventToForm(calevent: CalEventModel): CalEventFormModel {
-  return {
-    bkey: calevent.bkey ?? DEFAULT_KEY,
-    tenants: calevent.tenants ?? DEFAULT_TENANTS,
-    name: calevent.name ?? DEFAULT_NAME,
-    type: calevent.type ?? DEFAULT_CALEVENT_TYPE,
-    startDate: calevent.startDate ?? getTodayStr(),
-    startTime: calevent.startTime ?? DEFAULT_TIME,
-    endDate: calevent.endDate ?? END_FUTURE_DATE_STR,
-    endTime: calevent.endTime ?? DEFAULT_TIME,
-    locationKey: calevent.locationKey ?? DEFAULT_KEY,
-    calendars: calevent.calendars ?? DEFAULT_CALENDARS,
-    periodicity: calevent.periodicity ?? DEFAULT_PERIODICITY,
-    repeatUntilDate: calevent.repeatUntilDate ?? getTodayStr(),
-    responsiblePersons: calevent.responsiblePersons ?? [] as AvatarInfo[],
-    url: calevent.url ?? DEFAULT_URL,
-    description: calevent.description ?? DEFAULT_NOTES,
-    tags: calevent.tags ?? DEFAULT_TAGS,
-  };
-}
-
-export function convertFormToCalEvent(vm?: CalEventFormModel, calevent?: CalEventModel | undefined): CalEventModel {
-  if (!calevent) die('profile.util.convertFormToCalEvent: User is mandatory.');
-  if (!vm) return calevent;
-  
-  calevent.name = vm.name ?? DEFAULT_NAME;
-  calevent.type = vm.type ?? DEFAULT_CALEVENT_TYPE;
-  calevent.startDate = vm.startDate ?? getTodayStr(DateFormat.StoreDate);
-  calevent.startTime = vm.startTime ?? DEFAULT_TIME;
-  calevent.endDate = vm.endDate ?? calevent.startDate;
-  calevent.endTime = vm.endTime ?? DEFAULT_TIME;
-  calevent.locationKey = vm.locationKey ?? DEFAULT_KEY;
-  calevent.calendars = vm.calendars ?? DEFAULT_CALENDARS;
-  calevent.periodicity = vm.periodicity ?? DEFAULT_PERIODICITY;
-  calevent.repeatUntilDate = vm.repeatUntilDate ?? DEFAULT_DATE;
-  calevent.responsiblePersons = vm.responsiblePersons ?? [] as AvatarInfo[];
-  calevent.url = vm.url ?? DEFAULT_URL;
-  calevent.description = vm.description ?? DEFAULT_NOTES;
-  calevent.tags = vm.tags ?? DEFAULT_TAGS;
-  calevent.index = getCaleventIndex(calevent);
-  return calevent;
-}
+import { CalEventModel } from '@bk2/shared-models';
+import { getIsoDateTime, isType } from '@bk2/shared-util-core';
 
 export function isCalEvent(calEvent: unknown, tenantId: string): calEvent is CalEventModel {
   return isType(calEvent, new CalEventModel(tenantId));
@@ -110,9 +64,10 @@ export function convertFullCalendarToCalEvent(event: EventInput, tenantId: strin
 
 /*-------------------------- SEARCH --------------------------------*/
 export function getCaleventIndex(calevent: CalEventModel): string {
-  return 'n:' + calevent.name + ' st:' + calevent.startDate;
+  const persons = calevent.responsiblePersons.map(p => p.name2).join(',');
+  return 'n:' + calevent.name + ' p:' + persons + ' l:' + calevent.locationKey + ' c:' + calevent.calendars.join(',');
 }
 
 export function getCaleventIndexInfo(): string {
-  return 'n:ame st:artDate';
+  return 'n:ame p:ersons l:ocationKey c:alendars';
 }

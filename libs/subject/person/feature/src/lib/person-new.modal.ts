@@ -1,8 +1,6 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { OrgModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 
@@ -15,17 +13,16 @@ import { PersonNewStore } from './person-new.store';
   selector: 'bk-person-new-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     HeaderComponent, ChangeConfirmationComponent, PersonNewFormComponent,
     IonContent
   ],
   providers: [PersonNewStore],
   template: `
-    <bk-header title="{{ '@subject.person.operation.create.label' | translate | async }}" [isModal]="true" />
+    <bk-header title="@subject.person.operation.create.label" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content no-padding>
+    <ion-content class="ion-no-padding">
       <bk-person-new-form
         [formData]="formData()"
         [priv]="priv()"

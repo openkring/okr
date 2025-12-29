@@ -27,7 +27,7 @@ export const addressValidations = staticSuite((model: AddressModel, field?: stri
   booleanValidations('isValidated', model.isValidated);
 
   //tagValidations('tags', model.tags);
-  stringValidations('description', model.description, LONG_NAME_LENGTH);
+  stringValidations('notes', model.notes, LONG_NAME_LENGTH);
   stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH, 0, true);
 
   // cross validations

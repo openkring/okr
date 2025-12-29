@@ -16,23 +16,23 @@ export const calEventValidations = staticSuite((model: CalEventModel, field?: st
   dateValidations('repeatUntilDate', model.repeatUntilDate);
   // tbd: responsiblePersons: AvatarInfo[] - not yet implemented
 
-  test('startDate', '@calEventStartDateMandatory', () => {
+  test('startDate', '@caleventStartDateMandatory', () => {
     enforce(model.startDate).isNotEmpty();
   });
-  test('endDate', '@calEventEndDateMandatory', () => {
+  test('endDate', '@caleventEndDateMandatory', () => {
     enforce(model.endDate).isNotEmpty();
   });
 
   // field cross validations
-  test('endDate', '@calEventEndDateAfterStartDate', () => {
+  test('endDate', '@caleventEndDateAfterStartDate', () => {
     enforce(isAfterOrEqualDate(model.endDate, model.startDate)).isTruthy();
   });
 
   omitWhen(model.periodicity === 'once', () => {
-    test('repeatUntilDate', '@calEventRepeatUntilDateMandatoryWithGivenPeriodicity', () => {
+    test('repeatUntilDate', '@caleventRepeatUntilDateMandatoryWithGivenPeriodicity', () => {
       enforce(model.repeatUntilDate).isNotEmpty();
     });
-    test('repeatUntilDate', '@calEventRepeatUntilDateAfterStartDate', () => {
+    test('repeatUntilDate', '@caleventRepeatUntilDateAfterStartDate', () => {
       enforce(isAfterDate(model.repeatUntilDate, model.startDate)).isTruthy();
     });
   })

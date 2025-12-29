@@ -1,28 +1,25 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
-import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, inject, linkedSignal } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { MenuItemModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { CategorySelectComponent, EmptyListComponent, SearchbarComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
-
-import { MenuItemListStore } from './menu-list.store';
-import { MenuStore } from './menu.component.store';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { ActionSheetController } from '@ionic/angular';
+
+import { MenuStore } from './menu.store';
 
 @Component({
   selector: 'bk-menu-item-all-list',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    SearchbarComponent, CategorySelectComponent, SpinnerComponent, EmptyListComponent,
+    SpinnerComponent, EmptyListComponent, ListFilterComponent,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList
   ],
-  providers: [MenuItemListStore, MenuStore],
   template: `
     <ion-header>
       <!-- page header -->
@@ -45,19 +42,11 @@ import { ActionSheetController } from '@ionic/angular';
         </ion-item>
       </ion-toolbar>
 
-      <!-- search and category -->
-      <ion-toolbar>
-        <ion-grid>
-          <ion-row>
-            <ion-col size="6">
-              <bk-searchbar placeholder="{{ '@general.operation.search.placeholder' | translate | async }}" (ionInput)="onSearchtermChange($event)" />
-            </ion-col>
-            <ion-col size="6">
-              <bk-cat-select [category]="menuActions()!" selectedItemName="all" [withAll]="true" [readOnly]="readOnly()" (changed)="onCategoryChange($event)" />
-          </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-toolbar>
+      <!-- search and filters -->
+      <bk-list-filter
+        (searchTermChanged)="onSearchTermChange($event)"
+        (typeChanged)="onTypeSelected($event)" [types]="menuActions()"
+      />
 
       <!-- list header -->
       <ion-toolbar color="primary">
@@ -107,26 +96,21 @@ import { ActionSheetController } from '@ionic/angular';
   `
 })
 export class MenuListComponent {
-  protected menuItemListStore = inject(MenuItemListStore);
   protected readonly menuStore = inject(MenuStore);
   private actionSheetController = inject(ActionSheetController);
 
-  protected filteredMenuItems = computed(() => this.menuItemListStore.filteredMenuItems() ?? []);
-  protected menuItemsCount = computed(() => this.menuItemListStore.menuItemsCount());
+  // filters
+  protected searchTerm = linkedSignal(() => this.menuStore.searchTerm());
+  protected selectedCategory = linkedSignal(() => this.menuStore.selectedCategory());
+
+  protected filteredMenuItems = computed(() => this.menuStore.filteredMenuItems() ?? []);
+  protected menuItemsCount = computed(() => this.menuStore.menuItemsCount());
   protected selectedMenuItemsCount = computed(() => this.filteredMenuItems().length);
-  protected isLoading = computed(() => this.menuItemListStore.isLoading());
-  protected menuActions = computed(() => this.menuItemListStore.appStore.getCategory('menu_action'));
-  protected readOnly = computed(() => !hasRole('contentAdmin', this.menuItemListStore.currentUser()));
+  protected isLoading = computed(() => this.menuStore.isLoading());
+  protected menuActions = computed(() => this.menuStore.appStore.getCategory('menu_action'));
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.menuStore.currentUser()));
 
   private imgixBaseUrl = this.menuStore.appStore.env.services.imgixBaseUrl;
-
-  protected onSearchtermChange($event: Event): void {
-    this.menuItemListStore.setSearchTerm(($event.target as HTMLInputElement).value);
-  }
-
-  protected onCategoryChange($event: string): void {
-    this.menuItemListStore.setSelectedCategory($event);
-  }
 
   /**
    * Displays an ActionSheet with all possible actions on a MenuItem. Only actions are shown, that the user has permission for.
@@ -169,24 +153,32 @@ export class MenuListComponent {
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
         case 'menu.delete':
-          await this.menuItemListStore.delete(menuItem, this.readOnly());
+          await this.menuStore.delete(menuItem, this.readOnly());
           break;
         case 'menu.edit':
-          await this.menuItemListStore.edit(menuItem, this.readOnly());
+          await this.menuStore.edit(menuItem, this.readOnly());
           break;
         case 'menu.view':
-          await this.menuItemListStore.edit(menuItem, true);
+          await this.menuStore.edit(menuItem, true);
           break;
       }
     }
   }
 
   protected async add(): Promise<void> {
-    await this.menuItemListStore.edit(undefined, this.readOnly());
+    await this.menuStore.edit(undefined, this.readOnly());
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.menuItemListStore.currentUser());
+    return hasRole(role, this.menuStore.currentUser());
+  }
+
+  protected onSearchTermChange(searchTerm: string): void {
+    this.menuStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.menuStore.setSelectedCategory(type);
   }
 }
 

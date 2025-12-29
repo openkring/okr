@@ -5,7 +5,7 @@ import { AppStore } from "@bk2/shared-feature";
 import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from "@bk2/shared-models";
 
 import { OwnershipService } from "@bk2/relationship-ownership-data-access";
-import { convertFormToOwnership, isOwnership, OwnershipFormModel, OwnershipNewFormModel } from "@bk2/relationship-ownership-util";
+import { isOwnership, newOwnership } from "@bk2/relationship-ownership-util";
 
 import { OwnershipEditModalComponent } from "./ownership-edit.modal";
 import { OwnershipNewModalComponent } from "./ownership-new.modal";
@@ -27,20 +27,21 @@ export class OwnershipModalsService {
      * @param modelType the type of the member (Person or Org)
      */
   public async add(owner: PersonModel | OrgModel, modelType: 'person' | 'org', resource: ResourceModel): Promise<void> {
+    const ownership = newOwnership(owner, resource, this.appStore.tenantId(), modelType);
     const modal = await this.modalController.create({
       component: OwnershipNewModalComponent,
       cssClass: 'small-modal',
       componentProps: {
-        owner: owner,
-        resource: resource,
-        modelType: modelType,
+        ownership,
+        currentUser: this.appStore.currentUser()
       }
     });
     modal.present();
     const { data, role } = await modal.onDidDismiss();
     if (role === 'confirm') {
-      const ownership = convertFormToOwnership(data as OwnershipFormModel, new OwnershipModel(this.tenantId));
-      await this.ownershipService.create(ownership, this.appStore.currentUser());
+      if (isOwnership(data, this.tenantId)) {
+        await this.ownershipService.create(data, this.appStore.currentUser());
+      }
     }
   }  
   
@@ -54,9 +55,9 @@ export class OwnershipModalsService {
     const modal = await this.modalController.create({
       component: OwnershipEditModalComponent,
       componentProps: {
-        ownership: ownership,
+        ownership,
         currentUser: this.appStore.currentUser(),
-        readOnly: readOnly
+        readOnly
       }
     });
     modal.present();

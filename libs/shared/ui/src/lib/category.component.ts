@@ -12,7 +12,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
  * A component to select a category from a list of categories.
  * The selected category is shown as a ready-only text if the `readOnly` input is true.
  * Usage example:
- *  <bk-cat name="orgType" [(value)]="orgType" [categories]="orgTypes" [readOnly]="false" />
+ *  <bk-cat name="orgType" [value]="orgType" (valueChange)="onFieldChange('orgType', $event)" [categories]="orgTypes" [readOnly]="false" />
  *  name and readOnly are optional
  */
 @Component({
@@ -24,28 +24,30 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   ],
   viewProviders: [vestFormsViewProviders],
   template: `
-    <ion-item lines="none">
-      @if(isReadOnly()) {
-        <ion-label>{{ this.label() | translate | async }}: {{ '@' + this.selectedCategory().i18nBase + '.label' | translate | async }}</ion-label>
-      } @else {
-        <ion-select [name]="name()" (ionChange)="onCategoryChange($event)"
-          label="{{ this.label() | translate | async }}"
-          [disabled]="isReadOnly()"
-          label-placement="floating"
-          interface="popover"
-          [value]="this.selectedCategory()"
-          [compareWith]="compareWith">
-          @for (cat of this.categories(); track cat) {
-            <ion-select-option [value]="cat">
-  <!--       
-            unfortunately, Ionic is not supporting icons within ion-select-option   
-  -->            
-              {{ '@' + cat.i18nBase + '.label' | translate | async }}
-            </ion-select-option>
-          }
-        </ion-select>
-      }
-    </ion-item>
+    @if(selectedCategory(); as selectedCategory) {
+      <ion-item lines="none">
+        @if(isReadOnly()) {
+          <ion-label>{{ this.label() | translate | async }}: {{ '@' + selectedCategory.i18nBase + '.label' | translate | async }}</ion-label>
+        } @else {
+          <ion-select [name]="name()" (ionChange)="onCategoryChange($event)"
+            label="{{ this.label() | translate | async }}"
+            [disabled]="isReadOnly()"
+            label-placement="floating"
+            interface="popover"
+            [value]="selectedCategory"
+            [compareWith]="compareWith">
+            @for (cat of this.categories(); track cat) {
+              <ion-select-option [value]="cat">
+    <!--       
+              unfortunately, Ionic is not supporting icons within ion-select-option   
+    -->            
+                {{ '@' + cat.i18nBase + '.label' | translate | async }}
+              </ion-select-option>
+            }
+          </ion-select>
+        }
+      </ion-item>
+    }
     @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper">
       <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
@@ -55,7 +57,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 })
 export class CategoryComponent {
   public name = input('cat'); // name of the input field, determines the label of the input field
-  public value = model.required<number>(); // mandatory view model
+  public value = model.required<number>(); // the selected category id
   public categories = input.required<CategoryModel[]>(); // mandatory view model
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -63,9 +65,10 @@ export class CategoryComponent {
   protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
 
   protected label = computed(() => `@input.${this.name()}.label`);
-  protected selectedCategory = computed(() => this.categories()[this.value()]);
-
-  protected changed = output<number>();   // we need this notification when selecting a category in the toolbar
+  protected selectedCategory = computed(() => {
+    const id = this.value();
+    return this.categories().find(cat => cat.id === id) ?? null;
+  });
 
   /**
    * Compare two Categories.
@@ -78,7 +81,6 @@ export class CategoryComponent {
   public onCategoryChange($event: Event): void {
     const category = ($event.target as HTMLInputElement).value as unknown as CategoryModel;
     this.value.set(category.id);
-    this.changed.emit(category.id);
   }
 }
 

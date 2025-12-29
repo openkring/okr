@@ -3,6 +3,7 @@ import { Component, inject, input } from '@angular/core';
 import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
+
 import { HeaderComponent } from './header.component';
 
 @Component({
@@ -14,8 +15,8 @@ import { HeaderComponent } from './header.component';
     IonContent, IonDatetime
   ],
   template: `
-      <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
-      <ion-content class="ion-padding">
+      <bk-header [title]="title()" [isModal]="true" />
+      <ion-content class="ion-no-padding">
         <ion-datetime 
             [value]="time()"
             [locale]="locale()"
@@ -30,6 +31,7 @@ import { HeaderComponent } from './header.component';
 export class TimeSelectModalComponent {
   private readonly modalController = inject(ModalController);
 
+  // inputs
   public time = input.required<string>();
   public title = input('@general.operation.select.time');
   protected locale = input.required<string>(); // mandatory locale for the input field, used for formatting

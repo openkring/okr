@@ -14,7 +14,7 @@ import { HeaderComponent } from './header.component';
     IonContent, IonChip, IonLabel
   ],
   template: `
-    <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
+    <bk-header [title]="headerTitle()" [isModal]="true" />
     <ion-content class="ion-padding">
       @for (chip of chips(); track chip) {
         <ion-chip color="primary" (click)="select(chip)">
@@ -26,9 +26,13 @@ import { HeaderComponent } from './header.component';
 })
 export class ChipSelectModalComponent {
   private readonly modalController = inject(ModalController);
+
+  // inputs
   public chips = input.required<string[]>();
   public chipName = input.required<string>();
-  public title = computed(() => `@general.operation.select.${this.chipName()}`);
+
+  // computed
+  public headerTitle = computed(() => `@general.operation.select.${this.chipName()}`);
 
   public async select(chip: string): Promise<boolean> {
     return await this.modalController.dismiss(chip, 'confirm');

@@ -5,7 +5,7 @@
    Firebase storage is linked as a source to imgix CDN and the images can be served from there.
 */
 import { THUMBNAIL_SIZE } from "@bk2/shared-constants";
-import { Image, ImageType } from "@bk2/shared-models";
+import { ImageType } from "@bk2/shared-models";
 import { fileExtension, fileLogo, isAudio, isDocument, isImage, isPdf, isStreamingVideo, isVideo } from './file.util';
 import { die, warn } from './log.util';
 
@@ -101,7 +101,7 @@ export function fixHttpUrl(url: string | undefined): string | undefined {
  * @param height 
  * @returns 
  */
-export function getThumbnailUrl(path: string, width: number, height: number): string {
+export function getThumbnailUrl(path: string, width: string, height: string): string {
   const params = getSizedImgixParamsByExtension(path, width, height);
   if (params.length === 0) {   // neither image nor pdf -> return path to file icon
     const extension = fileExtension(path);
@@ -118,7 +118,7 @@ export function getThumbnailUrl(path: string, width: number, height: number): st
  * @param height the height of the image
  * @returns the imgix parameters for images and pdfs, or an empty string for other file types
  */
-export function getSizedImgixParamsByExtension(pathOrExtension: string | undefined, width: number, height: number): string {
+export function getSizedImgixParamsByExtension(pathOrExtension: string | undefined, width: string, height: string): string {
   if (!pathOrExtension || pathOrExtension.length === 0) return '';
   const arParams = `ar=${width}:${height}`;
   const params = getImgixParamsByExtension(pathOrExtension);
@@ -175,14 +175,6 @@ export const IMGIX_PDF_PARAMS = 'page=1';
 export const IMGIX_JPG_PARAMS = 'fm=jpg&auto=format,compress,enhance&fit=crop';
 export const IMGIX_THUMBNAIL_PARAMS = `fm=jpg&width=${THUMBNAIL_SIZE}&height=${THUMBNAIL_SIZE}&auto=format,compress,enhance&fit=crop`;
 export const IMGIX_JSON_PARAMS = 'fm=json';
-
-
-export function getImgixUrlFromImage(image: Image): string {
-  if (!image.width || !image.height) die('img.util.getImgixUrlFromImage -> image width and height must be set');
-  const params = getSizedImgixParamsByExtension(image.url ?? '', image.width, image.height);
-  return getImgixUrl(image.url, params);
-}
-
 
 export function getImgixJpgUrl(url: string, imgixBaseUrl: string): string {
   return `${imgixBaseUrl}/${url}?${IMGIX_JPG_PARAMS}`;

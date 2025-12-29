@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { Photo } from '@capacitor/camera';
 
 import { AppStore } from '@bk2/shared-feature';
@@ -9,7 +9,6 @@ import { PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models'
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
 import { PersonService } from '@bk2/subject-person-data-access';
-import { convertFormToPerson, PersonFormModel } from '@bk2/subject-person-util';
 import { AvatarService } from '@bk2/avatar-data-access';
 
 /**
@@ -75,8 +74,7 @@ export const PersonEditStore = signalStore(
       },
 
       /************************************ ACTIONS ************************************* */
-      async save(formData?: PersonFormModel): Promise<void> {
-        const person = convertFormToPerson(formData, store.person());
+      async save(person: PersonModel): Promise<void> {
         await (!person.bkey ? 
           store.personService.create(person, store.currentUser()) : 
           store.personService.update(person, store.currentUser()));

@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MenuItemModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
-import { isMenuItem, convertMenuItemToForm, convertFormToMenuItem } from './menu.util';
-import { MenuItemFormModel } from './menu-item-form.model';
+import { isMenuItem } from './menu.util';
 
 // Mock shared utility functions
 vi.mock('@bk2/shared-util-core', async importOriginal => {
@@ -61,45 +60,6 @@ describe('Menu Utils', () => {
 
       mockIsType.mockReturnValue(false);
       expect(isMenuItem({}, tenantId)).toBe(false);
-    });
-  });
-
-  describe('convertMenuItemToForm', () => {
-    it('should convert a MenuItemModel to a MenuItemFormModel', () => {
-      const formModel = convertMenuItemToForm(rootMenuItem);
-      expect(formModel.bkey).toBe('root-1');
-      expect(formModel.name).toBe('Main Menu');
-      expect(formModel.url).toBe('/home');
-    });
-  });
-
-  describe('convertFormToMenuItem', () => {
-    let formModel: MenuItemFormModel;
-
-    beforeEach(() => {
-      formModel = {
-        bkey: 'root-1',
-        name: 'Updated Menu',
-        label: '@menu.updated',
-        url: '/updated',
-        roleNeeded: 'admin',
-        menuItems: ['child-1', 'child-2'],
-        tenants: [tenantId],
-      };
-    });
-
-    it('should update an existing MenuItemModel from a form model', () => {
-      const updatedMenu = convertFormToMenuItem(rootMenuItem, formModel, tenantId);
-      expect(updatedMenu.name).toBe('Updated Menu');
-      expect(updatedMenu.url).toBe('/updated');
-      expect(updatedMenu.roleNeeded).toBe('admin');
-      expect(updatedMenu.bkey).toBe('root-1');
-    });
-    it('should create a new MenuItemModel if one is not provided', () => {
-      const newMenu = convertFormToMenuItem(undefined, formModel, tenantId);
-      expect(newMenu).toBeInstanceOf(MenuItemModel);
-      expect(newMenu.name).toBe('Updated Menu');
-      expect(newMenu.tenants[0]).toEqual(tenantId);
     });
   });
 });

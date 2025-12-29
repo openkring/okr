@@ -1,10 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, input } from '@angular/core';
 import { IonCard, IonCardContent, IonContent } from '@ionic/angular/standalone';
 import { register } from 'swiper/element/bundle';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { Image } from '@bk2/shared-models';
+import { IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle } from '@bk2/shared-models';
 import { HeaderComponent, ImageComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 register(); // globally register Swiper's custom elements.
@@ -17,7 +15,6 @@ register(); // globally register Swiper's custom elements.
   standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
-    TranslatePipe, AsyncPipe,
     HeaderComponent, SpinnerComponent, ImageComponent,
     IonContent, IonCard, IonCardContent,    
   ],
@@ -54,7 +51,7 @@ register(); // globally register Swiper's custom elements.
     }
   `],
   template: `
-      <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
+      <bk-header [title]="title()" [isModal]="true" />
       <ion-content>
         @if(imageList(); as images) {
           <ion-card>
@@ -63,7 +60,7 @@ register(); // globally register Swiper's custom elements.
                 pagination="true" keyboard="true" mousewheel="true" css-mode="true">
                 @for(image of imageList(); track image.url) {
                   <swiper-slide>
-                    <bk-img [image]="image" />
+                    <bk-img [image]="image" [imageStyle]="imageStyle()"  />
                   </swiper-slide>
                 }
               </swiper-container>
@@ -76,6 +73,7 @@ register(); // globally register Swiper's custom elements.
   `
 })
 export class SwiperModalComponent {
-  protected imageList = input.required<Image[]>();
+  protected imageList = input.required<ImageConfig[]>();
   protected title = input.required<string>();
+  protected imageStyle = input<ImageStyle>(IMAGE_STYLE_SHAPE);
 }

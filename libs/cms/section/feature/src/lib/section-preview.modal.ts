@@ -14,7 +14,7 @@ import { GallerySectionComponent } from './gallery-section.component';
 import { HeroSectionComponent } from './hero-section.component';
 import { IframeSectionComponent } from './iframe-section.component';
 import { MapSectionComponent } from './map-section.component';
-import { PeopleListSectionComponent } from './people-list-section.component';
+import { PeopleSectionComponent } from './people-section.component';
 import { SwiperSectionComponent } from './swiper-section.component';
 import { TableSectionComponent } from './table-section.component';
 import { VideoSectionComponent } from './video-section.component';
@@ -25,7 +25,7 @@ import { VideoSectionComponent } from './video-section.component';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     ArticleSectionComponent, SwiperSectionComponent, GallerySectionComponent, 
-    forwardRef(() => PeopleListSectionComponent),
+    forwardRef(() => PeopleSectionComponent),
     AlbumSectionComponent, MapSectionComponent, VideoSectionComponent, 
     CalendarSectionComponent, HeroSectionComponent, ButtonSectionComponent, IframeSectionComponent,
     TableSectionComponent,
@@ -51,7 +51,10 @@ import { VideoSectionComponent } from './video-section.component';
             <bk-album-section [section]="section" />
           }
           @case('article') {
-            <bk-article-section [section]="section" [readOnly]="true"  />
+            <bk-article-section [section]="section"  />
+          }
+          @case('cal') {
+            <bk-calendar-section [section]="section" />
           }
           @case('gallery') {
             <bk-gallery-section [section]="section" />
@@ -62,8 +65,8 @@ import { VideoSectionComponent } from './video-section.component';
           @case('map') {
             <bk-map-section [section]="section" />
           }
-          @case('peopleList') {
-            <bk-people-list-section [section]="section" [readOnly]="true"  />
+          @case('people') {
+            <bk-people-section [section]="section"  />
           }
           @case('slider') {
             <bk-swiper-section [section]="section" />
@@ -71,11 +74,9 @@ import { VideoSectionComponent } from './video-section.component';
           @case('video') {
             <bk-video-section [section]="section" />
           }
-          @case('calendar') {
-            <bk-calendar-section [section]="section" />
-          }
+
           @case('button') {     
-            <bk-button-section [section]="section" [readOnly]="true"  />    
+            <bk-button-section [section]="section"  />    
           }
           @case('table') {
             <bk-table-section [section]="section" />          

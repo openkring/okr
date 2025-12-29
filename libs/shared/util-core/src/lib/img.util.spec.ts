@@ -445,23 +445,6 @@ describe('img.util', () => {
     });
   });
 
-  describe('getImgixUrlFromImage', () => {
-    it('should return imgix URL with dimensions from Image object', () => {
-      mockIsImage.mockReturnValue(true);
-      mockIsPdf.mockReturnValue(false);
-      
-      const image: Image = {
-        url: 'tenant/images/photo.jpg',
-        width: 800,
-        height: 600,
-        imageLabel: 'photo_with_height_and_width.jpg'
-      };
-      
-      const result = getImgixUrlFromImage(image);
-      
-      expect(result).toBe('tenant/images/photo.jpg?ar=800:600&auto=format,compress,enhance&fit=crop');
-    });
-
     it('should call die when width or height is missing', () => {
       const image: Image = {
         url: 'tenant/images/photo.jpg',

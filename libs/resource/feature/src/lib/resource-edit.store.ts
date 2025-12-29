@@ -9,7 +9,6 @@ import { ResourceModel } from '@bk2/shared-models';
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
 import { ResourceService } from '@bk2/resource-data-access';
-import { convertFormToResource, ResourceFormModel } from '@bk2/resource-util';
 
 /**
  * the resourceEditPage is setting the resourceKey, the store needs to read the corresponding resource 
@@ -69,8 +68,8 @@ export const ResourceEditStore = signalStore(
 
       /************************************ ACTIONS ************************************* */
 
-      async save(formData?: ResourceFormModel): Promise<void> {
-        const resource = convertFormToResource(formData, store.resource());
+      async save(resource?: ResourceModel): Promise<void> {
+        if (!resource) return;
         await (!resource.bkey ? 
           store.resourceService.create(resource, store.currentUser()) : 
           store.resourceService.update(resource, store.currentUser()));

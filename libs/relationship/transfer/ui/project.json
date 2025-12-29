@@ -1,0 +1,25 @@
+{
+  "name": "relationship-transfer-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/transfer/ui/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:transfer", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/transfer/ui",
+        "main": "libs/relationship/transfer/ui/src/index.ts",
+        "tsConfig": "libs/relationship/transfer/ui/tsconfig.lib.json",
+        "assets": ["libs/relationship/transfer/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
+

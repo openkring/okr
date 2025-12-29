@@ -1,10 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { AccountModel, OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 
-import { newOwnershipFormModel, convertOwnershipToForm, convertFormToOwnership, newOwnership, getOwnerName, isOwnership, getOwnershipSearchIndex, getOwnershipSearchIndexInfo } from './ownership.util';
-import { OwnershipFormModel } from './ownership-form.model';
+import { newOwnership, getOwnerName, isOwnership } from './ownership.util';
 
 // Mock shared utility functions
 vi.mock('@bk2/shared-util-core', async importOriginal => {
@@ -75,60 +73,6 @@ describe('Ownership Utils', () => {
     account.type = 'asset';
   });
 
-  describe('newOwnershipFormModel', () => {
-    it('should return a default form model', () => {
-      const formModel = newOwnershipFormModel();
-      expect(formModel.bkey).toBe('');
-      expect(formModel.validFrom).toBe('20250904');
-      expect(formModel.validTo).toBe(END_FUTURE_DATE_STR);
-      expect(formModel.ownerModelType).toBe('person');
-      expect(formModel.price).toBe(0);
-    });
-  });
-
-  describe('convertOwnershipToForm', () => {
-    it('should convert an OwnershipModel to a form model', () => {
-      const formModel = convertOwnershipToForm(ownership);
-      expect(formModel.bkey).toBe('ownership-1');
-      expect(formModel.ownerKey).toBe('person-1');
-      expect(formModel.resourceName).toBe('Boat');
-    });
-
-    it('should return a new form model if ownership is undefined', () => {
-      const formModel = convertOwnershipToForm(undefined);
-      expect(formModel.bkey).toBe('');
-      expect(formModel.validFrom).toBe('20250904');
-    });
-  });
-
-  describe('convertFormToOwnership', () => {
-    const formModel: OwnershipFormModel = {
-      validFrom: '20240101',
-      validTo: '20241231',
-      price: 150,
-      periodicity: 'monthly',
-      notes: 'New notes',
-    } as OwnershipFormModel;
-
-    it('should update an existing ownership model', () => {
-      const updated = convertFormToOwnership(ownership, formModel, tenantId);
-      expect(updated.validFrom).toBe('20240101');
-      expect(updated.price).toBe(150);
-      expect(updated.notes).toBe('New notes');
-    });
-
-    it('should create a new ownership model if one is not provided', () => {
-      const created = convertFormToOwnership(undefined, formModel, tenantId);
-      expect(created).toBeInstanceOf(OwnershipModel);
-      expect(created.validFrom).toBe('20240101');
-    });
-
-    it('should call die if tenantId is not provided', () => {
-      convertFormToOwnership(ownership, formModel, undefined);
-      expect(mockDie).toHaveBeenCalledWith('ownership.util.convertFormToOwnership(): tenantId is mandatory.');
-    });
-  });
-
   describe('newOwnership', () => {
     it('should create a new ownership for a Person and a Resource', () => {
       mockIsPerson.mockReturnValue(true);
@@ -180,17 +124,6 @@ describe('Ownership Utils', () => {
     it('should call isType with the correct parameters', () => {
       isOwnership({}, tenantId);
       expect(mockIsType).toHaveBeenCalledWith({}, expect.any(OwnershipModel));
-    });
-  });
-
-  describe('Search Index functions', () => {
-    it('getOwnershipSearchIndex should return a formatted index string', () => {
-      const index = getOwnershipSearchIndex(ownership);
-      expect(index).toBe('on:John Doe rn:Boat');
-    });
-
-    it('getOwnershipSearchIndexInfo should return the info string', () => {
-      expect(getOwnershipSearchIndexInfo()).toBe('on:ownerName rn:resourceName');
     });
   });
 });

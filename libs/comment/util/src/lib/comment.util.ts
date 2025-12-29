@@ -30,3 +30,6 @@ export function getCommentIndex(comment: CommentModel): string {
   return `an:${comment.authorName}, cd:${comment.creationDateTime}, pk:${comment.parentKey}`;
 }
 
+export function getCommentIndexInfo(): string {
+  return 'an:authorname, cd:creationDateTime, pk:parentKey';
+}

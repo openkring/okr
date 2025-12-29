@@ -1,13 +1,13 @@
 import { isPlatformBrowser } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { CalendarOptions, EventInput } from '@fullcalendar/core';
+import { EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared-models';
+import { CalendarSection } from '@bk2/shared-models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { debugData, debugMessage, die } from '@bk2/shared-util-core';
 
@@ -57,13 +57,16 @@ import { CalendarStore } from './calendar-section.store';
 export class CalendarSectionComponent implements OnInit {
   protected calendarStore = inject(CalendarStore);
   private readonly platformId = inject(PLATFORM_ID);
-  public section = input<SectionModel>();
 
+  // inputs
+  public section = input<CalendarSection>();
+
+  // derived values
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
   protected readonly calendarName = computed(() => this.section()?.name);
   protected readonly calendarOptions = computed(() => {
-    const options = (this.section()?.properties.calendarOptions as CalendarOptions) ?? die('CalendarSectionComponent.calendarOptions: missing calendarOptions');
+    const options = (this.section()?.properties) ?? die('CalendarSectionComponent.calendarOptions: missing calendarOptions');
     options.plugins = [dayGridPlugin, interactionPlugin, timeGridPlugin];
     options.dateClick = arg => {
       this.onDateClick(arg);

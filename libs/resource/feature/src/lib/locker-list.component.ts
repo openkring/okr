@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -48,9 +48,9 @@ import { ResourceListStore } from './resource-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onTypeSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
      />
 
     <!-- list header -->
@@ -88,9 +88,16 @@ export class LockerListComponent {
   protected readonly resourceListStore = inject(ResourceListStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
+  // filters
+  protected searchTerm = linkedSignal(() => this.resourceListStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.resourceListStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.resourceListStore.selectedResourceType());
+
+  // data
   protected filteredLockers = computed(() => this.resourceListStore.filteredLockers() ?? []);
   protected lockersCount = computed(() => this.resourceListStore.lockersCount());
   protected selectedLockersCount = computed(() => this.filteredLockers().length);
@@ -98,21 +105,10 @@ export class LockerListComponent {
   protected tags = computed(() => this.resourceListStore.getLockerTags());
   protected types = computed(() => this.resourceListStore.appStore.getCategory('gender'));
   protected title = '@resource.locker.plural';
-  
+  protected currentUser = computed(() => this.resourceListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
-
-  /******************************** setters (filter) ******************************************* */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.resourceListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected($event: string): void {
-    this.resourceListStore.setSelectedTag($event);
-  }
-
-  protected onTypeSelected(gender: string): void {
-    this.resourceListStore.setSelectedGender(gender);
-  }
 
   /******************************** getters ******************************************* */
   protected getIcon(resource: ResourceModel): string {
@@ -122,6 +118,19 @@ export class LockerListComponent {
       case 'other': return 'gender_diverse';
       default: return 'help';
     }
+  }
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.resourceListStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.resourceListStore.setSelectedTag(tag);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.resourceListStore.setSelectedResourceType(type);
   }
 
   /******************************** actions ******************************************* */
@@ -150,12 +159,15 @@ export class LockerListComponent {
      * @param key 
      */
     private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, key: ResourceModel): void {
-      if (hasRole('resourceAdmin', this.resourceListStore.appStore.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      if (hasRole('registered', this.resourceListStore.appStore.currentUser())) {
+        actionSheetOptions.buttons.push(createActionSheetButton('locker.view', this.imgixBaseUrl, 'eye-on'));
         actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
       }
+      if (hasRole('resourceAdmin', this.resourceListStore.appStore.currentUser())) {
+        actionSheetOptions.buttons.push(createActionSheetButton('locker.edit', this.imgixBaseUrl, 'create_edit'));
+      }
       if (hasRole('admin', this.resourceListStore.appStore.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+        actionSheetOptions.buttons.push(createActionSheetButton('locker.delete', this.imgixBaseUrl, 'trash_delete'));
       }
     }
   
@@ -170,11 +182,14 @@ export class LockerListComponent {
         await actionSheet.present();
         const { data } = await actionSheet.onDidDismiss();
         switch (data.action) {
-          case 'delete':
-            await this.resourceListStore.delete(key);
+          case 'locker.delete':
+            await this.resourceListStore.delete(key, this.readOnly());
             break;
-          case 'edit':
-            await this.resourceListStore.edit(key);
+          case 'locker.view':
+            await this.resourceListStore.edit(key, true);
+            break;
+          case 'locker.edit':
+            await this.resourceListStore.edit(key, this.readOnly());
             break;
         }
       }

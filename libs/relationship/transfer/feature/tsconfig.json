@@ -27,6 +27,7 @@
     {"path": "../../../shared/util-core/tsconfig.lib.json"},
     {"path": "../../../comment/feature/tsconfig.lib.json"},
     {"path": "../../../relationship/transfer/util/tsconfig.lib.json"},
+    {"path": "../../../relationship/transfer/ui/tsconfig.lib.json"},
     {"path": "../../../relationship/transfer/data-access/tsconfig.lib.json"},
     {"path": "../../../cms/menu/feature/tsconfig.lib.json"}
   ]

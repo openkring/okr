@@ -3,25 +3,21 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { Photo } from '@capacitor/camera';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonSpinner, IonMenuButton, IonPopover, IonSegment, IonSegmentButton, IonTitle, IonToolbar, Platform } from '@ionic/angular/standalone';
 
-import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupModelName, RoleName } from '@bk2/shared-models';
+import { GroupModel, GroupModelName, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ChangeConfirmationComponent } from '@bk2/shared-ui';
 import { error } from '@bk2/shared-util-angular';
 import { coerceBoolean, debugData, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 
-import { AvatarService, UploadService } from '@bk2/avatar-data-access';
 import { GroupMenuComponent } from '@bk2/cms-menu-ui';
 import { ContentComponent } from '@bk2/cms-page-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { MembersComponent } from '@bk2/relationship-membership-feature';
 import { SimpleTaskListComponent } from '@bk2/task-feature';
 
-import { convertGroupToForm, GroupFormModel } from '@bk2/subject-group-util';
-
-import { GroupEditStore } from './group-edit.store';
+import { GroupStore } from './group.store';
 
 @Component({
   selector: 'bk-group-view-page',
@@ -32,7 +28,7 @@ import { GroupEditStore } from './group-edit.store';
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
     IonHeader, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover
   ],
-  providers: [GroupEditStore],
+  providers: [GroupStore],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
@@ -96,7 +92,7 @@ import { GroupEditStore } from './group-edit.store';
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content class="ion-padding">
+    <ion-content class="ion-no-padding">
       @switch (selectedSegment()) {
         @case ('content') {
           @defer (on immediate) {
@@ -152,11 +148,7 @@ import { GroupEditStore } from './group-edit.store';
   `
 })
 export class GroupViewPageComponent {
-  private readonly avatarService = inject(AvatarService);
-  private readonly groupEditStore = inject(GroupEditStore);
-  private readonly uploadService = inject(UploadService);
-  private readonly platform = inject(Platform);
-  private readonly env = inject(ENV);
+  private readonly groupStore = inject(GroupStore);
 
   // inputs
   public groupKey = input.required<string>();
@@ -167,14 +159,15 @@ export class GroupViewPageComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => convertGroupToForm(this.group()));
+  public formData = linkedSignal(() => structuredClone(this.group()));
+  protected showForm = signal(true);
 
   // derived signals and fields
   protected readonly avatarTitle = computed(() => this.name() ?? DEFAULT_NAME);
   protected readonly parentKey = computed(() => `${GroupModelName}.${this.groupKey()}`);
-  protected currentUser = computed(() => this.groupEditStore.currentUser());
-  protected selectedSegment = computed(() => this.groupEditStore.segment());
-  protected group = computed(() => this.groupEditStore.group());
+  protected currentUser = computed(() => this.groupStore.currentUser());
+  protected selectedSegment = computed(() => this.groupStore.segment());
+  protected group = computed(() => this.groupStore.group());
   protected name = computed(() => this.formData()?.name ?? DEFAULT_NAME);
   protected id = computed(() => this.formData()?.id ?? DEFAULT_ID);
   protected hasContent = computed(() => this.formData()?.hasContent ?? true);
@@ -184,27 +177,29 @@ export class GroupViewPageComponent {
   protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
   protected hasAlbum = computed(() => this.formData()?.hasAlbum ?? true);
   protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
-  protected path = computed(() => getDocumentStoragePath(this.groupEditStore.tenantId(), 'group', this.group()?.bkey));
-  protected groupTags = computed(() => this.groupEditStore.getTags());
+  protected path = computed(() => getDocumentStoragePath(this.groupStore.tenantId(), 'group', this.group()?.bkey));
+  protected groupTags = computed(() => this.groupStore.getTags());
 
   constructor() {
     effect(() => {
-      this.groupEditStore.setGroupKey(this.groupKey());
+      this.groupStore.setGroupKey(this.groupKey());
     });
   }
 
   /******************************* actions *************************************** */
   protected async save(): Promise<void> {
-    this.formDirty.set(false);
-    await this.groupEditStore.save(this.formData());
+    await this.groupStore.save(this.formData());
   }
 
   protected async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(convertGroupToForm(this.group()));  // reset the form
+    this.formData.set(structuredClone(this.group()));  // reset the form
+      // This destroys and recreates the <form scVestForm> → Vest fully resets
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: GroupFormModel): void {
+  protected onFormDataChange(formData: GroupModel): void {
     this.formData.set(formData);
   }
 
@@ -213,7 +208,7 @@ export class GroupViewPageComponent {
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   protected async onImageSelected(photo: Photo): Promise<void> {
-    await this.groupEditStore.saveAvatar(photo);    
+    await this.groupStore.saveAvatar(photo);    
   }
 
   /******************************* helpers *************************************** */
@@ -223,22 +218,22 @@ export class GroupViewPageComponent {
 
   protected async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
-    debugData(`GroupViewPageComponent.onPopoverDismiss: ${selectedMethod}`, $event, this.groupEditStore.currentUser());
+    debugData(`GroupViewPageComponent.onPopoverDismiss: ${selectedMethod}`, $event, this.groupStore.currentUser());
      switch(selectedMethod) {
-      case 'addSection': this.groupEditStore.addSection(); break;
-      case 'selectSection': this.groupEditStore.selectSection(); break;
-      case 'sortSections': this.groupEditStore.sortSections(); break;
-      case 'editSection': this.groupEditStore.editSection(); break;
-      case 'addEvent': this.groupEditStore.addEvent(); break;
-      case 'addTask': this.groupEditStore.addTask(); break;
-      case 'addMember': this.groupEditStore.addMember(); break;
+      case 'addSection': this.groupStore.addSection(); break;
+      case 'selectSection': this.groupStore.selectSection(); break;
+      case 'sortSections': this.groupStore.sortSections(); break;
+      case 'editSection': this.groupStore.editSection(); break;
+      case 'addEvent': this.groupStore.addEvent(); break;
+      case 'addTask': this.groupStore.addTask(); break;
+      case 'addMember': this.groupStore.addMember(); break;
       default: error(undefined, `GroupViewPage: context menu ${this.selectedSegment()} has unknown action: ${selectedMethod}`); break;
     } 
   }
 
   protected onSegmentChanged($event: CustomEvent): void {
     const selectedSegment = $event.detail.value;
-    this.groupEditStore.setSelectedSegment(selectedSegment);
+    this.groupStore.setSelectedSegment(selectedSegment);
   }
 
   protected hasMenu(segmentName?: string): boolean {

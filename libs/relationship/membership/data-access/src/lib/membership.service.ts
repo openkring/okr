@@ -1,12 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
-import { combineLatest, firstValueFrom, map, Observable, of } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { CategoryListModel, MembershipCollection, MembershipModel, PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
-import { copyToClipboardWithConfirmation, error } from '@bk2/shared-util-angular';
+import { CategoryListModel, MembershipCollection, MembershipModel, UserModel } from '@bk2/shared-models';
+import { error } from '@bk2/shared-util-angular';
 import { addDuration, findByKey, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
 import { getCategoryAttribute } from '@bk2/category-util';
@@ -21,7 +20,6 @@ import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembers
 export class MembershipService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
-  private readonly toastController = inject(ToastController);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -160,27 +158,6 @@ export class MembershipService {
       map((memberships: MembershipModel[]) => {
         return memberships.filter((membership: MembershipModel) => membership.orgKey === orgKey);
       }));
-  }
-
-  /*------------------------------ copy email addresses ------------------------------*/
-  public getAllEmailAddresses(memberships$: Observable<MembershipModel[]>): Observable<string[]> {
-    const persons$ = this.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(this.env.tenantId), 'lastName', 'asc');
-
-    // join the two streams to retrieve the email addresses of the selected memberships
-    const emails$ = combineLatest([memberships$, persons$]).pipe(
-      map(([memberships, persons]) => memberships.map(membership => {
-        if (membership.memberModelType !== 'person') return '';
-        const person = persons.find(a => a.bkey === membership.memberKey);
-        return person?.favEmail ?? '';
-      }))
-    );
-    return emails$.pipe(map(emails => emails.filter(email => email !== '')));
-  }
-
-  // tbd: should we show a modal with all email addresses as deletable ion-chips ?
-  public async copyAllEmailAddresses(memberships$: Observable<MembershipModel[]>): Promise<void> {
-    const emails = await firstValueFrom(this.getAllEmailAddresses(memberships$));
-    await copyToClipboardWithConfirmation(this.toastController, emails.toString() ?? '', '@subject.address.operation.emailCopy.conf');
   }
 
   /*-------------------------- exports --------------------------------*/

@@ -1,51 +1,10 @@
 import { DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_PRICE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { AddressModel, AddressUsage, MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
-import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 import { addIndexElement, die, getTodayStr } from '@bk2/shared-util-core';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
 
-import { PersonFormModel } from './person-form.model';
 import { PersonNewFormModel } from './person-new-form.model';
-
-export function convertPersonToForm(person?: PersonModel): PersonFormModel | undefined {
-  if (!person) return undefined;
-  return {
-    bkey: person.bkey ?? DEFAULT_KEY, // readonly
-    firstName: person.firstName ?? DEFAULT_NAME,
-    lastName: person.lastName ?? DEFAULT_NAME,
-    gender: person.gender ?? DEFAULT_GENDER,
-    dateOfBirth: person.dateOfBirth ?? DEFAULT_DATE,
-    dateOfDeath: person.dateOfDeath ?? DEFAULT_DATE ,
-    ssnId: formatAhv(person.ssnId, AhvFormat.Friendly),
-    bexioId: person.bexioId ?? DEFAULT_ID,
-    notes: person.notes ?? DEFAULT_NOTES,
-    tags: person.tags ?? DEFAULT_TAGS,
-    tenants: person.tenants ?? DEFAULT_TENANTS,  
-  };
-}
-
-/**
- * Only convert back the fields that can be changed by the user.
- * @param person  the subject to be updated.
- * @param vm  the view model, ie. the form data with the updated values.
- * @returns the updated subject.
- */
-export function convertFormToPerson(vm?: PersonFormModel, person?: PersonModel): PersonModel {
-  if (!person) die('person.util.convertFormToPerson: person is mandatory.');
-  if (!vm) return person;
-  
-  person.firstName = vm.firstName ?? DEFAULT_NAME;
-  person.lastName = vm.lastName ?? die('PersonUtil.convertFormToPerson: lastName is mandatory.');
-  person.gender = vm.gender ?? DEFAULT_GENDER;
-  person.dateOfBirth = vm.dateOfBirth ?? DEFAULT_DATE;
-  person.dateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
-  person.ssnId = formatAhv(vm.ssnId ?? DEFAULT_ID, AhvFormat.Electronic);
-  person.notes = vm.notes ?? DEFAULT_NOTES;
-  person.bexioId = vm.bexioId ?? DEFAULT_ID;
-  person.tags = vm.tags ?? DEFAULT_TAGS;
-  return person;
-}
 
 // new person
 export function createNewPersonFormModel(org?: OrgModel): PersonNewFormModel {

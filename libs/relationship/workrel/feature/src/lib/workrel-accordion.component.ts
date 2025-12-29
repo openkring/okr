@@ -1,19 +1,18 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
 
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, WorkrelModel } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
-import { getItemLabel, hasRole, isOngoing } from '@bk2/shared-util-core';
-
-import { WorkrelAccordionStore } from './workrel-accordion.store';
+import { hasRole, isOngoing } from '@bk2/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { ActionSheetController } from '@ionic/angular';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { WorkrelNamePipe } from '@bk2/relationship-workrel-util';
+
+import { WorkrelStore } from './workrel.store';
 
 @Component({
   selector: 'bk-workrel-accordion',
@@ -23,7 +22,7 @@ import { WorkrelNamePipe } from '@bk2/relationship-workrel-util';
     EmptyListComponent,
     IonAccordion, IonItem, IonLabel, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonButton, IonIcon
   ],
-  providers: [WorkrelAccordionStore],
+  providers: [WorkrelStore],
   styles: [`
     .list-avatar { margin-top: 0px; margin-bottom: 0px; width: 30px; height: 30px; }
     `],
@@ -76,7 +75,7 @@ import { WorkrelNamePipe } from '@bk2/relationship-workrel-util';
   `,
 })
 export class WorkrelAccordionComponent {
-  protected readonly workRelStore = inject(WorkrelAccordionStore);
+  protected readonly workRelStore = inject(WorkrelStore);
   private actionSheetController = inject(ActionSheetController);
 
   public personKey = input<string>();

@@ -19,10 +19,12 @@ import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
   `
 })
 export class LabelComponent {
+  // inputs
   public lines = input<'none' | 'full' | 'inset'>('inset');
   public label = input<string>();
   public color = input<ColorIonic>(ColorIonic.Primary);
   public slot = input<'start' | 'end' | 'icon-only'>('start');
 
+  // passing constants to the template
   protected colorsIonic = ColorsIonic;
 }

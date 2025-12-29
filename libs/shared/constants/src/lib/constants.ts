@@ -26,6 +26,12 @@ export const PHONE_PATTERN = '[- +()0-9]{6,}';
 export const AVATAR_URL = 'assets/img/logo_square.png';
 export const AVATAR_ROUND_URL = 'assets/img/logo_round.png';
 export const SHOW_FOOTER = false;
+export const DEFAULT_IMAGE_WIDTH_SMALL = 160; // in px
+export const DEFAULT_IMAGE_HEIGHT_SMALL = 90;
+export const DEFAULT_IMAGE_WIDTH = 480; // in px
+export const DEFAULT_IMAGE_HEIGHT = 270;
+export const DEFAULT_ALBUM_WIDTH = 400;
+export const DEFAULT_ALBUM_HEIGHT = 400;
 export const THUMBNAIL_SIZE = 200; // in px
 export const AVATAR_SIZE_SMALL = 30; // in px
 export const LOGO_WIDTH = 300; // in px
@@ -33,6 +39,9 @@ export const LOGO_HEIGHT = 200; // in px
 export const BUTTON_WIDTH = '60'; // in px
 export const BUTTON_HEIGHT = '60'; // in px
 export const ICON_SIZE = '40'; // in px
+export const DEFAULT_SIZES = '(max-width: 786px) 50vw, 100vw';
+export const DEFAULT_BORDER = '1px';
+export const DEFAULT_BORDER_RADIUS = '4';
 //-----------------------------------------------
 // dates
 //-----------------------------------------------
@@ -86,6 +95,7 @@ export const DEFAULT_ROLE = 'registered';
 // other defaults
 //-----------------------------------------------
 export const DEFAULT_CURRENCY = 'CHF';
+export const DEFAULT_ICON = 'other';
 export const DEFAULT_SALARY = 6000;
 export const DEFAULT_KEY = '';
 export const DEFAULT_NAME = '';
@@ -94,6 +104,7 @@ export const DEFAULT_TAGS = '';
 export const DEFAULT_PRICE = 0;
 export const DEFAULT_COUNT = '1';
 export const DEFAULT_TITLE = '';
+export const DEFAULT_LOCALE = 'de-ch';
 export const DEFAULT_SECTIONS: string[] = [];
 export const DEFAULT_TENANTS: string[] = [];
 export const DEFAULT_DATE = '';

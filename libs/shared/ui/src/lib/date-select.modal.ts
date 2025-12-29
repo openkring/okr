@@ -4,8 +4,9 @@ import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } f
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { HeaderComponent } from './header.component';
 import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
+
+import { HeaderComponent } from './header.component';
 
 @Component({
   selector: 'bk-date-select-modal',
@@ -18,7 +19,7 @@ import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
   viewProviders: [vestFormsViewProviders],
   template: `
     <ng-template>
-      <bk-header title="{{ header() | translate | async }}" [isModal]="true" />
+      <bk-header [title]="header()" [isModal]="true" />
       <ion-content class="ion-padding">
         <ion-datetime
           min="1900-01-01" max="2100-12-31"
@@ -43,16 +44,12 @@ import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
 export class DateSelectModalComponent {
   private readonly modalController = inject(ModalController);
 
-  // tbd: switching to input signals leads to error: not a function
-  // see: https://github.com/ionic-team/ionic-framework/issues/28876
-  // see: https://github.com/ionic-team/ionic-framework/pull/29453 
-  // should be fixed with Ionic 8.1.1 or 8.2 and is backwards-incompatible:  useSetInputAPI: true,
+  // inputs
   public isoDate = input(getTodayStr(DateFormat.IsoDate)); // mandatory date in isoDate format (yyyy-MM-dd)
   public header = input('@general.operation.select.date');
   protected locale = input('de-ch'); // locale for the input field, used for formatting
 
   /**
-   * 
    * @param detail 
    * @returns string | string[] | undefined | null
    */

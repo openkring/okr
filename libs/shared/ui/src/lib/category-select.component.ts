@@ -76,8 +76,9 @@ let id = 0;
   `
 })
 export class CategorySelectComponent {
-  public category = input.required<CategoryListModel>(); // mandatory view model
+  // inputs
   public selectedItemName = model.required<string>(); // mandatory view model
+  public category = input.required<CategoryListModel>(); // mandatory view model
   public withAll = input(false); // if true, the first item in the list is 'All' and the user can select it. This is useful for filtering.
   protected showWithAll = computed(() => coerceBoolean(this.withAll()));
   public labelName = input('label'); // the name of the label in the i18n file
@@ -105,8 +106,6 @@ export class CategorySelectComponent {
   protected popoverId = `select-cat-${id++}`;
   protected selectedItem = computed(() => this.items().find(item => item.name === this.selectedItemName()) ?? this.items()[0]);
 
-  protected changed = output<string>();   // we need this notification when selecting a category in the toolbar
-
   /**
    * Compare two CategoryItemModels.
    * Return true if they are the same.
@@ -117,7 +116,6 @@ export class CategorySelectComponent {
 
   public select(item: CategoryItemModel): void {
     this.selectedItemName.set(item.name);
-    this.changed.emit(item.name);
   }
 
   protected getItemLabel(item: CategoryItemModel): string {

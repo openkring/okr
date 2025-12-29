@@ -3,16 +3,17 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonImg, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryModel } from '@bk2/shared-models';
+import { CategoryItemModel, CategoryListModel, CategoryModel } from '@bk2/shared-models';
 
 import { ENV } from '@bk2/shared-config';
 import { HeaderComponent } from './header.component';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-card-select-modal',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, 
+    TranslatePipe, AsyncPipe, SvgIconPipe,
     HeaderComponent,
     IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonImg
   ],
@@ -22,19 +23,19 @@ import { HeaderComponent } from './header.component';
   `],
   template: `
     @if(slug()) {
-      <bk-header title="{{ '@general.operation.select.' + slug() | translate | async }}" [isModal]="true" />
+      <bk-header [title]="headerTitle()" [isModal]="true" />
       <ion-content>
         <ion-grid>
           <ion-row>
-            @for(cat of categories(); track cat; let i = $index) {
+            @for(item of items(); track $index) {
               <ion-col size="6" size-md="3">
-                <ion-card (click)="select(i)">
+                <ion-card (click)="select(item)">
                   <ion-card-header>
-                    <ion-card-title>{{ '@' + cat.i18nBase + '.label' | translate | async }}</ion-card-title>
-                    <ion-card-subtitle>{{ cat.name }}</ion-card-subtitle>
+                    <ion-card-title>{{ '@' + i18nBase() + '.' + item.name + '.label' | translate | async }}</ion-card-title>
+                    <ion-card-subtitle>{{ item.name }}</ion-card-subtitle>
                   </ion-card-header>
                   <ion-card-content>
-                    <ion-img src="{{ path() + cat.name + '.svg'}}" alt="{{ cat.name }}" />
+                    <ion-img src="{{ item.name | svgIcon:'section' }}" alt="{{ item.name }}" />
                   </ion-card-content>
                 </ion-card>
               </ion-col>
@@ -49,11 +50,17 @@ export class CardSelectModalComponent {
   private readonly env = inject(ENV);
   private readonly modalController = inject(ModalController);
 
-  public categories = input.required<CategoryModel[]>();
+  // inputs
+  public category = input.required<CategoryListModel>();
   public slug = input.required<string>();
+
+  // computed
+  protected i18nBase = computed(() => this.category().i18nBase);
+  protected items = computed(() => this.category().items);
   protected path = computed(() => `${this.env.services.imgixBaseUrl}/logo/${this.slug()}/`);
+  protected headerTitle = computed(() => `@general.operation.select.${this.slug()}`);
   
-  public async select(index: number): Promise<boolean> {
-    return await this.modalController.dismiss(index, 'confirm');
+  public async select(item: CategoryItemModel): Promise<boolean> {
+    return await this.modalController.dismiss(item, 'confirm');
   }
 }

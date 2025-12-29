@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { OwnershipModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getItemLabel, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -28,7 +28,7 @@ import { getCategoryIcon } from '@bk2/category-util';
   providers: [OwnershipListStore],
   template: `
     <ion-header>
-    <ion-toolbar color="secondary" id="bkheader">
+    <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
       <ion-title>{{ selectedOwnershipsCount()}}/{{ownershipsCount()}} {{ title() | translate | async }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
@@ -49,9 +49,9 @@ import { getCategoryIcon } from '@bk2/category-util';
 
     <!-- search and filters -->
     <bk-list-filter
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onTypeSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
     />
 
     <!-- list header -->
@@ -113,10 +113,15 @@ export class OwnershipListComponent {
   protected ownershipListStore = inject(OwnershipListStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
   protected currentUser = computed(() => this.ownershipListStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+
+  // filters
+  protected searchTerm = linkedSignal(() => this.ownershipListStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.ownershipListStore.selectedTag());
 
   protected filteredOwnerships = computed(() => {
     switch (this.listId()) {
@@ -142,6 +147,21 @@ export class OwnershipListComponent {
   });
   protected title = computed(() => {
     return `@ownership.list.${this.listId()}.title`;
+  });
+
+  protected selectedType = linkedSignal(() => {
+    switch (this.listId()) {
+      case 'privateBoats':
+      case 'lockers':
+        return this.ownershipListStore.selectedGender();
+      case 'scsBoats':
+        return this.ownershipListStore.selectedRowingBoatType();
+      case 'all':
+      case 'ownerships':
+        return this.ownershipListStore.selectedResourceType();
+      default:
+        return 'all';
+    }
   });
 
   protected types = computed(() => {
@@ -174,74 +194,7 @@ export class OwnershipListComponent {
   private rboatTypes = this.ownershipListStore.appStore.getCategory('rboat_type');
   private resourceTypes = this.ownershipListStore.appStore.getCategory('resource_type');
 
-  /******************************* actions *************************************** */
-  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const selectedMethod = $event.detail.data;
-    switch (selectedMethod) {
-      case 'add': await this.ownershipListStore.add(); break;
-      case 'exportRaw': await this.ownershipListStore.export("raw"); break;
-      default: error(undefined, `OwnershipListComponent.call: unknown method ${selectedMethod}`);
-    }
-  }
-
-  /**
-   * Displays an ActionSheet with all possible actions on a Ownership. Only actions are shown, that the user has permission for.
-   * After user selected an action this action is executed.
-   * @param ownership 
-   */
-  protected async showActions(ownership: OwnershipModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, ownership);
-    await this.executeActions(actionSheetOptions, ownership);
-  }
-
-  /**
-   * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param ownership 
-   */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
-    if (hasRole('resourceAdmin', this.ownershipListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      if (isOngoing(ownership.validTo)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('endownership', this.imgixBaseUrl, 'stop-circle'));
-      }
-    }
-    if (hasRole('admin', this.ownershipListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
-    }
-    actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
-  }
-
-  /**
-   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
-   * @param ownership 
-   */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): Promise<void> {
-    if (actionSheetOptions.buttons.length > 0) {
-      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
-      await actionSheet.present();
-      const { data } = await actionSheet.onDidDismiss();
-      if (!data) return;
-      switch (data.action) {
-        case 'delete':
-          await this.ownershipListStore.delete(ownership, this.readOnly());
-          break;
-        case 'edit':
-          await this.ownershipListStore.edit(ownership, this.readOnly());
-          break;
-        case 'view':
-          await this.ownershipListStore.edit(ownership, true);
-          break;
-        case 'endownership':
-          await this.ownershipListStore.end(ownership, this.readOnly());
-          break;
-      }
-    }
-  }
-
-  /******************************* change notifications *************************************** */
+  /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
     this.ownershipListStore.setSearchTerm(searchTerm);
   }
@@ -265,6 +218,73 @@ export class OwnershipListComponent {
         break;
       default:
         break;
+    }
+  }
+
+  /******************************* actions *************************************** */
+  public async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    const selectedMethod = $event.detail.data;
+    switch (selectedMethod) {
+      case 'add': await this.ownershipListStore.add(this.readOnly()); break;
+      case 'exportRaw': await this.ownershipListStore.export("raw"); break;
+      default: error(undefined, `OwnershipListComponent.call: unknown method ${selectedMethod}`);
+    }
+  }
+
+  /**
+   * Displays an ActionSheet with all possible actions on a Ownership. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param ownership 
+   */
+  protected async showActions(ownership: OwnershipModel): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, ownership);
+    await this.executeActions(actionSheetOptions, ownership);
+  }
+
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param ownership 
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): void {
+    if (hasRole('resourceAdmin', this.ownershipListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.edit', this.imgixBaseUrl, 'create_edit'));
+      if (isOngoing(ownership.validTo)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('ownership.end', this.imgixBaseUrl, 'stop-circle'));
+      }
+    }
+    if (hasRole('admin', this.ownershipListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('ownership.delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('ownership.view', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param ownership 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, ownership: OwnershipModel): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
+      switch (data.action) {
+        case 'ownership.delete':
+          await this.ownershipListStore.delete(ownership, this.readOnly());
+          break;
+        case 'ownership.edit':
+          await this.ownershipListStore.edit(ownership, this.readOnly());
+          break;
+        case 'ownership.view':
+          await this.ownershipListStore.edit(ownership, true);
+          break;
+        case 'ownership.end':
+          await this.ownershipListStore.end(ownership, this.readOnly());
+          break;
+      }
     }
   }
 

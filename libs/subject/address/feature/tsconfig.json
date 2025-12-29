@@ -16,16 +16,15 @@
   "exclude": ["dist/**/*"],
   "references": [
     {"path": "../../../shared/models/tsconfig.lib.json"},
-    {"path": "../../../shared/config/tsconfig.lib.json"},
-    {"path": "../../../shared/categories/tsconfig.lib.json"},
-    {"path": "../../../shared/feature/tsconfig.lib.json"},
     {"path": "../../../shared/i18n/tsconfig.lib.json"},
     {"path": "../../../shared/ui/tsconfig.lib.json"},
-    {"path": "../../../shared/pipes/tsconfig.lib.json"},
+    {"path": "../../../shared/data-access/tsconfig.lib.json"},
+    {"path": "../../../shared/feature/tsconfig.lib.json"},
+    {"path": "../../../shared/util-angular/tsconfig.lib.json"},
     {"path": "../../../shared/util-core/tsconfig.lib.json"},
-    {"path": "../../../subject/address/util/tsconfig.lib.json"},
+    {"path": "../../../subject/address/ui/tsconfig.lib.json"},
     {"path": "../../../subject/address/data-access/tsconfig.lib.json"},
     {"path": "../../../avatar/util/tsconfig.lib.json"},
-    {"path": "../../../subject/swisscities/ui/tsconfig.lib.json"}
+    {"path": "../../../avatar/data-access/tsconfig.lib.json"}
   ]
 }

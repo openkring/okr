@@ -1,14 +1,13 @@
-export * from './lib/album-section-config.component';
-export * from './lib/article-section-config.component';
-export * from './lib/button-action-config.component';
-export * from './lib/button-section-config.component';
-export * from './lib/button-widget.component';
-export * from './lib/button.form';
-export * from './lib/icon.form';
-export * from './lib/iframe.form';
-export * from './lib/image-config.form';
-export * from './lib/map.form';
-export * from './lib/people-list.form';
-export * from './lib/persons-widget.component';
-export * from './lib/table-section.form';
-export * from './lib/video.form';
+export * from './lib/album-config';
+export * from './lib/editor-config';
+export * from './lib/iframe-config';
+export * from './lib/image-style';
+export * from './lib/map-config';
+export * from './lib/people-config';
+export * from './lib/video-config';
+
+export * from './lib/section.form';
+export * from './lib/section-config';
+
+export * from './lib/button-widget';
+export * from './lib/persons-widget';

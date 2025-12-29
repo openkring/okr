@@ -5,3 +5,4 @@ export * from './lib/person-select.modal';
 export * from './lib/person-select.store';
 export * from './lib/resource-select.modal';
 export * from './lib/resource-select.store';
+export * from './lib/model-select.service';

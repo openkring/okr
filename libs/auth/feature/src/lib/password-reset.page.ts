@@ -30,7 +30,7 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
       }
     `,
   template: `
-    <bk-header title="{{ '@auth.operation.pwdreset.title' | translate | async }}" />
+    <bk-header title="@auth.operation.pwdreset.title" />
     <ion-content>
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Background Image" />

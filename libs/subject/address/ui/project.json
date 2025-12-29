@@ -1,0 +1,25 @@
+{
+  "name": "subject-address-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/subject/address/ui/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:address", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/subject/address/ui",
+        "main": "libs/subject/address/ui/src/index.ts",
+        "tsConfig": "libs/subject/address/ui/tsconfig.lib.json",
+        "assets": ["libs/subject/address/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
+

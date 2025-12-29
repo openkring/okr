@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -25,7 +25,7 @@ import { SearchbarComponent } from './searchbar.component';
             <ion-menu-button />
           </ion-buttons>
         }
-        <ion-title>{{ title() }}</ion-title>
+        <ion-title>{{ title() | translate | async }}</ion-title>
         @if(isRootPage() === false) {
           <ion-buttons slot="end">
             @if(shouldShowCloseButton()) {
@@ -43,7 +43,7 @@ import { SearchbarComponent } from './searchbar.component';
       </ion-toolbar>
       @if(isSearchablePage()) {
         <ion-toolbar>
-          <bk-searchbar placeholder="{{ placeholder() | translate | async }}" (ionInput)="onSearchtermChange($event)" />
+          <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ placeholder() | translate | async }}" />
         </ion-toolbar>
       }
     </ion-header>
@@ -55,31 +55,37 @@ import { SearchbarComponent } from './searchbar.component';
 })
 export class HeaderComponent {
   private readonly appNavigationService = inject(AppNavigationService);
-  private readonly modalController = inject(ModalController);
+  private readonly modalController = inject(ModalController, { optional: true });
+
+  // inputs
+  public searchTerm = model(''); // search term for the search bar
   public title = input.required<string>();
   public isModal = input(false);
-  protected isModalDialog = computed(() => coerceBoolean(this.isModal()));
   public isRoot = input(false);
-  protected isRootPage = computed(() => coerceBoolean(this.isRoot()));
   public isSearchable = input(false);
-  protected isSearchablePage = computed(() => coerceBoolean(this.isSearchable()));
   public showOkButton = input(false);
-  protected shouldShowOkButton = computed(() => coerceBoolean(this.showOkButton()));
   public showCloseButton = input(true);
-  protected shouldShowCloseButton = computed(() => coerceBoolean(this.showCloseButton()));
   public placeholder = input('@general.operation.search.placeholder');
+
+  // coerced boolean inputs
+  protected isModalDialog = computed(() => coerceBoolean(this.isModal()));
+  protected isRootPage = computed(() => coerceBoolean(this.isRoot()));
+  protected isSearchablePage = computed(() => coerceBoolean(this.isSearchable()));
+  protected shouldShowOkButton = computed(() => coerceBoolean(this.showOkButton()));
+  protected shouldShowCloseButton = computed(() => coerceBoolean(this.showCloseButton()));
+
+  // outputs
   public okClicked = output();
-  public searchtermChange = output<string>();
 
   public back(): void {
     if (this.isModal()) {
-      this.modalController.dismiss(null, 'cancel');
+      this.modalController?.dismiss(null, 'cancel');
     } else {
       this.appNavigationService.back();
     }
   }
 
-  protected onSearchtermChange($event: Event): void {
-    this.searchtermChange.emit(($event.target as HTMLInputElement).value);
+  protected onSearchTermChange($event: Event): void {
+    this.searchTerm.set(($event.target as HTMLInputElement).value);
   }
 }

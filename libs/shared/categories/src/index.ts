@@ -8,6 +8,7 @@ export * from './lib/delivery-type';
 export * from './lib/export-format';
 export * from './lib/gallery-effect';
 export * from './lib/image-action';
+export * from './lib/image-type';
 export * from './lib/language';
 export * from './lib/name-displays';
 export * from './lib/person-sort-criteria';

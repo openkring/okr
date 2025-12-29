@@ -1,7 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared-models';
+import { TrackerSection } from '@bk2/shared-models';
 import { ButtonCopyComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { lookupAddress } from '@bk2/shared-util-angular';
 
@@ -99,7 +99,7 @@ import { TrackerSectionStore } from './tracker-section.store';
   `
 })
 export class TrackerSectionComponent {
-  public section = input<SectionModel>();
+  public section = input<TrackerSection>();
   protected trackerStore = inject(TrackerSectionStore);
 
   protected title = computed(() => this.section()?.title);  

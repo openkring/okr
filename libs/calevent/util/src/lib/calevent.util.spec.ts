@@ -1,8 +1,7 @@
 import { CalEventModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CalEventFormModel } from './calevent-form.model';
-import { convertCalEventToForm, convertCalEventToFullCalendar, convertFormToCalEvent, fullDayEventLength, isCalEvent, isFullDayEvent } from './calevent.util';
+import { convertCalEventToFullCalendar, fullDayEventLength, isCalEvent, isFullDayEvent } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@bk2/shared-util-core', async importOriginal => {
@@ -25,14 +24,6 @@ describe('CalEvent Utils', () => {
 
   const modelType: 'person' | 'org' = 'person';
 
-  const TestAvatar = {
-    key: 'avatar-1',
-    name1: 'Name One',
-    name2: 'Name Two',
-    modelType: modelType,
-    label: 'Test Avatar',
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetTodayStr.mockReturnValue('20250903');
@@ -45,73 +36,6 @@ describe('CalEvent Utils', () => {
     baseCalEvent.startTime = '10:00';
     baseCalEvent.endDate = '20251010';
     baseCalEvent.endTime = '11:00';
-  });
-
-  describe('convertCalEventToForm', () => {
-    it('should convert a fully populated CalEventModel to a form model', () => {
-      const formModel = convertCalEventToForm(baseCalEvent);
-      expect(formModel.bkey).toBe('event-1');
-      expect(formModel.name).toBe('Test Event');
-      expect(formModel.startDate).toBe('20251010');
-      expect(formModel.startTime).toBe('10:00');
-    });
-
-    it('should use default values for missing properties', () => {
-      const partialEvent = new CalEventModel(tenantId);
-      partialEvent.bkey = 'event-2';
-
-      const formModel = convertCalEventToForm(partialEvent);
-      expect(formModel.startDate).toBe('');
-      expect(formModel.endDate).toBe('');
-      expect(formModel.periodicity).toBe('once');
-    });
-  });
-
-  describe('convertFormToCalEvent', () => {
-    let formModel: CalEventFormModel;
-
-    beforeEach(() => {
-      formModel = {
-        bkey: 'event-1',
-        tenants: [tenantId],
-        name: 'Updated Event',
-        type: 'training',
-        startDate: '20251111',
-        startTime: '14:00',
-        endDate: '20251111',
-        endTime: '15:00',
-        locationKey: 'loc-1',
-        calendars: ['cal-1'],
-        periodicity: 'daily',
-        repeatUntilDate: '20251231',
-        responsiblePersons: [TestAvatar],
-        url: 'http://example.com',
-        description: 'desc',
-        tags: 'tag1',
-      };
-    });
-
-    it('should update an existing CalEventModel from a form model', () => {
-      const updatedEvent = convertFormToCalEvent(baseCalEvent, formModel, tenantId);
-      expect(updatedEvent.name).toBe('Updated Event');
-      expect(updatedEvent.type).toBe('training');
-      expect(updatedEvent.startDate).toBe('20251111');
-    });
-
-    it('should create a new CalEventModel if one is not provided', () => {
-      const newEvent = convertFormToCalEvent(undefined, formModel, tenantId);
-      expect(newEvent).toBeInstanceOf(CalEventModel);
-      expect(newEvent.name).toBe('Updated Event');
-      expect(newEvent.tenants[0]).toBe(tenantId);
-    });
-
-    it('should use default values for missing form properties', () => {
-      const partialForm: CalEventFormModel = { bkey: 'form-1', name: 'Partial' } as CalEventFormModel;
-      const newEvent = convertFormToCalEvent(undefined, partialForm, tenantId);
-      expect(newEvent.startDate).toBe('20250903'); // from mockGetTodayStr
-      expect(newEvent.type).toBe('social');
-      expect(newEvent.periodicity).toBe('once');
-    });
   });
 
   describe('isCalEvent', () => {

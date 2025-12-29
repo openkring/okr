@@ -4,42 +4,7 @@ import { DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID,
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
 
-import { OrgFormModel } from './org-form.model';
 import { OrgNewFormModel } from './org-new-form.model';
-
-/*-------------------------- ORG --------------------------------*/
-export function convertOrgToForm(org?: OrgModel): OrgFormModel | undefined {
-  if (!org) return undefined;
-  return {
-    bkey: org.bkey ?? DEFAULT_KEY,
-    name: org.name ?? DEFAULT_NAME,
-    type: org.type ?? DEFAULT_ORG_TYPE,
-    dateOfFoundation: org.dateOfFoundation ?? DEFAULT_DATE,
-    dateOfLiquidation: org.dateOfLiquidation ?? DEFAULT_DATE,
-    membershipCategoryKey: org.membershipCategoryKey ?? 'mcat_default',
-    taxId: org.taxId ?? DEFAULT_ID,
-    bexioId: org.bexioId ?? DEFAULT_ID,
-    tags: org.tags ?? DEFAULT_TAGS,
-    notes: org.notes ?? DEFAULT_NOTES,
-  };
-}
-
-export function convertFormToOrg(vm?: OrgFormModel, org?: OrgModel): OrgModel {
-  if (!org) die('org.util.convertFormToOrg: org is mandatory.');
-  if (!vm) return org;
-  
-  org.bkey = vm.bkey ?? DEFAULT_KEY;
-  org.name = vm.name ?? DEFAULT_NAME;
-  org.type = vm.type ?? DEFAULT_ORG_TYPE;
-  org.dateOfFoundation = vm.dateOfFoundation ?? DEFAULT_DATE;
-  org.dateOfLiquidation = vm.dateOfLiquidation ?? DEFAULT_DATE;
-  org.membershipCategoryKey = vm.membershipCategoryKey ?? 'mcat_default';
-  org.taxId = vm.taxId ?? DEFAULT_ID;
-  org.notes = vm.notes ?? DEFAULT_NOTES;
-  org.bexioId = vm.bexioId ?? DEFAULT_ID;
-  org.tags = vm.tags ?? DEFAULT_TAGS;
-  return org;
-}
 
 /*-------------------------- NEW ORG --------------------------------*/
 export function convertFormToNewOrg(vm: OrgNewFormModel, tenantId: string): OrgModel {

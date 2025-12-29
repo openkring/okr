@@ -29,6 +29,7 @@
     {"path": "../../../relationship/personal-rel/ui/tsconfig.lib.json"},
     {"path": "../../../relationship/personal-rel/util/tsconfig.lib.json"},
     {"path": "../../../comment/feature/tsconfig.lib.json"},
+    {"path": "../../../document/feature/tsconfig.lib.json"},
     {"path": "../../../cms/menu/feature/tsconfig.lib.json"}
   ]
 }

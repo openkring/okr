@@ -1,5 +1,5 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, effect, input, model, output } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
@@ -39,10 +39,10 @@ import { USER_NOTIFICATION_FORM_SHAPE, UserNotificationFormModel, userNotificati
           <ion-grid>
             <ion-row>
             <ion-col size="12" size-md="6">                                                             
-              <bk-cat name="newsDelivery" [value]="newsDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" (changed)="onFieldChange('newsDelivery', $event)" />
+              <bk-cat name="newsDelivery" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">                                                             
-              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" [categories]="deliveryTypes" [readOnly]="readOnly()" (changed)="onFieldChange('invoiceDelivery', $event)" />
+              <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="readOnly()" />
             </ion-col>
             </ion-row>
           </ion-grid>
@@ -67,8 +67,8 @@ export class UserNotificationFormComponent {
   private readonly validationResult = computed(() => userNotificationFormValidations(this.formData()));
 
   // computed fields
-  protected newsDelivery = computed(() => this.formData().newsDelivery ?? DeliveryType.EmailAttachment);
-  protected invoiceDelivery = computed(() => this.formData().invoiceDelivery ?? DeliveryType.EmailAttachment);
+  protected newsDelivery = linkedSignal(() => this.formData().newsDelivery ?? DeliveryType.EmailAttachment);
+  protected invoiceDelivery = linkedSignal(() => this.formData().invoiceDelivery ?? DeliveryType.EmailAttachment);
 
   // passing constants to template
   protected readonly deliveryTypes = DeliveryTypes;
@@ -84,7 +84,7 @@ export class UserNotificationFormComponent {
     debugFormErrors('UserNotificationForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
-  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+  protected onFieldChange(fieldName: string, fieldValue: DeliveryType): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     debugFormErrors('UserNotificationForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }

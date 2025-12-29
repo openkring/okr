@@ -1,11 +1,16 @@
 import { Component, OnInit, computed, input, viewChild } from '@angular/core';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { FormsModule } from '@angular/forms';
 import { IonSearchbar } from '@ionic/angular/standalone';
+import { vestFormsViewProviders } from 'ngx-vest-forms';
+
+import { coerceBoolean } from '@bk2/shared-util-core';
+
 
 @Component({
   selector: 'bk-searchbar',
   standalone: true,
   imports: [
+    FormsModule, 
     IonSearchbar
   ],
   styles: [`
@@ -14,23 +19,29 @@ import { IonSearchbar } from '@ionic/angular/standalone';
       padding-bottom: 0 !important;
     }
   `],
+  viewProviders: [vestFormsViewProviders],
   template: `
       <ion-searchbar  #bksearch
-          type="search" 
-          inputmode="search"
-          [disabled]="isDisabled()"
-          [debounce]="debounce()"
-          [placeholder]="placeholder()"
-          [value]="searchTerm()">
+        type="search" 
+        inputmode="search"
+        [disabled]="isDisabled()"
+        [debounce]="debounce()"
+        [placeholder]="placeholder()"
+        [value]="searchTerm()">
       </ion-searchbar>
   `
 })
 export class SearchbarComponent implements OnInit {
+  // inputs
   public searchTerm = input('');
   public placeholder = input('');
   public disabled = input(false);
-  protected isDisabled = computed(() => coerceBoolean(this.disabled()));
   public debounce = input(500);
+
+  // coerced boolean inputs
+  protected isDisabled = computed(() => coerceBoolean(this.disabled()));
+
+  // view children
   protected bkSearch = viewChild<IonSearchbar>('bksearch');
 
   // fires ionInput event for every change of the value

@@ -1,15 +1,12 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { CalEventModel } from '@bk2/shared-models';
+import { CalEventModel, CategoryListModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, die } from '@bk2/shared-util-core';
+import { coerceBoolean } from '@bk2/shared-util-core';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CalEventFormComponent } from '@bk2/calevent-ui';
-import { CalEventFormModel, convertCalEventToForm, convertFormToCalEvent } from '@bk2/calevent-util';
 
 @Component({
   selector: 'bk-calevent-edit-modal',
@@ -17,62 +14,69 @@ import { CalEventFormModel, convertCalEventToForm, convertFormToCalEvent } from 
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
     CalEventFormComponent,
-    TranslatePipe, AsyncPipe,
     IonContent
   ],
   template: `
-    <bk-header title="{{ '@calEvent.operation.update.label' | translate | async }}" [isModal]="true" />
+    <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content no-padding>
-      <bk-calevent-form
-        [formData]="formData()" 
-        [currentUser]="currentUser()"
-        [types]="types()"
-        [periodicities]="periodicities()"
-        [allTags]="tags()" 
-        [locale]="locale()"
-        [readOnly]="isReadOnly()"
-        (formDataChange)="onFormDataChange($event)"
-      />
+    <ion-content class="ion-no-padding">
+      @if(currentUser(); as currentUser) {
+        <bk-calevent-form
+          [formData]="formData()" 
+          (formDataChange)="onFormDataChange($event)"
+          [currentUser]="currentUser"
+          [showForm]="showForm()"
+          [types]="types()"
+          [periodicities]="periodicities()"
+          [allTags]="tags()" 
+          [locale]="locale()"
+          [readOnly]="isReadOnly()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+        />
+      }
     </ion-content>
   `
 })
 export class CalEventEditModalComponent {
-  private readonly modalController = inject(ModalController);
-  protected readonly appStore = inject(AppStore);
+  private modalController = inject(ModalController);
 
   // inputs
   public calevent = input.required<CalEventModel>();
-  public readOnly = input<boolean>(true);
+  public currentUser = input.required<UserModel>();
+  public types = input.required<CategoryListModel>();
+  public periodicities = input.required<CategoryListModel>();
+  public tags = input.required<string>();
+  public locale = input.required<string>();
+  public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => convertCalEventToForm(this.calevent()));
+  protected formData = linkedSignal(() => structuredClone(this.calevent()));
+  protected showForm = signal(true);
 
   // derived signals
-  protected currentUser = computed(() => this.appStore.currentUser() ?? die('CalEventEditModal: current user is required'));
-  protected types = computed(() => this.appStore.getCategory('calevent_type'));
-  protected periodicities = computed(() => this.appStore.getCategory('periodicity'));
-  protected tags = computed(() => this.appStore.getTags('calevent'));
-  protected locale = computed(() => this.appStore.appConfig().locale);
-
+  protected headerTitle = computed(() => getTitleLabel('calevent', this.calevent().bkey, this.isReadOnly()));
+  
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    this.formDirty.set(false);
-    await this.modalController.dismiss(convertFormToCalEvent(this.formData(), this.calevent()), 'confirm');
+    await this.modalController.dismiss(this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(convertCalEventToForm(this.calevent()));  // reset
+    this.formData.set(structuredClone(this.calevent()));  // reset the form
+    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: CalEventFormModel): void {
+  protected onFormDataChange(formData: CalEventModel): void {
     this.formData.set(formData);
   }
 }

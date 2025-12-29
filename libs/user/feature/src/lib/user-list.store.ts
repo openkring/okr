@@ -80,13 +80,14 @@ export const UserListStore = signalStore(
         console.log('UserListStore.add() is not yet implemented.');
       },
 
-      async edit(user: UserModel): Promise<void> {
+      async edit(user: UserModel, readOnly = true): Promise<void> {
         store.appNavigationService.pushLink('/user/all' );
-        await navigateByUrl(store.router, `/user/${user.bkey}`);
+        await navigateByUrl(store.router, `/user/${user.bkey}`, { readOnly } );
         store.userResource.reload();
       },
 
-      async delete(user: UserModel): Promise<void> {
+      async delete(user: UserModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
         await store.userService.delete(user, store.appStore.currentUser());
         this.reset();
       },

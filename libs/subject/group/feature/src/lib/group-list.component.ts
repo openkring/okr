@@ -1,18 +1,18 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getItemLabel, hasRole } from '@bk2/shared-util-core';
+import { hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
-import { GroupListStore } from './group-list.store';
+import { GroupStore } from './group.store';
 
 @Component({
   selector: 'bk-group-list',
@@ -25,7 +25,7 @@ import { GroupListStore } from './group-list.store';
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover,
     IonAvatar, IonImg, IonList
   ],
-  providers: [GroupListStore],
+  providers: [GroupStore],
   template: `
     <ion-header>
       <!-- title and actions -->
@@ -51,8 +51,8 @@ import { GroupListStore } from './group-list.store';
 
     <!-- search and filters -->
     <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
     />
 
       <!-- list header -->
@@ -91,37 +91,44 @@ import { GroupListStore } from './group-list.store';
     `
 })
 export class GroupListComponent {
-  protected readonly groupListStore = inject(GroupListStore);
+  protected readonly groupStore = inject(GroupStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  protected filteredGroups = computed(() => this.groupListStore.filteredGroups() ?? []);
-  protected groupsCount = computed(() => this.groupListStore.groups()?.length ?? 0);
-  protected selectedGroupsCount = computed(() => this.filteredGroups().length);
-  protected isLoading = computed(() => this.groupListStore.isLoading());
-  protected tags = computed(() => this.groupListStore.getTags());
-  private currentUser = computed(() => this.groupListStore.currentUser());
+  // filter
+  protected searchTerm = linkedSignal(() => this.groupStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.groupStore.selectedTag());
 
-  private imgixBaseUrl = this.groupListStore.appStore.env.services.imgixBaseUrl;
+  // derived signals
+  protected filteredGroups = computed(() => this.groupStore.filteredGroups() ?? []);
+  protected groupsCount = computed(() => this.groupStore.groups()?.length ?? 0);
+  protected selectedGroupsCount = computed(() => this.filteredGroups().length);
+  protected isLoading = computed(() => this.groupStore.isLoading());
+  protected tags = computed(() => this.groupStore.getTags());
+  private currentUser = computed(() => this.groupStore.currentUser());
+  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
+
+  private imgixBaseUrl = this.groupStore.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.groupListStore.setSearchTerm(searchTerm);
+    this.groupStore.setSearchTerm(searchTerm);
   }
 
-  protected onTagSelected($event: string): void {
-    this.groupListStore.setSelectedTag($event);
+  protected onTagSelected(tag: string): void {
+    this.groupStore.setSelectedTag(tag);
   }
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.groupListStore.add(hasRole('memberAdmin', this.currentUser())); break;
-      case 'exportRaw': await this.groupListStore.export("raw_groups"); break;
-      default: error(undefined, `GroupListComponent.call: unknown method ${selectedMethod}`);
+      case 'add': await this.groupStore.add(hasRole('memberAdmin', this.currentUser())); break;
+      case 'exportRaw': await this.groupStore.export("raw"); break;
+      default: error(undefined, `GroupComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
@@ -141,13 +148,16 @@ export class GroupListComponent {
    * @param group 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('show', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('group.show', this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
-    if (hasRole('memberAdmin', this.groupListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    if (hasRole('registered', this.groupStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('group.view', this.imgixBaseUrl, 'create_edit'));
     }
-    if (hasRole('admin', this.groupListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('group.edit', this.imgixBaseUrl, 'create_edit'));
+    }
+    if (hasRole('admin', this.groupStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('group.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -163,14 +173,17 @@ export class GroupListComponent {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'delete':
-          await this.groupListStore.delete(group);
+        case 'group.delete':
+          await this.groupStore.delete(group, this.readOnly());
           break;
-        case 'edit':
-          await this.groupListStore.edit(group, !hasRole('memberAdmin', this.currentUser()));
+        case 'group.edit':
+          await this.groupStore.edit(group, this.readOnly());
           break;
-        case 'show':
-          await this.groupListStore.view(group, !hasRole('memberAdmin', this.currentUser()));
+        case 'group.view':
+          await this.groupStore.edit(group, true);
+          break;
+        case 'group.show':
+          await this.groupStore.view(group, this.readOnly());
           break;
       }
     }
@@ -178,6 +191,6 @@ export class GroupListComponent {
 
   /******************************** helpers ******************************************* */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.groupListStore.currentUser());
+    return hasRole(role, this.groupStore.currentUser());
   }
 }

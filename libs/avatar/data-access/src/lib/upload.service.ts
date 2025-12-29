@@ -3,7 +3,7 @@ import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { DocumentModel, DocumentModelName, Image } from "@bk2/shared-models";
+import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE } from "@bk2/shared-models";
 import { error } from "@bk2/shared-util-angular";
 import { getFileHash, getTodayStr, warn } from "@bk2/shared-util-core";
 import { DEFAULT_MIMETYPES } from "@bk2/shared-constants";
@@ -123,7 +123,7 @@ export class UploadService {
     });
   }
 
-  public async showZoomedImage(image: Image, title = '@content.type.article.zoomedImage', cssClass = 'zoom-modal'): Promise<void> {
-    await showZoomedImage(this.modalController, title, image, cssClass);     
+  public async showZoomedImage(url: string, title = '@content.type.article.zoomedImage', style = IMAGE_STYLE_SHAPE, altText = '', cssClass = 'zoom-modal'): Promise<void> {
+    await showZoomedImage(this.modalController, url, title, style, altText, cssClass);     
   }
 }

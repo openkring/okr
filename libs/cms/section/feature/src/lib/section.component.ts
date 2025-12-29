@@ -15,12 +15,12 @@ import { HeroSectionComponent } from './hero-section.component';
 import { IframeSectionComponent } from './iframe-section.component';
 import { MapSectionComponent } from './map-section.component';
 import { MissingSectionComponent } from './missing-section.component';
-import { PeopleListSectionComponent } from './people-list-section.component';
-import { SectionDetailStore } from './section-detail.store';
+import { PeopleSectionComponent } from './people-section.component';
 import { SwiperSectionComponent } from './swiper-section.component';
 import { TableSectionComponent } from './table-section.component';
 import { TrackerSectionComponent } from './tracker-section.component';
 import { VideoSectionComponent } from './video-section.component';
+import { SectionStore } from './section.store';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -33,11 +33,11 @@ import { VideoSectionComponent } from './video-section.component';
   imports: [
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
-    CalendarSectionComponent, PeopleListSectionComponent, GallerySectionComponent, TrackerSectionComponent,
+    CalendarSectionComponent, PeopleSectionComponent, GallerySectionComponent, TrackerSectionComponent,
     HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent, ChatSectionComponent,
     IonItem, IonLabel
   ],
-  providers: [SectionDetailStore],
+  providers: [SectionStore],
   template: `
     @if (section(); as section) {
       @if (hasRole(roleNeeded())) {
@@ -46,12 +46,12 @@ import { VideoSectionComponent } from './video-section.component';
             <bk-album-section [section]="section" />
           }
           @case('article') {
-            <bk-article-section [section]="section" [readOnly]="isReadOnly()" />
+            <bk-article-section [section]="section" />
           }
           @case('button') {  
-            <bk-button-section [section]="section" [readOnly]="isReadOnly()" />
+            <bk-button-section [section]="section" />
           }
-          @case('calendar') {
+          @case('cal') {
             <bk-calendar-section [section]="section" />
           }
           @case('chart') {
@@ -72,8 +72,8 @@ import { VideoSectionComponent } from './video-section.component';
           @case('map') {
             <bk-map-section [section]="section" />
           }
-          @case('peopleList') {
-            <bk-people-list-section [section]="section" [readOnly]="isReadOnly()" />
+          @case('people') {
+            <bk-people-section [section]="section" />
           }
           @case('slider') {
             <bk-swiper-section [section]="section" />
@@ -97,30 +97,10 @@ import { VideoSectionComponent } from './video-section.component';
         <ion-label>Missing type on section {{ id() }}</ion-label>
       </ion-item>
     }
-<!--         
-          @case('list') {      
-            <bk-list-section [section]="section" />           
-          }
-          @case('model') {
-            <bk-model-section [section]="section" />
-          }
-          @case('accordion') {
-            <bk-accordion-section [section]="section" [readOnly]="isReadOnly()" />      
-          }
-
-          Testimonials (Section)
-A Testimonials page is where customers share their experiences, building trust and credibility with potential visitors. 
-Here, try to demonstrate feedback in a clean, easy-to-navigate gallery format. Whether a grid or a carousel, the layout should allow 
-visitors to effortlessly browse through it.
-
-Each testimonial could feature a brief quote prominently, with the option to expand or click through for more detailed stories or 
-video reviews if users want to know more. Styling should be consistent with your brand but also aim to highlight the feedback 
-so they stand out on the page. Use clean fonts and subtle background colors that make the text easy to read and draw attention to the quotes.
-  -->
   `
 })
 export class SectionComponent {
-  private readonly sectionStore = inject(SectionDetailStore);
+  private readonly sectionStore = inject(SectionStore);
 
   public id = input.required<string>();     // sectionId
   public readOnly = input<boolean>(true);

@@ -4,13 +4,13 @@ import { Geolocation, Position } from '@capacitor/geolocation';
 import { GoogleMap, MapType } from '@capacitor/google-maps';
 import { Capacitor } from '@capacitor/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
+import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { LocationCollection, LocationModel, SectionModel } from '@bk2/shared-models';
+import { LocationCollection, LocationModel, MAP_CONFIG_SHAPE, MapSection } from '@bk2/shared-models';
 import { OptionalCardHeaderComponent } from '@bk2/shared-ui';
 import { debugMessage, die } from '@bk2/shared-util-core';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'bk-map-section',
@@ -58,17 +58,18 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   private readonly firestoreService = inject(FirestoreService);
   private readonly platformId = inject(PLATFORM_ID);
 
-  public section = input.required<SectionModel>();
+  public section = input.required<MapSection>();
   
   protected mapId: string;
   protected locationError: string | null = null;
 
-  private readonly centerLatitude = computed(() => parseFloat(this.section()?.properties?.map?.centerLatitude ?? '') || 0);
-  private readonly centerLongitude = computed(() => parseFloat(this.section()?.properties?.map?.centerLongitude ?? '') || 0);
-  private readonly zoom = computed(() => parseFloat(this.section()?.properties?.map?.zoom ?? '15') || 15);
+  private readonly mapConfig = computed(() => this.section()?.properties ?? MAP_CONFIG_SHAPE);
+  private readonly centerLatitude = computed(() => this.mapConfig().centerLatitude);
+  private readonly centerLongitude = computed(() => this.mapConfig().centerLongitude);
+  private readonly zoom = computed(() => this.mapConfig().zoom);
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
-  protected readonly useCurrentLocation = computed(() => this.section()?.properties?.map?.useCurrentLocationAsCenter ?? false);
+  protected readonly useCurrentLocation = computed(() => this.mapConfig().useCurrentLocationAsCenter);
 
   private map: GoogleMap | undefined;
   private resizeObserver: ResizeObserver | undefined;

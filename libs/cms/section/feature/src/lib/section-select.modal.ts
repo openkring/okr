@@ -1,11 +1,9 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
-import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, inject, linkedSignal } from '@angular/core';
+import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
-import { SectionSelectStore } from './section-select.store';
+import { SectionStore } from './section.store';
 
 /**
  * Modal to sort the sections of a page.
@@ -14,14 +12,17 @@ import { SectionSelectStore } from './section-select.store';
   selector: 'bk-section-select',
   standalone: true,
   imports: [ 
-    TranslatePipe, AsyncPipe,
     SpinnerComponent, HeaderComponent,
     IonContent, IonItem, IonList, IonLabel
   ],
-  providers: [SectionSelectStore],
   template: `
-    <bk-header title="{{ '@content.section.operation.select.label' | translate | async}}" [isModal]="true"
-      [isSearchable]="true" (searchtermChange)="onSearchtermChange($event)" />
+    <bk-header
+      [searchTerm]="searchTerm()"
+      (searchTermChange)="sectionStore.setSelSearchTerm($event)"
+      [isSearchable]="true"
+      title="@content.section.operation.select.label"
+      [isModal]="true"
+    />
     <ion-content>
       @if (isLoading()) {
         <bk-spinner />
@@ -40,18 +41,14 @@ import { SectionSelectStore } from './section-select.store';
   `
 })
 export class SectionSelectModalComponent {
-  private readonly modalController = inject(ModalController);
-  protected sectionSelectStore = inject(SectionSelectStore);
+  protected sectionStore = inject(SectionStore);
 
-  protected filteredSections = computed(() => this.sectionSelectStore.filteredSections() ?? []);
-  protected isLoading = computed(() => this.sectionSelectStore.isLoading());
+  protected searchTerm = linkedSignal(() => this.sectionStore.selSearchTerm());
+  protected filteredSections = computed(() => this.sectionStore.selFilteredSections() ?? []);
+  protected isLoading = computed(() => this.sectionStore.isLoading());
   
   protected select(sectionKey: string): Promise<boolean> {
-    return this.modalController.dismiss(sectionKey, 'confirm');
-  }
-
-  protected onSearchtermChange(searchTerm: string): void {
-    this.sectionSelectStore.setSearchTerm(searchTerm);
+    return this.sectionStore.modalController.dismiss(sectionKey, 'confirm');
   }
 }
 

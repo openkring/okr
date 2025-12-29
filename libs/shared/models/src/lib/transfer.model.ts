@@ -1,7 +1,7 @@
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE } from '@bk2/shared-constants';
+
 import { AvatarInfo } from './avatar-info';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
-import { ResourceInfo } from './resource.model';
 
 /**
  * A transfer of ownership or membership from one entity to another.
@@ -27,7 +27,15 @@ export class TransferModel implements BkModel, NamedModel, SearchableModel, Tagg
 
   public subjects: AvatarInfo[] = []; // list of subjects, e.g. person or org or account
   public objects: AvatarInfo[] = []; // list of objects, e.g. person or org or account
-  public resource: ResourceInfo = { key: '', name: '', type: DEFAULT_RESOURCE_TYPE, subType: DEFAULT_RBOAT_TYPE }; // the resource that is transferred
+  public resource: AvatarInfo = {   // the resource that is transferred
+    key: '',
+    name1: DEFAULT_NAME,
+    name2: DEFAULT_NAME,
+    modelType: 'resource',
+    type: DEFAULT_RESOURCE_TYPE,
+    subType: DEFAULT_RBOAT_TYPE,
+    label: ''
+  };
 
   // transfer
   public dateOfTransfer = DEFAULT_DATE;

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { IonAvatar, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonTextarea } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -7,7 +7,7 @@ import { RoleName, TaskModel } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { error } from '@bk2/shared-util-angular';
-import { extractTagAndDate, getAvatarInfoFromCurrentUser, hasRole } from '@bk2/shared-util-core';
+import { extractTagAndDate, getAvatarInfo, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { TaskListStore } from './task-list.store';
@@ -62,10 +62,11 @@ import { TaskListStore } from './task-list.store';
       }
 
       <!-- search and filters -->
-      <bk-list-filter 
-        [tags]="tags()" (tagChanged)="onTagSelected($event)"
-        [type]="types()" (typeChanged)="onTypeSelected($event)"
+      <bk-list-filter
         (searchTermChanged)="onSearchtermChange($event)"
+        (tagChanged)="onTagSelected($event)" [tags]="tags()"
+        (typeChanged)="onTypeSelected($event)" [types]="types()"
+        (stateChanged)="onStateSelected($event)" [states]="states()"
       />
     </ion-header>
 
@@ -109,21 +110,47 @@ import { TaskListStore } from './task-list.store';
 export class SimpleTaskListComponent {
   protected taskListStore = inject(TaskListStore);
 
+  // inputs
   public listId = input.required<string>();
   public readOnly = input(true);
 
+  // derived signals
+  protected searchTerm = linkedSignal(() => this.taskListStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.taskListStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.taskListStore.selectedPriority());
+  protected selectedState = linkedSignal(() => this.taskListStore.selectedState());
   protected filteredTasks = computed(() => this.taskListStore.filteredTasks() ?? []);
   protected tasksCount = computed(() => this.taskListStore.tasksCount());
   protected selectedTasksCount = computed(() => this.filteredTasks().length);
   protected isLoading = computed(() => this.taskListStore.isLoading());
   protected tags = computed(() => this.taskListStore.getTags());
   protected types = computed(() => this.taskListStore.appStore.getCategory('priority'));
+  protected states = computed(() => this.taskListStore.appStore.getCategory('task_state'));
+  protected currentUser = computed(() => this.taskListStore.appStore.currentUser());
 
   constructor() {
     effect(() => {
       this.taskListStore.setCalendarName(this.listId());
     });
   }
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.taskListStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.taskListStore.setSelectedTag(tag);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.taskListStore.setSelectedPriority(type);
+  }
+
+  protected onStateSelected(state: string): void {
+    this.taskListStore.setSelectedState(state);
+  }
+
   /******************************* actions *************************************** */
   /**
    * This is the quick entry. It just takes the name of the task and adds it to the list.
@@ -132,7 +159,7 @@ export class SimpleTaskListComponent {
   protected async addName(bkTaskName: IonTextarea): Promise<void> {
     const task = new TaskModel(this.taskListStore.tenantId());
     [task.tags, task.dueDate, task.name] = extractTagAndDate(bkTaskName.value?.trim() ?? '');
-    task.author = getAvatarInfoFromCurrentUser(this.taskListStore.currentUser());
+    task.author = getAvatarInfo(this.taskListStore.currentUser(), 'user');
     await this.taskListStore.addName(task);
     bkTaskName.value = '';
   }
@@ -160,23 +187,6 @@ export class SimpleTaskListComponent {
 
   protected clear(bkTaskName: IonTextarea): void {
     bkTaskName.value = '';
-  }
-
-  /******************************* change notifications *************************************** */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.taskListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected(tag: string): void {
-    this.taskListStore.setSelectedTag(tag);
-  }
-
-  protected onStateChange(state: string): void {
-    this.taskListStore.setSelectedState(state);
-  }
-
-  protected onTypeSelected(type: string): void {
-    this.taskListStore.setSelectedPriority(type);
   }
 
   /******************************* helpers *************************************** */

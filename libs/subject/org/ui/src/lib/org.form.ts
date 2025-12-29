@@ -1,12 +1,12 @@
-import { Component, computed, effect, input, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
-import { CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, OrgModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
-import { ORG_FORM_SHAPE, OrgFormModel, orgFormValidations } from '@bk2/subject-org-util';
+import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { orgValidations } from '@bk2/subject-org-util';
 
 @Component({
   selector: 'bk-org-form',
@@ -16,67 +16,74 @@ import { ORG_FORM_SHAPE, OrgFormModel, orgFormValidations } from '@bk2/subject-o
     CategorySelectComponent, DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
-   styles: [`
-    @media (width <= 600px) { ion-card { margin: 5px;} }
-  `],
+   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-  <form scVestForm
-    [formShape]="shape"
-    [formValue]="formData()"
-    [suite]="suite" 
-    (dirtyChange)="dirty.emit($event)"
-    (formValueChange)="onFormChange($event)">
+  @if (showForm()) {
+    <form scVestForm
+      [formValue]="formData()"
+      [suite]="suite" 
+      (dirtyChange)="dirty.emit($event)"
+      (validChange)="valid.emit($event)"
+      (formValueChange)="onFormChange($event)">
 
-    <ion-card>
-      <ion-card-content>
-        <ion-grid>
-          <ion-row>
-            <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="types()!" selectedItemName="type()" [readOnly]="isReadOnly()"  (changed)="onFieldChange('type', $event)" />
-            </ion-col>
-          </ion-row>
-          <ion-row> 
-            <ion-col size="12">
-              <bk-text-input name="name" [value]="name()" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" (changed)="onFieldChange('name', $event)" />
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col size="12" size-md="6">
-              <bk-date-input name="dateOfFoundation" [storeDate]="dateOfFoundation()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfFoundation', $event)" />
-            </ion-col>
-    
-            <ion-col size="12" size-md="6">
-              <bk-date-input name="dateOfLiquidation" [storeDate]="dateOfLiquidation()" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfLiquidation', $event)" />
-            </ion-col>
-          </ion-row>      
-          <ion-row>
-            <ion-col size="12" size-md="6">
-              <bk-text-input name="taxId" [value]="taxId()" [mask]="vatMask" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('taxId', $event)" />
-            </ion-col>
-            @if(hasRole('admin')) { 
-              <ion-col size="12" size-md="6">
-                <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('bexioId', $event)" />                                        
-              </ion-col>
+      <ion-card>
+        <ion-card-content class="ion-no-padding">
+          <ion-grid>
+            @if(isOrgTypeVisible()) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [readOnly]="isOrgTypeReadOnly()" />
+                </ion-col>
+              </ion-row>
             }
-          </ion-row>
-        </ion-grid>
-      </ion-card-content>
-    </ion-card>
+            <ion-row> 
+              <ion-col size="12">
+                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" />
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <bk-date-input name="dateOfFoundation" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+              </ion-col>
+      
+              <ion-col size="12" size-md="6">
+                <bk-date-input name="dateOfLiquidation" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <bk-text-input name="taxId" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [readOnly]="isReadOnly()" />
+              </ion-col>
+              @if(hasRole('admin')) { 
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="bexioId" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                </ion-col>
+              }
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
 
-    <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
+      @if(hasRole('privileged') || hasRole('memberAdmin')) {
+        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+      }
 
-    @if(hasRole('admin')) { 
-      <bk-notes name="notes" [readOnly]="isReadOnly()" [value]="notes()" />
-    }
-  </form>
+      @if(hasRole('admin')) { 
+        <bk-notes name="notes" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" />
+      }
+    </form>
+  }
   `
 })
 export class OrgFormComponent {
   // inputs
-  public formData = model.required<OrgFormModel>();
-  public currentUser = input<UserModel | undefined>();
+  public readonly formData = model.required<OrgModel>();
+  public readonly currentUser = input<UserModel | undefined>();
+  public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
+  public isOrgTypeReadOnly = input(false);
+  public isOrgTypeVisible = input(true);
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -85,40 +92,34 @@ export class OrgFormComponent {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = orgFormValidations;
-  protected readonly shape = ORG_FORM_SHAPE;
-  private readonly validationResult = computed(() => orgFormValidations(this.formData()));
+  protected readonly suite = orgValidations;
+  private readonly validationResult = computed(() => orgValidations(this.formData()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
-  protected type = computed(() => this.formData().type ?? 'association');
-  protected name = computed(() => this.formData().name ?? '');
-  protected dateOfFoundation = computed(() => this.formData().dateOfFoundation ?? '');
-  protected dateOfLiquidation = computed(() => this.formData().dateOfLiquidation ?? '');
-  protected taxId = computed(() => this.formData().taxId ?? '');
-  protected bexioId = computed(() => this.formData().bexioId ?? '');
-  protected tags = computed(() => this.formData().tags ?? '');
-  protected notes = computed(() => this.formData().notes ?? '');
+  protected type = linkedSignal(() => this.formData().type ?? 'association');
+  protected name = linkedSignal(() => this.formData().name ?? '');
+  protected dateOfFoundation = linkedSignal(() => this.formData().dateOfFoundation ?? '');
+  protected dateOfLiquidation = linkedSignal(() => this.formData().dateOfLiquidation ?? '');
+  protected taxId = linkedSignal(() => this.formData().taxId ?? '');
+  protected bexioId = linkedSignal(() => this.formData().bexioId ?? '');
+  protected tags = linkedSignal(() => this.formData().tags ?? '');
+  protected notes = linkedSignal(() => this.formData().notes ?? '');
 
   // passing constants to template
   protected bexioMask = BexioIdMask;
   protected vatMask = ChVatMask;
 
-  constructor() {
-    effect(() => {
-      this.valid.emit(this.validationResult().isValid());
-    });
-  }
-
-  protected onFormChange(value: OrgFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormErrors('OrgForm.onFormChange', this.validationResult().errors, this.currentUser());
-  }
-
-  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
+  /******************************* actions *************************************** */
+  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormErrors('OrgForm.onFieldChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFormChange(value: OrgModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormModel('OrgForm.onFormChange', this.formData(), this.currentUser());
+    debugFormErrors('OrgForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

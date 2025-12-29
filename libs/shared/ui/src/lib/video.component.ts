@@ -38,5 +38,6 @@ import { Component, CUSTOM_ELEMENTS_SCHEMA, input } from '@angular/core';
     `
   })
   export class VideoComponent {
+    // inputs
     public url = input.required<string>();
   }

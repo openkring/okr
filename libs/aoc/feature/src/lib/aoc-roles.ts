@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
 
@@ -26,7 +26,7 @@ import { AocRolesStore } from './aoc-roles.store';
   ],
   providers: [AocRolesStore],
   template: `
-    <bk-header title="{{ '@aoc.roles.title' | translate | async }}" />
+    <bk-header title="@aoc.roles.title" />
     <ion-content>
       <ion-card>
         <ion-card-header>
@@ -229,7 +229,7 @@ import { AocRolesStore } from './aoc-roles.store';
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-chips chipName="role" [storedChips]="roles()" [allChips]="allRoleNames()" [readOnly]="false" (changed)="onRoleChange($event)" />
+      <bk-chips chipName="role" [storedChips]="roles()" (storedChipsChange)="onRoleChange($event)" [allChips]="allRoleNames()" [readOnly]="false" />
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@aoc.roles.chat.title' | translate | async }}</ion-card-title>
@@ -289,7 +289,7 @@ export class AocRolesComponent {
 
   protected selectedPerson = computed(() => this.aocRolesStore.selectedPerson());
   protected selectedUser = computed(() => this.aocRolesStore.selectedUser());
-  protected roles = computed(() => flattenRoles(this.selectedUser()?.roles ?? { 'registered': true }));
+  protected roles = linkedSignal(() => flattenRoles(this.selectedUser()?.roles ?? { 'registered': true }));
 
   protected avatar = computed(() => {
     const person = this.aocRolesStore.selectedPerson();

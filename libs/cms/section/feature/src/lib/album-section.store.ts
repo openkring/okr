@@ -5,10 +5,10 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { GalleryEffects, getCategoryName } from '@bk2/shared-categories';
 import { STORAGE } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
-import { AlbumConfig, AlbumStyle, Image, ImageType } from '@bk2/shared-models';
+import { ALBUM_CONFIG_SHAPE, AlbumConfig, AlbumStyle, ImageConfig, ImageType } from '@bk2/shared-models';
 import { debugMessage, die } from '@bk2/shared-util-core';
 
-import { getImageMetaData, listAllFilesFromDirectory, newAlbumConfig } from '@bk2/cms-section-util';
+import { getImageMetaData, listAllFilesFromDirectory } from '@bk2/cms-section-util';
 
 import { HttpClient } from '@angular/common/http';
 import { GalleryModalComponent } from './gallery.modal';
@@ -16,11 +16,11 @@ import { GalleryModalComponent } from './gallery.modal';
 export interface AlbumState {
   config: AlbumConfig;
   currentDirectory: string; // not the same as config.directory, but the current directory in the album
-  currentImage: Image | undefined; // the currently selected image, if any
+  currentImage: ImageConfig | undefined; // the currently selected image, if any
 }
 
 export const initialState: AlbumState = {
-  config: newAlbumConfig(),
+  config: ALBUM_CONFIG_SHAPE,
   currentDirectory: '',
   currentImage: undefined
 };
@@ -36,7 +36,7 @@ export const AlbumStore = signalStore(
 
   withComputed((state) => {
     return {
-      albumStyle: computed(() => state.config().albumStyle),
+      albumStyle: computed(() => state.config()?.albumStyle ?? AlbumStyle.Grid),
       title: computed(() => state.currentDirectory().split('/').pop()),
       currentDirLength: computed(() => state.currentDirectory().split('/').length),
       initialDirLength: computed(() => {
@@ -46,6 +46,7 @@ export const AlbumStore = signalStore(
       parentDirectory: computed(() => state.currentDirectory().split('/').slice(0, -1).join('/')),
       imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
       currentUser: computed(() => state.appStore.currentUser()),
+      imageStyle: computed(() => state.config().imageStyle),
     };
   }),
 
@@ -92,8 +93,8 @@ export const AlbumStore = signalStore(
         patchState(store, { currentDirectory });
       },
 
-      setImage(image?: Image): void {
-        if (image && image.imageType !== ImageType.Dir) {
+      setImage(image?: ImageConfig): void {
+        if (image && image.type !== ImageType.Dir) {
           patchState(store, { currentImage: image });
         } else {
           patchState(store, { currentImage: undefined });
@@ -105,7 +106,7 @@ export const AlbumStore = signalStore(
       },
 
       setConfig(config?: AlbumConfig): void {
-        config ??= newAlbumConfig();
+        config ??= ALBUM_CONFIG_SHAPE;
         config.albumStyle ??= AlbumStyle.Grid;
         config.directory ??= `tenant/${store.appStore.env.tenantId}/album`;
         patchState(store, { config, currentDirectory: config.directory }); 
@@ -116,14 +117,15 @@ export const AlbumStore = signalStore(
         this.setDirectory(store.parentDirectory());
       },
 
-      async openGallery(files: Image[], title = '', initialSlide = 0): Promise<void> {
-        const images = files.filter((file) => file.imageType === ImageType.Image);
-        const effect = store.config().galleryEffect ?? die('AlbumStore.openGallery: gallery effect is mandatory.');
+      async openGallery(files: ImageConfig[], title = '', initialSlide = 0): Promise<void> {
+        const images = files.filter((file) => file.type === ImageType.Image);
+        const effect = store.config().effect ?? die('AlbumStore.openGallery: gallery effect is mandatory.');
         const modal = await store.modalController.create({
           component: GalleryModalComponent,
           cssClass: 'full-modal',
           componentProps: {
-            imageList: images,
+            images,
+            imageStyle: store.imageStyle(),
             initialSlide: initialSlide,
             title: title,
             effect: getCategoryName(GalleryEffects, effect)

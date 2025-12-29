@@ -1,14 +1,13 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, Platform } from '@ionic/angular/standalone';
+import { IonContent } from '@ionic/angular/standalone';
 
-import { RoleName } from '@bk2/shared-models';
+import { DocumentModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
-
-import { DocumentEditStore } from 'libs/document/feature/src/lib/document-edit.store';
-import { DocumentFormComponent } from '@bk2/document-ui';
-import { convertDocumentToForm, DocumentFormModel } from '@bk2/document-util';
+import { coerceBoolean } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
+
+import { DocumentFormComponent } from '@bk2/document-ui';
+import { DocumentStore } from './document.store';
 
 
 @Component({
@@ -19,32 +18,31 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
     DocumentFormComponent,
     IonContent
   ],
-  providers: [DocumentEditStore],
+  providers: [DocumentStore],
     styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <bk-header [title]="headerTitle()" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content no-padding>
-      @if(document(); as document) {
-        @if(formData(); as formData) {
-          <bk-document-form
-            [formData]="formData" 
-            [currentUser]="currentUser()"
-            [types]="types()"
-            [sources]="sources()"
-            [allTags]="tags()"
-            [readOnly]="isReadOnly()"
-            formDataChange)="onFormDataChange($event)"
-          />
-        }
-      }
+    <ion-content class="ion-no-padding">
+      <bk-document-form
+        [formData]="formData()"
+        (formDataChange)="onFormDataChange($event)" 
+        [currentUser]="currentUser()"
+        [types]="types()"
+        [sources]="sources()"
+        [showForm]="showForm()"
+        [allTags]="tags()"
+        [readOnly]="isReadOnly()"
+        (dirty)="formDirty.set($event)"
+        (valid)="formValid.set($event)"
+      />
     </ion-content>
   `
 })
 export class DocumentEditPageComponent {
-  private readonly documentEditStore = inject(DocumentEditStore);
+  private readonly documentStore = inject(DocumentStore);
 
   // inputs
   public documentKey = input.required<string>();
@@ -55,39 +53,37 @@ export class DocumentEditPageComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => convertDocumentToForm(this.document()));
+  protected document = linkedSignal(() => this.documentStore.document() ?? new DocumentModel(this.documentStore.tenantId()));
+  protected formData = linkedSignal(() => structuredClone(this.document()));
+  protected showForm = signal(true);
 
   // derived signals
   protected headerTitle = computed(() => getTitleLabel('document', this.document()?.bkey, this.isReadOnly()));
-  protected currentUser = computed(() => this.documentEditStore.currentUser());
-  protected document = computed(() => this.documentEditStore.document());
-  protected tags = computed(() => this.documentEditStore.getTags());
-  protected types = computed(() => this.documentEditStore.appStore.getCategory('document_type'));
-  protected sources = computed(() => this.documentEditStore.appStore.getCategory('document_source'));
+  protected currentUser = computed(() => this.documentStore.currentUser());
+  protected tags = computed(() => this.documentStore.getTags());
+  protected types = computed(() => this.documentStore.getTypes());
+  protected sources = computed(() => this.documentStore.getSources());
 
   constructor() {
     effect(() => {
-      this.documentEditStore.setDocumentKey(this.documentKey());
-    });
+      this.documentStore.setDocumentKey(this.documentKey());
+    }); 
   }
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    this.formDirty.set(false);
-    await this.documentEditStore.save(this.formData());
+    await this.documentStore.save(this.document());
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(convertDocumentToForm(this.document()));  // reset form
+    this.formData.set(structuredClone(this.document()));  // reset the form
+    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: DocumentFormModel): void {
+  protected onFormDataChange(formData: DocumentModel): void {
     this.formData.set(formData);
-  }
-
-  /******************************* helpers *************************************** */
-  protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.currentUser());
   }
 }

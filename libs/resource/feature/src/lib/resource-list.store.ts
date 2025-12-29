@@ -132,13 +132,21 @@ export const ResourceListStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      async add(isTypeEditable = false): Promise<void> {
+      async add(isTypeEditable = false, readOnly = true): Promise<void> {
+        if (readOnly) return;
         const resource = new ResourceModel(store.tenantId());
+        this.edit(resource, isTypeEditable, readOnly);
+        store.resourceResource.reload();
+      },
+
+      async edit(resource: ResourceModel, isTypeEditable = false, readOnly = true): Promise<void> {
+        console.log('ResourceListStore.edit()', resource, isTypeEditable, readOnly);
         const modal = await store.modalController.create({
           component: ResourceEditModalComponent,
           componentProps: {
-            resource: resource,
-            isTypeEditable: isTypeEditable
+            resource,
+            isTypeEditable,
+            readOnly
           }
         });
         modal.present();
@@ -150,12 +158,8 @@ export const ResourceListStore = signalStore(
               store.resourceService.update(data, store.currentUser()));
           }
         }
-        store.resourceResource.reload();
-      },
-
-      async edit(resource: ResourceModel, isTypeEditable = false, readOnly = true): Promise<void> {
-        store.appNavigationService.pushLink('/resource/all' );
-        await navigateByUrl(store.router, `/resource/${resource.bkey}`, { isTypeEditable, readOnly });
+        //store.appNavigationService.pushLink('/resource/all' );
+        //await navigateByUrl(store.router, `/resource/${resource.bkey}`, { isTypeEditable, readOnly });
         store.resourceResource.reload();        
       },
 

@@ -1,14 +1,14 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, input, output } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { SectionModel, ViewPosition } from '@bk2/shared-models';
-import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { ArticleSection, IMAGE_STYLE_SHAPE, ViewPosition } from '@bk2/shared-models';
+import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-article-section',
   standalone: true,
   imports: [
-    SpinnerComponent, EditorComponent, ImageComponent,
+    SpinnerComponent, ImageComponent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,
     OptionalCardHeaderComponent
 ],
@@ -30,11 +30,11 @@ import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerCo
                 <ion-row>
                   @if(image(); as image) {
                     <ion-col size="12" [sizeMd]="colSizeImage()">
-                      <bk-img [image]="image" />
+                      <bk-img [image]="image" [imageStyle]="imageStyle()" />
                     </ion-col>
                   }
                   <ion-col size="12" [sizeMd]="colSizeText()">
-                    <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
+                    <div [innerHTML]="content()"></div>
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -43,11 +43,11 @@ import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerCo
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" [sizeMd]="colSizeText()">
-                    <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
+                    <div [innerHTML]="content()"></div>
                   </ion-col>
                   @if(image(); as image) {
                     <ion-col size="12" [sizeMd]="colSizeImage()">
-                      <bk-img [image]="image" />
+                      <bk-img [image]="image" [imageStyle]="imageStyle()"  />
                     </ion-col>
                   }
                 </ion-row>
@@ -55,18 +55,18 @@ import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerCo
             }
             @case(VP.Top) {
               @if(image(); as image) {
-                <bk-img [image]="image" />
+                <bk-img [image]="image" [imageStyle]="imageStyle()"  />
               }
-              <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
+              <div [innerHTML]="content()"></div>
             }
             @case(VP.Bottom) {
-              <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
+              <div [innerHTML]="content()"></div>
               @if(image(); as image) {
-                <bk-img [image]="image" />
+                <bk-img [image]="image" [imageStyle]="imageStyle()"  />
               }
             }
             @default {  <!-- VP.None -->
-              <bk-editor [content]="content()" [readOnly]="isReadOnly()" (contentChange)="onContentChange($event)" />
+              <div [innerHTML]="content()"></div>
             }
           }
         </ion-card-content>
@@ -77,22 +77,18 @@ import { EditorComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerCo
   `
 })
 export class ArticleSectionComponent {
-  public section = input<SectionModel>();
-  public readOnly = input<boolean>(true);
-  protected isReadOnly = computed(() => this.readOnly());
-  public contentChange = output<string>();
+  // inputs
+  public section = input<ArticleSection>();
 
+  // computed
   protected image = computed(() => this.section()?.properties.image);
-  protected content = computed(() => this.section()?.properties?.content?.htmlContent ?? '<p></p>');
-  protected colSizeImage = computed(() => this.section()?.properties?.content?.colSize ?? 6);
-  protected position = computed(() => this.section()?.properties?.content?.position ?? ViewPosition.None);
+  protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
+  protected content = computed(() => this.section()?.content?.htmlContent ?? '<p></p>');
+  protected colSizeImage = computed(() => this.section()?.content?.colSize ?? 6);
+  protected position = computed(() => this.section()?.content?.position ?? ViewPosition.None);
   protected colSizeText = computed(() => 12 - this.colSizeImage());
   protected title = computed(() => this.section()?.title);
   protected subTitle = computed(() => this.section()?.subTitle);
 
   public VP = ViewPosition;
-
-  protected onContentChange(content: string): void {
-    this.contentChange.emit(content);
-  }
 }

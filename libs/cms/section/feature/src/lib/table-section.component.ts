@@ -3,7 +3,7 @@ import { Component, computed, input } from '@angular/core';
 import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { SectionModel } from '@bk2/shared-models';
+import { TableSection } from '@bk2/shared-models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 /**
@@ -34,7 +34,7 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
     <ion-card>
       <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
-        @if(header()?.length === 0 && content()?.length === 0) {
+        @if(header()?.length === 0 && body()?.length === 0) {
           <ion-item lines="none">
             <ion-label>{{'@content.section.error.emptyTable' | translate | async}}</ion-label>
           </ion-item>
@@ -43,8 +43,8 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
             @for(header of header(); track $index) {
               <div [ngStyle]="headerStyle()">{{header}}</div>
             }
-            @for(cell of content(); track $index) {
-              <div [ngStyle]="cellStyle()" [innerHTML]="cell"></div>
+            @for(cell of body(); track $index) {
+              <div [ngStyle]="bodyStyle()" [innerHTML]="cell"></div>
             }
           </div>
         }
@@ -61,41 +61,41 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 `
 })
 export class TableSectionComponent {
-  public section = input<SectionModel>();
-  protected config = computed(() => this.section()?.properties.table?.config);
-  protected header = computed(() => this.section()?.properties.table?.header);
-  protected content = computed(() => this.section()?.properties.table?.data);
+  public section = input<TableSection>();
+  protected config = computed(() => this.section()?.properties);
+  protected header = computed(() => this.section()?.properties?.data.header);
+  protected body = computed(() => this.section()?.properties?.data.body);
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
 
   protected gridStyle = computed(() => {
     return {
       'display': 'grid',
-      'grid-template-columns': this.config()?.gridTemplate ?? 'auto auto',
-      'gap': this.config()?.gridGap ?? '1px',
-      'background-color': this.config()?.gridBackgroundColor ?? 'var(--ion-color-step-200)',
-      'padding': this.config()?.gridPadding ?? '1px',
+      'grid-template-columns': this.config()?.grid.template ?? 'auto auto',
+      'gap': this.config()?.grid.gap ?? '1px',
+      'background-color': this.config()?.grid.backgroundColor ?? 'var(--ion-color-step-200)',
+      'padding': this.config()?.grid.padding ?? '1px',
       'margin': '10px'
     };
   });
 
   protected headerStyle = computed(() => {
     return {
-      'background-color': this.config()?.headerBackgroundColor ?? 'var(--ion-color-step-150)',
-      'text-align': this.config()?.headerTextAlign ?? 'center',
-      'font-size': this.config()?.headerFontSize ?? '1rem',
-      'font-weight': this.config()?.headerFontWeight ?? 'bold',
-      'padding': this.config()?.headerPadding ?? '5px',
+      'background-color': this.config()?.header.backgroundColor ?? 'var(--ion-color-step-150)',
+      'text-align': this.config()?.header.textAlign ?? 'center',
+      'font-size': this.config()?.header.fontSize ?? '1rem',
+      'font-weight': this.config()?.header.fontWeight ?? 'bold',
+      'padding': this.config()?.header.padding ?? '5px',
     };
   });
 
-  protected cellStyle = computed(() => {
+  protected bodyStyle = computed(() => {
     return {
-      'background-color': this.config()?.cellBackgroundColor ?? 'var(--ion-color-background)',
-      'text-align': this.config()?.cellTextAlign ?? 'left',
-      'font-size': this.config()?.cellFontSize ?? '0.8rem',
-      'font-weight': this.config()?.cellFontWeight ?? 'normal',
-      'padding': this.config()?.cellPadding ?? '5px',
+      'backgroundColor': this.config()?.body.backgroundColor ?? 'var(--ion-color-background)',
+      'text-align': this.config()?.body.textAlign ?? 'left',
+      'font-size': this.config()?.body.fontSize ?? '0.8rem',
+      'font-weight': this.config()?.body.fontWeight ?? 'normal',
+      'padding': this.config()?.body.padding ?? '5px',
       '-webkit-user-select': 'text',
       '-moz-user-select': 'text',
       '-ms-user-select': 'text',

@@ -38,6 +38,7 @@ import { LogInfo } from '@bk2/shared-models';
   `
 })
 export class ResultLogComponent {
+  // inputs
   public title = input<string>();
   public log = input<LogInfo[]>([]);
 

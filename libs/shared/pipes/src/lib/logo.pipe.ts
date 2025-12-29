@@ -9,6 +9,6 @@ import { getThumbnailUrl } from '@bk2/shared-util-core';
 export class LogoPipe implements PipeTransform {
   
   transform(url: string): string {
-    return getThumbnailUrl(url, LOGO_WIDTH, LOGO_HEIGHT);
+    return getThumbnailUrl(url, LOGO_WIDTH + '', LOGO_HEIGHT + '');
   }
 }

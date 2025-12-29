@@ -29,6 +29,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   `
 })
 export class OptionalCardHeaderComponent {
+  // inputs
   public title = input<string | undefined>();
   public subTitle = input<string | undefined>();
 }

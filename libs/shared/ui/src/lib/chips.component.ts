@@ -1,6 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
+import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -20,6 +21,7 @@ import { ChipSelectModalComponent } from './chip-select.modal';
     IonItem, IonLabel, IonIcon, IonChip, IonButton,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
+  viewProviders: [vestFormsViewProviders],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
   `],
@@ -63,6 +65,8 @@ import { ChipSelectModalComponent } from './chip-select.modal';
 })
 export class ChipsComponent {
   protected modalController = inject(ModalController);
+
+  // inputs
   public storedChips = model.required<string>();    // the list of tag or role names, separated by comma, as read from the database
   public allChips = input.required<string>();       // a comma-separated list of all available tags or roles
   public readOnly = input.required<boolean>();
@@ -71,15 +75,15 @@ export class ChipsComponent {
   public showTitle = input<boolean>(false);
   protected doShowTitle = computed(() => coerceBoolean(this.showTitle()));
 
+  // derived fields
   protected selectedChips = computed<string[]>(() => string2stringArray(this.storedChips()));
   protected nonSelectedChips = computed<string[]>(() => getNonSelectedChips(string2stringArray(this.allChips()), this.selectedChips()));
   protected title = computed(() => `@general.util.${this.chipName()}`);
-  public changed = output<string>(); 
 
   public removeChip(chip: string): void {
-    const _selectedChips = this.selectedChips();
-    _selectedChips.splice(_selectedChips.indexOf(chip), 1);
-    this.updateChips(_selectedChips);
+    const selectedChips = this.selectedChips();
+    selectedChips.splice(selectedChips.indexOf(chip), 1);
+    this.storedChips.set(selectedChips.join(','));
   }
 
   public async addChip() {
@@ -94,17 +98,11 @@ export class ChipsComponent {
     modal.present();
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
-      const _chip = data as string;
-      const _selectedChips = this.selectedChips();
-      _selectedChips.push(_chip);
-      this.updateChips(_selectedChips);
+      const chip = data as string;
+      const selectedChips = this.selectedChips();
+      selectedChips.push(chip);
+      this.storedChips.set(selectedChips.join(','));
     }
-  }
-
-  private updateChips(chips: string[]): void {
-    const _chips = chips.join(',');
-    this.storedChips.set(_chips); // converts array back into a comma-separated string; re-computing selectedChips and nonSelectedChips
-    this.changed.emit(_chips); // notify the parent component about the changes
   }
 }
 

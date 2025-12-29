@@ -2,7 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, input } from '@angular/cor
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { register } from 'swiper/element/bundle';
 
-import { SectionModel } from '@bk2/shared-models';
+import { IMAGE_STYLE_SHAPE, SliderSection } from '@bk2/shared-models';
 import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 register(); // globally register Swiper's custom elements.
@@ -35,9 +35,9 @@ register(); // globally register Swiper's custom elements.
         <ion-card-content background="black">
           <swiper-container class="mySwiper" loop="true" navigation="true"  style="width: 100%;"
             pagination="true" keyboard="true" mousewheel="true" css-mode="true">
-            @for(image of imageList(); track image.url) {
+            @for(image of images(); track image.url) {
               <swiper-slide>
-                <bk-img [image]="image" />
+                <bk-img [image]="image" [imageStyle]="imageStyle()"  />
               </swiper-slide>
             }
           </swiper-container>
@@ -49,11 +49,11 @@ register(); // globally register Swiper's custom elements.
   `
 })
 export class SwiperSectionComponent {
-  public section = input<SectionModel>();
-  protected imageList = computed(() => this.section()?.properties.imageList ?? []);
+  public section = input<SliderSection>();
+  protected images = computed(() => this.section()?.properties.images ?? []);
+  protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);  
-
 }
 
 /** 

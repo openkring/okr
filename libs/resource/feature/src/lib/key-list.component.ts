@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -49,9 +49,9 @@ import { DEFAULT_TAGS } from '@bk2/shared-constants';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      (searchTermChanged)="onSearchtermChange($event)"
+    <bk-list-filter
+        (searchTermChanged)="onSearchtermChange($event)"
+        (tagChanged)="onTagSelected($event)" [tags]="tags()"
      />
 
     <!-- list header -->
@@ -89,9 +89,14 @@ export class KeyListComponent {
   protected readonly resourceListStore = inject(ResourceListStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
+  // filters
+  protected searchTerm = linkedSignal(() => this.resourceListStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.resourceListStore.selectedTag());
 
+  // data
   protected filteredKeys = computed(() => this.resourceListStore.filteredKeys() ?? []);
   protected keysCount = computed(() => this.resourceListStore.keysCount());
   protected selectedKeysCount = computed(() => this.filteredKeys().length);
@@ -99,14 +104,16 @@ export class KeyListComponent {
   protected tags = computed(() => this.resourceListStore.getKeyTags() ?? DEFAULT_TAGS);
   protected title = '@resource.key.plural'
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
+  protected currentUser = computed(() => this.resourceListStore.currentUser());
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
     this.resourceListStore.setSearchTerm(searchTerm);
   }
 
-  protected onTagSelected($event: string): void {
-    this.resourceListStore.setSelectedTag($event);
+  protected onTagSelected(tag: string): void {
+    this.resourceListStore.setSelectedTag(tag);
   }
 
   /******************************** actions ******************************************* */
@@ -135,12 +142,15 @@ export class KeyListComponent {
    * @param key 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, key: ResourceModel): void {
-    if (hasRole('resourceAdmin', this.resourceListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    if (hasRole('registered', this.resourceListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('key.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('key.edit', this.imgixBaseUrl, 'create_edit'));
+    }
     if (hasRole('admin', this.resourceListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('key.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -155,11 +165,14 @@ export class KeyListComponent {
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
-        case 'delete':
-          await this.resourceListStore.delete(key);
+        case 'key.delete':
+          await this.resourceListStore.delete(key, this.readOnly());
           break;
-        case 'edit':
-          await this.resourceListStore.edit(key);
+        case 'key.view':
+          await this.resourceListStore.edit(key, true);
+          break;
+        case 'key.edit':
+          await this.resourceListStore.edit(key, this.readOnly());
           break;
       }
     }

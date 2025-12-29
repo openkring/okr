@@ -1,12 +1,12 @@
 import { Browser } from "@capacitor/browser";
 import { ModalController } from "@ionic/angular/standalone";
+import { getDownloadURL, getMetadata, getStorage, ref, updateMetadata } from "firebase/storage";
 
-import { Dimensions, Image, ImageAction, UserModel } from "@bk2/shared-models";
+import { Dimensions, ImageStyle, UserModel } from "@bk2/shared-models";
 import { DateFormat, debugMessage, getTodayStr, warn } from "@bk2/shared-util-core";
 
 import { DateSelectModalComponent } from "./date-select.modal";
 import { ImageViewModalComponent } from "./image-view.modal";
-import { getDownloadURL, getMetadata, getStorage, ref, updateMetadata } from "firebase/storage";
 
 export interface ValidationInfo {
   type: string,
@@ -26,14 +26,15 @@ export interface ValidationInfoDictionary {
 }
 
 // show a zoomed version of the image in a modal
-export async function showZoomedImage(modalController: ModalController, title: string, image: Image, cssClass = 'zoom-modal'): Promise<void> {
-  if (image.imageAction !== ImageAction.Zoom) return;
+export async function showZoomedImage(modalController: ModalController, url: string, title: string, style: ImageStyle, altText = '', cssClass = 'zoom-modal'): Promise<void> {
   const modal = await modalController.create({
     component: ImageViewModalComponent,
    // cssClass: cssClass,
     componentProps: {
-      title: title,
-      image: image
+      title,
+      altText,
+      url,
+      style
     }
   });
   modal.present();

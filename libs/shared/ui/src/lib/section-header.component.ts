@@ -27,6 +27,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   `
 })
 export class SectionHeaderComponent {
+  // inputs
   public title = input('');
   public description = input('');
   public color = input('light');

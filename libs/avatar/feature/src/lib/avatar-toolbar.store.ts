@@ -5,11 +5,12 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Observable, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ImageAction, newImage } from '@bk2/shared-models';
-import { getImageDimensionsFromMetadata, updateImageDimensions } from '@bk2/shared-ui';
+import { getImageDimensionsFromMetadata, showZoomedImage, updateImageDimensions } from '@bk2/shared-ui';
 import { getModelAndKey } from '@bk2/shared-util-core';
 
 import { AvatarService, UploadService } from '@bk2/avatar-data-access';
+import { IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
+import { ModalController } from '@ionic/angular/standalone';
 
 export interface AvatarToolbarState {
   key: string; // = ModelType.ModelKey e.g. person.lasdfölj
@@ -25,6 +26,7 @@ export const AvatarToolbarStore = signalStore(
     appStore: inject(AppStore),
     avatarService: inject(AvatarService),
     uploadService: inject(UploadService),
+    modalController: inject(ModalController),
   })),
   withProps(store => ({
     urlResource: rxResource({
@@ -67,7 +69,7 @@ export const AvatarToolbarStore = signalStore(
         patchState(store, { key });
       },
 
-      async showZoomedImage(title?: string): Promise<void> {
+      async showZoomedImage(title = 'Avatar'): Promise<void> {
         const path = store.relStorageUrl();
         if (path && path.length > 0) {
           let dimensions = await getImageDimensionsFromMetadata(path);
@@ -79,12 +81,19 @@ export const AvatarToolbarStore = signalStore(
           
           // if we have valid dimensions, show the zoomed image in a modal
           if (dimensions) {
-            const image = newImage('@content.type.article.zoomedImage', path, path);
+            const imageStyle = IMAGE_STYLE_SHAPE;
+            imageStyle.width = dimensions.width;
+            imageStyle.height = dimensions.height;
+            await showZoomedImage(store.modalController, path, title, imageStyle, title);
+
+
+          }
+/*             const image = newImage('@content.type.article.zoomedImage', path, path);
             image.width = parseInt(dimensions.width);
             image.height = parseInt(dimensions.height);
             image.imageAction = ImageAction.Zoom;
             await store.uploadService.showZoomedImage(image, title ?? '');
-          }
+          } */
         }
       },
 

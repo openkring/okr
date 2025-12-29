@@ -1,10 +1,9 @@
-import { AsyncPipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonLabel, IonProgressBar, IonRow, ModalController } from '@ionic/angular/standalone';
 import { UploadTask, UploadTaskSnapshot, getDownloadURL } from 'firebase/storage';
 
 import { uploadToFirebaseStorage } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { error } from '@bk2/shared-util-angular';
 import { die } from '@bk2/shared-util-core';
 
@@ -14,7 +13,7 @@ import { HeaderComponent } from './header.component';
   selector: 'bk-upload-task',
   standalone: true,
   imports: [
-    AsyncPipe, DecimalPipe, TranslatePipe,
+    DecimalPipe,
     HeaderComponent,
     IonContent, IonGrid, IonRow, IonCol, IonLabel, IonProgressBar
   ],
@@ -22,8 +21,8 @@ import { HeaderComponent } from './header.component';
     progress::-webkit-progress-value { transition: width 0.1s ease; }
   `],
   template: `
-    <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
-    <ion-content class="ion-padding">
+    <bk-header [title]="title()" [isModal]="true" />
+    <ion-content class="ion-no-padding">
       <ion-grid>
         @if(percentage(); as pct) {
           <ion-row>
@@ -47,10 +46,12 @@ import { HeaderComponent } from './header.component';
 export class UploadTaskComponent implements OnInit {
   private readonly modalController = inject(ModalController);
 
+  // inputs
   public file = input.required<File>();
   public fullPath = input.required<string>();
   public title = input('Upload');
 
+  // signals
   public task: UploadTask | undefined;
   public percentage = signal(0);
   public snapshot = signal<UploadTaskSnapshot | undefined>(undefined);

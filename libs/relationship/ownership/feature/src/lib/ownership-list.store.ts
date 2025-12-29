@@ -13,7 +13,6 @@ import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, di
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
 import { OwnershipModalsService } from './ownership-modals.service';
 import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
-import { read } from 'fs';
 
 export type OwnershipListState = {
   ownerKey: string;
@@ -267,7 +266,7 @@ export const OwnershipListStore = signalStore(
 
       async edit(ownership?: OwnershipModel, readOnly = true): Promise<void> {
         if (!readOnly && ownership) {
-          await store.ownershipModalsService.edit(ownership);
+          await store.ownershipModalsService.edit(ownership, readOnly);
           store.ownershipsResource.reload();
         }
       },
@@ -295,7 +294,7 @@ export const OwnershipListStore = signalStore(
         if (!readOnly && ownership) {
           const result = await confirm(store.alertController, '@ownership.operation.delete.confirm', true);
           if (result === true) {
-            await store.ownershipService.delete(ownership);
+            await store.ownershipService.delete(ownership, store.currentUser());
             store.ownershipsResource.reload(); 
           }
         }

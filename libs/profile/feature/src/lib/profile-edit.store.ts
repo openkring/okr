@@ -13,7 +13,6 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 
 import { PersonService } from '@bk2/subject-person-data-access';
-import { convertPersonalDataFormToPerson, convertPrivacyFormToUser, convertSettingsFormToUser, PersonalDataFormModel, PrivacyFormModel, SettingsFormModel } from '@bk2/profile-util';
 
 /**
  * the personEditPage is setting the personKey.
@@ -85,12 +84,13 @@ export const ProfileEditStore = signalStore(
      * Update the current user and the corresponding person with the changed profile data.
      * The method does two updates (person and user), saves two comments, and shows one confirmation toast.
      */
-      async save(personalData?: PersonalDataFormModel, settings?: SettingsFormModel, privacy?: PrivacyFormModel): Promise<void> {
-        const person = convertPersonalDataFormToPerson(personalData, store.person());
-        let user = convertSettingsFormToUser(settings, store.currentUser());
-        user = convertPrivacyFormToUser(privacy, user);
-        await store.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, user);
-        await store.firestoreService.updateModel<UserModel>(UserCollection, user, false, '@profile.operation.update', user);
+      async save(person?: PersonModel, user?: UserModel): Promise<void> {
+        if (person) {
+          await store.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, user);
+        }
+        if (user) {
+          await store.firestoreService.updateModel<UserModel>(UserCollection, user, false, '@profile.operation.update', user);
+        }
       },
 
       async saveAvatar(photo: Photo): Promise<void> {

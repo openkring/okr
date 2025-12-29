@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -46,12 +46,12 @@ import { ResourceListStore } from './resource-list.store';
       }
     </ion-toolbar>
 
-     <!-- search and filters -->
-     <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onTypeSelected($event)"
+    <!-- search and filters -->
+    <bk-list-filter 
       (searchTermChanged)="onSearchtermChange($event)"
-     />
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+    />
 
     <!-- list header -->
   <ion-toolbar color="primary">
@@ -90,36 +90,45 @@ export class RowingBoatListComponent {
   protected readonly resourceListStore = inject(ResourceListStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public filter = input.required<string>();
   public contextMenuName = input.required<string>();
 
+  // filters
+  public searchTerm = linkedSignal(() => this.resourceListStore.searchTerm())
+  public selectedTag = linkedSignal(() => this.resourceListStore.selectedTag())
+  public selectedType = linkedSignal(() => this.resourceListStore.selectedBoatType())
+
+  // data
   protected filteredBoats = computed(() => this.resourceListStore.filteredBoats() ?? []);
   protected boatsCount = computed(() => this.resourceListStore.boatsCount());
   protected selectedBoatsCount = computed(() => this.filteredBoats().length);
   protected isLoading = computed(() => this.resourceListStore.isLoading());
   protected tags = computed(() => this.resourceListStore.getRowingBoatTags());
   protected types = computed(() => this.resourceListStore.appStore.getCategory('rboat_type'));
-  
+    protected currentUser = computed(() => this.resourceListStore.appStore.currentUser());
+  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
   private cat = this.resourceListStore.appStore.getCategory('rboat_type');
+
+  /******************************** getters ******************************************* */
+  protected getIcon(resource: ResourceModel): string | undefined {
+    return this.resourceListStore.appStore.getCategoryItem('rboat_type', resource.subType)?.icon;
+  }
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
     this.resourceListStore.setSearchTerm(searchTerm);
   }
 
-  protected onTagSelected($event: string): void {
-    this.resourceListStore.setSelectedTag($event);
+  protected onTagSelected(tag: string): void {
+    this.resourceListStore.setSelectedTag(tag);
   }
 
-  protected onTypeSelected($event: string): void {
-    this.resourceListStore.setSelectedBoatType($event);
-  }
-
-  /******************************** getters ******************************************* */
-  protected getIcon(resource: ResourceModel): string | undefined {
-    return this.resourceListStore.appStore.getCategoryItem('rboat_type', resource.subType)?.icon;
+  protected onTypeSelected(type: string): void {
+    this.resourceListStore.setSelectedResourceType(type);
   }
 
   /******************************** actions ******************************************* */
@@ -148,12 +157,15 @@ export class RowingBoatListComponent {
    * @param boat 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, boat: ResourceModel): void {
-    if (hasRole('resourceAdmin', this.resourceListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    if (hasRole('registered', this.resourceListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('rboat.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
+    if (hasRole('resourceAdmin', this.resourceListStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('rboat.edit', this.imgixBaseUrl, 'create_edit'));
+    }
     if (hasRole('admin', this.resourceListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('rboat.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -168,11 +180,14 @@ export class RowingBoatListComponent {
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
-        case 'delete':
-          await this.resourceListStore.delete(boat);
+        case 'rboat.delete':
+          await this.resourceListStore.delete(boat, this.readOnly());
           break;
-        case 'edit':
-          await this.resourceListStore.edit(boat);
+        case 'rboat.edit':
+          await this.resourceListStore.edit(boat, this.readOnly());
+          break;
+        case 'rboat.view':
+          await this.resourceListStore.edit(boat, true);
           break;
       }
     }

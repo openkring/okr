@@ -1,11 +1,11 @@
 import { AsyncPipe } from '@angular/common';
-import { AfterViewInit, Component, inject, input, viewChild, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { AfterViewInit, Component, inject, input, viewChild, CUSTOM_ELEMENTS_SCHEMA, computed } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
 import { register, SwiperContainer } from 'swiper/element/bundle';
 
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { Image } from '@bk2/shared-models';
+import { ImageConfig, ImageStyle } from '@bk2/shared-models';
 import { HeaderComponent, LabelComponent } from '@bk2/shared-ui';
 import { downloadToBrowser } from '@bk2/shared-util-angular';
 import { die, getSizedImgixParamsByExtension } from '@bk2/shared-util-core';
@@ -64,13 +64,13 @@ register(); // globally register Swiper's custom elements.
     `,
   ],
   template: `
-    <bk-header title="{{ title() | translate | async }}" [isModal]="true" />
+    <bk-header [title]="title()" [isModal]="true" />
     <ion-content>
-      @if(imageList(); as images) {
+      @if(images(); as images) {
       <swiper-container #mainSwiper class="mainSwiper" [loop]="false" [navigation]="true" thumbs-swiper=".thumbsSwiper" [initialSlide]="initialSlide()" autoplay="false" [effect]="effect()">
         @for(image of images; track image.url) {
         <!-- <swiper-slide>
-              <bk-img [image]="image" />
+              <bk-img [image]="image" [imageStyle]="imageStyle()" />
             </swiper-slide> -->
         <swiper-slide [style]="getBackgroundStyle(image)" />
         }
@@ -89,13 +89,20 @@ register(); // globally register Swiper's custom elements.
 export class GalleryModalComponent implements AfterViewInit {
   protected readonly appStore = inject(AppStore);
 
-  protected imageList = input.required<Image[]>();
+  // inputs
+  protected images = input.required<ImageConfig[]>();
+  protected imageStyle = input.required<ImageStyle>();
   protected initialSlide = input(0);
   protected title = input.required<string>();
   protected effect = input('slide');
+
+
   protected baseImgixUrl = this.appStore.services.imgixBaseUrl();
   private readonly mainSwiper = viewChild<SwiperContainer>('mainSwiper');
 
+  // derived values
+  protected readonly width = computed(() => this.imageStyle().width);
+  protected readonly height = computed(() => this.imageStyle().height);
   /*
   tbd: 
   - set initial slide
@@ -122,16 +129,15 @@ export class GalleryModalComponent implements AfterViewInit {
     }
   }
 
-  public download(image: Image) {
+  public download(image: ImageConfig) {
     if (image.url) {
       downloadToBrowser(image.url);
     }
   }
 
-  protected getBackgroundStyle(image: Image) {
+  protected getBackgroundStyle(image: ImageConfig) {
     if (!image.url) die('GalleryModalComponent: image url must be set');
-    if (!image.width || !image.height) die('GalleryModalComponent: image width and height must be set');
-    const params = getSizedImgixParamsByExtension(image.url, image.width, image.height);
+    const params = getSizedImgixParamsByExtension(image.url, this.width(), this.height());
     const url = this.baseImgixUrl + '/' + image.url + '?' + params;
     return {
       'background-image': `url(${url})`,

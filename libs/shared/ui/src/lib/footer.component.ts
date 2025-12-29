@@ -3,8 +3,10 @@ import { Router } from '@angular/router';
 import { IonButtons, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { navigateByUrl } from '@bk2/shared-util-angular';
-import { ButtonComponent } from './button.component';
 import { coerceBoolean } from '@bk2/shared-util-core';
+
+import { ButtonComponent } from './button.component';
+
 
 @Component({
   selector: 'bk-footer',
@@ -64,14 +66,18 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 })
 export class FooterComponent {
   public router = inject(Router);
+
+  // inputs
   public showFooter = input(false);
-  protected shouldShowFooter = computed(() => coerceBoolean(this.showFooter()));
   public isMobile = input(false);
-  protected isMobileDevice = computed(() => coerceBoolean(this.isMobile()));
   public twitterUrl = input('');
   public emailUrl = input('');
   public author = input('bkaiser.com');
   public authorUrl = input('https://bkaiser.com');
+
+  // coerced boolean inputs
+  protected shouldShowFooter = computed(() => coerceBoolean(this.showFooter()));
+  protected isMobileDevice = computed(() => coerceBoolean(this.isMobile()));
 
   public callTwitter(): void {
     navigateByUrl(this.router, this.twitterUrl());

@@ -4,24 +4,24 @@ import { ActionSheetController, ActionSheetOptions, IonContent, IonDatetime, Ion
 
 import { MembershipModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, FullNamePipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, HeaderComponent } from '@bk2/shared-ui';
+import { EmptyListComponent } from '@bk2/shared-ui';
 import { DateFormat, getTodayStr, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { CategoryLogPipe } from '@bk2/relationship-membership-util';
-import { MembersAccordionStore } from './members-accordion.store';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { TranslatePipe } from '@bk2/shared-i18n';
+
+import { MembershipStore } from './membership.store';
 
 @Component({
   selector: 'bk-members',
   standalone: true,
   imports: [
-    DurationPipe, AsyncPipe, CategoryLogPipe, AvatarPipe, FullNamePipe, TranslatePipe,
-    EmptyListComponent, HeaderComponent,
-    IonItem, IonLabel, IonList, IonImg, IonThumbnail, IonContent, IonModal, IonDatetime
+    DurationPipe, AsyncPipe, CategoryLogPipe, AvatarPipe, FullNamePipe,
+    EmptyListComponent,
+    IonItem, IonLabel, IonList, IonImg, IonThumbnail, IonContent
   ],
-  providers: [MembersAccordionStore],
+  providers: [MembershipStore],
   styles: [`
     ion-thumbnail { width: 30px; height: 30px; }
   `],
@@ -43,52 +43,30 @@ import { TranslatePipe } from '@bk2/shared-i18n';
         </ion-list>
       }
     </ion-content>
-  <ion-modal  [isOpen]="isModalOpen()" [keepContentsMounted]="true">
-    <ng-template>
-      <bk-header title="{{ '@general.operation.select.date' | translate | async }}" [isModal]="true" />
-      <ion-content class="ion-padding">
-        <ion-datetime
-          min="1900-01-01" max="2100-12-31"
-          presentation="date"
-          [value]="isoDate()"
-          locale="de-ch"
-          firstDayOfWeek="1"
-          [showDefaultButtons]="true"
-          [showAdjacentDays]="true"
-          doneText="{{'@general.operation.change.ok' | translate | async}}"
-          cancelText="{{'@general.operation.change.cancel' | translate | async}}"
-          size="cover"
-          [preferWheel]="false"
-          style="height: 380px; --padding-start: 0;"
-          (ionCancel)="cancel()"
-          (ionChange)="onDateSelected($event)"
-        />
-      </ion-content>
-    </ng-template>
-  </ion-modal>
   `,
 })
 export class MembersComponent {
-  protected readonly membersStore = inject(MembersAccordionStore);
+  protected readonly membershipStore = inject(MembershipStore);
   private actionSheetController = inject(ActionSheetController);
 
   public orgKey = input.required<string>();
   public readonly readOnly = input(true);
 
-  protected members = computed(() => this.membersStore.members());
+  protected members = computed(() => this.membershipStore.members());
   protected isModalOpen = signal(false);
   protected isoDate = signal(getTodayStr(DateFormat.IsoDate));
+  private currentUser = computed(() => this.membershipStore.currentUser());
 
-  private imgixBaseUrl = this.membersStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.membersStore.setOrgKey(this.orgKey()));
-    effect(() => this.membersStore.setShowMode(hasRole('admin')));
+    effect(() => this.membershipStore.setOrgId(this.orgKey()));
+    effect(() => this.membershipStore.setShowMode(hasRole('admin', this.currentUser())));
   }
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    await this.membersStore.addMember();
+    await this.membershipStore.add(this.readOnly());
   }
 
 /**
@@ -107,15 +85,18 @@ export class MembersComponent {
    * @param member 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, member: MembershipModel): void {
-    if (hasRole('memberAdmin', this.membersStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+    if (hasRole('registered')) {
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
+    }
+    if (!this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'create_edit'));
       if (isOngoing(member.dateOfExit)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('endMembership', this.imgixBaseUrl, 'stop-circle'));
-        actionSheetOptions.buttons.push(createActionSheetButton('changeMcat', this.imgixBaseUrl, 'member_change'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'member_change'));
       }
     }
-    if (hasRole('admin', this.membersStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+    if (hasRole('admin', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash_delete'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
   }
@@ -123,26 +104,28 @@ export class MembersComponent {
   /**
    * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
    * @param actionSheetOptions 
-   * @param member 
+   * @param membership 
    */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, member: MembershipModel): Promise<void> {
+  private async executeActions(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
-        case 'delete':
-          await this.membersStore.delete(member, this.readOnly());
+        case 'membership.delete':
+          await this.membershipStore.delete(membership, this.readOnly());
           break;
-        case 'edit':
-          await this.membersStore.edit(member, this.readOnly());
+        case 'membership.edit':
+          await this.membershipStore.edit(membership, this.readOnly());
           break;
-        case 'endMembership':
-          this.membersStore.setCurrentMembership(member);
-          this.isModalOpen.set(true);
+        case 'membership.view':
+          await this.membershipStore.edit(membership, true);
           break;
-        case 'changeMcat':
-          await this.membersStore.changeMembershipCategory(member, this.readOnly());
+        case 'membership.end':
+          await this.membershipStore.end(membership, undefined, this.readOnly());
+          break;
+        case 'membership.changecat':
+          await this.membershipStore.changeMembershipCategory(membership, this.readOnly());
           break;
       }
     }
@@ -150,21 +133,14 @@ export class MembersComponent {
 
   /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.membersStore.currentUser());
+    return hasRole(role, this.currentUser());
   }
 
   protected isOngoing(membership: MembershipModel): boolean {
     return isOngoing(membership.dateOfExit);
   }
 
-
   protected cancel(): void { 
     this.isModalOpen.set(false);
-  }
-
-  protected async onDateSelected(event: CustomEvent): Promise<void> {
-    this.isModalOpen.set(false);
-    const iso = event.detail.value.substring(0, 10);
-    await this.membersStore.end(iso);
   }
 }

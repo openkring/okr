@@ -30,7 +30,7 @@ export class I18nService {
   /**
    * Translate a key into the current language.
    * We need to use selectTranslate() instead of translate() in order to make sure that the translations were loaded.
-   * @param key the translation key, e.g. '@calEvent.operation.create'
+   * @param key the translation key, e.g. '@calevent.operation.create'
    * @param argument  an optional argument to pass to the translation function
    * @returns an observable of the translated string
    */

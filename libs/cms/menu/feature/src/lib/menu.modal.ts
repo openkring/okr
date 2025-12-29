@@ -1,16 +1,12 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { AppStore } from '@bk2/shared-feature';
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { MenuItemModel } from '@bk2/shared-models';
+import { CategoryListModel, MenuItemModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
-import { convertFormToMenuItem, convertMenuItemToForm, MenuItemFormModel } from '@bk2/cms-menu-util';
 
 @Component({
   selector: 'bk-menu-item-modal',
@@ -18,24 +14,26 @@ import { convertFormToMenuItem, convertMenuItemToForm, MenuItemFormModel } from 
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
     MenuItemFormComponent,
-    TranslatePipe, AsyncPipe,
     IonContent
   ],
   template: `
-    <bk-header title="{{ headerTitle() | translate | async }}" [isModal]="true" />
+    <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
-    <ion-content no-padding>
+    <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <bk-menu-item-form
           [formData]="formData"
+          (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
+          [showForm]="showForm()"
           [roles]="roles()"
-          [type]="types()"
+          [types]="types()"
           [readOnly]="isReadOnly()"
           [allTags]="tags()"
-          (formDataChange)="onFormDataChange($event)"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
         />
       }
     </ion-content>
@@ -43,10 +41,13 @@ import { convertFormToMenuItem, convertMenuItemToForm, MenuItemFormModel } from 
 })
 export class MenuItemModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
 
   // inputs
   public menuItem = input.required<MenuItemModel>();
+  public currentUser = input.required<UserModel>();
+  public tags = input.required<string>();
+  public roles = input.required<CategoryListModel>();
+  public types = input.required<CategoryListModel>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -54,27 +55,26 @@ export class MenuItemModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => convertMenuItemToForm(this.menuItem()));
+  protected formData = linkedSignal(() => structuredClone(this.menuItem()));
+  protected showForm = signal(true);
 
   // derived signals
-  protected currentUser = computed(() => this.appStore.currentUser());
-  protected headerTitle = computed(() => getTitleLabel('menuItem', this.menuItem().bkey, this.isReadOnly()));
-  protected tags = computed(() => this.appStore.getTags('menuitem'));
-  protected roles = computed(() => this.appStore.getCategory('roles'));
-  protected types = computed(() => this.appStore.getCategory('menu_action'));
+  protected headerTitle = computed(() => getTitleLabel('content.menuItem', this.menuItem().bkey, this.isReadOnly()));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    this.formDirty.set(false);
-    await this.modalController.dismiss(convertFormToMenuItem(this.formData(), this.menuItem()), 'confirm');
+    await this.modalController.dismiss(this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(convertMenuItemToForm(this.menuItem()));  // reset the form
+    this.formData.set(structuredClone(this.menuItem()));  // reset the form
+    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: MenuItemFormModel): void {
+  protected onFormDataChange(formData: MenuItemModel): void {
     this.formData.set(formData);
   }
 }

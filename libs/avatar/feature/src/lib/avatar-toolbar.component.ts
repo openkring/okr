@@ -13,6 +13,14 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
   standalone: true,
   imports: [CategoryPlainNamePipe, SvgIconPipe, IonToolbar, IonAvatar, IonImg, IonTitle, IonIcon, IonItem, IonLabel],
   providers: [AvatarToolbarStore],
+  styles: [
+    `
+      ion-avatar { margin: auto; height: 100px; width: 100px; padding: 10px; text-align: right; position: relative; }
+      ion-title { margin: auto; width: 100%; text-align: center; }
+      ion-label { margin: auto; width: 100%; text-align: center; }
+      ion-icon { font-size: 24px; position: absolute; bottom: 12px; right: 12px; }
+    `,
+  ],
   template: `
     <ion-toolbar [color]="color() | categoryPlainName : colorsIonic">
       <ion-avatar (click)="editImage()">
@@ -27,37 +35,19 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
           <ion-title (click)="avatarToolbarStore.showZoomedImage()">{{ title() }}</ion-title>
         </ion-item>
       }
-      @if(subTitle()) {
+      @if(subTitle(); as subTitle) {
         <ion-item [color]="color() | categoryPlainName : colorsIonic" lines="none">
-          <ion-label><small>{{ subTitle() }}</small></ion-label>
+          @if(subTitle.startsWith('tel:')) {
+            <ion-label><small><a href="{{ subTitle }}">{{ subTitle.substring(4) }}</a></small></ion-label>
+          } @else if(subTitle.startsWith('mailto:')) {
+            <ion-label><small><a href="{{ subTitle }}">{{ subTitle.substring(7) }}</a></small></ion-label>
+          } @else {
+            <ion-label><small>{{ subTitle }}</small></ion-label>
+          }
         </ion-item>
       }
     </ion-toolbar>
-  `,
-  styles: [
-    `
-      ion-avatar {
-        margin: auto;
-        height: 100px;
-        width: 100px;
-        padding: 10px;
-        text-align: right;
-        position: relative;
-      }
-      ion-title {
-        margin: auto;
-        width: 100%;
-        text-align: center; 
-      }
-      ion-label { margin: auto; width: 100%; text-align: center; }
-      ion-icon {
-        font-size: 24px;
-        position: absolute;
-        bottom: 12px;
-        right: 12px;
-      }
-    `,
-  ],
+  `
 })
 export class AvatarToolbarComponent {
   protected avatarToolbarStore = inject(AvatarToolbarStore);
@@ -67,7 +57,7 @@ export class AvatarToolbarComponent {
   public alt = input('Avatar');
   public color = input<ColorIonic>(ColorIonic.Light);
   public title = input<string | undefined>();
-  public subTitle = input<string | undefined>();
+  public subTitle = input<string | undefined>(); // if subTitle starts with tel: or mailto: a href link is created
 
   public imageSelected = output<Photo>();
 

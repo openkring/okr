@@ -1,10 +1,8 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonContent, Platform } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { UserModelName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, ChipsComponent, HeaderComponent } from '@bk2/shared-ui';
 import { debugFormModel, getFullName, hasRole } from '@bk2/shared-util-core';
@@ -23,14 +21,13 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
   selector: 'bk-user-page',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
     HeaderComponent, ChangeConfirmationComponent, AvatarToolbarComponent, ChipsComponent, CommentsCardComponent,
     UserModelFormComponent, UserDisplayFormComponent, UserAuthFormComponent, UserPrivacyFormComponent, UserNotificationFormComponent,
     IonContent
   ],
   providers: [UserEditStore],
   template: `
-    <bk-header title="{{ headerTitle() | translate | async }}" [showCloseButton]="false" />
+    <bk-header [title]="headerTitle()" [showCloseButton]="false" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
@@ -42,7 +39,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
         <bk-user-display-form [formData]="userDisplayVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
         <bk-user-privacy-form [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (onFormDataChange)="log($event)" />
         <bk-user-notification-form [formData]="userNotificationVm()" [readOnly]="readOnly()" (onFormDataChange)="log($event)" />
-        <bk-chips chipName="tag" [storedChips]="tags()" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" (changed)="onTagsChanged($event)" />
+        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onTagsChanged($event)" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" />
       }
       <bk-comments-card [parentKey]="parentKey()" />
     </ion-content>
@@ -69,6 +66,7 @@ export class UserPageComponent{
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected showForm = signal(true);
 
   // derived signals
   protected readonly headerTitle = computed(() => getTitleLabel('user', this.user()?.bkey, this.readOnly()));

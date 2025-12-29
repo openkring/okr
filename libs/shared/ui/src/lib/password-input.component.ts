@@ -10,8 +10,9 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { PasswordMask } from '@bk2/shared-config';
 import { InputMode, PASSWORD_MAX_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ButtonCopyComponent } from './button-copy.component';
 import { coerceBoolean } from '@bk2/shared-util-core';
+
+import { ButtonCopyComponent } from './button-copy.component';
 
 @Component({
   selector: 'bk-password-input',
@@ -58,20 +59,23 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   `
 })
 export class PasswordInputComponent {
+  // inputs
   public value = model.required<string>(); // mandatory view model
   public name = input('password'); // name of the input field
   public maxLength = input(PASSWORD_MAX_LENGTH); // max number of characters allowed
   public clearInput = input(true); // show an icon to clear the input field
-  protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   public copyable = input(true); // if true, a button to copy the value of the input field is shown
-  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   public showHelper = input(false);
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public inputMode = input<InputMode>('text'); // A hint to the browser for which keyboard to display.
+
+  // coerced boolean inputs
+  protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
+  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
 
   // usefull masks: lowercaseWordMask, uppercaseWordMask, caseInsensitiveWordMask, passwordMask
   public mask = input<MaskitoOptions>(PasswordMask);
-  readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => ((el as unknown) as HTMLIonInputElement).getInputElement();
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
 
   protected onPasswordChange(event: CustomEvent): void {
     this.value.set(event.detail.value);

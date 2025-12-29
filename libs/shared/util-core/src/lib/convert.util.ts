@@ -1,5 +1,6 @@
-import { AvatarInfo, NameDisplay, OrgModel, PersonModel, UserModel } from '@bk2/shared-models';
-import { die, warn } from './log.util';
+import { AccountModel, AvatarInfo, GroupModel, NameDisplay, NamedModel, OrgModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
+import { warn } from './log.util';
+import { isOwnership, isPerson, isPersonalRel, isUser } from 'libs/shared/util-core/src/lib/type.util';
 
 /*-------------------------------------------- STRING ----------------------------------------------------- */
 export function safeConvertString(fieldName: string, value: unknown, defaultValue: string): string {
@@ -209,6 +210,22 @@ export function getFullName(name1?: string, name2?: string, nameDisplay = NameDi
   }
 }
 
+export function getModelName(model: any, tenantId: string, nameDisplay = NameDisplay.FirstLast): string {
+  if (isPerson(model, tenantId)) {
+    return getFullName(model.firstName, model.lastName, nameDisplay);
+  }
+  if (isUser(model, tenantId)) {
+    return getFullName(model.firstName, model.lastName, nameDisplay);
+  }
+  if (isPersonalRel(model, tenantId)) {
+    return getFullName(model.subjectFirstName, model.subjectLastName, nameDisplay) + ' - ' + getFullName(model.objectFirstName, model.objectLastName, nameDisplay);
+  }
+  if (isOwnership(model, tenantId)) {
+    return getFullName(model.ownerName1, model.ownerName2, nameDisplay) + ' - ' + model.resourceName;
+  }
+  return model.name ?? '';
+}
+
 /**
  * Takes two names and returns the initials of both names.
  * e.g.   getInitials('John', 'Doe') => 'JD'
@@ -244,55 +261,45 @@ export function getAvatarKeys(avatars: AvatarInfo[]): string {
   return keys;
 }
 
-export function newAvatarInfo(name1: string, name2: string, modelType: 'person' | 'org' = 'person'): AvatarInfo {
+export function newAvatarInfo(key: string, name1: string, name2: string, modelType: 'person' | 'org' | 'resource' | 'user' | 'group' | 'account', type: string, subType: string, label: string): AvatarInfo {
   return {
-    key: '',
-    name1: name1,
-    name2: name2,
-    label: '',
-    modelType: modelType
+    key,
+    name1,
+    name2,
+    modelType,
+    type,
+    subType,
+    label
   };
 }
 
-export function getAvatarInfo(model?: PersonModel | OrgModel, modelType?: string): AvatarInfo | undefined {
-  if (!model || modelType === undefined) return undefined;
-  if (modelType === 'person') {
-    const person = model as PersonModel;
-    return {
-      key: person.bkey,
-      name1: person.firstName,
-      name2: person.lastName,
-      modelType: 'person',
-      label: ''
-    };
-  } else {
-    const org = model as OrgModel;
-    return {
-      key: org.bkey,
-      name1: '',
-      name2: org.name,
-      modelType: 'org',
-      label: ''
-    };
+export function getAvatarInfo(model?: PersonModel | OrgModel | ResourceModel | UserModel | GroupModel | AccountModel, modelType?: 'person' | 'org' | 'resource' | 'user' | 'group' | 'account'): AvatarInfo | undefined {
+  if (!model || !modelType) return undefined;
+  switch (modelType) {
+    case 'person':
+      const person = model as PersonModel;
+      return newAvatarInfo(person.bkey, person.firstName, person.lastName, 'person', person.gender, '', person.firstName + ' ' + person.lastName);
+    case 'org':
+      const org = model as OrgModel;
+      return newAvatarInfo(org.bkey, '', org.name, 'org', org.type, '', org.name);
+    case 'group':
+      const group = model as GroupModel;
+      return newAvatarInfo(group.bkey, '', group.name, 'group', 'group', '', group.name);
+    case 'resource':
+      const resource = model as ResourceModel;
+      return newAvatarInfo(resource.bkey, '', resource.name, 'resource', resource.type, resource.subType, resource.name);
+    case 'user':
+      const user = model as UserModel;
+      return newAvatarInfo(user.bkey, user.firstName, user.lastName, 'user', '', '', user.firstName + ' ' + user.lastName);
+    case 'account':
+      const account = model as AccountModel;
+      return newAvatarInfo(account.bkey, '', account.name, 'account', account.type, '', account.name);
   }
 }
 
-export function getAvatarInfoArray(model?: PersonModel | OrgModel, modelType?: string): AvatarInfo[] {
+export function getAvatarInfoArray(model?: PersonModel | OrgModel | ResourceModel, modelType?: 'person' | 'org' | 'resource'): AvatarInfo[] {
   const avatarInfo = getAvatarInfo(model, modelType);
   return avatarInfo ? [avatarInfo] : [];
-}
-
-export function getAvatarInfoFromCurrentUser(currentUser?: UserModel): AvatarInfo | undefined {
-  if (currentUser) {
-    return {
-      key: currentUser.personKey,
-      name1: currentUser.firstName,
-      name2: currentUser.lastName,
-      modelType: 'person',
-      label: ''
-    };
-  }
-  return undefined;
 }
 
 /*-------------------------------------------- JSON ----------------------------------------------------- */

@@ -6,9 +6,9 @@ import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { URL_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
+import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { ButtonCopyComponent } from './button-copy.component';
-import { coerceBoolean } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-image-url',
@@ -49,17 +49,22 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   `
 })
 export class ImageUrlComponent {
+  // inputs
   public value = model.required<string>(); // mandatory view model
   public name = input('url'); // name of the input field
   public readOnly = input.required<boolean>();
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public maxLength = input(URL_LENGTH); // max number of characters allowed
   public copyable = input(true); // if true, a button to copy the value of the input field is shown
-  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   public showHelper = input(false);
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public clearInput = input(true); // show an icon to clear the input field
+
+  // coerced boolean inputs
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
+  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
+
+  // outputs
   public changed = output<string>();
 
   public onChange(event: CustomEvent): void {

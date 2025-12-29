@@ -7,7 +7,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { coerceBoolean, getFullName, newAvatarInfo } from '@bk2/shared-util-core';
+import { coerceBoolean, generateRandomString, getFullName, newAvatarInfo } from '@bk2/shared-util-core';
 
 import { AvatarDisplayComponent } from './avatar-display.component';
 
@@ -28,6 +28,7 @@ import { AvatarDisplayComponent } from './avatar-display.component';
     IonReorderGroup, IonReorder,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton
   ],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <ion-card>
       <ion-card-header>
@@ -46,7 +47,7 @@ import { AvatarDisplayComponent } from './avatar-display.component';
         } @else {
           <ion-item lines="none">
             <!-- we deliberately use ion-input here, because we do not want to interfere with the vest from update of avatars() -->
-            <ion-input [value]="''" (ionChange)="save($event)" #stringInput
+            <ion-input [value]="''" (ionChange)="add($event)" #stringInput
                 label="{{ addLabel() | translate | async }}"
                 labelPlacement="floating"
                 inputMode="text"
@@ -92,28 +93,34 @@ export class AvatarsComponent {
   public currentUser = input.required<UserModel>();
   public name = input('avatars'); // the name of the menu
   public copyable = input(false);
-  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   public editable = input(false);
-  protected isEditable = computed(() => coerceBoolean(this.editable()));
   public readOnly = input.required<boolean>();
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public description = input<string>();
   public maxLength = input(NAME_LENGTH);
 
-  public changed = output<AvatarInfo[]>();
+  // coerced boolean inputs
+  protected isCopyable = computed(() => coerceBoolean(this.copyable()));
+  protected isEditable = computed(() => coerceBoolean(this.editable()));
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+
+  // view children
   public stringInput = viewChild<IonInput>('stringInput');
+
+  // outputs
   public selectClicked = output<void>();
 
+  // computed labels
   protected title = computed(() => `@input.${this.name()}.label`);
   protected addLabel = computed(() => `@input.${this.name()}.addString`);
 
-  public save($event: CustomEvent): void {
-    const name = $event?.detail?.value as string;
+  public add($event: CustomEvent): void {
+    const name = $event?.detail?.value?.trim() as string;
     this.resetInput();
     if (name && name.length > 0) {    // we have a valid name, either of one or two parts
-      const avatars = this.avatars();
-      avatars.push(this.getAvatarFromName(name));
-      this.updateAvatars(avatars);
+      // do not use set here, because the set on an array would not be signalled to the parent component
+      let newAvatar = newAvatarInfo(`person.${generateRandomString(10)}`, '', '', 'person', '', '', name);
+      newAvatar = this.updateAvatarName(newAvatar, name);
+      this.avatars.update(arr => [...arr, newAvatar])
     }
   }
 
@@ -125,9 +132,8 @@ export class AvatarsComponent {
   }
 
   public remove(index: number): void {
-    const avatars = this.avatars();
-    avatars.splice(index, 1);
-    this.updateAvatars(avatars);
+    // do not use set here, because the set on an array would not be signalled to the parent component
+    this.avatars.update(arr => arr.filter((_, i) => i !== index));
   }
 
   public async copy(avatar: AvatarInfo, confirmation?: string): Promise<void> {
@@ -137,24 +143,25 @@ export class AvatarsComponent {
   public async edit(avatar: AvatarInfo, index: number): Promise<void> {
     const changedName = await bkPrompt(this.alertController, '@input.avatars.edit', this.getAvatarName(avatar));
     if (changedName) {
-      const avatars = this.avatars();
-      avatars[index] = this.getAvatarFromName(changedName);
-      this.updateAvatars(avatars);
+      // do not use set here, because the set on an array would not be signalled to the parent component
+      this.avatars.update(arr => {  
+        const newArr = [...arr];                    // new reference
+        newArr[index] = this.updateAvatarName(newArr[index], changedName);
+        return newArr;
+      });
     }
   }
 
-  private updateAvatars(avatars: AvatarInfo[]): void {
-    this.avatars.set(avatars); // converts array back into a comma-separated string
-    this.changed.emit(avatars); // notify the parent component about the change
-  }
-
-  private getAvatarFromName(name: string): AvatarInfo {
+  private updateAvatarName(oldAvatar: AvatarInfo, name: string): AvatarInfo {
     if (name.includes(' ')) {
       const nameParts = name.split(' ');
-      return newAvatarInfo(nameParts[0], nameParts[1]);  
+      oldAvatar.name1 = nameParts[0];
+      oldAvatar.name2 = nameParts[1];
     } else {
-      return newAvatarInfo('', name);
+      oldAvatar.name1 = '';
+      oldAvatar.name2 = name;
     }
+    return oldAvatar;
   }
 
   protected getAvatarName(avatar: AvatarInfo): string {
@@ -166,7 +173,8 @@ export class AvatarsComponent {
    * @param ev the custom dom event with the reordered items
    */
   reorder(ev: CustomEvent<ItemReorderEventDetail>) {
-    this.updateAvatars(ev.detail.complete(this.avatars()));
+    // this works with set, because ev.detail.complete always returns a new array reference
+    this.avatars.set(ev.detail.complete(this.avatars()));
   }
 }
 

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -48,10 +48,10 @@ import { PersonListStore } from './person-list.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onGenderSelected($event)"
+    <bk-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
     />
 
     <!-- list header -->
@@ -89,16 +89,12 @@ import { PersonListStore } from './person-list.store';
               <ion-label>{{person.firstName | fullName:person.lastName:nameDisplay()}}</ion-label>      
               <ion-label>
                 @if(person.favPhone) {
-                  <a href="tel:{{person.favPhone}}" style="text-decoration:none;">
-                    <span>{{person.favPhone }}</span>
-                  </a>
+                  <span>{{person.favPhone }}</span>
                 }
               </ion-label>
               <ion-label class="ion-hide-sm-down">
                 @if(person?.favEmail) {
-                  <a href="mailto:{{person.favEmail}}" style="text-decoration:none;">
-                    <span>{{person.favEmail }}</span>
-                  </a>
+                  <span>{{person.favEmail }}</span>
                 }
               </ion-label> 
             </ion-item>
@@ -113,9 +109,11 @@ export class PersonListComponent {
   protected readonly personListStore = inject(PersonListStore);
   private readonly actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public readonly listId = input.required<string>();
   public readonly contextMenuName = input.required<string>();
 
+  // derived signals
   protected personsCount = computed(() => this.personListStore.personsCount());
   protected filteredPersons = computed(() => this.personListStore.filteredPersons() ?? []);
   protected filteredPersonsCount = computed(() => this.filteredPersons().length);
@@ -126,6 +124,11 @@ export class PersonListComponent {
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   private readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
+  // filter
+  protected searchTerm = linkedSignal(() => this.personListStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.personListStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.personListStore.selectedGender());
+
   private imgixBaseUrl = this.personListStore.appStore.env.services.imgixBaseUrl;
   protected personModelName = PersonModelName;
 
@@ -134,12 +137,12 @@ export class PersonListComponent {
     this.personListStore.setSearchTerm(searchTerm);
   }
 
-  protected onTagSelected($event: string): void {
-    this.personListStore.setSelectedTag($event);
+  protected onTagSelected(tag: string): void {
+    this.personListStore.setSelectedTag(tag);
   }
 
-  protected onGenderSelected($event: string): void {
-    this.personListStore.setSelectedGender($event);
+  protected onTypeSelected(type: string): void {
+    this.personListStore.setSelectedGender(type);
   }
 
   /******************************** actions ******************************************* */
@@ -172,17 +175,17 @@ export class PersonListComponent {
     if (hasRole('registered', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
       if (person.favEmail) {
-        actionSheetOptions.buttons.push(createActionSheetButton('address.email.copy', this.imgixBaseUrl, 'copy'));
-        actionSheetOptions.buttons.push(createActionSheetButton('address.email.send', this.imgixBaseUrl, 'email'));
+        actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.imgixBaseUrl, 'copy'));
+        actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.imgixBaseUrl, 'email'));
       }
       if (person.favPhone) {
-        actionSheetOptions.buttons.push(createActionSheetButton('address.phone.copy', this.imgixBaseUrl, 'copy'));
-        //tbd: actionSheetOptions.buttons.push(createActionSheetButton('address.phone.sms', this.imgixBaseUrl, 'chatbubble'));
-        actionSheetOptions.buttons.push(createActionSheetButton('address.phone.call', this.imgixBaseUrl, 'tel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.imgixBaseUrl, 'copy'));
+        //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
+        actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.imgixBaseUrl, 'tel'));
       }
-/*   tbd:    if (person.favCity && person.favStreetName && person.favZipCode) {
+      if (person.favCity && person.favStreetName && person.favZipCode) {
         actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.imgixBaseUrl, 'location'));
-      } */
+      }
      /*
        tbd: if person isUser:  send direct message
       actionSheetOptions.buttons.push(createActionSheetButton('address.chat.start', this.imgixBaseUrl, 'chatbubble'));
@@ -214,20 +217,23 @@ export class PersonListComponent {
         case 'person.view':
           await this.personListStore.edit(person, true);
           break;
-        case 'address.email.copy':
+        case 'person.copyemail':
           await this.personListStore.copy(person.favEmail, '@subject.person.operation.copy.email.conf');
           break;
-        case 'address.phone.copy':
+        case 'person.copyphone':
           await this.personListStore.copy(person.favPhone, '@subject.person.operation.copy.phone.conf');
           break;
-        case 'address.email.send':
+        case 'person.sendemail':
           await this.personListStore.sendEmail(person.favEmail);
           break;
-        case 'address.phone.call':
+        case 'person.call':
           await this.personListStore.call(person.favPhone);
           break;
         case 'person.delete':
           await this.personListStore.delete(person, this.readOnly());
+          break;
+        case 'person.show':
+          await this.personListStore.showOnMap(person);
           break;
         case 'person.edit':
           await this.personListStore.edit(person, this.readOnly());

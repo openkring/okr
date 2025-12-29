@@ -1,11 +1,12 @@
 import { IMAGE_LOADER, ImageLoaderConfig, NgOptimizedImage, NgStyle } from '@angular/common';
 import { Component, computed, ElementRef, inject, input, viewChild } from '@angular/core';
 import { IonThumbnail, ModalController } from '@ionic/angular/standalone';
+import { Browser } from '@capacitor/browser';
 
 import { BkEnvironment, ENV } from '@bk2/shared-config';
-import { Image } from '@bk2/shared-models';
-import { ImgixUrlPipe } from '@bk2/shared-pipes';
-import { die } from '@bk2/shared-util-core';
+import { ImageActionType, ImageConfig, ImageStyle } from '@bk2/shared-models';
+import { die, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@bk2/shared-util-core';
+import { downloadToBrowser } from '@bk2/shared-util-angular';
 
 import { showZoomedImage } from './ui.util';
 
@@ -62,7 +63,6 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
   standalone: true,
   imports: [
     NgOptimizedImage, NgStyle,
-    ImgixUrlPipe,
     IonThumbnail
   ],
   providers: [
@@ -96,24 +96,40 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
   ],
   styles: [`
       ion-thumbnail { margin: auto; height: 100px; width: 100px; padding: 10px; text-align: right; position: relative;}
-      .image-container { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; height: auto; }
+      .image-container { position: relative; display: flex; justify-content: center; align-items: flex-start; width: 100%; height: auto; }
     `],
   template: `
       @if(image(); as image) {
         @if(isThumbnail() === true) {
           <ion-thumbnail [slot]="slot()" [ngStyle]="style()" (click)="onImageClicked()">
-            <img [ngSrc]="image | imgixUrl" [alt]="image.altText" /> 
+            <img [ngSrc]="thumbnailUrl()" [alt]="altText()" /> 
           </ion-thumbnail>
         }
         @else {
           <div class="image-container">
-            <img [ngSrc]="image | imgixUrl" [alt]="image.altText" [sizes]="sizes()"
-              [attr.priority]="image.hasPriority ? '' : null"
-              [attr.fill]="image.fill ? '' : null"
-              width="{{width()}}" 
-              height="{{height()}}"
-              placeholder 
-            />
+            @if(isExternalImage()) {
+              <img
+                [src]="url()"
+                [width]="width()"
+                [height]="height()"
+                [alt]="altText()"
+                (click)="onImageClicked()"
+                style="object-fit: contain;"
+              />
+            }
+            @else {
+              <img
+                [ngSrc]="imgixUrl()"
+                [ngSrcset]="srcset()"
+                [width]="width()"
+                [height]="height()"
+                [sizes]="sizes()"
+                [priority]="hasPriority()"
+                [fill]="fill()"
+                [alt]="altText()"
+                (click)="onImageClicked()"
+              />
+            }
           </div>
         }
       }
@@ -121,34 +137,81 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
 })
 export class ImageComponent {
   private readonly modalController = inject(ModalController);
+  protected readonly env = inject(ENV);
 
-  public image = input.required<Image>();
+  // inputs
+  public image = input.required<ImageConfig>();
+  public imageStyle = input.required<ImageStyle>();
 
   protected imageContainer = viewChild('.image-container', { read: ElementRef });
-  // we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
 
+  // fields
   // by default, image is 100% of screen width on devices under 768px wide, and 50% on bigger screens
   // alternatively when excluding the menu: calc(100vw - 128px)
-  protected sizes = computed(() => this.image().sizes ?? '(max-width: 768px) 100vw, 50vw');
-  protected isThumbnail = computed(() => this.image().isThumbnail ?? false);
+  protected url = computed(() => this.image().url ?? '');
+  protected altText = computed(() => this.image().altText ?? 'Image');
+  protected sizes = computed(() => this.imageStyle()?.sizes ?? '(max-width: 768px) 100vw, 50vw');
+  protected isThumbnail = computed(() => this.imageStyle()?.isThumbnail ?? false);
+  protected slot = computed(() => this.imageStyle()?.slot ?? 'start');
+  protected fill = computed(() => this.imageStyle()?.fill ?? false);
+  protected hasPriority = computed(() => this.imageStyle()?.hasPriority ?? false);
+  protected actionType = computed(() => this.imageStyle()?.action ?? 'none');
+  protected actionUrl = computed(() => this.image()?.actionUrl ?? '');
+  protected isExternalImage = computed(() => this.url().startsWith('http'));
+  protected srcset = computed(() => this.generateSrcset());
+
+  protected generateSrcset(): string {
+    // keep your existing srcset logic for internal images
+    const params = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
+    const base = getImgixUrl(this.url(), '');
+    const widths = [320, 640, 960, 1280, 1920];
+    return widths.map(w => `${base}?${params}&w=${w} ${w}w`).join(', ');
+  }
+
+    // using imgix to generate srcset based on width and height
   protected style = computed(() => {
     return {
-      '--size': this.image()?.width ?? '150px',
-      '--rounded': this.image()?.borderRadius ?? '5px'
+      '--size': this.imageStyle()?.width ?? '150px',
+      '--rounded': this.imageStyle()?.borderRadius ?? '5px'
     };
   });
-  protected slot = computed(() => this.image()?.slot ?? 'start');
   protected width = computed(() => {
-    const _width = this.image()?.width;
+    const _width = this.imageStyle()?.width;
     return _width ?? this.getValue('width', 'auto');
   });
   protected height = computed(() => {
-    const _height = this.image()?.height;
+    const _height = this.imageStyle()?.height;
     return _height ?? this.getValue('height', 'auto');
   });
 
+  // we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
+  protected imgixUrl = computed(() => {
+    const params = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
+    return getImgixUrl(this.url(), params);
+  });
+
+  protected thumbnailUrl = computed(() => {
+    return getThumbnailUrl(this.url(), this.width(), this.height());
+  });
+
   protected async onImageClicked(): Promise<void> {
-    await showZoomedImage(this.modalController, '@content.type.article.zoomedImage', this.image(), 'full-modal');
+    switch(this.actionType()) {
+      case ImageActionType.Zoom:
+        await showZoomedImage(this.modalController, this.url(), '@content.type.article.zoomedImage', this.imageStyle(), this.altText(), 'full-modal');
+        break;
+      case ImageActionType.FollowLink:
+        await Browser.open({ url: this.actionUrl() });
+        break;
+      case ImageActionType.Download:
+        await downloadToBrowser(this.env.services.imgixBaseUrl + this.url());
+        break;
+      case ImageActionType.OpenDirectory:
+      case ImageActionType.OpenSlider:
+      case ImageActionType.None:
+      default:
+        // do nothing
+        break;
+    }
   }
 
   private getValue(key: string, defaultValue: string): string {

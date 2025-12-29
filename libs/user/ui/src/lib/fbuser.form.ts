@@ -1,5 +1,5 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, effect, input, model, output } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
@@ -37,27 +37,27 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="uid" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="uid()"  [readOnly]="isReadOnly()" [copyable]=true />
+                <bk-text-input name="uid" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="uid()" (valueChange)="onFieldChange('uid', $event)" [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="displayName" label="@input.displayName.label" placeholder="@input.displayName.placeholder"  [readOnly]="isReadOnly()" [value]="displayName()" [copyable]=true />
+                <bk-text-input name="displayName" label="@input.displayName.label" placeholder="@input.displayName.placeholder"  [readOnly]="isReadOnly()" [value]="displayName()" (valueChange)="onFieldChange('displayName', $event)" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email [value]="email()" (changed)="onFieldChange('email', $event)"  [readOnly]="isReadOnly()"/>
+                <bk-email [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()"/>
                 <bk-error-note [errors]="emailError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6"> 
-                <bk-phone [value]="phone()" (changed)="onFieldChange('phone', $event)"  [readOnly]="isReadOnly()"/>
+                <bk-phone [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()"/>
                 <bk-error-note [errors]="phoneError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="emailVerified" [isChecked]="emailVerified()" [showHelper]="true"  [readOnly]="isReadOnly()" (changed)="onFieldChange('emailVerified', $event)" />
+                <bk-checkbox name="emailVerified" [checked]="emailVerified()" (checkedChange)="onFieldChange('emailVerified', $event)" [showHelper]="true"  [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="disabled" [isChecked]="disabled()" [showHelper]="true"  [readOnly]="isReadOnly()" (changed)="onFieldChange('disabled', $event)" />
+                <bk-checkbox name="disabled" [checked]="disabled()" (checkedChange)="onFieldChange('disabled', $event)" [showHelper]="true"  [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12">
-                <bk-text-input name="photoUrl" label="@input.photoUrl.label" placeholder="@input.photoUrl.placeholder"  [readOnly]="isReadOnly()" [value]="photoUrl()" [copyable]=true />
+                <bk-text-input name="photoUrl" label="@input.photoUrl.label" placeholder="@input.photoUrl.placeholder" [readOnly]="isReadOnly()" [value]="photoUrl()" (valueChange)="onFieldChange('photoUrl', $event)" [copyable]=true />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -83,17 +83,17 @@ export class FbuserFormComponent {
   protected readonly suite = firebaseUserFormValidations;
   protected readonly shape = FIREBASE_USER_SHAPE;
   private readonly validationResult = computed(() => firebaseUserFormValidations(this.formData()));
-
-  // fields
-  protected uid = computed(() => this.formData().uid ?? '');
-  protected email = computed(() => this.formData().email ?? '');
-  protected displayName = computed(() => this.formData().displayName ?? '');
-  protected emailVerified = computed(() => this.formData().emailVerified ?? false);
-  protected disabled = computed(() => this.formData().disabled ?? false);
-  protected phone = computed(() => this.formData().phone ?? '');
-  protected photoUrl = computed(() => this.formData().photoUrl ?? '');
   protected emailError = computed(() => this.validationResult().getErrors('email'));
   protected phoneError = computed(() => this.validationResult().getErrors('phone'));
+
+  // fields
+  protected uid = linkedSignal(() => this.formData().uid ?? '');
+  protected email = linkedSignal(() => this.formData().email ?? '');
+  protected displayName = linkedSignal(() => this.formData().displayName ?? '');
+  protected emailVerified = linkedSignal(() => this.formData().emailVerified ?? false);
+  protected disabled = linkedSignal(() => this.formData().disabled ?? false);
+  protected phone = linkedSignal(() => this.formData().phone ?? '');
+  protected photoUrl = linkedSignal(() => this.formData().photoUrl ?? '');
 
   constructor() {
     effect(() => {

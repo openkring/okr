@@ -1,14 +1,12 @@
 import { computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
-import { collection, query } from 'firebase/firestore';
 import { authState } from 'rxfire/auth';
-import { collectionData } from 'rxfire/firestore';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AddressCollection, AddressModel, AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { die, getSystemQuery } from '@bk2/shared-util-core';
 
 import { AppConfigService } from './app-config.service';
@@ -70,11 +68,22 @@ export const AppStore = signalStore(
   })),
   
   withProps((store) => ({
-    usersResource: rxResource({
+/*     usersResource: rxResource({
       // the resource will reload whenever the fbUser changes (login/logout).
       params: () => store.fbUser(),
       stream: () => {
         return store.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(store.tenantId()), 'loginEmail', 'asc');
+      }
+    }), */
+    currentUserResource: rxResource({
+      // the resource will reload whenever the fbUser changes (login/logout).
+      params: () => store.fbUser(),
+      stream: () => {
+        const query = getSystemQuery(store.tenantId());
+        const loginEmail = store.fbUser()?.email;
+        if (!loginEmail) return of(undefined);
+        query.push({ key: 'loginEmail', operator: '==', value: loginEmail });
+        return store.firestoreService.searchData<UserModel>(UserCollection, query, 'loginEmail', 'asc');
       }
     }),
     personsResource: rxResource({
@@ -115,7 +124,22 @@ export const AppStore = signalStore(
 
   withComputed((state) => {
     return {
-      allUsers : computed(() => state.usersResource.value() ?? []),
+      //allUsers : computed(() => state.usersResource.value() ?? []),
+      currentUser: computed(() => {
+        const users = state.currentUserResource.value();
+        if (!users) {
+          console.warn('AppStore.currentUser: currentUserResource has no value yet.');
+          return undefined;
+        }
+        if (users.length === 0) {
+          console.warn('AppStore.currentUser: no user found for loginEmail ', state.fbUser()?.email);
+          return undefined;
+        }
+        if (users.length > 1) {
+          console.error('AppStore.currentUser: multiple users found for loginEmail ', state.fbUser()?.email);
+        }
+        return users[0];
+      }),
       allPersons: computed(() => state.personsResource.value() ?? []),
       allOrgs: computed(() => state.orgsResource.value() ?? []),
       allResources: computed(() => state.resourcesResource.value() ?? []),
@@ -126,7 +150,7 @@ export const AppStore = signalStore(
   }),
 
   withComputed((state) => ({
-    currentUser: computed(() => state.allUsers().find((user: UserModel) => user.loginEmail === state.fbUser()?.email)),
+    //currentUser: computed(() => state.allUsers().find((user: UserModel) => user.loginEmail === state.fbUser()?.email)),
     defaultOrg: computed(() => state.allOrgs().find((org: OrgModel) => org.bkey === state.tenantId())),
     defaultResource: computed(() => state.allResources().find((resource: ResourceModel) => resource.bkey === state.appConfig().defaultResourceId)),
     privacySettings: computed(() => {
@@ -163,20 +187,20 @@ export const AppStore = signalStore(
     loginEmail: computed(() => state.fbUser()?.email ?? undefined),
     roles: computed(() => state.currentUser()?.roles ?? []),
     showDebugInfo: computed(() => state.currentUser()?.showDebugInfo ?? state.appConfig().showDebugInfo ?? false),
-    isLoading: computed(() => state.usersResource.isLoading() || state.personsResource.isLoading() || state.orgsResource.isLoading() || 
+    isLoading: computed(() => state.currentUserResource.isLoading() || state.personsResource.isLoading() || state.orgsResource.isLoading() || 
         state.resourcesResource.isLoading() || state.tagsResource.isLoading()),
   })),
 
   withMethods((store) => {
     return {
-      resetCurrentUser() {
+/*       resetCurrentUser() {
         store.usersResource.reload();
-      },
+      }, */
       /************************************ GETTERS ************************************* */
-      getUser(key: string) {
+/*       getUser(key: string) {
         if (!key) return undefined;
         return store.allUsers()?.find(p => p.bkey === key);
-      },
+      }, */
       getPerson(key: string) {
         if (!key) return undefined;
         return store.allPersons()?.find(p => p.bkey === key);

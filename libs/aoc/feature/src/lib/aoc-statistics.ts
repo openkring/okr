@@ -10,10 +10,14 @@ import { AocStatisticsStore } from './aoc-statistics.store';
 @Component({
   selector: 'bk-aoc-statistics',
   standalone: true,
-  imports: [TranslatePipe, AsyncPipe, FormsModule, HeaderComponent, ResultLogComponent, ButtonComponent, IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol],
+  imports: [
+    TranslatePipe, AsyncPipe, 
+    FormsModule, HeaderComponent, ResultLogComponent, ButtonComponent, 
+    IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol
+  ],
   providers: [AocStatisticsStore],
   template: `
-    <bk-header title="{{ '@aoc.statistics.header' | translate | async }}" />
+    <bk-header title="@aoc.statistics.header" />
     <ion-content>
       <ion-card>
         <ion-card-content>

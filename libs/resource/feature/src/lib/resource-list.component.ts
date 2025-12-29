@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
@@ -48,10 +48,10 @@ import { ResourceListStore } from './resource-list.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onTypeSelected($event)"
+    <bk-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
      />
 
   <!-- list header -->
@@ -91,10 +91,17 @@ export class ResourceListComponent {
   protected readonly resourceListStore = inject(ResourceListStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public filter = input.required<string>();
   public contextMenuName = input.required<string>();
 
+  // filters
+  public searchTerm = linkedSignal(() => this.resourceListStore.searchTerm())
+  public selectedTag = linkedSignal(() => this.resourceListStore.selectedTag())
+  public selectedType = linkedSignal(() => this.resourceListStore.selectedResourceType())
+
+  // data
   protected filteredResources = computed(() => this.resourceListStore.filteredResources() ?? []);
   protected resourcesCount = computed(() => this.resourceListStore.resourcesCount());
   protected selectedResourcesCount = computed(() => this.filteredResources().length);
@@ -106,19 +113,6 @@ export class ResourceListComponent {
 
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
 
-  /******************************** setters (filter) ******************************************* */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.resourceListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected($event: string): void {
-    this.resourceListStore.setSelectedTag($event);
-  }
-
-  protected onTypeSelected($event: string): void {
-    this.resourceListStore.setSelectedResourceType($event);
-  }
-
   /******************************** getters ******************************************* */
   protected getIcon(resource: ResourceModel): string {
     let iconName: string;
@@ -129,11 +123,24 @@ export class ResourceListComponent {
     return iconName ?? '';
   }
 
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.resourceListStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.resourceListStore.setSelectedTag(tag);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.resourceListStore.setSelectedResourceType(type);
+  }
+
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.resourceListStore.add(true); break;
+      case 'add':  await this.resourceListStore.add(true, this.readOnly()); break;
       case 'exportRaw': await this.resourceListStore.export("raw"); break;
       default: error(undefined, `ResourceListComponent.call: unknown method ${selectedMethod}`);
     }
@@ -159,12 +166,11 @@ export class ResourceListComponent {
       actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
-
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('resource.edit', this.imgixBaseUrl, 'create_edit'));
     }
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('resource.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
 
@@ -180,13 +186,13 @@ export class ResourceListComponent {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'delete':
+        case 'resource.delete':
           await this.resourceListStore.delete(resource, this.readOnly());
           break;
-        case 'edit':
+        case 'resource.edit':
           await this.resourceListStore.edit(resource, this.readOnly());
           break;
-        case 'view':
+        case 'resource.view':
           await this.resourceListStore.edit(resource, true);
           break;
 

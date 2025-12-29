@@ -37,6 +37,7 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   // object = the membership organization
   public orgKey = DEFAULT_KEY;
   public orgName = DEFAULT_NAME;
+  public orgModelType: 'org' | 'group' = 'org';
 
   // membership
   public memberId = DEFAULT_ID;

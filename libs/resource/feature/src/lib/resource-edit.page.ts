@@ -1,11 +1,9 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { ResourceModelName, RoleName } from '@bk2/shared-models';
+import { ResourceModel, ResourceModelName, RoleName } from '@bk2/shared-models';
 import { CategorySelectComponent, ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_RESOURCE_TYPE, DEFAULT_TITLE } from '@bk2/shared-constants';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
@@ -13,8 +11,8 @@ import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
 
 import { ResourceFormComponent } from '@bk2/resource-ui';
-import { convertResourceToForm, isReservable, ResourceFormModel } from '@bk2/resource-util';
 import { ResourceEditStore } from './resource-edit.store';
+import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@bk2/resource-util';
 
 @Component({
   selector: 'bk-resource-edit-page',
@@ -23,36 +21,37 @@ import { ResourceEditStore } from './resource-edit.store';
     HeaderComponent, ChangeConfirmationComponent,
     CommentsAccordionComponent, IconToolbarComponent, ResourceFormComponent, CategorySelectComponent,
     ReservationsAccordionComponent,
-    TranslatePipe, AsyncPipe,
     IonContent, IonAccordionGroup, IonGrid, IonRow, IonCol
   ],
   providers: [ResourceEditStore],
-  styles: [` @media (width <= 600px) { ion-card { margin: 5px;} } `],
   template: `
-    <bk-header title="{{ title() | translate | async }}" />
+    <bk-header [title]="headerTitle()" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
-    <ion-content no-padding>
+    <ion-content class="ion-no-padding">
       <bk-icon-toolbar icon="{{icon()}}" title="{{ toolbarTitle() }}"/>
       @if(isTypeEditable() === true && types()) {
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat-select [category]="types()!" [selectedItemName]="type()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onTypeChange($event)" />
+              <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onTypeChange($event)" [withAll]="false" [readOnly]="isReadOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>
       }
+      {{ readOnly()}}
       @if(formData(); as formData) {
         <bk-resource-form
           [formData]="formData" 
+          (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [subTypes]="subTypes()"
           [usages]="usages()"
           [allTags]="tags()"
           [readOnly]="isReadOnly()"
-          (formDataChange)="onFormDataChange($event)"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
         />
       }
 
@@ -82,17 +81,24 @@ export class ResourceEditPageComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => convertResourceToForm(this.resource()));
+  public formData = linkedSignal(() => structuredClone(this.resource()));
+  protected showForm = signal(true);
 
   // derived signals
-  protected title = computed(() => getTitleLabel('resource', this.resource()?.bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => getTitleLabel('@resource.type.' + this.type(), this.resource()?.bkey, this.isReadOnly()));
   protected toolbarTitle = computed(() => this.formData()?.name ?? DEFAULT_TITLE);
   protected readonly parentKey = computed(() => `${ResourceModelName}.${this.resourceKey()}`);
   protected currentUser = computed(() => this.resourceEditStore.currentUser());
-  protected types = computed(() => this.resourceEditStore.appStore.getCategory(this.formData()?.type));
-  protected type = computed(() => this.formData()?.type ?? DEFAULT_RESOURCE_TYPE);
-  protected subTypes = computed(() => this.resourceEditStore.appStore.getCategory(this.formData()?.subType));
-  protected usages = computed(() => this.resourceEditStore.appStore.getCategory(this.formData()?.usage));
+  protected types = computed(() => this.resourceEditStore.appStore.getCategory('resource_type'));
+  protected type = linkedSignal(() => this.formData()?.type ?? DEFAULT_RESOURCE_TYPE);
+  protected subTypes = computed(() => {
+    const catName = getCategoryNameForResourceType(this.type());
+    return catName ? this.resourceEditStore.appStore.getCategory(catName) : undefined;
+  });
+  protected usages = computed(() => {
+    const usageName = getUsageNameForResourceType(this.type());
+    return usageName ? this.resourceEditStore.appStore.getCategory(usageName) : undefined;
+  });
   private rowingBoatIcon = computed(() => this.resourceEditStore.appStore.getCategoryIcon('rboat_type', this.formData()?.subType));
   private resourceIcon = computed(() => this.resourceEditStore.appStore.getCategoryIcon('resource_type', this.formData()?.type));
   protected icon = computed(() => this.formData()?.type === 'rboat' ? this.rowingBoatIcon() : this.resourceIcon());
@@ -107,16 +113,24 @@ export class ResourceEditPageComponent {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    this.formDirty.set(false);
     await this.resourceEditStore.save(this.formData());
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(convertResourceToForm(this.resource()));  // reset the form
+    this.formData.set(structuredClone(this.resource()));  // reset the form
+    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: ResourceFormModel): void {
+  protected onTypeChange(type: string): void {
+    this.formDirty.set(true);
+    console.log('onTypeChange: ERROR: ', type);
+    //this.formData.update(vm => ({ ...vm, type }));
+  }
+
+  protected onFormDataChange(formData: ResourceModel): void {
     this.formData.set(formData);
   }
 
@@ -128,10 +142,5 @@ export class ResourceEditPageComponent {
   protected isReservable(resourceType?: string): boolean {
     if (!resourceType || resourceType.length === 0) return false;
     return isReservable(resourceType);
-  }
-
-  protected onTypeChange(type: string): void {
-    this.formDirty.set(true);
-    this.formData.update((vm) => ({ ...vm, type } as ResourceFormModel));
   }
 }

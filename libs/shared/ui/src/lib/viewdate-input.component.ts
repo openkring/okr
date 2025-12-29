@@ -1,15 +1,15 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, model, output } from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonInput, IonItem, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonInput, ModalController } from '@ionic/angular/standalone';
 
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 
-import { ChAnyDate } from '@bk2/shared-config';
 import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { coerceBoolean, DateFormat, getTodayStr } from '@bk2/shared-util-core';
+import { ChAnyDate } from '@bk2/shared-config';
 
 /**
  * This ui component enables to input a date in ViewDate format (dd.MM.yyyy) in a text input field.
@@ -21,15 +21,14 @@ import { coerceBoolean, DateFormat, getTodayStr } from '@bk2/shared-util-core';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    MaskitoDirective, FormsModule,
-    IonItem, IonInput, IonNote
+    FormsModule, MaskitoDirective,
+    IonInput
   ],
-  styles: [`ion-item.helper { --min-height: 0; }`],
   template: `
-    <ion-input (ionChange)="onChange($event)"
+    <ion-input
       type="text"
-      name="{{ name() }}"
-      [ngModel]="viewDate()"
+      [name]="name()"
+      [(ngModel)]="viewDate"
       labelPlacement="floating"
       label="{{ label() | translate | async}}"
       placeholder="{{ placeholder() | translate | async }}"
@@ -41,40 +40,30 @@ import { coerceBoolean, DateFormat, getTodayStr } from '@bk2/shared-util-core';
       [maskito]="mask()"
       [maskitoElement]="maskPredicate"
     />
-  @if(shouldShowHelper()) {
-    <ion-item lines="none" class="helper">
-      <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
-    </ion-item>
-  }
   `
 })
 export class ViewDateInputComponent {
   protected modalController = inject(ModalController);
 
+  // inputs
   // optional date in ViewDate format (dd.MM.yyyy); default is today
   public viewDate = model(getTodayStr(DateFormat.ViewDate)); 
   public name = input.required<string>(); // mandatory name of the input field
   public readOnly = input.required<boolean>();
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public inputMode = input<InputMode>('numeric'); // A hint to the browser for which keyboard to display.
   public maxLength = input(DATE_LENGTH);
   public clearInput = input(true); // show an icon to clear the input field
-  protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   public autocomplete = input('off'); // can be set to bday for birth date
   public mask = input<MaskitoOptions>(ChAnyDate);
-  public showHelper = input(false);
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
 
-  public changed = output<string>();  // emits the new value when the input field changes in ViewDate format
-  // we need to explicitely notify the change, so that it can be converted in the parent components into StoreDate format
+  // coerced boolean inputs
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
 
+  // derived fields
   protected label = computed(() => '@input.' + this.name() + '.label');
   protected placeholder = computed(() => '@input.' + this.name() + '.label');
 
-  protected readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => ((el as unknown) as HTMLIonInputElement).getInputElement();
-
-  public onChange(event: CustomEvent): void {
-    this.viewDate.set(event.detail.value);
-    this.changed.emit(this.viewDate());
-  }
+  // passing constants to the template
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
 }

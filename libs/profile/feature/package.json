@@ -17,7 +17,6 @@
     "@bk2/avatar-feature": "*",
     "@bk2/avatar-util": "*",
     "@bk2/profile-data-access": "*",
-    "@bk2/profile-ui": "*",
-    "@bk2/profile-util": "*"
+    "@bk2/profile-ui": "*"
   }
 }

@@ -7,17 +7,18 @@ import { of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressChannel, AddressModel, MembershipCollection, MembershipModel, PersonModel, PersonModelName } from '@bk2/shared-models';
+import { AddressModel, DefaultLanguage, MembershipCollection, MembershipModel, PersonModel, PersonModelName } from '@bk2/shared-models';
 import { confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, debugListLoaded, hasRole, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugListLoaded, getCountryName, hasRole, nameMatches } from '@bk2/shared-util-core';
 
-import { AddressService } from '@bk2/subject-address-data-access';
+import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/subject-person-util';
 
 import { PersonNewModalComponent } from './person-new.modal';
-import { send } from 'process';
 import { browseUrl } from '@bk2/subject-address-util';
+import { Languages } from '@bk2/shared-categories';
+import { MapViewModalComponent } from '@bk2/shared-ui';
 
 export type PersonListState = {
   orgId: string;
@@ -43,7 +44,8 @@ export const PersonListStore = signalStore(
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
-    toastController: inject(ToastController) 
+    toastController: inject(ToastController),
+    geocodeService: inject(GeocodingService),
   })),
   withProps((store) => ({
     personsResource: rxResource({
@@ -229,19 +231,25 @@ export const PersonListStore = signalStore(
         return await browseUrl(`tel:${phone}`, '');
       },
       
-/*  tbd:     async showPostalAddress(postalAddress: string): Promise<void> {
-        const coordinates = await this.geocodeService.geocodeAddress(postalAddress);
+      async showOnMap(person?: PersonModel): Promise<void> {
+        if (!person) return;
+        const countryName = getCountryName(person.favCountryCode, Languages[DefaultLanguage].abbreviation);
+        const addressStr = !countryName ? 
+          `${person.favStreetName} ${person.favStreetNumber}, ${person.favZipCode} ${person.favCity}` : 
+          `${person.favStreetName} ${person.favStreetNumber}, ${person.favZipCode} ${person.favCity}, ${countryName}`;
+
+        const coordinates = await store.geocodeService.geocodeAddress(addressStr);
         if (!coordinates) return;
-        const modal = await this.modalController.create({
+        const modal = await store.modalController.create({
           component: MapViewModalComponent,
           componentProps: {
-            title: postalAddress,
+            title: addressStr,
             initialPosition: coordinates
           }
         });
         modal.present();
         await modal.onWillDismiss();
-      } */
+      }
     }
   }),
 

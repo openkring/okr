@@ -10,10 +10,14 @@ import { AocContentStore } from './aoc-content.store';
 @Component({
   selector: 'bk-aoc-content',
   standalone: true,
-  imports: [TranslatePipe, AsyncPipe, FormsModule, HeaderComponent, ButtonComponent, ResultLogComponent, IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol],
+  imports: [
+    TranslatePipe, AsyncPipe, 
+    FormsModule, HeaderComponent, ButtonComponent, ResultLogComponent, 
+    IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol
+  ],
   providers: [AocContentStore],
   template: `
-    <bk-header title="{{ '@aoc.content.title' | translate | async }}" />
+    <bk-header title="@aoc.content.title" />
     <ion-content>
       <ion-card>
         <ion-card-content>

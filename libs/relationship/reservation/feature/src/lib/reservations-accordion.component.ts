@@ -6,10 +6,11 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { OrgModel, PersonModel, ReservationModel, ResourceModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
-import { getAvatarKey, getCategoryIcon, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { coerceBoolean, getAvatarKey, getCategoryIcon, hasRole, isOngoing } from '@bk2/shared-util-core';
 
-import { ReservationsAccordionStore } from './reservations-accordion.store';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+
+import { ReservationStore } from './reservation.store';
 
 @Component({
   selector: 'bk-reservations-accordion',
@@ -19,15 +20,13 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
     EmptyListComponent,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonAvatar, IonImg, IonList
   ],
-  providers: [ReservationsAccordionStore],
-  styles: [`
-    ion-avatar { width: 30px; height: 30px; }
-  `],
+  providers: [ReservationStore],
+  styles: [`ion-avatar { width: 30px; height: 30px; }`],
   template: `
   <ion-accordion toggle-icon-slot="start" value="reservations">
     <ion-item slot="header" [color]="color()">
       <ion-label>{{ title() | translate | async }}</ion-label>
-      @if(readOnly() === false) {
+      @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
@@ -55,22 +54,27 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   `,
 })
 export class ReservationsAccordionComponent {
-  private readonly reservationsStore = inject(ReservationsAccordionStore);
-    private actionSheetController = inject(ActionSheetController);
+  private readonly reservationsStore = inject(ReservationStore);
+  private actionSheetController = inject(ActionSheetController);
   
+  // inputs
+  public reserver = input<PersonModel | OrgModel>();
+  public resource = input<ResourceModel>();
+  public reserverModelType = input<'person' | 'org'>('person');
   public color = input('light');
   public title = input('@reservation.plural');
   public readOnly = input(true);
 
-  public reserver = input<PersonModel | OrgModel>();
-  public resource = input<ResourceModel>();
-  public reserverModelType = input<'person' | 'org'>('person');
-  protected reservations = computed(() => this.reservationsStore.reservations());
-  private currentUser = this.reservationsStore.currentUser;
+  // coerced boolean inputs
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  private imgixBaseUrl = this.reservationsStore.appStore.env.services.imgixBaseUrl;
-  protected readonly resourceTypes = this.reservationsStore.appStore.getCategory('resource_type');
-    private readonly rboatTypes = this.reservationsStore.appStore.getCategory('rboat_type');
+  // derived fields
+  protected reservations = computed(() => this.reservationsStore.reservations());
+  private currentUser = computed(() => this.reservationsStore.currentUser());
+
+  private imgixBaseUrl = computed(() => this.reservationsStore.imgixBaseUrl());
+  protected readonly resourceTypes = computed(() => this.reservationsStore.getResourceTypes());
+  private readonly rboatTypes = computed(() => this.reservationsStore.getRboatTypes());
 
   constructor() {
     effect(() => {
@@ -93,11 +97,7 @@ export class ReservationsAccordionComponent {
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    const resource = this.resource();
-    const reserver = this.reserver();
-    if (resource && reserver) {
-      await this.reservationsStore.add(reserver, this.reserverModelType(), resource);
-    }
+    await this.reservationsStore.add(this.isReadOnly());
   }
 
   /**
@@ -117,17 +117,17 @@ export class ReservationsAccordionComponent {
    */
    private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, reservation: ReservationModel): void {  
       if (hasRole('registered', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
-        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl(), 'eye-on'));
+        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl(), 'close_cancel'));
       }
-      if (!this.readOnly()) {
-        actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+      if (!this.isReadOnly()) {
+        actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl(), 'create_edit'));
         if (isOngoing(reservation.endDate)) {
-          actionSheetOptions.buttons.push(createActionSheetButton('endres', this.imgixBaseUrl, 'stop-circle'));
+          actionSheetOptions.buttons.push(createActionSheetButton('endres', this.imgixBaseUrl(), 'stop-circle'));
         }
       }
       if (hasRole('admin', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+        actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl(), 'trash_delete'));
       }
     }
 
@@ -144,16 +144,16 @@ export class ReservationsAccordionComponent {
       if (!data) return;
       switch (data.action) {
         case 'delete':
-          await this.reservationsStore.delete(reservation, this.readOnly());
+          await this.reservationsStore.delete(reservation, this.isReadOnly());
           break;
         case 'edit':
-          await this.reservationsStore.edit(reservation, this.readOnly());
+          await this.reservationsStore.edit(reservation, this.isReadOnly());
           break;
         case 'view':
           await this.reservationsStore.edit(reservation, true);
           break;
         case 'endres':
-          await this.reservationsStore.end(reservation, this.readOnly());
+          await this.reservationsStore.end(reservation, this.isReadOnly());
           break;
       }
     }
@@ -170,9 +170,9 @@ export class ReservationsAccordionComponent {
 
   protected getIcon(reservation: ReservationModel): string {
     if (reservation.resourceType === 'rboat') {
-      return getCategoryIcon(this.rboatTypes, reservation.resourceSubType);
+      return getCategoryIcon(this.rboatTypes(), reservation.resourceSubType);
     } else {
-      return getCategoryIcon(this.resourceTypes, reservation.resourceType);
+      return getCategoryIcon(this.resourceTypes(), reservation.resourceType);
     }
   }
 }

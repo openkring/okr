@@ -1,45 +1,57 @@
 
-import { Component, computed, input, model, output, viewChild } from '@angular/core';
-import { IonIcon, IonItem } from '@ionic/angular/standalone';
-import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
+import { Component, computed, effect, input, model, signal, viewChild } from '@angular/core';
+import { IonIcon, IonItem, IonNote } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
+import { AsyncPipe } from '@angular/common';
+import { MaskitoOptions } from '@maskito/core';
 
-import { ChAnyDate } from '@bk2/shared-config';
 import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared-util-core';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { DatePickerModalComponent } from '@bk2/shared-ui';
+import { ChAnyDate } from '@bk2/shared-config';
 
 import { ViewDateInputComponent } from './viewdate-input.component';
-import { DatePickerModalComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-date-input',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, TranslatePipe, AsyncPipe,
     ViewDateInputComponent, DatePickerModalComponent,
-    IonItem, IonIcon
+    IonItem, IonIcon, IonNote
   ],
   viewProviders: [vestFormsViewProviders],
+  styles: [`ion-item.helper { --min-height: 0; }`],
   template: `
     <ion-item lines="none">
       @if(shouldShowDateSelect() && !isReadOnly()) {
         <ion-icon src="{{'calendar' | svgIcon }}" slot="start" (click)="datePicker.open()" />
       }
-      <bk-viewdate-input (changed)="onChange($event)"
-        [name]="name()" 
+      <bk-viewdate-input
         [viewDate]="viewDate()"
+        (viewDateChange)="onViewDateChange($event)"
+        [name]="name()" 
         [readOnly]="isReadOnly()"
         [clearInput]="shouldShowClearInput()"
         [inputMode]="inputMode()"
         [maxLength]="maxLength()"
-        [autocomplete]="autocomplete()"
         [mask]="mask()"
-        [showHelper]="shouldShowHelper()"
+        [autocomplete]="autocomplete()"
        />
     </ion-item>
 
-    <bk-date-picker-modal #datePicker [isoDate]="isoDate()" (dateSelected)="onDateSelected($event)" />
+    <bk-date-picker-modal #datePicker
+      [isoDate]="isoDate()"
+      (dateSelected)="updateStoreDate($event, isoFormat)"
+    />
+
+    @if(shouldShowHelper()) {
+      <ion-item lines="none" class="helper">
+        <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
+      </ion-item>
+    }
   `
 })
 export class DateInputComponent {
@@ -58,35 +70,51 @@ export class DateInputComponent {
   public inputMode = input<InputMode>('numeric'); // A hint to the browser for which keyboard to display.
   public maxLength = input(DATE_LENGTH);
   public autocomplete = input('off'); // can be set to bday for birth date
-  public mask = input<MaskitoOptions>(ChAnyDate);
   public showHelper = input(false);
   protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public showDateSelect = input(true);
   protected shouldShowDateSelect = computed(() => coerceBoolean(this.showDateSelect()));
   public locale = input('de-ch'); // mandatory locale for the input field, used for formatting
   public header = input('@general.operation.select.date');
+  public mask = input<MaskitoOptions>(ChAnyDate);
 
-  protected viewDate = computed(() => convertDateFormatToString(this.storeDate(), DateFormat.StoreDate, DateFormat.ViewDate, false));
-  protected isoDate = computed(() => this.getIsoDate(this.storeDate()));
-  public changed = output<string>(); // output event when the value changes
+  protected isoDate = computed(() => {
+    const iso = convertDateFormatToString(this.storeDate(), DateFormat.StoreDate, DateFormat.IsoDate, false);
+    return iso || getTodayStr(DateFormat.IsoDate);
+  });
 
-  protected onChange(viewDate: string): void {
-    this.storeDate.set(convertDateFormatToString(viewDate, DateFormat.ViewDate, DateFormat.StoreDate, false));
-    this.changed.emit(this.storeDate());
+  // passing constants to the template
+  protected viewDate = signal(getTodayStr(DateFormat.ViewDate));
+  protected isoFormat = DateFormat.IsoDate;
+
+// Sync storeDate → viewDate (one-way)
+  constructor() {
+    effect(() => {
+      const converted = convertDateFormatToString(
+        this.storeDate(),
+        DateFormat.StoreDate,
+        DateFormat.ViewDate,
+        false
+      );
+      if (converted) {
+        this.viewDate.set(converted);
+      }
+    });
   }
 
-  // the date must be in ISO format (used as input into datetime picker), it may not be empty, instead default is today
-  private getIsoDate(storeDate: string): string {
-    let isoDate = convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.IsoDate, false);
-    return isoDate || getTodayStr(DateFormat.IsoDate);
+  protected updateStoreDate(date: string, format: DateFormat): void {
+    this.storeDate.set(convertDateFormatToString(date, format, DateFormat.StoreDate, false));
   }
 
-  protected onDateSelected(isoDate: string): void {
-    this.storeDate.set(
-      convertDateFormatToString(isoDate, DateFormat.IsoDate, DateFormat.StoreDate, false)
-    );
-    this.changed.emit(this.storeDate());
+  // Sync viewDate → storeDate (on change)
+  protected onViewDateChange(view: string) {
+    // Only convert if the view date is complete (10 chars: dd.MM.yyyy)
+    if (view?.length === 10 && view.includes('.')) {
+      const store = convertDateFormatToString(view, DateFormat.ViewDate, DateFormat.StoreDate, false);
+      if (store) {  // store will be '' if conversion failed
+        this.storeDate.set(store);
+      }
+    }
+    // If incomplete → do nothing (user still typing)
   }
-
-  protected readonly maskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => ((el as unknown) as HTMLIonInputElement).getInputElement();
 }

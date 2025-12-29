@@ -1,13 +1,13 @@
-import { Component, computed, effect, input, model, output, signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
-import { CategoryListModel, PrivacyAccessor, PrivacySettings, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, isVisibleToUser } from '@bk2/shared-util-core';
-import { PERSON_FORM_SHAPE, PersonFormModel, personFormValidations } from '@bk2/subject-person-util';
+import { coerceBoolean, debugFormErrors, debugFormModel, isVisibleToUser } from '@bk2/shared-util-core';
+import { personValidations } from '@bk2/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 @Component({
@@ -21,11 +21,12 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, 
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
+  @if (showForm()) {
     <form scVestForm
-      [formShape]="shape"
       [formValue]="formData()"
       [suite]="suite" 
       (dirtyChange)="dirty.emit($event)"
+      (validChange)="valid.emit($event)"
       (formValueChange)="onFormChange($event)">
 
       <ion-card>
@@ -33,11 +34,11 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, 
           <ion-grid>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="firstName" [value]="firstName()" autocomplete="given-name" [autofocus]="true" [maxLength]=30 [readOnly]="isReadOnly()" (changed)="onFieldChange('firstName', $event)" />                                        
+                <bk-text-input name="firstName" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [autofocus]="true" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="lastName" [value]="lastName()" autocomplete="family-name" [maxLength]=30 [readOnly]="isReadOnly()" (changed)="onFieldChange('lastName', $event)" />                                        
+                <bk-text-input name="lastName" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" autocomplete="family-name" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
               </ion-col>
             </ion-row>
 
@@ -47,13 +48,13 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, 
               <ion-row>
                 @if(isVisibleToUser(priv().showDateOfBirth)) {
                   <ion-col size="12" size-md="6"> 
-                    <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" autocomplete="bday" [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfBirth', $event)" />
+                    <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" autocomplete="bday" [readOnly]="isReadOnly()" />
                   </ion-col>
                 }
 
                 @if(isDeathDateVisible()) {
                   <ion-col size="12" size-md="6">
-                    <bk-date-input name="dateOfDeath"  [storeDate]="dateOfDeath()" [readOnly]="isReadOnly()" (changed)="onFieldChange('dateOfDeath', $event)" />
+                    <bk-date-input name="dateOfDeath" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                 }
               </ion-row>
@@ -62,18 +63,18 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, 
             <ion-row>
               @if(isVisibleToUser(priv().showGender)) {
                 <ion-col size="12" size-md="6">
-                  <bk-cat-select [category]="genders()!" [selectedItemName]="gender()" [withAll]="false" [readOnly]="isReadOnly()" (changed)="onFieldChange('gender', $event)" />
+                  <bk-cat-select [category]="genders()!" [selectedItemName]="gender()" (selectedItemNameChange)="onFieldChange('gender', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                 </ion-col>
               }
       
               @if(isVisibleToUser(priv().showTaxId)) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="ssnId" [value]="ssnId()" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('ssnId', $event)" />                                        
+                  <bk-text-input name="ssnId" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="isReadOnly()" />                                        
                 </ion-col>
               }
               @if(isVisibleToUser(priv().showBexioId)) {
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="bexioId" [value]="bexioId()" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('bexioId', $event)" />                                        
+                  <bk-text-input name="bexioId" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
                 </ion-col>
               }
             </ion-row>
@@ -82,19 +83,21 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, 
       </ion-card>
 
       @if(isTagsVisible()) {
-        <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
+        <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
       
       @if(isNotesVisible()) {
-        <bk-notes [value]="notes()" [readOnly]="isReadOnly()" (changed)="onFieldChange('notes', $event)" />
+        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
+  }
   `
 })
 export class PersonFormComponent {  
   // inputs
-  public formData = model.required<PersonFormModel>();
-  public currentUser = input<UserModel | undefined>();
+  public readonly formData = model.required<PersonModel>();
+  public readonly currentUser = input<UserModel | undefined>();
+  public readonly showForm = input(true);   // used for initializing the form and resetting vest validations
   public allTags = input.required<string>();
   public priv = input.required<PrivacySettings>();
   public genders = input.required<CategoryListModel>();
@@ -106,41 +109,35 @@ export class PersonFormComponent {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = personFormValidations;
-  protected readonly shape = PERSON_FORM_SHAPE;
-  private readonly validationResult = computed(() => personFormValidations(this.formData()));
+  protected readonly suite = personValidations;
+  private readonly validationResult = computed(() => personValidations(this.formData()));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
 
   // fields
-  protected firstName = computed(() => this.formData().firstName ?? DEFAULT_NAME);
-  protected lastName = computed(() => this.formData().lastName ?? DEFAULT_NAME);
-  protected dateOfBirth = computed(() => this.formData().dateOfBirth ?? DEFAULT_DATE);
-  protected dateOfDeath = computed(() => this.formData().dateOfDeath ?? DEFAULT_DATE);
-  protected gender = computed(() => this.formData().gender ?? DEFAULT_GENDER);
-  protected ssnId = computed(() => this.formData().ssnId ?? DEFAULT_ID);
-  protected bexioId = computed(() => this.formData().bexioId ?? DEFAULT_ID);
-  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected firstName = linkedSignal(() => this.formData().firstName ?? DEFAULT_NAME);
+  protected lastName = linkedSignal(() => this.formData().lastName ?? DEFAULT_NAME);
+  protected dateOfBirth = linkedSignal(() => this.formData().dateOfBirth ?? DEFAULT_DATE);
+  protected dateOfDeath = linkedSignal(() => this.formData().dateOfDeath ?? DEFAULT_DATE);
+  protected gender = linkedSignal(() => this.formData().gender ?? DEFAULT_GENDER);
+  protected ssnId = linkedSignal(() => this.formData().ssnId ?? DEFAULT_ID);
+  protected bexioId = linkedSignal(() => this.formData().bexioId ?? DEFAULT_ID);
+  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
 
   // passing constants to template
   protected bexioMask = BexioIdMask;
   protected ssnMask = ChSsnMask;
 
-  constructor() {
-    effect(() => {
-      this.valid.emit(this.validationResult().isValid());
-    });
-  }
-
-  protected onFormChange(value: PersonFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormErrors('PersonForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
-  }
-
+  /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
-    debugFormErrors('PersonForm.onFieldChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFormChange(value: PersonModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormModel('PersonForm.onFormChange', this.formData(), this.currentUser());
+    debugFormErrors('PersonForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 
   protected isVisibleToUser(privacyAccessor: PrivacyAccessor): boolean {

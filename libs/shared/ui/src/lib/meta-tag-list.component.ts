@@ -2,9 +2,11 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular/standalone';
-import { MaskitoDirective } from '@maskito/angular';
 
-import { LowercaseWordMask, MaskPredicate } from '@bk2/shared-config';
+import { MaskitoDirective } from '@maskito/angular';
+import { MaskitoElementPredicate } from '@maskito/core';
+
+import { LowercaseWordMask } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { MetaTag } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -75,12 +77,16 @@ import { getIndexOfMetaTag } from '@bk2/shared-util-core';
   `
 })
 export class MetaTagListComponent {
+  // inputs
   public metaTagList = model.required<MetaTag[]>(); // the keys of the menu items
   public title = input('@input.meta.label');
   public wordMask = input(LowercaseWordMask);
+
+  // outputs
   public changed = output<void>();
   
-  protected maskPredicate = MaskPredicate;
+  // passing constants to template
+  readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
   protected newMetaTag: MetaTag = { name: '', content: '' };
 
   protected onNameChanged(event: CustomEvent): void {

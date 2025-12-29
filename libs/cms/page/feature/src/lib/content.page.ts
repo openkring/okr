@@ -1,20 +1,18 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
-import { Router } from '@angular/router';
-import { ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { PageModel, RoleName } from '@bk2/shared-models';
+import { RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { AppNavigationService, createActionSheetButton, createActionSheetOptions, error, navigateByUrl } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
+import { SectionComponent, SectionStore } from '@bk2/cms-section-feature';
 
-import { SectionComponent } from '@bk2/cms-section-feature';
-import { PageDetailStore } from './page-detail.store';
-import { ActionSheetController } from '@ionic/angular';
+import { PageStore } from './page.store';
 
 @Component({
   selector: 'bk-content-page',
@@ -24,8 +22,32 @@ import { ActionSheetController } from '@ionic/angular';
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent, IonList, IonItem, IonLabel, IonPopover
   ],
+  providers: [PageStore, SectionStore],
   styles: [`
-  bk-section { width: 100%; }
+  bk-section { width: 100%; display: block; }
+
+  .section-wrapper.editable {
+    border: 3px solid;
+    border-radius: 8px;
+    border-color: yellow;
+    margin: 8px 0;
+    padding: 4px;
+    width: calc(100% - 16px);
+    cursor: pointer;
+  }
+
+  ion-item.edit-mode {
+    --padding-start: 0;
+    --inner-padding-end: 0;
+  }
+
+@media (width <= 600px) {
+    .section-item {
+    --padding-start: 2px;
+    --inner-padding-end: 2px;
+  }
+}
+
 @media print {
   @page {
     size: A4;
@@ -75,7 +97,6 @@ import { ActionSheetController } from '@ionic/angular';
   }
 }
 `],
-  providers: [PageDetailStore],
   template: `
     <ion-header>
       <ion-toolbar color="secondary" id="bkheader">
@@ -97,14 +118,14 @@ import { ActionSheetController } from '@ionic/angular';
         }
       </ion-toolbar>
     </ion-header>
-    <ion-content>
+    <ion-content class="ion-no-padding">
       @if(hasRole('contentAdmin')) {
         @if(pageStore.isEmptyPage()) {
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPage' | translate | async }}</ion-label>
           </ion-item>
           <ion-item lines="none">
-            <ion-button (click)="pageStore.addSection()">
+            <ion-button (click)="this.addSection()">
               <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" />
               {{ '@content.section.operation.add.label' | translate | async }}
             </ion-button>
@@ -112,8 +133,14 @@ import { ActionSheetController } from '@ionic/angular';
         } @else {     <!-- page contains sections -->
           <ion-list>
             @for(sectionId of pageStore.sections(); track $index) {
-              <ion-item lines="none" click="showActions(sectionId)">
-                <bk-section [id]="sectionId" />
+              <ion-item lines="none" class="section-item" (click)="showActions(sectionId)" [class.edit-mode]="editMode()">
+                @if(editMode()) {
+                  <div class="section-wrapper" [class.editable]="editMode()">
+                    <bk-section [id]="sectionId" />
+                  </div>  
+                } @else {
+                  <bk-section [id]="sectionId" />
+                }
               </ion-item>
             }
           </ion-list>
@@ -135,24 +162,25 @@ import { ActionSheetController } from '@ionic/angular';
   `
 })
 export class ContentPageComponent {
-  protected pageStore = inject(PageDetailStore);
+  protected pageStore = inject(PageStore);
+  private sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
-  private readonly router = inject(Router);
-  private readonly appNavigationService = inject(AppNavigationService);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public id = input.required<string>();     // pageId (can contain @TID@ placeholder)
   public contextMenuName = input.required<string>();
 
-  protected tenantId = this.pageStore.appStore.env.tenantId;
+  // derived signals
+  protected tenantId = computed(() => this.pageStore.tenantId());
   protected showDebugInfo = computed(() => this.pageStore.showDebugInfo());
   protected popupId = computed(() => 'c_contentpage_' + this.id());
-  private imgixBaseUrl = this.pageStore.appStore.env.services.imgixBaseUrl;
+  protected editMode = signal(false);
 
   constructor() {
     effect(() => {
-      const id = replaceSubstring(this.id(), '@TID@', this.pageStore.appStore.env.tenantId);
+      const id = replaceSubstring(this.id(), '@TID@', this.pageStore.tenantId());
       debugMessage(`ContentPageComponent: pageId=${this.id()} -> ${id}`, this.pageStore.currentUser());
       this.pageStore.setPageId(id);
     });
@@ -174,12 +202,20 @@ export class ContentPageComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
+      case 'toggleEditMode':  this.editMode.update(value => !value); break;
       case 'sortSections':  await this.pageStore.sortSections(); break;
       case 'selectSection': await this.pageStore.selectSection(); break;
-      case 'addSection':    await this.pageStore.addSection(); break;
+      case 'addSection':    await this.addSection(); break;
       case 'exportRaw': await this.pageStore.export("raw"); break;
       case 'print': await this.pageStore.print(); break;
       default: error(undefined, `ContentPage.onPopoverDismiss: unknown method ${selectedMethod}`);
+    }
+  }
+
+  protected async addSection(): Promise<void> {
+    const sectionId = await this.sectionStore.add(false);
+    if (sectionId) {
+      this.pageStore.addSectionById(sectionId);
     }
   }
 
@@ -189,20 +225,22 @@ export class ContentPageComponent {
    * @param sectionId 
    */
   protected async showActions(sectionId: string): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, sectionId);
-    await this.executeActions(actionSheetOptions, sectionId);
+    if (this.editMode()) {
+      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      this.addActionSheetButtons(actionSheetOptions);
+      await this.executeActions(actionSheetOptions, sectionId);
+    }
   }
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param sectionId 
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, sectionId: string): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
     if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.pageStore.imgixBaseUrl(), 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.pageStore.imgixBaseUrl(), 'close_cancel'));
     }
   }
 
@@ -213,31 +251,22 @@ export class ContentPageComponent {
    */
   private async executeActions(actionSheetOptions: ActionSheetOptions, sectionId: string): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
+      const id = replaceSubstring(sectionId, '@TID@', this.tenantId());
+      this.sectionStore.setSectionId(id);
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       switch (data.action) {
-        case 'delete':
-          await this.delete(sectionId);
+        case 'page.removesection':
+          if (sectionId) {
+            await this.pageStore.removeSectionById(sectionId);
+          }
           break;
-        case 'edit':
-          await this.edit(sectionId);
+        case 'section.edit':
+          await this.sectionStore.edit(this.sectionStore.section(), false);
           break;
       }
     }
-  }
-
-  public async edit(sectionKey: string) { 
-    const sectionId = replaceSubstring(sectionKey, '@TID@', this.pageStore.appStore.env.tenantId);
-    debugMessage(`ContentPageComponent.editSection: sectionId=${sectionKey} -> ${sectionId}`, this.pageStore.currentUser());
-    this.appNavigationService.pushLink('private/' + this.pageStore.pageId());
-    navigateByUrl(this.router, `/section/${sectionId}`);
-  } 
-
-  public delete(sectionKey: string) {
-    const sectionId = replaceSubstring(sectionKey, '@TID@', this.pageStore.appStore.env.tenantId);
-    debugMessage(`ContentPageComponent.deleteSection: sectionId=${sectionKey} -> ${sectionId}`, this.pageStore.currentUser());
-    this.pageStore.deleteSectionFromPage(sectionId);
   }
 
   protected hasRole(role: RoleName): boolean {

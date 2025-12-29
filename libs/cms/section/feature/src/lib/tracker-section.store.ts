@@ -3,14 +3,14 @@ import { Geolocation, Position } from '@capacitor/geolocation';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { ENV } from '@bk2/shared-config';
-import { SectionModel } from '@bk2/shared-models';
+import { TrackerSection } from '@bk2/shared-models';
 import { convertToKml, downloadZipFile, error } from '@bk2/shared-util-angular';
 import { warn } from '@bk2/shared-util-core';
 
 import { SectionService } from '@bk2/cms-section-data-access';
 
 export type TrackerState = {
-  section: SectionModel | undefined;
+  section: TrackerSection | undefined;
   watchId: string | undefined;
   state: 'idle' | 'started' | 'paused' | 'stopped';
   currentPosition: Position | undefined;
@@ -43,17 +43,17 @@ export const TrackerSectionStore = signalStore(
    */
   withComputed((state) => {
     return {
-      autoStart: computed(() => { return state.section()?.properties?.trackerConfig?.autostart ?? false }),
-      timeout: computed(() => (state.section()?.properties?.trackerConfig?.intervalInSeconds ?? 15 * 60) * 1000),
-      enableHighAccuracy: computed(() => state.section()?.properties?.trackerConfig?.enableHighAccuracy ?? true),
-      maximumAge: computed(() => state.section()?.properties?.trackerConfig?.maximumAge ?? 0),
-      exportFormat: computed(() => state.section()?.properties?.trackerConfig?.exportFormat ?? 'kmz'),
+      autoStart: computed(() => { return state.section()?.properties?.autostart ?? false }),
+      timeout: computed(() => (state.section()?.properties?.intervalInSeconds ?? 15 * 60) * 1000),
+      enableHighAccuracy: computed(() => state.section()?.properties?.enableHighAccuracy ?? true),
+      maximumAge: computed(() => state.section()?.properties?.maximumAge ?? 0),
+      exportFormat: computed(() => state.section()?.properties?.exportFormat ?? 'kmz'),
     };
   }),
 
   withMethods((store) => {
     return {
-      setSection(section: SectionModel): void {
+      setSection(section: TrackerSection): void {
         patchState(store, { section, state: 'idle', watchId: undefined });
         if (store.autoStart()) {
           this.start();

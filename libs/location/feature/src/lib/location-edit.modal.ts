@@ -1,16 +1,13 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { LocationModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { LocationFormComponent } from '@bk2/location-ui';
-import { convertFormToLocation, convertLocationToForm, LocationFormModel } from '@bk2/location-util';
 
 
 @Component({
@@ -18,11 +15,10 @@ import { convertFormToLocation, convertLocationToForm, LocationFormModel } from 
   standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent, LocationFormComponent,
-    TranslatePipe, AsyncPipe,
     IonContent
   ],
   template: `
-    <bk-header title="{{ headerTitle() | translate | async }}" [isModal]="true" />
+    <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
@@ -52,7 +48,8 @@ export class LocationEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => convertLocationToForm(this.location()));
+  public formData = linkedSignal(() => structuredClone(this.location()));
+  protected showForm = signal(true);
 
   // derived signals
   protected headerTitle = computed(() => getTitleLabel('location', this.location().bkey, this.isReadOnly()));
@@ -61,16 +58,18 @@ export class LocationEditModalComponent {
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    this.formDirty.set(false);
-    await this.modalController.dismiss(convertFormToLocation(this.formData(), this.location()), 'confirm');  
+    await this.modalController.dismiss(this.formData(), 'confirm');  
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(convertLocationToForm(this.location()));  // reset the form
+    this.formData.set(structuredClone(this.location()));  // reset the form
+    // This destroys and recreates the <form scVestForm> → Vest fully resets
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: LocationFormModel): void {
+  protected onFormDataChange(formData: LocationModel): void {
     this.formData.set(formData);
   }
 }

@@ -1,7 +1,6 @@
-import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
+import { computed } from '@angular/core';
+import { MaskitoOptions } from '@maskito/core';
 import { maskitoDateOptionsGenerator, maskitoNumberOptionsGenerator, maskitoTimeOptionsGenerator } from '@maskito/kit';
-
-export const MaskPredicate: MaskitoElementPredicate = async (el: HTMLElement) => (el as HTMLInputElement);
 
 // 1) Word masks
 export const LowercaseWordMask: MaskitoOptions = {
@@ -128,5 +127,5 @@ export const UsPhoneMask: MaskitoOptions = {
 };
 
 export const ChPhoneMask: MaskitoOptions = {
-  mask: ['+', '4', '1', ' ', /[1-9]/, /\d/, ' ', /\d/, /\d/, /\d/, ' ', /\d/, /\d/, /\d/, /\d/],
+  mask: ['+', '4', '1', ' ', /[1-9]/, /\d/, ' ', /[1-9]/, /\d/, /\d/, ' ', /\d/, /\d/, /\d/, /\d/],
 };

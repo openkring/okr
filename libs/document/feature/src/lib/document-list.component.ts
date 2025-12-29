@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
@@ -11,7 +11,7 @@ import { getItemLabel, hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
-import { DocumentListStore } from './document-list.store';
+import { DocumentStore } from './document.store';
 
 @Component({
   selector: 'bk-document-list',
@@ -23,7 +23,7 @@ import { DocumentListStore } from './document-list.store';
     IonToolbar, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
     IonTitle, IonMenuButton, IonContent, IonItem, IonPopover
   ],
-  providers: [DocumentListStore],
+  providers: [DocumentStore],
   template: `
   <ion-header>
     <!-- title and actions -->
@@ -47,10 +47,10 @@ import { DocumentListStore } from './document-list.store';
   </ion-toolbar>
 
   <!-- search and filters -->
-  <bk-list-filter 
-    [tags]="tags()" (tagChanged)="onTagSelected($event)"
-    [type]="types()" (typeChanged)="onTypeSelected($event)"
+  <bk-list-filter
     (searchTermChanged)="onSearchtermChange($event)"
+    (tagChanged)="onTagSelected($event)" [tags]="tags()"
+    (typeChanged)="onTypeSelected($event)" [types]="types()"
   />
 
   <!-- list header -->
@@ -108,30 +108,50 @@ import { DocumentListStore } from './document-list.store';
 `
 })
 export class DocumentListComponent {
-  protected readonly documentListStore = inject(DocumentListStore);
+  protected readonly documentStore = inject(DocumentStore);
   private readonly actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public readonly listId = input.required<string>();
   public readonly contextMenuName = input.required<string>();
 
-  protected documentsCount = computed(() => this.documentListStore.documentsCount());
-  protected filteredDocuments = computed(() => this.documentListStore.filteredDocuments() ?? []);
+  // filters
+  protected readonly searchTerm = linkedSignal(() => this.documentStore.searchTerm());
+  protected readonly selectedTag = linkedSignal(() => this.documentStore.selectedTag());
+  protected readonly selectedType = linkedSignal(() => this.documentStore.selectedType());
+
+  // data
+  protected documentsCount = computed(() => this.documentStore.documentsCount());
+  protected filteredDocuments = computed(() => this.documentStore.filteredDocuments() ?? []);
   protected filteredDocumentsCount = computed(() => this.filteredDocuments().length);
-  protected isLoading = computed(() => this.documentListStore.isLoading());
-  protected tags = computed(() => this.documentListStore.getTags());
-  protected types = computed(() => this.documentListStore.appStore.getCategory('document_type'));
-  protected sources = computed(() => this.documentListStore.appStore.getCategory('document_source'));
-  protected readonly currentUser = computed(() => this.documentListStore.appStore.currentUser());
+  protected isLoading = computed(() => this.documentStore.isLoading());
+  protected tags = computed(() => this.documentStore.getTags());
+  protected types = computed(() => this.documentStore.appStore.getCategory('document_type'));
+  protected sources = computed(() => this.documentStore.appStore.getCategory('document_source'));
+  protected readonly currentUser = computed(() => this.documentStore.appStore.currentUser());
   private readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.documentListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.documentStore.appStore.env.services.imgixBaseUrl;
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.documentStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.documentStore.setSelectedTag(tag);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.documentStore.setSelectedType(type);
+  }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.documentListStore.add(); break;
-      case 'exportRaw': await this.documentListStore.export('raw'); break;
+      case 'add':  await this.documentStore.add(); break;
+      case 'exportRaw': await this.documentStore.export('raw'); break;
       default: error(undefined, `DocumentListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -181,25 +201,25 @@ export class DocumentListComponent {
       if (!data) return;
       switch (data.action) {
         case 'document.delete':
-          await this.documentListStore.delete(document, this.readOnly());
+          await this.documentStore.delete(document, this.readOnly());
           break;
         case 'document.download':
-          await this.documentListStore.download(document, this.readOnly());
+          await this.documentStore.download(document, this.readOnly());
           break;
         case 'document.update':
-          await this.documentListStore.update(document, this.readOnly());
+          await this.documentStore.update(document, this.readOnly());
           break;
         case 'document.edit':
-          await this.documentListStore.edit(document, this.readOnly());
+          await this.documentStore.edit(document, this.readOnly());
           break;
         case 'document.view':
-          await this.documentListStore.edit(document, true);
+          await this.documentStore.edit(document, true);
           break;
         case 'document.preview':
-          await this.documentListStore.preview(document, true);
+          await this.documentStore.preview(document, true);
           break;
         case 'document.showRevisions':
-          const revisions = await this.documentListStore.getRevisions(document);
+          const revisions = await this.documentStore.getRevisions(document);
           for (const rev of revisions) {
             console.log(` - revision: ${rev.bkey} / version: ${rev.version} / last update: ${rev.dateOfDocLastUpdate}`);
           }
@@ -208,22 +228,9 @@ export class DocumentListComponent {
     }
   }
 
-  /******************************* filter setters *************************************** */
-  public onSearchtermChange(searchTerm: string): void {
-    this.documentListStore.setSearchTerm(searchTerm);
-  }
-
-  public onTypeSelected(type: string): void {
-    this.documentListStore.setSelectedType(type);
-  }
-
-  public onTagSelected(selectedTag: string): void {
-    this.documentListStore.setSelectedTag(selectedTag);
-  }
-
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.documentListStore.currentUser());
+    return hasRole(role, this.documentStore.currentUser());
   }
 }
 

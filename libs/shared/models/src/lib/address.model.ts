@@ -11,6 +11,7 @@ export class AddressModel implements BkModel, TaggedModel {
   public usageLabel = DEFAULT_LABEL; // optional label for custom address types
   public email = DEFAULT_EMAIL;
   public phone = DEFAULT_PHONE;
+  public iban = '';
   public streetName = DEFAULT_NAME;
   public streetNumber = '';
   public addressValue2 = ''; // optional address, e.g. c/o, company
@@ -25,7 +26,7 @@ export class AddressModel implements BkModel, TaggedModel {
   public isArchived = false;
 
   public tags = DEFAULT_TAGS;
-  public description = DEFAULT_NOTES;
+  public notes = DEFAULT_NOTES;
 
   public tenants: string[] = DEFAULT_TENANTS;
   public index = DEFAULT_INDEX; // for search

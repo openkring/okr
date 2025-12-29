@@ -1,20 +1,19 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, WorkrelModel } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getItemLabel, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
-
-import { WorkrelListStore } from './workrel-list.store';
-import { ActionSheetController } from '@ionic/angular';
 import { WorkrelNamePipe } from '@bk2/relationship-workrel-util';
+
+import { WorkrelStore } from './workrel.store';
 
 @Component({
   selector: 'bk-workrel-list',
@@ -25,7 +24,7 @@ import { WorkrelNamePipe } from '@bk2/relationship-workrel-util';
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonImg, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover
   ],
-  providers: [WorkrelListStore],
+  providers: [WorkrelStore],
   template: `
     <ion-header>
       <!-- title and actions -->
@@ -50,11 +49,11 @@ import { WorkrelNamePipe } from '@bk2/relationship-workrel-util';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <bk-list-filter 
-      [tags]="tags()" (tagChanged)="onTagSelected($event)"
-      [type]="types()" (typeChanged)="onTypeSelected($event)"
-      [state]="states()" (stateChanged)="onStateSelected($event)"
+    <bk-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+      (stateChanged)="onStateSelected($event)" [states]="states()"
       [showIcons]=false
     />
 
@@ -111,31 +110,56 @@ import { WorkrelNamePipe } from '@bk2/relationship-workrel-util';
     `
 })
 export class WorkrelListComponent {
-  protected workrelListStore = inject(WorkrelListStore);
+  protected workrelStore = inject(WorkrelStore);
   private actionSheetController = inject(ActionSheetController);
 
+  // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  protected filteredWorkRels = computed(() => this.workrelListStore.filteredWorkrels());
-  protected allWorkRels = computed(() => this.workrelListStore.allWorkrels());
-  protected workRelsCount = computed(() => this.workrelListStore.allWorkrels()?.length ?? 0);
+  // filters
+  protected searchTerm = linkedSignal(() => this.workrelStore.searchTerm());
+  protected selectedTag = linkedSignal(() => this.workrelStore.selectedTag());
+  protected selectedType = linkedSignal(() => this.workrelStore.selectedType());
+  protected selectedState = linkedSignal(() => this.workrelStore.selectedState());
+
+  // data
+  protected filteredWorkRels = computed(() => this.workrelStore.filteredWorkrels());
+  protected allWorkRels = computed(() => this.workrelStore.allWorkrels());
+  protected workRelsCount = computed(() => this.workrelStore.allWorkrels()?.length ?? 0);
   protected selectedWorkRelsCount = computed(() => this.filteredWorkRels()?.length ?? 0);
-  protected isLoading = computed(() => this.workrelListStore.isLoading());
-  protected tags = computed(() => this.workrelListStore.getTags());
-  protected types = computed(() => this.workrelListStore.appStore.getCategory('workrel_type'));
-  protected states = computed(() => this.workrelListStore.appStore.getCategory('workrel_state'));
-  protected currentUser = computed(() => this.workrelListStore.appStore.currentUser());
+  protected isLoading = computed(() => this.workrelStore.isLoading());
+  protected tags = computed(() => this.workrelStore.getTags());
+  protected types = computed(() => this.workrelStore.appStore.getCategory('workrel_type'));
+  protected states = computed(() => this.workrelStore.appStore.getCategory('workrel_state'));
+  protected currentUser = computed(() => this.workrelStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.workrelListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.workrelStore.appStore.env.services.imgixBaseUrl;
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.workrelStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.workrelStore.setSelectedTag(tag);
+  }
+
+  protected onTypeSelected(type: string): void {
+    this.workrelStore.setSelectedType(type);
+  }
+
+  protected onStateSelected(state: string): void {
+    this.workrelStore.setSelectedState(state);
+  }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.workrelListStore.add(); break;
-      case 'exportRaw': await this.workrelListStore.export('raw'); break;
+      case 'add': await this.workrelStore.add(this.readOnly()); break;
+      case 'exportRaw': await this.workrelStore.export('raw'); break;
       default: error(undefined, `WorkrelListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -157,17 +181,17 @@ export class WorkrelListComponent {
      */
     private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, workRel: WorkrelModel): void {
       if (hasRole('registered', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+        actionSheetOptions.buttons.push(createActionSheetButton('workrel.view', this.imgixBaseUrl, 'eye-on'));
         actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
       }
       if (!(this.readOnly())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('edit', this.imgixBaseUrl, 'create_edit'));
+        actionSheetOptions.buttons.push(createActionSheetButton('workrel.edit', this.imgixBaseUrl, 'create_edit'));
         if (isOngoing(workRel.validTo)) {
-          actionSheetOptions.buttons.push(createActionSheetButton('endrel', this.imgixBaseUrl, 'stop-circle'));
+          actionSheetOptions.buttons.push(createActionSheetButton('workrel.end', this.imgixBaseUrl, 'stop-circle'));
         }
       }
       if (hasRole('admin', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('delete', this.imgixBaseUrl, 'trash_delete'));
+        actionSheetOptions.buttons.push(createActionSheetButton('workrel.delete', this.imgixBaseUrl, 'trash_delete'));
       }
     }
   
@@ -183,42 +207,25 @@ export class WorkrelListComponent {
         const { data } = await actionSheet.onDidDismiss();
         if (!data) return;
         switch (data.action) {
-          case 'delete':
-            await this.workrelListStore.delete(workRel, this.readOnly());
+          case 'workrel.delete':
+            await this.workrelStore.delete(workRel, this.readOnly());
             break;
-          case 'edit':
-            await this.workrelListStore.edit(workRel, this.readOnly());
+          case 'workrel.edit':
+            await this.workrelStore.edit(workRel, this.readOnly());
             break;
-          case 'view':
-            await this.workrelListStore.edit(workRel, true);
+          case 'workrel.view':
+            await this.workrelStore.edit(workRel, true);
             break;
-          case 'endrel':
-            await this.workrelListStore.end(workRel, this.readOnly());
+          case 'workrel.end':
+            await this.workrelStore.end(workRel, this.readOnly());
             break;
         }
       }
     }
 
-  /******************************* change notifications *************************************** */
-  protected onSearchtermChange(searchTerm: string): void {
-    this.workrelListStore.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected(tag: string): void {
-    this.workrelListStore.setSelectedTag(tag);
-  }
-
-  protected onTypeSelected(workrelType: string): void {
-    this.workrelListStore.setSelectedType(workrelType);
-  }
-
-  protected onStateSelected(workrelState: string): void {
-    this.workrelListStore.setSelectedState(workrelState);
-  }
-
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.workrelListStore.currentUser());
+    return hasRole(role, this.workrelStore.currentUser());
   }
 
   protected isOngoing(workrel: WorkrelModel): boolean {

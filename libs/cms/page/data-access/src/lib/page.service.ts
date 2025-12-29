@@ -1,11 +1,9 @@
 import { Injectable, inject } from "@angular/core";
-import { AlertController } from "@ionic/angular/standalone";
 import { Observable } from "rxjs";
 
 import { ENV } from "@bk2/shared-config";
 import { FirestoreService } from "@bk2/shared-data-access";
 import { PageCollection, PageModel, UserModel } from "@bk2/shared-models";
-import { bkPrompt } from "@bk2/shared-util-angular";
 import { findByKey, getSystemQuery } from "@bk2/shared-util-core";
 
 import { getPageIndex } from "@bk2/cms-page-util";
@@ -16,7 +14,6 @@ import { getPageIndex } from "@bk2/cms-page-util";
 export class PageService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
-  private readonly alertController = inject(AlertController);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -60,15 +57,5 @@ export class PageService {
   /*-------------------------- LIST / QUERY  --------------------------------*/
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<PageModel[]> {
     return this.firestoreService.searchData<PageModel>(PageCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
-  }
-
-  /*-------------------------- section handling --------------------------------*/
-  public async addPage(currentUser?: UserModel): Promise<void> {
-    const pageName = await bkPrompt(this.alertController, '@content.page.operation.add.label', '@content.page.field.name');
-    if (pageName) {
-      const page = new PageModel(this.env.tenantId);
-      page.name = pageName;
-      await this.create(page, currentUser);
-    }
   }
 }

@@ -1,15 +1,16 @@
-import { Component, computed, effect, inject, input, model, output } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
-import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
+import { vestForms } from 'ngx-vest-forms';
 
 import { ChFutureDate, LowercaseWordMask } from '@bk2/shared-config';
-import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, NAME_LENGTH } from '@bk2/shared-constants';
-import { AvatarInfo, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
+import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, NAME_LENGTH } from '@bk2/shared-constants';
+import { AvatarInfo, CalEventModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, convertDateFormatToString, DateFormat, debugFormErrors, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, convertDateFormatToString, DateFormat, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { ModelSelectService } from '@bk2/shared-feature';
 
 import { AvatarsComponent } from '@bk2/avatar-ui';
-import { CAL_EVENT_FORM_SHAPE, CalEventFormModel, calEventFormValidations } from '@bk2/calevent-util';
+import { calEventValidations } from '@bk2/calevent-util';
 
 @Component({
   selector: 'bk-calevent-form',
@@ -21,94 +22,111 @@ import { CAL_EVENT_FORM_SHAPE, CalEventFormModel, calEventFormValidations } from
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
-  viewProviders: [vestFormsViewProviders],
   template: ` 
+  @if (showForm()) {
   <form scVestForm 
-    [formShape]="shape"
     [formValue]="formData()"
+    (formValueChange)="onFormChange($event)"
     [suite]="suite" 
     (dirtyChange)="dirty.emit($event)"
-    (formValueChange)="onFormChange($event)">
+    (validChange)="valid.emit($event)"
+  >
 
     <ion-card>
-      <ion-card-content>
+      <ion-card-content class="ion-no-padding">
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <bk-cat-select [category]="types()!" selectedItemName="typeName()" [withAll]="false"  [readOnly]="isReadOnly()" (changed)="onFieldChange('calEventType', $event)" />
+              <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false"  [readOnly]="isReadOnly()" />
             </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12">
-                <bk-text-input name="name" [value]="name()" [autofocus]="true" [readOnly]="isReadOnly()"  (changed)="onFieldChange('name', $event)" /> 
+                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" /> 
                 <bk-error-note [errors]="nameErrors()" />                                                                               
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="startDate"  [storeDate]="startDate()" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true  (changed)="onFieldChange('startDate', $event)" />
+                <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-time-input name="startTime" [value]="startTime()" [locale]="locale()" [readOnly]="isReadOnly()"  (changed)="onFieldChange('startTime', $event)" />
+                <bk-time-input name="startTime" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="endDate"  [storeDate]="endDate()" [showHelper]=true [readOnly]="isReadOnly()"  (changed)="onFieldChange('endDate', $event)" />
+                <bk-date-input name="endDate"  [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-time-input name="endTime" [value]="endTime()" [locale]="locale()" [readOnly]="isReadOnly()"  (changed)="onFieldChange('endTime', $event)" />
+                <bk-time-input name="endTime" [value]="endTime()" (valueChange)="onFieldChange('endTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="periodicities()!" selectedItemName="periodicity()" [readOnly]="isReadOnly()" [withAll]="false" (changed)="onFieldChange('periodicity', $event)" />
+                <bk-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
               </ion-col>
               @if(periodicity() !== 'once') {
                 <ion-col size="12" size-md="6">
-                  <bk-date-input name="repeatUntilDate" [storeDate]="repeatUntilDate()" [locale]="locale()" [readOnly]="isReadOnly()" [mask]="chFutureDate" [showHelper]=true  (changed)="onFieldChange('repeatUntilDate', $event)" />
+                  <bk-date-input name="repeatUntilDate" [storeDate]="repeatUntilDate()" (storeDateChange)="onFieldChange('repeatUntilDate', $event)" [locale]="locale()" [mask]="chFutureDate" [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
               }
             </ion-row>
             <ion-row>
               <ion-col size="12">
                 <!-- tbd: locationKey is currently only a text field, should be [key]@[name], e.g.  qlöh1341hkqj@Stäfa -->
-                <bk-text-input name="locationKey" [value]="locationKey()" [readOnly]="isReadOnly()"  (changed)="onFieldChange('locationKey', $event)" />                                        
+                <bk-text-input name="locationKey" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [readOnly]="isReadOnly()" />                                        
               </ion-col>
             </ion-row>
           </ion-grid>
       </ion-card-content>
     </ion-card>
  
-    <bk-avatars name="responsiblePersons" [avatars]="responsiblePersons()" [currentUser]="currentUser()" [readOnly]="isReadOnly()" (changed)="onFieldChange('responsiblePersons', $event)" />
+    @if(currentUser(); as currentUser) {
+      <bk-avatars
+        (selectClicked)="selectPerson()"
+        name="responsiblePersons"
+        [avatars]="responsiblePersons()"
+        (avatarsChange)="onFieldChange('responsiblePersons', $event)"
+        [currentUser]="currentUser"
+        [readOnly]="isReadOnly()"
+        title="@calevent.field.responsible.label"
+        description="@calevent.field.responsible.description"
+        addLabel="@calevent.field.responsible.addLabel"
+      />
+    }
 
-    <bk-strings (changed)="onFieldChange('calendars', $event)"
-              [strings]="calendars()" 
-              [mask]="calendarMask" 
-              [maxLength]="nameLength"
-              [readOnly]="isReadOnly()" 
-              title="@input.calendarName.label"
-              description="@input.calendarName.description"
-              addLabel="@input.calendarName.addLabel" />           
+    <bk-strings
+      [strings]="calendars()"
+      (stringsChange)="onFieldChange('calendars', $event)"
+      [mask]="calendarMask" 
+      [maxLength]="nameLength"
+      [readOnly]="isReadOnly()" 
+      title="@input.calendarName.label"
+      description="@input.calendarName.description"
+      addLabel="@input.calendarName.addLabel"
+    />           
 
-     <!---------------------------------------------------
-        TAG, NOTES 
-        --------------------------------------------------->
-        @if(hasRole('privileged')) {
-          <bk-chips chipName="tag" [storedChips]="tags()" [allChips]="allTags()" [readOnly]="isReadOnly()" (changed)="onFieldChange('tags', $event)" />
-        }
-    
-        @if(hasRole('admin')) {
-          <bk-notes name="description" [value]="description()" [readOnly]="isReadOnly()" (changed)="onFieldChange('description', $event)" />
-        }
+  <!---------------------------------------------------
+    TAG, NOTES 
+    --------------------------------------------------->
+    @if(hasRole('privileged') || hasRole('eventAdmin')) {
+      <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+    }
+
+    @if(hasRole('admin')) {
+      <bk-notes name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+    }
   </form>
+  }
 `
 })
 export class CalEventFormComponent {
-  protected modalController = inject(ModalController);
+  private readonly modelSelectService = inject(ModelSelectService);
 
   // inputs
-  public formData = model.required<CalEventFormModel>();
+  public formData = model.required<CalEventModel>();
   public readonly currentUser = input.required<UserModel>();
+  public showForm = input(true);   // used for initializing the form and resetting vest validations
+  public readonly allTags = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
   public readonly periodicities = input.required<CategoryListModel>();
-  public readonly allTags = input.required<string>();
   public readonly locale = input.required<string>();
   public readonly readOnly = input(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -118,25 +136,24 @@ export class CalEventFormComponent {
   public valid = output<boolean>();
 
   // validation and errors
-  protected readonly suite = calEventFormValidations;
-  protected readonly shape = CAL_EVENT_FORM_SHAPE;
-  private readonly validationResult = computed(() => calEventFormValidations(this.formData()));
+  protected readonly suite = calEventValidations;
+  private readonly validationResult = computed(() => calEventValidations(this.formData()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
-  protected typeName = computed(() => this.formData().type ?? DEFAULT_CALEVENT_TYPE);
-  protected name = computed(() => this.formData().name ?? DEFAULT_NAME);
-  protected startDate = computed(() => this.formData().startDate ?? DEFAULT_DATE);
-  protected startTime = computed(() => this.formData().startTime ?? DEFAULT_TIME);
-  protected endDate = computed(() => this.formData().endDate ?? DEFAULT_DATE);
-  protected endTime = computed(() => this.formData().endTime ?? DEFAULT_TIME);
-  protected periodicity = computed(() => this.formData().periodicity ?? DEFAULT_PERIODICITY);
-  protected repeatUntilDate = computed(() => convertDateFormatToString(this.formData().repeatUntilDate, DateFormat.StoreDate, DateFormat.ViewDate));
-  protected locationKey = computed(() => this.formData().locationKey ?? DEFAULT_KEY);
-  protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected description = computed(() => this.formData().description ?? DEFAULT_NOTES);
-  protected calendars = computed(() => this.formData().calendars ?? DEFAULT_CALENDARS);
-  protected responsiblePersons = computed(() => {
+  protected type = linkedSignal(() => this.formData().type ?? DEFAULT_CALEVENT_TYPE);
+  protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
+  protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
+  protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
+  protected endDate = linkedSignal(() => this.formData().endDate ?? DEFAULT_DATE);
+  protected endTime = linkedSignal(() => this.formData().endTime ?? DEFAULT_TIME);
+  protected periodicity = linkedSignal(() => this.formData().periodicity ?? DEFAULT_PERIODICITY);
+  protected repeatUntilDate = linkedSignal(() => convertDateFormatToString(this.formData().repeatUntilDate, DateFormat.StoreDate, DateFormat.ViewDate));
+  protected locationKey = linkedSignal(() => this.formData().locationKey ?? DEFAULT_KEY);
+  protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
+  protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
+  protected calendars = linkedSignal(() => this.formData().calendars ?? DEFAULT_CALENDARS);
+  protected responsiblePersons = linkedSignal(() => {
   const raw = this.formData().responsiblePersons ?? [];
   return raw.map(p => ({
     key: p.key ?? '',
@@ -152,32 +169,34 @@ export class CalEventFormComponent {
   protected calendarMask = LowercaseWordMask;
   protected nameLength = NAME_LENGTH;
 
-  constructor() {
-    effect(() => {
-      this.valid.emit(this.validationResult().isValid());
-    });
-  }
-
-  protected onFormChange(value: CalEventFormModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
-    debugFormErrors('CalEventForm.onFormChange', this.validationResult().errors, this.currentUser());
+  /******************************* actions *************************************** */
+  public async selectPerson(): Promise<void> {
+    const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL);
+    if (avatar) {
+        const responsiblePersons = this.responsiblePersons();
+        responsiblePersons.push(avatar);
+        this.onFieldChange('responsiblePersons', responsiblePersons);
+    }
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo[]): void {
     this.dirty.emit(true);
-    if (fieldName === 'responsiblePersons') {
-      const normalized = (fieldValue as AvatarInfo[]).map(p => ({
-        key: p.key ?? '',
-        label: p.label ?? p.name1 ?? '',
-        modelType: p.modelType ?? 'person',
-        name1: p.name1 ?? '',
-        name2: p.name2 ?? ''
-      }));
-      this.formData.update(vm => ({ ...vm, responsiblePersons: normalized }));
-    } else {
-      this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
+    switch(fieldName) {
+      case 'responsiblePersons':
+        this.formData.update(vm => ({ ...vm, responsiblePersons: fieldValue as AvatarInfo[] }));
+        break;
+      case 'calendars':
+        this.formData.update(vm => ({ ...vm, calendars: fieldValue as string[] }));
+        break;
+      default:
+        this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
     }
-    debugFormErrors('CalEventForm.onFieldChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFormChange(value: CalEventModel): void {
+    this.formData.update((vm) => ({...vm, ...value}));
+    debugFormModel('CalEventForm.onFormChange', this.formData(), this.currentUser());
+    debugFormErrors('CalEventForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
 
   protected hasRole(role: RoleName): boolean {

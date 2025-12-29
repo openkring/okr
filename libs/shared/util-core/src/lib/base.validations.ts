@@ -22,7 +22,7 @@ export const baseValidations = staticSuite((model: BkModel, field?: string) => {
     stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
   }
   if (isNamedModel(model)) {
-    stringValidations('name', model.name, SHORT_NAME_LENGTH);
+    stringValidations('name', model.name, NAME_LENGTH);
   }
   if (isTaggedModel(model)) {
 //    tagsValidations('tags', model.tags);

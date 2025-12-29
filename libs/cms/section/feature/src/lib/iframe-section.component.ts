@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { SectionModel } from '@bk2/shared-models';
+import { IframeSection } from '@bk2/shared-models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 @Component({
@@ -40,11 +40,11 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 export class IframeSectionComponent {
   private readonly sanitizer = inject(DomSanitizer);
 
-  public section = input<SectionModel>();
+  public section = input<IframeSection>();
 
-  public style = computed(() => this.section()?.properties?.iframe?.style ?? 'width:100%; min-height:400px; border:none;');
+  public style = computed(() => this.section()?.properties?.style ?? 'width:100%; min-height:400px; border:none;');
   public title = computed(() => this.section()?.title ?? '');
   protected subTitle = computed(() => this.section()?.subTitle);
-  protected url = computed(() => this.sanitizer.bypassSecurityTrustResourceUrl(this.section()?.properties?.iframe?.url ?? ''));
+  protected url = computed(() => this.sanitizer.bypassSecurityTrustResourceUrl(this.section()?.properties?.url ?? ''));
 }
 

@@ -1,8 +1,9 @@
 // connection-status-button.component.ts
 import { Component, signal } from '@angular/core';
-import { bkTranslate } from '@bk2/shared-i18n';
 import { Network } from '@capacitor/network';
 import { AlertController, IonButton, IonicSafeString } from '@ionic/angular/standalone';
+
+import { bkTranslate } from '@bk2/shared-i18n';
 
 type Status = 'online' | 'slow' | 'offline';
 
@@ -39,9 +40,10 @@ type Status = 'online' | 'slow' | 'offline';
   `]
 })
 export class ConnectionStatusButtonComponent {
+
+  // signals
   private alertCtrl = new AlertController();
   private status = signal<Status>('online');
-
   protected color = signal('#4caf50'); // default green
 
   constructor() {

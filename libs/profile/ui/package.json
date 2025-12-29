@@ -12,8 +12,7 @@
     "@bk2/shared-config": "*",
     "@bk2/shared-i18n": "*",
     "@bk2/shared-ui": "*",
-    "@bk2/shared-util-core": "*",
-    "@bk2/profile-util": "*"
+    "@bk2/shared-util-core": "*"
   }
 }
 

@@ -13,9 +13,13 @@ import { LoginFormComponent } from '@bk2/auth-ui';
 @Component({
   selector: 'bk-login-modal',
   standalone: true,
-  imports: [HeaderComponent, LoginFormComponent, TranslatePipe, AsyncPipe, IonContent, IonButton, IonItem],
+  imports: [
+     TranslatePipe, AsyncPipe, 
+    HeaderComponent, LoginFormComponent,
+    IonContent, IonButton, IonItem
+  ],
   template: `
-    <bk-header title="{{ '@auth.operation.login.title' | translate | async }}" [isModal]="true" />
+    <bk-header title="@auth.operation.login.title" [isModal]="true" />
     <ion-content>
       <bk-login-form [(vm)]="currentCredentials" (validChange)="formIsValid = $event" />
       <ion-item lines="none">

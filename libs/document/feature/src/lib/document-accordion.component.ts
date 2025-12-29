@@ -8,7 +8,8 @@ import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe }
 import { EmptyListComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
-import { DocumentListStore } from 'libs/document/feature/src/lib/document-list.store';
+
+import { DocumentStore } from './document.store';
 
 @Component({
   selector: 'bk-documents-accordion',
@@ -18,7 +19,7 @@ import { DocumentListStore } from 'libs/document/feature/src/lib/document-list.s
     SpinnerComponent, EmptyListComponent,
     IonItem, IonLabel, IonButton, IonIcon, IonList, IonAccordion
   ],
-  providers: [DocumentListStore],
+  providers: [DocumentStore],
   template: `
   <ion-accordion toggle-icon-slot="start" value="documents">
     <ion-item slot="header" [color]="color()">
@@ -52,7 +53,7 @@ import { DocumentListStore } from 'libs/document/feature/src/lib/document-list.s
   `,
 })
 export class DocumentsAccordionComponent {
-  protected readonly documentListStore = inject(DocumentListStore);
+  protected readonly documentStore = inject(DocumentStore);
   private actionSheetController = inject(ActionSheetController);
 
   public parentKey = input.required<string>();
@@ -61,19 +62,19 @@ export class DocumentsAccordionComponent {
   public readonly readOnly = input<boolean>(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
-  protected readonly currentUser = computed(() => this.documentListStore.appStore.currentUser());
-  protected readonly documents = computed(() => this.documentListStore.documentsOfParent() ?? []);
+  protected readonly currentUser = computed(() => this.documentStore.currentUser());
+  protected readonly documents = computed(() => this.documentStore.documentsOfParent() ?? []);
 
-  private imgixBaseUrl = this.documentListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.documentStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
-      this.documentListStore.setParentKey(this.parentKey());
+      this.documentStore.setParentKey(this.parentKey());
     });
   }
 
   protected async add(): Promise<void> {
-   await this.documentListStore.add(this.parentKey());
+   await this.documentStore.add(this.parentKey());
   } 
 
   /**
@@ -121,25 +122,25 @@ export class DocumentsAccordionComponent {
       if (!data) return;
       switch (data.action) {
         case 'document.delete':
-          await this.documentListStore.delete(document, this.readOnly());
+          await this.documentStore.delete(document, this.readOnly());
           break;
         case 'document.download':
-          await this.documentListStore.download(document, this.readOnly());
+          await this.documentStore.download(document, this.readOnly());
           break;
         case 'document.update':
-          await this.documentListStore.update(document, this.readOnly());
+          await this.documentStore.update(document, this.readOnly());
           break;
         case 'document.edit':
-          await this.documentListStore.edit(document, this.readOnly());
+          await this.documentStore.edit(document, this.readOnly());
           break;
         case 'document.view':
-          await this.documentListStore.edit(document, true);
+          await this.documentStore.edit(document, true);
           break;
         case 'document.preview':
-          await this.documentListStore.preview(document, true);
+          await this.documentStore.preview(document, true);
           break;
         case 'document.showRevisions':
-          const revisions = await this.documentListStore.getRevisions(document);
+          const revisions = await this.documentStore.getRevisions(document);
           for (const rev of revisions) {
             console.log(` - revision: ${rev.bkey} / version: ${rev.version} / last update: ${rev.dateOfDocLastUpdate}`);
           }

@@ -1,5 +1,6 @@
-import { Component, input } from '@angular/core';
+import { Component, model } from '@angular/core';
 import { IonCol, IonGrid, IonRow, IonToolbar } from '@ionic/angular/standalone';
+
 import { SearchbarComponent } from './searchbar.component';
 
 @Component({
@@ -14,7 +15,7 @@ import { SearchbarComponent } from './searchbar.component';
       <ion-grid>
         <ion-row class="ion-align-items-center">
           <ion-col class="ion-no-padding" size="12">
-            <bk-searchbar [searchTerm]="searchTerm()"></bk-searchbar>
+            <bk-searchbar [searchTerm]="searchTerm()" (ionInput)="onSearchTermChange($event)" />
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -22,5 +23,10 @@ import { SearchbarComponent } from './searchbar.component';
   `
 })
 export class SearchToolbarComponent {
-  public searchTerm = input('');
+  // inputs
+  public searchTerm = model('');
+
+  protected onSearchTermChange($event: Event): void {
+    this.searchTerm.set(($event.target as HTMLInputElement).value);
+  }
 }

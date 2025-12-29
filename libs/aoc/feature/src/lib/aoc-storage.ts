@@ -18,10 +18,14 @@ import { AocStorageStore } from './aoc-storage.store';
       }
     `,
   ],
-  imports: [TranslatePipe, AsyncPipe, SvgIconPipe, FormsModule, ButtonComponent, HeaderComponent, ResultLogComponent, IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonIcon, IonCheckbox, IonButtons, IonButton, IonItem],
+  imports: [
+    TranslatePipe, AsyncPipe, SvgIconPipe, 
+    FormsModule, ButtonComponent, HeaderComponent, ResultLogComponent, 
+    IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonIcon, IonCheckbox, IonButtons, IonButton, IonItem
+  ],
   providers: [AocStorageStore],
   template: `
-    <bk-header title="{{ '@aoc.storage.title' | translate | async }}" />
+    <bk-header title="@aoc.storage.title" />
     <ion-content>
       <ion-card>
         <ion-card-header>

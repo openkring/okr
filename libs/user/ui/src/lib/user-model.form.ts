@@ -1,5 +1,5 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, effect, input, model, output } from "@angular/core";
+import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
@@ -37,31 +37,31 @@ import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="bkey" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="bkey()" [readOnly]="true" [copyable]=true />
+                <bk-text-input name="bkey" label="@input.userKey.label" placeholder="@input.userKey.placeholder" [value]="bkey()" (valueChange)="onFieldChange('bkey', $event)" [readOnly]="true" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="personKey" [value]="personKey()" [readOnly]="isReadOnly()" [copyable]=true />
+                <bk-text-input name="personKey" [value]="personKey()" (valueChange)="onFieldChange('personKey', $event)" [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="firstName" [value]="firstName()" [copyable]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('firstName', $event)" />
+                <bk-text-input name="firstName" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" [copyable]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="lastName" [value]="lastName()" [copyable]=true [readOnly]="isReadOnly()" (changed)="onFieldChange('lastName', $event)" />
+                <bk-text-input name="lastName" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" [copyable]=true [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email name="loginEmail" [value]="loginEmail()" [readOnly]="isReadOnly()" />
+                <bk-email name="loginEmail" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email name="gravatarEmail" [value]="gravatarEmail()" [readOnly]="isReadOnly()" (changed)="onFieldChange('gravatarEmail', $event)"  />
+                <bk-email name="gravatarEmail" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="tenants" [value]="tenants()" [readOnly]="isReadOnly()" [copyable]=true />
+                <bk-text-input name="tenants" [value]="tenants()" (valueChange)="onFieldChange('tenants', $event)" [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-notes [value]="notes()" [readOnly]="isReadOnly()" (changed)="onFieldChange('notes', $event)" />
+      <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
     </form>
   `
 })
@@ -82,17 +82,17 @@ export class UserModelFormComponent {
   private readonly validationResult = computed(() => userModelFormValidations(this.formData()));
 
   // fields
-  protected bkey = computed(() => this.formData().bkey);
-  protected tenants = computed(() => {
+  protected bkey = linkedSignal(() => this.formData().bkey);
+  protected tenants = linkedSignal(() => {
     const tenants = this.formData().tenants;
     return Array.isArray(tenants) ? tenants.join(',') : tenants;
   });
-  protected personKey = computed(() => this.formData().personKey);
-  protected firstName = computed(() => this.formData().firstName);
-  protected lastName = computed(() => this.formData().lastName);
-  protected loginEmail = computed(() => this.formData().loginEmail);
-  protected gravatarEmail = computed(() => this.formData().gravatarEmail);
-  protected notes = computed(() => this.formData().notes);
+  protected personKey = linkedSignal(() => this.formData().personKey);
+  protected firstName = linkedSignal(() => this.formData().firstName);
+  protected lastName = linkedSignal(() => this.formData().lastName);
+  protected loginEmail = linkedSignal(() => this.formData().loginEmail);
+  protected gravatarEmail = linkedSignal(() => this.formData().gravatarEmail);
+  protected notes = linkedSignal(() => this.formData().notes);
 
   constructor() {
     effect(() => {
