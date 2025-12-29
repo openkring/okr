@@ -1,14 +1,18 @@
 import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 
-import { AVATAR_INFO_SHAPE, AvatarInfo } from './avatar-info';
-import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+
+export type InvitationState = 'pending' | 'accepted' | 'declined' | 'maybe';
+export type InvitationRole = 'required' | 'optional' | 'info';
+export const DEFAULT_INVITATION_STATE: InvitationState = 'pending';
+export const DEFAULT_INVITATION_ROLE: InvitationRole = 'info';
 
 /**
  * An invitation of a person to a calendar event.
  *
  * Person    invited to       CalEvent
  */
-export class InvitationModel implements BkModel, SearchableModel, TaggedModel {
+export class InvitationModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
   public bkey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
@@ -16,11 +20,22 @@ export class InvitationModel implements BkModel, SearchableModel, TaggedModel {
   public tags = DEFAULT_TAGS;
   public notes = DEFAULT_NOTES;
 
-  public invitee: AvatarInfo = AVATAR_INFO_SHAPE;
-  public inviter: AvatarInfo = AVATAR_INFO_SHAPE; 
-  public caleventId = '';
-  state: 'pending' | 'accepted' | 'declined' | 'maybe' = 'pending';
-  role: 'required' | 'optional' | 'info' = 'info';
+  // invitee
+  public inviteeKey = '';
+  public inviteeFirstName = '';
+  public inviteeLastName = '';
+  // inviter
+  public inviterKey = '';
+  public inviterFirstName = '';
+  public inviterLastName = '';
+  // calendar event
+  public caleventKey = '';
+  public name = '';
+  public date = '';
+
+  // invitation details
+  state: InvitationState = DEFAULT_INVITATION_STATE;
+  role: InvitationRole = DEFAULT_INVITATION_ROLE;
   sentAt = DEFAULT_DATE;
   respondedAt = DEFAULT_DATE;
 

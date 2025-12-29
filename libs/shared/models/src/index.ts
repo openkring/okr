@@ -21,6 +21,7 @@ export * from './lib/geoposition.model';
 export * from './lib/group.model';
 export * from './lib/image.model';
 export * from './lib/image.shapes';
+export * from './lib/invitation.model';
 export * from './lib/invoice-position.model';
 export * from './lib/invoice.model';
 export * from './lib/location.model';

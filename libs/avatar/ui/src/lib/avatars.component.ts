@@ -1,15 +1,16 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
-import { AlertController, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
+import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
 import { NAME_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { coerceBoolean, generateRandomString, getFullName, newAvatarInfo } from '@bk2/shared-util-core';
+import { coerceBoolean, getFullName } from '@bk2/shared-util-core';
 
 import { AvatarDisplayComponent } from './avatar-display.component';
+import { AvatarInputComponent } from "./avatar-input.component";
 
 /**
  * Vest updates work by binding to ngModel.
@@ -24,10 +25,11 @@ import { AvatarDisplayComponent } from './avatar-display.component';
     TranslatePipe, AsyncPipe, SvgIconPipe,
     AvatarDisplayComponent,
     IonList, IonItem,
-    IonLabel, IonInput, IonIcon, IonNote,
+    IonLabel, IonIcon, IonNote,
     IonReorderGroup, IonReorder,
-    IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton
-  ],
+    IonCard, IonCardHeader, IonCardContent, IonCardTitle,
+    AvatarInputComponent
+],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <ion-card>
@@ -45,20 +47,7 @@ import { AvatarDisplayComponent } from './avatar-display.component';
             <bk-avatar-display [avatars]="avatars()" [showName]="false" />
           </ion-item>
         } @else {
-          <ion-item lines="none">
-            <!-- we deliberately use ion-input here, because we do not want to interfere with the vest from update of avatars() -->
-            <ion-input [value]="''" (ionChange)="add($event)" #stringInput
-                label="{{ addLabel() | translate | async }}"
-                labelPlacement="floating"
-                inputMode="text"
-                type="text"
-                [counter]="true"
-                [maxlength]="maxLength()"
-                placeholder="ssssss"
-                />
-            <ion-button slot="end" fill="clear" (click)="selectClicked.emit()">{{ '@general.operation.select.subject' | translate | async }}</ion-button>
-          </ion-item>
-
+          <bk-avatar-input (avatarAdded)="add($event)" (selectClicked)="selectClicked.emit()" />
           @if(avatars(); as avatars) {
             <ion-list>
               <!-- Casting $event to $any is a temporary fix for this bug https://github.com/ionic-team/ionic-framework/issues/24245 -->
@@ -113,22 +102,8 @@ export class AvatarsComponent {
   protected title = computed(() => `@input.${this.name()}.label`);
   protected addLabel = computed(() => `@input.${this.name()}.addString`);
 
-  public add($event: CustomEvent): void {
-    const name = $event?.detail?.value?.trim() as string;
-    this.resetInput();
-    if (name && name.length > 0) {    // we have a valid name, either of one or two parts
-      // do not use set here, because the set on an array would not be signalled to the parent component
-      let newAvatar = newAvatarInfo(`person.${generateRandomString(10)}`, '', '', 'person', '', '', name);
-      newAvatar = this.updateAvatarName(newAvatar, name);
-      this.avatars.update(arr => [...arr, newAvatar])
-    }
-  }
-
-  private resetInput(): void {
-    const input = this.stringInput();
-    if (input) {
-      input.value = '';
-    }
+  public add(newAvatar: AvatarInfo): void {
+    this.avatars.update(arr => [...arr, newAvatar])
   }
 
   public remove(index: number): void {

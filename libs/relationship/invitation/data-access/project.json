@@ -1,0 +1,24 @@
+{
+  "name": "relationship-invitation-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/invitation/data-access/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:invitation", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/invitation/data-access",
+        "main": "libs/relationship/invitation/data-access/src/index.ts",
+        "tsConfig": "libs/relationship/invitation/data-access/tsconfig.lib.json",
+        "assets": ["libs/relationship/invitation/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

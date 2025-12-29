@@ -1,0 +1,25 @@
+{
+  "name": "relationship-invitation-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/invitation/ui/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:invitation", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/invitation/ui",
+        "main": "libs/relationship/invitation/ui/src/index.ts",
+        "tsConfig": "libs/relationship/invitation/ui/tsconfig.lib.json",
+        "assets": ["libs/relationship/invitation/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
+

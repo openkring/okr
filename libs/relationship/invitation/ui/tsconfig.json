@@ -1,0 +1,27 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vitest"],
+    "declaration": true
+  },
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "strictInjectionParameters": true,
+    "fullTemplateTypeCheck": true,
+    "disableTypeScriptVersionCheck": true,
+    "compileNonExportedClasses": true,
+    "skipTemplateCodegen": false
+  },
+  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": ["dist/**/*"],
+  "references": [
+    {"path": "../../../shared/models/tsconfig.lib.json"},
+    {"path": "../../../shared/constants/tsconfig.lib.json"},
+    {"path": "../../../shared/feature/tsconfig.lib.json"},
+    {"path": "../../../shared/i18n/tsconfig.lib.json"},
+    {"path": "../../../shared/ui/tsconfig.lib.json"},
+    {"path": "../../../shared/util-core/tsconfig.lib.json"},
+    {"path": "../../../relationship/invitation/util/tsconfig.lib.json"},
+    {"path": "../../../avatar/ui/tsconfig.lib.json"}
+  ]
+}

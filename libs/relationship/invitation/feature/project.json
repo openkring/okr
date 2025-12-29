@@ -1,0 +1,25 @@
+{
+  "name": "relationship-invitation-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/invitation/feature/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:invitation", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/invitation/feature",
+        "main": "libs/relationship/invitation/feature/src/index.ts",
+        "tsConfig": "libs/relationship/invitation/feature/tsconfig.lib.json",
+        "assets": ["libs/relationship/invitation/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
+
