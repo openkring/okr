@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, input, output } from '@angular/core';
-import { IonCol, IonGrid, IonRow, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, input, model, output, signal } from '@angular/core';
+import { IonButton, IonButtons, IonCol, IonGrid, IonIcon, IonRow, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel } from '@bk2/shared-models';
@@ -10,6 +10,7 @@ import { CategorySelectComponent } from './category-select.component';
 import { SearchbarComponent } from './searchbar.component';
 import { SingleTagComponent } from './single-tag.component';
 import { YearSelectComponent } from './year-select.component';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 /**
  * This component shows a list of filters in a toolbar at the top of a list.
@@ -27,9 +28,9 @@ import { YearSelectComponent } from './year-select.component';
   selector: 'bk-list-filter',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe,
     SearchbarComponent, SingleTagComponent, CategorySelectComponent, YearSelectComponent,
-    IonToolbar, IonGrid, IonRow, IonCol
+    IonToolbar, IonGrid, IonRow, IonCol, IonButtons, IonButton, IonIcon
   ],
   template: `
     <ion-toolbar>
@@ -67,6 +68,13 @@ import { YearSelectComponent } from './year-select.component';
           }
         </ion-row>
       </ion-grid>
+      @if(viewType()) {
+        <ion-buttons slot="end">
+          <ion-button (click)="toggleView()">
+            <ion-icon slot="icon-only" src="{{getViewIcon() | svgIcon }}" />
+          </ion-button>
+        </ion-buttons>
+      }
     </ion-toolbar>
 
   `
@@ -79,6 +87,7 @@ export class ListFilterComponent {
   public categories = input<CategoryListModel>();
   public years = input<number[]>();
   public states = input<CategoryListModel>();
+  public viewType = input<'calendar' | 'grid' | undefined>();
 
   public selectedTag = input<string>('');
   public selectedType = input<string>('');
@@ -90,6 +99,8 @@ export class ListFilterComponent {
   public showSearch = input(true);
   public yearLabel = input<string>();
 
+  public viewToggle = false;
+
   // coerced boolean inputs
   protected shouldShowIcons = computed(() => coerceBoolean(this.showIcons()));
 
@@ -99,11 +110,11 @@ export class ListFilterComponent {
   protected stateName = computed(() => this.states()?.name);
 
  // filter visibility
-  protected showTags = computed(()     => this.tags() !== undefined && this.selectedTag() !== undefined);
-  protected showType = computed(()     => this.types() !== undefined && this.selectedType() !== undefined);
-  protected showCategory = computed(() => this.categories() !== undefined && this.selectedCategory() !== undefined);
-  protected showYear = computed(()     => this.years() !== undefined && this.selectedYear() !== undefined);
-  protected showState = computed(()    => this.states() !== undefined && this.selectedState() !== undefined && this.selectedState() !== undefined);
+  protected showTags = computed(()     => this.tags().length > 0);
+  protected showType = computed(()     => this.types() !== undefined);
+  protected showCategory = computed(() => this.categories() !== undefined);
+  protected showYear = computed(()     => this.years() !== undefined);
+  protected showState = computed(()    => this.states() !== undefined);
   protected yearList = computed(()     => this.years() ?? getYearList());   // default is last 8 years
 
   // outputs
@@ -113,8 +124,35 @@ export class ListFilterComponent {
   public categoryChanged = output<string>();
   public yearChanged = output<number>();
   public stateChanged = output<string>();
+  public viewToggleChanged = output<boolean>();
 
   protected onSearchTermChange($event: Event): void {
     this.searchTermChanged.emit(($event.target as HTMLInputElement).value);
+  }
+
+  /**
+   * Toggle between two views: 
+   * -calendar ->   calendar, list
+   * -album ->  album, list
+   * The view toggle has a name that is passed from the parent component to set the toggle active.
+   * If the view toggle is active, an icon is shown. The icon has two representations: true and false, initially it is false.
+   * Internally, the toggle is just a boolean. By default, the view is 'list' (undefined).
+   * With each click on the icon, its representaiton is switched and the toggleViewChanged event is emitted.
+   * The view representation is up to the parent component. Typically, if toggleViewChanged is signalled true, an alternative view is shown.
+   */
+  protected toggleView(): void {
+    this.viewToggle = !this.viewToggle;
+    this.viewToggleChanged.emit(this.viewToggle);
+  }
+
+  protected getViewIcon(): string {
+    switch (this.viewType()) {
+      case 'calendar':
+        return this.viewToggle ? 'list' : 'calendar';
+      case 'grid':
+        return this.viewToggle ? 'list' : 'grid';
+      default:
+        return '';
+    }
   }
 }
