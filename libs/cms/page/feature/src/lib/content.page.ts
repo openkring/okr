@@ -99,7 +99,7 @@ import { PageStore } from './page.store';
 `],
   template: `
     <ion-header>
-      <ion-toolbar color="secondary" id="bkheader">
+      <ion-toolbar [color]="color()" id="bkheader">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>      
         <ion-title>{{ pageStore.page()?.name | translate | async }}</ion-title>
         @if(hasRole('contentAdmin')) {
@@ -171,6 +171,7 @@ export class ContentPageComponent {
   // inputs
   public id = input.required<string>();     // pageId (can contain @TID@ placeholder)
   public contextMenuName = input.required<string>();
+  public color = input('secondary');
 
   // derived signals
   protected tenantId = computed(() => this.pageStore.tenantId());

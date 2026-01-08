@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { MembershipModel, MembershipModelName, NameDisplay, PersonModelName, RoleName } from '@bk2/shared-models';
+import { GroupModel, MembershipModel, MembershipModelName, NameDisplay, PersonModelName, RoleName } from '@bk2/shared-models';
 import { DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -28,7 +28,7 @@ import { MembershipStore } from './membership.store';
   template: `
     <ion-header>
       <!-- title and context menu -->
-      <ion-toolbar color="secondary">
+      <ion-toolbar [color]="color()">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ '@membership.list.header.titleRel' | translate | async }} {{ orgName() }}</ion-title>
         @if(hasRole('privileged') || hasRole('memberAdmin')) {
@@ -48,22 +48,35 @@ import { MembershipStore } from './membership.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    @if(membershipCategory(); as cat) {
-      <bk-list-filter
-        (searchTermChanged)="onSearchtermChange($event)"
-        (tagChanged)="onTagSelected($event)" [tags]="tags()"
-        (typeChanged)="onTypeSelected($event)" [types]="types()"
-        (categoryChanged)="onCategorySelected($event)" [categories]="membershipCategory()"
-        (yearChanged)="onYearSelected($event)"
-      />
+    @switch(view()) {
+      @case('simple') {
+        <bk-list-filter
+            (searchTermChanged)="onSearchtermChange($event)"
+            (typeChanged)="onTypeSelected($event)" [types]="types()"
+          />
+      }
+      @default {
+        @if(membershipCategory(); as cat) {
+          <bk-list-filter
+            (searchTermChanged)="onSearchtermChange($event)"
+            (tagChanged)="onTagSelected($event)" [tags]="tags()"
+            (typeChanged)="onTypeSelected($event)" [types]="types()"
+            (categoryChanged)="onCategorySelected($event)" [categories]="membershipCategory()"
+            (yearChanged)="onYearSelected($event)"
+          />
+        }
+      }
     }
+
 
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
         <ion-label><strong>{{'@membership.list.header.name' | translate | async}}</strong></ion-label>
-        <ion-label><strong>{{'@membership.list.header.entryExit' | translate | async}}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{'@membership.list.header.category' | translate | async}}</strong></ion-label>
+        @if(view() !== 'simple') {
+          <ion-label><strong>{{'@membership.list.header.entryExit' | translate | async}}</strong></ion-label>
+          <ion-label class="ion-hide-md-down"><strong>{{'@membership.list.header.category' | translate | async}}</strong></ion-label>
+         }
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -84,8 +97,10 @@ import { MembershipStore } from './membership.store';
                   <ion-img src="{{ personModelName + '.' + membership.memberKey | avatar:membershipDefaultIcon() | async }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>      
-                <ion-label>{{membership.relLog | duration:membership.dateOfExit}}</ion-label>      
-                <ion-label class="ion-hide-md-down">{{membership.relLog|categoryLog}}</ion-label>
+                @if(view() !== 'simple') {
+                  <ion-label>{{membership.relLog | duration:membership.dateOfExit}}</ion-label>      
+                  <ion-label class="ion-hide-md-down">{{membership.relLog|categoryLog}}</ion-label>
+                }
               </ion-item>
           }
         </ion-list>
@@ -101,7 +116,10 @@ export class MembershipListComponent {
   // inputs
   public listId = input.required<string>();
   public orgId = input.required<string>();
+  public group = input<GroupModel | undefined>(undefined);
   public contextMenuName = input.required<string>();
+  public color = input('secondary');
+  public view = input<'simple' | 'default'>('default');
 
   // filters
   protected searchTerm = linkedSignal(() => this.membershipStore.searchTerm());
@@ -177,7 +195,13 @@ export class MembershipListComponent {
   protected personModelName = PersonModelName;
   
   constructor() {
-    effect(() => this.membershipStore.setOrgId(this.orgId()));
+    effect(() => {
+      // Ensure orgId is updated whenever it changes
+      const orgId = this.orgId();
+      if (orgId) {
+        this.membershipStore.setOrgId(orgId);
+      }
+    });
   }
 
   /******************************** setters (filter) ******************************************* */
@@ -205,7 +229,14 @@ export class MembershipListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.membershipStore.add(this.readOnly()); break;
+      case 'add': 
+        const group = this.group();
+        if (group) {
+          await this.membershipStore.addMemberToGroup(group, this.readOnly());
+        } else {
+          await this.membershipStore.add(this.readOnly());
+        }
+        break;
       case 'exportRaw': await this.membershipStore.export("raw"); break;
       case 'copyEmailAddresses': await this.membershipStore.copyEmailAddresses(this.listId(), this.readOnly()); break;
       default: error(undefined, `MembershipListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
@@ -229,14 +260,18 @@ export class MembershipListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
+      if (this.view() !== 'simple') {
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'create_edit'));
+      if (this.view() !== 'simple') {
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'create_edit'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'create_edit'));
-      if (isOngoing(membership.dateOfExit)) {
+      if (isOngoing(membership.dateOfExit) && this.view() !== 'simple') {
         actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
         actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'member_change'));
       }
