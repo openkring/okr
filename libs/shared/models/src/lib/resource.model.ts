@@ -22,7 +22,7 @@ export class ResourceModel implements BkModel, NamedModel, SearchableModel, Tagg
   public color = ''; // hexcolor
   public brand = '';
   public model = '';
-  public serialNumber = '';
+  public id = '';   // serialNumber, vin number, plate number etc.
   public seats = 0;
   public length = 0;
   public width = 0;

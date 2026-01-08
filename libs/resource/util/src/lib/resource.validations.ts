@@ -21,7 +21,7 @@ export const resourceValidations = staticSuite((model: ResourceModel, field?: st
   stringValidations('color', model.color, SHORT_NAME_LENGTH); // hexcolor
   stringValidations('brand', model.brand, SHORT_NAME_LENGTH); 
   stringValidations('model', model.model, SHORT_NAME_LENGTH); 
-  stringValidations('serialNumber', model.serialNumber, SHORT_NAME_LENGTH); 
+  stringValidations('id', model.id, SHORT_NAME_LENGTH); 
   numberValidations('seats', model.seats, true, 0, 100);
   numberValidations('length', model.length, false, 0, 500);
   numberValidations('width', model.width, false, 0, 50);

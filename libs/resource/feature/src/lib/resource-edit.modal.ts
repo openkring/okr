@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ResourceModel, ResourceModelName, RoleName } from '@bk2/shared-models';
+import { CategoryListModel, ResourceModel, ResourceModelName, RoleName } from '@bk2/shared-models';
 import { CategorySelectComponent, ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
@@ -12,7 +12,7 @@ import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
 
 import { ResourceFormComponent } from '@bk2/resource-ui';
-import { isReservable } from '@bk2/resource-util';
+import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@bk2/resource-util';
 
 @Component({
   selector: 'bk-resource-edit-modal',
@@ -83,19 +83,32 @@ export class ResourceEditModalComponent {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => getTitleLabel('resource.' + this.type(), this.resource()?.bkey, this.isReadOnly()));
-  protected toolbarTitle = computed(() => `${this.formData()?.name}`);
+  protected headerTitle = computed(() => getTitleLabel('resource.type.' + this.type(), this.resource()?.bkey, this.isReadOnly()));
+  protected toolbarTitle = computed(() => this.formData()?.name);
   protected readonly parentKey = computed(() => `${ResourceModelName}.${this.resourceKey()}`);
   protected currentUser = computed(() => this.appStore.currentUser());
-  protected types = computed(() => this.appStore.getCategory(this.type()));
-  protected subTypes = computed(() => this.appStore.getCategory(this.formData()?.subType));
-  protected usages = computed(() => this.appStore.getCategory(this.formData()?.usage));
-  protected tags = computed(() => this.appStore.getTags('resource'));
+  protected types = computed(() => this.appStore.getCategory('resource_type'));
+  protected subTypes = computed(() => this.getSubtypes());
+  protected usages = computed(() => this.getUsages());
+  protected tags = computed(() => this.appStore.getTags(`${ResourceModelName}.${this.type()}`));
   protected type = linkedSignal(() => this.formData()?.type ?? DEFAULT_RESOURCE_TYPE);
   protected resourceKey = computed(() => this.resource()?.bkey ?? '');
-  private rowingBoatIcon = computed(() => this.appStore.getCategoryItem('rboat_type', this.formData()?.subType));
-  private resourceIcon = computed(() => this.appStore.getCategoryIcon('resource_type', this.resource().type));
+
+  private rowingBoatIcon = computed(() => this.appStore.getCategoryIcon('rboat_type', this.formData()?.subType));
+  private resourceIcon = computed(() => this.appStore.getCategoryIcon('resource_type', this.formData()?.type));
   protected icon = computed(() => this.type() === 'rboat' ? this.rowingBoatIcon() : this.resourceIcon());
+
+  private getUsages(): CategoryListModel | undefined {
+    const usageName = getUsageNameForResourceType(this.type());
+    console.log('ResourceEditModalComponent.getUsages()', this.type(), usageName);
+    if (usageName) return this.appStore.getCategory(usageName);
+  }
+
+  private getSubtypes(): CategoryListModel | undefined {
+    const categoryName = getCategoryNameForResourceType(this.type());
+    console.log('ResourceEditModalComponent.getSubtypes()', this.type(), categoryName);
+    if (categoryName) return this.appStore.getCategory(categoryName);
+  }
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

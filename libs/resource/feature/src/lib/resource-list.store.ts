@@ -1,12 +1,10 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
 import { ResourceCollection, ResourceModel } from '@bk2/shared-models';
-import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, getSystemQuery, isResource, nameMatches } from '@bk2/shared-util-core';
 
 import { ResourceService } from '@bk2/resource-data-access';
@@ -34,8 +32,6 @@ export const ResourceListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     resourceService: inject(ResourceService),
-    appNavigationService: inject(AppNavigationService),
-    router: inject(Router),
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),    
@@ -93,6 +89,9 @@ export const ResourceListStore = signalStore(
 
   withMethods((store) => {
     return {
+      reload() {
+        store.resourceResource.reload();
+      },
       /******************************** setters (filter) ******************************************* */
       setSearchTerm(searchTerm: string) {
         patchState(store, { searchTerm });
@@ -135,8 +134,8 @@ export const ResourceListStore = signalStore(
       async add(isTypeEditable = false, readOnly = true): Promise<void> {
         if (readOnly) return;
         const resource = new ResourceModel(store.tenantId());
-        this.edit(resource, isTypeEditable, readOnly);
-        store.resourceResource.reload();
+        await this.edit(resource, isTypeEditable, readOnly);
+        this.reload();
       },
 
       async edit(resource: ResourceModel, isTypeEditable = false, readOnly = true): Promise<void> {
@@ -151,16 +150,14 @@ export const ResourceListStore = signalStore(
         });
         modal.present();
         const { data, role } = await modal.onDidDismiss();
-        if (role === 'confirm') {
+        if (role === 'confirm' && data && !readOnly) {
           if (isResource(data, store.tenantId())) {
-            await (!data.bkey ? 
-              store.resourceService.create(data, store.currentUser()) : 
-              store.resourceService.update(data, store.currentUser()));
+            resource.bkey === '' ?
+              await store.resourceService.create(data, store.currentUser()) : 
+              await store.resourceService.update(data, store.currentUser());
           }
         }
-        //store.appNavigationService.pushLink('/resource/all' );
-        //await navigateByUrl(store.router, `/resource/${resource.bkey}`, { isTypeEditable, readOnly });
-        store.resourceResource.reload();        
+        this.reload();        
       },
 
       async delete(resource: ResourceModel, readOnly = true): Promise<void> {

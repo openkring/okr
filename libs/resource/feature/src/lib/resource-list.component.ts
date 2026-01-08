@@ -163,7 +163,7 @@ export class ResourceListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, resource: ResourceModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('resource.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
     if (!this.readOnly()) {
@@ -190,10 +190,10 @@ export class ResourceListComponent {
           await this.resourceListStore.delete(resource, this.readOnly());
           break;
         case 'resource.edit':
-          await this.resourceListStore.edit(resource, this.readOnly());
+          await this.resourceListStore.edit(resource, false, this.readOnly());
           break;
         case 'resource.view':
-          await this.resourceListStore.edit(resource, true);
+          await this.resourceListStore.edit(resource, false, true);
           break;
 
       }
