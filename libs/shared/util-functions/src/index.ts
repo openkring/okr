@@ -4,4 +4,3 @@ export * from './lib/membership.util';
 export * from './lib/ownership.util';
 export * from './lib/personal-rel.util';
 export * from './lib/working-rel.util';
-export * from './lib/reservation.util';

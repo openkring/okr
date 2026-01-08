@@ -51,12 +51,13 @@ export const START_PAST_DATE = 19000101;
 export const START_PAST_DATE_STR = '19000101';
 export const MIN_YEAR = 1900;
 export const MAX_YEAR = 2100;
+export const MAX_DATES_PER_SERIES = 100;
 
 //-----------------------------------------------
 // default types
 //-----------------------------------------------
 export const DEFAULT_ACCOUNT_NAME = 'bank';
-export const DEFAULT_CALEVENT_TYPE = 'social';
+export const DEFAULT_CALEVENT_TYPE = 'training';
 export const DEFAULT_CAR_TYPE = 'hatchback';
 export const DEFAULT_COMPETITION_LEVEL = 'masters';
 export const DEFAULT_CONTENT_STATE = 'draft';

@@ -1,4 +1,4 @@
-import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL } from '@bk2/shared-constants';
+import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL } from '@bk2/shared-constants';
 import { AvatarInfo } from './avatar-info';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
@@ -11,13 +11,18 @@ export class CalEventModel implements BkModel, NamedModel, SearchableModel, Tagg
   public tags = DEFAULT_TAGS; // tags for searching and filtering
   public description = DEFAULT_NOTES; // a detailed description of the event, e.g. agenda or describe a conference
   public type = DEFAULT_CALEVENT_TYPE; // type of the event
+
   public startDate = DEFAULT_DATE; // start date of the event
   public startTime = DEFAULT_TIME; // start time of the event
-  public endDate = DEFAULT_DATE; // end date of the event
-  public endTime = DEFAULT_TIME; // end time of the event
-  public locationKey = DEFAULT_KEY; // name@key, e.g. 'Bucharest@qwerlkjqrw869sdf'
+  public durationMinutes = 60; // duration of the event in minutes, 60, 120
+  public fullDay = false; // whether the event lasts the whole day or several whole days
+  public endDate = DEFAULT_DATE; // end date of the event, only for fullDay, multi-day events
+
   public periodicity = DEFAULT_PERIODICITY; // how often the event repeats
   public repeatUntilDate = DEFAULT_DATE; // date until the event repeats
+  public seriesId = DEFAULT_ID; // ID of the series if the event is part of a recurring series
+
+  public locationKey = DEFAULT_KEY; // name@key, e.g. 'Bucharest@qwerlkjqrw869sdf'
   public calendars: string[] = DEFAULT_CALENDARS; // list of calendar keys this event belongs to
   public url = DEFAULT_URL; // a link to a website or a document
   public responsiblePersons: AvatarInfo[] = []; // list of persons responsible for the event

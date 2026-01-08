@@ -24,7 +24,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
-import { collection, deleteDoc, doc, query, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
 import { Observable, of, shareReplay } from 'rxjs';
 
@@ -40,7 +40,7 @@ import { createComment } from '@bk2/comment-util';
 })
 export class FirestoreService {
   private readonly env = inject(ENV);
-  private readonly firestore = inject(FIRESTORE);
+  public readonly firestore = inject(FIRESTORE);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly toastController = inject(ToastController);
     // Cache for query Observables to avoid duplicate listeners
@@ -537,5 +537,17 @@ export class FirestoreService {
   public clearCache(collectionName: string, dbQuery: DbQuery[], orderByParam = 'name', sortOrderParam = 'asc') {
     const cacheKey = JSON.stringify({ collectionName, dbQuery, orderByParam, sortOrderParam });
     this.queryCache.delete(cacheKey);
+  }
+
+  /**
+   * Execute multiple write operations as a single batch (set, update, delete).
+   * Use like this:
+   * a) const batch = firestoreService.getBatch();
+   * b) batch.set(...); batch.update(...); batch.delete(...);
+   * c) await batch.commit();
+   * @returns 
+   */
+  public getBatch(): WriteBatch {
+    return writeBatch(this.firestore);
   }
 }
