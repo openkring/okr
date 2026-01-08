@@ -110,11 +110,11 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
             @if(isExternalImage()) {
               <img
                 [src]="url()"
-                [width]="width()"
-                [height]="height()"
+                [width]="numericWidth()"
+                [height]="numericHeight()"
                 [alt]="altText()"
+                [ngStyle]="imageStyles()"
                 (click)="onImageClicked()"
-                style="object-fit: contain;"
               />
             }
             @else {
@@ -177,11 +177,52 @@ export class ImageComponent {
   });
   protected width = computed(() => {
     const _width = this.imageStyle()?.width;
+    console.log('ImageComponent.width -> imageStyle width:', _width);
     return _width ?? this.getValue('width', 'auto');
   });
   protected height = computed(() => {
     const _height = this.imageStyle()?.height;
+    console.log('ImageComponent.height -> imageStyle height:', _height);
     return _height ?? this.getValue('height', 'auto');
+  });
+
+  // Convert width/height to numeric values for img attributes (only if they're pixel values)
+  // BEWARE: CSS allows strings like '100%', '50vw', 'auto' for width and height,
+  // but the img attributes require numeric values in pixels or nothing at all (auto)
+  protected numericWidth = computed(() => {
+    const w = this.width();
+    if (typeof w === 'number') return w;
+    if (typeof w === 'string' && w.endsWith('px')) {
+      const num = parseInt(w.replace('px', ''), 10);
+      return isNaN(num) ? undefined : num;
+    }
+    return undefined;
+  });
+
+  protected numericHeight = computed(() => {
+    const h = this.height();
+    if (typeof h === 'number') return h;
+    if (typeof h === 'string' && h.endsWith('px')) {
+      const num = parseInt(h.replace('px', ''), 10);
+      return isNaN(num) ? undefined : num;
+    }
+    return undefined;
+  });
+
+  protected imageStyles = computed(() => {
+    const styles: any = { 'object-fit': 'contain' };
+    const w = this.width();
+    const h = this.height();
+    
+    // Use CSS for non-numeric values (100%, auto, 50vw, etc.)
+    if (typeof w === 'string' && !w.endsWith('px') && w !== 'auto') {
+      styles.width = w;
+    }
+    if (typeof h === 'string' && !h.endsWith('px') && h !== 'auto') {
+      styles.height = h;
+    }
+    
+    return styles;
   });
 
   // we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
