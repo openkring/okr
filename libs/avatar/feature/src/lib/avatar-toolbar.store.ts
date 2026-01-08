@@ -9,15 +9,18 @@ import { getImageDimensionsFromMetadata, showZoomedImage, updateImageDimensions 
 import { getModelAndKey } from '@bk2/shared-util-core';
 
 import { AvatarService, UploadService } from '@bk2/avatar-data-access';
-import { IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
+import { CategoryItemModel, IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
 import { ModalController } from '@ionic/angular/standalone';
+import { getDefaultIcon } from '@bk2/avatar-util';
 
 export interface AvatarToolbarState {
   key: string; // = ModelType.ModelKey e.g. person.lasdfölj
+  modelType: string;
 }
 
 export const initialState: AvatarToolbarState = {
   key: '', // The key of the model for which the avatar is displayed
+  modelType: '',
 };
 
 export const AvatarToolbarStore = signalStore(
@@ -48,18 +51,14 @@ export const AvatarToolbarStore = signalStore(
     return {
       isLoading: computed(() => state.urlResource.isLoading()),
       imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
-      relStorageUrl: computed(() => state.urlResource.value() ?? ''),
+      relStorageUrl: computed(() => state.urlResource.value() ?? getDefaultIcon(state.modelType())),
       currentUser: computed(() => state.appStore.currentUser()),
-      modelType: computed(() => {
-        const [modelType, key] = getModelAndKey(state.key());
-        return state.appStore.getCategoryItem('model_type', modelType);
-      })
     };
   }),
 
   withComputed(state => {
     return {
-      url: computed(() => (state.relStorageUrl().startsWith(state.imgixBaseUrl()) ? state.relStorageUrl() : `${state.imgixBaseUrl()}/${state.relStorageUrl()}`)),
+      url: computed(() => getRelStorageUrl(state.imgixBaseUrl(), state.modelType(), state.relStorageUrl())),
     };
   }),
 
@@ -67,6 +66,10 @@ export const AvatarToolbarStore = signalStore(
     return {
       setKey(key: string) {
         patchState(store, { key });
+      },
+
+      setModelType(modelType: string) {
+        patchState(store, { modelType });
       },
 
       async showZoomedImage(title = 'Avatar'): Promise<void> {
@@ -100,6 +103,21 @@ export const AvatarToolbarStore = signalStore(
       async uploadPhoto(): Promise<Photo> {
         return await store.uploadService.takePhoto();
       },
+
+      getModelTypeCategoryItemFromKey(): CategoryItemModel | undefined {
+        const [modelType, key] = getModelAndKey(store.key());
+        return store.appStore.getCategoryItem('model_type', modelType);
+      },
     };
   })
 );
+
+
+function getRelStorageUrl(imgixBaseUrl: string, modelType: string, url?: string): string {
+  if (!url || url.length === 0) {
+    const defaultIcon = getDefaultIcon(modelType);
+    return `${imgixBaseUrl}/logo/icons/${defaultIcon}.svg`;
+  }
+  // now we are sure to have a valid url
+  return (url.startsWith(imgixBaseUrl) ? url : `${imgixBaseUrl}/${url}`)
+}

@@ -36,6 +36,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
       <bk-avatar-toolbar
         key="{{ parentKey() }}"
         title="{{ avatarTitle() }}"
+        modelType="person"
         subTitle="{{ 'mailto:' + loginEmail() }}"
         [readOnly]="false"
         (imageSelected)="onImageSelected($event)"

@@ -7,6 +7,7 @@ import { FullNamePipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from "@bk2/shared-util-core";
 
 import { AvatarPipe } from './avatar.pipe';
+import { getDefaultIcon } from "@bk2/avatar-util";
 
 @Component({
   selector: 'bk-avatar-display',
@@ -73,17 +74,6 @@ export class AvatarDisplayComponent {
   protected shouldShowName = computed(() => coerceBoolean(this.showName()));
 
   protected getDefaultIcon(modelType: string): string {
-    switch (modelType) {
-      case 'person':
-        return PersonModelName;
-      case 'org':
-        return OrgModelName;
-      case 'account':
-        return 'bank_account';
-      case 'resource': 
-        return 'resource';
-      default:
-        return 'other';
-    }
+    return getDefaultIcon(modelType);
   }
 }

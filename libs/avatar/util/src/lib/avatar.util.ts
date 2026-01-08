@@ -2,7 +2,7 @@ import { Photo } from '@capacitor/camera';
 import { Filesystem } from '@capacitor/filesystem';
 import { Platform } from '@ionic/angular';
 
-import { AvatarDirectory, AvatarModel } from '@bk2/shared-models';
+import { AvatarDirectory, AvatarModel, OrgModelName, PersonModelName } from '@bk2/shared-models';
 import { blobToFile, die, getPartsOfTupel } from '@bk2/shared-util-core';
 
 export function newAvatarModel(tenantIds: string[], modelType: string, key: string, fileName: string): AvatarModel {
@@ -30,5 +30,20 @@ export async function readAsFile(photo: Photo, platform: Platform): Promise<File
     if (!photo.webPath) die('ProfilePage.readAsBase64: webPath is mandatory.');
     const response = await fetch(photo.webPath);
     return blobToFile(await response.blob(), new Date().getTime() + '.' + photo.format);
+  }
+}
+
+export function getDefaultIcon(modelType: string): string {
+  switch (modelType) {
+    case 'person':
+      return PersonModelName;
+    case 'org':
+      return OrgModelName;
+    case 'account':
+      return 'bank_account';
+    case 'resource': 
+      return 'resource';
+    default:
+      return 'other';
   }
 }

@@ -58,6 +58,7 @@ export class AvatarToolbarComponent {
   public color = input<ColorIonic>(ColorIonic.Light);
   public title = input<string | undefined>();
   public subTitle = input<string | undefined>(); // if subTitle starts with tel: or mailto: a href link is created
+  public modelType = input.required<'person' | 'org' | 'group'>();
 
   public imageSelected = output<Photo>();
 
@@ -66,6 +67,7 @@ export class AvatarToolbarComponent {
   constructor() {
     effect(() => {
       this.avatarToolbarStore.setKey(this.key());
+      this.avatarToolbarStore.setModelType(this.modelType());
     });
   }
 
