@@ -5,17 +5,18 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore } from '@bk2/shared-feature';
 import { confirm } from '@bk2/shared-util-angular';
 import { CategoryListModel, OrgModel, PersonModel, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, isPerson, isResource, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { DEFAULT_NAME } from '@bk2/shared-constants';
 
 import { ReservationService } from '@bk2/relationship-reservation-data-access';
 import { isReservation } from '@bk2/relationship-reservation-util';
 
 import { ReservationEditModalComponent } from './reservation-edit.modal';
-import { DEFAULT_NAME } from '@bk2/shared-constants';
+import { of } from 'rxjs';
 
 export type ReservationState = {
   resourceId: string;   // id of the current resource
@@ -43,7 +44,7 @@ const initialState: ReservationState = {
   searchTerm: '',
   selectedTag: '',
   selectedReason: 'all',
-  selectedYear: parseInt(getTodayStr(DateFormat.Year)),
+  selectedYear: 99, // all years
   selectedState: 'all'
 };
 
@@ -71,7 +72,7 @@ export const ReservationStore = signalStore(
           const reservations$ = store.reservationService.listReservationsForResource(params.resource.bkey);
           debugListLoaded('ReservationAccordionStore.reservationsForResource', reservations$, store.appStore.currentUser());
           return reservations$;
-        } else {
+        } else {    // return all reservations
           const reservations$ = store.reservationService.list();
           debugListLoaded('ReservationAccordionStore.allReservations', reservations$, store.appStore.currentUser());
           return reservations$;
@@ -83,6 +84,7 @@ export const ReservationStore = signalStore(
         resourceId: store.resourceId()
       }),
       stream: ({ params }) => {
+        if (!params.resourceId) return of(undefined);
         const allResources$ = store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
         const currentResource$ = findByKey<ResourceModel>(allResources$, params.resourceId);
         debugItemLoaded('ReservationStore.resource', currentResource$, store.appStore.currentUser());
@@ -105,6 +107,13 @@ export const ReservationStore = signalStore(
       imgixBaseUrl: computed(() => state.appStore.env.services.imgixBaseUrl),
 
       filteredReservations: computed(() => {
+        console.log('ReservationStore.filteredReservations by ', {
+          searchTerm: state.searchTerm(),
+          selectedYear: state.selectedYear(),
+          selectedReason: state.selectedReason(),
+          selectedState: state.selectedState(),
+          selectedTag: state.selectedTag()
+        });
         return state.reservationsResource.value()?.filter((reservation: ReservationModel) =>
           nameMatches(reservation.index, state.searchTerm()) &&
           yearMatches(reservation.startDate, state.selectedYear()) &&
@@ -219,30 +228,28 @@ export const ReservationStore = signalStore(
         }
       },
 
-      async edit(reservation?: ReservationModel, readOnly = true, isSelectable = false): Promise<void> {
-        if (!readOnly) {
-          const modal = await store.modalController.create({
-            component: ReservationEditModalComponent,
-            componentProps: {
-              reservation,
-              currentUser: store.currentUser(),
-              tags: this.getTags(),
-              reasons: this.getReasons(),
-              states: this.getStates(),
-              periodicities: this.getPeriodicities(),
-              isSelectable,
-              readOnly
-            }
-          });
-          modal.present();
-          const { data, role } = await modal.onDidDismiss();
-          if (role === 'confirm' && data && !readOnly) {
-            if (isReservation(data, store.tenantId())) {
-              await (!data.bkey ? 
-                store.reservationService.create(data, store.currentUser()) : 
-                store.reservationService.update(data, store.currentUser()));
-              this.reload();
-            }
+      async edit(reservation: ReservationModel, readOnly = true, isSelectable = false): Promise<void> {
+        const modal = await store.modalController.create({
+          component: ReservationEditModalComponent,
+          componentProps: {
+            reservation,
+            currentUser: store.currentUser(),
+            tags: this.getTags(),
+            reasons: this.getReasons(),
+            states: this.getStates(),
+            periodicities: this.getPeriodicities(),
+            isSelectable,
+            readOnly
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data && !readOnly) {
+          if (isReservation(data, store.tenantId())) {
+            await (!data.bkey ? 
+              store.reservationService.create(data, store.currentUser()) : 
+              store.reservationService.update(data, store.currentUser()));
+            this.reload();
           }
         }
       },

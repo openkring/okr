@@ -31,8 +31,8 @@ import { ENV } from '@bk2/shared-config';
         <bk-relationship-toolbar
           relType="reservation"
           title="@reservation.reldesc"
-          [subjectAvatar]="reserverAvatar()"
-          [objectAvatar]="resourceAvatar()"
+          [subjectAvatar]="resourceAvatar()"
+          [objectAvatar]="reserverAvatar()"
           [currentUser]="currentUser"
           icon="reservation"
           relLabel="Reservation"

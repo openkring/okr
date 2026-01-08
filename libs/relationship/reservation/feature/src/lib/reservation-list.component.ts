@@ -7,7 +7,7 @@ import { ReservationModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { getYear, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -49,11 +49,11 @@ import { ReservationStore } from './reservation.store';
 
     <!-- search and filters -->
       <bk-list-filter
-        (searchTermChanged)="searchTerm.set($event)"
-        (tagChanged)="selectedTag.set($event)" [tags]="tags()"
-        (typeChanged)="selectedReason.set($event)" [types]="reasons()"
-        (stateChanged)="selectedState.set($event)" [states]="states()"
-        (yearChanged)="selectedYear.set($event)"
+        (searchTermChanged)="onSearchtermChange($event)"
+        (tagChanged)="onTagSelected($event)" [tags]="tags()"
+        (typeChanged)="onReasonSelected($event)" [types]="reasons()"
+        (stateChanged)="onStateSelected($event)" [states]="states()"
+        (yearChanged)="onYearSelected($event)" [years]="years()"
       />
 
     <!-- list header -->
@@ -116,9 +116,30 @@ export class ReservationListComponent {
   protected popupId = computed(() => 'c_reservation_' + this.listId());
   protected currentUser = computed(() => this.reservationStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+  protected readonly years = computed(() => getYearList(getYear() + 1, 7));
 
-  protected years = getYearList();
   private imgixBaseUrl = this.reservationStore.appStore.env.services.imgixBaseUrl;
+
+  /******************************** setters (filter) ******************************************* */
+  protected onSearchtermChange(searchTerm: string): void {
+    this.reservationStore.setSearchTerm(searchTerm);
+  }
+
+  protected onTagSelected(tag: string): void {
+    this.reservationStore.setSelectedTag(tag);
+  }
+
+  protected onReasonSelected(reason: string): void {
+    this.reservationStore.setSelectedReason(reason);
+  }
+
+  protected onStateSelected(state: string): void {
+    this.reservationStore.setSelectedState(state);
+  }
+
+  protected onYearSelected(year: number): void {
+    this.reservationStore.setSelectedYear(year);
+  }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
