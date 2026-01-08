@@ -5,17 +5,25 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { ownerTypeMatches } from '@bk2/shared-categories';
 import { AppStore } from '@bk2/shared-feature';
-import { OwnershipModel } from '@bk2/shared-models';
+import { OrgModel, OwnershipModel, PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { confirm } from '@bk2/shared-util-angular';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
-
-import { OwnershipService } from '@bk2/relationship-ownership-data-access';
-import { OwnershipModalsService } from './ownership-modals.service';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, isOwnership, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@bk2/shared-constants';
 
-export type OwnershipListState = {
+import { OwnershipService } from '@bk2/relationship-ownership-data-access';
+import { newOwnership } from '@bk2/relationship-ownership-util';
+import { OwnershipEditModalComponent } from './ownership-edit.modal';
+import { OwnershipNewModalComponent } from './ownership-new.modal';
+
+export type OwnershipState = {
+  // accordion state
+  ownerModelType: 'person' | 'org';
   ownerKey: string;
+  showOnlyCurrent: boolean;
+  resourceKey: string;
+
+  // filters
   searchTerm: string;
   selectedTag: string;
   selectedOwnershipType: string;
@@ -28,8 +36,13 @@ export type OwnershipListState = {
   yearField: 'validFrom' | 'validTo';
 };
 
-const initialState: OwnershipListState = {
+const initialState: OwnershipState = {
   ownerKey: '',
+  showOnlyCurrent: false,
+  ownerModelType: 'person',
+  resourceKey: '',
+
+  // filters
   searchTerm: '',
   selectedTag: '',
   selectedOwnershipType: 'all',
@@ -42,22 +55,22 @@ const initialState: OwnershipListState = {
   yearField: 'validFrom',
 };
 
-export const OwnershipListStore = signalStore(
+export const OwnershipStore = signalStore(
   withState(initialState),
   withProps(() => ({
     ownershipService: inject(OwnershipService),
-    ownershipModalsService: inject(OwnershipModalsService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController)     
   })),
 
   withProps((store) => ({
-    ownershipsResource: rxResource({
+    // all ownerships of this tenant
+    allOwnershipsResource: rxResource({
       stream: () => {
-        const ownerships$ = store.ownershipService.list();
-        debugListLoaded('OwnershipListStore.ownerships', ownerships$, store.appStore.currentUser());
-        return ownerships$;
+        const allOwnerships$ = store.ownershipService.list();
+        debugListLoaded('OwnershipStore.allOwnerships', allOwnerships$, store.appStore.currentUser());
+        return allOwnerships$;
       }
     })
   })),
@@ -68,31 +81,48 @@ export const OwnershipListStore = signalStore(
       currentUser: computed(() => state.appStore.currentUser()),
       currentPerson: computed(() => state.appStore.currentPerson()),
       defaultResource: computed(() => state.appStore.defaultResource()),
-      // all ownerships, no filters applied
-      allOwnerships: computed(() => state.ownershipsResource.value() ?? []),
-      isLoading: computed(() => state.ownershipsResource.isLoading()),
+      tenantId: computed(() => state.appStore.tenantId()),
+
+      // all ownerships, either only the current ones or all that ever existed (based on showOnlyCurrent)
+      allOwnerships: computed(() => state.showOnlyCurrent() ? 
+        state.allOwnershipsResource.value()?.filter(m => isAfterDate(m.validTo, getTodayStr(DateFormat.StoreDate))) ?? [] : 
+        state.allOwnershipsResource.value() ?? []),
+
+      isLoading: computed(() => state.allOwnershipsResource.isLoading()),
 
       // all ownerships of a given owner (person or org). This can be used e.g. in ownership-accordion
-      ownerships: computed(() => state.ownershipsResource.value()?.filter((ownership: OwnershipModel) =>
-        ownership.ownerKey === state.ownerKey()) ?? []),
+      ownerships: computed(() => {
+        if (!state.ownerKey() || state.ownerKey().length === 0) return [];
+        if (!state.ownerModelType()) return [];
+        return state.allOwnershipsResource.value()?.filter((ownership: OwnershipModel) =>
+        ownership.ownerKey === state.ownerKey()) ?? []
+      }),
 
-      lockers: computed(() => state.ownershipsResource.value()?.filter((ownership: OwnershipModel) =>
+      // all owners of a given resource
+      owners: computed(() => {
+        if (!state.ownerKey() || state.ownerKey().length === 0) return [];
+        return Array.from(new Set(state.allOwnershipsResource.value()
+          ?.filter((ownership: OwnershipModel) => ownership.resourceKey === state.ownerKey())
+          .map((ownership: OwnershipModel) => ownership.ownerKey)));
+      }),
+
+      lockers: computed(() => state.allOwnershipsResource.value()?.filter((ownership: OwnershipModel) =>
         ownership.resourceModelType === 'resource' &&
         ownership.resourceType === 'locker' &&
         isAfterDate(ownership.validTo, getTodayStr(DateFormat.StoreDate))) ?? []),
 
-      keys: computed(() => state.ownershipsResource.value()?.filter((ownership: OwnershipModel) =>
+      keys: computed(() => state.allOwnershipsResource.value()?.filter((ownership: OwnershipModel) =>
         ownership.resourceModelType === 'resource' &&
         ownership.resourceType === 'key' &&
         isAfterDate(ownership.validTo, getTodayStr(DateFormat.StoreDate))) ?? []),
 
-      privateBoats: computed(() => state.ownershipsResource.value()?.filter((ownership: OwnershipModel) =>
+      privateBoats: computed(() => state.allOwnershipsResource.value()?.filter((ownership: OwnershipModel) =>
         ownership.resourceModelType === 'resource' &&
         ownership.resourceType === 'rboat' &&
         ownership.ownerModelType === 'person' &&
         isAfterDate(ownership.validTo, getTodayStr(DateFormat.StoreDate))) ?? []),
   
-      scsBoats: computed(() => state.ownershipsResource.value()?.filter((ownership: OwnershipModel) =>
+      scsBoats: computed(() => state.allOwnershipsResource.value()?.filter((ownership: OwnershipModel) =>
         ownership.resourceModelType === 'resource' &&
         ownership.resourceType === 'rboat' &&
         ownership.ownerKey === 'scs' &&
@@ -104,7 +134,8 @@ export const OwnershipListStore = signalStore(
   withComputed((state) => {
     return {
       // all ownerships
-      allOwnershipsCount: computed(() => state.allOwnerships().length), 
+      allOwnershipsCount: computed(() => state.allOwnerships().length),
+      ownershipsCount: computed(() => state.ownerships().length),
       filteredAllOwnerships: computed(() => 
         state.allOwnerships().filter((ownership: OwnershipModel) => 
           nameMatches(ownership.index, state.searchTerm()) &&
@@ -112,8 +143,6 @@ export const OwnershipListStore = signalStore(
           nameMatches(ownership.resourceType ?? DEFAULT_RESOURCE_TYPE, state.selectedResourceType()) &&
           ownerTypeMatches(ownership, state.selectedModelType(), state.selectedGender(), state.selectedOrgType()))
       ),
-      // ownerships of a given owner
-      ownershipsCount: computed(() => state.ownerships().length),
       filteredOwnerships: computed(() => 
         state.ownerships().filter((ownership: OwnershipModel) => 
           nameMatches(ownership.index, state.searchTerm()) &&
@@ -167,12 +196,18 @@ export const OwnershipListStore = signalStore(
     return {
       reset() {
         patchState(store, initialState);
-        store.ownershipsResource.reload();
+      },
+      reload() {
+        store.allOwnershipsResource.reload();
       },
 
       /******************************** setters (filter) ******************************************* */
       setOwnerKey(ownerKey: string) {
         patchState(store, { ownerKey });
+      },
+
+      setShowMode(showOnlyCurrent: boolean) {
+        patchState(store, { showOnlyCurrent });
       },
 
       setYearField(yearField: 'validFrom' | 'validTo') {
@@ -249,26 +284,70 @@ export const OwnershipListStore = signalStore(
         }
       },
 
+      setOwner(ownerKey: string, ownerModelType: 'person' | 'org'): void {
+        patchState(store, { ownerKey, ownerModelType });
+        this.reload();
+      },  
+
       /******************************** getters ******************************************* */
       getTags(): string {
         return store.appStore.getTags('ownership');
       },
 
       /******************************* actions *************************************** */
-      async add(readOnly = true): Promise<void> {
+      /**
+       * Show a modal to add a new Ownership.
+       * @param readOnly 
+       * @returns 
+       */
+      async add(givenOwner?: PersonModel | OrgModel, ownerModelType: 'person' | 'org' = 'person', givenResource?: ResourceModel, readOnly = true): Promise<void> {
         if (readOnly) return;
-        const currentPerson = store.appStore.currentPerson();
-        const defaultResource = store.appStore.defaultResource();
-        if (!currentPerson || !defaultResource) return;
-        await store.ownershipModalsService.add(currentPerson, 'person', defaultResource);
-        store.ownershipsResource.reload();
+        const owner = givenOwner ?? store.appStore.currentPerson();
+        const resource = givenResource ?? store.appStore.defaultResource();
+        if (!owner || !resource) return;
+        const ownership = newOwnership(owner, resource, store.tenantId(), ownerModelType);
+        const modal = await store.modalController.create({
+          component: OwnershipNewModalComponent,
+          cssClass: 'small-modal',
+          componentProps: {
+            ownership,
+            currentUser: store.appStore.currentUser()
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data) {
+          if (isOwnership(data, store.tenantId())) {
+            await store.ownershipService.create(data, store.currentUser());
+          }
+        }
+        this.reload();
       },
 
-      async edit(ownership?: OwnershipModel, readOnly = true): Promise<void> {
-        if (!readOnly && ownership) {
-          await store.ownershipModalsService.edit(ownership, readOnly);
-          store.ownershipsResource.reload();
+      /**
+       * Show a modal to edit an existing Ownership.
+       * @param ownership the Ownership to edit
+       * @param readOnly 
+       */
+      async edit(ownership: OwnershipModel, readOnly = true): Promise<void> {
+        const modal = await store.modalController.create({
+          component: OwnershipEditModalComponent,
+          componentProps: {
+            ownership,
+            currentUser: store.currentUser(),
+            readOnly
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data && !readOnly) {
+          if (isOwnership(data, store.tenantId())) {
+            await (!data.bkey ? 
+              store.ownershipService.create(data, store.currentUser()) : 
+              store.ownershipService.update(data, store.currentUser()));
+          }
         }
+        this.reload();
       },
 
       /**
@@ -282,7 +361,7 @@ export const OwnershipListStore = signalStore(
           const date = await selectDate(store.modalController);
           if (!date) return;
           await store.ownershipService.endOwnershipByDate(ownership, convertDateFormatToString(date, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
-          store.ownershipsResource.reload();  
+          this.reload();
         }
       },   
 
@@ -295,7 +374,7 @@ export const OwnershipListStore = signalStore(
           const result = await confirm(store.alertController, '@ownership.operation.delete.confirm', true);
           if (result === true) {
             await store.ownershipService.delete(ownership, store.currentUser());
-            store.ownershipsResource.reload(); 
+            this.reload();
           }
         }
       },

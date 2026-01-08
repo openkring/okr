@@ -30,8 +30,9 @@ import { getOwnerName } from '@bk2/relationship-ownership-util';
       @if (currentUser(); as currentUser) {
         <bk-relationship-toolbar
           relType="ownership"
-          [subjectAvatar]="ownerAvatar()"
-          [objectAvatar]="resourceAvatar()"
+          [subjectAvatar]="resourceAvatar()"
+          [types]="resourceTypes()"
+          [objectAvatar]="ownerAvatar()"
           [currentUser]="currentUser"
         />
         
@@ -83,6 +84,7 @@ export class OwnershipEditModalComponent {
   protected readonly parentKey = computed(() => `${OwnershipModelName}.${this.bkey()}`);
   protected readonly tags = computed(() => this.appStore.getTags('ownership'));
   protected readonly name = computed(() => getOwnerName(this.ownership()));
+  protected readonly resourceTypes = computed(() => this.appStore.getCategory('resource_type'));
   protected ownerAvatar = computed<AvatarInfo>(() => {
     const o = this.ownership();
     return newAvatarInfo(o.ownerKey, o.ownerName1, o.ownerName2, o.ownerModelType, o.ownerType, '', this.name());
