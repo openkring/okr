@@ -208,6 +208,144 @@ export const ChatSectionStore = signalStore(
         await channel.watch();
 
         await channel.sendMessage({ text, attachments });
+      },
+
+      /**
+       * Get channels with unread messages for the current user.
+       * Returns channels where the user has unread messages.
+       * @returns Promise with array of channels that have unread messages
+       */
+      async getChannelsWithUnreadMessages(): Promise<any[]> {
+        if (!store.isChatInitialized()) {
+          console.warn('ChatSectionStore.getChannelsWithUnreadMessages: Chat not initialized');
+          return [];
+        }
+
+        try {
+          const client = store.chatService.chatClient;
+          const currentUserId = store.currentUser()?.bkey;
+          
+          if (!currentUserId) {
+            console.warn('ChatSectionStore.getChannelsWithUnreadMessages: No current user');
+            return [];
+          }
+
+          // Query all channels where the user is a member
+          const filter = { 
+            type: 'messaging',
+            members: { $in: [currentUserId] }
+          };
+          
+          const sort = [{ last_message_at: -1 as const }];
+          
+          const channels = await client.queryChannels(filter, sort, {
+            watch: true,
+            state: true,
+          });
+
+          // Filter channels with unread messages
+          const unreadChannels = channels.filter(channel => {
+            const unreadCount = channel.countUnread();
+            return unreadCount > 0;
+          });
+
+          console.log(`ChatSectionStore.getChannelsWithUnreadMessages: Found ${unreadChannels.length} channels with unread messages`);
+          return unreadChannels;
+        } catch (error) {
+          console.error('ChatSectionStore.getChannelsWithUnreadMessages: Error querying channels', error);
+          return [];
+        }
+      },
+
+      /**
+       * Get total unread message count across all channels.
+       * @returns Promise with total unread count
+       */
+      async getTotalUnreadCount(): Promise<number> {
+        if (!store.isChatInitialized()) {
+          console.warn('ChatSectionStore.getTotalUnreadCount: Chat not initialized');
+          return 0;
+        }
+
+        try {
+          const client = store.chatService.chatClient;
+          const currentUserId = store.currentUser()?.bkey;
+          
+          if (!currentUserId) {
+            console.warn('ChatSectionStore.getTotalUnreadCount: No current user');
+            return 0;
+          }
+
+          const filter = { 
+            type: 'messaging',
+            members: { $in: [currentUserId] }
+          };
+          
+          const channels = await client.queryChannels(filter, [{ last_message_at: -1 as const }], {
+            watch: true,
+            state: true,
+          });
+
+          const totalUnread = channels.reduce((sum, channel) => {
+            return sum + channel.countUnread();
+          }, 0);
+
+          console.log(`ChatSectionStore.getTotalUnreadCount: Total unread messages: ${totalUnread}`);
+          return totalUnread;
+        } catch (error) {
+          console.error('ChatSectionStore.getTotalUnreadCount: Error counting unread messages', error);
+          return 0;
+        }
+      },
+
+      /**
+       * Get messages where the user hasn't replied in a channel.
+       * This finds channels where the last message was NOT from the current user.
+       * @returns Promise with array of channels awaiting user response
+       */
+      async getChannelsAwaitingResponse(): Promise<any[]> {
+        if (!store.isChatInitialized()) {
+          console.warn('ChatSectionStore.getChannelsAwaitingResponse: Chat not initialized');
+          return [];
+        }
+
+        try {
+          const client = store.chatService.chatClient;
+          const currentUserId = store.currentUser()?.bkey;
+          
+          if (!currentUserId) {
+            console.warn('ChatSectionStore.getChannelsAwaitingResponse: No current user');
+            return [];
+          }
+
+          const filter = { 
+            type: 'messaging',
+            members: { $in: [currentUserId] }
+          };
+          
+          const sort = [{ last_message_at: -1 as const }];
+          
+          const channels = await client.queryChannels(filter, sort, {
+            watch: true,
+            state: true,
+          });
+
+          // Filter channels where the last message was NOT from the current user
+          const awaitingResponse = channels.filter(channel => {
+            const messages = channel.state.messages;
+            if (messages.length === 0) return false;
+            
+            const lastMessage = messages[messages.length - 1];
+            // Return true if the last message is not from current user
+            return lastMessage.user?.id !== currentUserId;
+          });
+
+          console.log(`ChatSectionStore.getChannelsAwaitingResponse: Found ${awaitingResponse.length} channels awaiting response`);
+          return awaitingResponse;
+        } catch (error) {
+          console.error('ChatSectionStore.getChannelsAwaitingResponse: Error querying channels', error);
+          return [];
+        }
       }
     };
   })

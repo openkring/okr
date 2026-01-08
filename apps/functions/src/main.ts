@@ -1,5 +1,5 @@
 import './init'; // Import the initialization logic to ensure Firebase Admin SDK is initialized
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
 import * as functions from 'firebase-functions'; // needed for logger
 
@@ -7,6 +7,7 @@ import * as Test from './test';
 import * as Replication from './replication';
 import * as Stream from './stream';
 import * as Auth from './auth';
+import * as Fcm from './fcm';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -16,7 +17,7 @@ import * as Auth from './auth';
 //      for local development:   firebase emulators:start --only functions
 
 // in AppHosting, we start an Express server
-const app = express();
+const app: Express = express();
 
 // Enable CORS for requests from your local development server
 app.use(cors({ origin: 'http://localhost:4200' }));
@@ -50,6 +51,11 @@ export const revokeOtherStreamUserToken = Stream.revokeOtherStreamUserToken; // 
 export const onUserCreated = Stream.onUserCreated;
 export const onUserDeleted = Stream.onUserDeleted;
 export const createOtherStreamUser = Stream.createOtherStreamUser; // uid, name, email, image
+
+// fcm (Firebase Cloud Messaging)
+export const sendChatNotification = Fcm.sendChatNotification;
+export const saveFcmToken = Fcm.saveFcmToken;
+export const checkUnreadMessagesScheduled = Fcm.checkUnreadMessagesScheduled;
 
 // test
 export const getEcho = Test.getEcho;
