@@ -24,6 +24,12 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           <ion-card-subtitle>{{ subTitle() | translate | async}}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
+        @if(intro(); as intro) {
+          @if(intro.length > 0) {
+            <small><div [innerHTML]="intro"></div></small>
+          }
+        }        
+
         <ion-grid>
           <ion-row>
             <ion-col size="12">

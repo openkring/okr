@@ -354,7 +354,6 @@ export class SectionFormComponent {
 
   /************************************** property setters (section type specific) *********************************************** */
   protected onContentChange(content: EditorConfig): void {
-    console.log('SectionForm.onContentChange', { content });
     this.formData.set({ ...this.formData(), content: content });
   }
 

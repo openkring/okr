@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, input, linkedSignal, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -18,7 +18,7 @@ import { AlbumStyles } from '@bk2/cms-section-util';
     TranslatePipe, AsyncPipe,
     vestForms, FormsModule,
     TextInputComponent, CategoryComponent, CheckboxComponent,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonNote
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -29,9 +29,9 @@ import { AlbumStyles } from '@bk2/cms-section-util';
       <ion-card-content>
         @if(intro(); as intro) {
           @if(intro.length > 0) {
-            <ion-note>{{ intro }}</ion-note>
+            <small><div [innerHTML]="intro"></div></small>
           }
-        }
+        }        
         <ion-grid>
           <ion-row>
             <ion-col size="12">

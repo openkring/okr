@@ -60,7 +60,7 @@ import { ChatSectionStore } from './chat-section.store';
                       <ion-icon slot="start" name="add-outline" size="large" (click)="presentAttachmentActions()" class="custom-plus"></ion-icon>
                       <stream-message-input 
                         [isFileUploadEnabled]="true"
-                        [areMentionsEnabled]="false"
+                        [areMentionsEnabled]="true"
                         [areEmojisEnabled]="false"
                         [displayVoiceRecordingButton]="false"
                         [autoFocus]="true"

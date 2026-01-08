@@ -23,9 +23,11 @@ import { ButtonActions } from '@bk2/shared-categories';
         <ion-card-subtitle>Definiere was bei einem Klick auf den Button passieren soll.</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
-        <small>
-          <div [innerHTML]="description"></div>
-        </small>          
+        @if(intro(); as intro) {
+          @if(intro.length > 0) {
+            <small><div [innerHTML]="intro"></div></small>
+          }
+        }        
 
         <ion-grid>
           <ion-row>
@@ -51,7 +53,16 @@ export class ButtonActionComponent {
   public formData = model.required<ButtonActionConfig>();
   public title = input('@content.section.type.button.action.title');
   public subTitle = input('@content.section.type.button.action.subtitle');
-  public intro = input<string>();
+  public intro = input<string>(`
+  <ul>
+  <li><strong>Download:</strong> Der Button startet einen Download der mittels URL referenzierten Datei. Die URL muss auf eine Datei im Firebase Storage zeigen.</li>
+  <li><strong>Navigieren:</strong> Der Button navigiert zur angegebenen URL. Die URL muss eine interne Route sein (siehe dazu die MenuItem Konfiguration).</li>
+  <li><strong>Browse:</strong> Der Button linkt auf eine externe URL (https://domain.com/path).</li>
+  <li><strong>Zoom:</strong> Die in der URL referenzierte Datei wird in einem Zoom-Viewer angezeigt (typischerweise ein Bild). Die URL muss auf eine Datei im Firebase Storage zeigen.</li>
+  <li><strong>Keine:</strong> Keine Aktion wird ausgeführt. Die URL wird ignoriert. Dies ist die Default-Einstellung.</li>
+  </ul>
+  `);
+
   public readonly readOnly = input(true);
 
   // fields
@@ -62,15 +73,6 @@ export class ButtonActionComponent {
   // passing constants to template
   protected BA = ButtonAction;
   protected buttonActions = ButtonActions;
-  protected description = `
-  <ul>
-  <li><strong>Download:</strong> Der Button startet einen Download der mittels URL referenzierten Datei. Die URL muss auf eine Datei im Firebase Storage zeigen.</li>
-  <li><strong>Navigieren:</strong> Der Button navigiert zur angegebenen URL. Die URL muss eine interne Route sein (siehe dazu die MenuItem Konfiguration).</li>
-  <li><strong>Browse:</strong> Der Button linkt auf eine externe URL (https://domain.com/path).</li>
-  <li><strong>Zoom:</strong> Die in der URL referenzierte Datei wird in einem Zoom-Viewer angezeigt (typischerweise ein Bild). Die URL muss auf eine Datei im Firebase Storage zeigen.</li>
-  <li><strong>Keine:</strong> Keine Aktion wird ausgeführt. Die URL wird ignoriert. Dies ist die Default-Einstellung.</li>
-  </ul>
-  `;
 
   protected onFieldChange(fieldName: string, $event: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
