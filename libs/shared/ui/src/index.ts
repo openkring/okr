@@ -1,5 +1,4 @@
 export * from './lib/autofocus.directive';
-export * from './lib/avatar-select.component';
 export * from './lib/avatar.component';
 export * from './lib/avatar-user.component';
 export * from './lib/button-copy.component';
