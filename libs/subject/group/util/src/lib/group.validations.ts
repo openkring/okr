@@ -9,7 +9,6 @@ export const groupValidations = staticSuite((model: GroupModel, field?: string) 
 
   stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);
-  stringValidations('id', model.id, WORD_LENGTH, 3, true);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   //tagValidations('tags', model.tags);
   booleanValidations('hasContent', model.hasContent);

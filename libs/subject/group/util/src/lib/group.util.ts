@@ -13,7 +13,7 @@ import { addIndexElement } from '@bk2/shared-util-core';
 export function getGroupIndex(group: GroupModel): string {
   let index = '';
   index = addIndexElement(index, 'n', group.name);
-  index = addIndexElement(index, 'id', group.id);
+  index = addIndexElement(index, 'k', group.bkey);
   return index;
 }
 
@@ -22,5 +22,5 @@ export function getGroupIndex(group: GroupModel): string {
  * This can be used in info boxes on the GUI.
  */
 export function getGroupIndexInfo(): string {
-  return 'n:name id:id';
+  return 'n:name k:bkey';
 }

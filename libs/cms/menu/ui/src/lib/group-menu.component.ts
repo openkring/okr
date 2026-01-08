@@ -24,7 +24,9 @@ import { hasRole } from '@bk2/shared-util-core';
       @if (hasRole('groupAdmin')) {
         <ion-list>
           @switch(segmentName()) {
-            @case('content') {
+<!--             @case('content') {
+
+content uses normal context menu of content-page
               <ion-item button (click)="popoverController.dismiss('addSection')">
                 <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" color="primary" />
                 <ion-label>Neu Sektion hinzufügen</ion-label>
@@ -41,14 +43,10 @@ import { hasRole } from '@bk2/shared-util-core';
                 <ion-icon slot="start" src="{{'create_edit' | svgIcon }}" color="primary" />
                 <ion-label>Sektion ändern</ion-label>
               </ion-item>
-            }
+            } -->
             <!-- chat has no menu items -->
-            @case('calendar') {
-              <ion-item button (click)="popoverController.dismiss('addEvent')">
-                <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" color="primary" />
-                <ion-label>Event hinzufügen</ion-label>
-              </ion-item>
-            }
+            <!-- calendar uses context menu of calendar-list component -->
+
             @case('tasks') {
               <ion-item button (click)="popoverController.dismiss('addTask')">
                 <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" color="primary" />

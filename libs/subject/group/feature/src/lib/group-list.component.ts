@@ -126,7 +126,7 @@ export class GroupListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.groupStore.add(hasRole('memberAdmin', this.currentUser())); break;
+      case 'add': await this.groupStore.add(this.readOnly()); break;
       case 'exportRaw': await this.groupStore.export("raw"); break;
       default: error(undefined, `GroupComponent.call: unknown method ${selectedMethod}`);
     }

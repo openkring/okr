@@ -3,22 +3,22 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { of } from 'rxjs';
+import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { GroupCollection, GroupModel, GroupModelName, MembershipModel } from '@bk2/shared-models';
-import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
+import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, ImageType, MembershipModel, PageCollection, PageModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
+import { confirm, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugData, debugItemLoaded, getSystemQuery, getTodayStr, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
+import { DEFAULT_KEY, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
 import { GroupService } from '@bk2/subject-group-data-access';
+import { AvatarService } from '@bk2/avatar-data-access';
+import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { getMembershipIndex } from '@bk2/relationship-membership-util';
 
 import { GroupEditModalComponent } from './group-edit.modal';
-import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { AvatarService } from '@bk2/avatar-data-access';
-import { of } from 'rxjs';
-import { Photo } from '@capacitor/camera';
-import { DEFAULT_KEY, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { getMembershipIndex } from '@bk2/relationship-membership-util';
 
 export type GroupState = {
   searchTerm: string;
@@ -50,7 +50,7 @@ export const GroupStore = signalStore(
   withProps((store) => ({
     groupsResource: rxResource({
       stream: () => {
-        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.appStore.tenantId()), 'id', 'asc')
+        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc')
       }
     }),
     groupResource: rxResource({
@@ -90,7 +90,6 @@ export const GroupStore = signalStore(
   withMethods((store) => ({
     reset() {
       patchState(store, initialState);
-      store.groupsResource.reload();
     },
     reload() {
       store.groupsResource.reload();
@@ -101,6 +100,8 @@ export const GroupStore = signalStore(
       console.log('GroupStore state:');
       console.log('  searchTerm: ' + store.searchTerm());
       console.log('  selectedTag: ' + store.selectedTag());
+      console.log('  groupKey: ' + store.groupKey());
+      console.log('  selectedSegment: ' + store.selectedSegment());
       console.log('  groups: ' + JSON.stringify(store.groups()));
       console.log('  groupsCount: ' + store.groupsCount());
       console.log('  filteredGroups: ' + JSON.stringify(store.filteredGroups()));
@@ -136,16 +137,17 @@ export const GroupStore = signalStore(
     async add(readOnly = true): Promise<void> {
       if (readOnly) return;
       const newGroup = new GroupModel(store.tenantId());
-      await this.edit(newGroup, readOnly);
+      await this.edit(newGroup, readOnly, true);
     },
 
-    async edit(group?: GroupModel, readOnly = true): Promise<void> {
+    async edit(group?: GroupModel, readOnly = true, isNew = false): Promise<void> {
       const modal = await store.modalController.create({
         component: GroupEditModalComponent,
         componentProps: {
           group,
           currentUser: store.currentUser(),
           tags: this.getTags(),
+          isNew,
           readOnly
         }
       });
@@ -153,12 +155,137 @@ export const GroupStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
         if (isGroup(data, store.tenantId())) {
-          await (!data.bkey ? 
-            store.groupService.create(data, store.currentUser()) : 
-            store.groupService.update(data, store.currentUser()));
+          if (isNew) {
+          // bkey is user-defined. Therefore, we need to check for duplicates when creating a new group.
+            const existingGroup = store.groups()?.find((g: GroupModel) => g.bkey === data.bkey);
+            if (existingGroup) {
+              const alert = await store.alertController.create({
+                header: 'Duplicate ID',
+                message: `A group with ID "${data.bkey}" already exists. Please use a different ID.`,
+                buttons: ['OK']
+              });
+              await alert.present();
+              return;
+            }
+            await store.groupService.create(data, store.currentUser());
+
+            // create default calendar segment
+            await this.createGroupCalendar(data);
+
+            // create default content page with initial article section
+            const articleId = await this.createArticleSection(data);
+            await this.createGroupPage(data, 'content', 'Inhalt', articleId);
+
+            // create default chat section and page
+            const chatId = await this.createChatSection(data);
+            await this.createGroupPage(data, 'chat', 'Chat', chatId);
+          } else {
+            await store.groupService.update(data, store.currentUser());
+          }
           this.reload();
         }
       }
+    },
+
+    async createGroupCalendar(group: GroupModel): Promise<void> {
+      const cal = new CalendarModel(store.tenantId());
+      cal.bkey = group.bkey;
+      cal.name = group.name;
+      cal.description = `Calendar for group ${group.bkey}`;
+      cal.owner = `${GroupModelName}.${group.bkey}`;
+      await store.firestoreService.createModel<CalendarModel>(CalendarCollection, cal, '@calendar.operation.create', store.currentUser());
+    },
+
+    async createGroupPage(group: GroupModel, postfix: string, name: string, sectionId?: string): Promise<void> {
+      const page = new PageModel(store.tenantId());
+      page.bkey = `${group.bkey}_${postfix}`;
+      page.name = name;
+      page.type = 'content';
+      page.state = 'published';
+      if (sectionId) {
+        page.sections = [sectionId];
+      }
+      await store.firestoreService.createModel<PageModel>(PageCollection, page, '@page.operation.create', store.currentUser());
+    },
+
+    async createChatSection(group: GroupModel): Promise<string | undefined> {
+      const name = `${group.bkey}_chat`;
+      const section = {
+        bkey: name,
+        type: 'chat',
+        name: name,
+        title: 'Chat',
+        subTitle: '',
+        index: '',
+        color: ColorIonic.Light,
+        roleNeeded: 'registered',
+        isArchived: false,
+        content: { 
+          htmlContent: '<p></p>',
+          colSize: 4,
+          position: ViewPosition.None
+        },
+        properties: {
+          description: 'Hier können sich alle Mitglieder der Gruppe austauschen.',
+          id: `group-chat-${group.bkey}`,
+          name: 'Gruppen Chat',
+          showChannelList: true,
+          type: 'team',
+          url: ''
+        },
+        notes: '',
+        tags: '',
+        tenants: [store.tenantId()],
+      } as ChatSection;
+      return await store.firestoreService.createModel<ChatSection>(SectionCollection, section, '@section.operation.create', store.currentUser())
+    },
+
+    async createArticleSection(group: GroupModel): Promise<string | undefined> {
+      const name = `${group.bkey}_article1`;
+      const section = {
+        bkey: name,
+        type: 'article',
+        name: name,
+        title: 'Artikel',
+        subTitle: '',
+        index: '',
+        color: ColorIonic.Light,
+        roleNeeded: 'registered',
+        isArchived: false,
+        content: { 
+          htmlContent: '<p>Diese Website enthält Informationen, die für die Gruppe relevant sind. Der/die Gruppen-Admin kann diesen Inhalt frei bearbeiten. Dazu musst du oben rechts im Menu auf den Editor-Modus klicken. Du siehst dann die vorhandenen Sektionen gelb umrandet. Wenn du nun auf eine solche Sektion klickst, kannst du sie bearbeiten.</p>',
+          colSize: 4,
+          position: ViewPosition.Left
+        },
+        properties: {
+          image: {
+            label: '',
+            type: ImageType.Image,
+            url: store.appStore.services.imgixBaseUrl() + '/' + store.appStore.appConfig().welcomeBannerUrl,
+            actionUrl: '',
+            altText: 'default image (same as welcome banner)',
+            overlay: ''
+          },
+          imageStyle: {
+            imgIxParams: '',
+            width: '571px',
+            height: '420px',
+            sizes: '(max-width: 786px) 50vw, 100vw',
+            border: '1px',
+            borderRadius: '4px',
+            isThumbnail: false,
+            slot: 'none',
+            fill: false,
+            hasPriority: false,
+            action: ImageActionType.None,
+            zoomFactor: 2
+          },
+        },
+        notes: '',
+        tags: '',
+        tenants: [store.tenantId()],
+      } as ArticleSection;
+      return await store.firestoreService.createModel<ArticleSection>(SectionCollection, section, '@section.operation.create', store.currentUser())
     },
 
     async view(group?: GroupModel, readOnly = true): Promise<void> {
@@ -169,8 +296,11 @@ export const GroupStore = signalStore(
 
     async delete(group?: GroupModel, readOnly = true): Promise<void> {
       if (!group || readOnly) return;
-      await store.groupService.delete(group, store.currentUser());
-      this.reset();
+      const result = await confirm(store.alertController, '@subject.group.operation.delete.confirm', true);
+      if (result === true) {
+        await store.groupService.delete(group, store.currentUser());
+        this.reload();
+      }
     },
 
     async export(type: string): Promise<void> {

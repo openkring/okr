@@ -9,7 +9,6 @@ import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model'
 export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
   public bkey = DEFAULT_KEY; // unique
   public name = DEFAULT_NAME;
-  public id = DEFAULT_ID; // unique
 
   public notes = DEFAULT_NOTES;
   public tags = DEFAULT_TAGS;

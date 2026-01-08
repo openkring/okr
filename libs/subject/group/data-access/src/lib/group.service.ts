@@ -65,7 +65,7 @@ export class GroupService  {
    * @param sortOrder the order direction (asc or desc)
    * @returns an Observable of the list of groups
    */
-  public list(orderBy = 'id', sortOrder = 'asc'): Observable<GroupModel[]> {
+  public list(orderBy = 'name', sortOrder = 'asc'): Observable<GroupModel[]> {
     return this.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 }

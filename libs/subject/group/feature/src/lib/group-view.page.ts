@@ -1,32 +1,32 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonSpinner, IonMenuButton, IonPopover, IonSegment, IonSegmentButton, IonTitle, IonToolbar, Platform } from '@ionic/angular/standalone';
+import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, GroupModelName, RoleName } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ChangeConfirmationComponent } from '@bk2/shared-ui';
 import { error } from '@bk2/shared-util-angular';
 import { coerceBoolean, debugData, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 
-import { GroupMenuComponent } from '@bk2/cms-menu-ui';
-import { ContentComponent } from '@bk2/cms-page-feature';
+import { ContentPageComponent } from '@bk2/cms-page-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
-import { MembersComponent } from '@bk2/relationship-membership-feature';
+import { MembershipListComponent } from '@bk2/relationship-membership-feature';
 import { SimpleTaskListComponent } from '@bk2/task-feature';
 
 import { GroupStore } from './group.store';
+import { CalEventListComponent } from '@bk2/calevent-feature';
 
 @Component({
   selector: 'bk-group-view-page',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
-    ChangeConfirmationComponent, ContentComponent, MembersComponent, GroupMenuComponent, SimpleTaskListComponent,
+    TranslatePipe, AsyncPipe,
+    ChangeConfirmationComponent, ContentPageComponent, SimpleTaskListComponent,
+    CalEventListComponent, MembershipListComponent,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
-    IonHeader, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover
+    IonHeader, IonButtons, IonTitle, IonMenuButton
   ],
   providers: [GroupStore],
   template: `
@@ -34,20 +34,6 @@ import { GroupStore } from './group.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ name() }}</ion-title>
-        @if(hasMenu(selectedSegment())) {
-          <ion-buttons slot="end">
-            <ion-button [id]="id()">
-              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
-            </ion-button>
-            <ion-popover [trigger]="id()" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <bk-group-menu segmentName="{{selectedSegment()}}" [currentUser]="currentUser()" />
-                </ion-content>
-              </ng-template>
-            </ion-popover>
-          </ion-buttons>
-        }
       </ion-toolbar>
       <ion-toolbar>
       <ion-segment [scrollable]="true" color="secondary" (ionChange)="onSegmentChanged($event)" value="content">
@@ -71,6 +57,7 @@ import { GroupStore } from './group.store';
             <ion-label>{{ '@subject.group.segment.tasks' | translate | async}}</ion-label>
           </ion-segment-button>
         }
+        <!--
         @if(hasFiles()) {
           <ion-segment-button value="files">
             <ion-label>{{ '@subject.group.segment.files' | translate | async}}</ion-label>
@@ -81,6 +68,7 @@ import { GroupStore } from './group.store';
             <ion-label>{{ '@subject.group.segment.album' | translate | async}}</ion-label>
           </ion-segment-button>
         }
+        -->
         @if(hasMembers()) {
           <ion-segment-button value="members">
             <ion-label>{{ '@subject.group.segment.members' | translate | async}}</ion-label>
@@ -93,54 +81,59 @@ import { GroupStore } from './group.store';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      @switch (selectedSegment()) {
-        @case ('content') {
-          @defer (on immediate) {
-            <bk-content id="{{id() + '_content'}}" [readOnly]="isReadOnly()" />
-          } @placeholder {
-            <div class="placeholder-center"><ion-spinner /></div>
+      @if(id(); as id) {
+        @switch (selectedSegment()) {
+          @case ('content') {
+            @defer (on immediate) {
+              <bk-content-page id="{{id + '_content'}}" contextMenuName="c-test-contentpage" color="light" />
+            } @placeholder {
+              <div class="placeholder-center"><ion-spinner /></div>
+            }
           }
-        }
-        @case ('chat') {
-          @defer (on immediate) {
-            <bk-content id="{{id() + '_chat'}}" [readOnly]="isReadOnly()" />
-          } @placeholder {
-            <div class="placeholder-center"><ion-spinner /></div>
+          @case ('chat') {
+            @defer (on immediate) {
+              <bk-content-page id="{{id + '_chat'}}" contextMenuName="c-test-contentpage" color="light" />
+            } @placeholder {
+              <div class="placeholder-center"><ion-spinner /></div>
+            }
           }
-        }
-        @case ('calendar') {
-          @defer (on immediate) {
-            <bk-content id="{{id() + '_calendar'}}" [readOnly]="isReadOnly()" />
-          } @placeholder {
-            <div class="placeholder-center"><ion-spinner /></div>
+          @case ('calendar') {
+            @defer (on immediate) {
+              <bk-calevent-list [listId]="id" contextMenuName="c-test-calevents" color="light" view="calendar" />
+            } @placeholder {
+              <div class="placeholder-center"><ion-spinner /></div>
+            }
           }
-        }
-        @case ('tasks') {
-          @defer (on immediate) {
-            <bk-simple-task-list [listId]="id()" [readOnly]="isReadOnly()" />
-          } @placeholder {
-            <div class="placeholder-center"><ion-spinner /></div>
+          @case ('tasks') {
+            @defer (on immediate) {
+              <bk-simple-task-list [listId]="id" contextMenuName="c-test-simpletasklist" color="light" />
+            } @placeholder {
+              <div class="placeholder-center"><ion-spinner /></div>
+            }
           }
-        }
-        @case ('files') {
-          @defer (on immediate) {
-            <bk-content id="{{id() + '_files'}}" [readOnly]="isReadOnly()" />
-          } @placeholder {
-            <div class="placeholder-center"><ion-spinner /></div>
+          <!--
+          @case ('files') {
+            @defer (on immediate) {
+              <bk-content-page id="{{id + '_files'}}" contextMenuName="c-test-contentpage" color="light" />
+            } @placeholder {
+              <div class="placeholder-center"><ion-spinner /></div>
+            }
           }
-        }
-        @case ('album') {
-          @defer (on immediate) {
-            <bk-content id="{{id() + '_album'}}" [readOnly]="isReadOnly()" />
-          } @placeholder {
-            <div class="placeholder-center"><ion-spinner /></div>
+          @case ('album') {
+            @defer (on immediate) {
+              <bk-content-page id="{{id + '_album'}}" contextMenuName="c-test-contentpage" color="light" />
+            } @placeholder {
+              <div class="placeholder-center"><ion-spinner /></div>
+            }
           }
-        }
-        @case ('members') {
-          @defer (on immediate) {
-            <bk-members [orgKey]="groupKey()" [readOnly]="isReadOnly()" />
-          } @placeholder {
-            <div class="placeholder-center"><ion-spinner /></div>
+        -->
+          @case ('members') {
+            @defer (on immediate) {
+              <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-test-membership" color="light" view="simple" />
+              <!-- <bk-members [orgKey]="groupKey()" [readOnly]="isReadOnly()" /> -->
+            } @placeholder {
+              <div class="placeholder-center"><ion-spinner /></div>
+            }
           }
         }
       }
@@ -169,19 +162,20 @@ export class GroupViewPageComponent {
   protected selectedSegment = computed(() => this.groupStore.segment());
   protected group = computed(() => this.groupStore.group());
   protected name = computed(() => this.formData()?.name ?? DEFAULT_NAME);
-  protected id = computed(() => this.formData()?.id ?? DEFAULT_ID);
+  protected id = computed(() => this.formData()?.bkey ?? DEFAULT_ID);
   protected hasContent = computed(() => this.formData()?.hasContent ?? true);
   protected hasChat = computed(() => this.formData()?.hasChat ?? true);
   protected hasCalendar = computed(() => this.formData()?.hasCalendar ?? true);
   protected hasTasks = computed(() => this.formData()?.hasTasks ?? true);
-  protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
-  protected hasAlbum = computed(() => this.formData()?.hasAlbum ?? true);
+  //protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
+  //protected hasAlbum = computed(() => this.formData()?.hasAlbum ?? true);
   protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
   protected path = computed(() => getDocumentStoragePath(this.groupStore.tenantId(), 'group', this.group()?.bkey));
   protected groupTags = computed(() => this.groupStore.getTags());
 
   constructor() {
     effect(() => {
+      console.log(`GroupViewPageComponent: loading group ${this.groupKey()}`);
       this.groupStore.setGroupKey(this.groupKey());
     });
   }

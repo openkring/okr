@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { die, getSystemQuery } from '@bk2/shared-util-core';
 
 import { AppConfigService } from './app-config.service';
@@ -96,6 +96,11 @@ export const AppStore = signalStore(
         return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
       }
     }),
+    groupsResource: rxResource({
+      stream: () => {
+        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
+      }
+    }),
     resourcesResource: rxResource({
       stream: () => {
         return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
@@ -142,6 +147,7 @@ export const AppStore = signalStore(
       }),
       allPersons: computed(() => state.personsResource.value() ?? []),
       allOrgs: computed(() => state.orgsResource.value() ?? []),
+      allGroups: computed(() => state.groupsResource.value() ?? []),
       allResources: computed(() => state.resourcesResource.value() ?? []),
       allTags: computed(() => state.tagsResource.value() ?? []),
       allCategories: computed(() => state.categoriesResource.value() ?? []),
@@ -209,13 +215,18 @@ export const AppStore = signalStore(
         if (!key) return undefined;
         return store.allOrgs()?.find(p => p.bkey === key);
       },
+      getGroup(key: string) {
+        if (!key) return undefined;
+        return store.allGroups()?.find(p => p.bkey === key);
+      },
       getResource(key: string) {
         if (!key) return undefined;
         return store.allResources()?.find(p => p.bkey === key);
       },
       getTags(modelType: string): string {
         if (!modelType) return '';
-        return store.allTags().filter((tag: TagModel) => tag.tagModel === modelType)[0].tags;
+        const tagModels = store.allTags().filter((tag: TagModel) => tag.tagModel === modelType);
+        return tagModels.length === 0 ? '' : tagModels[0].tags;
       },
       getCategory(name?: string): CategoryListModel {
         // enforce that this function always returns the category (or it ends with an internal error)
