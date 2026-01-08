@@ -16,13 +16,12 @@ export class TaskModel implements BkModel, PersistedModel, NamedModel, Searchabl
 
   public state = DEFAULT_TASK_STATE;
   public dueDate = DEFAULT_DATE; // date when the task should be completed
-  public completionDate = DEFAULT_DATE; // date when the task should be completed
+  public completionDate = DEFAULT_DATE; // date when the task should be completed; if set, the task is considered completed
   public priority = DEFAULT_PRIORITY; // Priority: 0: low, 1: medium, 2: high
   public importance = DEFAULT_IMPORTANCE; // Importance: 0: low, 1: medium, 2: high
 
   // a task is visible to the author, the assignee, and privileged Users by default
-  // the visibility can be extended to the groups it belongs to
-  // 'all' is the implicit group of all registered users
+  // the visibility can be extended to the group it belongs to
   public scope: AvatarInfo | undefined;
 
   // a task can be shown on its due date in calendars

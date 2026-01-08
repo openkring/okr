@@ -1,16 +1,17 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { LowercaseWordMask } from '@bk2/shared-config';
-import { RoleName, TaskModel, TaskModelName } from '@bk2/shared-models';
-import { AvatarSelectComponent, ChangeConfirmationComponent, HeaderComponent, StringsComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { ENV, LowercaseWordMask } from '@bk2/shared-config';
+import { AvatarInfo, CategoryListModel, GroupModel, PersonModel, RoleName, TaskModel, TaskModelName, UserModel } from '@bk2/shared-models';
+import { ChangeConfirmationComponent, HeaderComponent, StringsComponent } from '@bk2/shared-ui';
+import { coerceBoolean, hasRole, isGroup, isPerson, newAvatarInfo } from '@bk2/shared-util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 
 import { TaskFormComponent } from '@bk2/task-ui';
-import { TaskEditStore } from './task-edit.store';
 import { getTitleLabel } from '@bk2/shared-util-angular';
+import { GroupSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AvatarSelectComponent } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-task-edit-modal',
@@ -20,27 +21,31 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
     AvatarSelectComponent, StringsComponent,
     IonContent, IonAccordionGroup
   ],
-  providers: [TaskEditStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-task-form
-        [formData]="formData()"
-        [currentUser]="taskEditStore.currentUser()"
-        [allTags]="tags()"
-        [states]="states()"
-        [priorities]="priorities()"
-        [importances]="importances()"
-        [readOnly]="isReadOnly()"
-        (formDataChange)="onFormDataChange($event)"
-      />
+      @if(formData(); as formData) {
+        <bk-task-form
+          [formData]="formData"
+          (formDataChange)="onFormDataChange($event)"
+          [currentUser]="currentUser()"
+          [showForm]="showForm()"
+          [allTags]="tags()"
+          [states]="states()"
+          [priorities]="priorities()"
+          [importances]="importances()"
+          [readOnly]="isReadOnly()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+        />
+      }
 
-      <bk-avatar-select title="@task.field.author" [avatarUrl]="authorUrl()" [name]="authorName()" [readOnly]="isReadOnly()" />
-      <bk-avatar-select title="@task.field.assignee" [avatarUrl]="assigneeUrl()" [name]="assigneeName()" [readOnly]="isReadOnly()" (selectClicked)="select()" />
-      <bk-avatar-select title="@task.field.scope" [avatarUrl]="scopeUrl()" [name]="scopeName()" [readOnly]="isReadOnly()" (selectClicked)="select()" />    
+      <bk-avatar-select name="assignee" [avatar]="assignee()" [readOnly]="isReadOnly()" (selectClicked)="selectPerson('assignee')" />
+      <bk-avatar-select name="author" [avatar]="author()" [readOnly]="isReadOnly()" (selectClicked)="selectPerson('author')" />
+      <bk-avatar-select name="scope" [avatar]="scope()" [readOnly]="isReadOnly()" (selectClicked)="selectGroup()" />    
 
       <bk-strings
         [strings]="calendars()"
@@ -62,10 +67,15 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 })
 export class TaskEditModalComponent {
   private readonly modalController = inject(ModalController);
-  protected readonly taskEditStore = inject(TaskEditStore);
+  private readonly env = inject(ENV);
 
   // inputs
   public task = input.required<TaskModel>();
+  public currentUser = input<UserModel | undefined>();
+  public readonly tags = input.required<string>();
+  public readonly states = input.required<CategoryListModel>();
+  public readonly priorities = input.required<CategoryListModel>();
+  public readonly importances = input.required<CategoryListModel>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   
@@ -77,34 +87,16 @@ export class TaskEditModalComponent {
   protected showForm = signal(true);
 
   // derived signals
+  protected defaultAvatar = computed(() => newAvatarInfo(this.currentUser()!.personKey, this.currentUser()!.firstName, this.currentUser()!.lastName, 'person', '', '', ''));  
   protected headerTitle = computed(() => getTitleLabel('task', this.task().bkey, this.isReadOnly()));
   protected readonly parentKey = computed(() => `${TaskModelName}.${this.task().bkey}`);
   protected calendars = linkedSignal(() => (this.formData().calendars ?? []) as string[]);
-  protected states = computed(() => this.taskEditStore.appStore.getCategory('task_state'));
-  protected priorities = computed(() => this.taskEditStore.appStore.getCategory('priority'));
-  protected importances = computed(() => this.taskEditStore.appStore.getCategory('importance'));
-  protected tags = computed(() => this.taskEditStore.tags());
-  protected currentUser = computed(() => this.taskEditStore.currentUser());
-  // author
-  protected authorUrl = computed(() => this.taskEditStore.authorUrl() ?? '');
-  protected authorName = computed(() => this.taskEditStore.authorName());
-  // assignee
-  protected assigneeUrl = computed(() => this.taskEditStore.assigneeUrl() ?? '');
-  protected assigneeName = computed(() => this.taskEditStore.assigneeName());
-  // scope
-  protected scopeUrl = computed(() => this.taskEditStore.scopeUrl() ?? '');
-  protected scopeName = computed(() => this.taskEditStore.scopeName());
+  protected author = linkedSignal(() => this.formData().author ?? this.defaultAvatar());
+  protected assignee = linkedSignal(() => this.formData().assignee ?? this.defaultAvatar());
+  protected scope = linkedSignal(() => this.formData().scope);
 
   // passing constants to template
   protected calendarMask = LowercaseWordMask;
-
-  constructor() {
-    effect(() => {
-      this.taskEditStore.setAuthor(this.task().author);
-      this.taskEditStore.setAssignee(this.task().assignee);
-      this.taskEditStore.setScope(this.task().scope);
-    });
-  }
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -128,11 +120,61 @@ export class TaskEditModalComponent {
     this.formData.set(formData);
   }
 
-  protected select(): void {
-    console.log('select clicked');
+  protected async selectPerson(type: 'author' | 'assignee'): Promise<void> {
+    const person = await this.selectPersonModal();
+    if (!person) return;
+    const avatar = newAvatarInfo(person.bkey, person.firstName, person.lastName, 'person', person.gender, '', '');
+    this.formData.update((vm) => ({...vm, [type]: avatar }));
+    this.formDirty.set(true);
+  }
+
+  async selectPersonModal(): Promise<PersonModel | undefined> {
+    const modal = await this.modalController.create({
+      component: PersonSelectModalComponent,
+      cssClass: 'list-modal',
+      componentProps: {
+        selectedTag: '',
+        currentUser: this.currentUser()
+      }
+    });
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm' && data) {
+      if (isPerson(data, this.env.tenantId)) {
+        return data;
+      }
+    }
+    return undefined;
+  }
+
+  protected async selectGroup(): Promise<void> {
+    const group = await this.selectGroupModal();
+    if (!group) return;
+    const avatar = newAvatarInfo(group.bkey, '', group.name, 'group', '', '', '');
+    this.formData.update((vm) => ({...vm, scope: avatar }));
+    this.formDirty.set(true);
+  }
+
+  async selectGroupModal(): Promise<GroupModel | undefined> {
+    const modal = await this.modalController.create({
+      component: GroupSelectModalComponent,
+      cssClass: 'list-modal',
+      componentProps: {
+        selectedTag: '',
+        currentUser: this.currentUser()
+      }
+    });
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm' && data) {
+      if (isGroup(data, this.env.tenantId)) {
+        return data;
+      }
+    }
+    return undefined;
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.taskEditStore.currentUser());
+    return hasRole(role, this.currentUser());
   }
 }

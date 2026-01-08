@@ -2,16 +2,16 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TaskModel } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { extractTagAndDate, getAvatarInfo, hasRole } from '@bk2/shared-util-core';
+import { extractTagAndDate, getAvatarInfo, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
-import { TaskListStore } from './task-list.store';
+import { TaskStore } from './task.store';
 
 /**
  * Task items can be marked as done/completed by checking the checkbox.
@@ -32,7 +32,7 @@ import { TaskListStore } from './task-list.store';
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg, IonTextarea, IonChip, IonPopover
   ],
-  providers: [TaskListStore],
+  providers: [TaskStore],
   styles: [`
       ion-avatar { width: 30px; height: 30px; border: 2px solid white; transition: transform 0.2s ease; }
       ion-textarea { margin-top: 10px;}
@@ -45,20 +45,20 @@ import { TaskListStore } from './task-list.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ '@task.plural' | translate | async }}</ion-title>
-          @if(hasRole('privileged') || hasRole('eventAdmin')) {
-            <ion-buttons slot="end">
-              <ion-button id="c-tasks">
-                <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
-              </ion-button>
-              <ion-popover trigger="c-tasks" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-                <ng-template>
-                  <ion-content>
-                    <bk-menu [menuName]="contextMenuName()"/>
-                  </ion-content>
-                </ng-template>
-              </ion-popover>
-            </ion-buttons>
-          }
+        @if(hasRole('privileged') || hasRole('eventAdmin')) {
+          <ion-buttons slot="end">
+            <ion-button id="c-tasks">
+              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="c-tasks" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+              <ng-template>
+                <ion-content>
+                  <bk-menu [menuName]="contextMenuName()"/>
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          </ion-buttons>
+        }
       </ion-toolbar>
 
       <!-- quick entry -->
@@ -83,7 +83,7 @@ import { TaskListStore } from './task-list.store';
       <bk-list-filter
         (searchTermChanged)="onSearchtermChange($event)"
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
-        (typeChanged)="onTypeSelected($event)" [types]="types()"
+        (typeChanged)="onPrioritySelected($event)" [types]="priorities()"
         (stateChanged)="onStateSelected($event)" [states]="states()"
       />
     </ion-header>
@@ -97,6 +97,11 @@ import { TaskListStore } from './task-list.store';
           @for(task of filteredTasks(); track $index) {
             <ion-item>
               <ion-icon src="{{ getIcon(task) | svgIcon }}"  (click)="toggleCompleted(task)" />
+              @if(task.assignee !== undefined) {
+                <ion-avatar>
+                  <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar | async }}" alt="Avatar of the assigned person" />
+                </ion-avatar>
+              }
               <div class="tags ion-hide-md-down">
                 @for (tag of task.tags.split(','); track tag) {
                   @if(tag.length > 0) {
@@ -108,16 +113,21 @@ import { TaskListStore } from './task-list.store';
               </div>
               <ion-label class="name" (click)="showActions(task)">{{ task.name }}</ion-label>
               @if(task.dueDate.length > 0) {
-                <ion-label>{{ task.dueDate | prettyDate }}</ion-label>
+                <ion-label class="ion-hide-md-down ion-text-end">
+                  {{ task.dueDate | prettyDate }}
+                </ion-label>
               }
-              @if(task.assignee !== undefined) {
-                <ion-avatar>
-                  <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar | async }}" alt="Avatar of the assigned person" />
-                </ion-avatar>
-              }
+
+                <!-- 
+              keine gute Darstellung für Importance und Priority gefunden
               <ion-label class="ion-hide-md-down ion-text-end">
-                {{task.priority}} {{task.importance}}
+                 P:{{task.priority}} I:{{task.importance}}
+                 P<ion-icon slot="start" src="{{getPriorityIcon(task) | svgIcon }}" />
               </ion-label> 
+              <ion-label class="ion-hide-md-down ion-text-end">
+                I<ion-icon slot="start" src="{{getImportanceIcon(task) | svgIcon }}" /> 
+              </ion-label> 
+              -->
             </ion-item>
           }
         </ion-list>
@@ -126,70 +136,79 @@ import { TaskListStore } from './task-list.store';
     `
 })
 export class TaskListComponent {
-  protected taskListStore = inject(TaskListStore);
+  protected taskStore = inject(TaskStore);
   private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
   // derived signals
-  protected searchTerm = linkedSignal(() => this.taskListStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.taskListStore.selectedTag())
-  protected selectedType = linkedSignal(() => this.taskListStore.selectedPriority());
-  protected selectedState = linkedSignal(() => this.taskListStore.selectedState());
-  protected filteredTasks = computed(() => this.taskListStore.filteredTasks() ?? []);
-  protected tasksCount = computed(() => this.taskListStore.tasksCount());
+  protected filteredTasks = computed(() => this.taskStore.filteredTasks() ?? []);
+  protected tasksCount = computed(() => this.taskStore.tasksCount());
   protected selectedTasksCount = computed(() => this.filteredTasks().length);
-  protected isLoading = computed(() => this.taskListStore.isLoading());
-  protected tags = computed(() => this.taskListStore.getTags());
-  protected types = computed(() => this.taskListStore.appStore.getCategory('priority'));
-  protected states = computed(() => this.taskListStore.appStore.getCategory('task_state'));
-  protected currentUser = computed(() => this.taskListStore.appStore.currentUser());
+  protected isLoading = computed(() => this.taskStore.isLoading());
+  protected tags = computed(() => this.taskStore.tags());
+  protected priorities = computed(() => this.taskStore.appStore.getCategory('priority'));
+  protected importances = computed(() => this.taskStore.appStore.getCategory('importance'));
+  protected states = computed(() => this.taskStore.appStore.getCategory('task_state'));
+  protected currentUser = computed(() => this.taskStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.taskListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.taskStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
-      this.taskListStore.setCalendarName(this.listId());
+      this.taskStore.setCalendarName(this.listId());
     });
   }
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.taskListStore.setSearchTerm(searchTerm);
+    this.taskStore.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.taskListStore.setSelectedTag(tag);
+    this.taskStore.setSelectedTag(tag);
   }
 
-  protected onTypeSelected(type: string): void {
-    this.taskListStore.setSelectedPriority(type);
+  protected onPrioritySelected(priority: string): void {
+    this.taskStore.setSelectedPriority(priority);
   }
 
   protected onStateSelected(state: string): void {
-    this.taskListStore.setSelectedState(state);
+    this.taskStore.setSelectedState(state);
   }
 
+  /******************************* getters *************************************** */
+  public getIcon(task: TaskModel): string {
+    return task.completionDate.length > 0 ? 'checkbox-circle' : 'circle';
+  }
+
+  protected getImportanceIcon(task: TaskModel): string {
+    return getCategoryIcon(this.importances(), task.importance);
+  }
+
+  protected getPriorityIcon(task: TaskModel): string {
+    return getCategoryIcon(this.priorities(), task.priority);
+  }
   /******************************* actions *************************************** */
   /**
    * This is the quick entry. It just takes the name of the task and adds it to the list.
    * @param taskName 
    */
   protected async addName(bkTaskName: IonTextarea): Promise<void> {
-    const task = new TaskModel(this.taskListStore.tenantId());
+    const task = new TaskModel(this.taskStore.tenantId());
     [task.tags, task.dueDate, task.name] = extractTagAndDate(bkTaskName.value?.trim() ?? '');
-    task.author = getAvatarInfo(this.taskListStore.currentUser(), 'user');
-    await this.taskListStore.addName(task);
+    task.author = getAvatarInfo(this.taskStore.currentUser(), 'user');
+    await this.taskStore.addName(task);
     bkTaskName.value = '';
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.taskListStore.add(); break;
-      case 'export': await this.taskListStore.export('raw'); break;
+      case 'add': await this.taskStore.add(this.readOnly()); break;
+      case 'export': await this.taskStore.export('raw'); break;
       default: error(undefined, `TaskListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -218,7 +237,7 @@ export class TaskListComponent {
     if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.imgixBaseUrl, 'create_edit'));
     }
-    if (hasRole('admin', this.taskListStore.appStore.currentUser())) {
+    if (hasRole('admin', this.taskStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.imgixBaseUrl, 'trash_delete'));
     }
   }
@@ -236,16 +255,16 @@ export class TaskListComponent {
       if (!data) return;
       switch (data.action) {
         case 'task.delete':
-          await this.taskListStore.delete(task, this.readOnly());
+          await this.taskStore.delete(task, this.readOnly());
           break;
         case 'task.edit':
-          await this.taskListStore.edit(task, this.readOnly());
+          await this.taskStore.edit(task, this.readOnly());
           break;
         case 'task.view':
-          await this.taskListStore.edit(task, true);
+          await this.taskStore.edit(task, true);
           break;
         case 'task.complete':
-          await this.taskListStore.setCompleted(task, this.readOnly());
+          await this.taskStore.setCompleted(task, this.readOnly());
           break;
 
       }
@@ -253,11 +272,7 @@ export class TaskListComponent {
   }
 
   public async toggleCompleted(task: TaskModel): Promise<void> {
-    await this.taskListStore.setCompleted(task);
-  }
-
-  public getIcon(task: TaskModel): string {
-    return task.completionDate.length > 0 ? 'checkbox-circle' : 'circle';
+    await this.taskStore.setCompleted(task);
   }
 
   protected clear(bkTaskName: IonTextarea): void {
@@ -266,6 +281,6 @@ export class TaskListComponent {
 
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.taskListStore.currentUser());
+    return hasRole(role, this.taskStore.currentUser());
   }
 }

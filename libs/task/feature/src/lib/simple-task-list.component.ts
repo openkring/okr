@@ -10,7 +10,7 @@ import { error } from '@bk2/shared-util-angular';
 import { extractTagAndDate, getAvatarInfo, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { TaskListStore } from './task-list.store';
+import { TaskStore } from './task.store';
 
 /**
  * Task items can be marked as done/completed by checking the checkbox.
@@ -32,7 +32,7 @@ import { TaskListStore } from './task-list.store';
     EmptyListComponent, ListFilterComponent,
     IonHeader, IonIcon, IonLabel, IonContent, IonItem, IonList, IonAvatar, IonImg, IonTextarea, IonChip
   ],
-  providers: [TaskListStore],
+  providers: [TaskStore],
   styles: [`
       ion-avatar { width: 30px; height: 30px; border: 2px solid white; transition: transform 0.2s ease; }
       ion-textarea { margin-top: 10px;}
@@ -108,7 +108,7 @@ import { TaskListStore } from './task-list.store';
     `
 })
 export class SimpleTaskListComponent {
-  protected taskListStore = inject(TaskListStore);
+  protected taskListStore = inject(TaskStore);
 
   // inputs
   public listId = input.required<string>();
@@ -123,7 +123,7 @@ export class SimpleTaskListComponent {
   protected tasksCount = computed(() => this.taskListStore.tasksCount());
   protected selectedTasksCount = computed(() => this.filteredTasks().length);
   protected isLoading = computed(() => this.taskListStore.isLoading());
-  protected tags = computed(() => this.taskListStore.getTags());
+  protected tags = computed(() => this.taskListStore.tags());
   protected types = computed(() => this.taskListStore.appStore.getCategory('priority'));
   protected states = computed(() => this.taskListStore.appStore.getCategory('task_state'));
   protected currentUser = computed(() => this.taskListStore.appStore.currentUser());

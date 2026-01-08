@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@bk2/shared-constants';
@@ -8,16 +8,19 @@ import { CategorySelectComponent, ChipsComponent, DateInputComponent, ErrorNoteC
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
 import { taskValidations } from '@bk2/task-util';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'bk-task-form',
   standalone: true,
   imports: [
     vestForms,
+    TranslatePipe, AsyncPipe,
     DateInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
     TextInputComponent, ErrorNoteComponent,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent
-  ],
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonLabel, IonItem
+],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
@@ -45,15 +48,24 @@ import { taskValidations } from '@bk2/task-util';
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                <ion-item lines="none">
+                  <ion-label>{{ '@input.state.label' | translate | async}}:</ion-label>
+                  <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                </ion-item>
               </ion-col>
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="priorities()!" [selectedItemName]="priority()" (selectedItemNameChange)="onFieldChange('priority', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                <ion-item lines="none">
+                  <ion-label>{{ '@input.priority.label' | translate | async}}:</ion-label>
+                  <bk-cat-select [category]="priorities()!" [selectedItemName]="priority()" (selectedItemNameChange)="onFieldChange('priority', $event)" [readOnly]="isReadOnly()" [withAll]="false" /> 
+                </ion-item>
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat-select [category]="importances()!" [selectedItemName]="importance()" (selectedItemNameChange)="onFieldChange('importance', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                <ion-item lines="none">
+                  <ion-label>{{ '@input.importance.label' | translate | async}}:</ion-label>
+                  <bk-cat-select [category]="importances()!" [selectedItemName]="importance()" (selectedItemNameChange)="onFieldChange('importance', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                </ion-item>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -108,6 +120,7 @@ export class TaskFormComponent {
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
+    console.log('TaskForm.onFieldChange', fieldName, fieldValue);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
