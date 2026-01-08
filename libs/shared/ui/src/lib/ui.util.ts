@@ -52,18 +52,23 @@ export async function browse(url?: string): Promise<void> {
  * @param modalController
  * @returns the selected date as a string in ISO format (yyyy-mm-dd)
  */
-export async function selectDate(modalController: ModalController): Promise<string | undefined> {
+export async function selectDate(modalController: ModalController, isoDate?: string, headerTitle?: string, intro?: string): Promise<string | undefined> {
+  const cssClass = (intro && intro?.length > 0) ? 'date-modal2' : 'date-modal';
   const modal = await modalController.create({
     component: DateSelectModalComponent,
-    cssClass: 'date-modal',
+    cssClass,
     componentProps: {
-      isoDate: getTodayStr(DateFormat.IsoDate)
+      isoDate,
+      headerTitle,
+      intro,
+      locale: 'de-ch'
     }
   });
   modal.present();
   const { data, role } = await modal.onWillDismiss();
-  if (role === 'confirm') {
+  if (role === 'confirm' && data) {
     if (typeof(data) === 'string') {
+      console.log('ui.util.selectDate: selected date: ' + data);
       return data;
     } else {
       warn('ui.util.selectDate: type of returned data is not string: ' + data);
