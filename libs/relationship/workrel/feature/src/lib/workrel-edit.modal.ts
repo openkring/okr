@@ -27,20 +27,23 @@ import { ENV } from '@bk2/shared-config';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-workrel-form
-        [formData]="formData()"
-        (formDataChange)="onFormDataChange($event)"
-        [currentUser]="currentUser()"
-        [allTags]="tags()"
-        [types]="types()"
-        [states]="states()" 
-        [readOnly]="isReadOnly()"
-        [periodicities]="periodicities()" 
-        (selectPerson)="selectPerson()"
-        (selectOrg)="selectOrg()"
-        (dirty)="formDirty.set($event)"
-        (valid)="formValid.set($event)"
-      />
+      @if(currentUser(); as currentUser) {
+        <bk-workrel-form
+          [formData]="formData()"
+          (formDataChange)="onFormDataChange($event)"
+          [currentUser]="currentUser"
+          [showForm]="showForm()"
+          [allTags]="tags()"
+          [types]="types()"
+          [states]="states()" 
+          [readOnly]="isReadOnly()"
+          [periodicities]="periodicities()" 
+          (selectPerson)="selectPerson()"
+          (selectOrg)="selectOrg()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+        />
+      }
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-card>

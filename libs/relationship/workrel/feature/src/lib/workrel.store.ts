@@ -3,9 +3,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { CategoryListModel, OrgModel, PersonModel, WorkrelModel } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isOrg, isPerson, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { AppStore } from '@bk2/shared-feature';
+import { CategoryListModel, WorkrelModel } from '@bk2/shared-models';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isValidAt, nameMatches } from '@bk2/shared-util-core';
 import { confirm } from '@bk2/shared-util-angular';
 
 import { WorkrelService } from '@bk2/relationship-workrel-data-access';
@@ -195,6 +195,11 @@ export const WorkrelStore = signalStore(
           component: WorkrelEditModalComponent,
           componentProps: {
             workrel,
+            currentUser: store.currentUser(),
+            tags: this.getTags(),
+            types: this.getTypes(),
+            states: this.getStates(),
+            periodicities: this.getPeriodicities(),
             readOnly
           }
         });
