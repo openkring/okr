@@ -1,7 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, input } from '@angular/core';
 import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
@@ -16,29 +15,32 @@ import { HeaderComponent } from './header.component';
     HeaderComponent,
     IonContent, IonDatetime
   ],
-  viewProviders: [vestFormsViewProviders],
   template: `
-    <ng-template>
-      <bk-header [title]="header()" [isModal]="true" />
-      <ion-content class="ion-padding">
-        <ion-datetime
-          min="1900-01-01" max="2100-12-31"
-          presentation="date"
-          [value]="isoDate()"
-          locale="de-ch"
-          firstDayOfWeek="1"
-          [showDefaultButtons]="true"
-          [showAdjacentDays]="true"
-          doneText="{{'@general.operation.change.ok' | translate | async}}"
-          cancelText="{{'@general.operation.change.cancel' | translate | async}}"
-          size="cover"
-          [preferWheel]="false"
-          style="height: 380px; --padding-start: 0;"
-          (ionCancel)="cancel()"
-          (ionChange)="onDateSelected($event.detail)"
-        />
-      </ion-content>
-    </ng-template>
+    <bk-header [title]="headerTitle()" [isModal]="true" />
+    <ion-content class="ion-padding">
+      @if(intro(); as intro) {
+        @if(intro.length > 0) {
+          <small><div innerHTML="{{intro | translate | async}}"></div></small>
+        }
+      }        
+
+      <ion-datetime
+        min="1900-01-01" max="2100-12-31"
+        presentation="date"
+        [value]="isoDate()"
+        locale="de-ch"
+        firstDayOfWeek="1"
+        [showDefaultButtons]="true"
+        [showAdjacentDays]="true"
+        doneText="{{'@general.operation.change.ok' | translate | async}}"
+        cancelText="{{'@general.operation.change.cancel' | translate | async}}"
+        size="cover"
+        [preferWheel]="false"
+        style="height: 380px; --padding-start: 0;"
+        (ionCancel)="cancel()"
+        (ionChange)="onDateSelected($event.detail)"
+      />
+    </ion-content>
   `,
 })
 export class DateSelectModalComponent {
@@ -46,12 +48,13 @@ export class DateSelectModalComponent {
 
   // inputs
   public isoDate = input(getTodayStr(DateFormat.IsoDate)); // mandatory date in isoDate format (yyyy-MM-dd)
-  public header = input('@general.operation.select.date');
-  protected locale = input('de-ch'); // locale for the input field, used for formatting
+  public headerTitle = input('@general.operation.select.date');
+  public locale = input('de-ch'); // locale for the input field, used for formatting
+  public intro = input<string>();
 
   /**
    * @param detail 
-   * @returns string | string[] | undefined | null
+   * @returns string in ISO format (yyyy-mm-dd)
    */
   protected async onDateSelected(detail: DatetimeChangeEventDetail): Promise<boolean> {
     return await this.modalController.dismiss(detail.value, 'confirm');

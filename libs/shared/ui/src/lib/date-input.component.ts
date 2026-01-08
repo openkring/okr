@@ -1,5 +1,5 @@
 
-import { Component, computed, effect, input, model, signal, viewChild } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, viewChild } from '@angular/core';
 import { IonIcon, IonItem, IonNote } from '@ionic/angular/standalone';
 import { vestFormsViewProviders } from 'ngx-vest-forms';
 import { AsyncPipe } from '@angular/common';
@@ -23,7 +23,10 @@ import { ViewDateInputComponent } from './viewdate-input.component';
     IonItem, IonIcon, IonNote
   ],
   viewProviders: [vestFormsViewProviders],
-  styles: [`ion-item.helper { --min-height: 0; }`],
+  styles: [`
+    ion-item.helper { --min-height: 0; }
+    bk-viewdate-input { width: 100%; }
+  `],
   template: `
     <ion-item lines="none">
       @if(shouldShowDateSelect() && !isReadOnly()) {
@@ -62,6 +65,20 @@ export class DateInputComponent {
   // for the ion-input field, we need to convert into viewDate format (using the view-date-input component).
   // optional date in StoreDate format (yyyyMMdd); default is today
   public storeDate = model(getTodayStr(DateFormat.StoreDate));
+
+  protected viewDate = linkedSignal(() => {
+    const store = this.storeDate();
+    if (!store || store.length !== 8) return '';     // make sure that we only send valid dates to date-fns/format
+
+    const converted = convertDateFormatToString(
+      store,
+      DateFormat.StoreDate,
+      DateFormat.ViewDate,
+      false
+    );
+    return converted ?? '';
+  });  
+
   public name = input.required<string>(); // mandatory name of the input field
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -78,29 +95,16 @@ export class DateInputComponent {
   public header = input('@general.operation.select.date');
   public mask = input<MaskitoOptions>(ChAnyDate);
 
-  protected isoDate = computed(() => {
-    const iso = convertDateFormatToString(this.storeDate(), DateFormat.StoreDate, DateFormat.IsoDate, false);
-    return iso || getTodayStr(DateFormat.IsoDate);
+  protected isoDate = computed(() => { 
+    const store = this.storeDate();
+    if (!store || store.length !== 8) return '';    // make sure that we only send valid dates to date-fns/format
+
+    const iso = convertDateFormatToString(store, DateFormat.StoreDate, DateFormat.IsoDate, false);
+    return iso || '';
   });
 
   // passing constants to the template
-  protected viewDate = signal(getTodayStr(DateFormat.ViewDate));
   protected isoFormat = DateFormat.IsoDate;
-
-// Sync storeDate → viewDate (one-way)
-  constructor() {
-    effect(() => {
-      const converted = convertDateFormatToString(
-        this.storeDate(),
-        DateFormat.StoreDate,
-        DateFormat.ViewDate,
-        false
-      );
-      if (converted) {
-        this.viewDate.set(converted);
-      }
-    });
-  }
 
   protected updateStoreDate(date: string, format: DateFormat): void {
     this.storeDate.set(convertDateFormatToString(date, format, DateFormat.StoreDate, false));
@@ -108,7 +112,10 @@ export class DateInputComponent {
 
   // Sync viewDate → storeDate (on change)
   protected onViewDateChange(view: string) {
-    // Only convert if the view date is complete (10 chars: dd.MM.yyyy)
+    // Only convert if the view date is complete (10 chars: dd.MM.yyyy) or empty
+    if (view.length === 0) {
+      this.storeDate.set('');
+    } else
     if (view?.length === 10 && view.includes('.')) {
       const store = convertDateFormatToString(view, DateFormat.ViewDate, DateFormat.StoreDate, false);
       if (store) {  // store will be '' if conversion failed
