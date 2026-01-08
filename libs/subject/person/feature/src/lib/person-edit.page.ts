@@ -39,7 +39,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-avatar-toolbar key="{{parentKey()}}" title="{{ toolbarTitle() }}" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
+      <bk-avatar-toolbar key="{{parentKey()}}" title="{{ toolbarTitle() }}" modelType="person" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
 
       @if(formData(); as formData) {
         <bk-person-form

@@ -142,30 +142,30 @@ export const PersonListStore = signalStore(
         });
         modal.present();
         const { data, role } = await modal.onWillDismiss();
-        if (role === 'confirm') {
-          const vm = data as PersonNewFormModel;
+        if (role === 'confirm' && data && !readOnly) {
+          const person = data as PersonNewFormModel;
 
-          if (store.personService.checkIfExists(store.persons(), vm.firstName, vm.lastName)) {
+          if (store.personService.checkIfExists(store.persons(), person.firstName, person.lastName)) {
             if (!confirm(store.alertController, '@subject.person.operation.create.exists.error', true)) return;           
           }
 
-          const personKey = await store.personService.create(convertFormToNewPerson(vm, store.tenantId()), store.currentUser());
+          const personKey = await store.personService.create(convertFormToNewPerson(person, store.tenantId()), store.currentUser());
           const avatarKey = `person.${personKey}`;
-          if ((vm.email ?? '').length > 0) {
-            this.saveAddress(convertNewPersonFormToEmailAddress(vm, store.tenantId()), avatarKey);
+          if ((person.email ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToEmailAddress(person, store.tenantId()), avatarKey);
           }
-          if ((vm.phone ?? '').length > 0) {
-            this.saveAddress(convertNewPersonFormToPhoneAddress(vm, store.tenantId()), avatarKey);
+          if ((person.phone ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToPhoneAddress(person, store.tenantId()), avatarKey);
           }
-          if ((vm.web ?? '').length > 0) {
-            this.saveAddress(convertNewPersonFormToWebAddress(vm, store.tenantId()), avatarKey);
+          if ((person.web ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToWebAddress(person, store.tenantId()), avatarKey);
           }
-          if ((vm.city ?? '').length > 0) {
-            this.saveAddress(convertNewPersonFormToPostalAddress(vm, store.tenantId()), avatarKey);
+          if ((person.city ?? '').length > 0) {
+            this.saveAddress(convertNewPersonFormToPostalAddress(person, store.tenantId()), avatarKey);
           }
-          if (vm.shouldAddMembership) {
-            if ((vm.orgKey ?? '').length > 0 && (vm.membershipCategory ?? '').length > 0) {
-              await this.saveMembership(vm, personKey);
+          if (person.shouldAddMembership) {
+            if ((person.orgKey ?? '').length > 0 && (person.membershipCategory ?? '').length > 0) {
+              await this.saveMembership(person, personKey);
             }
           }
         }

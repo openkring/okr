@@ -98,9 +98,9 @@ export class PersonFormComponent {
   public readonly formData = model.required<PersonModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly showForm = input(true);   // used for initializing the form and resetting vest validations
-  public allTags = input.required<string>();
-  public priv = input.required<PrivacySettings>();
-  public genders = input.required<CategoryListModel>();
+  public readonly allTags = input.required<string>();
+  public readonly priv = input.required<PrivacySettings>();
+  public readonly genders = input.required<CategoryListModel>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   

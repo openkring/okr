@@ -7,8 +7,8 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressModel, CategoryListModel, OrgCollection, OrgModel } from '@bk2/shared-models';
-import { AppNavigationService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { chipMatches, debugItemLoaded, getSystemQuery, isOrg, nameMatches } from '@bk2/shared-util-core';
+import { confirm, AppNavigationService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
+import { chipMatches, debugItemLoaded, debugListLoaded, getSystemQuery, isOrg, nameMatches } from '@bk2/shared-util-core';
 
 import { AddressService } from '@bk2/subject-address-data-access';
 import { OrgService } from '@bk2/subject-org-data-access';
@@ -19,16 +19,20 @@ import { OrgEditModalComponent } from './org-edit.modal';
 import { of } from 'rxjs';
 
 export type OrgState = {
+  orgKey: string;
+
+  // filter
   searchTerm: string;
   selectedTag: string;
   selectedType: string;
-  orgKey: string;
 };
 export const initialState: OrgState = {
+  orgKey: '',
+
+  // filter
   searchTerm: '',
   selectedTag: '',
   selectedType: 'all',
-  orgKey: '',
 };
 
 export const OrgStore = signalStore(
@@ -47,7 +51,9 @@ export const OrgStore = signalStore(
   withProps((store) => ({
     orgsResource: rxResource({
       stream: () => {
-        return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc')
+        const orgs$ = store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
+        debugListLoaded<OrgModel>('OrgStore.orgs', orgs$, store.appStore.currentUser());
+        return orgs$;
       }
     }),
     orgResource: rxResource({
@@ -65,9 +71,7 @@ export const OrgStore = signalStore(
   withComputed((state) => ({
     // orgs
     orgs: computed(() => {
-      const value = state.orgsResource.value();
-      console.log('Computed orgs:', value?.length);
-      return value;
+      return state.orgsResource.value();
     }),
     orgsCount: computed(() => state.orgsResource.value()?.length ?? 0),
     filteredOrgs: computed(() =>
@@ -83,9 +87,11 @@ export const OrgStore = signalStore(
     defaultResource : computed(() => state.appStore.defaultResource()),
 
     // other
-    isLoading: computed(() => state.orgsResource.isLoading()),
+    isLoading: computed(() => state.orgsResource.isLoading() || state.orgResource.isLoading()),
     currentUser: computed(() => state.appStore.currentUser()),
     tenantId: computed(() => state.appStore.tenantId()),
+    tags: computed(() => state.appStore.getTags('org')),
+    types: computed(() => state.appStore.getCategory('org_type')),
   })),
   withMethods((store) => ({
     reset() {
@@ -123,15 +129,6 @@ export const OrgStore = signalStore(
       patchState(store, { orgKey });
     },
 
-    /******************************** getters ******************************************* */
-    getTags(): string {
-      return store.appStore.getTags('org');
-    },
-
-    getTypes(): CategoryListModel {
-      return store.appStore.getCategory('org_type');
-    },
-
     /******************************** actions ******************************************* */
     async export(type: string): Promise<void> {
       console.log(`OrgStore.export(${type}) is not yet implemented.`);
@@ -143,27 +140,27 @@ export const OrgStore = signalStore(
         component: OrgNewModalComponent,
         componentProps: {
           currentUser: store.currentUser(),
-          tags: this.getTags(),
-          types: this.getTypes(),
+          tags: store.tags(),
+          types: store.types(),
           readOnly,
         }
       });
       modal.present();
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
-        const vm = data as OrgNewFormModel;
-        const key = `org.${await store.orgService.create(convertFormToNewOrg(vm, store.tenantId()), store.currentUser())}`;
-        if ((vm.email ?? '').length > 0) {
-          this.saveAddress(convertNewOrgFormToEmailAddress(vm, store.tenantId()), key);
+        const org = data as OrgNewFormModel;
+        const key = `org.${await store.orgService.create(convertFormToNewOrg(org, store.tenantId()), store.currentUser())}`;
+        if ((org.email ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToEmailAddress(org, store.tenantId()), key);
         }
-        if ((vm.phone ?? '').length > 0) {
-          this.saveAddress(convertNewOrgFormToPhoneAddress(vm, store.tenantId()), key);
+        if ((org.phone ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToPhoneAddress(org, store.tenantId()), key);
         }
-        if ((vm.url ?? '').length > 0) {
-          this.saveAddress(convertNewOrgFormToWebAddress(vm, store.tenantId()), key);
+        if ((org.url ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToWebAddress(org, store.tenantId()), key);
         }
-        if ((vm.city ?? '').length > 0) {
-          this.saveAddress(convertNewOrgFormToPostalAddress(vm, store.tenantId()), key);
+        if ((org.city ?? '').length > 0) {
+          this.saveAddress(convertNewOrgFormToPostalAddress(org, store.tenantId()), key);
         }
       }
       store.orgsResource.reload();
@@ -174,24 +171,25 @@ export const OrgStore = signalStore(
       store.addressService.create(address, store.currentUser());
     },
 
-    async edit(org?: OrgModel, readOnly = true): Promise<void> {
-      if (!org) return;
+    async edit(org: OrgModel, readOnly = true): Promise<void> {
       const modal = await store.modalController.create({
         component: OrgEditModalComponent,
         componentProps: {
           org,
           currentUser: store.currentUser(),
-          tags: this.getTags(),
+          resource: store.defaultResource(),
+          tags: store.tags(),
+          types: store.types(),
           readOnly
         }
       });
       modal.present();
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
-        if (isOrg(data, store.appStore.tenantId())) {
-          await (!data.bkey ? 
-            store.orgService.create(data, store.currentUser()) : 
-            store.orgService.update(data, store.currentUser()));
+        if (isOrg(data, store.tenantId())) {
+          data.bkey?.length === 0 ? 
+            await store.orgService.create(data, store.currentUser()) : 
+            await store.orgService.update(data, store.currentUser());
           this.reload();
         }
       }
@@ -199,9 +197,12 @@ export const OrgStore = signalStore(
     },
 
     async delete(org?: OrgModel, readOnly = true): Promise<void> {
-      if (!org) return;
-      await store.orgService.delete(org, store.currentUser());
-      this.reset();
+      if (!org || readOnly) return;
+      const result = await confirm(store.alertController, '@subject.person.operation.delete.confirm', true);
+      if (result === true) {
+        await store.orgService.delete(org, store.currentUser());
+        this.reload();
+      }
     },
 
     async copyEmailAddresses(): Promise<void> {

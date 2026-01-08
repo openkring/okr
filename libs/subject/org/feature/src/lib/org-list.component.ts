@@ -33,22 +33,20 @@ import { OrgStore } from './org.store';
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
       <ion-title>{{ selectedOrgsCount()}}/{{orgsCount()}} {{ '@subject.org.plural' | translate | async }}</ion-title>
-      <ion-buttons slot="end">
-        @if(hasRole('privileged') || hasRole('memberAdmin')) {
-          <ion-buttons slot="end">
-            <ion-button id="c-orgs">
-              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="c-orgs" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
-                </ion-content>
-              </ng-template>
-            </ion-popover>
-          </ion-buttons>
-        }
-      </ion-buttons>
+      @if(hasRole('privileged') || hasRole('memberAdmin')) {
+        <ion-buttons slot="end">
+          <ion-button id="c-orgs">
+            <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+          </ion-button>
+          <ion-popover trigger="c-orgs" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ng-template>
+              <ion-content>
+                <bk-menu [menuName]="contextMenuName()"/>
+              </ion-content>
+            </ng-template>
+          </ion-popover>
+        </ion-buttons>
+      }
     </ion-toolbar>
 
     <!-- search and filters -->
@@ -129,19 +127,13 @@ export class OrgListComponent {
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  // filter
-  protected searchTerm = linkedSignal(() => this.orgStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.orgStore.selectedTag());
-  protected selectedType = linkedSignal(() => this.orgStore.selectedType());
-
   // derived signals
   protected filteredOrgs = computed(() => this.orgStore.filteredOrgs() ?? []);
-  protected orgs = computed(() => this.orgStore.orgs() ?? []);
   protected orgsCount = computed(() => this.orgStore.orgsCount());
   protected selectedOrgsCount = computed(() => this.filteredOrgs().length);
   protected isLoading = computed(() => this.orgStore.isLoading());
-  protected tags = computed(() => this.orgStore.getTags());
-  protected types = computed(() => this.orgStore.appStore.getCategory('org_type'));
+  protected tags = computed(() => this.orgStore.tags());
+  protected types = computed(() => this.orgStore.types());
   protected currentUser = computed(() => this.orgStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 

@@ -7,20 +7,20 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_TITLE } from '@bk2/shared-constants';
 import { getTitleLabel } from '@bk2/shared-util-angular';
+import { ENV } from '@bk2/shared-config';
 
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
-
+import { AvatarService } from '@bk2/avatar-data-access';
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
+import { DocumentsAccordionComponent } from '@bk2/document-feature';
+
 import { MembersAccordionComponent, MembershipAccordionComponent } from '@bk2/relationship-membership-feature';
 import { OwnershipAccordionComponent } from '@bk2/relationship-ownership-feature';
 import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
-import { DocumentsAccordionComponent } from '@bk2/document-feature';
 
 import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
 import { OrgFormComponent } from '@bk2/subject-org-ui';
-import { ENV } from '@bk2/shared-config';
-import { AvatarService } from '@bk2/avatar-data-access';
 
 @Component({
   selector: 'bk-org-edit-modal',
@@ -40,7 +40,7 @@ import { AvatarService } from '@bk2/avatar-data-access';
     }
     <ion-content class="ion-no-padding">
       @if(!isNew()) {
-        <bk-avatar-toolbar key="{{parentKey()}}" title="{{ toolbarTitle() }}" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
+        <bk-avatar-toolbar key="{{parentKey()}}" title="{{ toolbarTitle() }}" modelType="org" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
       }
       @if(formData(); as formData) {
         <bk-org-form
@@ -59,15 +59,15 @@ import { AvatarService } from '@bk2/avatar-data-access';
         @if(org(); as org) {
           <ion-card>
             <ion-card-content class="ion-no-padding">
-              <ion-accordion-group value="members" [multiple]="true">
+              <ion-accordion-group value="addresses" [multiple]="true">
                 <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
                 <bk-membership-accordion [member]="org" [readOnly]="isReadOnly()" modelType="org" />
 
                 @if(hasRole('privileged') || !isReadOnly()) {
                     @if(resource(); as resource) {
-                    <bk-ownerships-accordion [owner]="org" [defaultResource]="resource" ownerModelType="org" [readOnly]="isReadOnly()" />
-                    <bk-reservations-accordion [reserver]="org" [readOnly]="isReadOnly()" reserverModelType="org" [resource]="resource" />
-                    <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
+                      <bk-ownerships-accordion [owner]="org" [defaultResource]="resource" ownerModelType="org" [readOnly]="isReadOnly()" />
+                      <bk-reservations-accordion [reserver]="org" [readOnly]="isReadOnly()" reserverModelType="org" [resource]="resource" />
+                      <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                     }
                     <bk-members-accordion [orgKey]="orgKey()" [readOnly]="isReadOnly()" />
                     <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
