@@ -1,21 +1,26 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup } from '@ionic/angular/standalone';
 
-import { CalEventModel, CategoryListModel, UserModel } from '@bk2/shared-models';
+import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CalEventFormComponent } from '@bk2/calevent-ui';
+import { InviteesAccordionComponent } from '@bk2/relationship-invitation-feature';
+import { DocumentsAccordionComponent } from '@bk2/document-feature';
+import { CommentsAccordionComponent } from '@bk2/comment-feature';
 
 @Component({
   selector: 'bk-calevent-edit-modal',
   standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
-    CalEventFormComponent,
-    IonContent
-  ],
+    CalEventFormComponent, InviteesAccordionComponent, DocumentsAccordionComponent, CommentsAccordionComponent,
+    IonContent, IonCard, IonCardContent,
+    IonAccordionGroup
+],
+  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -37,7 +42,20 @@ import { CalEventFormComponent } from '@bk2/calevent-ui';
           (valid)="formValid.set($event)"
         />
       }
+
+      @if(!isNew()) {
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <ion-accordion-group value="invitees">
+              <bk-invitees-accordion [calevent]="formData()" [readOnly]="isReadOnly()" />
+              <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+            </ion-accordion-group>
+          </ion-card-content>
+        </ion-card>
+      }
     </ion-content>
+    
   `
 })
 export class CalEventEditModalComponent {
@@ -62,7 +80,9 @@ export class CalEventEditModalComponent {
 
   // derived signals
   protected headerTitle = computed(() => getTitleLabel('calevent', this.calevent().bkey, this.isReadOnly()));
-  
+  protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().bkey}`);
+  protected isNew = computed(() => !this.formData().bkey);
+
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     await this.modalController.dismiss(this.formData(), 'confirm');

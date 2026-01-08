@@ -5,18 +5,20 @@ import { Router } from '@angular/router';
 
 import { DEFAULT_DATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, CategoryListModel, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@bk2/shared-models';
-import { ChipsComponent, NotesInputComponent } from '@bk2/shared-ui';
+import { ChipsComponent, DateInputComponent, NotesInputComponent, StringSelectComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarDisplayComponent, AvatarInputComponent } from '@bk2/avatar-ui';
 import { invitationValidations, createPersonAvatar } from '@bk2/relationship-invitation-util';
+import { PrettyDatePipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-invitation-form',
   standalone: true,
   imports: [
     vestForms,
-    ChipsComponent, AvatarDisplayComponent, AvatarInputComponent, NotesInputComponent,
+    PrettyDatePipe,
+    ChipsComponent, AvatarDisplayComponent, AvatarInputComponent, NotesInputComponent, StringSelectComponent, DateInputComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -24,86 +26,73 @@ import { invitationValidations, createPersonAvatar } from '@bk2/relationship-inv
     @if (showForm()) {
       <form scVestForm
         [formValue]="formData()"
+        (formValueChange)="onFormChange($event)"
         [suite]="suite"
         (dirtyChange)="dirty.emit($event)"
-        (formValueChange)="onFormChange($event)"
+        (validChange)="valid.emit($event)"
       >
         @if(currentUser(); as currentUser) {
           <ion-card>
             <ion-card-header>
               <ion-card-title>Invitation</ion-card-title>
             </ion-card-header>
-            <ion-card-content>
+            <ion-card-content class="ion-no-padding">
               <ion-grid>
                 <ion-row>
-                  @if(isReadOnly() || !editable()) {
-
-                    <!-- inviter -->
-                    <ion-col size="12" size-md="6">
-                      <ion-label>Inviter</ion-label>
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <ion-item lines="none">
-                        <bk-avatar-display [avatars]="[inviterAvatar()]" [showName]="true" />
-                      </ion-item>
-                    </ion-col>
-
-                    <!-- invitee -->
-                    <ion-col size="12" size-md="6">
-                      <ion-label>Invitee</ion-label>
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <ion-item lines="none">
-                        <bk-avatar-display [avatars]="[inviteeAvatar()]" [showName]="true" />
-                      </ion-item>
-                    </ion-col>
-                  } @else {
-
-                    <!-- inviter -->
-                    <ion-col size="12" size-md="6">
-                      <ion-label>Inviter</ion-label>
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <ion-item lines="none">
-                        <bk-avatar-input (avatarAdded)="add('inviter', $event)" (selectClicked)="selectClicked.emit('inviter')" />
-                      </ion-item>
-                    </ion-col>
-
-                    <!-- invitee -->
-                    <ion-col size="12" size-md="6">
-                      <ion-label>Invitee</ion-label>
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <ion-item lines="none">
-                        <bk-avatar-input (avatarAdded)="add('invitee', $event)" (selectClicked)="selectClicked.emit('invitee')" />
-                      </ion-item>
-                    </ion-col>
-                  }
-
                   <!-- calevent -->
+                  <ion-col size="12" size-md="6">
+                    <ion-label>{{ date() | prettyDate}}</ion-label>
+                  </ion-col>
                   <ion-col size="12" size-md="6">
                     <ion-label>{{ name() }}</ion-label>
                   </ion-col>
+                </ion-row>
+
+                <ion-row>
+                  <!-- inviter -->
                   <ion-col size="12" size-md="6">
-                    <ion-label>{{ date() }}</ion-label>
+                    <ion-label>Inviter</ion-label>
+                  </ion-col>
+                  <ion-col size="12" size-md="6">
+                    <ion-item lines="none">
+                      @if(isReadOnly() || !editable()) {
+                        <bk-avatar-display [avatars]="[inviterAvatar()]" [showName]="true" />
+                      } @else {
+                        <bk-avatar-input (avatarAdded)="add('inviter', $event)" (selectClicked)="selectClicked.emit('inviter')" />
+                      }
+                    </ion-item>
+                  </ion-col>
+
+                  <!-- invitee -->
+                  <ion-col size="12" size-md="6">
+                    <ion-label>Invitee</ion-label>
+                  </ion-col>
+                  <ion-col size="12" size-md="6">
+                    <ion-item lines="none">
+                      @if(isReadOnly() || !editable()) {
+                        <bk-avatar-display [avatars]="[inviteeAvatar()]" [showName]="true" />
+                      } @else {
+                        <bk-avatar-input (avatarAdded)="add('invitee', $event)" (selectClicked)="selectClicked.emit('invitee')" />
+                      }
+                    </ion-item>
                   </ion-col>
 
                   <!-- state -->
                   <ion-col size="12" size-md="6">
-                    <ion-label>State: {{ state() }}</ion-label>
+                    <bk-string-select name="state"  [selectedString]="state()" (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="readOnly()" [stringList] = "['pending', 'accepted', 'declined', 'maybe']" />           
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <ion-label>Role: {{ role() }}</ion-label>
+                    <bk-string-select name="role"  [selectedString]="role()" (selectedStringChange)="onFieldChange('role', $event)" [readOnly]="readOnly()" [stringList] = "['required', 'optional', 'info']" />           
                   </ion-col>
 
                   <!-- sentAt -->
                   <ion-col size="12" size-md="6">
-                    <ion-label>Sent At: {{ sentAt() }}</ion-label>
+                    <bk-date-input name="sentAt"  [storeDate]="sentAt()" (storeDateChange)="onFieldChange('sentAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
                   </ion-col>
 
                   <!-- respondedAt -->
                   <ion-col size="12" size-md="6">
-                    <ion-label>Responded At: {{ respondedAt() }}</ion-label>
+                    <bk-date-input name="respondedAt"  [storeDate]="respondedAt()" (storeDateChange)="onFieldChange('respondedAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -125,10 +114,10 @@ import { invitationValidations, createPersonAvatar } from '@bk2/relationship-inv
 export class InvitationFormComponent {
   // inputs
   public readonly formData = model.required<InvitationModel>();
-  public currentUser = input<UserModel | undefined>();
-  public showForm = input(true);   // used for initializing the form and resetting vest validations
-  public states = input.required<CategoryListModel>();
-  public allTags = input.required<string>();
+  public readonly currentUser = input<UserModel | undefined>();
+  public readonly showForm = input(true);   // used for initializing the form and resetting vest validations
+  public readonly allTags = input.required<string>();
+  public readonly locale = input.required<string>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected editable = input(false);

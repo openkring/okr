@@ -1,13 +1,13 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, InvitationModel, InvitationModelName, RoleName, TransferModel, TransferModelName, UserModel } from '@bk2/shared-models';
+import { InvitationModel, InvitationModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
+import { ModelSelectService } from '@bk2/shared-feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { ModelSelectService } from '@bk2/shared-feature';
 
 import { InvitationFormComponent } from '@bk2/relationship-invitation-ui';
 
@@ -26,18 +26,20 @@ import { InvitationFormComponent } from '@bk2/relationship-invitation-ui';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-invitation-form
-        [formData]="formData()"
-        (formDataChange)="onFormDataChange($event)"
-        [currentUser]="currentUser()"
-        [allTags]="tags()"
-        [states]="states()"
-        [readOnly]="readOnly()"
-        [showForm]="showForm()"
-        (dirty)="formDirty.set($event)"
-        (valid)="formValid.set($event)"
-        (selectClicked)="select($event)"
-      />
+      @if(currentUser(); as currentUser) {
+        <bk-invitation-form
+          [formData]="formData()"
+          (formDataChange)="onFormDataChange($event)"
+          [currentUser]="currentUser"
+          [allTags]="tags()"
+          [locale]="locale()"
+          [readOnly]="readOnly()"
+          [showForm]="showForm()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+          (selectClicked)="select($event)"
+        />
+      }
 
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-card>
@@ -58,10 +60,10 @@ export class InvitationEditModalComponent {
   // inputs
   public invitation = input.required<InvitationModel>();
   public currentUser = input.required<UserModel>();
-  public types = input.required<CategoryListModel>();
-  public states = input.required<CategoryListModel>();
-  public periodicities = input.required<CategoryListModel>();
   public tags = input.required<string>();
+  public locale = input.required<string>();
+  public readOnly = input(true);
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals
   protected formDirty = signal(false);
@@ -73,7 +75,7 @@ export class InvitationEditModalComponent {
   // derived signals
   protected readonly headerTitle = computed(() => getTitleLabel('invitation', this.invitation()?.bkey, this.readOnly()));
   protected readonly parentKey = computed(() => `${InvitationModelName}.${this.invitationKey()}`);
-  protected readonly invitationKey = computed(() => this.invitation().bkey ?? '');  protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
+  protected readonly invitationKey = computed(() => this.invitation().bkey ?? '');
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

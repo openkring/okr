@@ -1,5 +1,5 @@
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { add, compareAsc, differenceInCalendarDays, differenceInHours, Duration, format, getISODay, isAfter, isFuture, isValid, parse } from 'date-fns';
+import { add, compareAsc, differenceInCalendarDays, differenceInHours, Duration, addBusinessDays, format, getISODay, isAfter, isFuture, isValid, parse } from 'date-fns';
 import { die, warn } from './log.util';
 
 export enum DateFormat {
@@ -218,7 +218,7 @@ export function checkDate(fieldName: string, value: string, dateFormat: DateForm
     }
 }
 
-// checks whether a relationship has already been ended or will be ended in the future
+/* ------------------- date checks for relationships ----------------------- */
 /**
  * Checks whether an object with a validity period from startDate to endDate is ongoing.
  * 'Ongoing' means that the validity period has not yet ended, not in the past nor future.
@@ -230,7 +230,6 @@ export function isOngoing(endDate: string): boolean {
   return endDate === END_FUTURE_DATE_STR;
 }
 
-// checks whether a relationship 
 /**
  * Checks whether an object with a validity period from startDate to endDate is valid at a given date (refDate).
  * @param startDate the start of the validity period
@@ -260,6 +259,7 @@ export function checkYearRange(year: unknown, minYear: number, maxYear: number):
     return year >= minYear && year <= maxYear;
 }
 
+/* ------------------- date calculations ----------------------- */
 /**
  * Returns the year of a date as a number. 
  * @param yearDiff returns the year(s) before the current year; default is to return the current year.
@@ -325,6 +325,20 @@ export function compareDate(date1: string, date2: string, dateFormat = DateForma
 export function addDuration(storeDate: string, duration: Duration, dateFormat = DateFormat.StoreDate): string {
   const date = parseDate(storeDate, dateFormat, false) ?? die('date.util/addDays: invalid date ' + storeDate);
   const dateAfterDuration = add(date, duration);
+  return format(dateAfterDuration, dateFormat);
+}
+
+/**
+ * Same as daily addDuration, but without the weekends.
+ * The duration is always 1 business day.
+ * @param storeDate
+ * @param days number of days to add, default is 1 business day
+ * @param dateFormat 
+ * @returns 
+ */
+export function addWorkDays(storeDate: string, days = 1, dateFormat = DateFormat.StoreDate): string {
+  const date = parseDate(storeDate, dateFormat, false) ?? die('date.util/addDays: invalid date ' + storeDate);
+  const dateAfterDuration = addBusinessDays(date, days);
   return format(dateAfterDuration, dateFormat);
 }
 
@@ -427,12 +441,12 @@ export function copyDate(origDate: Date): Date {
 /**
  * creates an array of years
  * e.g. [2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015]
- * default is to return the eight last years including the current year
+ * default is to return the eight last years plus the current year and the following year
  * @param startYear 
  * @param numberOfYears 
  * @returns the array of years
  */
-export function getYearList(startYear = getYear(), numberOfYears = 8): number[] {
+export function getYearList(startYear = getYear() + 1, numberOfYears = 10): number[] {
     const yearList: number[] = [];
     for (let i = 0; i < numberOfYears; i++) {
         yearList.push(startYear - i);
@@ -535,4 +549,50 @@ export function getIsoDateTime(date: string, time: string): string {
   if (!date || date.length !== 8) die('date.util/getIsoDateTime: invalid date ' + date);
   if (!time || time.length !== 5) die('date.util/getIsoDateTime: invalid time ' + time);
   return getYearStrFromDate(date) + '-' + getMonthFromDate(date) + '-' + getDayFromDate(date) + 'T' + time + ':00';
+}
+
+
+export function calculateRecurringDates(startDate: string, endDate: string, periodicity: string): string[] {
+    const dates: string[] = [];
+    if (!startDate || startDate.length !== 8) return dates;
+    let currentDate = startDate;
+    const maxIterations = 100; // to avoid infinite loops
+    let iteration = 0;
+
+    while (currentDate && (endDate === END_FUTURE_DATE_STR || compareDate(currentDate, endDate) <= 0)) {
+        dates.push(currentDate);
+        iteration++;
+        if (iteration > maxIterations) {
+            warn('date.util/calculateRecurringDates: maximum iterations reached, stopping to avoid infinite loop');
+            break;
+        }
+        switch (periodicity) {
+            case 'daily':
+                currentDate = addDuration(currentDate, { days: 1 });
+                break;
+            case 'workdays':  // daily without weekends
+                currentDate = addWorkDays(currentDate, 1);
+                break;
+            case 'weekly':
+                currentDate = addDuration(currentDate, { weeks: 1 });
+                break;
+            case 'biweekly':
+                currentDate = addDuration(currentDate, { weeks: 2 });
+                break;
+            case 'monthly':
+                currentDate = addDuration(currentDate, { months: 1 });
+                break;
+            case 'quarterly':
+                currentDate = addDuration(currentDate, { months: 3 });
+                break;
+            case 'yearly':
+                currentDate = addDuration(currentDate, { years: 1 });
+                break;
+            default:
+                warn(`date.util/calculateRecurringDates: unknown periodicity ${periodicity}, stopping calculation`);
+                currentDate = '';
+                break;
+        }
+    }
+    return dates;
 }

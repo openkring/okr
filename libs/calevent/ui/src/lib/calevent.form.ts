@@ -1,12 +1,12 @@
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, inject, input, linkedSignal, model, output, signal } from '@angular/core';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { ChFutureDate, LowercaseWordMask } from '@bk2/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, convertDateFormatToString, DateFormat, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, ErrorNoteComponent, NotesInputComponent, NumberInputComponent, StringsComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared-ui';
+import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { ModelSelectService } from '@bk2/shared-feature';
 
 import { AvatarsComponent } from '@bk2/avatar-ui';
@@ -17,7 +17,7 @@ import { calEventValidations } from '@bk2/calevent-util';
   standalone: true,
   imports: [
     vestForms,
-    CategorySelectComponent, ChipsComponent, NotesInputComponent, DateInputComponent, TimeInputComponent,
+    CategorySelectComponent, ChipsComponent, NotesInputComponent, DateInputComponent, TimeInputComponent, NumberInputComponent, CheckboxComponent,
     TextInputComponent, ChipsComponent, ErrorNoteComponent, StringsComponent, AvatarsComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -35,6 +35,16 @@ import { calEventValidations } from '@bk2/calevent-util';
     <ion-card>
       <ion-card-content class="ion-no-padding">
         <ion-grid>
+          @if(hasRole('admin')) {
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                bkey: {{ bkey() }}
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                seriesId: {{ seriesId() }}
+              </ion-col>
+            </ion-row>
+          }
           <ion-row>
             <ion-col size="12">
               <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false"  [readOnly]="isReadOnly()" />
@@ -48,21 +58,36 @@ import { calEventValidations } from '@bk2/calevent-util';
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                <bk-checkbox name="fullDay" [checked]="fullDay()" (checkedChange)="onFieldChange('fullDay', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-time-input name="startTime" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-date-input name="endDate"  [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-time-input name="endTime" [value]="endTime()" (valueChange)="onFieldChange('endTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
-              </ion-col>
+            </ion-row>
+            @if(!fullDay()) {
+              <ion-row>
+                <ion-col size="12" size-md="6" size-lg="4">
+                  <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                </ion-col>
+                <ion-col size="12" size-md="6" size-lg="4">
+                  <bk-time-input name="startTime" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                </ion-col>
+                <ion-col size="12" size-md="6" size-lg="4">
+                  <bk-number-input name="durationMinutes" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+            } @else {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <bk-date-input name="endDate"  [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                </ion-col>
+              </ion-row>
+            }
+            <ion-row>
               <ion-col size="12" size-md="6">
                 <bk-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
               </ion-col>
-              @if(periodicity() !== 'once') {
+              @if(isRecurring()) {
                 <ion-col size="12" size-md="6">
                   <bk-date-input name="repeatUntilDate" [storeDate]="repeatUntilDate()" (storeDateChange)="onFieldChange('repeatUntilDate', $event)" [locale]="locale()" [mask]="chFutureDate" [readOnly]="isReadOnly()" [showHelper]=true />
                 </ion-col>
@@ -141,14 +166,18 @@ export class CalEventFormComponent {
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
+  protected bkey = linkedSignal(() => this.formData().bkey ?? '');
+  protected seriesId = linkedSignal(() => this.formData().seriesId ?? '');
   protected type = linkedSignal(() => this.formData().type ?? DEFAULT_CALEVENT_TYPE);
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
   protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
-  protected endDate = linkedSignal(() => this.formData().endDate ?? DEFAULT_DATE);
-  protected endTime = linkedSignal(() => this.formData().endTime ?? DEFAULT_TIME);
+  protected fullDay = linkedSignal(() => this.formData().fullDay ?? false);
+  protected endDate = linkedSignal(() => this.formData().endDate ?? this.startDate());
+  protected durationMinutes = linkedSignal(() => this.formData().durationMinutes ?? 60);
   protected periodicity = linkedSignal(() => this.formData().periodicity ?? DEFAULT_PERIODICITY);
-  protected repeatUntilDate = linkedSignal(() => convertDateFormatToString(this.formData().repeatUntilDate, DateFormat.StoreDate, DateFormat.ViewDate));
+  protected isRecurring = computed(() => this.periodicity() && this.periodicity() !== 'once');
+  protected repeatUntilDate = linkedSignal(() => this.formData().repeatUntilDate ?? DEFAULT_DATE);
   protected locationKey = linkedSignal(() => this.formData().locationKey ?? DEFAULT_KEY);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
@@ -170,6 +199,11 @@ export class CalEventFormComponent {
   protected nameLength = NAME_LENGTH;
 
   /******************************* actions *************************************** */
+  protected toggleFullDay(): void {
+
+    this.fullDay.update(fd => !fd);
+  }
+
   public async selectPerson(): Promise<void> {
     const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL);
     if (avatar) {

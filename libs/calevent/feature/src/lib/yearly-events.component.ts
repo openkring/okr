@@ -137,7 +137,7 @@ export class YearlyEventsComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.calEventStore.edit(undefined, this.readOnly()); break;
+      case 'add':  await this.calEventStore.add(this.readOnly()); break;
       case 'exportRaw': await this.calEventStore.export("raw"); break;
       default: error(undefined, `YearlyEvents.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
@@ -187,10 +187,10 @@ export class YearlyEventsComponent {
           await this.calEventStore.delete(calEvent, this.readOnly());
           break;
         case 'calevent.edit':
-          await this.calEventStore.edit(calEvent, this.readOnly());
+          await this.calEventStore.edit(calEvent, false, this.readOnly());
           break;
         case 'calevent.view':
-          await this.calEventStore.edit(calEvent, true);
+          await this.calEventStore.edit(calEvent, false, true);
           break;
         case 'album':
           await this.calEventStore.showAlbum(calEvent.url);

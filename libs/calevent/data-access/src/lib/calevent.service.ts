@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { CalEventCollection, CalEventModel, UserModel } from '@bk2/shared-models';
-import { die, findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { addTime, die, findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getCaleventIndex } from '@bk2/calevent-util';
 
@@ -73,43 +73,21 @@ export class CalEventService {
   /*-------------------------- event helpers --------------------------------*/
   public convertEventModelToCalendarEvent(calEvent: CalEventModel): EventInput {
     if (!calEvent.startDate || calEvent.startDate.length !== 8) die('CalEventService.convertEventModelToCalendarEvent: calEvent ' + calEvent.bkey + ' has invalid start date: ' + calEvent.startDate);
-    if (!calEvent.startTime || calEvent.startTime.length !== 4) {
+    if (!calEvent.startTime || calEvent.startTime.length !== 5) {
       // fullDay CalEvent have no startTime
-      if (!calEvent.endDate || calEvent.endDate.length !== 8) {
-        // same day CalEvent
-        return {
-          title: calEvent.name,
-          start: this.getIsoDate(calEvent.startDate),
-          eventKey: calEvent.bkey,
-        };
-      } else {
-        // multi day event
-        return {
-          title: calEvent.name,
-          start: this.getIsoDate(calEvent.startDate),
-          end: this.getIsoDate(calEvent.endDate),
-          eventKey: calEvent.bkey,
-        };
-      }
-    } else {
-      // not a fullday event
-      const endTime = !calEvent.endTime || calEvent.endTime.length !== 4 ? this.getDefaultEndTime(calEvent.startTime) : calEvent.endTime;
-      if (!calEvent.endDate || calEvent.endDate.length !== 8) {
-        // same day event
-        return {
-          title: calEvent.name,
-          start: this.getIsoDateTime(calEvent.startDate, calEvent.startTime),
-          end: this.getIsoDateTime(calEvent.startDate, endTime),
-          eventKey: calEvent.bkey,
-        };
-      } else {
-        return {
-          title: calEvent.name,
-          start: this.getIsoDateTime(calEvent.startDate, calEvent.startTime),
-          end: this.getIsoDateTime(calEvent.endDate, endTime),
-          eventKey: calEvent.bkey,
-        };
-      }
+      return {
+        title: calEvent.name,
+        start: this.getIsoDate(calEvent.startDate),
+        eventKey: calEvent.bkey,
+      };
+    } else {  // not a fullday event
+      const endTime = addTime(calEvent.startTime, 0, calEvent.durationMinutes);
+      return {
+        title: calEvent.name,
+        start: this.getIsoDateTime(calEvent.startDate, calEvent.startTime),
+        end: this.getIsoDateTime(calEvent.startDate, endTime),
+        eventKey: calEvent.bkey,
+      };
     }
   }
 
@@ -123,12 +101,5 @@ export class CalEventService {
 
   private getIsoDateTime(dateStr: string, timeStr: string): string {
     return this.getIsoDate(dateStr) + 'T' + this.getIsoTime(timeStr);
-  }
-
-  private getDefaultEndTime(startTime: string): string {
-    const startTimeInt = parseInt(startTime);
-    let endTime = startTimeInt + 100;
-    if (endTime >= 2400) endTime = endTime - 2400;
-    return endTime + '';
   }
 }

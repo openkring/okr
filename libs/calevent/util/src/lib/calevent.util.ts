@@ -1,22 +1,10 @@
 import { EventInput } from '@fullcalendar/core';
 
 import { CalEventModel } from '@bk2/shared-models';
-import { getIsoDateTime, isType } from '@bk2/shared-util-core';
+import { addTime, getIsoDateTime, isType } from '@bk2/shared-util-core';
 
 export function isCalEvent(calEvent: unknown, tenantId: string): calEvent is CalEventModel {
   return isType(calEvent, new CalEventModel(tenantId));
-}
-
-/**
- * This function returns the number of days of a - potentially multiday - fullday event or 0 if its is not fullday.
- * if startDate and endDate are the same -> 1 (fullday event)
- * if startDate and endDate are different -> endDate - startDate + 1 (multiday event)
- * @param calevent
- * @returns
- */
-export function fullDayEventLength(calevent: CalEventModel): number {
-  if (!isFullDayEvent(calevent)) return 0;
-  return parseInt(calevent.endDate) - parseInt(calevent.startDate) + 1;
 }
 
 /**
@@ -41,14 +29,15 @@ export function convertFullDayCalEventToFullCalendar(calevent: CalEventModel): E
   return {
     title: calevent.name,
     start: calevent.startDate,
-    end: calevent.endDate,
+    end: calevent.startDate,
     allDay: true,
   };
 }
 
 export function convertTimeCalEventToFullCalendar(calevent: CalEventModel): EventInput {
   const isoStartDateTime = getIsoDateTime(calevent.startDate, calevent.startTime);
-  const isoEndDateTime = getIsoDateTime(calevent.endDate, calevent.endTime);
+  const endTime = addTime(calevent.startTime, 0, calevent.durationMinutes);
+  const isoEndDateTime = getIsoDateTime(calevent.startDate, endTime);
   return {
     title: calevent.name,
     start: isoStartDateTime,

@@ -1,7 +1,7 @@
 import { CalEventModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { convertCalEventToFullCalendar, fullDayEventLength, isCalEvent, isFullDayEvent } from './calevent.util';
+import { convertCalEventToFullCalendar, isCalEvent, isFullDayEvent } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@bk2/shared-util-core', async importOriginal => {
@@ -34,8 +34,7 @@ describe('CalEvent Utils', () => {
     baseCalEvent.type = 'socialEvent';
     baseCalEvent.startDate = '20251010';
     baseCalEvent.startTime = '10:00';
-    baseCalEvent.endDate = '20251010';
-    baseCalEvent.endTime = '11:00';
+    baseCalEvent.durationMinutes = 60;
   });
 
   describe('isCalEvent', () => {
@@ -63,32 +62,10 @@ describe('CalEvent Utils', () => {
     });
   });
 
-  describe('fullDayEventLength', () => {
-    it('should return 0 for a non-full-day event', () => {
-      baseCalEvent.startTime = '09:00';
-      expect(fullDayEventLength(baseCalEvent)).toBe(0);
-    });
-
-    it('should return 1 for a single full-day event', () => {
-      baseCalEvent.startTime = '';
-      baseCalEvent.startDate = '20250101';
-      baseCalEvent.endDate = '20250101';
-      expect(fullDayEventLength(baseCalEvent)).toBe(1);
-    });
-
-    it('should return correct length for a multi-day event', () => {
-      baseCalEvent.startTime = '';
-      baseCalEvent.startDate = '20250101';
-      baseCalEvent.endDate = '20250103';
-      expect(fullDayEventLength(baseCalEvent)).toBe(3);
-    });
-  });
-
   describe('convertCalEventToFullCalendar', () => {
     it('should convert a full-day event correctly', () => {
       baseCalEvent.startTime = '';
       baseCalEvent.startDate = '2025-01-01';
-      baseCalEvent.endDate = '2025-01-02';
       const fcEvent = convertCalEventToFullCalendar(baseCalEvent);
       expect(fcEvent).toEqual({
         title: 'Test Event',
