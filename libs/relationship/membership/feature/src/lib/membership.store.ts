@@ -2,13 +2,12 @@ import { computed, inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { memberTypeMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryCollection, CategoryListModel, GroupModel, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
+import { CategoryCollection, CategoryListModel, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, isMembership, nameMatches } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
@@ -18,9 +17,10 @@ import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { convertMemberAndOrgToMembership, getMemberEmailAddresses, getRelLogEntry } from '@bk2/relationship-membership-util';
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
+import { of, switchMap } from 'rxjs';
 
 export type MembershipState = {
-  orgId: string;  // the organization to which the memberships belong
+  orgId: string;  // the organization to which the memberships belong (can be org or group)
   showOnlyCurrent: boolean;  // whether to show only current memberships or all memberships that ever existed
 
   // for accordion-like display of memberships of a given member
@@ -68,24 +68,9 @@ export const _MembershipStore = signalStore(
     allMembershipsResource: rxResource({  
       stream: () => {
         const allMemberships$ = store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.tenantId()), 'memberName2', 'asc');
-        debugListLoaded('allMemberships', allMemberships$, store.appStore.currentUser());
+        debugListLoaded('MembershipStore.allMemberships', allMemberships$, store.appStore.currentUser());
         return allMemberships$;
       },
-    }),
-
-    // the default organisation (to calculate the membership categories)
-    orgResource: rxResource({
-      params: () => ({
-        orgId: store.orgId()
-      }),  
-      stream: ({params}) => {
-        let org$: Observable<OrgModel | undefined> = of(undefined);
-        if (params.orgId && params?.orgId.length > 0) {
-          org$ = store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgId);
-        }
-        debugItemLoaded('org', org$, store.appStore.currentUser());
-        return org$;
-      }
     }),
   })),
 
@@ -110,8 +95,7 @@ export const _MembershipStore = signalStore(
           membership.memberModelType === state.modelType()) ?? []
       }),
 
-      org: computed(() => state.orgResource.value()),
-      orgName: computed(() => state.orgResource.value()?.name ?? ''),
+      org: computed(() => state.appStore.getOrg(state.orgId()) ?? undefined),
       membershipCategoryKey: computed(() => 'mcat_' + state.orgId()),
       currentUser: computed(() => state.appStore.currentUser()),
       genders: computed(() => state.appStore.getCategory('gender')),
@@ -127,15 +111,26 @@ export const _MembershipStore = signalStore(
         mcatId: store.membershipCategoryKey()
       }),  
       stream: ({params}) => {
-        const mcat$ = store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId);
-        debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, mcat$, store.currentUser());           
-        return mcat$;          
+        return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId).pipe(
+          switchMap(mcat => {
+            if (!mcat) {
+              // fallback to default membership category if not found
+              console.log(`MembershipStore: mcat ${params.mcatId} not found, falling back to mcat_default`);
+              const defaultMcat$ = store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_default');
+              debugItemLoaded<CategoryListModel>(`mcat_default (fallback)`, defaultMcat$, store.currentUser());
+              return defaultMcat$;
+            }
+            debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, of(mcat), store.currentUser());
+            return of(mcat);
+          })
+        );
       }
     })
   })),
 
   withComputed((state) => {
     return {
+      orgName: computed(() => state.org()?.name ?? ''),
       personMembers: computed(() => state.members().filter((membership: MembershipModel) =>
         membership.memberModelType === 'person') ?? []),
 
@@ -180,9 +175,9 @@ export const _MembershipStore = signalStore(
   withComputed((state) => {
     return {
       membershipCategory: computed(() => state.mcatResource.value() ?? undefined),
-      defaultOrg: computed(() => state.orgResource.value()),
+      defaultOrg: computed(() => state.org()),
       currentPerson : computed(() => state.appStore.currentPerson()),
-      isLoading: computed(() => state.allMembershipsResource.isLoading() || state.orgResource.isLoading()
+      isLoading: computed(() => state.allMembershipsResource.isLoading()
         || state.mcatResource.isLoading()),
 
       // all members (= orgs and persons)
@@ -199,7 +194,7 @@ export const _MembershipStore = signalStore(
         return state.personMembers()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
           nameMatches(membership.membershipCategory, state.selectedMembershipCategory()) &&
-          nameMatches(membership.memberType, state.selectedGender()) &&
+          nameMatches(membership.memberType, state.selectedGender(), true) &&
           chipMatches(membership.tags, state.selectedTag()))
       }
       ),
@@ -288,13 +283,23 @@ export const _MembershipStore = signalStore(
     return {
       reload() {
         store.allMembershipsResource.reload();
-        store.orgResource.reload();
         store.mcatResource.reload();
       },
 
       /******************************** setters (filter) ******************************************* */
       setOrgId(orgId: string) {
-        patchState(store, { orgId });
+        console.log(`MembershipStore.setOrgId: ${orgId}`);
+        // Only reset filters if orgId actually changed
+        if (store.orgId() !== orgId) {
+          patchState(store, { 
+            orgId,
+            searchTerm: '',
+            selectedTag: '',
+            selectedMembershipCategory: 'all',
+            selectedGender: 'all',
+            selectedOrgType: 'all'
+          });
+        }
       },
 
       setYearField(yearField: 'dateOfEntry' | 'dateOfExit') {
@@ -352,14 +357,30 @@ export const _MembershipStore = signalStore(
         if (!org) { console.log('MembershipStore.add: no org.'); return; }
         this.setOrgId(org.bkey);
         const membership = convertMemberAndOrgToMembership(member, org, store.tenantId(), PersonModelName);
-        this.edit(membership, readOnly);
+        this.edit(membership, readOnly, true);
+      },
+
+      /**
+       * Add a person to a given group as a member.
+       * We propose the current person as member. User can change this to another person in the edit modal.
+       * The group stays fix.
+       * @param group 
+       * @param readOnly 
+       * @returns 
+       */
+      async addMemberToGroup(group: GroupModel, readOnly = true): Promise<void> {
+        if (readOnly) { console.log('MembershipStore.addMemberToGroup: readOnly mode.'); return; }
+        const member = store.appStore.currentPerson();
+        if (!member) { console.log('MembershipStore.addMemberToGroup: no member.'); return; }
+        const membership = convertMemberAndOrgToMembership(member, group, store.tenantId(), PersonModelName);
+        this.edit(membership, readOnly, true);
       },
 
       /**
        * Show a modal to edit an existing membership.
        * @param membership the membership to edit
        */
-      async edit(membership?: MembershipModel, readOnly = true): Promise<void> {
+      async edit(membership?: MembershipModel, readOnly = true, isNew = false): Promise<void> {
         if (!membership) return;
 
         const modal = await store.modalController.create({
@@ -368,6 +389,7 @@ export const _MembershipStore = signalStore(
             membership,
             currentUser: store.currentUser(),
             tags: this.getTags(),
+            isNew,
             priv: store.privacySettings(),
             mcat: store.membershipCategory(),
             readOnly
@@ -396,10 +418,11 @@ export const _MembershipStore = signalStore(
       async end(membership: MembershipModel, endDate?: string, readOnly = true): Promise<void> {
         if (!membership || readOnly) return;
         if (!endDate) {
-          endDate =  await selectDate(store.modalController);
+          endDate =  await selectDate(store.modalController, undefined, '@membership.operation.end.select', '@membership.operation.end.intro');
         }
         if (!endDate) return;
-        await store.membershipService.endMembershipByDate(membership, convertDateFormatToString(endDate, DateFormat.IsoDate, DateFormat.StoreDate, false), store.currentUser());              
+        const sDate = convertDateFormatToString(endDate.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate, false);
+        await store.membershipService.endMembershipByDate(membership, sDate, store.currentUser());              
         this.reload();  
       },
 

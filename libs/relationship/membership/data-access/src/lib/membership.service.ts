@@ -62,7 +62,7 @@ export class MembershipService {
     if (membership.dateOfExit.startsWith('9999') && dateOfExit && dateOfExit.length === 8) {
       membership.dateOfExit = dateOfExit;
       membership.relIsLast = true;
-      return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, '@comment.message.membership.deleted', currentUser);
+      return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, '@membership.operation.end', currentUser);
     }
     return undefined;
   }

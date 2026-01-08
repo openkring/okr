@@ -75,38 +75,17 @@ export function convertMembershipToCategoryChangeForm(membership: MembershipMode
   };
 }
 
-export function convertMemberAndOrgToMembership(member: PersonModel | OrgModel | GroupModel, org: OrgModel, tenantId: string, modelType: 'person' | 'org' | 'group'): MembershipModel {
-  const membership = new MembershipModel(tenantId);
+export function convertMemberAndOrgToMembership(member: PersonModel | OrgModel | GroupModel, org: OrgModel | GroupModel, tenantId: string, modelType: 'person' | 'org' | 'group'): MembershipModel {
+  let membership = new MembershipModel(tenantId);
   switch (modelType) {
     case PersonModelName:
-      const person = member as PersonModel;
-      membership.memberKey = person.bkey;
-      membership.memberName1 = person.firstName;
-      membership.memberName2 = person.lastName;
-      membership.memberModelType = PersonModelName;
-      membership.memberType = person.gender;
-      membership.memberDateOfBirth = person.dateOfBirth;
-      membership.memberDateOfDeath = person.dateOfDeath;
-      membership.memberZipCode = person.favZipCode;
-      membership.memberBexioId = person.bexioId;
+      membership = addPersonInfoToMembership(membership, member as PersonModel);
       break;
     case OrgModelName:
-      const orgMember = member as OrgModel;
-      membership.memberKey = orgMember.bkey;
-      membership.memberName1 = DEFAULT_NAME;
-      membership.memberName2 = orgMember.name;
-      membership.memberModelType = OrgModelName;
-      membership.memberType = orgMember.type;
-      membership.memberDateOfBirth = orgMember.dateOfFoundation;
-      membership.memberDateOfDeath = orgMember.dateOfLiquidation;
-      membership.memberZipCode = orgMember.favZipCode;
-      membership.memberBexioId = orgMember.bexioId;
+      membership = addOrgInfoToMembership(membership, member as OrgModel);
       break;
     case GroupModelName:
-      const group = member as GroupModel;
-      membership.memberKey = group.bkey;
-      membership.memberName2 = group.name;
-      membership.memberModelType = GroupModelName;
+      membership = addGroupInfoToMembership(membership, member as GroupModel);
       break;
   }
   membership.orgKey = org.bkey;
@@ -114,6 +93,40 @@ export function convertMemberAndOrgToMembership(member: PersonModel | OrgModel |
   membership.dateOfEntry = getTodayStr();
   membership.dateOfExit = END_FUTURE_DATE_STR;
   membership.membershipCategory = DEFAULT_MCAT;
+  return membership;
+}
+
+export function addPersonInfoToMembership(membership: MembershipModel, person: PersonModel): MembershipModel {
+  membership.memberKey = person.bkey;
+  membership.memberName1 = person.firstName;
+  membership.memberName2 = person.lastName;
+  membership.memberModelType = PersonModelName;
+  membership.memberType = person.gender;
+  membership.memberDateOfBirth = person.dateOfBirth;
+  membership.memberDateOfDeath = person.dateOfDeath;
+  membership.memberZipCode = person.favZipCode;
+  membership.memberBexioId = person.bexioId;
+  return membership;
+}
+
+export function addOrgInfoToMembership(membership: MembershipModel, org: OrgModel): MembershipModel {
+  membership.memberKey = org.bkey;
+  membership.memberName1 = DEFAULT_NAME;
+  membership.memberName2 = org.name;
+  membership.memberModelType = OrgModelName;
+  membership.memberType = org.type;
+  membership.memberDateOfBirth = org.dateOfFoundation;
+  membership.memberDateOfDeath = org.dateOfLiquidation;
+  membership.memberZipCode = org.favZipCode;
+  membership.memberBexioId = org.bexioId;
+  return membership;
+}
+
+export function addGroupInfoToMembership(membership: MembershipModel, group: GroupModel): MembershipModel {
+  membership.memberKey = group.bkey;
+  membership.memberName1 = DEFAULT_NAME;
+  membership.memberName2 = group.name;
+  membership.memberModelType = GroupModelName;
   return membership;
 }
 

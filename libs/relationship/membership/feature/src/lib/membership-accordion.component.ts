@@ -28,7 +28,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   <ion-accordion toggle-icon-slot="start" value="memberships">
     <ion-item slot="header" [color]="color()">
       <ion-label>{{ title() | translate | async }}</ion-label>
-      @if(isReadOnly() === false) {
+      @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>

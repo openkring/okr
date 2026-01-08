@@ -18,7 +18,6 @@ import { MembershipFormComponent } from '@bk2/relationship-membership-ui';
     ChangeConfirmationComponent, DocumentsAccordionComponent,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
-  // we are injecting the MembershipStore as a singleton, no need to provide it here
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
@@ -42,7 +41,7 @@ import { MembershipFormComponent } from '@bk2/relationship-membership-ui';
             [allTags]="tags()"
             [readOnly]="isReadOnly()"
             [priv]="priv()"
-            (dirty)="formDirty.set($event)"
+            (dirty)="manualDirty.set($event)"
             (valid)="formValid.set($event)"
           />
         }
@@ -70,15 +69,20 @@ export class MembershipEditModalComponent {
   public tags = input.required<string>();
   public priv = input.required<PrivacySettings>();
   public mcat = input.required<CategoryListModel>();
+  public isNew = input.required<boolean>();
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals
-  protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => structuredClone(this.membership()));
   protected showForm = signal(true);
+  protected formDirty = computed(() => {
+    // Always dirty for new memberships, or when explicitly set
+    return this.isNew() || this.manualDirty();
+  });
+  protected manualDirty = signal(false);
+  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
 
   // derived signals
   protected headerTitle = computed(() => this.isReadOnly() ? '@membership.operation.view.label' : '@membership.operation.update.label');
@@ -86,14 +90,13 @@ export class MembershipEditModalComponent {
   protected readonly name = computed(() => getFullName(this.membership().memberName1, this.membership().memberName2, this.currentUser()?.nameDisplay));
   protected memberAvatar = computed<AvatarInfo>(() => {
     const m = this.membership();
-      return newAvatarInfo(m.memberKey, m.memberName1, m.memberName2, m.memberModelType, '', '', this.name());
+    return newAvatarInfo(m.memberKey, m.memberName1, m.memberName2, m.memberModelType, '', '', this.name());
   });
   protected orgAvatar = computed<AvatarInfo>(() => {
     const m = this.membership();
-      return newAvatarInfo(m.orgKey, '', m.orgName, m.orgModelType, '', '', m.orgName);
+    return newAvatarInfo(m.orgKey, '', m.orgName, m.orgModelType, '', '', m.orgName);
   });
   protected memberKey = computed(() => this.formData().memberKey ?? '');
-  protected isNew = computed(() => !this.formData().bkey);
 
   /******************************* actions *************************************** */
   public async save(): Promise<boolean> {
@@ -101,7 +104,7 @@ export class MembershipEditModalComponent {
   }
 
   public async cancel(): Promise<void> {
-    this.formDirty.set(false);
+    this.manualDirty.set(false);
     this.formData.set(structuredClone(this.membership()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
