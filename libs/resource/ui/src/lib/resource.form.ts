@@ -48,24 +48,32 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
                       <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                       <bk-error-note [errors]="nameErrors()" />
                     </ion-col>
+
                     <ion-col size="12">
                       <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
+
                     <ion-col size="12">
                       <bk-cat-select [category]="usages()!" [selectedItemName]="usage()" (selectedItemNameChange)="onFieldChange('usage', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
+
                     <ion-col size="12" size-md="6">
                       <bk-text-input name="load" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
                       <bk-error-note [errors]="loadErrors()" />                                                                                                                                                             
                     </ion-col>
+
                     <ion-col size="12" size-md="6">
                       <bk-number-input name="currentValue" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />                                        
                       <bk-error-note [errors]="currentValueErrors()" />                                                                                                                                                             
                     </ion-col>
+
+
+                  
                     <ion-col size="12" size-md="6">
                       <bk-color [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)"  [readOnly]="isReadOnly()" />
                       <bk-error-note [errors]="hexColorErrors()" />                                                                                  
                     </ion-col>
+
                   </ion-row>
                 </ion-grid>
               </ion-card-content>

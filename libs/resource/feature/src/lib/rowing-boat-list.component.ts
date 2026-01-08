@@ -179,15 +179,16 @@ export class RowingBoatListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'rboat.delete':
           await this.resourceListStore.delete(boat, this.readOnly());
           break;
         case 'rboat.edit':
-          await this.resourceListStore.edit(boat, this.readOnly());
+          await this.resourceListStore.edit(boat, false, this.readOnly());
           break;
         case 'rboat.view':
-          await this.resourceListStore.edit(boat, true);
+          await this.resourceListStore.edit(boat, false, true);
           break;
       }
     }

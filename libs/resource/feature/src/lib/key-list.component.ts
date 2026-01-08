@@ -169,10 +169,10 @@ export class KeyListComponent {
           await this.resourceListStore.delete(key, this.readOnly());
           break;
         case 'key.view':
-          await this.resourceListStore.edit(key, true);
+          await this.resourceListStore.edit(key, false, true);
           break;
         case 'key.edit':
-          await this.resourceListStore.edit(key, this.readOnly());
+          await this.resourceListStore.edit(key, false, this.readOnly());
           break;
       }
     }

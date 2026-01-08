@@ -43,7 +43,7 @@ export class ColorComponent {
   public hexColor = model<string>('#ffffcc');
   public label = input('@input.color.label');
   public readOnly = input.required<boolean>();
-  protected isReadOnly = inject(computed(() => coerceBoolean(this.readOnly())));
+  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // actions
   public async selectColor(): Promise<void> {

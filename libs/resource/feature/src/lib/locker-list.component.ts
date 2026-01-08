@@ -186,10 +186,10 @@ export class LockerListComponent {
             await this.resourceListStore.delete(key, this.readOnly());
             break;
           case 'locker.view':
-            await this.resourceListStore.edit(key, true);
+            await this.resourceListStore.edit(key, false, true);
             break;
           case 'locker.edit':
-            await this.resourceListStore.edit(key, this.readOnly());
+            await this.resourceListStore.edit(key, false, this.readOnly());
             break;
         }
       }
