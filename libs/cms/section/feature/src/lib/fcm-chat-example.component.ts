@@ -5,6 +5,7 @@ import { getApp } from 'firebase/app';
 import { FcmService } from '@bk2/shared-data-access';
 import { ChatSectionStore } from './chat-section.store';
 import { AppStore } from '@bk2/shared-feature';
+import { IonBadge, IonButton } from '@ionic/angular/standalone';
 
 /**
  * Example component showing how to integrate FCM notifications with Stream Chat.
@@ -21,6 +22,9 @@ import { AppStore } from '@bk2/shared-feature';
  */
 @Component({
   selector: 'bk-fcm-chat-example',
+  imports: [
+    IonButton, IonBadge
+  ],
   template: `
     <ion-button (click)="requestNotificationPermission()">
       Enable Chat Notifications
