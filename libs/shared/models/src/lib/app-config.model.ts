@@ -35,7 +35,6 @@ export class AppConfig {
   public appName = DEFAULT_NAME; // name of the application
   public appTitle = DEFAULT_TITLE; // title of the application on Welcome Screen
   public appSubtitle = DEFAULT_TITLE; // subtitle of the application on Welcome Screen
-  public appVersion = ''; // version of the application
   public appDomain = ''; // domain of the application, e.g. example.com
   public rootUrl = '/public/welcome';
   public logoUrl = DEFAULT_URL;

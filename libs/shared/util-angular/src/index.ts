@@ -11,4 +11,5 @@ export * from './lib/iban.util';
 export * from './lib/item-color.pipe';
 export * from './lib/phone.util';
 export * from './lib/route.util';
+export * from './lib/version-check.service';
 
