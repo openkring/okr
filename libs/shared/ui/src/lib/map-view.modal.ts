@@ -1,12 +1,22 @@
 import { isPlatformBrowser } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, inject, input, PLATFORM_ID, computed } from '@angular/core';
-import { GoogleMap, MapType } from '@capacitor/google-maps';
 import { IonContent } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
 import { coerceBoolean, die } from '@bk2/shared-util-core';
 
 import { HeaderComponent } from './header.component';
+
+// Dynamic import for Capacitor Google Maps to avoid SSR issues
+let GoogleMap: any;
+let MapType: any;
+
+if (typeof window !== 'undefined') {
+  import('@capacitor/google-maps').then(module => {
+    GoogleMap = module.GoogleMap;
+    MapType = module.MapType;
+  });
+}
 
 export interface GeoCoordinates {
   lat: number;
@@ -49,7 +59,7 @@ export class MapViewModalComponent implements OnInit, OnDestroy {
   // coerced boolean inputs
   protected shouldEnableTrafficLayer = computed(() => coerceBoolean(this.enableTrafficLayer()));
 
-  private map: GoogleMap | undefined;
+  private map: any; // GoogleMap instance - using any to avoid type issues with dynamic imports
   
   ngOnInit(): void {
       this.loadMap();

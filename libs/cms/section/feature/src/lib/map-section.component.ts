@@ -1,8 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
 import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, inject, input } from '@angular/core';
-import { Geolocation, Position } from '@capacitor/geolocation';
-import { GoogleMap, MapType } from '@capacitor/google-maps';
-import { Capacitor } from '@capacitor/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
@@ -11,6 +8,39 @@ import { LocationCollection, LocationModel, MAP_CONFIG_SHAPE, MapSection } from 
 import { OptionalCardHeaderComponent } from '@bk2/shared-ui';
 import { debugMessage, die } from '@bk2/shared-util-core';
 import { FirestoreService } from '@bk2/shared-data-access';
+
+// Dynamic imports for Capacitor plugins to avoid SSR issues
+let Geolocation: any;
+let GoogleMap: any;
+let MapType: any;
+let Capacitor: any;
+
+// Type alias for Position from @capacitor/geolocation
+type CapacitorPosition = {
+  timestamp: number;
+  coords: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    altitudeAccuracy: number | null | undefined;
+    altitude: number | null;
+    speed: number | null;
+    heading: number | null;
+  };
+};
+
+if (typeof window !== 'undefined') {
+  import('@capacitor/geolocation').then(module => {
+    Geolocation = module.Geolocation;
+  });
+  import('@capacitor/google-maps').then(module => {
+    GoogleMap = module.GoogleMap;
+    MapType = module.MapType;
+  });
+  import('@capacitor/core').then(module => {
+    Capacitor = module.Capacitor;
+  });
+}
 
 @Component({
   selector: 'bk-map-section',
@@ -71,7 +101,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   protected readonly subTitle = computed(() => this.section()?.subTitle);
   protected readonly useCurrentLocation = computed(() => this.mapConfig().useCurrentLocationAsCenter);
 
-  private map: GoogleMap | undefined;
+  private map: any; // GoogleMap instance - using any to avoid type issues with dynamic imports
   private resizeObserver: ResizeObserver | undefined;
 
   constructor() {
@@ -203,7 +233,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
    * It then returns either the current position of the user or the default position if the user did not agree or geolocation is not supported.
    * @returns the current position of the user the default position
    */
-  private async getCurrentPosition(): Promise<Position> {
+  private async getCurrentPosition(): Promise<CapacitorPosition> {
     if (Capacitor.isNativePlatform()) {
       const permissionStatus = await Geolocation.requestPermissions();
       if (permissionStatus.location !== 'granted') {
@@ -228,7 +258,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
       } catch (error) {
         console.warn('MapSectionComponent: Permission query not supported or failed:', error);
       }
-      return await new Promise<Position>((resolve, reject) => {
+      return await new Promise<CapacitorPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
           timeout: 10000,
