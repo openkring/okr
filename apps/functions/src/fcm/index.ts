@@ -150,7 +150,7 @@ export const checkUnreadMessagesScheduled = onSchedule({
       notificationsSent: notifications.length
     });
 
-    return { success: true, count: notifications.length };
+    logger.log('checkUnreadMessagesScheduled: Completed', { count: notifications.length });
   } catch (error: any) {
     logger.error('checkUnreadMessagesScheduled: Error', { error: error.message });
     throw error;

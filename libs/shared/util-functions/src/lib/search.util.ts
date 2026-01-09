@@ -29,3 +29,18 @@ export async function searchData<T>(firestore: Firestore, collectionName: string
     return { ...doc.data(), bkey: doc.id } as T;
   });
 }
+
+/**
+ * Helper function to check whether data has changed.
+ * @param currentData  the current data (typically a BkModel from the database)
+ * @param newData the new data to compare with (typically a partial BkModel)
+ * @returns true if any one of the data fields has changed, false otherwise
+ */
+export function hasChanged(currentData: any, newData: Record<string, any>): boolean {
+  for (const key of Object.keys(newData)) {
+    if (currentData[key] !== newData[key]) {
+      return true;
+    }
+  }
+  return false;
+}

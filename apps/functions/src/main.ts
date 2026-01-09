@@ -36,8 +36,7 @@ export const setPassword = Auth.setPassword; // uid, password
 export const updateFirebaseUser = Auth.updateFirebaseUser; // uid, email, displayName, emailVerified, disabled, phone, photoUrl
 
 // replication
-export const onPersonAddressChange = Replication.onPersonAddressChange;
-export const onOrgAddressChange = Replication.onOrgAddressChange;
+export const onAddressChange = Replication.onAddressChange;
 export const onResourceChange = Replication.onResourceChange;
 export const onPersonChange = Replication.onPersonChange;
 export const onOrgChange = Replication.onOrgChange;

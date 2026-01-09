@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 
-import { AddressChannel, AddressModel } from '@bk2/shared-models';
+import { AddressChannel, AddressCollection, AddressModel, OrgCollection, PersonCollection } from '@bk2/shared-models';
 import { die } from '@bk2/shared-util-core';
 import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_PHONE, DEFAULT_URL } from '@bk2/shared-constants';
 
@@ -20,16 +20,26 @@ export interface FavoriteAddressInfo {
 /**
  * If an address changes, update the corresponding cached address data in its parent document (person or org).
  * @param firestore a handle to Firestore database
- * @param parentId the key to the parent document of the address
- * @param parentCollection the collection name of the addresses parent document (persons or orgs)
+ * @param addressId the key to the address data
  */
-export async function updateFavoriteAddressInfo(firestore: Firestore, parentId: string, parentCollection: 'persons' | 'orgs'): Promise<void> {
-  logger.info(`Address change for ${parentCollection}/${parentId}`);
-  const ref = admin.firestore().doc(`${parentCollection}/${parentId}`);
+export async function updateFavoriteAddressInfo(firestore: Firestore, address: AddressModel, addressId: string): Promise<void> {
+  logger.info(`Address change for ${AddressCollection}/${addressId}`);
+  let parentId: string | undefined;
+  let parentCollection: 'persons' | 'orgs' | undefined;
+  if (address.parentKey.startsWith('person.')) {
+    parentId = address.parentKey.substring('person.'.length);
+    parentCollection = PersonCollection;
+  }
+  if (address.parentKey.startsWith('org.')) {
+    parentId = address.parentKey.substring('org.'.length);
+    parentCollection = OrgCollection;
+  }
+  if (!parentId || !parentCollection) return;
 
   try {
-    const favoriteAddressInfo = await getFavoriteAddressInfo(firestore, parentId, parentCollection);
+    const favoriteAddressInfo = await getFavoriteAddressInfo(firestore, address.parentKey);
     logger.info(`Updating favorite address info for ${parentCollection}/${parentId}`, favoriteAddressInfo);
+    const ref = admin.firestore().doc(`${parentCollection}/${parentId}`);
     await ref.update({
       favEmail: favoriteAddressInfo.favEmail,
       favPhone: favoriteAddressInfo.favPhone,
@@ -48,23 +58,21 @@ export async function updateFavoriteAddressInfo(firestore: Firestore, parentId: 
 /**
  * Extracts the favorite address info for a given person or org. 
  * @param firestore a handle to firestore database
- * @param parentId  the key to the parent document of the address
- * @param parentCollection the collection name of the addresses parent document (persons or orgs)
+ * @param parentKey  the key to the parent document of the address (e.g. person.{bkey} or org.{bkey})
  * @returns FavoriteAddressInfo, i.e. the data that is cached in teh parent document.
  */
-async function getFavoriteAddressInfo(firestore: Firestore, parentId: string, parentCollection: 'persons' | 'orgs'): Promise<FavoriteAddressInfo> {
-  const collection = `${parentCollection}/${parentId}/addresses`;
-  let query: FirebaseFirestore.Query = firestore.collection(collection);
-  query = query.where('isFavorite', '==', true);
+async function getFavoriteAddressInfo(firestore: Firestore, parentKey: string): Promise<FavoriteAddressInfo> {
+  let query: FirebaseFirestore.Query = firestore.collection(AddressCollection);
+  query = query.where('parentKey', '==', parentKey);
   const favoriteAddressInfo = getEmptyFavoriteAddressInfo();
   const snapshot = await query.get();
   if (snapshot.empty) {
-    logger.info(`getFavoriteAddressInfo: no favorite addresses found for ${parentCollection}/${parentId})`);
+    logger.info(`getFavoriteAddressInfo: no favorite addresses found for ${parentKey})`);
   } else {
     const favoriteAddresses = snapshot.docs.map(doc => {
       return { ...doc.data(), bkey: doc.id } as AddressModel;
     });
-    logger.info(`getFavoriteAddressInfo: found ${favoriteAddresses.length} favorite addresses for ${parentCollection}/${parentId}`);
+    logger.info(`getFavoriteAddressInfo: found ${favoriteAddresses.length} favorite addresses for ${parentKey}`);
     for (const favoriteAddress of favoriteAddresses) {
       switch (favoriteAddress.channelType) {
         case AddressChannel.Email:
