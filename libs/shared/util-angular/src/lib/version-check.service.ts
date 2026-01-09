@@ -23,7 +23,16 @@ export class VersionCheckService {
   public readonly firestore = inject(FIRESTORE);
 
   private readonly currentVersion = packageJson.version;
+  private versionConfig: AppVersionConfig | undefined;
 
+  getCurrentVersion(): string {
+    return this.currentVersion;
+  }
+
+  getLatestVersion(): string | undefined {
+    return this.versionConfig?.latestVersion;
+  }
+  
   async checkVersion(): Promise<void> {
     // Only check on browser platform
     if (!isPlatformBrowser(this.platformId)) {
@@ -33,17 +42,17 @@ export class VersionCheckService {
     try {
       const configDoc = doc(this.firestore, AppVersionCollection, AppVersionCollection);
       const snapshot = await getDoc(configDoc);
-      const config = snapshot.data() as AppVersionConfig;
+      this.versionConfig = snapshot.data() as AppVersionConfig;
 
-      if (!config) {
+      if (!this.versionConfig) {
         return;
       }
 
-      const needsUpdate = this.compareVersions(this.currentVersion, config.latestVersion) < 0;
-      const forceUpdate = config.forceUpdate || this.compareVersions(this.currentVersion, config.minVersion) < 0;
+      const needsUpdate = this.compareVersions(this.currentVersion, this.versionConfig.latestVersion) < 0;
+      const forceUpdate = this.versionConfig.forceUpdate || this.compareVersions(this.currentVersion, this.versionConfig.minVersion) < 0;
 
       if (needsUpdate) {
-        await this.showUpdateAlert(forceUpdate);
+        await this.showUpdateAlert(this.versionConfig.latestVersion, forceUpdate);
       }
     } catch (error) {
       console.error('Error checking app version:', error);
@@ -65,10 +74,13 @@ export class VersionCheckService {
     return 0;
   }
 
-  private async showUpdateAlert(forceUpdate: boolean): Promise<void> {
+  private async showUpdateAlert(latestVersion: string, forceUpdate: boolean): Promise<void> {
     const alert = await this.alertController.create({
       header: bkTranslate('@app.version.update.header'),
-      message: bkTranslate('@app.version.update.message'),
+      message: bkTranslate('@app.version.update.message', { 
+        currentVersion: this.currentVersion,
+        latestVersion: latestVersion 
+      }),
       backdropDismiss: !forceUpdate,
       buttons: forceUpdate ? [] : [
         {
