@@ -32,16 +32,27 @@
         "main": "apps/functions/src/main.ts",
         "tsConfig": "apps/functions/tsconfig.app.json",
         "assets": ["apps/functions/src/assets", "apps/functions/package.json"],
-        "generatePackageJson": false,
-        "createLockFile": false,
+        "generatePackageJson": true,
+        "bundle": true,
+        "thirdParty": true,
+        "skipTypeCheck": true,
         "format": ["cjs"],
         "platform": "node",
-        "external": []
+        "external": [
+          "firebase-admin",
+          "firebase-functions",
+          "@google-cloud/*"
+        ],
+        "esbuildOptions": {
+          "logLevel": "info",
+          "keepNames": true
+        }
       },
       "configurations": {
         "development": {},
         "production": {
-          "sourcemap": false
+          "sourcemap": false,
+          "minify": true
         }
       }
     },

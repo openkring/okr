@@ -3,16 +3,9 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "module": "commonjs",
-    "rootDir": "src",
     "types": ["node", "express"],
-    "tsBuildInfoFile": "../../dist/out-tsc/apps-functions.tsbuildinfo"
+    "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
-  "references": [
-    { "path": "../../libs/shared/constants/tsconfig.lib.json" },
-    { "path": "../../libs/shared/models/tsconfig.lib.json" },
-    { "path": "../../libs/shared/util-core/tsconfig.lib.json" },
-    { "path": "../../libs/shared/util-functions/tsconfig.lib.json" }
-  ]
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]
 }

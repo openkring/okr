@@ -20,6 +20,7 @@
     {"path": "../../shared/models/tsconfig.lib.json"},
     {"path": "../../shared/util-core/tsconfig.lib.json"},
     {"path": "../../shared/util-angular/tsconfig.lib.json"},
+    {"path": "../../shared/util-functions/tsconfig.lib.json"},
     {"path": "../../shared/ui/tsconfig.lib.json"},
     {"path": "../../shared/i18n/tsconfig.lib.json"},
     {"path": "../../shared/categories/tsconfig.lib.json"},

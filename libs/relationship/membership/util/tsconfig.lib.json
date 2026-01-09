@@ -1,13 +1,11 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../../dist/out-tsc/libs/relationship/membership/util",
-    "rootDir": "./src",
-    "declaration": true,
+    "outDir": "../../../../dist/out-tsc/libs/relationship/membership/util",    "declaration": true,
     "composite": true,
     "module": "es2020",
     "target": "es2020",
-    "types": [],
+    "types": []
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]

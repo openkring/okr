@@ -1,12 +1,30 @@
 #!/usr/bin/env node
-const fs = require('fs');
-const path = require('path');
-const { glob } = require('glob');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-async function fixTsConfig(filePath) {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+function findTsconfigFiles(dir, files = []) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    
+    if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== 'dist') {
+      findTsconfigFiles(fullPath, files);
+    } else if (entry.isFile() && entry.name === 'tsconfig.lib.json') {
+      files.push(fullPath);
+    }
+  }
+  
+  return files;
+}
+
+function fixTsConfig(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   
-  // Parse JSON (with comments)
   let hasChanges = false;
   let newContent = content;
   
@@ -28,21 +46,19 @@ async function fixTsConfig(filePath) {
   return false;
 }
 
-async function main() {
-  const tsconfigFiles = await glob('libs/**/tsconfig.lib.json', { 
-    cwd: __dirname,
-    absolute: true 
-  });
+function main() {
+  const libsDir = path.join(__dirname, 'libs');
+  const tsconfigFiles = findTsconfigFiles(libsDir);
   
   console.log(`Found ${tsconfigFiles.length} tsconfig.lib.json files`);
   
   let fixedCount = 0;
   for (const file of tsconfigFiles) {
-    const fixed = await fixTsConfig(file);
+    const fixed = fixTsConfig(file);
     if (fixed) fixedCount++;
   }
   
   console.log(`\nFixed ${fixedCount} files`);
 }
 
-main().catch(console.error);
+main();

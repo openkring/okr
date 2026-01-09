@@ -17,7 +17,6 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "composite": true,
     "paths": {
       "@bk2/aoc-feature": ["libs/aoc/feature/src/index.ts"],
       "@bk2/aoc-util": ["libs/aoc/util/src/index.ts"],

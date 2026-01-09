@@ -169,7 +169,7 @@ importers:
         version: 13.6.0(encoding@0.1.13)
       firebase-functions:
         specifier: latest
-        version: 7.0.2(firebase-admin@13.6.0(encoding@0.1.13))
+        version: 7.0.3(firebase-admin@13.6.0(encoding@0.1.13))
       firebase-tools:
         specifier: ^14.27.0
         version: 14.27.0(@swc/core@1.5.29(@swc/helpers@0.5.17))(@types/node@24.2.0)(encoding@0.1.13)(hono@4.11.1)(typescript@5.8.3)
@@ -6827,12 +6827,19 @@ packages:
     peerDependencies:
       firebase-admin: ^11.10.0 || ^12.0.0 || ^13.0.0
 
-  firebase-functions@7.0.2:
-    resolution: {integrity: sha512-AFAZOn2iMp6X6lvCzEI92/J/JfT2ZAGSHKAfop4btWZdIqeHU40gFwVBGPl53bnqEpuv5VYKirmkxGuPu4OHpA==}
+  firebase-functions@7.0.3:
+    resolution: {integrity: sha512-DiIjIUv0OS4KEAA3jqyIc7ymZKdcmMcaXy7FCCkrDQo/1CVMbDDWMdZIslmsgSjldA2nhau1dTE/6JQI8Urjjw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
+      '@apollo/server': ^5.2.0
+      '@as-integrations/express4': ^1.1.2
       firebase-admin: ^11.10.0 || ^12.0.0 || ^13.0.0
+    peerDependenciesMeta:
+      '@apollo/server':
+        optional: true
+      '@as-integrations/express4':
+        optional: true
 
   firebase-tools@14.27.0:
     resolution: {integrity: sha512-HrucHJ69mLM9pQhZFO1rb0N/QMpZD4iznoOtKd2lctEELPtbSMN5JHgdgzLlf+EXn5aQy87u5zlPd/0xwwyYTQ==}
@@ -19142,7 +19149,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  firebase-functions@7.0.2(firebase-admin@13.6.0(encoding@0.1.13)):
+  firebase-functions@7.0.3(firebase-admin@13.6.0(encoding@0.1.13)):
     dependencies:
       '@types/cors': 2.8.19
       '@types/express': 4.17.25

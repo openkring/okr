@@ -2,9 +2,14 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
-    "rootDir": "src",
+    "composite": true,
+    "declaration": true,
     "tsBuildInfoFile": "../../../dist/out-tsc/shared-util-core.tsbuildinfo"
   },
   "include": ["src/**/*"],
-  "exclude": ["**/*.spec.ts", "vite.config.ts"]
+  "exclude": ["**/*.spec.ts", "vite.config.ts"],
+  "references": [
+    { "path": "../constants/tsconfig.lib.json" },
+    { "path": "../models/tsconfig.lib.json" }
+  ]
 }

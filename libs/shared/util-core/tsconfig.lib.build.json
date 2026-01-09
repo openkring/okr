@@ -6,5 +6,9 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "vite.config.ts"]
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "vite.config.ts"],
+  "references": [
+    { "path": "../constants/tsconfig.lib.build.json" },
+    { "path": "../models/tsconfig.lib.json" }
+  ]
 }
