@@ -53,6 +53,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
                 (formDataChange)="onPersonChange($event)"
                 [currentUser]="currentUser()"
                 [genders]="genders()"
+                [showForm]="showForm()"
                 [readOnly]="false"
                 (valid)="formValid.set($event)" 
                 (dirty)="formDirty.set($event)"
@@ -65,6 +66,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
                 (formDataChange)="onUserChange($event)"
                 [currentUser]="currentUser()"
                 [readOnly]="false"
+                [showForm]="showForm()"
                 (valid)="formValid.set($event)" 
                 (dirty)="formDirty.set($event)"
               />
@@ -74,6 +76,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
                 [formData]="userFormData"
                 (formDataChange)="onUserChange($event)"
                 [currentUser]="currentUser()"
+                [showForm]="showForm()"
                 [readOnly]="false"
                 (valid)="formValid.set($event)" 
                 (dirty)="formDirty.set($event)"
