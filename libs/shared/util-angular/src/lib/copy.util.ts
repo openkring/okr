@@ -34,7 +34,27 @@ export async function copyToClipboard(content: string | string[] | number | bool
   } else {
     _content = content ?? '';
   }  
-  await Clipboard.write({ string: _content});
+  
+  try {
+    await Clipboard.write({ string: _content});
+  } catch (err) {
+    // Fallback for mobile web browsers that lose user gesture context
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(_content);
+    } else if (typeof document !== 'undefined') {
+      // Legacy fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = _content;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    } else {
+      throw err;
+    }
+  }
 }
 
 /**
