@@ -95,7 +95,7 @@ export class PersonEditPageComponent {
   // derived signals
   protected headerTitle = computed(() => getTitleLabel('subject.person', this.person()?.bkey, this.isReadOnly()));
   protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
-  protected readonly parentKey = computed(() => `${PersonModelName}.${this.personKey()}`);
+  protected parentKey = computed(() => `${PersonModelName}.${this.personKey()}`);
   protected priv = computed(() => this.personEditStore.privacySettings());
   protected currentUser = computed(() => this.personEditStore.currentUser());
   protected person = computed(() => this.personEditStore.person());
