@@ -3,7 +3,7 @@ import { Component, computed, inject, input, linkedSignal } from '@angular/core'
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupModel, RoleName } from '@bk2/shared-models';
+import { GroupModel, MembershipModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -103,7 +103,21 @@ export class GroupListComponent {
   protected selectedTag = linkedSignal(() => this.groupStore.selectedTag());
 
   // derived signals
-  protected filteredGroups = computed(() => this.groupStore.filteredGroups() ?? []);
+  protected filteredGroups = computed(() => {
+    const allGroups = this.groupStore.filteredGroups() ?? [];
+    
+    switch(this.listId()) {
+      case 'current': {
+        const userGroupKeys = this.groupStore.currentUserMemberships()
+          ?.filter((m: MembershipModel) => m.orgModelType === 'group')
+          .map((m: MembershipModel) => m.orgKey) ?? [];
+          console.log('User group keys:', userGroupKeys);
+        return allGroups.filter(group => userGroupKeys.includes(group.bkey));
+      }
+      case 'all': 
+      default: return allGroups;
+    }
+  });
   protected groupsCount = computed(() => this.groupStore.groups()?.length ?? 0);
   protected selectedGroupsCount = computed(() => this.filteredGroups().length);
   protected isLoading = computed(() => this.groupStore.isLoading());

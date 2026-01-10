@@ -85,21 +85,21 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
         @switch (selectedSegment()) {
           @case ('content') {
             @defer (on immediate) {
-              <bk-content-page id="{{id + '_content'}}" contextMenuName="c-test-contentpage" color="light" />
+              <bk-content-page id="{{id + '_content'}}" contextMenuName="c-contentpage" color="light" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('chat') {
             @defer (on immediate) {
-              <bk-content-page id="{{id + '_chat'}}" contextMenuName="c-test-contentpage" color="light" />
+              <bk-content-page id="{{id + '_chat'}}" contextMenuName="c-contentpage" color="light" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('calendar') {
             @defer (on immediate) {
-              <bk-calevent-list [listId]="id" contextMenuName="c-test-calevents" color="light" view="calendar" />
+              <bk-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="calendar" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
@@ -129,7 +129,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
         -->
           @case ('members') {
             @defer (on immediate) {
-              <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-test-membership" color="light" view="simple" />
+              <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-membership" color="light" view="simple" />
               <!-- <bk-members [orgKey]="groupKey()" [readOnly]="isReadOnly()" /> -->
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>

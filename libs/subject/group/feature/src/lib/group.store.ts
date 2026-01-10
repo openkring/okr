@@ -10,7 +10,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, ImageType, MembershipModel, PageCollection, PageModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
 import { confirm, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, debugData, debugItemLoaded, getSystemQuery, getTodayStr, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_KEY, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
 import { GroupService } from '@bk2/subject-group-data-access';
@@ -64,6 +64,18 @@ export const GroupStore = signalStore(
         return group$;
       }
     }),
+    currentUserMembershipsResource: rxResource({
+      params: () => ({
+        personKey: store.appStore.currentUser()?.personKey
+      }),
+      stream: ({params}) => {
+        console.log('GroupStore.currentUserMembershipsResource: personKey=', params.personKey);
+        if (!params.personKey) return of([]);
+        const result = store.membershipService.listMembershipsOfMember(params.personKey, 'person');
+        debugListLoaded('GroupStore.currentUserMemberships', result, store.appStore.currentUser());  
+        return result;
+      }
+    }),
   })),
   withComputed((state) => ({
     // groups
@@ -81,6 +93,9 @@ export const GroupStore = signalStore(
     group: computed(() => state.groupResource.value()),
     defaultResource : computed(() => state.appStore.defaultResource()),
     segment: computed(() => state.selectedSegment()),
+
+    // memberships
+    currentUserMemberships: computed(() => state.currentUserMembershipsResource.value()),
 
     // other
     currentUser: computed(() => state.appStore.currentUser()),
@@ -339,41 +354,42 @@ export const GroupStore = signalStore(
       console.log('GroupStore.addTask: Not implemented yet');
     },
 
-      async addMember(): Promise<void> {
-        console.log('GroupStore.addMember: Not implemented yet');
-        const modal = await store.modalController.create({
-          component: PersonSelectModalComponent,
-          cssClass: 'list-modal',
-          componentProps: {
-            selectedTag: '',
-            currentUser: store.currentUser()
-          }
-        });
-        modal.present();
-        const { data, role } = await modal.onWillDismiss();
-        if (role === 'confirm') {
-          if (isPerson(data, store.tenantId())) {
-            const membership = new MembershipModel(store.tenantId());
-            membership.memberKey = data.bkey;
-            membership.memberName1 = data.firstName;
-            membership.memberName2 = data.lastName;
-            membership.memberModelType = 'person';
-            membership.memberType = data.gender;
-            membership.memberDateOfBirth = data.dateOfBirth;
-            membership.memberDateOfDeath = data.dateOfDeath;
-            membership.memberZipCode = data.favZipCode;
-            membership.memberBexioId = data.bexioId;
-            membership.orgKey = store.groupKey() ?? DEFAULT_KEY;
-            membership.orgName = store.group()?.name ?? DEFAULT_NAME;
-            membership.dateOfEntry = getTodayStr();
-            membership.dateOfExit = END_FUTURE_DATE_STR;
-            membership.index = getMembershipIndex(membership);
-            membership.order = 1; // default priority for the first membership
-            membership.relIsLast = true; // this is the last membership of this person in
-            debugData(`GroupStore.addMember: new membership: `, membership, store.currentUser());
-            store.membershipService.create(membership, store.appStore.currentUser());
-          }
+    async addMember(): Promise<void> {
+      console.log('GroupStore.addMember: Not implemented yet');
+      const modal = await store.modalController.create({
+        component: PersonSelectModalComponent,
+        cssClass: 'list-modal',
+        componentProps: {
+          selectedTag: '',
+          currentUser: store.currentUser()
         }
-      },
+      });
+      modal.present();
+      const { data, role } = await modal.onWillDismiss();
+      if (role === 'confirm') {
+        if (isPerson(data, store.tenantId())) {
+          const membership = new MembershipModel(store.tenantId());
+          membership.memberKey = data.bkey;
+          membership.memberName1 = data.firstName;
+          membership.memberName2 = data.lastName;
+          membership.memberModelType = 'person';
+          membership.memberType = data.gender;
+          membership.memberDateOfBirth = data.dateOfBirth;
+          membership.memberDateOfDeath = data.dateOfDeath;
+          membership.memberZipCode = data.favZipCode;
+          membership.memberBexioId = data.bexioId;
+          membership.orgKey = store.groupKey() ?? DEFAULT_KEY;
+          membership.orgName = store.group()?.name ?? DEFAULT_NAME;
+          membership.orgModelType = 'group';
+          membership.dateOfEntry = getTodayStr();
+          membership.dateOfExit = END_FUTURE_DATE_STR;
+          membership.index = getMembershipIndex(membership);
+          membership.order = 1; // default priority for the first membership
+          membership.relIsLast = true; // this is the last membership of this person in
+          debugData(`GroupStore.addMember: new membership: `, membership, store.currentUser());
+          store.membershipService.create(membership, store.appStore.currentUser());
+        }
+      }
+    },
   }))
 );
