@@ -180,7 +180,18 @@ export function stringifyPostalAddress(address: AddressModel, lang: string): str
  * @param prefix a URL prefix that is defined by the channel type (e.g. https://twitter.com for type Twitter)
  */
 export async function browseUrl(url: string, prefix = ''): Promise<void> {
-  return Browser.open({ url: prefix + url });
+  const fullUrl = prefix + url;
+  
+  try {
+    await Browser.open({ url: fullUrl });
+  } catch (err) {
+    // Fallback for web or when Browser.open fails
+    if (typeof window !== 'undefined') {
+      window.open(fullUrl, '_blank');
+    } else {
+      throw err;
+    }
+  }
 }
 
 /**
