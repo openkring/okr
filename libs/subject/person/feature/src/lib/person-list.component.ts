@@ -13,6 +13,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { PersonListStore } from './person-list.store';
+import { SIZE_MD } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-person-list',
@@ -119,7 +120,10 @@ export class PersonListComponent {
   protected filteredPersonsCount = computed(() => this.filteredPersons().length);
   protected isLoading = computed(() => this.personListStore.isLoading());
   protected readonly tags = computed(() => this.personListStore.getTags());
-  protected readonly types = computed(() => this.personListStore.appStore.getCategory('gender'));
+  protected readonly types = computed(() => {
+    const cat = this.personListStore.appStore.getCategory('gender');
+    return typeof window !== 'undefined' && window.innerWidth < SIZE_MD ? undefined : cat;
+  });
   protected readonly currentUser = computed(() => this.personListStore.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   private readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));

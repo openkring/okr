@@ -151,7 +151,10 @@ export const DEFAULT_MIMETYPES = [
  * Styling
 ---------------------------------------------------------------------------*/
 export const MODAL_STYLE = '.modalContent { background: #fff; border-radius: 10px; @media only screen and (min-width: 768px)  {  width: 50%; display: block; margin-left: auto; margin-right: auto; }}';
-
+export const SIZE_SM = 576; // px
+export const SIZE_MD = 768; // px
+export const SIZE_LG = 992; // px
+export const SIZE_XL = 1200; // px
 /**
  * User experience (UX)
  */
