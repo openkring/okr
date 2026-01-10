@@ -7,6 +7,13 @@ service cloud.firestore {
     match /app-config/{tenant} {
       allow read: if true;
     }
+    match /app-version/app-version {
+      allow read: if true;
+    }
+    match /categories/{category} {
+      allow get: if true;
+      allow list: if true;
+    }
 
     match /menuItems/{menuItem} {
       allow get: if true;
@@ -23,7 +30,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if (request.auth != null) && (request.auth.uid == userId);
     }
-    match /tags/{tagid} 
+    match /tags/{tagid} {
       allow get: if true;
       allow list: if true;
     }
@@ -41,4 +48,3 @@ service cloud.firestore {
     }
   }
 }
-
