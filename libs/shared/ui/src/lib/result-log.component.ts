@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, effect, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -41,12 +41,4 @@ export class ResultLogComponent {
   // inputs
   public title = input<string>();
   public log = input<LogInfo[]>([]);
-
-  constructor() {
-    effect(() => {
-      console.log('ResultLogComponent initialized');
-      console.log('Title:', this.title());
-      console.log('Log:', this.log());
-    });
-  }
 }
