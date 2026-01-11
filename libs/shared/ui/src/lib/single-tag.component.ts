@@ -17,12 +17,12 @@ import { ChipSelectModalComponent } from './chip-select.modal';
   ],
   template: `
   @if (selectedTag()) {
-    <ion-button color="light" (click)="remove()">
+    <ion-button (click)="remove()" fill="clear">
       <ion-icon src="{{'close_cancel_circle' | svgIcon }}" />
       <ion-label>{{ selectedTag() | translate | async }}</ion-label>
     </ion-button>
   } @else {
-    <ion-button color="light" (click)="add()">
+    <ion-button (click)="add()" fill="clear">
       <ion-icon src="{{'search' | svgIcon }}" />
       <ion-label>{{ searchLabel() | translate | async }}</ion-label>
     </ion-button>
