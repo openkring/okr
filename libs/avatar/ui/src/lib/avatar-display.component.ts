@@ -23,7 +23,7 @@ import { getDefaultIcon } from "@bk2/avatar-util";
     .stacked-avatar { margin-left: -8px; }
     .stacked-avatar:hover { transform: scale(1.2) translateY(-5px); }
     .single-avatar-name { margin-left: 12px; font-size: 16px; }
-    ion-chip { background-color: var(--ion-color-light); color: var(--ion-color-primary); }
+    ion-chip { background-color: var(--ion-color-light); color: var(--ion-color-light-contrast); }
     `],
   template: `
     @if(avatars(); as avatars) {
@@ -34,7 +34,7 @@ import { getDefaultIcon } from "@bk2/avatar-util";
         @case(1) {
           @if(avatars[0].key && avatars[0].key.length > 0) {
             @if(shouldShowName()) {
-              <ion-chip>
+              <ion-chip color="light">
                 <ion-avatar>
                   <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) | async }}" alt="Avatar of person or org" />
                 </ion-avatar>
