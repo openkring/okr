@@ -72,6 +72,15 @@ export const _MembershipStore = signalStore(
         return allMemberships$;
       },
     }),
+    
+    // default membership category - loaded once and reused as fallback
+    defaultMcatResource: rxResource({
+      stream: () => {
+        const defaultMcat$ = store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_default');
+        debugItemLoaded<CategoryListModel>('mcat_default', defaultMcat$, store.appStore.currentUser());
+        return defaultMcat$;
+      }
+    }),
   })),
 
   withComputed((state) => {
@@ -114,11 +123,10 @@ export const _MembershipStore = signalStore(
         return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId).pipe(
           switchMap(mcat => {
             if (!mcat) {
-              // fallback to default membership category if not found
+              // fallback to preloaded default membership category
               console.log(`MembershipStore: mcat ${params.mcatId} not found, falling back to mcat_default`);
-              const defaultMcat$ = store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_default');
-              debugItemLoaded<CategoryListModel>(`mcat_default (fallback)`, defaultMcat$, store.currentUser());
-              return defaultMcat$;
+              const defaultMcat = store.defaultMcatResource.value();
+              return of(defaultMcat);
             }
             debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, of(mcat), store.currentUser());
             return of(mcat);
