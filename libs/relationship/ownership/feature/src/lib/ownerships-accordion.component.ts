@@ -20,7 +20,7 @@ import { OwnershipStore } from './ownership.store';
   ],
   providers: [OwnershipStore],
   styles: [`
-      ion-avatar { width: 30px; height: 30px; }
+      ion-avatar { width: 30px; height: 30px;  background-color: var(--ion-color-light);}
     `],
   template: `
     <ion-accordion toggle-icon-slot="start" value="ownerships">

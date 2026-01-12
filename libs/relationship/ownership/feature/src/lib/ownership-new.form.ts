@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, IonThumbnail, ModalController } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -11,6 +11,7 @@ import { DateInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarKey, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
 
 import { ownershipValidations } from '@bk2/relationship-ownership-util';
+import { getCategoryIcon } from '@bk2/category-util';
 
 
 @Component({
@@ -20,9 +21,8 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
     vestForms,
     TranslatePipe, AsyncPipe, AvatarPipe,
     DateInputComponent,
-    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonAvatar, IonImg, IonButton, IonThumbnail, IonCard, IonCardContent
+    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonAvatar, IonImg, IonButton, IonCard, IonCardContent
   ],
-  styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
   template: `
   @if (showForm()) {
     <form scVestForm
@@ -38,7 +38,7 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
             <ion-row>
               <ion-col size="9">
                 <ion-item lines="none">
-                  <ion-avatar slot="start">
+                  <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
                     <ion-img src="{{ ownerModelType() + '.' + ownerKey() | avatar:'ownership' | async }}" alt="Avatar of Owner" />
                   </ion-avatar>
                   <ion-label>{{ ownerName() }}</ion-label>
@@ -60,9 +60,9 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
             <ion-row>
               <ion-col size="9">
                 <ion-item lines="none">
-                  <ion-thumbnail slot="start">
-                    <ion-img [src]="getAvatarKey() | avatar | async" alt="Logo of the resource" />
-                  </ion-thumbnail>
+                  <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
+                    <ion-img [src]="getAvatarKey() | avatar:getIcon(formData()) | async" alt="Logo of the resource" />
+                  </ion-avatar>
                   <ion-label>{{ resourceName() }}</ion-label>
                 </ion-item>
               </ion-col>
@@ -113,6 +113,9 @@ export class OwnershipNewFormComponent {
   protected resourceName = computed(() => this.formData().resourceName ?? '');
   protected validFrom = linkedSignal(() => this.formData().validFrom ?? getTodayStr());
   protected locale = computed(() => this.appStore.appConfig().locale);
+
+  private rboatTypes = this.appStore.getCategory('rboat_type');
+  private resourceTypes = this.appStore.getCategory('resource_type');
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
@@ -220,5 +223,13 @@ export class OwnershipNewFormComponent {
       return getAvatarKey(ownership.resourceModelType, ownership.resourceKey, ownership.resourceType, ownership.resourceSubType);
     }
     return `${ResourceModelName}.${this.appStore.defaultResource()?.bkey}`; // default avatar
+  }
+
+  protected getIcon(ownership: OwnershipModel): string {
+    if (ownership.resourceType === 'rboat') {
+      return getCategoryIcon(this.rboatTypes, ownership.resourceSubType);
+    } else {
+      return getCategoryIcon(this.resourceTypes, ownership.resourceType);
+    }
   }
 }

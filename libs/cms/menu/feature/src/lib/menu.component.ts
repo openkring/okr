@@ -10,15 +10,22 @@ import { hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_MENU_ACTION } from '@bk2/shared-constants';
 
 import { MenuStore } from './menu.store';
+import { MultiAvatarComponent } from '@bk2/cms-menu-ui';
 
 @Component({
   selector: 'bk-menu',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    forwardRef(() => MenuComponent), SpinnerComponent,
+    forwardRef(() => MenuComponent), SpinnerComponent, MultiAvatarComponent,
     IonList, IonItem, IonIcon, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider
 ],
+  styles: [`
+      ion-icon { color: var(--ion-color-dark); }
+    @media (prefers-color-scheme: dark) {
+      ion-icon { color: var(--ion-color-white); }
+    }
+    `],
   providers: [MenuStore],
   template: `
     @if(menuStore.isLoading()) {
@@ -28,16 +35,10 @@ import { MenuStore } from './menu.store';
         @if(menuItem(); as menuItem) {
           @switch(action()) {
             @case('navigate') {
-              <ion-item button (click)="select(menuItem)">
-                <ion-icon slot="start" src="{{icon() | svgIcon }}" color="primary" />
-                <ion-label>{{ label() | translate | async }}</ion-label>
-              </ion-item>
+              <bk-multi-avatar [icon]="icon()" [label]="label()" (click)="select(menuItem)" />
             }
             @case('browse') {
-              <ion-item button (click)="select(menuItem)">
-                <ion-icon slot="start" src="{{icon() | svgIcon }}" color="primary" />
-                <ion-label>{{ label() | translate | async }}</ion-label>
-              </ion-item>
+              <bk-multi-avatar [icon]="icon()" [label]="label()" (click)="select(menuItem)" />
             }
             @case('sub') {
               <ion-accordion-group>
@@ -73,10 +74,7 @@ import { MenuStore } from './menu.store';
               </ion-list>
             }
             @case('call') {
-              <ion-item button (click)="select(menuItem)">
-                <ion-icon slot="start" src="{{icon() | svgIcon }}" color="primary" />
-                <ion-label>{{ label() | translate | async }}</ion-label>
-              </ion-item>
+              <bk-multi-avatar [icon]="icon()" [label]="label()" (click)="select(menuItem)" />
             }
           }
         } @else {

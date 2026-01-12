@@ -84,7 +84,7 @@ import { SIZE_MD } from '@bk2/shared-constants';
         <ion-list lines="inset">
           @for(person of filteredPersons(); track $index) {
             <ion-item (click)="showActions(person)">
-              <ion-avatar slot="start">
+              <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
                 <ion-img src="{{ personModelName + '.' + person.bkey | avatar:personModelName | async }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{person.firstName | fullName:person.lastName:nameDisplay()}}</ion-label>      

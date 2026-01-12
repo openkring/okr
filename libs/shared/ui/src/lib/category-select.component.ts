@@ -36,15 +36,22 @@ let id = 0;
     .popover.active { opacity: 1;}
   `],
   template: `
-  <ion-button fill="clear" id="{{popoverId}}">
-    @if(showIcons() && selectedItem().icon.length > 0) {
-      <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
-    }
-    {{ getItemLabel(selectedItem()) | translate | async}}
-    @if(!isReadOnly()) {
+  @if(!isReadOnly()) {
+    <ion-button fill="clear" id="{{popoverId}}">
+      @if(showIcons() && selectedItem().icon.length > 0) {
+        <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
+      }
+      {{ getItemLabel(selectedItem()) | translate | async}}
       <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
-    }
-  </ion-button>
+    </ion-button>
+  } @else {
+    <ion-item lines="none">
+      @if(showIcons() && selectedItem().icon.length > 0) {
+        <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
+      }
+      <ion-label>{{ getItemLabel(selectedItem()) | translate | async}}</ion-label>
+    </ion-item>
+  }
   @if(!isReadOnly()) {
     <ion-popover trigger="{{popoverId}}" [showBackdrop]=true [dismissOnSelect]=true>
       <ng-template>

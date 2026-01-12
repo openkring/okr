@@ -93,7 +93,7 @@ import { MembershipStore } from './membership.store';
         <ion-list lines="inset">
           @for(membership of filteredMemberships(); track $index) {
               <ion-item (click)="showActions(membership)">
-                <ion-avatar slot="start">
+                <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
                   <ion-img src="{{ personModelName + '.' + membership.memberKey | avatar:membershipDefaultIcon() | async }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>      

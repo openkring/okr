@@ -78,8 +78,8 @@ import { GroupStore } from './group.store';
         <ion-list lines="inset">
           @for(group of filteredGroups(); track $index) {
             <ion-item (click)="showActions(group)">
-              <ion-avatar slot="start">
-                <ion-img src="{{ 'group.' + group.bkey | avatar | async }}" alt="Avatar Logo" />
+              <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
+                <ion-img src="{{ 'group.' + group.bkey | avatar:'people' | async }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{group.name}}</ion-label>      
             </ion-item>
@@ -105,7 +105,6 @@ export class GroupListComponent {
   // derived signals
   protected filteredGroups = computed(() => {
     const allGroups = this.groupStore.filteredGroups() ?? [];
-    
     switch(this.listId()) {
       case 'current': {
         const userGroupKeys = this.groupStore.currentUserMemberships()

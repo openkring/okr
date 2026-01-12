@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -85,7 +85,7 @@ import { OrgStore } from './org.store';
         <ion-list lines="inset">
           @for(org of filteredOrgs(); track $index) {
             <ion-item (click)="showActions(org)">
-              <ion-avatar slot="start">
+              <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
                 <ion-img src="{{ 'org.' + org.bkey | avatar:'org' | async }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{org.name}}</ion-label>      

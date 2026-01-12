@@ -4,14 +4,14 @@ import { IonAvatar, IonIcon, IonImg, IonItem, IonLabel, IonTitle, IonToolbar } f
 
 import { ColorsIonic } from '@bk2/shared-categories';
 import { ColorIonic } from '@bk2/shared-models';
-import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 import { AvatarToolbarStore } from './avatar-toolbar.store';
 
 @Component({
   selector: 'bk-avatar-toolbar',
   standalone: true,
-  imports: [CategoryPlainNamePipe, SvgIconPipe, IonToolbar, IonAvatar, IonImg, IonTitle, IonIcon, IonItem, IonLabel],
+  imports: [SvgIconPipe, IonToolbar, IonAvatar, IonImg, IonTitle, IonIcon, IonItem, IonLabel],
   providers: [AvatarToolbarStore],
   styles: [
     `
@@ -22,7 +22,7 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
     `,
   ],
   template: `
-    <ion-toolbar [color]="color() | categoryPlainName : colorsIonic">
+    <ion-toolbar>
       <ion-avatar (click)="editImage()">
         <ion-img [src]="avatarToolbarStore.url()" [alt]="alt()" />
         @if(readOnly() === false) {
@@ -31,12 +31,12 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
       </ion-avatar>
 
       @if(title()) {
-        <ion-item [color]="color() | categoryPlainName : colorsIonic" lines="none">
+        <ion-item lines="none">
           <ion-title (click)="avatarToolbarStore.showZoomedImage()">{{ title() }}</ion-title>
         </ion-item>
       }
       @if(subTitle(); as subTitle) {
-        <ion-item [color]="color() | categoryPlainName : colorsIonic" lines="none">
+        <ion-item lines="none">
           @if(subTitle.startsWith('tel:')) {
             <ion-label><small><a href="{{ subTitle }}">{{ subTitle.substring(4) }}</a></small></ion-label>
           } @else if(subTitle.startsWith('mailto:')) {

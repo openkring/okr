@@ -87,7 +87,7 @@ import { CalEventStore } from './calevent.store';
 
       <!-- list header -->
     @if(!showCalendar()) {
-      <ion-toolbar color="light">
+      <ion-toolbar>
         <ion-grid>
           <ion-row>
             <ion-col size="6" size-md="3">

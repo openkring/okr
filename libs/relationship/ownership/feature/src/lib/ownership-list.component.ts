@@ -86,7 +86,7 @@ import { getCategoryIcon } from '@bk2/category-util';
           @for(ownership of filteredOwnerships(); track $index) {
             @if(listId() === 'scsBoats') {
               <ion-item class="ion-text-wrap" (click)="showActions(ownership)">
-                <ion-icon slot="start" color="primary" src="{{ getIcon(ownership) | svgIcon }}" />
+                <ion-icon slot="start" src="{{ getIcon(ownership) | svgIcon }}" />
                 <ion-label>{{ ownership.resourceName }}</ion-label>
                 <ion-label>{{ ownership.resourceSubType }}</ion-label>
                 <ion-label class="ion-hide-md-down">{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>
@@ -94,7 +94,7 @@ import { getCategoryIcon } from '@bk2/category-util';
             }
             @else {
               <ion-item (click)="showActions(ownership)">
-                <ion-avatar slot="start">
+                <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
                   <ion-img src="{{ ownership.ownerModelType + '.' + ownership.ownerKey | avatar:(ownership.ownerModelType === 'person' ? 'person' : 'org') | async }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{getOwnerName(ownership)}}</ion-label>      
