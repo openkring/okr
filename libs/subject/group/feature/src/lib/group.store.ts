@@ -245,7 +245,7 @@ export const GroupStore = signalStore(
           id: `group-chat-${group.bkey}`,
           name: 'Gruppen Chat',
           showChannelList: true,
-          type: 'team',
+          type: 'messaging',
           url: ''
         },
         notes: '',
