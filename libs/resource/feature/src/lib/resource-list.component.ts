@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getItemLabel, hasRole } from '@bk2/shared-util-core';
+import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
@@ -96,12 +96,7 @@ export class ResourceListComponent {
   public filter = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  // filters
-  public searchTerm = linkedSignal(() => this.resourceListStore.searchTerm())
-  public selectedTag = linkedSignal(() => this.resourceListStore.selectedTag())
-  public selectedType = linkedSignal(() => this.resourceListStore.selectedResourceType())
-
-  // data
+  // derived signals
   protected filteredResources = computed(() => this.resourceListStore.filteredResources() ?? []);
   protected resourcesCount = computed(() => this.resourceListStore.resourcesCount());
   protected selectedResourcesCount = computed(() => this.filteredResources().length);

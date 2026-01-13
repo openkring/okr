@@ -21,7 +21,7 @@ export function getNonSelectedChips(availableChips: string[], selectedChips: str
  */
 export function chipMatches(storedChips: string, selectedChip: string | undefined | null): boolean {
   if (selectedChip === undefined || selectedChip === null || selectedChip.length === 0) return true; // no filter
-  if (!storedChips || storedChips.length === 0) return false;
+  if (!storedChips || storedChips.length === 0) return false; // no stored chips
   return storedChips.toLowerCase().includes(selectedChip.toLowerCase());
 }
 

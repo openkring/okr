@@ -16,7 +16,7 @@ export type ResourceListState = {
   searchTerm: string;
   selectedTag: string;
   selectedResourceType: string;
-  selectedBoatType: string;
+  selectedSubType: string;
   selectedGender: string;
 };
 
@@ -24,7 +24,7 @@ const initialState: ResourceListState = {
   searchTerm: '',
   selectedTag: '',
   selectedResourceType: 'all',
-  selectedBoatType: 'all',
+  selectedSubType: 'all',
   selectedGender: 'all',
 };
 
@@ -54,9 +54,13 @@ export const ResourceListStore = signalStore(
           nameMatches(resource.type, state.selectedResourceType()) &&
           chipMatches(resource.tags, state.selectedTag()))
       ),
-      boats: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'rboat') ?? []),
+      boats: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'boat') ?? []),
+      rboats: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'rboat') ?? []),
+      cars: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'car') ?? []),
       lockers: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'locker') ?? []),
       keys: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'key') ?? []),
+      realestate: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'realestate') ?? []),
+      pets: computed(() => state.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'pet') ?? []),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
       isLoading: computed(() => state.resourceResource.isLoading()),
@@ -68,7 +72,20 @@ export const ResourceListStore = signalStore(
       filteredBoats: computed(() => 
         state.boats()?.filter((resource: ResourceModel) => 
           nameMatches(resource.index, state.searchTerm()) &&
-          nameMatches(resource.subType, state.selectedBoatType()) &&
+          nameMatches(resource.subType, state.selectedSubType()) &&
+          chipMatches(resource.tags, state.selectedTag()))
+      ),
+      rboatsCount: computed(() => state.rboats().length ?? 0), 
+      filteredRboats: computed(() => 
+        state.rboats()?.filter((resource: ResourceModel) => 
+          nameMatches(resource.index, state.searchTerm()) &&
+          nameMatches(resource.subType, state.selectedSubType(), true) &&
+          chipMatches(resource.tags, state.selectedTag()))
+      ),
+      carsCount: computed(() => state.cars().length ?? 0),
+      filteredCars: computed(() =>
+        state.cars()?.filter((resource: ResourceModel) =>
+          nameMatches(resource.index, state.searchTerm()) &&
           chipMatches(resource.tags, state.selectedTag()))
       ),
       lockersCount: computed(() => state.lockers().length ?? 0),
@@ -84,6 +101,18 @@ export const ResourceListStore = signalStore(
           nameMatches(resource.index, state.searchTerm()) &&
           chipMatches(resource.tags, state.selectedTag()))
       ),
+      realestateCount: computed(() => state.realestate().length ?? 0),
+      filteredRealestate: computed(() =>
+        state.realestate()?.filter((resource: ResourceModel) =>
+          nameMatches(resource.index, state.searchTerm()) &&
+          chipMatches(resource.tags, state.selectedTag()))
+      ),
+      petsCount: computed(() => state.pets().length ?? 0),
+      filteredPets: computed(() =>
+        state.pets()?.filter((resource: ResourceModel) =>
+          nameMatches(resource.index, state.searchTerm()) &&
+          chipMatches(resource.tags, state.selectedTag()))
+      )
     }
   }),
 
@@ -101,8 +130,8 @@ export const ResourceListStore = signalStore(
         patchState(store, { selectedResourceType });
       },
 
-      setSelectedBoatType(selectedBoatType: string) {
-        patchState(store, { selectedBoatType });
+      setSelectedSubType(selectedSubType: string) {
+        patchState(store, { selectedSubType });
       },
 
       setSelectedGender(selectedGender: string) {
@@ -118,16 +147,32 @@ export const ResourceListStore = signalStore(
         return store.appStore.getTags('resource');
       },
 
-      getLockerTags(): string {
-        return store.appStore.getTags('resource.locker');
+      getBoatTags(): string {
+        return store.appStore.getTags('resource.boat');
+      },
+      
+      getCarTags(): string {
+        return store.appStore.getTags('resource.car');
       },
 
       getKeyTags(): string {
         return store.appStore.getTags('resource.key');
       },
-      
+
+      getLockerTags(): string {
+        return store.appStore.getTags('resource.locker');
+      },
+
+      getPetTags(): string {
+        return store.appStore.getTags('resource.pet');
+      },
+
       getRowingBoatTags(): string {
         return store.appStore.getTags('resource.rboat');
+      },
+
+      getRealEstateTags(): string {
+        return store.appStore.getTags('resource.realestate');
       },
 
       /******************************** actions ******************************************* */
@@ -139,7 +184,6 @@ export const ResourceListStore = signalStore(
       },
 
       async edit(resource: ResourceModel, isTypeEditable = false, readOnly = true): Promise<void> {
-        console.log('ResourceListStore.edit()', resource, isTypeEditable, readOnly);
         const modal = await store.modalController.create({
           component: ResourceEditModalComponent,
           componentProps: {

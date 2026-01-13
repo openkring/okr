@@ -22,7 +22,7 @@ import { CategoryPlainNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
   <ion-toolbar [color]="color() | categoryPlainName:colorsIonic">
     <ion-item lines="none" class="ion-align-items-center ion-justify-content-center" [color]="color() | categoryPlainName:colorsIonic">
       <ion-avatar>
-        <ion-icon [src]="icon() | svgIcon" size="large" color="light" />
+        <ion-icon [src]="icon() | svgIcon" size="large" />
         <!-- <ion-img [src]="icon() | svgIcon" [alt]="alt()" /> -->
       </ion-avatar>
     </ion-item>

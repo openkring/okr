@@ -100,13 +100,11 @@ export class ResourceEditModalComponent {
 
   private getUsages(): CategoryListModel | undefined {
     const usageName = getUsageNameForResourceType(this.type());
-    console.log('ResourceEditModalComponent.getUsages()', this.type(), usageName);
     if (usageName) return this.appStore.getCategory(usageName);
   }
 
   private getSubtypes(): CategoryListModel | undefined {
     const categoryName = getCategoryNameForResourceType(this.type());
-    console.log('ResourceEditModalComponent.getSubtypes()', this.type(), categoryName);
     if (categoryName) return this.appStore.getCategory(categoryName);
   }
 

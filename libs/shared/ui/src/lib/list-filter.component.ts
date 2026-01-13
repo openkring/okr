@@ -43,7 +43,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
           }
           @if(showTags()) {
             <ion-col size="6" size-md="2" class="ion-no-padding">
-              <bk-single-tag [selectedTag]="selectedTag()" [tags]="tags()" />
+              <bk-single-tag [selectedTag]="selectedTag()" (selectedTagChange)="tagChanged.emit($event)" [tags]="tags()" />
             </ion-col>
           }
           @if(showCategory()) {

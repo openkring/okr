@@ -74,7 +74,7 @@ import { ResourceListStore } from './resource-list.store';
       <ion-list lines="inset">
         @for(boat of filteredBoats(); track $index) {
           <ion-item class="ion-text-wrap" (click)="showActions(boat)">
-            <ion-icon slot="start" color="primary" src="{{ getCategoryIcon(boat) | svgIcon }}" />
+            <ion-icon slot="start" src="{{ getCategoryIcon(boat) | svgIcon }}" />
             <ion-label>{{ boat.name }}</ion-label>
             <ion-label>{{ boat.subType }}</ion-label>
             <ion-label class="ion-hide-md-down">{{ boat?.load }}</ion-label>
@@ -95,23 +95,17 @@ export class RowingBoatListComponent {
   public filter = input.required<string>();
   public contextMenuName = input.required<string>();
 
-  // filters
-  public searchTerm = linkedSignal(() => this.resourceListStore.searchTerm())
-  public selectedTag = linkedSignal(() => this.resourceListStore.selectedTag())
-  public selectedType = linkedSignal(() => this.resourceListStore.selectedBoatType())
-
   // data
-  protected filteredBoats = computed(() => this.resourceListStore.filteredBoats() ?? []);
-  protected boatsCount = computed(() => this.resourceListStore.boatsCount());
+  protected filteredBoats = computed(() => this.resourceListStore.filteredRboats() ?? []);
+  protected boatsCount = computed(() => this.resourceListStore.rboatsCount());
   protected selectedBoatsCount = computed(() => this.filteredBoats().length);
   protected isLoading = computed(() => this.resourceListStore.isLoading());
   protected tags = computed(() => this.resourceListStore.getRowingBoatTags());
   protected types = computed(() => this.resourceListStore.appStore.getCategory('rboat_type'));
-    protected currentUser = computed(() => this.resourceListStore.appStore.currentUser());
+  protected currentUser = computed(() => this.resourceListStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.resourceListStore.appStore.env.services.imgixBaseUrl;
-  private cat = this.resourceListStore.appStore.getCategory('rboat_type');
 
   /******************************** getters ******************************************* */
   protected getIcon(resource: ResourceModel): string | undefined {
@@ -128,7 +122,7 @@ export class RowingBoatListComponent {
   }
 
   protected onTypeSelected(type: string): void {
-    this.resourceListStore.setSelectedResourceType(type);
+    this.resourceListStore.setSelectedSubType(type);
   }
 
   /******************************** actions ******************************************* */
@@ -200,7 +194,7 @@ export class RowingBoatListComponent {
   }
 
   protected getCategoryIcon(boat: ResourceModel): string {
-    return getCategoryIcon(this.cat, boat.subType);
+    return getCategoryIcon(this.types(), boat.subType);
   }
 }
 

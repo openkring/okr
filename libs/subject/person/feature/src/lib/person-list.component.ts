@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -128,11 +128,6 @@ export class PersonListComponent {
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   private readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
-  // filter
-  protected searchTerm = linkedSignal(() => this.personListStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.personListStore.selectedTag());
-  protected selectedType = linkedSignal(() => this.personListStore.selectedGender());
-
   private imgixBaseUrl = this.personListStore.appStore.env.services.imgixBaseUrl;
   protected personModelName = PersonModelName;
 
@@ -216,7 +211,6 @@ export class PersonListComponent {
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
-      console.log('PersonListComponent.executeActions', data);
       switch (data.action) {
         case 'person.view':
           await this.personListStore.edit(person, true);

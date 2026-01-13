@@ -1,10 +1,9 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, forwardRef, inject, input } from '@angular/core';
-import { IonAccordion, IonAccordionGroup, IonIcon, IonItem, IonItemDivider, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { MenuItemModel } from '@bk2/shared-models';
-import { SvgIconPipe } from '@bk2/shared-pipes';
 import { SpinnerComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_MENU_ACTION } from '@bk2/shared-constants';
@@ -16,9 +15,9 @@ import { MultiAvatarComponent } from '@bk2/cms-menu-ui';
   selector: 'bk-menu',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    TranslatePipe, AsyncPipe,
     forwardRef(() => MenuComponent), SpinnerComponent, MultiAvatarComponent,
-    IonList, IonItem, IonIcon, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider
+    IonList, IonItem, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider
 ],
   styles: [`
       ion-icon { color: var(--ion-color-dark); }

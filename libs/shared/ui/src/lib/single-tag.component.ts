@@ -33,7 +33,7 @@ export class SingleTagComponent {
   protected modalController = inject(ModalController);
 
   // inputs
-  public selectedTag = model<string>(); // the selected tag name
+  public selectedTag = model.required<string>(); // the selected tag name
   public tags = input.required<string>(); // the list of available tag names, separated by comma
   public searchLabel = input('@general.operation.search.byTag');
 
