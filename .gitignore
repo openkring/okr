@@ -6,6 +6,7 @@
 **/.env
 emulator-storage
 **/firebase.config.ts
+**/firebase-config.js
 environment.global.ts
 **/bk-config.ts
 **/schema.json
