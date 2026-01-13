@@ -58,9 +58,27 @@ if (process.env.FIREBASE_WEBAPP_CONFIG) {
   process.exit(1);
 }
 
-// Always load .env for pnpm workspace module resolution, even in production.
-// The environment variables set by the hosting provider will still take precedence.
-dotenv.config();
+// Get the project name from Nx environment variable
+const projectName = process.env.NX_TASK_TARGET_PROJECT;
+
+if (!projectName) {
+  console.error('ERROR: NX_TASK_TARGET_PROJECT is not defined. This script expects to be run by Nx.');
+  process.exit(1);
+}
+
+// Load .env file from the specific app directory first, then fallback to root
+// This allows app-specific configuration to override workspace defaults
+const appEnvPath = `./apps/${projectName}/.env`;
+const rootEnvPath = './.env';
+
+// Try to load app-specific .env first
+if (fs.existsSync(appEnvPath)) {
+  console.log(`Loading app-specific .env from ${appEnvPath}`);
+  dotenv.config({ path: appEnvPath });
+} else {
+  console.log(`No app-specific .env found at ${appEnvPath}, trying root .env`);
+  dotenv.config({ path: rootEnvPath });
+}
 
 if (process.env.NODE_ENV === 'production') {
   console.log('NODE_ENV=production, assuming deployed environment. Skipping .env load for variables, but used for module resolution. Trying to read injected FIREBASE_WEBAPP_CONFIG.');
@@ -77,13 +95,6 @@ servicesConfig.imgixBaseUrl = process.env.NEXT_PUBLIC_IMGIX_BASE_URL || '';
 
 const writeFile = fs.writeFile;
 
-// Get the project name from Nx environment variable
-const projectName = process.env.NX_TASK_TARGET_PROJECT;
-
-if (!projectName) {
-  console.error('ERROR: NX_TASK_TARGET_PROJECT is not defined. This script expects to be run by Nx.');
-  process.exit(1);
-}
 const envPath = `./apps/${projectName}/src/environments/environment.ts`;
 const tenantId = projectName.replace(/-app$/, '');
 
