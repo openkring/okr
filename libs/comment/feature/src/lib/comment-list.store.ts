@@ -1,7 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
 import { AlertController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
@@ -29,12 +28,12 @@ export const CommentListStore = signalStore(
     commentsResource: rxResource({
       params: () => ({
         parentKey: store.parentKey(),
+        currentUser: store.appStore.currentUser()
       }),  
       stream: ({params}) => {
-        if (!params.parentKey || params.parentKey.length === 0) return of([]);
-        const comments$ = store.commentService.list(params.parentKey);
-        debugListLoaded('CommentListStore.comment$', comments$, store.appStore.currentUser());   
-        return comments$;
+        return store.commentService.list(params.parentKey).pipe(
+          debugListLoaded('CommentListStore.comment$', params.currentUser)
+        );
       }
     }),
   })),

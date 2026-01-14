@@ -68,9 +68,9 @@ export const OwnershipStore = signalStore(
     // all ownerships of this tenant
     allOwnershipsResource: rxResource({
       stream: () => {
-        const allOwnerships$ = store.ownershipService.list();
-        debugListLoaded('OwnershipStore.allOwnerships', allOwnerships$, store.appStore.currentUser());
-        return allOwnerships$;
+        return store.ownershipService.list().pipe(
+          debugListLoaded('OwnershipStore.allOwnerships', store.appStore.currentUser())
+        );
       }
     })
   })),

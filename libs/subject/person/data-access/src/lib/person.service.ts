@@ -32,7 +32,8 @@ export class PersonService {
    * @param key the unique key of the person 
    * @returns an Observable of the person or undefined if not found
    */
-  public read(key: string): Observable<PersonModel | undefined> {
+  public read(key?: string): Observable<PersonModel | undefined> {
+    if (!key || key.length === 0) return of(undefined);
     return findByKey<PersonModel>(this.list(), key);    
   }
 

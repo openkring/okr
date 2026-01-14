@@ -1,11 +1,11 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AvatarInfo, CategoryListModel, TaskCollection, TaskModel } from '@bk2/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getFullName, getSystemQuery, getTodayStr, nameMatches, newAvatarInfo } from '@bk2/shared-util-core';
+import { CategoryListModel, TaskCollection, TaskModel } from '@bk2/shared-models';
+import { chipMatches, debugItemLoaded, debugListLoaded, getAvatarInfo, getSystemQuery, getTodayStr, nameMatches } from '@bk2/shared-util-core';
 
 import { TaskService } from '@bk2/task-data-access';
 
@@ -13,7 +13,6 @@ import { ModalController } from '@ionic/angular/standalone';
 import { TaskEditModalComponent } from 'libs/task/feature/src/lib/task-edit.modal';
 import { isTask } from '@bk2/task-util';
 import { AvatarService } from '@bk2/avatar-data-access';
-import { of } from 'rxjs';
 
 export type TaskState = {
   calendarName: string;
@@ -52,21 +51,24 @@ export const TaskStore = signalStore(
   })),
   withProps((store) => ({
     tasksResource: rxResource({
-      stream: () => {
-        const tasks$ = store.firestoreService.searchData<TaskModel>(TaskCollection, getSystemQuery(store.appStore.tenantId()), 'dueDate', 'asc');
-        debugListLoaded<TaskModel>('TaskListStore.tasks', tasks$, store.appStore.currentUser());
-        return tasks$;
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        return store.firestoreService.searchData<TaskModel>(TaskCollection, getSystemQuery(store.appStore.tenantId()), 'dueDate', 'asc').pipe(
+          debugListLoaded<TaskModel>('TaskListStore.tasks', params.currentUser)
+        );
       }
     }),
     taskResource: rxResource({
       params: () => ({
-        taskKey: store.taskKey()
+        taskKey: store.taskKey(),
+        currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
-        if (!params.taskKey) return of(undefined);
-        const task$ = store.taskService.read(params.taskKey);
-        debugItemLoaded('TaskStore.task', task$, store.appStore.currentUser());
-        return task$;
+        return store.taskService.read(params.taskKey).pipe(
+          debugItemLoaded('TaskStore.task', params.currentUser)
+        );
       }
     }),
   })),

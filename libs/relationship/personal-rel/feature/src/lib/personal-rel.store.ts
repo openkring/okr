@@ -46,8 +46,9 @@ export const PersonalRelStore = signalStore(
         const personalRels$ = params.personKey ?
           store.personalRelService.listPersonalRelsOfPerson(params.personKey) :  
           store.personalRelService.list();        
-        debugListLoaded('PersonalRelStore.personalRels', personalRels$, store.appStore.currentUser());
-        return personalRels$;
+        return personalRels$.pipe(
+          debugListLoaded('PersonalRelStore.personalRels', store.appStore.currentUser())
+        );
       }
     })
   })),

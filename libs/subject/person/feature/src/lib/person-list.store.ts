@@ -49,10 +49,13 @@ export const PersonListStore = signalStore(
   })),
   withProps((store) => ({
     personsResource: rxResource({
-      stream: () => {
-        const persons$ = store.personService.list();
-        debugListLoaded('PersonListStore.persons$', persons$, store.appStore.currentUser());   
-        return persons$;
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        return store.personService.list().pipe(
+          debugListLoaded('PersonListStore.persons$', params.currentUser)
+        );
       }
     }),
   })),
@@ -74,7 +77,6 @@ export const PersonListStore = signalStore(
         mcatId: store.membershipCategoryKey()
       }),  
       stream: ({params}) => {
-        if (!params.mcatId || params.mcatId.length === 0) return of(undefined);
         return of(store.appStore.getCategory(params.mcatId));
       }
     }),

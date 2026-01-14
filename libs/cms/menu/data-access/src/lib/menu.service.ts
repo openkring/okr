@@ -31,7 +31,7 @@ export class MenuService {
    * @param key the document id of the menuitem
    * @returns an Observable of the MenuItemModel
    */
-  public read(key: string): Observable<MenuItemModel | undefined> {
+  public read(key?: string): Observable<MenuItemModel | undefined> {
     return findByKey<MenuItemModel>(this.list(), key);
   }
 

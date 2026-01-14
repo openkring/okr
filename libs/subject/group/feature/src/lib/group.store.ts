@@ -3,7 +3,6 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
 import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -58,10 +57,9 @@ export const GroupStore = signalStore(
         groupKey: store.groupKey()
       }),
       stream: ({params}) => {
-        if (!params.groupKey) return of(undefined);
-        const group$ = store.groupService.read(params.groupKey);
-        debugItemLoaded('GroupStore.group', group$, store.appStore.currentUser());
-        return group$;
+        return store.groupService.read(params.groupKey).pipe(
+          debugItemLoaded('GroupStore.group', store.appStore.currentUser())
+        );
       }
     }),
     currentUserMembershipsResource: rxResource({
@@ -69,14 +67,13 @@ export const GroupStore = signalStore(
         personKey: store.appStore.currentUser()?.personKey
       }),
       stream: ({params}) => {
-        console.log('GroupStore.currentUserMembershipsResource: personKey=', params.personKey);
-        if (!params.personKey) return of([]);
-        const result = store.membershipService.listMembershipsOfMember(params.personKey, 'person');
-        debugListLoaded('GroupStore.currentUserMemberships', result, store.appStore.currentUser());  
-        return result;
+        return store.membershipService.listMembershipsOfMember(params.personKey, 'person').pipe(
+          debugListLoaded('GroupStore.currentUserMemberships', store.appStore.currentUser())
+        );
       }
     }),
   })),
+
   withComputed((state) => ({
     // groups
     groups: computed(() => {

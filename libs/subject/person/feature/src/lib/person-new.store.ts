@@ -32,9 +32,9 @@ export const PersonNewStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),  
       stream: ({params}) => {
-        const org$ = store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgId);
-        debugItemLoaded<OrgModel>(`org ${params.orgId}`, org$, params.currentUser);
-        return org$;
+        return store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgId).pipe(
+          debugItemLoaded(`org ${params.orgId}`, params.currentUser)
+        );
       }
     })
   })),
@@ -54,12 +54,13 @@ export const PersonNewStore = signalStore(
         mcatId: store.membershipCategoryKey()
       }),  
       stream: ({params}) => {
-        const mcat$ = store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId);
-        debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, mcat$, store.appStore.currentUser());           
-        return mcat$;
+        return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId).pipe(
+          debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, store.appStore.currentUser())          
+        );
       }
-    })
+    }),
   })),
+  
   withComputed((state) => {
     return {
       membershipCategory: computed(() => state.mcatResource.value() ?? getDefaultMembershipCategory(state.appStore.tenantId())),

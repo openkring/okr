@@ -60,23 +60,27 @@ export const _PageStore = signalStore(
   }),
   withProps((store) => ({
     pagesResource: rxResource({
-      stream: () => {
-        const pages$ = store.pageService.list();
-        debugListLoaded<PageModel>('PageStore.pages', pages$, store.currentUser());
-        return pages$;
+      params: () => ({
+        currentUser: store.currentUser()
+      }),
+      stream: ({params}) => {
+        return store.pageService.list().pipe(
+          debugListLoaded<PageModel>('PageStore.pages', params.currentUser)
+        );
       }
     }),
     pageResource: rxResource({
       params: () => ({
-        pageId: store.pageId()
+        pageId: store.pageId(),
+        currentUser: store.currentUser()
       }),
       stream: ({ params }) => {
         if (!params.pageId || params.pageId.length === 0) {
           return of(undefined);
         }
-        const page$ = store.pageService.read(params.pageId);
-        debugItemLoaded<PageModel>(`PageStore.pageResource`, page$, store.currentUser());
-        return page$;
+        return store.pageService.read(params.pageId).pipe(
+          debugItemLoaded<PageModel>(`PageStore.pageResource`, params.currentUser)
+        );
       }
     })
   })),

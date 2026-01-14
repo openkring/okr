@@ -13,7 +13,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { FirebaseUserModel, LogInfo, logMessage, PersonCollection, PersonModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
-import { debugListLoaded, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@bk2/shared-util-core';
+import { debugListLoaded, debugMessage, findUserByPersonKey, getSystemQuery, hasRole, isPerson, warn } from '@bk2/shared-util-core';
 
 import { createFirebaseAccount, createUserFromPerson, getUidByEmail, generatePassword, isValidEmail, setPassword, getFirebaseUser, updateFirebaseUser } from '@bk2/aoc-util';
 import { AuthService } from '@bk2/auth-data-access';
@@ -52,25 +52,31 @@ export const AocRolesStore = signalStore(
   })),
   withProps(store => ({
     personsResource: rxResource({
-      stream: () => {
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
         if (!isFirestoreInitializedCheck()) {
-          console.warn('AocRolesStore.personsResource: Firestore not initialized, returning empty stream.');
+          debugMessage('AocRolesStore.personsResource: Firestore not initialized, returning empty stream.', params.currentUser);
           return of([]);
         }
-        const persons$ = store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
-        debugListLoaded<PersonModel>('RolesStore.persons', persons$, store.appStore.currentUser());
-        return persons$;
+        return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc').pipe(
+          debugListLoaded<PersonModel>('RolesStore.persons', params.currentUser)
+        );
       },
     }),
     usersResource: rxResource({
-      stream: () => {
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
         if (!isFirestoreInitializedCheck()) {
-          console.warn('AocRolesStore.usersResource: Firestore not initialized, returning empty stream.');
+          debugMessage('AocRolesStore.usersResource: Firestore not initialized, returning empty stream.', params.currentUser);
           return of([]);
         }
-        const users$ = store.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(store.appStore.env.tenantId), 'loginEmail', 'asc');
-        debugListLoaded<UserModel>('RolesStore.users', users$, store.appStore.currentUser());
-        return users$;
+        return store.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(store.appStore.env.tenantId), 'loginEmail', 'asc').pipe(
+          debugListLoaded<UserModel>('RolesStore.users', params.currentUser)
+        );
       },
     }),
   })),

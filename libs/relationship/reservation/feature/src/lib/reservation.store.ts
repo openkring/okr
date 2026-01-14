@@ -16,7 +16,6 @@ import { ReservationService } from '@bk2/relationship-reservation-data-access';
 import { isReservation } from '@bk2/relationship-reservation-util';
 
 import { ReservationEditModalComponent } from './reservation-edit.modal';
-import { of } from 'rxjs';
 
 export type ReservationState = {
   resourceId: string;   // id of the current resource
@@ -65,30 +64,30 @@ export const ReservationStore = signalStore(
       }),
       stream: ({params}) => {
         if (params.reserver) {  // return reservations of the reserver
-          const reservations$ = store.reservationService.listReservationsOfReserver(params.reserver.bkey, store.reserverModelType());
-          debugListLoaded('ReservationAccordionStore.reservationsOfReserver', reservations$, store.appStore.currentUser());
-          return reservations$;
+          return store.reservationService.listReservationsOfReserver(params.reserver.bkey, store.reserverModelType()).pipe(
+            debugListLoaded('ReservationAccordionStore.reservationsOfReserver', store.appStore.currentUser())
+          );
         } else if (params.resource) { // return reservations of the resource
-          const reservations$ = store.reservationService.listReservationsForResource(params.resource.bkey);
-          debugListLoaded('ReservationAccordionStore.reservationsForResource', reservations$, store.appStore.currentUser());
-          return reservations$;
+          return store.reservationService.listReservationsForResource(params.resource.bkey).pipe(
+            debugListLoaded('ReservationAccordionStore.reservationsForResource', store.appStore.currentUser())
+          );
         } else {    // return all reservations
-          const reservations$ = store.reservationService.list();
-          debugListLoaded('ReservationAccordionStore.allReservations', reservations$, store.appStore.currentUser());
-          return reservations$;
+          return store.reservationService.list().pipe(
+            debugListLoaded('ReservationAccordionStore.allReservations', store.appStore.currentUser())
+          );
         }
       }
     }),
     resResource: rxResource({
       params: () => ({
-        resourceId: store.resourceId()
+        resourceId: store.resourceId(),
+        currentUser: store.appStore.currentUser()
       }),
       stream: ({ params }) => {
-        if (!params.resourceId) return of(undefined);
         const allResources$ = store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
-        const currentResource$ = findByKey<ResourceModel>(allResources$, params.resourceId);
-        debugItemLoaded('ReservationStore.resource', currentResource$, store.appStore.currentUser());
-        return currentResource$;
+        return findByKey<ResourceModel>(allResources$, params.resourceId).pipe(
+          debugItemLoaded('ReservationStore.resource', params.currentUser)
+        );
       }
     }),
   })),

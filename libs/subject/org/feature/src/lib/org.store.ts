@@ -16,7 +16,6 @@ import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgForm
 
 import { OrgNewModalComponent } from './org-new.modal';
 import { OrgEditModalComponent } from './org-edit.modal';
-import { of } from 'rxjs';
 
 export type OrgState = {
   orgKey: string;
@@ -51,9 +50,9 @@ export const OrgStore = signalStore(
   withProps((store) => ({
     orgsResource: rxResource({
       stream: () => {
-        const orgs$ = store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
-        debugListLoaded<OrgModel>('OrgStore.orgs', orgs$, store.appStore.currentUser());
-        return orgs$;
+        return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
+        debugListLoaded<OrgModel>('OrgStore.orgs', store.appStore.currentUser())
+        )
       }
     }),
     orgResource: rxResource({
@@ -61,13 +60,13 @@ export const OrgStore = signalStore(
         orgKey: store.orgKey()
       }),
       stream: ({params}) => {
-        if (!params.orgKey) return of(undefined);
-        const org$ = store.orgService.read(params.orgKey);
-        debugItemLoaded('OrgStore.org', org$, store.appStore.currentUser());
-        return org$;
+        return store.orgService.read(params.orgKey).pipe(
+          debugItemLoaded('OrgStore.org', store.appStore.currentUser())
+        );
       }
     }),
   })),
+
   withComputed((state) => ({
     // orgs
     orgs: computed(() => {

@@ -2,7 +2,6 @@ import { computed, inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 
@@ -47,20 +46,14 @@ export const _MenuStore = signalStore(
   withProps((store) => ({
     menuItemsResource: rxResource({
       stream: () => {
-        const menuItems$ = store.menuService.list();
-        debugListLoaded<MenuItemModel>('menuItem', menuItems$, store.appStore.currentUser());
-        return menuItems$;
+        return store.menuService.list();
       }
     }),
     menuResource: rxResource({
       params: () => ({
-        name: store.name(),
-        user: store.appStore.currentUser()
+        name: store.name()
       }),
       stream: ({ params }) => {
-        if (!params.name || params.name.length === 0) {
-          return of(undefined);
-        }
         return store.menuService.read(params.name);
       }
     })

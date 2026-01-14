@@ -14,7 +14,6 @@ import { isWorkrel } from '@bk2/relationship-workrel-util';
 import { WorkrelEditModalComponent } from './workrel-edit.modal';
 import { selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { Observable, of } from 'rxjs';
 
 export type WorkrelState = {
   personKey: string | undefined;    // parent e.g. in accordions
@@ -51,11 +50,11 @@ export const WorkrelStore = signalStore(
         personKey: store.personKey(),
       }),
       stream: ({params}) => {
-        const workrels$ = params.personKey ? 
+        return params.personKey ? 
           store.workrelService.listWorkrelsOfPerson(params.personKey) : 
-          store.workrelService.list();
-        debugListLoaded('WorkrelStore.workrels of person', workrels$, store.appStore.currentUser());
-        return workrels$;
+          store.workrelService.list().pipe(
+            debugListLoaded('WorkrelStore.workrels of person', store.appStore.currentUser())
+          );
       }
     }),
     workersResource: rxResource({
@@ -63,12 +62,9 @@ export const WorkrelStore = signalStore(
         orgKey: store.orgKey(),
       }),
       stream: ({ params }) => {
-        let workers$: Observable<WorkrelModel[]> = of([]);
-        if (params.orgKey) {
-          workers$ = store.workrelService.listWorkersOfOrg(params.orgKey);
-        }
-        debugListLoaded('WorkrelStore.workers of org', workers$, store.appStore.currentUser());
-        return workers$;
+        return store.workrelService.listWorkersOfOrg(params.orgKey).pipe(
+          debugListLoaded('WorkrelStore.workers of org', store.appStore.currentUser())
+        );
       }
     })
   })),

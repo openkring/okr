@@ -97,6 +97,12 @@ export class ReservationListComponent {
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
+  // tbd: restrict to all, t:resourceType, r:resourceKey, p:reserverKey with the listId
+  // e.g. for Bootshausreservationen: key:test_default (need to change this bkey as well)
+  // e.g. for Bootsreservationen: type:rboat
+  // e.g. for my reservations: p:currentUser.personKey
+  // then pass this listId to the store to load only relevant reservations
+
   // filters
   protected searchTerm = linkedSignal(() => this.reservationStore.searchTerm());
   protected selectedTag = linkedSignal(() => this.reservationStore.selectedTag());

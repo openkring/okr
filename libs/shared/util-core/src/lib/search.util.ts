@@ -31,10 +31,7 @@ export function getQuery(dbQuery: DbQuery[], orderByParam = 'name', sortOrderPar
  * @returns the first item that has the given key or undefined if no such item exists
  */
 export function findByKey<T extends BkModel>(items$: Observable<T[]>, key: string | undefined | null): Observable<T | undefined> {
-  if (!key || key.length === 0) {
-    warn(`search.util.findByKey: invalid key <${key}>`);
-    return of(undefined);
-  }
+  if (!key || key.length === 0) return of(undefined);
   return items$.pipe(
     map((items: T[]) => {
       return items.find((item: T) => item.bkey === key);

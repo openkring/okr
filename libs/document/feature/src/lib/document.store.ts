@@ -49,22 +49,26 @@ export const DocumentStore = signalStore(
   })),
   withProps((store) => ({
     documentsResource: rxResource({
-      stream: () => {
-        const documents$ = store.firestoreService.searchData<DocumentModel>(DocumentCollection, getSystemQuery(store.appStore.tenantId()), 'fullPath', 'asc');
-        debugListLoaded<DocumentModel>('DocumentStore.documents', documents$, store.appStore.currentUser());
-        return documents$;
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        return store.firestoreService.searchData<DocumentModel>(DocumentCollection, getSystemQuery(store.appStore.tenantId()), 'fullPath', 'asc').pipe(
+          debugListLoaded<DocumentModel>('DocumentStore.documents', params.currentUser)
+        );
       }
     }),
 
     documentResource: rxResource({
       params: () => ({
-        documentKey: store.documentKey()
+        documentKey: store.documentKey(),
+        currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
         if (!params.documentKey?.length) return new Observable<DocumentModel>(() => {});
-        const document$ = store.documentService.read(params.documentKey);
-        debugItemLoaded('DocumentStore.document', document$, store.appStore.currentUser());
-        return document$;
+        return store.documentService.read(params.documentKey).pipe(
+          debugItemLoaded('DocumentStore.document', params.currentUser)
+        );
       }
     }),
   })),

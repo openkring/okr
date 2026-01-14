@@ -1,5 +1,5 @@
 import { UserModel } from "@bk2/shared-models";
-import { Observable } from "rxjs";
+import { Observable, tap } from "rxjs";
 
 /**
  * Utility functions that can be used in debug mode.
@@ -12,20 +12,28 @@ export function debugFormErrors(formName: string, errors: unknown, currentUser?:
   }
 }
 
-export function debugListLoaded<T>(name: string, data$: Observable<T[]>, currentUser?: UserModel): void {
-  if (currentUser?.showDebugInfo) {
-    data$.subscribe((data) => {
+/**
+ * Returns an RxJS operator that logs list data when debugging is enabled.
+ * Use in a pipe: data$.pipe(debugListLoaded('myList', currentUser))
+ */
+export function debugListLoaded<T>(name: string, currentUser?: UserModel) {
+  return tap<T[]>((data) => {
+    if (currentUser?.showDebugInfo) {
       console.log(`${name}: loaded ${data.length} items.`);
-    });
-  }
+    }
+  });
 }
 
-export function debugItemLoaded<T>(name: string, data$: Observable<T | undefined>, currentUser?: UserModel): void {
-  if (currentUser?.showDebugInfo) {
-    data$.subscribe((data) => {
+/**
+ * Returns an RxJS operator that logs item data when debugging is enabled.
+ * Use in a pipe: data$.pipe(debugItemLoaded('myItem', currentUser))
+ */
+export function debugItemLoaded<T>(name: string, currentUser?: UserModel) {
+  return tap<T | undefined>((data) => {
+    if (currentUser?.showDebugInfo) {
       console.log(`${name} loaded.`, data);
-    });
-  }
+    }
+  });
 }
 
 export function debugMessage(message: string, currentUser?: UserModel): void {

@@ -104,7 +104,7 @@ export class WorkrelService {
    * @param orgKey the document id of the org to look its relationships up
    * @returns an Observable array of the selected work relationships
    */
-  public listWorkersOfOrg(orgKey: string): Observable<WorkrelModel[]> {
+  public listWorkersOfOrg(orgKey?: string): Observable<WorkrelModel[]> {
     if (!orgKey || orgKey.length === 0) return of([]);
     return this.list().pipe(
       map((workrels: WorkrelModel[]) => {

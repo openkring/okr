@@ -1,7 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, of } from 'rxjs';
 import { Photo } from '@capacitor/camera';
 
 import { AppStore } from '@bk2/shared-feature';
@@ -40,15 +39,13 @@ export const ProfileEditStore = signalStore(
   withProps((store) => ({
     personResource: rxResource({
       params: () => ({
-        personKey: store.personKey()
+        personKey: store.personKey(),
+        currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
-        let person$: Observable<PersonModel | undefined> = of(undefined);
-        if (params.personKey) {
-          person$ = store.personService.read(params.personKey);
-          debugItemLoaded('ProfileEditStore.person', person$, store.appStore.currentUser());
-        }
-        return person$;
+        return store.personService.read(params.personKey).pipe(
+          debugItemLoaded('ProfileEditStore.person', params.currentUser)
+        );
       }
     })
   })),

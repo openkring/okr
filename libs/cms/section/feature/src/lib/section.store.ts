@@ -1,6 +1,5 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -48,15 +47,13 @@ export const _SectionStore = signalStore(
 
     sectionResource: rxResource({
       params: () => ({
-        sectionId: store.sectionId()
+        sectionId: store.sectionId(),
+        currentUser: store.appStore.currentUser()
       }),
       stream: ({ params }) => {
-        if (!params.sectionId || params.sectionId.length === 0) {
-          return of(undefined);
-        }
-        const section$ = store.sectionService.read(params.sectionId);
-        debugItemLoaded<SectionModel>(`SectionStore.sectionResource`, section$, store.appStore.currentUser());
-        return section$;
+        return store.sectionService.read(params.sectionId).pipe(
+          debugItemLoaded<SectionModel>(`SectionStore.sectionResource`, params.currentUser)
+        );
       }
     })
   })),

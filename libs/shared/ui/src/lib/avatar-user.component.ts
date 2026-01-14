@@ -7,9 +7,6 @@ import { coerceBoolean, getFullName } from "@bk2/shared-util-core";
 import { FirestoreService } from '@bk2/shared-data-access';
 import { addImgixParams } from '@bk2/shared-util-core';
 import { ENV } from "@bk2/shared-config";
-import { SvgIconPipe } from "@bk2/shared-pipes";
-import { TranslatePipe } from "@bk2/shared-i18n";
-import { AsyncPipe } from "@angular/common";
 import { navigateByUrl } from "@bk2/shared-util-angular";
 import { Router } from "@angular/router";
 
@@ -18,7 +15,6 @@ import { Router } from "@angular/router";
   selector: 'bk-avatar-user',
   standalone: true,
   imports: [
-    SvgIconPipe, TranslatePipe, AsyncPipe,
     IonAvatar, IonLabel, IonImg
   ],
   styles: [`
@@ -31,13 +27,6 @@ import { Router } from "@angular/router";
         </ion-avatar>
         @if (shouldShowName()) {
           <ion-label><small>{{ userName() }}</small></ion-label>
-        }
-    } @else {
-        <ion-avatar>
-            <ion-img src="{{ 'help-circle' | svgIcon }}" alt="Help Circle because there is no current user" />
-        </ion-avatar>
-        @if (shouldShowName()) {
-          <ion-label><small>{{ '@user.unknown' | translate | async }}</small></ion-label>
         }
     }
   `

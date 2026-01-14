@@ -1,7 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
 import { Photo } from '@capacitor/camera';
 
 import { AppStore } from '@bk2/shared-feature';
@@ -38,10 +37,9 @@ export const PersonEditStore = signalStore(
         personKey: store.personKey()
       }),
       stream: ({params}) => {
-        if (!params.personKey) return of(undefined);
-        const person$ = store.personService.read(params.personKey);
-        debugItemLoaded('PersonEditStore.person', person$, store.appStore.currentUser());
-        return person$;
+        return store.personService.read(params.personKey).pipe(
+          debugItemLoaded('PersonEditStore.person', store.appStore.currentUser())
+        );
       }
     })
   })),

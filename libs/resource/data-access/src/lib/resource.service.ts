@@ -32,7 +32,7 @@ export class ResourceService {
    * @param key the document id of the Resource
    * @returns the ResourceModel that has the given key
    */
-  public read(key: string): Observable<ResourceModel | undefined> {
+  public read(key: string | undefined): Observable<ResourceModel | undefined> {
     return findByKey<ResourceModel>(this.list(), key);
   }
 

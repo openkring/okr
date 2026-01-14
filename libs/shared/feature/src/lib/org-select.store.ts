@@ -30,9 +30,9 @@ export const OrgSelectStore = signalStore(
   withProps((store) => ({
     orgsResource: rxResource({
       stream: () => {
-        const orgs$ = store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
-        debugListLoaded('orgs (to select)', orgs$, store.currentUser());
-        return orgs$;
+        return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
+          debugListLoaded('orgs (to select)', store.currentUser())
+        );
       }
     })
   })),

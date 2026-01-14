@@ -38,10 +38,6 @@ export class DocumentService {
    * @param key the key of the model document
    */
   public read(key: string): Observable<DocumentModel | undefined> {
-    console.log('DocumentService.read', key);
-    this.list().subscribe(docs => {
-      console.log('DocumentService.read: listed documents', docs.map(d => d.bkey));
-    });
     return findByKey<DocumentModel>(this.list(), key);    
   }
 

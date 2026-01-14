@@ -55,12 +55,12 @@ export const ChatSectionStore = signalStore(
       }),
       stream: ({params}): Observable<string | undefined> => {
         if (!params.currentUser) {
-          debugMessage(`ChatSectionStore.imageUrlResource: No user, can't load image.`);
+          console.warn(`ChatSectionStore.imageUrlResource: No user, can't load image.`);
           return of(undefined);
         }
-        const url$ = store.avatarService.getAvatarImgixUrl(`person.${params.currentUser.personKey}`, "person");
-        debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${params.currentUser.personKey}`, url$, store.currentUser());
-        return url$;
+        return store.avatarService.getAvatarImgixUrl(`person.${params.currentUser.personKey}`, "person").pipe(
+          debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${params.currentUser.personKey}`, params.currentUser)
+        );
       }
     }),
 
@@ -81,7 +81,7 @@ export const ChatSectionStore = signalStore(
       stream: ({params}): Observable<string | undefined> => {
         // Guard that the user is actually logged in.
         if (!params.currentUser) {
-          debugMessage(`ChatSectionStore.userTokenResource: No user, can't call function.`);
+          console.warn(`ChatSectionStore.userTokenResource: No user, can't call function.`);
           return of(undefined);
         }
         try {
@@ -96,15 +96,14 @@ export const ChatSectionStore = signalStore(
 
           // Call the function. You don't need to pass any data, as the
           // function gets the user ID from the authentication context.
-          const token$ = from(getStreamUserToken()).pipe(
+          return from(getStreamUserToken()).pipe(
             map(result => result.data as string),
             catchError(err => {
               console.error('ChatSectionStore.userTokenResource: Token fetch error:', err);
               return of(undefined);
-            })
-          ); 
-          debugItemLoaded(`ChatSectionStore.userTokenResource: user token for ${params.currentUser.bkey}`, token$, params.currentUser);
-          return token$;
+            }),
+            debugItemLoaded(`ChatSectionStore.userTokenResource: got stream user token for ${params.currentUser.bkey}`, params.currentUser)
+          );
         } catch (error) {
           console.error('ChatSectionStore.userTokenResource: Error preparing to call getStreamUserToken function:', error);
           return of(undefined);

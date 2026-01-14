@@ -37,8 +37,9 @@ export const ResourceEditStore = signalStore(
       stream: ({params}) => {
         let resource$: Observable<ResourceModel | undefined> = of(undefined);
         if (params.resourceKey) {
-          resource$ = store.resourceService.read(params.resourceKey);
-          debugItemLoaded('ResourceEditStore.resource', resource$, store.appStore.currentUser());
+          resource$ = store.resourceService.read(params.resourceKey).pipe(
+            debugItemLoaded('ResourceEditStore.resource', store.appStore.currentUser())
+          );
         }
         return resource$;
       }

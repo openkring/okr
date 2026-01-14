@@ -138,7 +138,7 @@ export class MembershipService {
    * @param memberKey the given subject to list its memberships for.
    * @returns a list of the subject's memberships as an Observable
    */
-  public listMembershipsOfMember(memberKey: string, modelType: string): Observable<MembershipModel[]> {
+  public listMembershipsOfMember(memberKey?: string, modelType?: string): Observable<MembershipModel[]> {
     if (!memberKey || memberKey.length === 0) return of([]);
     if (!modelType || (modelType !== 'person' && modelType !== 'org')) return of([]);
     return this.list().pipe(

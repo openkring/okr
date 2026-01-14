@@ -30,9 +30,9 @@ export const ResourceSelectStore = signalStore(
   withProps((store) => ({
     resourcesResource: rxResource({
       stream: () => {
-        const resources$ = store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
-        debugListLoaded('resources (to select)', resources$, store.currentUser());
-        return resources$;
+        return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
+          debugListLoaded('resources (to select)', store.currentUser())
+        );
       }
     })
   })),

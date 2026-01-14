@@ -30,11 +30,11 @@ export const GroupSelectStore = signalStore(
   withProps((store) => ({
     groupsResource: rxResource({
       stream: () => {
-        const groups$ = store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
-        debugListLoaded('groups (to select)', groups$, store.currentUser());
-        return groups$;
+        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
+          debugListLoaded('groups (to select)', store.currentUser())
+        );
       }
-    })
+    }),
   })),
 
   withComputed((state) => {

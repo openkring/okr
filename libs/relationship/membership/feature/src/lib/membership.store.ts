@@ -8,7 +8,7 @@ import { memberTypeMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryCollection, CategoryListModel, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, isMembership, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, debugMessage, getSystemQuery, getTodayStr, isAfterDate, isMembership, nameMatches } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 
@@ -66,19 +66,25 @@ export const _MembershipStore = signalStore(
   withProps((store) => ({
     // all memberships of this tenant
     allMembershipsResource: rxResource({  
-      stream: () => {
-        const allMemberships$ = store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.tenantId()), 'memberName2', 'asc');
-        debugListLoaded('MembershipStore.allMemberships', allMemberships$, store.appStore.currentUser());
-        return allMemberships$;
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        return store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.tenantId()), 'memberName2', 'asc').pipe(
+          debugListLoaded('MembershipStore.allMemberships', params.currentUser)
+        );
       },
     }),
     
     // default membership category - loaded once and reused as fallback
     defaultMcatResource: rxResource({
-      stream: () => {
-        const defaultMcat$ = store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_default');
-        debugItemLoaded<CategoryListModel>('mcat_default', defaultMcat$, store.appStore.currentUser());
-        return defaultMcat$;
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_default').pipe(
+          debugItemLoaded<CategoryListModel>('mcat_default', params.currentUser)
+        );
       }
     }),
   })),
@@ -92,7 +98,6 @@ export const _MembershipStore = signalStore(
 
       // members of a given org or group (if orgId is set), otherwise []
       members: computed(() => { 
-        if (!state.orgId || state.orgId().length === 0) return [];
         return state.allMembershipsResource.value()?.filter((membership: MembershipModel) => membership.orgKey === state.orgId()) ?? []
       }),
 
@@ -117,19 +122,20 @@ export const _MembershipStore = signalStore(
   withProps((store) => ({
     mcatResource: rxResource({
       params: () => ({
-        mcatId: store.membershipCategoryKey()
+        mcatId: store.membershipCategoryKey(),
+        currentUser: store.currentUser()
       }),  
       stream: ({params}) => {
         return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId).pipe(
           switchMap(mcat => {
             if (!mcat) {
               // fallback to preloaded default membership category
-              console.log(`MembershipStore: mcat ${params.mcatId} not found, falling back to mcat_default`);
-              const defaultMcat = store.defaultMcatResource.value();
-              return of(defaultMcat);
+              debugMessage(`MembershipStore: mcat ${params.mcatId} not found, falling back to mcat_default`, params.currentUser);
+              return of(store.defaultMcatResource.value());
             }
-            debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, of(mcat), store.currentUser());
-            return of(mcat);
+            return of(mcat).pipe(
+              debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, params.currentUser)
+            );
           })
         );
       }

@@ -33,11 +33,11 @@ export const PersonSelectStore = signalStore(
         currentUser: store.currentUser()
       }),
       stream: ({params}) => {
-        const persons$ = store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.tenantId()), 'lastName', 'asc');
-        debugListLoaded('persons (to select)', persons$, params.currentUser);
-        return persons$;
+        return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.tenantId()), 'lastName', 'asc').pipe(
+          debugListLoaded('persons (to select)', params.currentUser)
+        );
       }
-    })
+    }),
   })),
 
   withComputed((state) => {

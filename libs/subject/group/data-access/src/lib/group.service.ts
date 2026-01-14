@@ -32,7 +32,7 @@ export class GroupService  {
    * @param key the unique key of the group in the database
    * @returns an Observable of the group or undefined if not found
    */
-  public read(key: string): Observable<GroupModel | undefined> {
+  public read(key?: string): Observable<GroupModel | undefined> {
     return findByKey<GroupModel>(this.list(), key);
   }
 

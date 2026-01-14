@@ -1,7 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { UserModel } from '@bk2/shared-models';
@@ -29,13 +28,13 @@ export const UserEditStore = signalStore(
   withProps((store) => ({
     userResource: rxResource({
       params: () => ({
-        userKey: store.userKey()
+        userKey: store.userKey(),
+        currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
-        if (!params.userKey) return of(undefined);
-        const user$ = store.userService.read(params.userKey);
-        debugItemLoaded('UserEditStore.user', user$, store.appStore.currentUser());
-        return user$;
+        return store.userService.read(params.userKey).pipe(
+          debugItemLoaded('UserEditStore.user', params.currentUser)
+        );
       }
     })
   })),

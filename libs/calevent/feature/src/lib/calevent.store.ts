@@ -60,17 +60,23 @@ export const CalEventStore = signalStore(
   })),
   withProps((store) => ({
     caleventsResource: rxResource({
-      stream: () => {
-        const calevents$ = store.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
-        debugListLoaded<CalEventModel>('CalEventStore.calevents', calevents$, store.appStore.currentUser());
-        return calevents$;
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        return store.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
+          debugListLoaded<CalEventModel>('CalEventStore.calevents', params.currentUser)
+        );
       }
     }),
     calendarsResource: rxResource({
-      stream: () => {
-        const calendars$ = store.firestoreService.searchData<CalendarModel>(CalendarCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
-        debugListLoaded<CalendarModel>('CalEventStore.calendars', calendars$, store.appStore.currentUser());
-        return calendars$;
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        return store.firestoreService.searchData<CalendarModel>(CalendarCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
+          debugListLoaded<CalendarModel>('CalEventStore.calendars', params.currentUser)
+        );
       }
     }),
   })),
