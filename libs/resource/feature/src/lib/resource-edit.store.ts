@@ -2,7 +2,6 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { ResourceModel } from '@bk2/shared-models';
@@ -35,13 +34,9 @@ export const ResourceEditStore = signalStore(
         resourceKey: store.resourceKey()
       }),
       stream: ({params}) => {
-        let resource$: Observable<ResourceModel | undefined> = of(undefined);
-        if (params.resourceKey) {
-          resource$ = store.resourceService.read(params.resourceKey).pipe(
-            debugItemLoaded('ResourceEditStore.resource', store.appStore.currentUser())
-          );
-        }
-        return resource$;
+        return store.resourceService.read(params.resourceKey).pipe(
+          debugItemLoaded('ResourceEditStore.resource', store.appStore.currentUser())
+        );
       }
     }),    
   })),
