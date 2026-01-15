@@ -125,7 +125,6 @@ export class DocumentService {
 
   private async convertStorageMetadataToDocumentModel(metadata: FullMetadata): Promise<DocumentModel> {
     const doc = new DocumentModel(this.tenantId);
-    doc.bkey = generateRandomString(10);
     doc.fullPath = metadata.fullPath;
     doc.description = DEFAULT_NOTES;
     doc.type = DEFAULT_DOCUMENT_TYPE;
