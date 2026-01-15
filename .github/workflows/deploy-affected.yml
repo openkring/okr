@@ -1,0 +1,63 @@
+name: Deploy Affected Apps to Firebase App Hosting
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for Nx affected
+      
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Get affected apps
+        id: affected
+        run: |
+          # Get list of affected apps
+          AFFECTED=$(pnpm nx show projects --affected --type app --base=origin/main~1 --head=HEAD)
+          echo "Affected apps: $AFFECTED"
+          
+          # Convert to JSON array for matrix strategy
+          APPS_JSON=$(echo "$AFFECTED" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "apps=$APPS_JSON" >> $GITHUB_OUTPUT
+      
+      - name: Deploy affected apps
+        if: steps.affected.outputs.apps != '[]'
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          # Map app names to backend IDs
+          declare -A BACKEND_MAP
+          BACKEND_MAP[scs-app]="bko-scs-euw4-be"
+          BACKEND_MAP[test-app]="bko-test-euw4-be"
+          # Add more mappings as you create more apps:
+          # BACKEND_MAP[new-app]="bko-new-euw4-be"
+          
+          APPS='${{ steps.affected.outputs.apps }}'
+          echo "$APPS" | jq -r '.[]' | while read -r app; do
+            if [ -n "${BACKEND_MAP[$app]}" ]; then
+              echo "🚀 Deploying $app to ${BACKEND_MAP[$app]}..."
+              pnpm nx run $app:config
+              pnpm nx build $app --configuration=production
+              # Uncomment when Firebase CLI is configured:
+              # firebase apphosting:backends:rollout ${BACKEND_MAP[$app]} --no-wait
+            else
+              echo "⚠️  No backend mapping found for $app"
+            fi
+          done
