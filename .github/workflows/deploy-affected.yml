@@ -37,10 +37,14 @@ jobs:
           APPS_JSON=$(echo "$AFFECTED" | jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "apps=$APPS_JSON" >> $GITHUB_OUTPUT
       
+      - name: Authenticate to Google Cloud
+        if: steps.affected.outputs.apps != '[]'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      
       - name: Deploy affected apps
         if: steps.affected.outputs.apps != '[]'
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           # Map app names to backend IDs
           declare -A BACKEND_MAP
