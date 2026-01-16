@@ -190,39 +190,26 @@ export class ImageComponent {
   // BEWARE: CSS allows strings like '100%', '50vw', 'auto' for width and height,
   // but the img attributes require numeric values in pixels or nothing at all (auto)
   protected numericWidth = computed(() => {
-    const w = this.width();
-    if (typeof w === 'number') return w;
-    if (typeof w === 'string' && w.endsWith('px')) {
-      const num = parseInt(w.replace('px', ''), 10);
-      return isNaN(num) ? undefined : num;
-    }
-    return undefined;
+    let w = this.width();
+    if (w.endsWith('px')) w = w.replace('px', '');
+    const num = parseInt(w, 10);
+    return isNaN(num) ? undefined : num;
   });
 
   protected numericHeight = computed(() => {
-    const h = this.height();
-    if (typeof h === 'number') return h;
-    if (typeof h === 'string' && h.endsWith('px')) {
-      const num = parseInt(h.replace('px', ''), 10);
-      return isNaN(num) ? undefined : num;
-    }
-    return undefined;
+    let h = this.height();
+    if (h.endsWith('px')) h = h.replace('px', '');
+    const num = parseInt(h, 10);
+    return isNaN(num) ? undefined : num;
   });
 
+  // styles for the img element, also supports e.g. 100%, 50vw, auto, 100px, etc.
   protected imageStyles = computed(() => {
-    const styles: any = { 'object-fit': 'contain' };
-    const w = this.width();
-    const h = this.height();
-    
-    // Use CSS for non-numeric values (100%, auto, 50vw, etc.)
-    if (typeof w === 'string' && !w.endsWith('px') && w !== 'auto') {
-      styles.width = w;
-    }
-    if (typeof h === 'string' && !h.endsWith('px') && h !== 'auto') {
-      styles.height = h;
-    }
-    
-    return styles;
+    return {
+      'object-fit': 'contain',
+      'width': this.width(),
+      'height': this.height()
+    };
   });
 
   // we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage

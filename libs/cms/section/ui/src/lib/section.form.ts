@@ -1,9 +1,9 @@
-import { Component, computed, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, GallerySection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, MapConfig, MapSection, PeopleConfig, PeopleSection, RoleName, SectionModel, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, GallerySection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, MapConfig, MapSection, PeopleConfig, PeopleSection, RoleName, SectionModel, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
 import { ChipsComponent, ImageConfigComponent, NotesInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 import { SectionConfigComponent } from './section-config';
 import { EditorConfigComponent } from './editor-config';
@@ -21,6 +21,7 @@ import { TrackerConfigComponent } from './tracker-config';
 import { TableGridComponent } from './table-grid';
 import { TableStyleComponent } from './table-style';
 import { TableDataComponent } from './table-data';
+import { ModelSelectService } from '@bk2/shared-feature';
 
 @Component({
   selector: 'bk-section-form',
@@ -112,13 +113,14 @@ import { TableDataComponent } from './table-data';
           }
         }
         @case('people') {
-          /**
-            avatar: AvatarConfig;
-            persons: AvatarInfo[]; // list of persons to be shown
-          tbd: peopleConfig: AvatarInfo triggert noch nicht und select funktioniert noch nicht
-          */
           @if(peopleConfig(); as peopleConfig) {
-              <bk-people-config [formData]="peopleConfig" (formDataChange)="onPeopleConfigChange($event)" [currentUser]="currentUser()" [readOnly]="isReadOnly()" />
+              <bk-people-config
+                [formData]="peopleConfig"
+                (formDataChange)="onPeopleConfigChange($event)"
+                (selectClicked)="selectPerson()"
+                [currentUser]="currentUser()" 
+                [readOnly]="isReadOnly()"
+              />
           }
         }
         @case('slider') {
@@ -165,6 +167,8 @@ import { TableDataComponent } from './table-data';
  * Because vest validation is type specific and we want to have a generic section form component for all union types, we do not use vest here.
  */
 export class SectionFormComponent {
+  private readonly modelSelectService = inject(ModelSelectService);
+
   // inputs
   public formData = model.required<SectionModel>();
   public currentUser = input.required<UserModel>();
@@ -201,7 +205,7 @@ export class SectionFormComponent {
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
 
   /************************************** actions *********************************************** */
-  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean | AvatarInfo[]): void {
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
   }
   
@@ -221,6 +225,7 @@ export class SectionFormComponent {
   private getContent(): EditorConfig | undefined {
     switch (this.formData().type) {
       case 'article': return (this.formData() as ArticleSection).content || EDITOR_CONFIG_SHAPE;
+      case 'people': return (this.formData() as PeopleSection).content || EDITOR_CONFIG_SHAPE;
       case 'button': return (this.formData() as ButtonSection).content || EDITOR_CONFIG_SHAPE;
       default: 
         console.log(`SectionForm.getContent: no content for section type ${this.formData().type}`);
@@ -558,6 +563,17 @@ export class SectionFormComponent {
         ...section,
         properties: config
       } as VideoSection);
+    }
+  }
+
+  /************************************** select person *********************************************** */
+  public async selectPerson(): Promise<void> {
+    const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL);
+    if (avatar) {
+      // peopleConfig
+      const people = this.peopleConfig()?.persons || [];
+      people.push(avatar);
+      this.onFieldChange('persons', people);
     }
   }
 }

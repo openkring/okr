@@ -7,13 +7,13 @@ export const SectionCollection = 'sections';
 export const SectionModelName = 'section';
 
 export type SectionType = 
-    'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' |'gallery' | 'hero' | 'iframe' | 'map' | 'people' | 'slider' | 'table' | 'tracker' | 'video';
+    'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' |'gallery' | 'hero' | 'iframe' | 'map' | 'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     GallerySection | HeroSection | IframeSection | MapSection | PeopleSection | SliderSection | 
-    TableSection | TrackerSection | VideoSection;
+    TableSection | TrackerSection | VideoSection | AccordionSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 export interface BaseSection {
@@ -27,7 +27,7 @@ export interface BaseSection {
   roleNeeded: RoleName;
   isArchived: boolean;
   content: EditorConfig; // content from rich text editor
-  properties?: AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | GalleryConfig | HeroConfig | IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig;
+  properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | GalleryConfig | HeroConfig | IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -40,6 +40,26 @@ export interface EditorConfig {
 }
 
 // --------------------------------------- CONCRETE SECTION MODELS ----------------------------------------
+
+// accordion
+export interface AccordionSection extends BaseSection {
+  type: 'accordion';
+  properties: AccordionConfig;
+}
+
+export interface AccordionConfig {
+  multiple: boolean;
+  readonly: boolean;
+  value: string;
+  items: AccordionItem[];
+}
+
+export interface AccordionItem {
+  key: string;
+  label: string;
+  value: string;
+}
+
 // album
 export interface AlbumSection extends BaseSection {
   type: 'album';
@@ -84,7 +104,7 @@ export interface ButtonConfig {
 
 export interface IconConfig {
     name: string; // either ion-icon name (e.g. download, contains -) or FileTypeIcon (e.g. pdf) that resolves into assets/filetypes/file-pdf-light.svg
-    size: 'small' | 'default' | 'large'; // default is 'default'
+    size: number; // size in px, default is 60, if size is not given, it is set to 60% of the button size (min(width, height))
     slot: Slot; // default is 'start'
 }
 
@@ -212,14 +232,13 @@ export interface PeopleConfig {
 }
 
 export interface AvatarConfig {
-  cols: number; // number of columns, 0 - 4, default is 2
-  color: ColorIonic; // color of the avatar, default is ColorIonic.Light
-  showName: boolean; // if true, the name is displayed, default is true
-  showLabel: boolean; // if true, the label is displayed, default is true
-  nameDisplay: NameDisplay; // NameDisplay enum, default is FirstLast
   altText: string; // alt text for the image, default is 'avatar'
-  title: string;
+  color: ColorIonic; // background color of the avatar, default is ColorIonic.Light
   linkedSection: string; // this section content will be shown in a modal when the title is clicked
+  nameDisplay: NameDisplay; // NameDisplay enum, default is FirstLast
+  showLabel: boolean; // if true, the label of the avatar is displayed as () after the name, default is true
+  showName: boolean; // if true, the name of the avatar is displayed, default is true
+  title: string; // to add a short text besides the avatar (e.g. Finanzen:   Bruno Kaiser (bkaiser))
 }
 
 // slider
@@ -254,6 +273,7 @@ export interface TableGrid {
     gap: string;
     backgroundColor: string;
     padding: string;
+    showTitleAs: 'title' | 'legend' | 'header' | 'none';
 }
 
 export interface TableStyle {
@@ -262,6 +282,8 @@ export interface TableStyle {
   fontSize: string;
   fontWeight: string;
   padding: string;
+  textColor: string;
+  border: string;
 }
 
 // tracker

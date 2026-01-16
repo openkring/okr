@@ -4,7 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { RoleName } from '@bk2/shared-models';
+import { ArticleSection, ButtonSection, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
@@ -227,6 +227,14 @@ export class ContentPageComponent {
    */
   protected async showActions(sectionId: string): Promise<void> {
     if (this.editMode()) {
+      const id = replaceSubstring(sectionId, '@TID@', this.tenantId());
+      this.sectionStore.setSectionId(id);
+
+      // Wait for section to load
+      while (this.sectionStore.isLoading()) {
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+
       const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
       this.addActionSheetButtons(actionSheetOptions);
       await this.executeActions(actionSheetOptions, sectionId);
@@ -235,11 +243,17 @@ export class ContentPageComponent {
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param sectionId 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
     if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
+
       actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'create_edit'));
+      if (this.sectionStore.section()?.type === 'article') {
+        actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
+      }
+      if (this.sectionStore.section()?.type === 'button') {
+        actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.pageStore.imgixBaseUrl(), 'upload'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.pageStore.imgixBaseUrl(), 'trash_delete'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.pageStore.imgixBaseUrl(), 'close_cancel'));
     }
@@ -252,8 +266,6 @@ export class ContentPageComponent {
    */
   private async executeActions(actionSheetOptions: ActionSheetOptions, sectionId: string): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
-      const id = replaceSubstring(sectionId, '@TID@', this.tenantId());
-      this.sectionStore.setSectionId(id);
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
@@ -266,6 +278,13 @@ export class ContentPageComponent {
         case 'section.edit':
           await this.sectionStore.edit(this.sectionStore.section(), false);
           break;
+        case 'section.image.upload':
+          await this.sectionStore.uploadImage(this.sectionStore.section() as ArticleSection);
+          break;
+        case 'section.file.upload':
+          await this.sectionStore.uploadFile(this.sectionStore.section() as ButtonSection);
+          break;
+
       }
     }
   }

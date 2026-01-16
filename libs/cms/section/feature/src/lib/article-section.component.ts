@@ -34,7 +34,9 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
                     </ion-col>
                   }
                   <ion-col size="12" [sizeMd]="colSizeText()">
-                    <div [innerHTML]="content()"></div>
+                    <ion-item lines="none">
+                      <div [innerHTML]="content()"></div>
+                    </ion-item>
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -43,7 +45,9 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" [sizeMd]="colSizeText()">
-                    <div [innerHTML]="content()"></div>
+                    <ion-item lines="none">
+                      <div [innerHTML]="content()"></div>
+                    </ion-item>
                   </ion-col>
                   @if(image(); as image) {
                     <ion-col size="12" [sizeMd]="colSizeImage()">
@@ -54,19 +58,45 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
               </ion-grid>
             }
             @case(VP.Top) {
-              @if(image(); as image) {
-                <bk-img [image]="image" [imageStyle]="imageStyle()"  />
-              }
-              <div [innerHTML]="content()"></div>
+              <ion-grid>
+                @if(image(); as image) {
+                  <ion-row>
+                    <ion-col size="12">
+                      <bk-img [image]="image" [imageStyle]="imageStyle()"  />
+                    </ion-col>
+                  </ion-row>
+                }
+                <ion-row>
+                  <ion-col size="12">
+                    <ion-item lines="none">
+                      <div [innerHTML]="content()"></div>
+                    </ion-item>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
             }
             @case(VP.Bottom) {
-              <div [innerHTML]="content()"></div>
-              @if(image(); as image) {
-                <bk-img [image]="image" [imageStyle]="imageStyle()"  />
-              }
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="12">
+                    <ion-item lines="none">
+                      <div [innerHTML]="content()"></div>
+                    </ion-item>
+                  </ion-col>
+                </ion-row>
+                @if(image(); as image) {
+                  <ion-row>
+                    <ion-col size="12">
+                      <bk-img [image]="image" [imageStyle]="imageStyle()"  />
+                    </ion-col>
+                  </ion-row>
+                }
+              </ion-grid>
             }
             @default {  <!-- VP.None -->
-              <div [innerHTML]="content()"></div>
+              <ion-item lines="none">
+                <div [innerHTML]="content()"></div>
+              </ion-item>
             }
           }
         </ion-card-content>

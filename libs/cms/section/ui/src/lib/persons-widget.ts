@@ -22,19 +22,11 @@ import { AvatarLabelComponent } from '@bk2/avatar-ui';
     @if(section(); as section) {
       <ion-grid>
         <ion-row>
-          @if(persons().length === 0) {
+          @if(count() === 0) {
             <ion-col>{{ '@content.section.error.noPeople' | translate | async }}</ion-col>
           } @else {
             @for(person of persons(); track person.key) {
-              @if(cols() === 0) {
-                <bk-avatar-label 
-                  key="{{ person.modelType + '.' + person.key}}" 
-                  [label]="getPersonLabel(person)" 
-                  [color]="color()"
-                  alt="{{altText()}}"
-                />
-              } @else {
-                <ion-col size="12" [sizeMd]="12/cols()" (click)="showPerson(person)">
+              <ion-col size="12" [sizeMd]="cols()" (click)="showPerson(person)">
                 <bk-avatar-label 
                   key="{{ person.modelType + '.' + person.key}}" 
                   [label]="getPersonLabel(person)" 
@@ -42,7 +34,6 @@ import { AvatarLabelComponent } from '@bk2/avatar-ui';
                   alt="{{altText()}}"
                 />
               </ion-col>
-              }
             }
           }
         </ion-row>
@@ -59,11 +50,24 @@ export class PersonsWidgetComponent {
   // signals
   protected persons = computed(() => this.section()?.properties.persons ?? []);
   protected avatar = computed(() => this.section()?.properties.avatar ?? AVATAR_CONFIG_SHAPE);
-  protected cols = computed(() => this.avatar().cols ?? 2);
+  protected avatarTitle = computed(() => this.avatar().title);
+  protected count = computed(() => this.persons().length);
+  protected cols = computed(() => {
+    const count = this.count();
+    if (this.avatarTitle().length > 0) {  // distribute the avatars to max 9 columns if title is shown
+      if (count === 1) return 9;
+      if (count === 2) return 4;
+      if (count === 3) return 3;
+      return 2; // for 4 or more avatars
+    } else {      // distribute the avatars to max 12 columns if no title is shown
+      if (count > 4) return 2;
+      return 12/count;
+    }
+  });
   protected showName = computed(() => this.avatar().showName ?? true);
   protected showLabel = computed(() => this.avatar().showLabel ?? true);
   protected nameDisplay = computed(() => this.avatar().nameDisplay ?? NameDisplay.FirstLast);
-  protected color = computed(() => this.section()?.color ?? ColorIonic.Light);
+  protected color = computed(() => this.avatar()?.color ?? ColorIonic.Light);
   protected altText = computed(() => this.avatar().altText ?? 'avatar');
 
   protected getPersonLabel(person: AvatarInfo): string {

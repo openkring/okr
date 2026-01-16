@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 import { AsyncPipe } from '@angular/common';
 
 import { IconConfig, Slot } from '@bk2/shared-models';
-import { StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
+import { NumberInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
 import { DEFAULT_NAME } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 
@@ -12,8 +12,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    TextInputComponent,
-    StringSelectComponent,
+    TextInputComponent, NumberInputComponent, StringSelectComponent,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -31,7 +30,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
               <bk-text-input name="iconName" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <bk-string-select name="iconSize"  [selectedString]="size()" (selectedStringChange)="onFieldChange('size', $event)" [readOnly]="readOnly()" [stringList] = "['small', 'default', 'large']" />           
+              <bk-number-input name="iconSize"  [value]="size()" (valueChange)="onFieldChange('size', $event)" [readOnly]="readOnly()" />           
             </ion-col>
             <ion-col size="12" size-md="6">
               <bk-string-select name="iconSlot"  [selectedString]="slot()" (selectedStringChange)="onFieldChange('slot', $event)" [readOnly]="readOnly()" [stringList] = "['start', 'end', 'icon-only']" />           
@@ -55,7 +54,7 @@ export class IconConfigComponent {
   protected size = linkedSignal(() => this.formData().size ?? 'default');
   protected slot = linkedSignal(() => this.formData().slot ?? 'start');
 
-  protected onFieldChange(fieldName: string, $event: string | Slot): void {
+  protected onFieldChange(fieldName: string, $event: string | Slot | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
   }
 }

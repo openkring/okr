@@ -126,6 +126,14 @@ export const DEFAULT_STREETNUMBER = '';
 export const DEFAULT_CITY = '';
 export const DEFAULT_COUNTRY = 'CH';
 export const DEFAULT_ORDER = 1;
+export const IMAGE_MIMETYPES = [
+    'image/png',
+    'image/jpg',
+    'image/jpeg',
+    'image/webp',
+    'image/gif',
+    'image/tiff',
+    'image/bmp']; //  'image/svg+xml' currently not supported. 
 export const DEFAULT_MIMETYPES = [
     'image/png', 
     'image/jpg', 
@@ -142,7 +150,9 @@ export const DEFAULT_MIMETYPES = [
     'com.apple.iwork.pages.pages',
     'com.apple.iwork.numbers.numbers',
     'com.apple.iwork.keynote.key',
+    'application/x-iwork-pages-sffpages',
     'public.zip-archive',
+    'application/zip',
     'public.data'
     ];
 

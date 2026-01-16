@@ -1,19 +1,17 @@
 import { Component, computed, input, model } from '@angular/core';
 
-import { StringsComponent } from '@bk2/shared-ui';
-import { HtmlTextMask } from '@bk2/shared-config';
+import { StringsComponent, TextInputComponent, TextList } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-table-data',
   standalone: true,
   imports: [
-    StringsComponent
+    TextList
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <bk-strings
-        [(strings)]="formData"
-        [mask]="mask"
+    <bk-text-list
+        [(texts)]="formData"
         [maxLength]="maxLength()"
         [title]="title()"
         [readOnly]="readOnly()"
@@ -33,6 +31,4 @@ export class TableDataComponent {
   protected title = computed(() => `@input.${this.name()}.title`);
   protected description = computed(() => `@input.${this.name()}.description`);
   protected addLabel = computed(() => `@input.${this.name()}.addLabel`);
-
-  protected mask = HtmlTextMask;
 } 

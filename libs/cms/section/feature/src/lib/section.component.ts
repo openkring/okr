@@ -4,6 +4,7 @@ import { IonItem, IonLabel } from '@ionic/angular/standalone';
 import { RoleName } from '@bk2/shared-models';
 import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
+import { AccordionSectionComponent } from './accordion-section';
 import { AlbumSectionComponent } from './album-section.component';
 import { ArticleSectionComponent } from './article-section.component';
 import { ButtonSectionComponent } from './button-section.component';
@@ -31,6 +32,7 @@ import { SectionStore } from './section.store';
   selector: 'bk-section',
   standalone: true,
   imports: [
+    AccordionSectionComponent,
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleSectionComponent, GallerySectionComponent, TrackerSectionComponent,
@@ -42,6 +44,9 @@ import { SectionStore } from './section.store';
     @if (section(); as section) {
       @if (hasRole(roleNeeded())) {
         @switch (section.type) {
+          @case('accordion') { 
+            <bk-accordion-section [section]="section" />
+          }
           @case('album') { 
             <bk-album-section [section]="section" />
           }

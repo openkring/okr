@@ -2,7 +2,7 @@ import { CalendarOptions } from "@fullcalendar/core";
 import { EChartsOption } from "echarts";
 
 import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DEFAULT_URL } from "@bk2/shared-constants";
-import { AlbumConfig, AlbumSection, AlbumStyle, ArticleConfig, ArticleSection, AvatarConfig, AvatarInfo, ButtonAction, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection, ChartSection, ChatConfig, ChatSection, ColorIonic, EditorConfig, GalleryConfig, GalleryEffect, GallerySection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, ImageConfig, MapConfig, MapSection, NameDisplay, PeopleConfig, PeopleSection, SliderConfig, SliderSection, Slot, TableConfig, TableSection, TrackerConfig, TrackerSection, VideoConfig, VideoSection, ViewPosition } from "@bk2/shared-models";
+import { AccordionSection, AlbumConfig, AlbumSection, AlbumStyle, ArticleConfig, ArticleSection, AvatarConfig, AvatarInfo, ButtonAction, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection, ChartSection, ChatConfig, ChatSection, ColorIonic, EditorConfig, GalleryConfig, GalleryEffect, GallerySection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, ImageConfig, MapConfig, MapSection, NameDisplay, PeopleConfig, PeopleSection, SliderConfig, SliderSection, Slot, TableConfig, TableSection, TrackerConfig, TrackerSection, VideoConfig, VideoSection, ViewPosition } from "@bk2/shared-models";
 import { IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from "./image.shapes";
 
 const imgixBaseUrl = 'https://bkaiser.imgix.net'; // tbd: temporary solution
@@ -28,8 +28,8 @@ export const BASE_SECTION_SHAPE = {
   isArchived: false,
   content: {
     htmlContent: '<p></p>',
-    colSize: 4,
-    position: ViewPosition.None
+    colSize: 3,
+    position: ViewPosition.Top
   },
   notes: DEFAULT_NOTES,
   tags: DEFAULT_TAGS,
@@ -58,9 +58,9 @@ export const ARTICLE_CONFIG_SHAPE = {
 
 // button
 export const ICON_CONFIG_SHAPE = {
-    name: DEFAULT_NAME,
-    size: 'default',
-    slot: 'start' as Slot
+    name: 'filetypes:pdf',
+    size: 60,
+    slot: 'iconOnly' as Slot
 } as IconConfig;
 
 export const BUTTON_STYLE_SHAPE = {
@@ -193,6 +193,17 @@ export const VIDEO_CONFIG_SHAPE = {
 } as VideoConfig;
 
 // --------------------------------------- CONCRETE SECTION SHAPES ----------------------------------------
+
+export const ACCORDION_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'accordion',
+  properties: {
+    value: DEFAULT_LABEL,
+    readonly: true,
+    multiple: true,
+    items: []
+  }
+} as AccordionSection;
 
 export const ALBUM_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,

@@ -1,17 +1,18 @@
-import { Component, computed, input, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { Component, computed, inject, input } from '@angular/core';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { PeopleSection, ViewPosition } from "@bk2/shared-models";
 import { OptionalCardHeaderComponent, SpinnerComponent } from "@bk2/shared-ui";
 
 import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
+import { PreviewSectionModal } from '@bk2/cms-section-feature';
 
 @Component({
   selector: 'bk-people-section',
   standalone: true,
   imports: [
     SpinnerComponent, PersonsWidgetComponent, OptionalCardHeaderComponent,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol
+    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
   styles: [`
     ion-card-content { padding: 0px; }
@@ -20,53 +21,26 @@ import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
   template: `
     @if(section(); as section) {
       <ion-card>
-        <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+        <bk-optional-card-header  [title]="sectionTitle()" [subTitle]="subTitle()" />
         <ion-card-content>
-          @switch(position()) {
-            @case(VP.Left) {
-              <ion-grid>
-                <ion-row>
-                  <ion-col size="12" [sizeMd]="colSizeImage()">
-                    <bk-persons-widget [section]="section" />
-                  </ion-col>
-                  @if(content(); as content) {
-                    <ion-col size="12" [sizeMd]="colSizeText()">
-                      <div [innerHTML]="content"></div>
-                    </ion-col>
-                  }
-                </ion-row>
-              </ion-grid>
-            }
-            @case(VP.Right) {
-              <ion-grid>
-                <ion-row>
-                  @if(content(); as content) {
-                    <ion-col size="12" [sizeMd]="colSizeText()">
-                      <div [innerHTML]="content"></div>
-                    </ion-col>
-                  }
-                  <ion-col size="12" [sizeMd]="colSizeImage()">
-                    <bk-persons-widget [section]="section" />
-                  </ion-col>
-                </ion-row>
-              </ion-grid>
-            }
-            @case(VP.Top) {
-              <bk-persons-widget [section]="section" />
-              @if(content(); as content) {
-                <div [innerHTML]="content"></div>
+          <ion-grid>
+            <ion-row>
+              @if(avatarTitle(); as avatarTitle) {
+                <ion-col size="12" size-md="3">
+                  <ion-item lines="none" (click)="showLinkedSection()">
+                    <ion-label>{{ avatarTitle }}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="12" size-md="9">
+                  <bk-persons-widget [section]="section" />
+                </ion-col>
+              } @else {
+              <ion-col size="12">
+                <bk-persons-widget [section]="section" />
+              </ion-col>
               }
-            }
-            @case(VP.Bottom) {
-              @if(content(); as content) {
-                <div [innerHTML]="content"></div>
-              }
-              <bk-persons-widget [section]="section" />
-            }
-            @default { <!-- VP.None -->
-              <bk-persons-widget [section]="section" />
-            }
-          }
+            </ion-row>
+          </ion-grid>
         </ion-card-content>
       </ion-card>
     } @else {
@@ -75,17 +49,33 @@ import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
   `
 })
 export class PeopleSectionComponent {
+  private readonly modalController = inject(ModalController);
+
   // inputs
   public section = input<PeopleSection>();
 
   // fields
-  protected content = computed(() => this.section()?.content?.htmlContent || '<p></p>'); // check for undefined or empty content
-  protected colSizeImage = computed(() => this.section()?.content?.colSize ?? 6);
-  protected position = computed(() => this.section()?.content?.position ?? ViewPosition.None);
-  protected colSizeText = computed(() => 12 - this.colSizeImage());
-  protected readonly title = computed(() => this.section()?.title);
+  protected readonly sectionTitle = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
+
+  protected readonly avatarConfig = computed(() => this.section()?.properties.avatar);
+  protected readonly avatarTitle = computed(() => this.avatarConfig()?.title);
+  protected readonly linkedSection = computed(() => this.section()?.properties.avatar?.linkedSection);
 
   // passing constants to template
   public VP = ViewPosition;
+
+  protected async showLinkedSection(): Promise<void> {
+    const linkedSection = this.linkedSection();
+    if (!linkedSection || linkedSection.length === 0) return;
+      const _modal = await this.modalController.create({
+        component: PreviewSectionModal,
+        cssClass: 'wide-modal',
+        componentProps: { 
+          id: linkedSection,
+          title: this.avatarTitle()
+        }
+      });
+      _modal.present();
+      await _modal.onDidDismiss();  }
 }

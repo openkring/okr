@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { ColorsIonic, NameDisplays } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@bk2/shared-models';
-import { CategoryComponent, CheckboxComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategoryComponent, CheckboxComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
 import { AvatarsComponent } from '@bk2/avatar-ui';
@@ -20,7 +20,7 @@ import { AvatarsComponent } from '@bk2/avatar-ui';
     TranslatePipe, AsyncPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid,
     CategoryComponent, AvatarsComponent,
-    CheckboxComponent, TextInputComponent, NumberInputComponent
+    CheckboxComponent, TextInputComponent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -53,9 +53,6 @@ import { AvatarsComponent } from '@bk2/avatar-ui';
                 <bk-checkbox name="showLabel" [checked]="showLabel()" (checkedChange)="onFieldChange('showLabel', $event)" [readOnly]="isReadOnly()" />
               </ion-col>  
               <ion-col size="12" size-md="6">
-                <bk-number-input name="cols" [value]="cols()" (valueChange)="onFieldChange('cols', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
-              </ion-col> 
-              <ion-col size="12" size-md="6">
                 <bk-cat name="color" [value]="color()" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />                                               
               </ion-col>  
               <ion-col size="12" size-md="6">
@@ -81,14 +78,14 @@ export class PeopleConfigComponent {
   public selectClicked = output<void>();
 
   // linked signals (fields)
-  protected title = linkedSignal(() => this.formData()?.avatar?.title ?? 'Avatar');
-  protected altText = linkedSignal(() => this.formData()?.avatar?.altText ?? 'avatar');
-  protected showName = linkedSignal(() => this.formData()?.avatar?.showName ?? true);
-  protected showLabel = linkedSignal(() => this.formData()?.avatar?.showLabel ?? false);
-  protected cols = linkedSignal(() => this.formData()?.avatar?.cols ?? 1);
-  protected color = linkedSignal(() => this.formData()?.avatar?.color ?? ColorIonic.Primary);
-  protected nameDisplay = linkedSignal(() => this.formData()?.avatar?.nameDisplay ?? NameDisplay.FirstLast);
-  protected linkedSection = linkedSignal(() => this.formData()?.avatar?.linkedSection ?? '');
+  protected avatarConfig = linkedSignal(() => this.formData()?.avatar ?? {});
+  protected title = linkedSignal(() => this.avatarConfig().title ?? 'Avatar');
+  protected altText = linkedSignal(() => this.avatarConfig().altText ?? 'avatar');
+  protected showName = linkedSignal(() => this.avatarConfig().showName ?? true);
+  protected showLabel = linkedSignal(() => this.avatarConfig().showLabel ?? false);
+  protected color = linkedSignal(() => this.avatarConfig().color ?? ColorIonic.Primary);
+  protected nameDisplay = linkedSignal(() => this.avatarConfig().nameDisplay ?? NameDisplay.FirstLast);
+  protected linkedSection = linkedSignal(() => this.avatarConfig().linkedSection ?? '');
   protected persons = linkedSignal(() => this.formData()?.persons ?? []);
 
   // passing constants to template
@@ -97,6 +94,9 @@ export class PeopleConfigComponent {
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
-    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    this.formData.update((vm) => {
+      const avatar = { ...vm.avatar, [fieldName]: fieldValue };
+      return { ...vm, avatar };
+    });
   }
 }

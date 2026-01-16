@@ -27,12 +27,26 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
   ion-card-content { padding: 5px; }
   ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
   legend { padding: 0px; margin: 0px;  }
-  ion-label { margin-top: 0px; }
+  ion-label { 
+    margin-top: 0px;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+  ion-textarea {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
 `],
   template: `
   @if(section(); as section) {
     <ion-card>
-      <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+      @if(showTitleAs() === 'title') {
+        <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+      }
       <ion-card-content>
         @if(header()?.length === 0 && body()?.length === 0) {
           <ion-item lines="none">
@@ -40,6 +54,11 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
           </ion-item>
         } @else {
           <div [ngStyle]="gridStyle()">
+            @if(showTitleAs() === 'header') {
+              <!-- tbd: currently, this only works with 2 columns -->
+              <div [ngStyle]="headerStyle()">{{title()}}</div>
+              <div [ngStyle]="headerStyle()"></div>
+            }
             @for(header of header(); track $index) {
               <div [ngStyle]="headerStyle()">{{header}}</div>
             }
@@ -48,7 +67,7 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
             }
           </div>
         }
-        @if(section.title && section.title !== '') {
+        @if(section.title && section.title !== '' && showTitleAs() === 'legend') {
           <ion-item lines="none" class="legend">
             <ion-label><i>{{ section.title | translate | async}}</i></ion-label>
           </ion-item>
@@ -61,20 +80,23 @@ import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 `
 })
 export class TableSectionComponent {
+  // inputs
   public section = input<TableSection>();
+
+  // computed
   protected config = computed(() => this.section()?.properties);
   protected header = computed(() => this.section()?.properties?.data.header);
   protected body = computed(() => this.section()?.properties?.data.body);
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
+  protected readonly showTitleAs = computed(() => this.config()?.grid.showTitleAs ?? 'title');
 
   protected gridStyle = computed(() => {
     return {
       'display': 'grid',
       'grid-template-columns': this.config()?.grid.template ?? 'auto auto',
-      'gap': this.config()?.grid.gap ?? '1px',
-      'background-color': this.config()?.grid.backgroundColor ?? 'var(--ion-color-step-200)',
-      'padding': this.config()?.grid.padding ?? '1px',
+      'gap': '0',
+      'padding': '0',
       'margin': '10px'
     };
   });
@@ -86,16 +108,24 @@ export class TableSectionComponent {
       'font-size': this.config()?.header.fontSize ?? '1rem',
       'font-weight': this.config()?.header.fontWeight ?? 'bold',
       'padding': this.config()?.header.padding ?? '5px',
+      'color': this.config()?.header.textColor ?? 'var(--ion-text-color)',
+      'border': this.config()?.header.border ?? '0.5px solid var(--ion-color-medium)',
+      '-webkit-user-select': 'text',
+      '-moz-user-select': 'text',
+      '-ms-user-select': 'text',
+      'user-select': 'text'
     };
   });
 
   protected bodyStyle = computed(() => {
     return {
-      'backgroundColor': this.config()?.body.backgroundColor ?? 'var(--ion-color-background)',
+      'background-color': this.config()?.body.backgroundColor ?? 'var(--ion-color-background)',
       'text-align': this.config()?.body.textAlign ?? 'left',
       'font-size': this.config()?.body.fontSize ?? '0.8rem',
       'font-weight': this.config()?.body.fontWeight ?? 'normal',
       'padding': this.config()?.body.padding ?? '5px',
+      'color': this.config()?.body.textColor ?? 'var(--ion-text-color)',
+      'border': this.config()?.body.border ?? '0.5px solid var(--ion-color-medium)',
       '-webkit-user-select': 'text',
       '-moz-user-select': 'text',
       '-ms-user-select': 'text',

@@ -15,8 +15,8 @@ export const IMAGE_CONFIG_SHAPE = {
 
 export const IMAGE_STYLE_SHAPE = {
     imgIxParams: '',
-    width: '160',
-    height: '90',
+    width: '100%',
+    height: 'auto',
     sizes: '(max-width: 1240px) 50vw, 300px',
     border: '1px',
     borderRadius: '4',

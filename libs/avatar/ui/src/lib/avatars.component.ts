@@ -80,7 +80,7 @@ export class AvatarsComponent {
   // inputs
   public avatars = model.required<AvatarInfo[]>(); // the keys of the menu items
   public currentUser = input.required<UserModel>();
-  public name = input('avatars'); // the name of the menu
+  public name = input('avatar'); // the name of the menu
   public copyable = input(false);
   public editable = input(false);
   public readOnly = input.required<boolean>();
@@ -116,7 +116,7 @@ export class AvatarsComponent {
   }
 
   public async edit(avatar: AvatarInfo, index: number): Promise<void> {
-    const changedName = await bkPrompt(this.alertController, '@input.avatars.edit', this.getAvatarName(avatar));
+    const changedName = await bkPrompt(this.alertController, '@input.avatar.edit', this.getAvatarName(avatar));
     if (changedName) {
       // do not use set here, because the set on an array would not be signalled to the parent component
       this.avatars.update(arr => {  

@@ -4,7 +4,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryItemModel, CategoryListModel, SectionModel, SectionType } from '@bk2/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, ImageActionType, SectionModel, SectionType } from '@bk2/shared-models';
 import { CardSelectModalComponent } from '@bk2/shared-ui';
 import { chipMatches, debugItemLoaded, debugMessage, nameMatches } from '@bk2/shared-util-core';
 
@@ -12,6 +12,8 @@ import { SectionService } from '@bk2/cms-section-data-access';
 import { createSection, narrowSection } from '@bk2/cms-section-util';
 
 import { SectionEditModalComponent } from './section-edit.modal';
+import { UploadService } from '@bk2/avatar-data-access';
+import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
 
 export type SectionState = {
   sectionId: string;
@@ -35,6 +37,7 @@ export const _SectionStore = signalStore(
   withState(initialState),
   withProps(() => ({
     sectionService: inject(SectionService),
+    uploadService: inject(UploadService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),  
   })),
@@ -194,6 +197,42 @@ export const _SectionStore = signalStore(
         if (readOnly || !section) return;
         await store.sectionService.delete(section, store.currentUser());
         this.reset();
+      },
+
+      async uploadImage(section?: ArticleSection): Promise<void> {
+        if (!section) return;
+        // 1) pick an image file
+        const file = await store.uploadService.pickFile(IMAGE_MIMETYPES);
+        if (!file) return;
+
+        // 2) upload the image file into Firestorage
+        const fullPath = `tenant/${store.tenantId()}/section/${section.bkey}/image/${file.name}`;
+        const downloadUrl = await store.uploadService.uploadFile(file, fullPath, 'Upload Section Image');
+        if (!downloadUrl) return;
+
+        // 3) update the section with the new image URL
+        section.properties.image.url = downloadUrl;
+        await store.sectionService.update(section, store.currentUser());
+        this.reload();
+      },
+
+      async uploadFile(section?: ButtonSection): Promise<void> {
+        if (!section) return;
+        // 1) pick a file
+        const file = await store.uploadService.pickFile(DEFAULT_MIMETYPES);
+        if (!file) return;
+
+        // 2) upload the file into Firestorage
+        const fullPath = `tenant/${store.tenantId()}/section/${section.bkey}/file/${file.name}`;
+        const downloadUrl = await store.uploadService.uploadFile(file, fullPath, 'Upload Section File');
+        if (!downloadUrl) return;
+
+        // 3) update the section with the new file URL
+        section.properties.action.url = downloadUrl;
+        section.properties.action.altText = file.name;
+        section.properties.action.type = ButtonAction.Download;
+        await store.sectionService.update(section, store.currentUser());
+        this.reload();
       },
 
       async export(type: string): Promise<void> {

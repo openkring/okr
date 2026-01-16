@@ -55,6 +55,7 @@ export * from './lib/spinner.component';
 export * from './lib/string-select.component';
 export * from './lib/strings.component';
 export * from './lib/text-input.component';
+export * from './lib/text-list';
 export * from './lib/time-input.component';
 export * from './lib/time-select.modal';
 export * from './lib/ui.util';

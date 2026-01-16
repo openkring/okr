@@ -2,7 +2,7 @@ import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { TextInputComponent } from '@bk2/shared-ui';
+import { StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
 import { TableStyle } from '@bk2/shared-models';
 import { TranslatePipe } from '@bk2/shared-i18n';
 
@@ -12,7 +12,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   imports: [
     TranslatePipe, AsyncPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
-    TextInputComponent
+    TextInputComponent, StringSelectComponent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -33,10 +33,16 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                     <bk-text-input name="fontSize" [value]="fontSize()" (valueChange)="onFieldChange('fontSize', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <bk-text-input name="fontWeight" [value]="fontWeight()" (valueChange)="onFieldChange('fontWeight', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                    <bk-string-select name="fontWeight"  [selectedString]="fontWeight()" (selectedStringChange)="onFieldChange('fontWeight', $event)" [readOnly]="readOnly()" [showHelper]="true" [stringList]="['thin', 'light', 'normal', 'medium', 'bold', 'black']" /> 
                   </ion-col>
                   <ion-col size="12" size-md="6">
                     <bk-text-input name="padding" [value]="padding()" (valueChange)="onFieldChange('padding', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                  </ion-col>
+                  <ion-col size="12" size-md="6">
+                    <bk-text-input name="textColor" [value]="textColor()" (valueChange)="onFieldChange('textColor', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                  </ion-col>
+                  <ion-col size="12" size-md="6">
+                    <bk-text-input name="border" [value]="border()" (valueChange)="onFieldChange('border', $event)" [showHelper]="true" [readOnly]="readOnly()" />
                   </ion-col>
                 </ion-row>
             </ion-grid>
@@ -57,6 +63,8 @@ export class TableStyleComponent {
   protected fontWeight = linkedSignal(() => this.formData().fontWeight ?? 'normal');
   protected backgroundColor = linkedSignal(() => this.formData().backgroundColor ?? 'var(--ion-color-step-200)');
   protected padding = linkedSignal(() => this.formData().padding ?? '5px');
+  protected textColor = linkedSignal(() => this.formData().textColor ?? 'var(--ion-text-color)');
+  protected border = linkedSignal(() => this.formData().border ?? '0.5px solid var(--ion-color-medium)');
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

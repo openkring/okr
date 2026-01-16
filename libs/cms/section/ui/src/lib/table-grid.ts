@@ -2,7 +2,7 @@ import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
-import { TextInputComponent } from '@bk2/shared-ui';
+import { StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
 import { TableGrid } from '@bk2/shared-models';
 import { coerceBoolean } from '@bk2/shared-util-core';
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -13,7 +13,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   imports: [
     TranslatePipe, AsyncPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
-    TextInputComponent
+    TextInputComponent, StringSelectComponent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -26,6 +26,9 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                 <ion-row>
                   <ion-col size="12" size-md="6">
                     <bk-text-input name="template" [value]="template()" (valueChange)="onFieldChange('template', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+                  </ion-col>
+                  <ion-col size="12" size-md="6">
+                    <bk-string-select name="showTitleAs"  [selectedString]="showTitleAs()" (selectedStringChange)="onFieldChange('showTitleAs', $event)" [readOnly]="readOnly()" [stringList] = "['title', 'legend', 'header', 'none']" /> 
                   </ion-col>
                   <ion-col size="12" size-md="6">
                     <bk-text-input name="gap" [value]="gap()" (valueChange)="onFieldChange('gap', $event)" [showHelper]="true" [readOnly]="readOnly()" />
@@ -54,6 +57,7 @@ export class TableGridComponent {
   protected gap = linkedSignal(() => this.formData().gap ?? '1px');
   protected backgroundColor = linkedSignal(() => this.formData().backgroundColor ?? 'var(--ion-color-step-200)');
   protected padding = linkedSignal(() => this.formData().padding ?? '1px');
+  protected showTitleAs = linkedSignal(() => this.formData().showTitleAs ?? 'title');
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

@@ -11,6 +11,7 @@ export * from './lib/iframe-section.component';
 export * from './lib/map-section.component';
 export * from './lib/missing-section.component';
 export * from './lib/people-section.component';
+export * from './lib/preview-section.modal';
 export * from './lib/section-list.component';
 export * from './lib/section-preview.modal';
 export * from './lib/section.component';
