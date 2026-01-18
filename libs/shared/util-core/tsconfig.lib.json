@@ -7,9 +7,5 @@
     "tsBuildInfoFile": "../../../dist/out-tsc/shared-util-core.tsbuildinfo"
   },
   "include": ["src/**/*"],
-  "exclude": ["**/*.spec.ts", "vite.config.ts"],
-  "references": [
-    { "path": "../constants/tsconfig.lib.json" },
-    { "path": "../models/tsconfig.lib.json" }
-  ]
+  "exclude": ["**/*.spec.ts", "vite.config.ts"]
 }
