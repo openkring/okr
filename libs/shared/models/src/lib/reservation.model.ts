@@ -1,5 +1,7 @@
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_PERIODICITY, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_RBOAT_TYPE, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME } from '@bk2/shared-constants';
+import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { AvatarInfo } from './avatar-info';
+import { MoneyModel } from './money.model';
 
 /**
  * A reservation of a resource or a rowing boat.
@@ -15,6 +17,12 @@ import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model'
  * - booking of a room
  * - registration for a course
  * - waiting list of applicants
+ * 
+ * Each Resource may have multiple Reservations. As soon as the first reservation for a resource is created,
+ * a resource calendar is opened with key 'resource.{resourceKey}'. This calendar is public and contains all reservations
+ * for the resource.
+ * CalEvents of a resource can not be changed directly, they are created/updated/deleted via Reservations.
+ * That's because the startDate and endDate need to be kept in sync between Reservation and CalEvent.
  */
 export class ReservationModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
   // base
@@ -24,36 +32,27 @@ export class ReservationModel implements BkModel, NamedModel, SearchableModel, T
   public index = DEFAULT_INDEX;
   public tags = DEFAULT_TAGS;
   public name = DEFAULT_NAME;
-  public notes = DEFAULT_NOTES;
+  public notes = DEFAULT_NOTES;   // internal notes
 
   // the person or org making the reservation
-  public reserverKey = DEFAULT_KEY;
-  public reserverName = DEFAULT_NAME; // e.g. firstname of subject
-  public reserverName2 = DEFAULT_NAME; // name of subject, e.g. lastname
-  public reserverModelType: 'person' | 'org' = 'person';
-  public reserverType = DEFAULT_GENDER; // gender for Person or orgType for Org
+  public reserver: AvatarInfo | undefined; // avatar for person or org
 
   // the resource that the reservation is for
-  public resourceKey = DEFAULT_KEY;
-  public resourceName = DEFAULT_NAME; // name of object, e.g. lastname
-  public resourceModelType: 'resource' | 'account' = 'resource';
-  public resourceType = DEFAULT_RESOURCE_TYPE; // resource or account e.g. Locker, Boat, Room, Document
-  public resourceSubType = DEFAULT_RBOAT_TYPE; // e.g. gender for Lockers or License, type for Documents or contracts
+  public resource: AvatarInfo | undefined; // avatar for resource or account
 
+  // event details
+  public caleventKey: string | undefined;  // for more details. Set caleventId in the reservation store to load the CalEventModel
   public startDate = DEFAULT_DATE;
-  public startTime = DEFAULT_TIME;
   public endDate = DEFAULT_DATE;
-  public endTime = DEFAULT_TIME;
-  public numberOfParticipants = '';
-  public area = '';
-  public reservationRef = ''; // e.g. the reservation number or contact person
-  public reservationState = DEFAULT_RES_STATE;
-  public reservationReason = DEFAULT_RES_REASON;
-  public order = DEFAULT_ORDER; // e.g. relevant for waiting list (state applied)
 
-  public price = DEFAULT_PRICE;
-  public currency = DEFAULT_CURRENCY;
-  public periodicity = DEFAULT_PERIODICITY;
+  public participants = '';
+  public area = '';
+  public ref = ''; // e.g. the reservation number or contact person
+  public state = DEFAULT_RES_STATE;
+  public reason = DEFAULT_RES_REASON;
+  public order = DEFAULT_ORDER; // e.g. relevant for waiting list (state applied)
+  public description = '';  // public notes
+  public price: MoneyModel | undefined;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

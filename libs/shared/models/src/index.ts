@@ -29,6 +29,7 @@ export * from './lib/location.model';
 export * from './lib/log-info.model';
 export * from './lib/membership.model';
 export * from './lib/menu-item.model';
+export * from './lib/money.model';
 export * from './lib/org.model';
 export * from './lib/ownership.model';
 export * from './lib/page.model';
