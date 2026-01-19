@@ -74,7 +74,7 @@ export class ReservationService {
   }
 
   /*-------------------------- list --------------------------------*/
-  public list(orderBy = 'reserverName2', sortOrder = 'asc'): Observable<ReservationModel[]> {
+  public list(orderBy = 'startDate', sortOrder = 'asc'): Observable<ReservationModel[]> {
     return this.firestoreService.searchData<ReservationModel>(ReservationCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
@@ -90,7 +90,7 @@ export class ReservationService {
     return this.list().pipe(
       map((reservations: ReservationModel[]) => {
         return reservations.filter((reservation: ReservationModel) => {
-          return (reservation.reserverKey === reserverKey && reservation.reserverModelType === modelType);
+          return (reservation.reserver?.key === reserverKey && reservation.reserver.modelType === modelType);
         });
       })
     );
@@ -106,7 +106,7 @@ export class ReservationService {
     return this.list().pipe(
       map((reservations: ReservationModel[]) => {
         return reservations.filter((reservation: ReservationModel) => {
-          return (reservation.resourceKey === resourceKey);
+          return (reservation.resource?.key === resourceKey);
         });
       })
     );

@@ -1,15 +1,6 @@
 import { ReservationModel } from '@bk2/shared-models';
 import { addIndexElement, isType } from '@bk2/shared-util-core';
 
-export function getReserverName(reservation: ReservationModel): string {
-  // tbd: consider NameDisplay
-  if (reservation.reserverModelType === 'person') {
-    return `${reservation.reserverName} ${reservation.reserverName2}`;
-  } else {
-    return reservation.reserverName2;
-  }
-}
-
 export function isReservation(reservation: unknown, tenantId: string): reservation is ReservationModel {
   return isType(reservation, new ReservationModel(tenantId));
 }
@@ -22,10 +13,16 @@ export function isReservation(reservation: unknown, tenantId: string): reservati
  */
 export function getReservationIndex(reservation: ReservationModel): string {
   let index = '';
-  index = addIndexElement(index, 'rn', reservation.reserverName + ' ' + reservation.reserverName2);
-  index = addIndexElement(index, 'rk', reservation.reserverKey);
-  index = addIndexElement(index, 'resn', reservation.resourceName);
-  index = addIndexElement(index, 'resk', reservation.resourceKey);
+  const reserver = reservation.reserver;
+  if (reserver) {
+    index = addIndexElement(index, 'rn', reserver.name1 + ' ' + reserver.name2);
+    index = addIndexElement(index, 'rk', reserver.key);
+  }
+  const resource = reservation.resource;
+  if (resource) {
+    index = addIndexElement(index, 'resn', resource.name1 + ' ' + resource.name2);
+    index = addIndexElement(index, 'resk', resource.key);
+  }
   return index;
 }
 

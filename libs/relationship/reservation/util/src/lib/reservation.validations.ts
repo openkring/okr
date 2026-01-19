@@ -1,69 +1,29 @@
 
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { only, staticSuite } from 'vest';
 
-import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
+import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
 import { ReservationModel } from '@bk2/shared-models';
-import { booleanValidations, dateValidations, isAfterDate, numberValidations, stringValidations, timeValidations } from '@bk2/shared-util-core';
+import { avatarValidations, baseValidations, dateValidations, moneyValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const reservationValidations = staticSuite((model: ReservationModel, field?: string) => {
+export const reservationValidations = staticSuite((model: ReservationModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
-  booleanValidations('isArchived', model.isArchived);
-  stringValidations('index', model.index, SHORT_NAME_LENGTH);
-  //tagValidations('tags', model.tags);
-  stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
-  stringValidations('name', model.name, SHORT_NAME_LENGTH);
+  baseValidations(model, tenants, tags, field);
+  avatarValidations('reserver', model.reserver);
+  avatarValidations('resource', model.resource);
 
-  // reserver
-  stringValidations('reserverKey', model.reserverKey, SHORT_NAME_LENGTH);
-  stringValidations('reserverName', model.reserverName, SHORT_NAME_LENGTH);
-  stringValidations('reserverName2', model.reserverName2, SHORT_NAME_LENGTH);
-  stringValidations('reserverModelType', model.reserverModelType, WORD_LENGTH); // tbd: if Person: gender, else orgType
-
-  omitWhen(model.reserverModelType !== 'person', () => {
-    stringValidations('reserverType', model.reserverType, WORD_LENGTH); // gender
-  });
-  omitWhen(model.reserverModelType !== 'org', () => {
-    stringValidations('reserverType', model.reserverType, WORD_LENGTH); // org type
-  });
-
-  // resource
-  stringValidations('resourceKey', model.resourceKey, SHORT_NAME_LENGTH);
-  stringValidations('resourceName', model.resourceName, SHORT_NAME_LENGTH);
-  stringValidations('resourceModelType', model.resourceModelType, WORD_LENGTH); // Resource or Account
-  omitWhen(model.resourceModelType !== 'resource', () => {
-    stringValidations('resourceType', model.resourceType, WORD_LENGTH);   // resource type
-  });
-  omitWhen(model.resourceModelType !== 'account', () => {
-    stringValidations('resourceType', model.resourceType, WORD_LENGTH);   // account type
-  });
-
+  stringValidations('caleventKey', model.caleventKey, SHORT_NAME_LENGTH);
   dateValidations('startDate', model.startDate);
-  timeValidations('startTime', model.startTime);
   dateValidations('endDate', model.endDate);
-  timeValidations('endTime', model.endTime);
-
-  stringValidations('numberOfParticipants', model.numberOfParticipants, SHORT_NAME_LENGTH);
+  stringValidations('participants', model.participants, SHORT_NAME_LENGTH);
   stringValidations('area', model.area, SHORT_NAME_LENGTH);
-  stringValidations('reservationRef', model.reservationRef, SHORT_NAME_LENGTH);
-  stringValidations('reservationState', model.reservationState, WORD_LENGTH);
-  stringValidations('reservationReason', model.reservationReason, WORD_LENGTH);
+  stringValidations('ref', model.ref, SHORT_NAME_LENGTH);
+  stringValidations('state', model.state, WORD_LENGTH);
+  stringValidations('reason', model.reason, WORD_LENGTH);
   numberValidations('order', model.order, true, 0, 10);
-
-  numberValidations('price', model.price, false, 0, 1000000);
-  stringValidations('currency', model.currency, CURRENCY_LENGTH);
-  stringValidations('periodicity', model.periodicity, WORD_LENGTH);
-
-   // cross field validations
-  omitWhen(model.startDate === '' || model.endDate === '', () => {
-    test('endDate', '@reservationEndAfterStartDate', () => {
-      enforce(isAfterDate(model.endDate, model.startDate)).isTruthy();
-    });
-  });
-
-  // tbd: cross reference resourceKey in resources
-  // tbd: cross reference reserverKey in persons
+  stringValidations('description', model.description, DESCRIPTION_LENGTH);
+  
+  moneyValidations('price', model.price);
 });
 
 

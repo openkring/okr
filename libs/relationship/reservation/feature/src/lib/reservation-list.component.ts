@@ -1,28 +1,29 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ReservationModel, RoleName } from '@bk2/shared-models';
-import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { AvatarCollection, AvatarInfo, AvatarModel, OrgModel, PersonModel, ReservationModel, ResourceModelName, RoleName } from '@bk2/shared-models';
+import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getYear, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { addImgixParams, getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole, isOngoing, isPerson } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
-import { getReserverName } from '@bk2/relationship-reservation-util';
 
 import { ReservationStore } from './reservation.store';
+import { map } from 'rxjs';
+import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-reservation-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, AvatarPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, PrettyDatePipe,
     ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover
+    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonPopover,
+    IonGrid, IonRow, IonCol
   ],
   providers: [ReservationStore],
   template: `
@@ -30,7 +31,12 @@ import { ReservationStore } from './reservation.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedReservationsCount()}}/{{reservationsCount()}} {{ '@reservation.list.title' | translate | async }}</ion-title>
+        <ion-title class="ion-hide-md-down">
+          {{ selectedReservationsCount()}}/{{reservationsCount()}} {{ title() }}
+        </ion-title>
+        <ion-title class="ion-hide-md-up">
+          {{ selectedReservationsCount()}}/{{reservationsCount()}} {{ title() }}
+        </ion-title>
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -48,22 +54,100 @@ import { ReservationStore } from './reservation.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-      <bk-list-filter
+      <bk-list-filter class="ion-hide-md-down"
         (searchTermChanged)="onSearchtermChange($event)"
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
         (typeChanged)="onReasonSelected($event)" [types]="reasons()"
         (stateChanged)="onStateSelected($event)" [states]="states()"
         (yearChanged)="onYearSelected($event)" [years]="years()"
       />
-
+      <bk-list-filter class="ion-hide-md-up"
+        (searchTermChanged)="onSearchtermChange($event)"
+        (yearChanged)="onYearSelected($event)" [years]="years()"
+      />
     <!-- list header -->
     <ion-toolbar color="primary">
-      <ion-item lines="none" color="primary">
-        <ion-label><strong>{{'@reservation.list.header.name' | translate | async}}</strong></ion-label>
-        <ion-label><strong>{{'@reservation.list.header.resource' | translate | async}}</strong></ion-label>
-        <ion-label><strong>{{'@reservation.list.header.duration' | translate | async}}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{'@reservation.list.header.category' | translate | async}}</strong></ion-label>
-      </ion-item>
+      <ion-grid>
+        <ion-row>
+          @if(isReservationFromPerson() || isReservationFromOrg()) {
+            <ion-col size="4" size-md="3">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.resource' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="4" size-md="3">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.name' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="4" size-md="3">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.validFrom' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="3" class="ion-hide-md-down">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.state' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+          } @else if(isReservationOfResource() || isReservationOfResourceType()) {
+            <ion-col size="4" size-md="3">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.reserver' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="4" size-md="3">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.name' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="4" size-md="3">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.validFrom' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="3" class="ion-hide-md-down">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.state' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-item lines="none" color="primary">
+            </ion-item>
+          } @else { <!-- all -->
+            <ion-col size="auto" size-md="2"class="ion-hide-md-down">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.reserver' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="auto" size-md="2" class="ion-hide-md-down">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.resource' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="3" class="ion-hide-md-up">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.reserver' | translate | async}}</strong></ion-label>
+                <ion-label><strong>{{'@reservation.list.header.resource' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col>
+              <ion-item lines="none" color="primary" class="ion-text-wrap">
+                <ion-label><strong>{{'@reservation.list.header.name' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="3">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.validFrom' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col class="ion-hide-md-down">
+              <ion-item lines="none" color="primary">
+                <ion-label><strong>{{'@reservation.list.header.state' | translate | async}}</strong></ion-label>
+              </ion-item>
+            </ion-col>
+          }
+        </ion-row>
+      </ion-grid>
     </ion-toolbar>
   </ion-header>
 
@@ -72,19 +156,91 @@ import { ReservationStore } from './reservation.store';
     @if(selectedReservationsCount() === 0) {
       <bk-empty-list message="@reservation.field.empty" />
     } @else {
-      <ion-list lines="inset">
+      <ion-grid>
         @for(reservation of filteredReservations(); track $index) {
-          <ion-item (click)="showActions(reservation)">
-            <ion-avatar slot="start">
-              <ion-img src="{{ 'person.' + reservation.reserverKey | avatar:'reservation' | async }}" alt="Avatar Logo" />
-            </ion-avatar>
-            <ion-label>{{getReserverName(reservation)}}</ion-label>
-            <ion-label>{{reservation.resourceName}}</ion-label>
-            <ion-label>{{reservation.startDate | duration:reservation.endDate}}</ion-label>      
-            <ion-label class="ion-hide-md-down">{{reservation.reservationState}}</ion-label>
-          </ion-item>
+          <ion-row (click)="showActions(reservation)">
+            @if(isReservationFromPerson() || isReservationFromOrg()) {
+              <ion-col size="3">
+                <ion-item lines="none">
+                  <ion-avatar slot="start" style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Avatar Logo" /></ion-avatar>
+                  <ion-label class="ion-hide-md-down">{{reservation.resource?.name2}}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="5" size-md="3">
+                <ion-item lines="none" class="ion-text-wrap">
+                  <ion-label>{{reservation.name}}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="4" size-md="3">
+                <ion-item lines="none">
+                  <ion-label>{{reservation.startDate | prettyDate }}</ion-label>      
+                </ion-item>
+              </ion-col>
+              <ion-col size="3" class="ion-hide-md-down">
+                <ion-item lines="none">
+                  <ion-label>{{reservation.state}}</ion-label>
+                </ion-item>
+              </ion-col>
+            } @else if(isReservationOfResource() || isReservationOfResourceType()) {
+                <ion-col size="3">
+                  <ion-item lines="none">
+                    <ion-avatar slot="start" style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Avatar Logo" /></ion-avatar>
+                    <ion-label class="ion-hide-md-down">{{getReserverName(reservation)}}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="5" size-md="3">
+                  <ion-item lines="none" class="ion-text-wrap">
+                    <ion-label>{{reservation.name}}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="4" size-md="3">
+                  <ion-item lines="none">
+                    <ion-label>{{reservation.startDate | prettyDate }}</ion-label>      
+                  </ion-item>
+                </ion-col>
+                <ion-col size="3" class="ion-hide-md-down">
+                  <ion-item lines="none">
+                    <ion-label>{{reservation.state}}</ion-label>
+                  </ion-item>
+                </ion-col>
+            } @else { <!-- all --> 
+              <ion-col size="3" class="ion-hide-md-down">
+                <ion-item lines="none">
+                  <ion-avatar slot="start"style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Reserver Avatar" /></ion-avatar>
+                  <ion-label>{{getReserverName(reservation)}}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="auto" class="ion-hide-md-up">
+                  <ion-avatar style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'reserver')" alt="Reserver Avatar" /></ion-avatar>
+              </ion-col>
+              <ion-col class="ion-hide-md-down">
+                <ion-item lines="none">
+                  <ion-avatar slot="start" style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Resource Avatar" /></ion-avatar>
+                  <ion-label>{{getResourceName(reservation)}}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="auto" class="ion-hide-md-up">
+                  <ion-avatar style="width: 32px; height: 32px;"><ion-img [src]="getAvatarUrl(reservation, 'resource')" alt="Resource Avatar" /></ion-avatar>
+              </ion-col>
+              <ion-col>
+                <ion-item lines="none"  class="ion-text-wrap">
+                  <ion-label>{{reservation.name}}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="auto">
+                <ion-item lines="none">
+                  <ion-label>{{reservation.startDate | prettyDate }}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col class="ion-hide-md-down">
+                <ion-item lines="none">
+                  <ion-label>{{reservation.state}}</ion-label>
+                </ion-item>
+              </ion-col>
+            }
+          </ion-row>
         }
-      </ion-list>
+      </ion-grid>
     }
   </ion-content>
     `
@@ -94,14 +250,91 @@ export class ReservationListComponent {
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
+  // listIds: t_resourceType, r_resourceKey, p_reserverKey, all
+  /**
+   * A list filter that defines which reservations to show in the list:
+   * - all: all reservations
+   * - my: all reservations of the current user (sames as p_{{currentUser.personKey}})
+   * - t_resourceType: all reservations for resources of the given type
+   * - r_resourceKey: all reservations for the given resource
+   * - p_reserverKey: all reservations of the given reserver (person)
+   * - o_reserverKey: all reservations of the given reserver (org)
+   * 
+   * Examples:
+   * - for Bootshaus reservations: r_test_default
+   * - for boat reservations: t_rboat
+   * - for my reservations: p_{{currentUser.personKey}}
+   */
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
+  
+  private imgixBaseUrl = this.reservationStore.appStore.env.services.imgixBaseUrl;
 
-  // tbd: restrict to all, t:resourceType, r:resourceKey, p:reserverKey with the listId
-  // e.g. for Bootshausreservationen: key:test_default (need to change this bkey as well)
-  // e.g. for Bootsreservationen: type:rboat
-  // e.g. for my reservations: p:currentUser.personKey
-  // then pass this listId to the store to load only relevant reservations
+  // Avatar URLs cache - loaded on demand via effect
+  protected avatarUrls = signal(new Map<string, string>());
+
+  constructor() {
+    effect(() => {
+      this.reservationStore.setListId(this.listId());
+    });
+    
+    // Load avatar URLs when reservations change
+    effect(() => {
+      const reservations = this.filteredReservations();
+      
+      for (const reservation of reservations) {
+        // Load reserver avatar
+        if (reservation.reserver) {
+          const reserverKey = getAvatarKey(
+            reservation.reserver.modelType,
+            reservation.reserver.key,
+            reservation.reserver.type,
+            reservation.reserver.subType
+          );
+          
+          this.reservationStore.firestoreService.readModel<AvatarModel>(AvatarCollection, reserverKey).pipe(
+            map(avatar => {
+              if (!avatar) {
+                // Use same icon logic as getAvatarUrl
+                return this.getDefaultIconUrl(reservation.reserver!);
+              }
+              else return `${this.imgixBaseUrl}/${addImgixParams(avatar.storagePath, THUMBNAIL_SIZE)}`;
+            })
+          ).subscribe(url => {
+            this.avatarUrls.update(map => {
+              map.set(`${reservation.bkey}_reserver`, url);
+              return new Map(map);
+            });
+          });
+        }
+        
+        // Load resource avatar
+        if (reservation.resource) {
+          const resourceKey = getAvatarKey(
+            reservation.resource.modelType,
+            reservation.resource.key,
+            reservation.resource.type,
+            reservation.resource.subType
+          );
+          
+          this.reservationStore.firestoreService.readModel<AvatarModel>(AvatarCollection, resourceKey).pipe(
+            map(avatar => {
+              if (!avatar) {
+                // Use same icon logic as getAvatarUrl
+                return this.getDefaultIconUrl(reservation.resource!);
+              }
+              else return `${this.imgixBaseUrl}/${addImgixParams(avatar.storagePath, THUMBNAIL_SIZE)}`;
+            })
+          ).subscribe(url => {
+            this.avatarUrls.update(map => {
+              map.set(`${reservation.bkey}_resource`, url);
+              return new Map(map);
+            });
+          });
+        }
+      }
+    });
+  }
 
   // filters
   protected searchTerm = linkedSignal(() => this.reservationStore.searchTerm());
@@ -123,8 +356,13 @@ export class ReservationListComponent {
   protected currentUser = computed(() => this.reservationStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected readonly years = computed(() => getYearList(getYear() + 1, 7));
-
-  private imgixBaseUrl = this.reservationStore.appStore.env.services.imgixBaseUrl;
+  protected title = computed(() => this.getTitle());
+  protected resourceName = computed(() => this.reservationStore.currentResource()?.name);
+  protected resourceKey = computed(() => this.reservationStore.currentResource()?.bkey ?? '');
+  protected isReservationFromPerson = computed(() => this.listId().startsWith('p_') || this.listId() === 'my');
+  protected isReservationFromOrg = computed(() => this.listId().startsWith('o_'));
+  protected isReservationOfResource = computed(() => this.listId().startsWith('r_'));
+  protected isReservationOfResourceType = computed(() => this.listId().startsWith('t_'));
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -226,6 +464,76 @@ export class ReservationListComponent {
   }
 
   protected getReserverName(reservation: ReservationModel): string {
-    return getReserverName(reservation);
+    const avatar = reservation.reserver;
+    return avatar ? getAvatarName(avatar, this.currentUser()?.nameDisplay) : '';
+  }
+
+  protected getResourceName(reservation: ReservationModel): string {
+    return reservation.resource?.name2 || reservation.resource?.label || '';
+  }
+
+  /**
+   * Get the default icon URL for an avatar based on its type
+   */
+  private getDefaultIconUrl(avatar: AvatarInfo): string {
+    let iconName = avatar.modelType as string;
+    
+    if (avatar.modelType === ResourceModelName) {
+      // For rboat resources, use the subType icon (e.g., b1x, b2x, etc.)
+      if (avatar.type === 'rboat' && avatar.subType) {
+        iconName = this.reservationStore.appStore.getCategoryIcon('rboat_type', avatar.subType) || 'rboat';
+      } 
+      // For other resources, use the resource type icon
+      else if (avatar.type) {
+        iconName = this.reservationStore.appStore.getCategoryIcon('resource_type', avatar.type) || avatar.type;
+      }
+    }
+    
+    return `${this.imgixBaseUrl}/logo/icons/${iconName}.svg`;
+  }
+
+  /**
+   * Get the avatar URL for a reserver or resource
+   */
+  protected getAvatarUrl(reservation: ReservationModel, type: 'reserver' | 'resource'): string {
+    const avatar = type === 'reserver' ? reservation.reserver : reservation.resource;
+    
+    // Check if we have a cached URL
+    const cachedUrl = this.avatarUrls().get(`${reservation.bkey}_${type}`);
+    if (cachedUrl) return cachedUrl;
+    
+    // Return default icon while loading
+    if (!avatar) return `${this.imgixBaseUrl}/logo/icons/person.svg`;
+    
+    // Use the helper method to get the correct default icon
+    return this.getDefaultIconUrl(avatar);
+  }
+
+  protected getTitle(): string {
+    if (this.listId() === 'all') return ' Reservationen';
+    const reserver = this.reservationStore.currentReserver();
+    let reserverName = '';
+    if (reserver) {
+      if (isPerson(reserver, this.reservationStore.tenantId())) {
+        const person = reserver as PersonModel;
+        reserverName = getFullName(person.firstName, person.lastName, this.currentUser()?.nameDisplay) || '';
+      } else {
+        reserverName = (reserver as OrgModel).name || '';
+      }
+    }
+    switch (this.listId().substring(0,2)) {
+      case 't_': // resource type 
+        return this.listId().substring(2) + ' Reservationen';
+      case 'r_': // resource key
+        const resourceName = this.resourceName() ?? '';
+        return `${resourceName} Reservationen`;
+      case 'my': // my reservations = p_[currentUser.personKey]
+      case 'p_': // reserver key (person)
+        return `${reserverName} Reservationen`;
+      case 'o_': // reserver key (org)
+        return `${reserverName} Reservationen`;
+      default:
+        return '';
+    }
   }
 }

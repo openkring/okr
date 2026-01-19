@@ -1,16 +1,18 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonRow, ModalController, IonButton } from '@ionic/angular/standalone';
 
-import { AvatarInfo, CategoryListModel, PersonModel, ReservationModel, ReservationModelName, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
+import { AvatarInfo, CalEventModel, CategoryListModel, PersonModel, ReservationModel, ReservationModelName, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, isPerson, isResource, newAvatarInfo } from '@bk2/shared-util-core';
+import { coerceBoolean, getAvatarName, hasRole, isPerson, isResource } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
+
+import { CalEventEditModalComponent } from '@bk2/calevent-feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { ReservationFormComponent } from '@bk2/relationship-reservation-ui';
-import { getReserverName } from '@bk2/relationship-reservation-util';
-import { PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
 import { ENV } from '@bk2/shared-config';
+import { isCalEvent } from '@bk2/calevent-util';
 
 @Component({
   selector: 'bk-reservation-edit-modal',
@@ -18,8 +20,10 @@ import { ENV } from '@bk2/shared-config';
   imports: [
     CommentsAccordionComponent, RelationshipToolbarComponent, HeaderComponent,
     ChangeConfirmationComponent, ReservationFormComponent,
-    IonContent, IonAccordionGroup, IonCard, IonCardContent
-  ],
+    IonContent, IonAccordionGroup, IonCard, IonCardContent,
+    IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol,
+    IonButton
+],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
@@ -28,20 +32,57 @@ import { ENV } from '@bk2/shared-config';
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
-        <bk-relationship-toolbar
-          relType="reservation"
-          title="@reservation.reldesc"
-          [subjectAvatar]="resourceAvatar()"
-          [objectAvatar]="reserverAvatar()"
-          [currentUser]="currentUser"
-          icon="reservation"
-          relLabel="Reservation"
-        />
+        @if(reserverAvatar(); as reserver) {
+          @if(resourceAvatar(); as resource) {
+            <bk-relationship-toolbar
+              relType="reservation"
+              title="@reservation.reldesc"
+              [subjectAvatar]="resource"
+              [objectAvatar]="reserver"
+              [currentUser]="currentUser"
+              icon="reservation"
+              relLabel="Reservation"
+            />
+          }
+        }
+     <ion-card>
+        <ion-card-header>
+          <ion-card-title>Zeitliche Angaben</ion-card-title>
+        </ion-card-header>
+        <ion-card-content class="ion-no-padding">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <ion-button expand="block" (click)="selectCalevent()">Ändern</ion-button>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                tbd
+                <!-- <bk-date-input name="startDate" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [showHelper]=true [readOnly]="isReadOnly()" /> -->
+              </ion-col>
+              <!--
+              <ion-col size="12" size-md="6"> 
+                <bk-text-input name="startTime" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [maxLength]=5 [mask]="timeMask" [readOnly]="isReadOnly()" />                                        
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-date-input name="endDate" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
+              </ion-col>
+              <ion-col size="12" size-md="6"> 
+                <bk-text-input name="endTime" [value]="endTime()" (valueChange)="onFieldChange('endTime', $event)" [maxLength]=5 [mask]="timeMask" [readOnly]="isReadOnly()" />                                        
+              </ion-col>
+    -->
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
         <bk-reservation-form
           [formData]="formData()"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser"
           [allTags]="tags()"
+          [tenantId]="tenantId()"
           [reasons]="reasons()"
           [states]="states()"
           [readOnly]="isReadOnly()"
@@ -68,7 +109,7 @@ import { ENV } from '@bk2/shared-config';
 })
 export class ReservationEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
+  private readonly appstore = inject(AppStore);
 
   // inputs
   public reservation = input.required<ReservationModel>();
@@ -87,21 +128,17 @@ export class ReservationEditModalComponent {
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected formData = linkedSignal(() => structuredClone(this.reservation()));
   protected showForm = signal(true);
+  protected calevent = signal<CalEventModel | undefined>(undefined);
 
   protected readonly parentKey = computed(() => `${ReservationModelName}.${this.reservationKey()}`);
   
   // derived signals
   protected readonly headerTitle = computed(() => getTitleLabel('reservation', this.reservation()?.bkey, this.readOnly()));
   protected readonly reservationKey = computed(() => this.reservation().bkey ?? '');
-  protected readonly name = computed(() => getReserverName(this.reservation()) ?? '');
-  protected reserverAvatar = computed<AvatarInfo>(() => {
-    const r = this.reservation();
-      return newAvatarInfo(r.reserverKey, r.reserverName, r.reserverName2, r.reserverModelType, r.reserverType, '', r.name);
-  });
-  protected resourceAvatar = computed<AvatarInfo>(() => {
-    const r = this.reservation();
-      return newAvatarInfo(r.resourceKey, '', r.resourceName, r.resourceModelType, r.resourceType, r.resourceSubType, r.resourceName);
-  });
+  protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.reservation().reserver);
+  protected readonly reserverName = computed(() => this.reserverAvatar() ? getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay) : '');
+  protected readonly resourceAvatar = computed<AvatarInfo | undefined>(() => this.reservation().resource);
+  protected readonly tenantId = computed(() => this.appstore.tenantId());
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -150,11 +187,42 @@ export class ReservationEditModalComponent {
     modal.present();
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm' && data) {
-      if (isPerson(data, this.env.tenantId)) {
+      if (isPerson(data, this.tenantId())) {
         return data;
       }
     }
     return undefined;
+  }
+
+  async selectCalevent(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: CalEventEditModalComponent,
+      cssClass: 'wide-modal',
+      componentProps: {
+            calevent: this.calevent() ?? new CalEventModel(this.tenantId()),
+            currentUser: this.currentUser(),
+            types: this.appstore.getCategory('calevent_type'),
+            periodicities: this.periodicities(),
+            tags: this.appstore.getTags('calevent'),
+            tenantId: this.tenantId(),
+            locale: this.appstore.appConfig().locale,
+            readOnly: this.isReadOnly()
+      }
+    });
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm' && data) {
+      if (isCalEvent(data, this.tenantId())) {
+        this.calevent.set(data);
+        console.log('selected calevent:', data);
+        this.formData.update((vm) => ({
+          ...vm,
+          caleventKey: data.bkey,
+          startDate: data.startDate,
+          endDate: data.endDate ?? data.startDate,
+        }));
+      }
+    }
   }
 
   protected async selectResource(): Promise<void> {
@@ -182,7 +250,7 @@ export class ReservationEditModalComponent {
     modal.present();
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm' && data) {
-      if (isResource(data, this.env.tenantId)) {
+      if (isResource(data, this.tenantId())) {
         return data;
       }
     }

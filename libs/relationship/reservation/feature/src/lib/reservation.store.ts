@@ -7,22 +7,23 @@ import { yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { confirm } from '@bk2/shared-util-angular';
-import { CategoryListModel, OrgModel, PersonModel, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
+import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getSystemQuery, getTodayStr, isValidAt, nameMatches } from '@bk2/shared-util-core';
-import { DEFAULT_NAME } from '@bk2/shared-constants';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getSystemQuery, getTodayStr, getYear, isValidAt, nameMatches } from '@bk2/shared-util-core';
 
 import { ReservationService } from '@bk2/relationship-reservation-data-access';
 import { isReservation } from '@bk2/relationship-reservation-util';
 
 import { ReservationEditModalComponent } from './reservation-edit.modal';
+import { of } from 'rxjs';
 
 export type ReservationState = {
-  resourceId: string;   // id of the current resource
+  listId: string;       // filter format: t_resourceType, r_resourceKey, p_reserverKey, or 'all'
   showOnlyCurrent: boolean;
-  reserver: PersonModel | OrgModel | undefined;
-  reserverModelType: 'person' | 'org';
-  resource: ResourceModel | undefined;
+  reserverId: string | undefined; // current reserver -> if reservations are filtered by this reserver
+  reserverModelType: 'person' | 'org'; // model type of the reserver (if reservations are reserver-restricted)
+  resourceId: string | undefined;   // id of the current resource -> used when reservations are resource-restricted
+  caleventId: string | undefined;
   
   // filters
   searchTerm: string;
@@ -33,17 +34,18 @@ export type ReservationState = {
 };
 
 const initialState: ReservationState = {
-  resourceId: '',
+  listId: 'all',
   showOnlyCurrent: true,
-  reserver: undefined,
+  reserverId: undefined,
   reserverModelType: 'person',
-  resource: undefined,
+  resourceId: undefined,
+  caleventId: undefined,
 
   // filters
   searchTerm: '',
   selectedTag: '',
   selectedReason: 'all',
-  selectedYear: 99, // all years
+  selectedYear: getYear(), // initialize to current year to match ListFilterComponent default
   selectedState: 'all'
 };
 
@@ -57,28 +59,17 @@ export const ReservationStore = signalStore(
     modalController: inject(ModalController)
   })),
   withProps((store) => ({
-    reservationsResource: rxResource({
+    allReservationsResource: rxResource({
       params: () => ({
-        reserver: store.reserver(),
-        resource: store.resource()
+        currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
-        if (params.reserver) {  // return reservations of the reserver
-          return store.reservationService.listReservationsOfReserver(params.reserver.bkey, store.reserverModelType()).pipe(
-            debugListLoaded('ReservationAccordionStore.reservationsOfReserver', store.appStore.currentUser())
-          );
-        } else if (params.resource) { // return reservations of the resource
-          return store.reservationService.listReservationsForResource(params.resource.bkey).pipe(
-            debugListLoaded('ReservationAccordionStore.reservationsForResource', store.appStore.currentUser())
-          );
-        } else {    // return all reservations
-          return store.reservationService.list().pipe(
-            debugListLoaded('ReservationAccordionStore.allReservations', store.appStore.currentUser())
-          );
-        }
+        return store.reservationService.list().pipe(
+          debugListLoaded('ReservationStore.allReservations', params.currentUser)
+        );
       }
     }),
-    resResource: rxResource({
+    currentResourceResource: rxResource({
       params: () => ({
         resourceId: store.resourceId(),
         currentUser: store.appStore.currentUser()
@@ -90,58 +81,162 @@ export const ReservationStore = signalStore(
         );
       }
     }),
+    currentReserverResource: rxResource({
+      params: () => ({
+        reserverId: store.reserverId(),
+        reserverModelType: store.reserverModelType(),
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({ params }) => {
+        if (!params.reserverId || !params.reserverId.length) return of(undefined);
+        const collection = params.reserverModelType === 'person' ? 'persons' : 'orgs';
+        return store.firestoreService.readModel<PersonModel | OrgModel>(collection, params.reserverId).pipe(
+          debugItemLoaded('ReservationStore.reserver', params.currentUser)
+        );
+      }
+    }),
+    caleventResource: rxResource({
+      params: () => ({
+        caleventId: store.caleventId(),
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({ params }) => {
+        if (!params.caleventId || !params.caleventId.length) return of(undefined);
+        return store.firestoreService.readModel<CalEventModel>(CalEventCollection, params.caleventId).pipe(
+          debugItemLoaded('ReservationStore.caleventResource', params.currentUser)
+        );
+      }
+    })
   })),
 
   withComputed((state) => {
     return {
-      allReservations: computed(() => state.reservationsResource.value() ?? []),
-      currentReservations: computed(() => state.reservationsResource.value()?.filter(m => isValidAt(m.startDate, m.endDate)) ?? []),
-      reservations: computed(() => state.showOnlyCurrent() ? state.reservationsResource.value() ?? [] : state.reservationsResource.value()?.filter(m => isValidAt(m.startDate, m.endDate)) ?? []),
+      allReservations: computed(() => state.allReservationsResource.value() ?? []),
+      currentReservations: computed(() => state.allReservationsResource.value()?.filter(m => isValidAt(m.startDate, m.endDate)) ?? []),
+      reservations: computed(() => state.showOnlyCurrent() ? state.allReservationsResource.value() ?? [] : state.allReservationsResource.value()?.filter(m => isValidAt(m.startDate, m.endDate)) ?? []),
+      currentReserver: computed(() => state.currentReserverResource.value()),
+      currentResource: computed(() => state.currentResourceResource.value()),
+      calevent: computed(() => state.caleventResource.value() ?? undefined),
+
+      // defaults if we do not have reserver or resource set explicitly
       currentUser: computed(() => state.appStore.currentUser()),
       currentPerson: computed(() => state.appStore.currentPerson()),
-      selectedResource: computed(() => state.resResource.value()),
       defaultResource: computed(() => state.appStore.defaultResource()),
-      isLoading: computed(() => state.reservationsResource.isLoading() || state.resResource.isLoading()),
+
+      isLoading: computed(() => state.allReservationsResource.isLoading() || state.currentResourceResource.isLoading() || state.caleventResource.isLoading()),
       tenantId: computed(() => state.appStore.tenantId()),
       imgixBaseUrl: computed(() => state.appStore.env.services.imgixBaseUrl),
-
-      filteredReservations: computed(() => {
-        console.log('ReservationStore.filteredReservations by ', {
-          searchTerm: state.searchTerm(),
-          selectedYear: state.selectedYear(),
-          selectedReason: state.selectedReason(),
-          selectedState: state.selectedState(),
-          selectedTag: state.selectedTag()
-        });
-        return state.reservationsResource.value()?.filter((reservation: ReservationModel) =>
-          nameMatches(reservation.index, state.searchTerm()) &&
-          yearMatches(reservation.startDate, state.selectedYear()) &&
-          nameMatches(reservation.reservationReason, state.selectedReason()) &&
-          nameMatches(reservation.reservationState, state.selectedState()) &&
-          chipMatches(reservation.tags, state.selectedTag()))
-      }),
     }
   }),
+
+    withComputed((state) => {
+      return {
+        filteredReservations: computed(() => {
+          console.log('ReservationStore.filteredReservations by ', {
+            listId: state.listId(),
+            searchTerm: state.searchTerm(),
+            selectedYear: state.selectedYear(),
+            selectedReason: state.selectedReason(),
+            selectedState: state.selectedState(),
+            selectedTag: state.selectedTag()
+          });
+          
+          const allReservations = state.reservations() ?? [];
+          
+          // Apply listId filter first
+          let filtered = allReservations;
+          const listId = state.listId();
+          
+          if (listId && listId !== 'all') {
+            const prefix = listId.substring(0,2);
+            const value = listId.substring(2);
+            
+            switch (prefix) {
+            case 't_': // resource type
+            console.log('ReservationStore: filtering by resource type ', value);
+              filtered = filtered.filter(r => r.resource?.type === value);
+              break;
+            case 'r_': // resource key
+            console.log('ReservationStore: filtering by resource key ', value);
+            console.log('   before:' + filtered.length + ' reservations');
+              filtered = filtered.filter(r => r.resource?.key === value);
+                          console.log('   after:' + filtered.length + ' reservations');
+
+              break;
+            case 'p_': // reserver key (person)
+              filtered = filtered.filter(r => r.reserver?.key === value);
+              break;
+            case 'o_': // reserver key (org)
+              filtered = filtered.filter(r => r.reserver?.key === value);
+              break;
+            default:
+              console.warn(`ReservationStore: unknown listId prefix '${prefix}' in listId '${listId}'`);
+              return allReservations;
+            }
+          }
+          
+          // Apply other filters
+          return filtered.filter((reservation: ReservationModel) =>
+            nameMatches(reservation.index, state.searchTerm()) &&
+            yearMatches(reservation.startDate, state.selectedYear()) &&
+            nameMatches(reservation.reason, state.selectedReason()) &&
+            nameMatches(reservation.state, state.selectedState()) &&
+            chipMatches(reservation.tags, state.selectedTag()))
+        }),
+      }
+    }),
 
   withMethods((store) => {
     return {
       reload() {
-        store.reservationsResource.reload();
+        store.allReservationsResource.reload();
+        store.currentReserverResource.reload();
+        store.currentResourceResource.reload();
+        store.caleventResource.reload();
       },
 
       /******************************** setters (filter) ******************************************* */
-      setResourceId(resourceId: string) {
-        patchState(store, { resourceId });
+      setListId(listId: string) {
+        if (listId === 'my') {
+          const currentUser = store.appStore.currentUser();
+          if (currentUser && currentUser.personKey) {
+            const id = 'p_' + currentUser.personKey;
+            patchState(store, { listId: id });
+          }
+        } else {
+          patchState(store, { listId });
+        }
+
+        if (listId && listId !== 'all') {
+          let prefix = listId.substring(0,2);
+          let value = listId.substring(2);
+
+          console.log(`ReservationStore.setListId: setting listId to ${listId} -> prefix=${prefix}, value=${value}`);
+          
+          switch (prefix) {
+            case 'r_': // resource key */
+            console.log('ReservationStore.setListId: setting resourceId to ', value);
+              patchState(store, { resourceId: value, reserverId: undefined });
+              break;
+            case 'p_': // reserver key (person) */
+              patchState(store, { reserverId: value, reserverModelType: 'person', resourceId: undefined });
+              break;
+            case 'o_': // reserver key (org) */
+              patchState(store, { reserverId: value, reserverModelType: 'org', resourceId: undefined });
+              break;
+          }
+          this.reload();
+        }
       },
 
-      setReserver(reserver: PersonModel | OrgModel, reserverModelType: 'person' | 'org') {
-        patchState(store, { reserver, reserverModelType });
-        store.reservationsResource.reload();
+      setReserverId(reserverId: string | undefined, reserverModelType: 'person' | 'org') {
+        patchState(store, { reserverId, reserverModelType, resourceId: undefined });
+        this.reload();
       },
 
-      setResource(resource: ResourceModel | undefined) {
-        patchState(store, { resource });
-        store.reservationsResource.reload();
+      setResourceId(resourceId: string | undefined) {
+        patchState(store, { resourceId, reserverId: undefined });
+        this.reload();
       },
 
       setShowMode(showOnlyCurrent: boolean) {
@@ -194,35 +289,21 @@ export const ReservationStore = signalStore(
         return store.appStore.getCategory('rboat_type');
       },
 
+      getResource(resourceKey: string): ResourceModel | undefined {
+        return store.appStore.getResource(resourceKey);
+      },
+
       /******************************** actions ******************************************* */
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
         const newReservation = new ReservationModel(store.appStore.tenantId());
         // use either reserver (person/org) or resource from the store to prefill the new reservation or use currentPerson and defaultResource
-        const reserver = store.reserver() ?? store.currentPerson();
-        const resource = store.resource() ?? store.defaultResource();
+        const reserver = store.currentReserver() ?? store.currentPerson();
+        const reserverModelType = store.currentReserver() ? store.reserverModelType() : 'person';
+        const resource = store.currentResource() ?? store.defaultResource();
         if (reserver && resource) {
-          newReservation.reserverKey = reserver.bkey;
-          if (store.reserverModelType() === 'person') {
-            const res = reserver as PersonModel;
-            newReservation.reserverModelType = 'person';
-            newReservation.reserverName = res.firstName;
-            newReservation.reserverName2 = res.lastName;
-            newReservation.reserverType = res.gender;
-
-          } else {
-            const res = reserver as OrgModel;
-            newReservation.reserverModelType = 'org';
-            newReservation.reserverName = DEFAULT_NAME;
-            newReservation.reserverName2 = res.name;
-            newReservation.reserverType = res.type;
-          }
-          newReservation.resourceKey = resource.bkey;
-          newReservation.resourceName = resource.name;
-          newReservation.resourceModelType = 'resource';
-          newReservation.resourceType = resource.type;
-          newReservation.resourceSubType = resource.subType;
-          newReservation.startDate = getTodayStr(DateFormat.StoreDate);
+          newReservation.reserver = getAvatarInfo(reserver, reserverModelType);
+          newReservation.resource = getAvatarInfo(resource, 'resource');
           await this.edit(newReservation, readOnly, true);
         }
       },

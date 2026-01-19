@@ -4,9 +4,9 @@ import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, Ion
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { OrgModel, PersonModel, ReservationModel, ResourceModel, RoleName } from '@bk2/shared-models';
-import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { DurationPipe, getSvgIconUrl, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
-import { coerceBoolean, getAvatarKey, getCategoryIcon, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { coerceBoolean, getCategoryIcon, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
@@ -40,10 +40,10 @@ import { ReservationStore } from './reservation.store';
           @for(reservation of reservations(); track $index) {
             <ion-item (click)="showActions(reservation)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ getIcon(reservation) | svgIcon }}" alt="resource avatar" />
+                  <ion-img src="{{ getIcon(reservation) | async }}" alt="resource avatar" />
                 </ion-avatar>
 
-              <ion-label>{{reservation.resourceName}}</ion-label>  
+              <ion-label>{{reservation.resource?.name2}}</ion-label>  
               <ion-label>{{ reservation.startDate | duration:reservation.endDate }}</ion-label>
             </ion-item>
           }
@@ -59,8 +59,9 @@ export class ReservationsAccordionComponent {
   
   // inputs
   public reserver = input<PersonModel | OrgModel>();
-  public resource = input<ResourceModel>();
   public reserverModelType = input<'person' | 'org'>('person');
+
+  public resource = input<ResourceModel>();
   public color = input('light');
   public title = input('@reservation.plural');
   public readOnly = input(true);
@@ -80,19 +81,14 @@ export class ReservationsAccordionComponent {
     effect(() => {
       const reserver = this.reserver();
       if (reserver) {
-        this.reservationsStore.setReserver(reserver, this.reserverModelType());
+        const prefix = this.reserverModelType() === 'person' ? 'p_' : 'o_';
+        this.reservationsStore.setListId(prefix + reserver.bkey);
       }
       const resource = this.resource();
       if (resource) {
-        this.reservationsStore.setResource(resource);
+        this.reservationsStore.setListId('r_' + resource.bkey);
       }
     });
-  }
-
-  /******************************* getters *************************************** */
-  // 20.0:key for a rowing boat, 20.4:key for a locker
-  protected getAvatarKey(reservation: ReservationModel): string {
-    return getAvatarKey(reservation.resourceModelType, reservation.resourceKey, reservation.resourceType, reservation.resourceSubType);
   }
 
   /******************************* actions *************************************** */
@@ -168,11 +164,24 @@ export class ReservationsAccordionComponent {
     return isOngoing(reservation.endDate);
   }
 
-  protected getIcon(reservation: ReservationModel): string {
-    if (reservation.resourceType === 'rboat') {
-      return getCategoryIcon(this.rboatTypes(), reservation.resourceSubType);
-    } else {
-      return getCategoryIcon(this.resourceTypes(), reservation.resourceType);
+  protected async getIcon(reservation: ReservationModel): Promise<string> {
+    // Wait for resource to load
+    while (this.reservationsStore.isLoading()) {
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
+
+    const resource = this.reservationsStore.getResource(reservation.resource?.key || '');
+    this.imgixBaseUrl();
+    let iconName = '';
+    if (!resource) {
+      iconName = 'resource';
+    } else {
+      if (resource.type === 'rboat') {
+        iconName = getCategoryIcon(this.rboatTypes(), resource.subType);
+      } else {
+        iconName = getCategoryIcon(this.resourceTypes(), resource.type);
+      }
+    }
+    return getSvgIconUrl(this.imgixBaseUrl(), iconName);
   }
 }

@@ -3,13 +3,11 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTi
 import { vestForms } from 'ngx-vest-forms';
 import { AsyncPipe } from '@angular/common';
 
-import { ChTimeMask } from '@bk2/shared-config';
-import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_RES_STATE } from '@bk2/shared-constants';
 import { CategoryListModel, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { CategorySelectComponent, ChipsComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { FullNamePipe } from '@bk2/shared-pipes';
 
 import { reservationValidations } from '@bk2/relationship-reservation-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -19,8 +17,8 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   standalone: true,
   imports: [
     vestForms,
-    AsyncPipe, TranslatePipe, AvatarPipe, FullNamePipe,
-    TextInputComponent, DateInputComponent,
+    AsyncPipe, TranslatePipe, AvatarPipe,
+    TextInputComponent,
     NumberInputComponent, ChipsComponent, NotesInputComponent, CategorySelectComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton
   ],
@@ -43,9 +41,9 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                 <ion-col size="9">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ reserverAvatar() | avatar | async }}" alt="Avatar of Reserver" />
+                      <ion-img src="{{ reserverAvatarKey() | avatar | async }}" alt="Avatar of Reserver" />
                     </ion-avatar>
-                    <ion-label>{{ reserverName() | fullName:reserverName2() }}</ion-label>
+                    <ion-label>{{ reserverName() }}</ion-label>
                   </ion-item>
                 </ion-col>
                 <ion-col size="3">
@@ -65,7 +63,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                 <ion-col size="9">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ resourceAvatar() | avatar | async }}" alt="Avatar Logo of Resource" />
+                      <ion-img src="{{ resourceAvatarKey() | avatar | async }}" alt="Avatar Logo of Resource" />
                     </ion-avatar>
                     <ion-label>{{ resourceName() }}</ion-label>
                   </ion-item>
@@ -80,30 +78,6 @@ import { AvatarPipe } from '@bk2/avatar-ui';
           </ion-card-content>
         </ion-card>
       }
- 
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Zeitliche Angaben</ion-card-title>
-        </ion-card-header>
-        <ion-card-content class="ion-no-padding">
-          <ion-grid>
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <bk-date-input name="startDate" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
-              </ion-col>
-              <ion-col size="12" size-md="6"> 
-                <bk-text-input name="startTime" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [maxLength]=5 [mask]="timeMask" [readOnly]="isReadOnly()" />                                        
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-date-input name="endDate" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
-              </ion-col>
-              <ion-col size="12" size-md="6"> 
-                <bk-text-input name="endTime" [value]="endTime()" (valueChange)="onFieldChange('endTime', $event)" [maxLength]=5 [mask]="timeMask" [readOnly]="isReadOnly()" />                                        
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
 
       <ion-card>
         <ion-card-header>
@@ -117,7 +91,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="numberOfParticipants" [value]="numberOfParticipants()" (valueChange)="onFieldChange('numberOfParticipants', $event)" [maxLength]=6  [readOnly]="isReadOnly()" />                                        
+                <bk-text-input name="participants" [value]="participants()" (valueChange)="onFieldChange('participants', $event)"  [readOnly]="isReadOnly()" />                                        
               </ion-col>
 
               <ion-col size="12" size-md="6"> 
@@ -125,7 +99,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
               </ion-col>
 
               <ion-col size="12" size-md="6"> 
-                <bk-text-input name="reservationRef" [value]="reservationRef()" (valueChange)="onFieldChange('reservationRef', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
+                <bk-text-input name="resref" [value]="ref()" (valueChange)="onFieldChange('ref', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -139,25 +113,24 @@ import { AvatarPipe } from '@bk2/avatar-ui';
         <ion-card-content class="ion-no-padding">
           <ion-grid>
             <ion-row>
-              <ion-col size="12" size-md="6"> 
-                <bk-cat-select [category]="states()" [selectedItemName]="reservationState()" (selectedItemNameChange)="onFieldChange('reservationState', $event)" [withAll]=false [readOnly]="isReadOnly()" />
+              <ion-col size="12"> 
+                <bk-cat-select [category]="states()" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]=false [readOnly]="isReadOnly()" />
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-number-input name="price" [value]="price()" (valueChange)="onFieldChange('price', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />                                        
+                <bk-number-input name="price" [value]="amount()" (valueChange)="onFieldChange('amount', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />                                        
               </ion-col>
 
               <ion-col size="12" size-md="6">
                 <bk-text-input name="currency" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
               </ion-col>
 
-              <ion-col size="12" size-md="6"> 
-                <bk-cat-select [category]="periodicities()" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [withAll]=false [readOnly]="isReadOnly()" />
-              </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
+
+      <bk-notes name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
 
       @if(hasRole('privileged') || hasRole('eventAdmin')) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
@@ -176,6 +149,7 @@ export class ReservationFormComponent {
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly reasons = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
   public readonly periodicities = input.required<CategoryListModel>();
@@ -191,37 +165,34 @@ export class ReservationFormComponent {
 
   // validation and errors
   protected readonly suite = reservationValidations;
-  private readonly validationResult = computed(() => reservationValidations(this.formData()));
+  private readonly validationResult = computed(() => reservationValidations(this.formData(), this.tenantId(), this.allTags()));
 
   // fields
-  protected reserverName = linkedSignal(() => this.formData().reserverName ?? DEFAULT_NAME); 
-  protected reserverName2 = linkedSignal(() => this.formData().reserverName2 ?? DEFAULT_NAME); 
-  protected reserverModelType = linkedSignal(() => this.formData().reserverModelType ?? 'person');
-  protected reserverType = linkedSignal(() => this.formData().reserverType ?? DEFAULT_GENDER);
-  protected reserverAvatar = computed(() => this.formData().reserverModelType + '.' + this.formData().reserverKey);
-  protected resourceKey = linkedSignal(() => this.formData().resourceKey ?? DEFAULT_KEY);
-  protected resourceName = linkedSignal(() => this.formData().resourceName ?? DEFAULT_NAME);
-  protected resourceAvatar = computed(() => 'resource.' + this.formData().resourceType + ':' + this.formData().resourceKey);
-  protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
-  protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
-  protected endDate = linkedSignal(() => this.formData().endDate ?? DEFAULT_DATE);
-  protected endTime = linkedSignal(() => this.formData().endTime ?? DEFAULT_TIME);
-  protected numberOfParticipants = linkedSignal(() => this.formData().numberOfParticipants ?? '');
+  protected reserverAvatar = linkedSignal(() => this.formData().reserver);
+  protected reserverName = computed(() => getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay));
+  protected reserverModelType = computed(() => this.reserverAvatar()?.modelType as string ?? 'person');
+  protected reserverKey = computed(() => this.reserverAvatar()?.key ?? DEFAULT_KEY);
+  protected reserverAvatarKey = computed(() => `${this.reserverModelType()}.${this.reserverKey()}`);
+
+  protected resourceAvatar = linkedSignal(() => this.formData().resource);
+  protected resourceName = computed(() => getAvatarName(this.resourceAvatar()));
+  protected resourceType = computed(() => this.resourceAvatar()?.type ?? '');
+  protected resourceKey = computed(() => this.resourceAvatar()?.key ?? DEFAULT_KEY);
+  protected resourceAvatarKey = computed(() => `resource.${this.resourceType()}:${this.resourceKey()}`);
+
+  protected participants = linkedSignal(() => this.formData().participants ?? '');
   protected area = linkedSignal(() => this.formData().area ?? '');
-  protected reservationRef = linkedSignal(() => this.formData().reservationRef ?? '');
-  protected reservationState = linkedSignal(() => this.formData().reservationState ?? DEFAULT_RES_STATE);
-  protected reason = linkedSignal(() => this.formData().reservationReason ?? DEFAULT_RES_REASON);
+  protected ref = linkedSignal(() => this.formData().ref ?? '');
+  protected state = linkedSignal(() => this.formData().state ?? DEFAULT_RES_STATE);
+  protected reason = linkedSignal(() => this.formData().reason ?? DEFAULT_RES_REASON);
   protected order = linkedSignal(() => this.formData().order ?? 0);
-  protected price = linkedSignal(() => this.formData().price ?? 0);
-  protected currency = linkedSignal(() => this.formData().currency ?? 'CHF');
-  protected periodicity = linkedSignal(() => this.formData().periodicity ?? 'yearly');
+  protected price = linkedSignal(() => this.formData().price);
+  protected amount = linkedSignal(() => this.price()?.amount ?? 0);
+  protected currency = linkedSignal(() => this.price()?.currency ?? DEFAULT_CURRENCY);
   protected tags = linkedSignal(() => this.formData().tags ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
   protected name = linkedSignal(() => this.formData().name ?? '');
-
-  // passing constants to template
-  protected timeMask = ChTimeMask;
-  protected endFutureDate = END_FUTURE_DATE_STR;
+  protected description = linkedSignal(() => this.formData().description ?? '');
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

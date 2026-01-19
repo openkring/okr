@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { OrgModel, PersonModel, ReservationModel, ResourceModel, UserModel } from '@bk2/shared-models';
+import { AvatarModelTypes, OrgModel, PersonModel, ReservationModel, ResourceModel, UserModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 
-import { getReservationIndex, getReservationIndexInfo, getReserverName, isReservation } from './reservation.util';
+import { getReservationIndex, getReservationIndexInfo, isReservation } from './reservation.util';
 
 // Mock shared utility functions
 vi.mock('@bk2/shared-util-core', async importOriginal => {
@@ -38,13 +38,28 @@ describe('Reservation Utils', () => {
     reservation = new ReservationModel(tenantId);
     reservation.bkey = 'res-1';
     reservation.name = 'Team Training';
-    reservation.reserverKey = 'person-1';
-    reservation.reserverName = 'John';
-    reservation.reserverName2 = 'Doe';
-    reservation.reserverModelType = 'person';
-    reservation.resourceKey = 'resource-1';
-    reservation.resourceName = 'Boat A';
-    reservation.startDate = '20251010';
+    const reserverAvatar = {
+      key: 'person-1',
+      name1: 'John',
+      name2: 'Doe',
+      modelType: 'person' as AvatarModelTypes,
+      type: 'male',
+      subType: '',
+      label: 'JD'
+    } 
+    reservation.reserver = reserverAvatar;
+    const resourceAvatar = {
+      key: 'resource-1',
+      name1: 'Boat',
+      name2: 'A',
+      modelType: 'resource' as AvatarModelTypes,
+      type: 'rboat',
+      subType: 'b1x',
+      label: 'Boat A'
+    };
+    reservation.resource = resourceAvatar;
+
+    // tbd: calevent
 
     person = new PersonModel(tenantId);
     person.bkey = 'person-1';
@@ -64,21 +79,6 @@ describe('Reservation Utils', () => {
 
     currentUser = new UserModel(tenantId);
     currentUser.bkey = 'user-1';
-  });
-
-  describe('getReserverName', () => {
-    it('should return "firstName lastName" for a person', () => {
-      reservation.reserverModelType = 'person';
-      reservation.reserverName = 'John';
-      reservation.reserverName2 = 'Doe';
-      expect(getReserverName(reservation)).toBe('John Doe');
-    });
-
-    it('should return "name" for an org', () => {
-      reservation.reserverModelType = 'org';
-      reservation.reserverName2 = 'The Big Club';
-      expect(getReserverName(reservation)).toBe('The Big Club');
-    });
   });
 
   describe('isReservation', () => {
