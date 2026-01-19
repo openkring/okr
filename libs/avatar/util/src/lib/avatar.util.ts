@@ -10,7 +10,7 @@ export function newAvatarModel(tenantIds: string[], modelType: string, key: stri
   return {
     bkey: modelType + '.' + key,
     tenants: tenantIds,
-    storagePath: `tenant/${tenantIds[0]}/modelType/${key}/${AvatarDirectory}/${fn}.${ext}`,
+    storagePath: `tenant/${tenantIds[0]}/${modelType}/${key}/${AvatarDirectory}/${fn}.${ext}`,
     isArchived: false,
   };
 }
@@ -23,8 +23,13 @@ export async function readAsFile(photo: Photo, platform: Platform): Promise<File
     });
     const _fileContent = _file.data;
     if (typeof _fileContent !== 'string') die('ProfilePage.readAsFile: _fileContent is not a string.');
-    const _rawData = Buffer.from(_fileContent, 'base64');
-    return blobToFile(new Blob([new Uint8Array(_rawData)], { type: 'image/' + photo.format }), new Date().getTime() + '.' + photo.format);
+    // Convert base64 string to Uint8Array using browser-compatible atob
+    const binaryString = atob(_fileContent);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return blobToFile(new Blob([bytes], { type: 'image/' + photo.format }), new Date().getTime() + '.' + photo.format);
   } else {
     // Fetch the photo, read as a blob, then convert to base64 format
     if (!photo.webPath) die('ProfilePage.readAsBase64: webPath is mandatory.');

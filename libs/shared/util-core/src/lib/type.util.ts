@@ -1,4 +1,4 @@
-import { BaseProperty, BaseType, BkModel, GroupModel, MembershipModel, MetaTag, OrgModel, OwnershipModel, PersonalRelModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
+import { AVATAR_INFO_SHAPE, AvatarInfo, BaseProperty, BaseType, BkModel, GroupModel, MembershipModel, MetaTag, MoneyModel, OrgModel, OwnershipModel, PersonalRelModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
 import { die, warn } from './log.util';
 
 /************************************************* Tupel ********************************************************** */
@@ -310,6 +310,14 @@ export function isUser(user: unknown, tenantId: string): user is UserModel {
     }
   }
   return false;
+}
+
+export function isAvatarInfo(avatar: unknown): avatar is AvatarInfo {
+  return isType<AvatarInfo>(avatar, AVATAR_INFO_SHAPE);  
+}
+
+export function isMoney(money: unknown): money is MoneyModel {
+  return isType<MoneyModel>(money, new MoneyModel(0));
 }
 
 /************************************************* General Type Checks ********************************************************** */

@@ -210,6 +210,10 @@ export function getFullName(name1?: string, name2?: string, nameDisplay = NameDi
   }
 }
 
+export function getAvatarName(avatar?: AvatarInfo, nameDisplay = NameDisplay.FirstLast): string {
+  return getFullName(avatar?.name1, avatar?.name2, nameDisplay);
+}
+
 export function getModelName(model: any, tenantId: string, nameDisplay = NameDisplay.FirstLast): string {
   if (isPerson(model, tenantId)) {
     return getFullName(model.firstName, model.lastName, nameDisplay);

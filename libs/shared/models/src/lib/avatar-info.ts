@@ -1,12 +1,14 @@
 import { DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME } from '@bk2/shared-constants';
 
+export type AvatarModelTypes = 'person' | 'org' | 'resource' | 'user' | 'group' | 'account';
+
 export interface AvatarInfo {
   key: string; // key of the avatar
   name1: string; // firstName of the avatar
   name2: string; // lastName of the avatar or name of the org
-  modelType: 'person' | 'org' | 'resource' | 'user' | 'group' | 'account'; // type of the avatar
-  type: string; // reserved for future use, e.g. resource type for building resource avatars
-  subType: string; // reserved for future use, e.g. rboat type for building resource avatars
+  modelType: AvatarModelTypes; // type of the avatar
+  type: string; // e.g. resource type for resource avatars
+  subType: string; // e.g. rboat type for resource avatars
   label: string; // label of the avatar
 }
 

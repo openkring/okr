@@ -7,7 +7,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { coerceBoolean, getFullName } from '@bk2/shared-util-core';
+import { coerceBoolean, getAvatarName, getFullName } from '@bk2/shared-util-core';
 
 import { AvatarDisplayComponent } from './avatar-display.component';
 import { AvatarInputComponent } from "./avatar-input.component";
@@ -140,7 +140,7 @@ export class AvatarsComponent {
   }
 
   protected getAvatarName(avatar: AvatarInfo): string {
-    return getFullName(avatar.name1, avatar.name2, this.currentUser()?.nameDisplay);
+    return getAvatarName(avatar, this.currentUser()?.nameDisplay);
   }
 
   /**
