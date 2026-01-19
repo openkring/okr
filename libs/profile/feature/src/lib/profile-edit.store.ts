@@ -2,6 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Photo } from '@capacitor/camera';
+import { of, take } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@bk2/shared-models';
@@ -43,7 +44,9 @@ export const ProfileEditStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
+        if (!params.personKey) return of(undefined);
         return store.personService.read(params.personKey).pipe(
+          take(1), // Complete after first emission to prevent memory leak with hot observable
           debugItemLoaded('ProfileEditStore.person', params.currentUser)
         );
       }

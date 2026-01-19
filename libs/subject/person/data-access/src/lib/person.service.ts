@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { map, Observable, of } from 'rxjs';
+import { map, Observable, of, take } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -34,7 +34,7 @@ export class PersonService {
    */
   public read(key?: string): Observable<PersonModel | undefined> {
     if (!key || key.length === 0) return of(undefined);
-    return findByKey<PersonModel>(this.list(), key);    
+    return this.firestoreService.readModel<PersonModel>(PersonCollection, key).pipe(take(1));    
   }
 
   /**
@@ -46,6 +46,7 @@ export class PersonService {
   public readPersonByBexioId(bexioId: string): Observable<PersonModel | undefined> {
     if (!bexioId || bexioId.length === 0) return of(undefined);
     return this.list().pipe(
+      take(1),
       map((persons: PersonModel[]) => {
         return persons.find((person: PersonModel) => person.bexioId === bexioId);
       }));

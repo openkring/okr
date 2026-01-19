@@ -105,8 +105,14 @@ export class ProfileEditPageComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected personFormData = linkedSignal(() => structuredClone(this.currentPerson()));
-  protected userFormData = linkedSignal(() => structuredClone(this.currentUser()));
+  protected personFormData = linkedSignal(() => {
+    const person = this.currentPerson();
+    return person ? structuredClone(person) : undefined;
+  });
+  protected userFormData = linkedSignal(() => {
+    const user = this.currentUser();
+    return user ? structuredClone(user) : undefined;
+  });
   protected showForm = signal(true);
 
   // derived signals
