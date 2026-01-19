@@ -17,7 +17,7 @@ import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { convertMemberAndOrgToMembership, getMemberEmailAddresses, getRelLogEntry } from '@bk2/relationship-membership-util';
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
-import { of, switchMap } from 'rxjs';
+import { of, switchMap, take } from 'rxjs';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -83,6 +83,7 @@ export const _MembershipStore = signalStore(
       }),
       stream: ({params}) => {
         return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_default').pipe(
+          take(1),
           debugItemLoaded<CategoryListModel>('mcat_default', params.currentUser)
         );
       }
@@ -127,6 +128,7 @@ export const _MembershipStore = signalStore(
       }),  
       stream: ({params}) => {
         return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId).pipe(
+          take(1),
           switchMap(mcat => {
             if (!mcat) {
               // fallback to preloaded default membership category

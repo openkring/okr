@@ -15,7 +15,7 @@ import { ReservationService } from '@bk2/relationship-reservation-data-access';
 import { isReservation } from '@bk2/relationship-reservation-util';
 
 import { ReservationEditModalComponent } from './reservation-edit.modal';
-import { of } from 'rxjs';
+import { of, take } from 'rxjs';
 
 export type ReservationState = {
   listId: string;       // filter format: t_resourceType, r_resourceKey, p_reserverKey, or 'all'
@@ -91,6 +91,7 @@ export const ReservationStore = signalStore(
         if (!params.reserverId || !params.reserverId.length) return of(undefined);
         const collection = params.reserverModelType === 'person' ? 'persons' : 'orgs';
         return store.firestoreService.readModel<PersonModel | OrgModel>(collection, params.reserverId).pipe(
+          take(1),
           debugItemLoaded('ReservationStore.reserver', params.currentUser)
         );
       }
@@ -103,6 +104,7 @@ export const ReservationStore = signalStore(
       stream: ({ params }) => {
         if (!params.caleventId || !params.caleventId.length) return of(undefined);
         return store.firestoreService.readModel<CalEventModel>(CalEventCollection, params.caleventId).pipe(
+          take(1),
           debugItemLoaded('ReservationStore.caleventResource', params.currentUser)
         );
       }

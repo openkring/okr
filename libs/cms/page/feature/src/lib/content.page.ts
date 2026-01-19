@@ -258,11 +258,8 @@ export class ContentPageComponent {
       const id = replaceSubstring(sectionId, '@TID@', this.tenantId());
       this.sectionStore.setSectionId(id);
 
-      // Wait for section to load
-      while (this.sectionStore.isLoading()) {
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
-
+      // Section will be available via the store's rxResource
+      // No need to poll - the UI will update when data loads
       const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
       this.addActionSheetButtons(actionSheetOptions);
       await this.executeActions(actionSheetOptions, sectionId);

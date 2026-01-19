@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, of } from 'rxjs';
+import { Observable, of, take } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
@@ -78,6 +78,7 @@ export const AocDataStore = signalStore(
         console.log('AocDataStore.fixModels: fixing addresses...');
         const dbQuery = getSystemQuery(store.appStore.tenantId());
         store.appStore.firestoreService.searchData<AddressModel>(AddressCollection, dbQuery, 'parentKey', 'asc')
+          .pipe(take(1))
           .subscribe(async (addresses) => {
             for (const address of addresses) {
               let hasChanged = false;
@@ -198,6 +199,7 @@ export const AocDataStore = signalStore(
       validate<T>(collection: string, suite: StaticSuite, tenants: string, tags: string, orderBy = 'name'): void {
         const dbQuery = getSystemQuery(store.appStore.tenantId());
         store.appStore.firestoreService.searchData<T>(collection, dbQuery, orderBy, 'asc')
+          .pipe(take(1))
           .subscribe(async (data) => {
             for (const model of data) {
               console.log(`Validating model ${collection}/${(model as any).bkey}...`);

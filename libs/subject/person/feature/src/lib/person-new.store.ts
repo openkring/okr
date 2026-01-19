@@ -7,6 +7,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, OrgCollection, OrgModel } from '@bk2/shared-models';
 import { debugItemLoaded } from '@bk2/shared-util-core';
+import { take } from 'rxjs';
 
 export type PersonNewState = {
   orgId: string | undefined;
@@ -33,6 +34,7 @@ export const PersonNewStore = signalStore(
       }),  
       stream: ({params}) => {
         return store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgId).pipe(
+          take(1),
           debugItemLoaded(`org ${params.orgId}`, params.currentUser)
         );
       }
@@ -55,6 +57,7 @@ export const PersonNewStore = signalStore(
       }),  
       stream: ({params}) => {
         return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId).pipe(
+          take(1),
           debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, store.appStore.currentUser())          
         );
       }
