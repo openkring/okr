@@ -157,6 +157,7 @@ export const TaskStore = signalStore(
           task,
           currentUser: store.currentUser(),
           tags: store.tags(),
+          tenantId: store.tenantId(),
           states: store.states(),
           priorities: store.priorities(),
           importances: store.importances(),

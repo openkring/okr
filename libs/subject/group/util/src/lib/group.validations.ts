@@ -4,7 +4,7 @@ import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-
 import { GroupModel } from '@bk2/shared-models';
 import { booleanValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const groupValidations = staticSuite((model: GroupModel, field?: string) => {
+export const groupValidations = staticSuite((model: GroupModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
   stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);

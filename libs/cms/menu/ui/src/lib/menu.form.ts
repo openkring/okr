@@ -113,6 +113,7 @@ export class MenuItemFormComponent {
   public readonly types = input.required<CategoryListModel>();
   public readonly roles = input.required<CategoryListModel>();
   public readonly currentUser = input.required<UserModel | undefined>();
+  public readonly tenantId = input.required<string>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
   public readonly readOnly = input(true);
@@ -124,7 +125,7 @@ export class MenuItemFormComponent {
 
   // validation and errors
   protected readonly suite = menuItemValidations;
-  private readonly validationResult = computed(() => menuItemValidations(this.formData()));
+  private readonly validationResult = computed(() => menuItemValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected iconErrors = computed(() => this.validationResult().getErrors('icon'));
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));

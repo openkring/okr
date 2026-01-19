@@ -4,10 +4,10 @@ import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarUsage, DeliveryType, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@bk2/shared-models';
 import { baseValidations, booleanValidations, categoryValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const userValidations = staticSuite((model: UserModel, field?: string) => {
+export const userValidations = staticSuite((model: UserModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model, field);
+  baseValidations(model, tenants, tags, field);
   stringValidations('loginEmail', model.loginEmail, SHORT_NAME_LENGTH);
   stringValidations('personKey', model.personKey, SHORT_NAME_LENGTH);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);

@@ -7,6 +7,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
+import { ENV } from '@bk2/shared-config';
 
 @Component({
   selector: 'bk-menu-item-modal',
@@ -30,6 +31,7 @@ import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
           [showForm]="showForm()"
           [roles]="roles()"
           [types]="types()"
+          [tenantId]="env.tenantId"
           [readOnly]="isReadOnly()"
           [allTags]="tags()"
           (dirty)="formDirty.set($event)"
@@ -41,6 +43,7 @@ import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
 })
 export class MenuItemModalComponent {
   private readonly modalController = inject(ModalController);
+  protected readonly env = inject(ENV);
 
   // inputs
   public menuItem = input.required<MenuItemModel>();

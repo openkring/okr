@@ -4,10 +4,10 @@ import { baseValidations, booleanValidations, numberValidations, stringValidatio
 
 import { only, staticSuite } from 'vest';
 
-export const categoryListValidations = staticSuite((model: CategoryListModel, field?: string) => {
+export const categoryListValidations = staticSuite((model: CategoryListModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model);
+  baseValidations(model, tenants, tags, field);
   stringValidations('i18nBase', model.name, SHORT_NAME_LENGTH);
   stringValidations('notes', model.name, DESCRIPTION_LENGTH);
   booleanValidations('translateItems', model.translateItems);

@@ -5,10 +5,10 @@ import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-
 import { ResourceModel } from '@bk2/shared-models';
 import { baseValidations, isArrayOfBaseProperties, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const resourceValidations = staticSuite((model: ResourceModel, field?: string) => {
+export const resourceValidations = staticSuite((model: ResourceModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model, field);
+  baseValidations(model, tenants, tags, field);
 
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
   stringValidations('index', model.name, SHORT_NAME_LENGTH);

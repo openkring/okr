@@ -29,6 +29,7 @@ import { AddressFormComponent } from "@bk2/subject-address-ui";
           [readOnly]="isReadOnly()"
           [showForm]="showForm()"
           [allTags]="tags()"
+          [tenantId]="tenantId()" 
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -43,6 +44,7 @@ export class AddressEditModalComponent {
   public address = input.required<AddressModel>();
   public currentUser = input<UserModel | undefined>();
   public tags = input.required<string>();
+  public tenantId = input.required<string>();
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   

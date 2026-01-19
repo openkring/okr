@@ -50,6 +50,7 @@ import { OrgFormComponent } from '@bk2/subject-org-ui';
           [types]="types()"
           [showForm]="showForm()"
           [allTags]="tags()"
+          [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -90,6 +91,7 @@ export class OrgEditModalComponent {
   public currentUser = input<UserModel | undefined>();
   public resource = input<ResourceModel | undefined>();
   public tags = input.required<string>();
+  public tenantId = input.required<string>();
   public types = input.required<CategoryListModel>();
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

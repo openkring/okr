@@ -5,10 +5,10 @@ import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-
 import { LocationModel } from '@bk2/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const locationValidations = staticSuite((model: LocationModel, field?: string) => {
+export const locationValidations = staticSuite((model: LocationModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model, field);  // bkey, tenants, isArchived
+  baseValidations(model, tenants, tags, field);  // bkey, tenants, isArchived
   stringValidations('index', model.index, SHORT_NAME_LENGTH);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
   //tagValidations('tags', model.tags);

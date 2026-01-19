@@ -4,11 +4,11 @@ import { ABBREVIATION_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } 
 import { OwnershipModel } from '@bk2/shared-models';
 import { baseValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const ownershipValidations = staticSuite((model: OwnershipModel, field?: string) => {
+export const ownershipValidations = staticSuite((model: OwnershipModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
   // base
-  baseValidations(model);
+  baseValidations(model, tenants, tags, field);
 
   // owner
   stringValidations('ownerKey', model.ownerKey, SHORT_NAME_LENGTH);

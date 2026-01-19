@@ -178,6 +178,7 @@ export const OrgStore = signalStore(
           currentUser: store.currentUser(),
           resource: store.defaultResource(),
           tags: store.tags(),
+          tenantId: store.tenantId(),
           types: store.types(),
           readOnly
         }

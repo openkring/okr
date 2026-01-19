@@ -140,6 +140,7 @@ export const TransferStore = signalStore(
             states: this.getStates(),
             periodicities: this.getPeriodicities(),
             tags: this.getTags(),
+            tenantId: store.tenantId(),
             readOnly
           }
         });

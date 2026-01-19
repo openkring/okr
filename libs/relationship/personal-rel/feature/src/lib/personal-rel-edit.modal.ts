@@ -35,6 +35,7 @@ import { ENV } from '@bk2/shared-config';
         [types]="types()"
         [allTags]="tags()"
         [readOnly]="isReadOnly()"
+        [tenants]="env.tenantId"
         (selectPerson)="selectPerson($event)"
         (dirty)="formDirty.set($event)"
         (valid)="formValid.set($event)"
@@ -55,7 +56,7 @@ import { ENV } from '@bk2/shared-config';
 })
 export class PersonalRelEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
+  protected readonly env = inject(ENV);
 
   // inputs
   public personalRel = input.required<PersonalRelModel>();

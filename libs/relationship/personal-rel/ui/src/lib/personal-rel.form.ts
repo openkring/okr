@@ -124,6 +124,7 @@ export class PersonalRelFormComponent {
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public types = input.required<CategoryListModel>();
   public allTags = input.required<string>();
+  public tenants = input.required<string>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -134,7 +135,7 @@ export class PersonalRelFormComponent {
 
   // validation and errors
   protected readonly suite = personalRelValidations;
-  private readonly validationResult = computed(() => personalRelValidations(this.formData()));
+  private readonly validationResult = computed(() => personalRelValidations(this.formData(), this.tenants(), this.allTags()));
 
   // fields
   protected subjectKey = linkedSignal(() => this.formData().subjectKey ?? DEFAULT_KEY);

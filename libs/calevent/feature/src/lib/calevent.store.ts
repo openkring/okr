@@ -200,6 +200,7 @@ export const CalEventStore = signalStore(
             types: this.getTypes(),
             periodicities: this.getPeriodicities(),
             tags: this.getTags(),
+            tenantId: store.tenantId(),
             locale: this.getLocale(),
             readOnly
           }

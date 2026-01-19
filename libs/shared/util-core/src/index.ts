@@ -1,6 +1,5 @@
 export * from './lib/auth.util';
 export * from './lib/base-model.util';
-export * from './lib/base.validations';
 export * from './lib/category.util';
 export * from './lib/chip.util';
 export * from './lib/convert.util';

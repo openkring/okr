@@ -2,16 +2,16 @@ import { only, staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
 import { TaskModel } from '@bk2/shared-models';
-import { avatarInfoValidations, baseValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
+import { avatarValidations, baseValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const taskValidations = staticSuite((model: TaskModel, field?: string) => {
+export const taskValidations = staticSuite((model: TaskModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model, field);
+  baseValidations(model, tenants, tags, field);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
 
-  avatarInfoValidations('author', model.author);
-  avatarInfoValidations('assignee', model.assignee);
+  avatarValidations('author', model.author);
+  avatarValidations('assignee', model.assignee);
 
   stringValidations('state', model.state, WORD_LENGTH);
   dateValidations('dueDate', model.dueDate);  // may be empty
@@ -19,7 +19,7 @@ export const taskValidations = staticSuite((model: TaskModel, field?: string) =>
   stringValidations('priority', model.priority, WORD_LENGTH);
   stringValidations('importance', model.importance, WORD_LENGTH);
 
-  avatarInfoValidations('scope', model.scope);
+  avatarValidations('scope', model.scope);
   // calendars are not validated here
 });
 

@@ -109,6 +109,8 @@ export class ProfileSettingsAccordionComponent {
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
   public color = input('light'); // color of the accordion
   public title = input('@profile.settings.title'); // title of the accordion
+  public readonly tenantId = input.required<string>();
+  public readonly tags = input.required<string>();
   public readonly readOnly = input<boolean>(true);
   public readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -118,7 +120,7 @@ export class ProfileSettingsAccordionComponent {
 
   // validation and errors
   protected readonly suite = userValidations;
-  private readonly validationResult = computed(() => userValidations(this.formData()));
+  private readonly validationResult = computed(() => userValidations(this.formData(), this.tenantId(), this.tags()));
   protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
   protected showHelper = computed(() => this.currentUser()?.showHelpers ?? true);
 

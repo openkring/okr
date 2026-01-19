@@ -288,6 +288,7 @@ export class ResourceFormComponent {
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly subTypes = input<CategoryListModel | undefined>();
   public readonly usages = input<CategoryListModel | undefined>();
   public readonly readOnly = input(true);
@@ -299,7 +300,7 @@ export class ResourceFormComponent {
 
   // validation and errors
   protected readonly suite = resourceValidations;
-  private readonly validationResult = computed(() => resourceValidations(this.formData()));
+  private readonly validationResult = computed(() => resourceValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected loadErrors = computed(() => this.validationResult().getErrors('load'));
   protected currentValueErrors = computed(() => this.validationResult().getErrors('currentValue'));

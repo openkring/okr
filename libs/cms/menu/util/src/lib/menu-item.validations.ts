@@ -5,7 +5,7 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } 
 import { MenuItemModel } from '@bk2/shared-models';
 import { booleanValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
 
-export const menuItemValidations = staticSuite((model: MenuItemModel, field?: string) => {
+export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
   stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);

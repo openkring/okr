@@ -110,6 +110,7 @@ export const AddressStore = signalStore(
             address,
             currentUser: store.currentUser(),
             tags: this.getTags(),
+            tenantId: store.tenantId(),
             readOnly
         }
         });

@@ -89,6 +89,7 @@ export class TaskFormComponent {
   public readonly currentUser = input<UserModel | undefined>();
   public readonly showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly states = input.required<CategoryListModel>();
   public readonly priorities = input.required<CategoryListModel>();
   public readonly importances = input.required<CategoryListModel>();
@@ -101,7 +102,7 @@ export class TaskFormComponent {
 
   // validation and errors
   protected readonly suite = taskValidations;
-  private readonly validationResult = computed(() => taskValidations(this.formData()));
+  private readonly validationResult = computed(() => taskValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields

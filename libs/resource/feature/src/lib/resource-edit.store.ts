@@ -45,6 +45,7 @@ export const ResourceEditStore = signalStore(
     return {
       resource: computed(() => state.resResource.value()),
       currentUser: computed(() => state.appStore.currentUser()),
+      tenantId: computed(() => state.appStore.env.tenantId),
       isLoading: computed(() => state.resResource.isLoading()),
     };
   }),

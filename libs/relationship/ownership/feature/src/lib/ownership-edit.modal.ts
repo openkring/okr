@@ -42,6 +42,7 @@ import { getOwnerName } from '@bk2/relationship-ownership-util';
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
             [allTags]="tags()"
+            [tenantId]="appStore.env.tenantId"
             [readOnly]="isReadOnly()"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
@@ -64,7 +65,7 @@ import { getOwnerName } from '@bk2/relationship-ownership-util';
 })
 export class OwnershipEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
+  protected readonly appStore = inject(AppStore);
 
   // inputs
   public ownership = input.required<OwnershipModel>();

@@ -7,6 +7,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CategoryListFormComponent } from '@bk2/category-ui';
+import { ENV } from '@bk2/shared-config';
 
 @Component({
   selector: 'bk-category-edit-modal',
@@ -27,6 +28,7 @@ import { CategoryListFormComponent } from '@bk2/category-ui';
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser"
           [allTags]="tags()"
+          [tenants]="env.tenantId"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -37,6 +39,7 @@ import { CategoryListFormComponent } from '@bk2/category-ui';
 })
 export class CategoryEditModalComponent {
   private readonly modalController = inject(ModalController);
+  protected readonly env = inject(ENV);
 
   // inputs
   public category = input.required<CategoryListModel>();

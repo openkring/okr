@@ -3,7 +3,8 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, forkJoin, of } from 'rxjs';
+import { map, switchMap, take, tap } from 'rxjs/operators';
 
 import { AppStore } from '@bk2/shared-feature';
 import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@bk2/shared-models';
@@ -76,10 +77,27 @@ export const _PageStore = signalStore(
       }),
       stream: ({ params }) => {
         if (!params.pageId || params.pageId.length === 0) {
-          return of(undefined);
+          return of({ page: undefined, sections: [] });
         }
         return store.pageService.read(params.pageId).pipe(
-          debugItemLoaded<PageModel>(`PageStore.pageResource`, params.currentUser)
+          debugItemLoaded<PageModel>(`PageStore.pageResource`, params.currentUser),
+          switchMap(page => {
+            if (!page || !page.sections || page.sections.length === 0) {
+              return of({ page, sections: [] as SectionModel[] });
+            }
+            // Load all sections for this page
+            const sectionObservables = page.sections.map(sectionId => 
+              store.sectionService.read(sectionId).pipe(
+                take(1) // Ensure the observable completes after first emission
+              )
+            );
+            return forkJoin(sectionObservables).pipe(
+              map(sections => ({
+                page,
+                sections: sections.filter(s => s !== undefined) as SectionModel[]
+              }))
+            );
+          })
         );
       }
     })
@@ -98,10 +116,11 @@ export const _PageStore = signalStore(
           chipMatches(page.tags, state.selectedTag())
       )),
       // page
-      page: computed(() => state.pageResource.value() ?? undefined),
-      meta: computed(() => state.pageResource.value()?.meta),
-      sections: computed(() => state.pageResource.value()?.sections ?? []),
-      isEmptyPage: computed(() => state.pageResource.value()?.sections === undefined || state.pageResource.value()?.sections.length === 0),
+      page: computed(() => state.pageResource.value()?.page ?? undefined),
+      meta: computed(() => state.pageResource.value()?.page?.meta),
+      sections: computed(() => state.pageResource.value()?.page?.sections ?? []),
+      pageSections: computed(() => state.pageResource.value()?.sections ?? []),
+      isEmptyPage: computed(() => state.pageResource.value()?.page?.sections === undefined || state.pageResource.value()?.page?.sections.length === 0),
       sectionTypes: computed(() => state.appStore.getCategory('section_type')),
 
       isLoading: computed(() => state.pagesResource.isLoading() || state.pageResource.isLoading()),

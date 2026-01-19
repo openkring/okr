@@ -30,6 +30,7 @@ import { ModelSelectService } from '@bk2/shared-feature';
         (formDataChange)="onFormDataChange($event)"
         [currentUser]="currentUser()"
         [allTags]="tags()"
+        [tenantId]="tenantId()"
         [types]="types()"
         [states]="states()"
         [periodicities]="periodicities()"
@@ -65,6 +66,7 @@ export class TransferEditModalComponent {
   public states = input.required<CategoryListModel>();
   public periodicities = input.required<CategoryListModel>();
   public tags = input.required<string>();
+  public tenantId = input.required<string>();
 
   // signals
   protected formDirty = signal(false);

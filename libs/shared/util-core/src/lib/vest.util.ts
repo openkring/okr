@@ -1,8 +1,98 @@
-import { LONG_NAME_LENGTH, STORE_DATE_LENGTH, STORE_DATETIME_LENGTH, TIME_LENGTH, URL_LENGTH } from '@bk2/shared-constants';
-import { Roles } from '@bk2/shared-models';
+import { LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, SHORT_NAME_LENGTH, STORE_DATE_LENGTH, STORE_DATETIME_LENGTH, TIME_LENGTH, URL_LENGTH } from '@bk2/shared-constants';
 import { enforce, omitWhen, test } from 'vest';
 import { checkDate, DateFormat } from './date.util';
-import { isArrayOfStrings } from './type.util';
+import { isArrayOfStrings, isAvatarInfo, isMoney } from './type.util';
+import { AddressableModel, AvatarInfo, BkModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, MoneyModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from '@bk2/shared-models';
+
+/**
+ * Validates BkModel attributes:
+ * - BaseModel: bkey
+ * - NamedModel: name
+ * - TaggedModel: tags
+ * - SearchableModel: index
+ * - AddressableModel: favEmail, favPhone, favStreetName, favStreetNumber, favZipCode, favCity, favCountryCode
+ * - PersistedModel: tenants, isArchived
+ * @param model BkModel
+ * @param field optional field to validate
+ */
+export function baseValidations(model: BkModel, givenTenants: string, givenTags: string, field?: string) {
+
+  omitWhen(!isBaseModel(model), () => {
+    stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
+  });
+
+  omitWhen(!isNamedModel(model), () => {
+    const m = model as unknown as NamedModel;
+    stringValidations('name', m.name, NAME_LENGTH);
+  });
+  
+  omitWhen(!isTaggedModel(model), () => {
+    const m = model as unknown as TaggedModel;
+    tagValidations('tags', m.tags, givenTags);
+  });
+
+  omitWhen(!isSearchableModel(model), () => {
+    const m = model as unknown as SearchableModel;
+    stringValidations('index', m.index, LONG_NAME_LENGTH);
+  });
+
+  omitWhen(!isAddressableModel(model), () => {
+    const m = model as unknown as AddressableModel;
+    stringValidations('favEmail', m.favEmail, SHORT_NAME_LENGTH);
+    stringValidations('favPhone', m.favPhone, SHORT_NAME_LENGTH);
+    stringValidations('favStreetName', m.favStreetName, NAME_LENGTH);
+    stringValidations('favStreetNumber', m.favStreetNumber, NUMBER_LENGTH);
+    stringValidations('favZipCode', m.favZipCode, SHORT_NAME_LENGTH);
+    stringValidations('favCity', m.favCity, SHORT_NAME_LENGTH);
+    stringValidations('favCountryCode', m.favCountryCode, SHORT_NAME_LENGTH);
+  });
+
+  omitWhen(!isPersistedModel(model), () => {
+    const m = model as unknown as PersistedModel;
+    //tenantValidations(m.tenants, givenTenants);
+    booleanValidations('isArchived', m.isArchived, false);
+  });
+};
+
+
+export function avatarValidations(fieldName: string, avatar: unknown) {
+
+  omitWhen(!avatar, () => {
+    // test whether it is of type AvatarInfo
+    test(fieldName, 'isAvatarInfo', () => {
+      enforce(isAvatarInfo(avatar)).isTruthy();
+    });
+
+    // test each field of AvatarInfo
+    test(fieldName, '@validation.avatarFormat', () => {
+      const avatarInfo = avatar as AvatarInfo;
+      stringValidations(`${fieldName}.key`, avatarInfo.key, NAME_LENGTH, 4, true);
+      stringValidations(`${fieldName}.name1`, avatarInfo.name1, LONG_NAME_LENGTH);
+      stringValidations(`${fieldName}.name2`, avatarInfo.name2, LONG_NAME_LENGTH);
+      stringsValidations(`${fieldName}.modelType`, avatarInfo.modelType, ['person', 'org', 'resource', 'user', 'group', 'account']);
+      stringValidations(`${fieldName}.type`, avatarInfo.type, LONG_NAME_LENGTH);
+      stringValidations(`${fieldName}.subType`, avatarInfo.subType, LONG_NAME_LENGTH);
+      stringValidations(`${fieldName}.label`, avatarInfo.label, LONG_NAME_LENGTH);
+    });
+  });
+} 
+
+export function moneyValidations(fieldName: string, money: unknown) {
+  omitWhen(!money, () => {
+    // test whether it is of type MoneyModel
+    test(fieldName, 'isMoneyModel', () => {
+      enforce(isMoney(money)).isTruthy();
+    });
+
+    // test each field of MoneyModel
+    test(fieldName, '@validation.moneyFormat', () => {
+      const moneyModel = money as MoneyModel;
+      numberValidations(`${fieldName}.amount`, moneyModel.amount, true, 0);
+      stringValidations(`${fieldName}.currency`, moneyModel.currency, 3, 3, true);
+      stringsValidations(`${fieldName}.periodicity`, moneyModel.periodicity, ['once', 'daily', 'workdays', 'monthly', 'biweekly', 'monthly', 'quarterly', 'yearly']);
+    });
+  });
+}
 
 /**
  * Validates a boolean field
@@ -47,6 +137,97 @@ export function categoryValidations(fieldName: string, category: unknown, catego
   });
   test(fieldName, 'enumValue', () => {
     enforce(category).inside(Object.values(categoryEnum));
+  });
+}
+
+/**
+ * Validates a given string against a list of valid values.
+ * @param fieldName 
+ * @param value 
+ * @param validValues 
+ */
+export function stringsValidations(fieldName: string, value: unknown, validValues: string[]) {
+  test(fieldName, 'notNull', () => {
+    enforce(value).isNotNull();
+  });
+  test(fieldName, 'notUndefined', () => {
+    enforce(value).isNotUndefined();
+  });
+  test(fieldName, 'stringMandatory', () => {
+    enforce(value).isString();
+  });
+  test(fieldName, 'validValue', () => {
+    enforce(value).inside(validValues);
+  });
+}
+
+/**
+ * Tests an array of strings against a list of valid values. e.g. sections, roles, tags
+ * @param fieldName 
+ * @param values  // array of strings, e.g. ['tag1', 'tag2']
+ * @param validValues // array of valid strings, e.g. ['tag1', 'tag2', 'tag3'] -> 'tag1' and 'tag2' are valid, 'tag4' is not valid
+ */
+export function stringArrayValidations(fieldName: string, values: unknown, validValues: string[]) {
+  test(fieldName, 'notNull', () => {
+    enforce(values).isNotNull();
+  });
+  test(fieldName, 'notUndefined', () => {
+    enforce(values).isNotUndefined();
+  });
+  test(fieldName, 'arrayMandatory', () => {
+    enforce(Array.isArray(values)).isTruthy();
+  });
+  omitWhen(!Array.isArray(values), () => {
+    (values as unknown[]).forEach(values => {
+      test(fieldName, 'stringMandatory', () => {
+        enforce(values).isString();
+      });
+    });
+    (values as string[]).forEach((value, index) => {
+      test(`${fieldName}[${index}]`, 'validValue', () => {
+        enforce(value).inside(validValues);
+      });
+    });
+  });
+}
+
+/**
+ * Tests if an array of strings contains at least one of the required values.
+ * This is the opposite of stringArrayValidations.
+ * It is usable for tenants.
+ * @param fieldName 
+ * @param values e.g. tenants ['a', 'b', 'c']
+ * @param requiredValues e.g. required tenants ['b', 'd'] -> valid because 'b' is contained in values
+ * @param isMandatory if true, the array must contain at least one of the required values
+ */
+export function stringArrayContainsValidation(
+  fieldName: string, 
+  values: unknown, 
+  requiredValues: string[],
+  isMandatory = true
+) {
+  test(fieldName, 'arrayMandatory', () => {
+    enforce(Array.isArray(values)).isTruthy();
+  });
+
+  omitWhen(!isMandatory, () => {
+    test(fieldName, '@validation.tenantsLength', () => {
+      enforce((values as unknown[]).length).greaterThan(0);
+    });
+  });
+  
+  omitWhen(!Array.isArray(values), () => {
+    (values as unknown[]).forEach(values => {
+      test(fieldName, 'stringMandatory', () => {
+        enforce(values).isString();
+      });
+    });
+    test(fieldName, 'containsRequiredValue', () => {
+      const hasRequired = requiredValues.some(required => 
+        (values as string[]).includes(required)
+      );
+      enforce(hasRequired).isTruthy();
+    });
   });
 }
 
@@ -189,8 +370,9 @@ export function stringValidations(fieldName: string, value: unknown, maxLength?:
   });
 }
 
-export function tenantValidations(givenTenants: string, tenants: unknown ) {
-
+export function tenantValidations(tenants: unknown, givenTenants: string) {
+  stringArrayContainsValidation('tenants', tenants, givenTenants.split(','));
+  stringArrayValidations('tenants', tenants, givenTenants.split(','));
   test('tenants', '@validation.tenantsType', () => {
     enforce(isArrayOfStrings(tenants)).isTruthy();
   });
@@ -209,17 +391,12 @@ export function tenantValidations(givenTenants: string, tenants: unknown ) {
   });
 }
 
-export function tagValidations(givenTags: string, fieldName: string, tags: unknown) {
+export function tagValidations(fieldName: string, tags: unknown, givenTags: string, ) {
   // there is no min length as tags are optional
   stringValidations(fieldName, tags, LONG_NAME_LENGTH);
-  const _tags = tags as string;
-  const _tagsArray = _tags.split(',');
-  const _givenTags = givenTags.split(',');
-  _tagsArray.forEach((tag) => {
-    test(fieldName, '@validation.tagValid', () => {
-      enforce(tag).inside(_givenTags);
-    });
-  });
+  // tags is a comma-separated string, split it to validate as array
+  const tagsArray = typeof tags === 'string' ? tags.split(',').filter(t => t.length > 0) : [];
+  stringArrayValidations(fieldName, tagsArray, givenTags.split(','));
 }
 
 export function urlValidations(fieldName: string, url: unknown ) {

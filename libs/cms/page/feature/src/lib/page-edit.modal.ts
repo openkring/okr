@@ -7,6 +7,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { PageFormComponent } from '@bk2/cms-page-ui';
+import { ENV } from '@bk2/shared-config';
 
 @Component({
   selector: 'bk-page-edit-modal',
@@ -31,6 +32,7 @@ import { PageFormComponent } from '@bk2/cms-page-ui';
           [types]="types()"
           [states]="states()"
           [allTags]="tags()"
+          [tenantId]="env.tenantId"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -41,6 +43,7 @@ import { PageFormComponent } from '@bk2/cms-page-ui';
 })
 export class PageEditModalComponent {
   private modalController = inject(ModalController);
+  protected readonly env = inject(ENV);
 
   // inputs
   public page = input.required<PageModel>();

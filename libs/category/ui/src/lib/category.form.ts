@@ -68,6 +68,7 @@ export class CategoryListFormComponent {
   public currentUser = input<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public allTags = input.required<string>();
+  public tenants = input.required<string>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   
@@ -77,7 +78,7 @@ export class CategoryListFormComponent {
 
   // validation and errors
   protected readonly suite = categoryListValidations;
-  private readonly validationResult = computed(() => categoryListValidations(this.formData()));
+  private readonly validationResult = computed(() => categoryListValidations(this.formData(), this.tenants(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected i18nBaseErrors = computed(() => this.validationResult().getErrors('i18nBase'));
 

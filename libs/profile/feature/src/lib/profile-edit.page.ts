@@ -53,6 +53,8 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
                 (formDataChange)="onPersonChange($event)"
                 [currentUser]="currentUser()"
                 [genders]="genders()"
+                [tags]="tags()"
+                [tenantId]="tenantId()"
                 [showForm]="showForm()"
                 [readOnly]="false"
                 (valid)="formValid.set($event)" 
@@ -66,6 +68,8 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
                 (formDataChange)="onUserChange($event)"
                 [currentUser]="currentUser()"
                 [readOnly]="false"
+                [tags]="tags()"
+                [tenantId]="tenantId()"
                 [showForm]="showForm()"
                 (valid)="formValid.set($event)" 
                 (dirty)="formDirty.set($event)"
@@ -78,6 +82,8 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
                 [currentUser]="currentUser()"
                 [showForm]="showForm()"
                 [readOnly]="false"
+                [tags]="tags()"
+                [tenantId]="tenantId()"
                 (valid)="formValid.set($event)" 
                 (dirty)="formDirty.set($event)"
               />
@@ -117,6 +123,7 @@ export class ProfileEditPageComponent {
     const intro = await firstValueFrom(this.i18nService.translate('@profile.intro'));
     return intro + ' <a href=mailto:"' + this.profileEditStore.appStore.appConfig().opEmail + '">Website Admin</a>.';
   });
+  protected tags = computed(() => this.profileEditStore.getTags());
 
   constructor() {
     effect(() => {

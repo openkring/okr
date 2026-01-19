@@ -28,6 +28,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
             [currentUser]="currentUser"
             [showForm]="showForm()"
             [allTags]="tags()"
+            [tenantId]="tenantId()"
             [isNew]="isNew()"
             [readOnly]="isReadOnly()"
             (dirty)="formDirty.set($event)"
@@ -44,6 +45,7 @@ export class GroupEditModalComponent {
   public group = input.required<GroupModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly tags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly isNew = input(false);
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

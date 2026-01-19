@@ -87,6 +87,7 @@ export class OwnershipFormComponent {
   public readonly currentUser = input<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -96,7 +97,7 @@ export class OwnershipFormComponent {
 
   // validation and errors
   protected readonly suite = ownershipValidations;
-  private readonly validationResult = computed(() => ownershipValidations(this.formData()));
+  private readonly validationResult = computed(() => ownershipValidations(this.formData(), this.tenantId(), this.allTags()));
   protected readonly errors = signal<Record<string, string>>({ });
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 

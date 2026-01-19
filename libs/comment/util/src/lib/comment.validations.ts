@@ -4,10 +4,10 @@ import { SHORT_NAME_LENGTH } from '@bk2/shared-constants';
 import { CommentModel } from '@bk2/shared-models';
 import { baseValidations, dateValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const commentValidations = staticSuite((model: CommentModel, field?: string) => {
+export const commentValidations = staticSuite((model: CommentModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model, field);
+  baseValidations(model, tenants, tags, field);
   stringValidations('authorKey', model.authorKey, SHORT_NAME_LENGTH, 5, true);
   dateValidations('creationDateTime', model.creationDateTime);
   stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH, 5, true);

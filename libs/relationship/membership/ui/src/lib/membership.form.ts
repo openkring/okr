@@ -182,7 +182,7 @@ export class MembershipFormComponent {
 
   // validation and errors
   protected readonly suite = membershipValidations;
-  private readonly validationResult = computed(() => membershipValidations(this.formData()));
+  private readonly validationResult = computed(() => membershipValidations(this.formData(), this.appStore.env.tenantId, this.allTags()));
 
   // fields
   protected isNew = computed(() => !this.formData().bkey);

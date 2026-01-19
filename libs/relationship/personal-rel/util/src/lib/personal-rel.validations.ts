@@ -5,7 +5,7 @@ import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-
 import { PersonalRelModel } from '@bk2/shared-models';
 import { dateValidations, isAfterOrEqualDate, stringValidations } from '@bk2/shared-util-core';
 
-export const personalRelValidations = staticSuite((model: PersonalRelModel, field?: string) => {
+export const personalRelValidations = staticSuite((model: PersonalRelModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
   stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);

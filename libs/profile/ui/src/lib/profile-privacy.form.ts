@@ -97,6 +97,8 @@ export class ProfilePrivacyAccordionComponent {
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
   public color = input('light'); // color of the accordion
   public title = input('@profile.privacy.title'); // title of the accordion
+  public readonly tenantId = input.required<string>();
+  public readonly tags = input.required<string>();
   public readonly readOnly = input<boolean>(true);
   public readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -106,7 +108,7 @@ export class ProfilePrivacyAccordionComponent {
 
   // validation and errors
   protected readonly suite = userValidations;
-  private readonly validationResult = computed(() => userValidations(this.formData()));
+  private readonly validationResult = computed(() => userValidations(this.formData(), this.tenantId(), this.tags()));
 
   // fields
   protected usageImages = linkedSignal(() => this.formData().usageImages ?? PrivacyUsage.Public);

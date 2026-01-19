@@ -4,7 +4,7 @@ import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-
 import { OrgModel } from '@bk2/shared-models';
 import { dateValidations, isAfterDate, stringValidations } from '@bk2/shared-util-core';
 
-export const orgValidations = staticSuite((model: OrgModel, field?: string) => {
+export const orgValidations = staticSuite((model: OrgModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
   stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);

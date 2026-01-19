@@ -46,6 +46,7 @@ import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservab
           [subTypes]="subTypes()"
           [usages]="usages()"
           [allTags]="tags()"
+          [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -91,6 +92,7 @@ export class ResourceEditModalComponent {
   protected subTypes = computed(() => this.getSubtypes());
   protected usages = computed(() => this.getUsages());
   protected tags = computed(() => this.appStore.getTags(`${ResourceModelName}.${this.type()}`));
+  protected tenantId = computed(() => this.appStore.env.tenantId);
   protected type = linkedSignal(() => this.formData()?.type ?? DEFAULT_RESOURCE_TYPE);
   protected resourceKey = computed(() => this.resource()?.bkey ?? '');
 

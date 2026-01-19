@@ -89,6 +89,7 @@ export class LocationFormComponent {
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly types = input.required<CategoryListModel>();
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -98,7 +99,7 @@ export class LocationFormComponent {
 
   // validation and errors
   protected readonly suite = locationValidations;
-  private readonly validationResult = computed(() => locationValidations(this.formData()));
+  private readonly validationResult = computed(() => locationValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields

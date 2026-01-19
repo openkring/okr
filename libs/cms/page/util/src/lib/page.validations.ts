@@ -4,10 +4,10 @@ import { DESCRIPTION_LENGTH, NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-consta
 import { PageModel } from '@bk2/shared-models';
 import { baseValidations, isArrayOfStrings, stringValidations } from '@bk2/shared-util-core';
 
-export const pageValidations = staticSuite((model: PageModel, field?: string) => {
+export const pageValidations = staticSuite((model: PageModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model, field);
+  baseValidations(model, tenants, tags, field);
 
   stringValidations('title', model.title, NAME_LENGTH);
   // meta: MetaTag[] = [];        // meta tags for SEO

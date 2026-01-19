@@ -5,7 +5,7 @@ import { CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } f
 import { WorkrelModel } from '@bk2/shared-models';
 import { dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const workrelValidations = staticSuite((model: WorkrelModel, field?: string) => {
+export const workrelValidations = staticSuite((model: WorkrelModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
   stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);

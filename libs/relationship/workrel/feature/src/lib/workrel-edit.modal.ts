@@ -9,7 +9,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 
 import { WorkrelFormComponent } from '@bk2/relationship-workrel-ui';
-import { OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { ENV } from '@bk2/shared-config';
 
 @Component({
@@ -36,6 +36,7 @@ import { ENV } from '@bk2/shared-config';
           [allTags]="tags()"
           [types]="types()"
           [states]="states()" 
+          [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           [periodicities]="periodicities()" 
           (selectPerson)="selectPerson()"
@@ -59,12 +60,12 @@ import { ENV } from '@bk2/shared-config';
 })
 export class WorkrelEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly env = inject(ENV);
 
   // inputs
   public workrel = input.required<WorkrelModel>();
   public currentUser = input.required<UserModel>();
   public tags = input.required<string>();
+  public tenantId = input.required<string>();
   public types = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public periodicities = input.required<CategoryListModel>();
@@ -122,13 +123,14 @@ export class WorkrelEditModalComponent {
       cssClass: 'list-modal',
       componentProps: {
         selectedTag: '',
-        currentUser: this.currentUser()
+        currentUser: this.currentUser(),
+        tenantId: this.tenantId()
       }
     });
     modal.present();
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm' && data) {
-      if (isPerson(data, this.env.tenantId)) {
+      if (isPerson(data, this.tenantId())) {
         return data;
       }
     }
@@ -158,7 +160,7 @@ export class WorkrelEditModalComponent {
     modal.present();
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isOrg(data, this.env.tenantId)) {
+      if (isOrg(data, this.tenantId())) {
         return data;
       }
     }

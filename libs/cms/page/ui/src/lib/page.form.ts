@@ -98,6 +98,7 @@ export class PageFormComponent {
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public tenantId = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
   public readonly readOnly = input(true);
@@ -109,7 +110,7 @@ export class PageFormComponent {
 
   // validation and errors
   protected readonly suite = pageValidations;
-  private readonly validationResult = computed(() => pageValidations(this.formData()));
+  private readonly validationResult = computed(() => pageValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
 

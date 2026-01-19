@@ -28,6 +28,7 @@ import { LocationFormComponent } from '@bk2/location-ui';
         [currentUser]="currentUser()"
         [types]="types()"
         [allTags]="tags()"
+        [tenantId]="appStore.env.tenantId"
         [readOnly]="isReadOnly()"
         (formDataChange)="onFormDataChange($event)"
       />

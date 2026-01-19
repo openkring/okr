@@ -112,6 +112,7 @@ export class GroupFormComponent {
   public currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly isNew = input(false);
   public readOnly = input(true);  
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -122,7 +123,7 @@ export class GroupFormComponent {
   
   // validation and errors
   protected readonly suite = groupValidations;
-  private readonly validationResult = computed(() => groupValidations(this.formData()));
+  private readonly validationResult = computed(() => groupValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected bkeyErrors = computed(() => this.validationResult().getErrors('bkey'));
 

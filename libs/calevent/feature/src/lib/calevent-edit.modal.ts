@@ -36,6 +36,7 @@ import { CommentsAccordionComponent } from '@bk2/comment-feature';
           [types]="types()"
           [periodicities]="periodicities()"
           [allTags]="tags()" 
+          [tenantId]="tenantId()"
           [locale]="locale()"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
@@ -67,6 +68,7 @@ export class CalEventEditModalComponent {
   public types = input.required<CategoryListModel>();
   public periodicities = input.required<CategoryListModel>();
   public tags = input.required<string>();
+  public tenantId = input.required<string>();
   public locale = input.required<string>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

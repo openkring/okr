@@ -150,6 +150,7 @@ export class TransferFormComponent {
   public states = input.required<CategoryListModel>();
   public periodicities = input.required<CategoryListModel>()
   public allTags = input.required<string>();
+  public tenantId = input.required<string>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly locale = input(DEFAULT_LOCALE);
@@ -163,7 +164,7 @@ export class TransferFormComponent {
 
   // validation and errors
   protected readonly suite = transferValidations;
-  private readonly validationResult = computed(() => transferValidations(this.formData()));
+  private readonly validationResult = computed(() => transferValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields

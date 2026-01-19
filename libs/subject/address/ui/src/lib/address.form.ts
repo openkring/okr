@@ -177,6 +177,7 @@ export class AddressFormComponent {
   public readonly currentUser = input<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   protected readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -186,7 +187,7 @@ export class AddressFormComponent {
   
   // validation and errors
   protected readonly suite = addressValidations;
-  private readonly validationResult = computed(() => addressValidations(this.formData()));
+  private readonly validationResult = computed(() => addressValidations(this.formData(), this.tenantId(), this.allTags()));
   protected channelLabelError = computed(() => this.validationResult().getErrors('channelLabel'));
   protected usageLabelError = computed(() => this.validationResult().getErrors('usageLabel'));
   protected emailError = computed(() => this.validationResult().getErrors('email'));

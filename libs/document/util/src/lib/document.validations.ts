@@ -4,10 +4,10 @@ import { LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-co
 import { DocumentModel } from '@bk2/shared-models';
 import { baseValidations, compareDate, dateValidations, isFutureDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const documentValidations = staticSuite((model: DocumentModel, field?: string) => {
+export const documentValidations = staticSuite((model: DocumentModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model, field);
+  baseValidations(model, tenants, tags, field);
   stringValidations('docType', model.type, WORD_LENGTH);
   stringValidations('fullPath', model.fullPath, LONG_NAME_LENGTH);
   stringValidations('mimeType', model.mimeType, SHORT_NAME_LENGTH);

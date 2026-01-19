@@ -4,10 +4,10 @@ import { CITY_LENGTH, COUNTRY_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, NAME_LENGT
 import { AddressChannel, AddressModel, AddressUsage } from '@bk2/shared-models';
 import { baseValidations, booleanValidations, categoryValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
 
-export const addressValidations = staticSuite((model: AddressModel, field?: string) => {
+export const addressValidations = staticSuite((model: AddressModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model, field);
+  baseValidations(model, tenants, tags, field);
   categoryValidations('channelType', model.channelType, AddressChannel);
   stringValidations('channelLabel', model.channelLabel, SHORT_NAME_LENGTH);
   categoryValidations('usageType', model.usageType, AddressUsage);

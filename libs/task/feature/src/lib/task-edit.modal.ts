@@ -34,6 +34,7 @@ import { AvatarSelectComponent } from '@bk2/avatar-ui';
           [currentUser]="currentUser()"
           [showForm]="showForm()"
           [allTags]="tags()"
+          [tenantId]="tenantId()"
           [states]="states()"
           [priorities]="priorities()"
           [importances]="importances()"
@@ -73,6 +74,7 @@ export class TaskEditModalComponent {
   public task = input.required<TaskModel>();
   public currentUser = input<UserModel | undefined>();
   public readonly tags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly states = input.required<CategoryListModel>();
   public readonly priorities = input.required<CategoryListModel>();
   public readonly importances = input.required<CategoryListModel>();

@@ -147,6 +147,7 @@ export class WorkrelFormComponent {
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
   public readonly periodicities = input.required<CategoryListModel>();
@@ -161,7 +162,7 @@ export class WorkrelFormComponent {
 
   // validation and errors
   protected readonly suite = workrelValidations;
-  private readonly validationResult = computed(() => workrelValidations(this.formData()));
+  private readonly validationResult = computed(() => workrelValidations(this.formData(), this.tenantId(), this.allTags()));
 
   // fields
   protected subjectKey = computed(() => this.formData().subjectKey ?? DEFAULT_KEY);

@@ -4,10 +4,10 @@ import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-
 import { PersonModel } from '@bk2/shared-models';
 import { baseValidations, dateValidations, isAfterDate, stringValidations } from '@bk2/shared-util-core';
 
-export const personValidations = staticSuite((model: PersonModel, field?: string) => {
+export const personValidations = staticSuite((model: PersonModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model);
+  baseValidations(model, tenants, tags, field);
   stringValidations('index', model.index, SHORT_NAME_LENGTH);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);

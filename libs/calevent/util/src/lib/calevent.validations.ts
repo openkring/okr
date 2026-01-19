@@ -4,10 +4,10 @@ import { SHORT_NAME_LENGTH, WORD_LENGTH } from '@bk2/shared-constants';
 import { CalEventModel } from '@bk2/shared-models';
 import { baseValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const calEventValidations = staticSuite((model: CalEventModel, field?: string) => {
+export const calEventValidations = staticSuite((model: CalEventModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  baseValidations(model, field);
+  baseValidations(model, tenants, tags, field);
   stringValidations('type', model.type, WORD_LENGTH);
   dateValidations('startDate', model.startDate);
   numberValidations('durationMinutes', model.durationMinutes, true, 0, 1440);

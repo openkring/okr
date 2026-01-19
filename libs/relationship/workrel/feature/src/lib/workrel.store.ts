@@ -195,6 +195,7 @@ export const WorkrelStore = signalStore(
             tags: this.getTags(),
             types: this.getTypes(),
             states: this.getStates(),
+            tenantId: store.tenantId(),
             periodicities: this.getPeriodicities(),
             readOnly
           }

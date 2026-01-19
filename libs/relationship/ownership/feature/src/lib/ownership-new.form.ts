@@ -6,7 +6,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { OwnershipModel, ResourceModelName, UserModel } from '@bk2/shared-models';
+import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@bk2/shared-models';
 import { DateInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarKey, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
 
@@ -101,7 +101,7 @@ export class OwnershipNewFormComponent {
 
   // validation and errors
   protected readonly suite = ownershipValidations;
-  private readonly validationResult = computed(() => ownershipValidations(this.formData()));
+  private readonly validationResult = computed(() => ownershipValidations(this.formData(), this.appStore.tenantId(), this.appStore.getTags(OwnershipModelName)));
 
   // fields
   protected ownerKey = computed(() => this.formData().ownerKey ?? '');

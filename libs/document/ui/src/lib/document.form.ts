@@ -155,7 +155,7 @@ export class DocumentFormComponent {
 
   // validations and errors
   protected readonly suite = documentValidations;
-  private readonly validationResult = computed(() => documentValidations(this.formData()));
+  private readonly validationResult = computed(() => documentValidations(this.formData(), this.env.tenantId, this.allTags()));
 
   // fields
   protected fullPath = linkedSignal(() => this.formData().fullPath ?? '');

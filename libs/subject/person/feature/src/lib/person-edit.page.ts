@@ -49,6 +49,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
           [priv]="priv()"
           [genders]="genders()"
           [allTags]="tags()"
+          [tenantId]="tenantId()" 
           [readOnly]="isReadOnly()"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
@@ -101,6 +102,7 @@ export class PersonEditPageComponent {
   protected person = computed(() => this.personEditStore.person());
   protected defaultResource = computed(() => this.personEditStore.defaultResource());
   protected tags = computed(() => this.personEditStore.getTags());
+  protected tenantId = computed(() => this.personEditStore.tenantId());
   protected genders = computed(() => this.personEditStore.appStore.getCategory('gender'));
 
   constructor() {

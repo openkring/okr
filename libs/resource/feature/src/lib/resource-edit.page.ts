@@ -49,6 +49,7 @@ import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservab
           [subTypes]="subTypes()"
           [usages]="usages()"
           [allTags]="tags()"
+          [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -104,6 +105,7 @@ export class ResourceEditPageComponent {
   protected icon = computed(() => this.formData()?.type === 'rboat' ? this.rowingBoatIcon() : this.resourceIcon());
   protected resource = computed(() => this.resourceEditStore.resource());
   protected tags = computed(() => this.resourceEditStore.getTags());
+  protected tenantId = computed(() => this.resourceEditStore.tenantId());
 
   constructor() {
     effect(() => {

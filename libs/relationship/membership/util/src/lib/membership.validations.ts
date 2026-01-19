@@ -1,18 +1,14 @@
 
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, CURRENCY_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
+import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
 import { MembershipModel } from '@bk2/shared-models';
-import { booleanValidations, dateValidations, isAfterDate, isFutureDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { baseValidations, booleanValidations, dateValidations, isAfterDate, isFutureDate, numberValidations, stringValidations } from '@bk2/shared-util-core';
 
-export const membershipValidations = staticSuite((model: MembershipModel, field?: string) => {
+export const membershipValidations = staticSuite((model: MembershipModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
-  stringValidations('bkey', model.bkey, SHORT_NAME_LENGTH);
-  booleanValidations('isArchived', model.isArchived);
-  stringValidations('index', model.index, SHORT_NAME_LENGTH);
-  //tagValidations('tags', model.tags);
-  stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
+  baseValidations(model, tenants, tags, field);
 
   // subject
   stringValidations('memberKey', model.memberKey, SHORT_NAME_LENGTH);
@@ -70,6 +66,3 @@ export const membershipValidations = staticSuite((model: MembershipModel, field?
   // tbd: cross reference memberKey in subjects
   // tbd: cross reference orgId in subjects
 });
-
-
-

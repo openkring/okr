@@ -94,6 +94,8 @@ export class ProfileDataAccordionComponent {
   public color = input('light'); // color of the accordion
   public readonly title = input('@profile.data.title'); // title of the accordion
   public readonly currentUser = input<UserModel | undefined>();
+  public readonly tenantId = input.required<string>();
+  public readonly tags = input.required<string>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
   public readonly genders = input.required<CategoryListModel>();
   public readonly readOnly = input<boolean>(true);
@@ -105,7 +107,7 @@ export class ProfileDataAccordionComponent {
 
   // validation and errors
   protected readonly suite = personValidations;
-  private readonly validationResult = computed(() => personValidations(this.formData()));
+  private readonly validationResult = computed(() => personValidations(this.formData(), this.tenantId(), this.tags()));
   protected ssnIdErrors = computed(() => this.validationResult().getErrors('ssnId'));
 
   // fields

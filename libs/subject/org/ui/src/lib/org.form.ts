@@ -81,6 +81,7 @@ export class OrgFormComponent {
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
   public isOrgTypeReadOnly = input(false);
   public isOrgTypeVisible = input(true);
@@ -93,7 +94,7 @@ export class OrgFormComponent {
 
   // validation and errors
   protected readonly suite = orgValidations;
-  private readonly validationResult = computed(() => orgValidations(this.formData()));
+  private readonly validationResult = computed(() => orgValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
