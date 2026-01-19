@@ -17,6 +17,12 @@ tmp
 /out-tsc
 **/data
 
+# TypeScript compilation artifacts in source directories
+libs/**/*.js
+libs/**/*.d.ts
+!libs/**/*.spec.js
+!libs/**/*.config.js
+
 # dependencies
 **/node_modules
 
