@@ -40,7 +40,7 @@ import { ReservationStore } from './reservation.store';
           @for(reservation of reservations(); track $index) {
             <ion-item (click)="showActions(reservation)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ getIcon(reservation) | async }}" alt="resource avatar" />
+                  <ion-img [src]="getIcon(reservation)" alt="resource avatar" />
                 </ion-avatar>
 
               <ion-label>{{reservation.resource?.name2}}</ion-label>  
@@ -164,14 +164,8 @@ export class ReservationsAccordionComponent {
     return isOngoing(reservation.endDate);
   }
 
-  protected async getIcon(reservation: ReservationModel): Promise<string> {
-    // Wait for resource to load
-    while (this.reservationsStore.isLoading()) {
-      await new Promise(resolve => setTimeout(resolve, 10));
-    }
-
+  protected getIcon(reservation: ReservationModel): string {
     const resource = this.reservationsStore.getResource(reservation.resource?.key || '');
-    this.imgixBaseUrl();
     let iconName = '';
     if (!resource) {
       iconName = 'resource';

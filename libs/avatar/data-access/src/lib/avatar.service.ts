@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { map, Observable, of } from 'rxjs';
+import { map, Observable, of, shareReplay, take } from 'rxjs';
 import { Platform } from '@ionic/angular/standalone';
 import { Photo } from '@capacitor/camera';
 
@@ -52,6 +52,7 @@ export class AvatarService {
 
   public getRelStorageUrl(key: string): Observable<string> {
     return this.firestoreService.readModel<AvatarModel>(AvatarCollection, key).pipe(
+      take(1), // Complete after first emission to prevent memory leaks
       map(avatar => {
         return avatar?.storagePath ?? '';
       })
@@ -69,13 +70,15 @@ export class AvatarService {
    */
   public getAvatarImgixUrl(key: string, defaultIcon: string, size = THUMBNAIL_SIZE, imgixBaseUrl = this.env.services.imgixBaseUrl, expandImgixBaseUrl = true): Observable<string> {
     return this.firestoreService.readModel<AvatarModel>(AvatarCollection, key).pipe(
+      take(1), // Complete after first emission to prevent memory leaks with hot observables
       map(avatar => {
         if (!avatar) {
           return `${imgixBaseUrl}/logo/icons/${defaultIcon}.svg`;
         } else {
           return expandImgixBaseUrl ? `${imgixBaseUrl}/${addImgixParams(avatar.storagePath, size)}` : addImgixParams(avatar.storagePath, size);
         }
-      })
+      }),
+      shareReplay(1) // Cache the result so multiple subscriptions don't trigger multiple reads
     );
   }
 

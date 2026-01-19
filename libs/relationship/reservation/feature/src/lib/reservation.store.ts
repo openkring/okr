@@ -132,15 +132,6 @@ export const ReservationStore = signalStore(
     withComputed((state) => {
       return {
         filteredReservations: computed(() => {
-          console.log('ReservationStore.filteredReservations by ', {
-            listId: state.listId(),
-            searchTerm: state.searchTerm(),
-            selectedYear: state.selectedYear(),
-            selectedReason: state.selectedReason(),
-            selectedState: state.selectedState(),
-            selectedTag: state.selectedTag()
-          });
-          
           const allReservations = state.reservations() ?? [];
           
           // Apply listId filter first
@@ -153,15 +144,11 @@ export const ReservationStore = signalStore(
             
             switch (prefix) {
             case 't_': // resource type
-            console.log('ReservationStore: filtering by resource type ', value);
               filtered = filtered.filter(r => r.resource?.type === value);
               break;
             case 'r_': // resource key
-            console.log('ReservationStore: filtering by resource key ', value);
-            console.log('   before:' + filtered.length + ' reservations');
               filtered = filtered.filter(r => r.resource?.key === value);
-                          console.log('   after:' + filtered.length + ' reservations');
-
+              filtered = filtered.filter(r => r.resource?.key === value);
               break;
             case 'p_': // reserver key (person)
               filtered = filtered.filter(r => r.reserver?.key === value);
@@ -210,12 +197,9 @@ export const ReservationStore = signalStore(
         if (listId && listId !== 'all') {
           let prefix = listId.substring(0,2);
           let value = listId.substring(2);
-
-          console.log(`ReservationStore.setListId: setting listId to ${listId} -> prefix=${prefix}, value=${value}`);
           
           switch (prefix) {
             case 'r_': // resource key */
-            console.log('ReservationStore.setListId: setting resourceId to ', value);
               patchState(store, { resourceId: value, reserverId: undefined });
               break;
             case 'p_': // reserver key (person) */

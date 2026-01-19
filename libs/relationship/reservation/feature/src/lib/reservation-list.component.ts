@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -12,7 +12,7 @@ import { addImgixParams, getAvatarKey, getAvatarName, getFullName, getYear, getY
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { ReservationStore } from './reservation.store';
-import { map } from 'rxjs';
+import { map, take } from 'rxjs';
 import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
 
 @Component({
@@ -282,55 +282,72 @@ export class ReservationListComponent {
     effect(() => {
       const reservations = this.filteredReservations();
       
+      // Get current cached keys to avoid re-fetching
+      const cachedKeys = untracked(() => new Set(this.avatarUrls().keys()));
+      
       for (const reservation of reservations) {
         // Load reserver avatar
         if (reservation.reserver) {
-          const reserverKey = getAvatarKey(
-            reservation.reserver.modelType,
-            reservation.reserver.key,
-            reservation.reserver.type,
-            reservation.reserver.subType
-          );
-          
-          this.reservationStore.firestoreService.readModel<AvatarModel>(AvatarCollection, reserverKey).pipe(
-            map(avatar => {
-              if (!avatar) {
-                // Use same icon logic as getAvatarUrl
-                return this.getDefaultIconUrl(reservation.reserver!);
-              }
-              else return `${this.imgixBaseUrl}/${addImgixParams(avatar.storagePath, THUMBNAIL_SIZE)}`;
-            })
-          ).subscribe(url => {
-            this.avatarUrls.update(map => {
-              map.set(`${reservation.bkey}_reserver`, url);
-              return new Map(map);
+          const cacheKey = `${reservation.bkey}_reserver`;
+          if (!cachedKeys.has(cacheKey)) {
+            const reserverKey = getAvatarKey(
+              reservation.reserver.modelType,
+              reservation.reserver.key,
+              reservation.reserver.type,
+              reservation.reserver.subType
+            );
+            
+            this.reservationStore.firestoreService.readModel<AvatarModel>(AvatarCollection, reserverKey).pipe(
+              take(1), // Complete after first emission to prevent memory leaks
+              map(avatar => {
+                if (!avatar) {
+                  // Use same icon logic as getAvatarUrl
+                  return this.getDefaultIconUrl(reservation.reserver!);
+                }
+                else return `${this.imgixBaseUrl}/${addImgixParams(avatar.storagePath, THUMBNAIL_SIZE)}`;
+              })
+            ).subscribe(url => {
+              // Use untracked to prevent the signal update from triggering this effect
+              untracked(() => {
+                this.avatarUrls.update(map => {
+                  map.set(cacheKey, url);
+                  return new Map(map);
+                });
+              });
             });
-          });
+          }
         }
         
         // Load resource avatar
         if (reservation.resource) {
-          const resourceKey = getAvatarKey(
-            reservation.resource.modelType,
-            reservation.resource.key,
-            reservation.resource.type,
-            reservation.resource.subType
-          );
-          
-          this.reservationStore.firestoreService.readModel<AvatarModel>(AvatarCollection, resourceKey).pipe(
-            map(avatar => {
-              if (!avatar) {
-                // Use same icon logic as getAvatarUrl
-                return this.getDefaultIconUrl(reservation.resource!);
-              }
-              else return `${this.imgixBaseUrl}/${addImgixParams(avatar.storagePath, THUMBNAIL_SIZE)}`;
-            })
-          ).subscribe(url => {
-            this.avatarUrls.update(map => {
-              map.set(`${reservation.bkey}_resource`, url);
-              return new Map(map);
+          const cacheKey = `${reservation.bkey}_resource`;
+          if (!cachedKeys.has(cacheKey)) {
+            const resourceKey = getAvatarKey(
+              reservation.resource.modelType,
+              reservation.resource.key,
+              reservation.resource.type,
+              reservation.resource.subType
+            );
+            
+            this.reservationStore.firestoreService.readModel<AvatarModel>(AvatarCollection, resourceKey).pipe(
+              take(1), // Complete after first emission to prevent memory leaks
+              map(avatar => {
+                if (!avatar) {
+                  // Use same icon logic as getAvatarUrl
+                  return this.getDefaultIconUrl(reservation.resource!);
+                }
+                else return `${this.imgixBaseUrl}/${addImgixParams(avatar.storagePath, THUMBNAIL_SIZE)}`;
+              })
+            ).subscribe(url => {
+              // Use untracked to prevent the signal update from triggering this effect
+              untracked(() => {
+                this.avatarUrls.update(map => {
+                  map.set(cacheKey, url);
+                  return new Map(map);
+                });
+              });
             });
-          });
+          }
         }
       }
     });

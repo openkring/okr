@@ -5,7 +5,7 @@ import { Observable, of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventModel, CommentCollection, CommentModel, DocumentCollection, DocumentModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
+import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventModel, CalEventModelName, CommentCollection, CommentModel, DocumentCollection, DocumentModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { getSystemQuery } from '@bk2/shared-util-core';
 
 import { addressValidations, getAddressIndex } from '@bk2/subject-address-util';
@@ -54,6 +54,7 @@ export const AocDataStore = signalStore(
   withComputed(state => {
     return {
       currentUser: computed(() => state.appStore.currentUser()),
+      tenantId: computed(() => state.appStore.env.tenantId),
       isLoading: computed(() => state.dataResource.isLoading()),
       data: computed(() => state.dataResource.value() ?? []),
     };
@@ -112,51 +113,72 @@ export const AocDataStore = signalStore(
        */
       async validateModels(): Promise<void> {
         console.log('AocDataStore.validateModels: validating ' + store.modelType() + ' models...');
+        const tenants = store.tenantId();
         switch (store.modelType()) {
           case 'address':
-            this.validate<AddressModel>(AddressCollection, addressValidations, 'parentKey');
+            this.validate<AddressModel>(AddressCollection, addressValidations, tenants, store.appStore.getTags('address'), 'parentKey');
             break;
           case 'comment':
-            this.validate<CommentModel>(CommentCollection, commentValidations, 'createdAt');
+            this.validate<CommentModel>(CommentCollection, commentValidations, tenants, store.appStore.getTags('comment'), 'createdAt');
+            break;
           case 'document':
-          //  this.validate(DocumentCollection, documentValidations, 'title');
+          //  this.validate(DocumentCollection, documentValidations, tenants, store.appStore.getTags('document'), 'title');
+            break;
           case 'calevent':
-            this.validate(CalEventCollection, calEventValidations, 'title');
+            this.validate(CalEventCollection, calEventValidations, tenants, store.appStore.getTags(CalEventModelName), 'title');
+            break;
           case 'location':
-          //  this.validate(LocationCollection, locationValidations, 'name');
+          //  this.validate(LocationCollection, locationValidations, tenants, store.appStore.getTags('location'), 'name');
+            break;
           case 'membership':
-          //  this.validate(MembershipCollection, membershipValidations, 'memberName2');
+          //  this.validate(MembershipCollection, membershipValidations, tenants, store.appStore.getTags('membership'), 'memberName2');
+            break;
           case 'menuitem':
-          //  this.validate(MenuItemCollection, menuItemValidations);
+          //  this.validate(MenuItemCollection, menuItemValidations, tenants, store.appStore.getTags('menuitem'));
+            break;
           case 'org':
-          //  this.validate(OrgCollection, orgValidations, 'name');
+          //  this.validate(OrgCollection, orgValidations, tenants, store.appStore.getTags('org'), 'name');
+            break;
           case 'ownership':
-          //  this.validate(OwnershipCollection, ownershipValidations);
+          //  this.validate(OwnershipCollection, ownershipValidations, tenants, store.appStore.getTags('ownership'));
+            break;
           case 'page':
-          //  this.validate(PageCollection, pageValidations);
+          //  this.validate(PageCollection, pageValidations, tenants, store.appStore.getTags('page'));
+            break;
           case 'person':
-          //  this.validate(PersonCollection, personValidations, 'lastName');
+          //  this.validate(PersonCollection, personValidations, tenants, store.appStore.getTags('person'), 'lastName');
+            break;
           case 'personal_rel':
-          //  this.validate(PersonalRelCollection, personalRelValidations);
+          //  this.validate(PersonalRelCollection, personalRelValidations, tenants, store.appStore.getTags('personal_rel'));
+            break;
           case 'reservation':
-          //  this.validate(ReservationCollection, reservationValidations);
+          //  this.validate(ReservationCollection, reservationValidations, tenants, store.appStore.getTags('reservation'));
+            break;
           case 'resource':
-          //  this.validate(ResourceCollection, resourceValidations);
+          //  this.validate(ResourceCollection, resourceValidations, tenants, store.appStore.getTags('resource'));
+            break;
           case 'todo':
-          //  this.validate(TaskCollection, taskValidations);
+          //  this.validate(TaskCollection, taskValidations, tenants, store.appStore.getTags('todo'));
+            break;
           case 'transfer':
-          //  this.validate(TransferCollection, transferValidations);
+          //  this.validate(TransferCollection, transferValidations, tenants, store.appStore.getTags('transfer'));
+            break;
           case 'user':
             // split into auth, display, settings, privacy validations
-          //  this.validate(UserCollection, userValidations);
+          //  this.validate(UserCollection, userValidations, tenants, store.appStore.getTags('user'));
+            break;
           case 'workrel':
-          //  this.validate(WorkrelCollection, workrelValidations);
+          //  this.validate(WorkrelCollection, workrelValidations, tenants, store.appStore.getTags('workrel'));
+            break;
           case 'category':
-          //  this.validate(CategoryCollection, categoryListValidations);, 
+          //  this.validate(CategoryCollection, categoryListValidations, tenants, store.appStore.getTags('category'));
+            break;
           case 'group':
-          //  this.validate(GroupCollection, groupValidations);
+          //  this.validate(GroupCollection, groupValidations, tenants, store.appStore.getTags('group'));
+            break;
           case 'account': 
-            // this.validate(AccountCollection, accountValidations, 'name');
+            // this.validate(AccountCollection, accountValidations, tenants, store.appStore.getTags('account'), 'name');
+            break;
           case 'avatar':
           case 'bill':
           case 'competitionLevel':
@@ -173,13 +195,13 @@ export const AocDataStore = signalStore(
         }
       },
 
-      validate<T>(collection: string, suite: StaticSuite, orderBy = 'name'): void {
+      validate<T>(collection: string, suite: StaticSuite, tenants: string, tags: string, orderBy = 'name'): void {
         const dbQuery = getSystemQuery(store.appStore.tenantId());
         store.appStore.firestoreService.searchData<T>(collection, dbQuery, orderBy, 'asc')
           .subscribe(async (data) => {
             for (const model of data) {
               console.log(`Validating model ${collection}/${(model as any).bkey}...`);
-              const validationResult = suite(model);
+              const validationResult = suite(model, tenants, tags);
               if (validationResult.hasErrors()) {
                 console.log(`Model ${collection}/${(model as any).bkey} has validation errors:`);
                 console.log(validationResult.getErrors());
