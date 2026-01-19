@@ -24,10 +24,10 @@ import { coerceBoolean, getYear } from '@bk2/shared-util-core';
       interface="popover"
       [compareWith]="compareWith">
       @if(shouldShowAllYears()) {
-        <ion-select-option value="99">{{ '@general.util.allYears' | translate | async }}</ion-select-option>
+        <ion-select-option value=99>{{ '@general.util.allYears' | translate | async }}</ion-select-option>
       }
       @for(year of years(); track year) {
-        <ion-select-option [value]="year">{{ year }}</ion-select-option>
+        <ion-select-option [value]=year>{{ year }}</ion-select-option>
       }
     </ion-select>
   }
