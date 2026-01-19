@@ -51,7 +51,10 @@ export const AvatarToolbarStore = signalStore(
     return {
       isLoading: computed(() => state.urlResource.isLoading()),
       imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
-      relStorageUrl: computed(() => state.urlResource.value() ?? getDefaultIcon(state.modelType())),
+      relStorageUrl: computed(() => {
+        const url = state.urlResource.value();
+        return (url && url.length > 0) ? url : getDefaultIcon(state.modelType());
+      }),
       currentUser: computed(() => state.appStore.currentUser()),
     };
   }),
