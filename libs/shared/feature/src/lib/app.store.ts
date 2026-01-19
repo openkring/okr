@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, ResourceModelName, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { die, getSystemQuery } from '@bk2/shared-util-core';
 
 import { AppConfigService } from './app-config.service';
@@ -223,6 +223,14 @@ export const AppStore = signalStore(
         if (!key) return undefined;
         return store.allResources()?.find(p => p.bkey === key);
       },
+
+      /**
+       * Returns the configured tags for a given model type from firestore collection 'tags'.
+       * The search is by attribute 'tagModel'. That means that the tags can be configured per model type and per tenant.
+       * You will find a database entry 'default' to start with or extend the tenants for an existing entry with your own tenantId.
+       * @param modelType 
+       * @returns 
+       */
       getTags(modelType: string): string {
         if (!modelType) return '';
         const tagModels = store.allTags().filter((tag: TagModel) => tag.tagModel === modelType);
@@ -254,7 +262,7 @@ export const AppStore = signalStore(
        */
        getDefaultIcon(modelType?: string, key?: string): string {
         if (!modelType || !key) return 'other';
-        if (modelType === 'resource') {
+        if (modelType === ResourceModelName) {
           const resourceTypePart = key.split(':')[0];
           if (resourceTypePart.includes('_')) {
             const [resourceType, subType] = resourceTypePart.split('_');
