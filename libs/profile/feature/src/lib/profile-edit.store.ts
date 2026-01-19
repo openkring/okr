@@ -5,7 +5,7 @@ import { Photo } from '@capacitor/camera';
 
 import { AppStore } from '@bk2/shared-feature';
 import { PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@bk2/shared-models';
-import { AppNavigationService } from '@bk2/shared-util-angular';
+import { AhvFormat, AppNavigationService, formatAhv } from '@bk2/shared-util-angular';
 import { debugItemLoaded } from '@bk2/shared-util-core';
 import { FirestoreService } from '@bk2/shared-data-access';
 
@@ -83,7 +83,9 @@ export const ProfileEditStore = signalStore(
      */
       async save(person?: PersonModel, user?: UserModel): Promise<void> {
         if (person) {
-          await store.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, user);
+          const newPerson = structuredClone(person);
+          newPerson.ssnId = formatAhv(newPerson.ssnId ?? '', AhvFormat.Electronic);
+          await store.firestoreService.updateModel<PersonModel>(PersonCollection, newPerson, false, undefined, user);
         }
         if (user) {
           await store.firestoreService.updateModel<UserModel>(UserCollection, user, false, '@profile.operation.update', user);

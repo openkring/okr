@@ -9,6 +9,7 @@ import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInput
 import { coerceBoolean, debugFormErrors, debugFormModel, isVisibleToUser } from '@bk2/shared-util-core';
 import { personValidations } from '@bk2/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-person-form',
@@ -99,6 +100,7 @@ export class PersonFormComponent {
   public readonly currentUser = input<UserModel | undefined>();
   public readonly showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly priv = input.required<PrivacySettings>();
   public readonly genders = input.required<CategoryListModel>();
   public readonly readOnly = input(true);
@@ -110,7 +112,7 @@ export class PersonFormComponent {
 
   // validation and errors
   protected readonly suite = personValidations;
-  private readonly validationResult = computed(() => personValidations(this.formData()));
+  private readonly validationResult = computed(() => personValidations(this.formData(), this.tenantId(), this.allTags()));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
 
   // fields
@@ -119,7 +121,7 @@ export class PersonFormComponent {
   protected dateOfBirth = linkedSignal(() => this.formData().dateOfBirth ?? DEFAULT_DATE);
   protected dateOfDeath = linkedSignal(() => this.formData().dateOfDeath ?? DEFAULT_DATE);
   protected gender = linkedSignal(() => this.formData().gender ?? DEFAULT_GENDER);
-  protected ssnId = linkedSignal(() => this.formData().ssnId ?? DEFAULT_ID);
+  protected ssnId = linkedSignal(() => formatAhv(this.formData().ssnId ?? '', AhvFormat.Friendly));
   protected bexioId = linkedSignal(() => this.formData().bexioId ?? DEFAULT_ID);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);

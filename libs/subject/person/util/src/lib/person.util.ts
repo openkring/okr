@@ -5,6 +5,7 @@ import { addIndexElement, die, getTodayStr } from '@bk2/shared-util-core';
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
 
 import { PersonNewFormModel } from './person-new-form.model';
+import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 
 // new person
 export function createNewPersonFormModel(org?: OrgModel): PersonNewFormModel {
@@ -46,7 +47,7 @@ export function convertFormToNewPerson(vm: PersonNewFormModel, tenantId: string)
   person.gender = vm.gender ?? DEFAULT_GENDER;
   person.dateOfBirth = vm.dateOfBirth ?? DEFAULT_DATE;
   person.dateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
-  person.ssnId = vm.ssnId ?? DEFAULT_ID;
+  person.ssnId = formatAhv(vm.ssnId ?? DEFAULT_ID, AhvFormat.Electronic);
   person.bexioId = vm.bexioId ?? DEFAULT_ID;
 
   person.favEmail = vm.email ?? DEFAULT_EMAIL;

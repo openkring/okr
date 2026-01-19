@@ -16,6 +16,7 @@ import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
 
 import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel, personNewFormValidations } from '@bk2/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
+import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-person-new-form',
@@ -250,7 +251,7 @@ export class PersonNewFormComponent {
   protected dateOfBirth = linkedSignal(() => this.formData().dateOfBirth ?? DEFAULT_DATE);
   protected dateOfDeath = linkedSignal(() => this.formData().dateOfDeath ?? DEFAULT_DATE);
   protected gender = linkedSignal(() => this.formData().gender ?? DEFAULT_GENDER);
-  protected ssnId = linkedSignal(() => this.formData().ssnId ?? DEFAULT_ID);
+  protected ssnId = linkedSignal(() => formatAhv(this.formData().ssnId ?? '', AhvFormat.Friendly));
   protected bexioId = linkedSignal(() => this.formData().bexioId ?? DEFAULT_ID);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);

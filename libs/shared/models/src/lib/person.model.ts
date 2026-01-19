@@ -11,7 +11,7 @@ export class PersonModel implements BkModel, AddressableModel, SearchableModel, 
   public firstName = DEFAULT_NAME;
   public lastName = DEFAULT_NAME;
   public gender = DEFAULT_GENDER;
-  public ssnId = DEFAULT_ID; // social security number, in Switzerland: AHV Number
+  public ssnId = DEFAULT_ID; // social security number, in Switzerland: AHV Number in electronic format
   public dateOfBirth = DEFAULT_DATE;
   public dateOfDeath = DEFAULT_DATE;
   public favEmail = DEFAULT_EMAIL;
