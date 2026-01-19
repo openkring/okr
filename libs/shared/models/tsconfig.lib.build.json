@@ -1,8 +1,11 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../../../tsconfig.base.build.json",
   "compilerOptions": {
+    "rootDir": ".",
     "outDir": "../../../dist/libs/shared/models",
-    "declaration": true
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false
   },
   "include": ["src/**/*"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"]

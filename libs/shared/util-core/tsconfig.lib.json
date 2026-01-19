@@ -1,11 +1,14 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
-    "composite": true,
+    "outDir": "../../../dist/libs/shared/util-core",
     "declaration": true,
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-util-core.tsbuildinfo"
+    "types": ["node"],
+    "paths": {
+      "@bk2/shared-models": ["../../../dist/libs/shared/models/src/index.d.ts"],
+      "@bk2/shared-constants": ["../../../dist/libs/shared/constants/src/index.d.ts"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["**/*.spec.ts", "vite.config.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
 }
