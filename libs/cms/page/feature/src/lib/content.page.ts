@@ -4,7 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ArticleSection, ButtonSection, RoleName } from '@bk2/shared-models';
+import { AccordionSection, ArticleSection, ButtonSection, RoleName, SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
@@ -132,14 +132,14 @@ import { PageStore } from './page.store';
           </ion-item>
         } @else {     <!-- page contains sections -->
           <ion-list>
-            @for(sectionId of pageStore.sections(); track $index) {
-              <ion-item lines="none" class="section-item" (click)="showActions(sectionId)" [class.edit-mode]="editMode()">
+            @for(section of visibleSections(); track section.bkey) {
+              <ion-item lines="none" class="section-item" (click)="showActions(section.bkey)" [class.edit-mode]="editMode()">
                 @if(editMode()) {
                   <div class="section-wrapper" [class.editable]="editMode()">
-                    <bk-section [id]="sectionId" />
+                    <bk-section [id]="section.bkey" />
                   </div>  
                 } @else {
-                  <bk-section [id]="sectionId" />
+                  <bk-section [id]="section.bkey" />
                 }
               </ion-item>
             }
@@ -152,8 +152,8 @@ import { PageStore } from './page.store';
           </ion-item>
         } @else {
           <div class="print-content" #printContent>
-            @for(sectionId of pageStore.sections(); track $index) {
-              <bk-section [id]="sectionId" />
+            @for(section of visibleSections(); track section.bkey) {
+              <bk-section [id]="section.bkey" />
             } 
           </div>
         }
@@ -178,6 +178,34 @@ export class ContentPageComponent {
   protected showDebugInfo = computed(() => this.pageStore.showDebugInfo());
   protected popupId = computed(() => 'c_contentpage_' + this.id());
   protected editMode = signal(false);
+
+  /**
+   * Get all nested section IDs from accordion sections.
+   * These sections are rendered inside accordions via content projection,
+   * so they should be excluded from the top-level section list.
+   */
+  private nestedSectionIds = computed(() => {
+    const nestedIds = new Set<string>();
+    this.pageStore.pageSections()
+      .filter(s => s.type === 'accordion')
+      .forEach(section => {
+        const accordion = section as AccordionSection;
+        accordion.properties.items.forEach(item => {
+          if (item.sectionId) nestedIds.add(item.sectionId);
+        });
+      });
+    return nestedIds;
+  });
+
+  /**
+   * Get only top-level sections (exclude nested accordion sections).
+   * Nested sections are rendered inside their parent accordions via content projection,
+   * so they shouldn't appear at the top level to avoid duplication.
+   */
+  protected visibleSections = computed(() => {
+    const nested = this.nestedSectionIds();
+    return this.pageStore.pageSections().filter(s => !nested.has(s.bkey));
+  });
 
   constructor() {
     effect(() => {
@@ -291,5 +319,28 @@ export class ContentPageComponent {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.pageStore.currentUser());
+  }
+
+  /**
+   * Get nested sections for a given section (only relevant for accordion sections).
+   * Returns an array of SectionModel objects that should be rendered inside accordion items.
+   * Note: Uses item.key as the section reference (sectionId is optional and may not be populated).
+   */
+  protected getNestedSections(section: SectionModel): SectionModel[] {
+    if (section.type !== 'accordion') return [];
+    const accordion = section as AccordionSection;
+    const sectionIds = accordion.properties.items
+      .map(item => item.key)
+      .filter(id => id !== undefined) as string[];
+    return this.pageStore.pageSections().filter(s => sectionIds.includes(s.bkey));
+  }
+
+  /**
+   * Get accordion items from an accordion section.
+   * Each item contains a sectionId that references a section to be rendered inside that accordion item.
+   */
+  protected getAccordionItems(section: SectionModel) {
+    if (section.type !== 'accordion') return [];
+    return (section as AccordionSection).properties.items;
   }
 }

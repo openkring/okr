@@ -1,13 +1,12 @@
-import { Component, computed, forwardRef, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { AccordionConfig, AccordionSection, ColorIonic } from '@bk2/shared-models';
+import { AccordionConfig, AccordionSection, ColorIonic, SectionModel } from '@bk2/shared-models';
 import { ColorsIonic } from '@bk2/shared-categories';
 import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 import { TranslatePipe } from '@bk2/shared-i18n';
-
-import { SectionComponent } from './section.component';
+import { AccordionItemContentComponent } from './accordion-item.component';
 
 @Component({
   selector: 'bk-accordion-section',
@@ -16,8 +15,7 @@ import { SectionComponent } from './section.component';
     AsyncPipe, TranslatePipe, CategoryPlainNamePipe,
     IonLabel, IonCard, IonCardContent, OptionalCardHeaderComponent,
     IonAccordionGroup, IonAccordion, IonItem, IonLabel,
-    SpinnerComponent,
-    forwardRef(() => SectionComponent)
+    SpinnerComponent, AccordionItemContentComponent
   ],
   styles: [`
     ion-card-content { padding: 5px; }
@@ -28,16 +26,16 @@ import { SectionComponent } from './section.component';
       <ion-card>
         <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
-          <ion-accordion-group [value]="section.name">
-            @for(item of items(); track item) {
-            <ion-accordion [value]="item.value" toggle-icon-slot="start" >
+          <ion-accordion-group [value]="value()">
+            @for(item of items(); track item.value; let idx = $index) {
+              <ion-accordion [value]="item.value" toggle-icon-slot="start">
                 <ion-item slot="header" [color]="color() | categoryPlainName:colorsIonic">
-                <ion-label>{{item.label | translate | async}}</ion-label>
+                  <ion-label>{{item.label | translate | async}}</ion-label>
                 </ion-item>
-                <div slot="content">
-                <bk-section [id]="item.key" [readOnly]="readonly()"/>
+                <div class="ion-padding" slot="content">
+                  <bk-accordion-item-content [sectionId]="item.key" />
                 </div>
-            </ion-accordion>
+              </ion-accordion>
             }
           </ion-accordion-group>
         </ion-card-content>

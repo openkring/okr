@@ -2,7 +2,23 @@ import { CalendarOptions } from "@fullcalendar/core";
 import { EChartsOption } from "echarts";
 
 import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DEFAULT_URL } from "@bk2/shared-constants";
-import { AccordionSection, AlbumConfig, AlbumSection, AlbumStyle, ArticleConfig, ArticleSection, AvatarConfig, AvatarInfo, ButtonAction, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection, ChartSection, ChatConfig, ChatSection, ColorIonic, EditorConfig, GalleryConfig, GalleryEffect, GallerySection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, ImageConfig, MapConfig, MapSection, NameDisplay, PeopleConfig, PeopleSection, SliderConfig, SliderSection, Slot, TableConfig, TableSection, TrackerConfig, TrackerSection, VideoConfig, VideoSection, ViewPosition } from "@bk2/shared-models";
+import type { 
+  AccordionSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection, 
+  AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection, 
+  ChartSection, ChatConfig, ChatSection, EditorConfig, GalleryConfig, 
+  GallerySection, HeroConfig, HeroSection, IconConfig, IframeConfig, 
+  IframeSection, MapConfig, MapSection, PeopleConfig, 
+  PeopleSection, SliderConfig, SliderSection, TableConfig, TableSection, 
+  TrackerConfig, TrackerSection, VideoConfig, VideoSection 
+} from "./section.model";
+import { AlbumStyle } from './enums/album-style.enum';
+import { ButtonAction } from './enums/button-action.enum';
+import { ColorIonic } from './enums/color-ionic.enum';
+import { GalleryEffect } from './enums/gallery-effect.enum';
+import { ViewPosition } from './enums/view-position.enum';
+import { NameDisplay } from './enums/name-display.enum';
+import { AvatarInfo } from './avatar-info';
+import { ImageConfig, Slot } from './image.model';
 import { IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from "./image.shapes";
 
 const imgixBaseUrl = 'https://bkaiser.imgix.net'; // tbd: temporary solution

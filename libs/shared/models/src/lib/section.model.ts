@@ -1,7 +1,15 @@
 import { CalendarOptions } from '@fullcalendar/core';
 import { EChartsOption } from 'echarts';
 
-import { AlbumStyle, ButtonAction, ColorIonic, GalleryEffect, ViewPosition, RoleName, AvatarInfo, NameDisplay, ImageStyle, ImageConfig, Slot } from "@bk2/shared-models";
+import { AlbumStyle } from './enums/album-style.enum';
+import { ButtonAction } from './enums/button-action.enum';
+import { ColorIonic } from './enums/color-ionic.enum';
+import { GalleryEffect } from './enums/gallery-effect.enum';
+import { ViewPosition } from './enums/view-position.enum';
+import { NameDisplay } from './enums/name-display.enum';
+import { RoleName } from './menu-item.model';
+import { AvatarInfo } from './avatar-info';
+import { ImageStyle, ImageConfig, Slot } from './image.model';
 
 export const SectionCollection = 'sections';
 export const SectionModelName = 'section';
@@ -57,7 +65,8 @@ export interface AccordionConfig {
 export interface AccordionItem {
   key: string;
   label: string;
-  value: string;
+  value: string;        // used for accordion state (which item is open)
+  sectionId?: string;   // reference to section to render in accordion content
 }
 
 // album

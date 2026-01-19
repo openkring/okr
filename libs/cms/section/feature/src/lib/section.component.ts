@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { RoleName } from '@bk2/shared-models';
+import { RoleName, SectionModel } from '@bk2/shared-models';
 import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
 import { AccordionSectionComponent } from './accordion-section';
