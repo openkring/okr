@@ -35,7 +35,6 @@ export const AvatarToolbarStore = signalStore(
     urlResource: rxResource({
       params: () => ({
         key: store.key(),
-        currentUser: store.appStore.currentUser(),
       }),
       stream: ({ params }) => {
         let url$: Observable<string | undefined> = of(undefined);
@@ -61,7 +60,8 @@ export const AvatarToolbarStore = signalStore(
 
   withComputed(state => {
     return {
-      url: computed(() => getRelStorageUrl(state.imgixBaseUrl(), state.modelType(), state.relStorageUrl())),
+      //url: computed(() => getRelStorageUrl(state.imgixBaseUrl(), state.modelType(), state.relStorageUrl())),
+      url: computed(() => state.avatarService.getAvatarUrl(state.key(), getDefaultIcon(state.modelType()))),
     };
   }),
 

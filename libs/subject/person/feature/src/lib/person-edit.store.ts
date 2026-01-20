@@ -61,6 +61,10 @@ export const PersonEditStore = signalStore(
         patchState(store, initialState);
       },
       
+      reload() {
+        store.personResource.reload();
+      },
+      
       /************************************ SETTERS ************************************* */
       setPersonKey(personKey: string): void {
         patchState(store, { personKey });
@@ -82,6 +86,7 @@ export const PersonEditStore = signalStore(
         const person = store.person();
         if (!person) return;
         await store.avatarService.saveAvatarPhoto(photo, person.bkey, store.appStore.env.tenantId, PersonModelName);
+        store.personResource.reload();
       }
     }
   }),

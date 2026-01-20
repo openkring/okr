@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail, ModalController } from '@ionic/angular/standalone';
 
@@ -14,7 +13,7 @@ import { ResourceSelectStore } from './resource-select.store';
   standalone: true,
   imports: [
     HeaderComponent, SpinnerComponent,
-    AsyncPipe, AvatarPipe, EmptyListComponent,
+    AvatarPipe, EmptyListComponent,
     IonContent, IonItem, IonLabel, IonThumbnail, IonImg, IonList,
   ],
   providers: [ResourceSelectStore],
@@ -41,7 +40,7 @@ import { ResourceSelectStore } from './resource-select.store';
             <ion-list lines="none">
               <ion-item class="item" (click)="select(resource)">
                  <ion-thumbnail slot="start">
-                  <ion-img [src]="getAvatarKey(resource) | avatar | async" alt="Avatar Logo" />
+                  <ion-img [src]="getAvatarKey(resource) | avatar" alt="Avatar Logo" />
                 </ion-thumbnail>
                 <ion-label>{{resource.name}}</ion-label>
               </ion-item>

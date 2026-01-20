@@ -41,7 +41,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                 <ion-col size="9">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ reserverAvatarKey() | avatar | async }}" alt="Avatar of Reserver" />
+                      <ion-img src="{{ reserverAvatarKey() | avatar }}" alt="Avatar of Reserver" />
                     </ion-avatar>
                     <ion-label>{{ reserverName() }}</ion-label>
                   </ion-item>
@@ -63,7 +63,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                 <ion-col size="9">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ resourceAvatarKey() | avatar | async }}" alt="Avatar Logo of Resource" />
+                      <ion-img src="{{ resourceAvatarKey() | avatar }}" alt="Avatar Logo of Resource" />
                     </ion-avatar>
                     <ion-label>{{ resourceName() }}</ion-label>
                   </ion-item>

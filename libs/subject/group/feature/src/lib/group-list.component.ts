@@ -79,7 +79,7 @@ import { GroupStore } from './group.store';
           @for(group of filteredGroups(); track $index) {
             <ion-item (click)="showActions(group)">
               <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                <ion-img src="{{ 'group.' + group.bkey | avatar:'people' | async }}" alt="Avatar Logo" />
+                <ion-img src="{{ 'group.' + group.bkey | avatar:'people' }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{group.name}}</ion-label>      
             </ion-item>

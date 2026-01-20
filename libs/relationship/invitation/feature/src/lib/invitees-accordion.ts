@@ -47,7 +47,7 @@ import { InvitationStore } from 'libs/relationship/invitation/feature/src/lib/in
           @for(invitee of invitees(); track $index) {
             <ion-item (click)="showActions(invitee)">
               <ion-avatar slot="start">
-                <ion-img src="{{ 'person.' + invitee.inviteeKey | avatar:'person' | async}}" alt="invitation avatar" />
+                <ion-img src="{{ 'person.' + invitee.inviteeKey | avatar:'person' }}" alt="invitation avatar" />
               </ion-avatar>
               <ion-label>{{ invitee.inviteeFirstName | fullName: invitee.inviteeLastName }}</ion-label>
               <ion-label>{{ invitee.state }}</ion-label>

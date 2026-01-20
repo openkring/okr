@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
@@ -13,7 +12,7 @@ import { OrgSelectStore } from './org-select.store';
   standalone: true,
   imports: [
     HeaderComponent, SpinnerComponent,
-    AsyncPipe, AvatarPipe, EmptyListComponent,
+    AvatarPipe, EmptyListComponent,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
   ],
   providers: [OrgSelectStore],
@@ -40,7 +39,7 @@ import { OrgSelectStore } from './org-select.store';
             <ion-list lines="none">
               <ion-item class="item" (click)="select(org)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ 'org.' + org.bkey | avatar:defaultIcon | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'org.' + org.bkey | avatar:defaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ org.name }}</ion-label>
               </ion-item>

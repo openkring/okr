@@ -95,7 +95,7 @@ import { getCategoryIcon } from '@bk2/category-util';
             @else {
               <ion-item (click)="showActions(ownership)">
                 <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                  <ion-img src="{{ ownership.ownerModelType + '.' + ownership.ownerKey | avatar:(ownership.ownerModelType === 'person' ? 'person' : 'org') | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ ownership.ownerModelType + '.' + ownership.ownerKey | avatar:(ownership.ownerModelType === 'person' ? 'person' : 'org') }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{getOwnerName(ownership)}}</ion-label>      
                 <ion-label>{{ownership.resourceName}}</ion-label>      

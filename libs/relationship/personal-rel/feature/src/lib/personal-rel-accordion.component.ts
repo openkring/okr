@@ -47,7 +47,7 @@ import { PersonalRelStore } from 'libs/relationship/personal-rel/feature/src/lib
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start" class="list-avatar">
-                      <ion-img src="{{ 'person.' + personalRel.subjectKey | avatar:'person' | async}}" alt="avatar of first person" />
+                      <ion-img src="{{ 'person.' + personalRel.subjectKey | avatar:'person' }}" alt="avatar of first person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{personalRel.subjectFirstName | fullName:personalRel.subjectLastName}}</ion-label>
                   </ion-item>
@@ -60,7 +60,7 @@ import { PersonalRelStore } from 'libs/relationship/personal-rel/feature/src/lib
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start" class="list-avatar">
-                      <ion-img src="{{ 'person.' + personalRel.objectKey | avatar:'person' | async}}" alt="avatar of second person" />
+                      <ion-img src="{{ 'person.' + personalRel.objectKey | avatar:'person' }}" alt="avatar of second person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{personalRel.objectFirstName | fullName:personalRel.objectLastName}}</ion-label>
                   </ion-item> 

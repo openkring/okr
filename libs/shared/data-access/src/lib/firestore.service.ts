@@ -372,7 +372,7 @@ export class FirestoreService {
    * stricter CORS checks or indexedDB access issues during page navigation/reloads, unlike Chrome's WebSocket preference.
    * @param collectionName The name of the collection.
    * @param dbQuery The query parameters.
-   * @param orderByParam The field to order by.
+   * @param orderByParam The field to order by. May be 'none' to indicate no ordering.
    * @param sortOrderParam The sort order (asc/desc).
    * @returns An Observable that emits the query results.
    */
@@ -398,7 +398,7 @@ export class FirestoreService {
     }
 
     try {
-      const queries = getQuery(dbQuery, orderByParam, sortOrderParam);
+      const queries = orderByParam === 'none' ? getQuery(dbQuery, 'none') : getQuery(dbQuery, orderByParam, sortOrderParam);
       const collectionRef = collection(this.firestore, collectionName);
       const q = query(collectionRef, ...queries);
 

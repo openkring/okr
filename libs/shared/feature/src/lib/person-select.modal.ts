@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
@@ -14,7 +13,7 @@ import { PersonSelectStore } from './person-select.store';
   standalone: true,
   imports: [
     HeaderComponent, SpinnerComponent,
-    AsyncPipe, FullNamePipe, AvatarPipe, EmptyListComponent,
+    FullNamePipe, AvatarPipe, EmptyListComponent,
     IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
   ],
   providers: [PersonSelectStore],
@@ -42,7 +41,7 @@ import { PersonSelectStore } from './person-select.store';
             <ion-list lines="none">
               <ion-item class="item" (click)="select(person)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ 'person.' + person.bkey | avatar:defaultIcon | async }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'person.' + person.bkey | avatar:defaultIcon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>
               </ion-item>

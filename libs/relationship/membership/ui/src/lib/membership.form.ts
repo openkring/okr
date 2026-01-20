@@ -43,7 +43,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                     <ion-col size="9">
                       <ion-item lines="none">
                         <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                          <ion-img src="{{ memberModelType() + '.' + memberKey() | avatar:'membership' | async }}" alt="Avatar of Member" />
+                          <ion-img src="{{ memberModelType() + '.' + memberKey() | avatar:'membership' }}" alt="Avatar of Member" />
                         </ion-avatar>
                         <ion-label>{{ memberName() }}</ion-label>
                       </ion-item>
@@ -65,7 +65,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                     <ion-col size="9">
                       <ion-item lines="none">
                         <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                          <ion-img src="{{ 'org.' + orgKey() | avatar | async }}" alt="Avatar Logo of Organization" />
+                          <ion-img src="{{ 'org.' + orgKey() | avatar }}" alt="Avatar Logo of Organization" />
                         </ion-avatar>
                         <ion-label>{{ orgName() }}</ion-label>
                       </ion-item>

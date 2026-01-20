@@ -45,7 +45,7 @@ import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
               <ion-col size="9">
                 <ion-item lines="none" (click)="showPerson(subjectKey())">
                   <ion-avatar slot="start">
-                    <ion-img [src]="subjectAvatarKey() | avatar | async" alt="Avatar of first person" />
+                    <ion-img [src]="subjectAvatarKey() | avatar" alt="Avatar of first person" />
                   </ion-avatar>
                   <ion-label>{{ subjectFirstName() | fullName:subjectLastName() }}</ion-label>
                 </ion-item>
@@ -70,7 +70,7 @@ import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
               <ion-col size="9">
                 <ion-item lines="none" (click)="showPerson(objectKey())">
                   <ion-avatar slot="start">
-                  <ion-img [src]="objectAvatarKey() | avatar | async" alt="Avatar of second person" />
+                  <ion-img [src]="objectAvatarKey() | avatar" alt="Avatar of second person" />
                   </ion-avatar>
                   <ion-label>{{ objectFirstName() | fullName:objectLastName() }}</ion-label>
                 </ion-item>

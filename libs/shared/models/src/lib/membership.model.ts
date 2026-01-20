@@ -1,5 +1,6 @@
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { AvatarInfo } from 'libs/shared/models/src/lib/avatar-info';
 
 /**
  * A membership of a person or organization in a group or organization.
@@ -22,6 +23,7 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   public notes = DEFAULT_NOTES;
 
   // member
+  //public member: AvatarInfo | undefined; // avatar for person, org or group
   public memberKey = DEFAULT_KEY;
   public memberName1 = DEFAULT_NAME; // e.g. firstname of person
   public memberName2 = DEFAULT_NAME; // e.g. lastname or company name
@@ -37,9 +39,11 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   public memberId = DEFAULT_ID;
 
   // object = the membership organization
+  //public org: AvatarInfo | undefined; // avatar for org or group
   public orgKey = DEFAULT_KEY;
   public orgName = DEFAULT_NAME;
   public orgModelType: 'org' | 'group' = 'org';
+  // orgType could be added here
 
   // membership
   public dateOfEntry = DEFAULT_DATE;

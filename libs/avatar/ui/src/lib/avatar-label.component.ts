@@ -1,5 +1,4 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
 import { IonAvatar, IonImg, IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { ColorsIonic, getCategoryStringField } from '@bk2/shared-categories';
@@ -33,13 +32,6 @@ export class AvatarLabelComponent {
 
   // computed
   protected colorName = computed(() => getCategoryStringField(ColorsIonic, this.color(), 'name') );
-
-  private readonly urlRef = rxResource({
-    params: () => ({
-      key: this.key()
-    }),
-    stream: ({ params }) => this.avatarService.getAvatarImgixUrl(params.key, 'other')
-  });
-  public url = computed(() => this.urlRef.value() ?? '');
+  public url = computed(() => this.avatarService.getAvatarUrl(this.key(), 'other'));
 }
 

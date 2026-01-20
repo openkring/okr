@@ -27,7 +27,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
       <ion-item lines="none" [color]="color() | categoryPlainName:colorsIonic">
         @if(avatar()) {
           <ion-avatar slot="start">
-            <ion-img src="{{ avatarKey() | avatar | async }}" alt="Avatar icon" />
+            <ion-img src="{{ avatarKey() | avatar }}" alt="Avatar icon" />
           </ion-avatar>
           <ion-label>{{fullName()}}</ion-label>
         }

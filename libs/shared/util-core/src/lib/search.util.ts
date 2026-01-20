@@ -17,7 +17,9 @@ export function getQuery(dbQuery: DbQuery[], orderByParam = 'name', sortOrderPar
   for (const queryItem of dbQuery) {
     queries.push(where(queryItem.key, queryItem.operator as WhereFilterOp, queryItem.value));
   }
-  queries.push(orderBy(orderByParam, sortOrderParam as OrderByDirection));
+  if (orderByParam !== 'none') {
+    queries.push(orderBy(orderByParam, sortOrderParam as OrderByDirection));
+  }
   return queries;
 }
 

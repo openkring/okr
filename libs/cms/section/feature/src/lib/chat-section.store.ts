@@ -49,20 +49,6 @@ export const ChatSectionStore = signalStore(
   }),
 
   withProps((store) => ({
-    imageUrlResource: rxResource({
-      params: () => ({
-        currentUser: store.currentUser()
-      }),
-      stream: ({params}): Observable<string | undefined> => {
-        if (!params.currentUser) {
-          console.warn(`ChatSectionStore.imageUrlResource: No user, can't load image.`);
-          return of(undefined);
-        }
-        return store.avatarService.getAvatarImgixUrl(`person.${params.currentUser.personKey}`, "person").pipe(
-          debugItemLoaded<string>(`ChatSectionStore.imageUrlResource: image URL for ${params.currentUser.personKey}`, params.currentUser)
-        );
-      }
-    }),
 
     /**
      * For security reasons, the secret key should never be stored in the client code.
@@ -114,15 +100,17 @@ export const ChatSectionStore = signalStore(
 
   withComputed((state) => {
     return {
-      imageUrl: computed(() => state.imageUrlResource.value()),
+      imageUrl: computed(() => {
+        const user = state.currentUser();
+        if (!user) return undefined;
+        return state.avatarService.getAvatarUrl(`person.${user.personKey}`, 'person');
+      }),
       userToken: computed(() => state.userTokenResource.value()),
     }
   }),
 
   withComputed((state) => {
     return {
-      isLoading: computed(() => state.imageUrlResource.isLoading()),
-      error: computed(() => state.imageUrlResource.error()),
       chatUser: computed((): ChatUser | undefined => {
         const user = state.currentUser();
         const url = state.imageUrl();

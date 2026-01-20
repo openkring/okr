@@ -99,7 +99,7 @@ import { TaskStore } from './task.store';
               <ion-icon src="{{ getIcon(task) | svgIcon }}"  (click)="toggleCompleted(task)" />
               @if(task.assignee !== undefined) {
                 <ion-avatar>
-                  <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar | async }}" alt="Avatar of the assigned person" />
+                  <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar of the assigned person" />
                 </ion-avatar>
               }
               <div class="tags ion-hide-md-down">

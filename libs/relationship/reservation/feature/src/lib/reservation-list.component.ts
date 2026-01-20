@@ -3,16 +3,16 @@ import { Component, computed, effect, inject, input, linkedSignal, signal, untra
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AvatarCollection, AvatarInfo, AvatarModel, OrgModel, PersonModel, ReservationModel, ResourceModelName, RoleName } from '@bk2/shared-models';
+import { AvatarInfo, OrgModel, PersonModel, ReservationModel, ResourceModelName, RoleName } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { addImgixParams, getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole, isOngoing, isPerson } from '@bk2/shared-util-core';
+import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole, isOngoing, isPerson } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
+import { AvatarService } from '@bk2/avatar-data-access';
 
 import { ReservationStore } from './reservation.store';
-import { map, take } from 'rxjs';
 import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
 
 @Component({
@@ -248,6 +248,7 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
 export class ReservationListComponent {
   protected reservationStore = inject(ReservationStore);
   private actionSheetController = inject(ActionSheetController);
+  private avatarService = inject(AvatarService);
 
   // inputs
   // listIds: t_resourceType, r_resourceKey, p_reserverKey, all
@@ -270,86 +271,12 @@ export class ReservationListComponent {
   
   private imgixBaseUrl = this.reservationStore.appStore.env.services.imgixBaseUrl;
 
-  // Avatar URLs cache - loaded on demand via effect
-  protected avatarUrls = signal(new Map<string, string>());
+  // Track which avatar storagePaths have been loaded (triggers re-render when loaded)
+  protected avatarUrls = signal(new Map<string, boolean>());
 
   constructor() {
     effect(() => {
       this.reservationStore.setListId(this.listId());
-    });
-    
-    // Load avatar URLs when reservations change
-    effect(() => {
-      const reservations = this.filteredReservations();
-      
-      // Get current cached keys to avoid re-fetching
-      const cachedKeys = untracked(() => new Set(this.avatarUrls().keys()));
-      
-      for (const reservation of reservations) {
-        // Load reserver avatar
-        if (reservation.reserver) {
-          const cacheKey = `${reservation.bkey}_reserver`;
-          if (!cachedKeys.has(cacheKey)) {
-            const reserverKey = getAvatarKey(
-              reservation.reserver.modelType,
-              reservation.reserver.key,
-              reservation.reserver.type,
-              reservation.reserver.subType
-            );
-            
-            this.reservationStore.firestoreService.readModel<AvatarModel>(AvatarCollection, reserverKey).pipe(
-              take(1), // Complete after first emission to prevent memory leaks
-              map(avatar => {
-                if (!avatar) {
-                  // Use same icon logic as getAvatarUrl
-                  return this.getDefaultIconUrl(reservation.reserver!);
-                }
-                else return `${this.imgixBaseUrl}/${addImgixParams(avatar.storagePath, THUMBNAIL_SIZE)}`;
-              })
-            ).subscribe(url => {
-              // Use untracked to prevent the signal update from triggering this effect
-              untracked(() => {
-                this.avatarUrls.update(map => {
-                  map.set(cacheKey, url);
-                  return new Map(map);
-                });
-              });
-            });
-          }
-        }
-        
-        // Load resource avatar
-        if (reservation.resource) {
-          const cacheKey = `${reservation.bkey}_resource`;
-          if (!cachedKeys.has(cacheKey)) {
-            const resourceKey = getAvatarKey(
-              reservation.resource.modelType,
-              reservation.resource.key,
-              reservation.resource.type,
-              reservation.resource.subType
-            );
-            
-            this.reservationStore.firestoreService.readModel<AvatarModel>(AvatarCollection, resourceKey).pipe(
-              take(1), // Complete after first emission to prevent memory leaks
-              map(avatar => {
-                if (!avatar) {
-                  // Use same icon logic as getAvatarUrl
-                  return this.getDefaultIconUrl(reservation.resource!);
-                }
-                else return `${this.imgixBaseUrl}/${addImgixParams(avatar.storagePath, THUMBNAIL_SIZE)}`;
-              })
-            ).subscribe(url => {
-              // Use untracked to prevent the signal update from triggering this effect
-              untracked(() => {
-                this.avatarUrls.update(map => {
-                  map.set(cacheKey, url);
-                  return new Map(map);
-                });
-              });
-            });
-          }
-        }
-      }
     });
   }
 
@@ -490,9 +417,9 @@ export class ReservationListComponent {
   }
 
   /**
-   * Get the default icon URL for an avatar based on its type
+   * Get the default icon name for an avatar based on its type
    */
-  private getDefaultIconUrl(avatar: AvatarInfo): string {
+  private getDefaultIconName(avatar: AvatarInfo): string {
     let iconName = avatar.modelType as string;
     
     if (avatar.modelType === ResourceModelName) {
@@ -506,24 +433,30 @@ export class ReservationListComponent {
       }
     }
     
-    return `${this.imgixBaseUrl}/logo/icons/${iconName}.svg`;
+    return iconName;
   }
 
   /**
-   * Get the avatar URL for a reserver or resource
+   * Get the avatar URL for a reserver or resource.
+   * Returns the URL synchronously using cached storagePath from AvatarService.
    */
   protected getAvatarUrl(reservation: ReservationModel, type: 'reserver' | 'resource'): string {
     const avatar = type === 'reserver' ? reservation.reserver : reservation.resource;
     
-    // Check if we have a cached URL
-    const cachedUrl = this.avatarUrls().get(`${reservation.bkey}_${type}`);
-    if (cachedUrl) return cachedUrl;
-    
-    // Return default icon while loading
+    // Return default icon if no avatar info
     if (!avatar) return `${this.imgixBaseUrl}/logo/icons/person.svg`;
     
-    // Use the helper method to get the correct default icon
-    return this.getDefaultIconUrl(avatar);
+    const avatarKey = getAvatarKey(
+      avatar.modelType,
+      avatar.key,
+      avatar.type,
+      avatar.subType
+    );
+    
+    const defaultIcon = this.getDefaultIconName(avatar);
+    
+    // Use AvatarService's synchronous method (uses cached storagePath)
+    return this.avatarService.getAvatarUrl(avatarKey, defaultIcon, THUMBNAIL_SIZE);
   }
 
   protected getTitle(): string {

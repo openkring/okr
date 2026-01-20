@@ -45,7 +45,7 @@ import { workrelValidations } from '@bk2/relationship-workrel-util';
               <ion-col size="9">
                 <ion-item lines="none">
                   <ion-avatar slot="start">
-                    <ion-img src="{{ 'person.' + subjectKey() | avatar | async }}" alt="Avatar of person" />
+                    <ion-img src="{{ 'person.' + subjectKey() | avatar }}" alt="Avatar of person" />
                   </ion-avatar>
                   <ion-label>{{ subjectName1() | fullName:subjectName2() }}</ion-label>
                 </ion-item>
@@ -70,7 +70,7 @@ import { workrelValidations } from '@bk2/relationship-workrel-util';
               <ion-col size="9">
                 <ion-item lines="none">
                   <ion-avatar slot="start">
-                  <ion-img src="{{ 'org.' + objectKey() | avatar | async }}" alt="Logo of organization" />
+                  <ion-img src="{{ 'org.' + objectKey() | avatar }}" alt="Logo of organization" />
                   </ion-avatar>
                   <ion-label>{{ objectName() }}</ion-label>
                 </ion-item>

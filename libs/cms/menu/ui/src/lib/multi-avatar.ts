@@ -49,7 +49,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           @if(icon.startsWith('//')) {
             <ion-item>
               <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                <ion-img src="{{ name | avatar:getModelName(name) | async }}" alt="Avatar Logo" />
+                <ion-img src="{{ name | avatar:getModelName(name) }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{ label() | translate | async }}</ion-label>
             </ion-item>

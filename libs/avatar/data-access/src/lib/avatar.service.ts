@@ -1,4 +1,5 @@
-import { Inject, Injectable } from '@angular/core';
+import { effect, Inject, Injectable, Injector, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { map, Observable, of, shareReplay, take } from 'rxjs';
 import { Platform } from '@ionic/angular/standalone';
 import { Photo } from '@capacitor/camera';
@@ -7,7 +8,7 @@ import { BkEnvironment, ENV } from '@bk2/shared-config';
 import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AvatarCollection, AvatarModel } from '@bk2/shared-models';
-import { addImgixParams } from '@bk2/shared-util-core';
+import { addImgixParams, getSystemQuery } from '@bk2/shared-util-core';
 
 import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
 import { UploadService } from './upload.service';
@@ -21,14 +22,44 @@ export interface UserPhoto {
   providedIn: 'root',
 })
 export class AvatarService {
+  // Cache for avatar storagePaths to avoid repeated Firestore reads
+  // Key format: modelType.documentId (e.g., "person.abc123" or "org.xyz789")
+  // Using signal to ensure reactivity and real-time updates from Firestore
+  private storagePathCache = signal(new Map<string, string | null>());
+
   // classic DI to enable mocks for testing
   // eslint-disable-next-line @angular-eslint/prefer-inject
   constructor(
     private readonly platform: Platform,
     private readonly firestoreService: FirestoreService, 
     private readonly uploadService: UploadService,
-    @Inject(ENV) private readonly env: BkEnvironment
-  ) {}
+    @Inject(ENV) private readonly env: BkEnvironment,
+    private readonly injector: Injector
+  ) {
+    // Convert avatar collection Observable to signal for reactive cache updates
+    const avatars = toSignal(
+      this.firestoreService.searchData<AvatarModel>(
+        AvatarCollection,
+        [{ key: 'tenants', operator: 'array-contains', value: this.env.tenantId }],
+        'none'
+      ),
+      { initialValue: [], injector: this.injector }
+    );
+
+    // Use effect to reactively update cache when avatars change
+    effect(() => {
+      const avatarList = avatars();
+      console.log('AvatarService: Received', avatarList?.length ?? 0, 'avatars from Firestore');
+      
+      const newCache = new Map<string, string | null>();
+      for (const avatar of avatarList) {
+        newCache.set(avatar.bkey, avatar.storagePath || null);
+      }
+      
+      this.storagePathCache.set(newCache);
+      console.log('AvatarService: Cache updated with', this.storagePathCache().size, 'entries');
+    }, { injector: this.injector, allowSignalWrites: true });
+  }
 
   /**
    * Save a model as a new Firestore document into the database.
@@ -59,28 +90,7 @@ export class AvatarService {
     );
   }
 
-  /**
-   * Get the imgix URL for an avatar by its key.
-   * @param key the key of the avatar in the format ModelType.ModelKey e.g. person.1123123asdf
-   * @param defaultIcon the default icon to use if there is no avatar. This can be obtained from AppStore.
-   * @param size the optional size of the image to retrieve; default is THUMBNAIL_SIZE
-   * @param imgixBaseUrl the optional base URL for imgix, defaults to the configured value
-   * @param expandImgixBaseUrl whether to expand the imgix base URL with parameters, defaults to true
-   * @returns an Observable of the imgix (absolute) URL for the avatar or the default icon if no avatar is found
-   */
-  public getAvatarImgixUrl(key: string, defaultIcon: string, size = THUMBNAIL_SIZE, imgixBaseUrl = this.env.services.imgixBaseUrl, expandImgixBaseUrl = true): Observable<string> {
-    return this.firestoreService.readModel<AvatarModel>(AvatarCollection, key).pipe(
-      take(1), // Complete after first emission to prevent memory leaks with hot observables
-      map(avatar => {
-        if (!avatar) {
-          return `${imgixBaseUrl}/logo/icons/${defaultIcon}.svg`;
-        } else {
-          return expandImgixBaseUrl ? `${imgixBaseUrl}/${addImgixParams(avatar.storagePath, size)}` : addImgixParams(avatar.storagePath, size);
-        }
-      }),
-      shareReplay(1) // Cache the result so multiple subscriptions don't trigger multiple reads
-    );
-  }
+
 
   public async saveAvatarPhoto(photo: Photo, key: string, tenantId: string, modelName: string): Promise<string | undefined> {
     const file = await readAsFile(photo, this.platform);
@@ -89,7 +99,52 @@ export class AvatarService {
 
     if (downloadUrl) {
       await this.updateOrCreate(avatar);
+      // Cache automatically updates via searchData subscription
     }
     return downloadUrl;
   }
+
+  /**
+   * Get the avatar URL synchronously using cached storagePath.
+   * If the storagePath is not cached, returns the default icon URL.
+   * Use getStoragePath() first to ensure the cache is populated.
+   * 
+   * @param key the key of the avatar in the format ModelType.ModelKey e.g. person.1123123asdf
+   * @param defaultIcon the default icon to use if there is no avatar
+   * @param size the optional size of the image to retrieve; default is THUMBNAIL_SIZE
+   * @returns the imgix URL for the avatar or the default icon if no avatar is found
+   */
+  public getAvatarUrl(key: string, defaultIcon: string, size = THUMBNAIL_SIZE): string {
+    const imgixBaseUrl = this.env.services.imgixBaseUrl;
+    
+    if (!key || key.length === 0) {
+      return `${imgixBaseUrl}/logo/icons/${defaultIcon}.svg`;
+    }
+
+    const cache = this.storagePathCache();
+    const storagePath = cache.get(key);
+    
+    // If not in cache or null, return default icon
+    if (!storagePath) {
+      return `${imgixBaseUrl}/logo/icons/${defaultIcon}.svg`;
+    }
+    
+    // Construct the URL with imgix parameters
+    return `${imgixBaseUrl}/${addImgixParams(storagePath, size)}`;
+  }
+
+  /**
+   * Get the cached storagePath synchronously without constructing a URL.
+   * Returns null if not in cache or if the avatar doesn't exist.
+   * 
+   * @param key the key of the avatar in the format ModelType.ModelKey e.g. person.1123123asdf
+   * @returns the storagePath or null if not found or not cached
+   */
+  public getCachedStoragePath(key: string): string | null {
+    if (!key || key.length === 0) return null;
+    const cache = this.storagePathCache();
+    return cache.get(key) ?? null;
+  }
+
+
 }

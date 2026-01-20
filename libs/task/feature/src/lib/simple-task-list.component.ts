@@ -94,7 +94,7 @@ import { TaskStore } from './task.store';
                 }
                 @if(task.assignee !== undefined) {
                   <ion-avatar>
-                    <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar | async }}" alt="Avatar of the assigned person" />
+                    <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar of the assigned person" />
                   </ion-avatar>
                 }
                 <ion-label class="ion-hide-md-down ion-text-end">

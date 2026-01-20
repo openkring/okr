@@ -42,7 +42,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
           @for(membership of memberships(); track $index) {
             <ion-item (click)="showActions(membership)">
               <ion-thumbnail slot="start">
-                <ion-img src="{{ 'org.' + membership.orgKey | avatar:'membership' | async}}" alt="membership avatar" />
+                <ion-img src="{{ 'org.' + membership.orgKey | avatar:'membership' }}" alt="membership avatar" />
               </ion-thumbnail>
               <ion-label>{{ membership.orgName }}</ion-label>
               <ion-label>{{ membership.relLog | categoryLog }} / {{ membership.dateOfEntry | duration:membership.dateOfExit }}</ion-label>

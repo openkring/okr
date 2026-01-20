@@ -39,7 +39,7 @@ import { getCategoryIcon } from '@bk2/category-util';
               <ion-col size="9">
                 <ion-item lines="none">
                   <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                    <ion-img src="{{ ownerModelType() + '.' + ownerKey() | avatar:'ownership' | async }}" alt="Avatar of Owner" />
+                    <ion-img src="{{ ownerModelType() + '.' + ownerKey() | avatar:'ownership' }}" alt="Avatar of Owner" />
                   </ion-avatar>
                   <ion-label>{{ ownerName() }}</ion-label>
                 </ion-item>
@@ -61,7 +61,7 @@ import { getCategoryIcon } from '@bk2/category-util';
               <ion-col size="9">
                 <ion-item lines="none">
                   <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                    <ion-img [src]="getAvatarKey() | avatar:getIcon(formData()) | async" alt="Logo of the resource" />
+                    <ion-img [src]="getAvatarKey() | avatar:getIcon(formData()) " alt="Logo of the resource" />
                   </ion-avatar>
                   <ion-label>{{ resourceName() }}</ion-label>
                 </ion-item>

@@ -82,7 +82,7 @@ import { WorkrelStore } from './workrel.store';
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ 'person.' + workrel.subjectKey | avatar | async}}" alt="avatar of first person" />
+                      <ion-img src="{{ 'person.' + workrel.subjectKey | avatar }}" alt="avatar of first person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{workrel.subjectName1 | fullName:workrel.subjectName2}}</ion-label>
                   </ion-item>
@@ -95,7 +95,7 @@ import { WorkrelStore } from './workrel.store';
                 <ion-col size="3" size-md="4">
                   <ion-item lines="none">
                     <ion-avatar slot="start">
-                      <ion-img src="{{ 'org.' + workrel.objectKey | avatar | async}}" alt="avatar of second person" />
+                      <ion-img src="{{ 'org.' + workrel.objectKey | avatar }}" alt="avatar of second person" />
                     </ion-avatar>
                     <ion-label class="ion-hide-md-down">{{workrel.objectName }}</ion-label>
                   </ion-item> 

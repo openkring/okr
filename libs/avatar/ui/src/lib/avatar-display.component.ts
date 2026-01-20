@@ -1,8 +1,7 @@
-import { AsyncPipe } from "@angular/common";
 import { Component, computed, input } from "@angular/core";
 import { IonAvatar, IonChip, IonImg, IonLabel } from "@ionic/angular/standalone";
 
-import { AvatarInfo, OrgModelName, PersonModelName } from "@bk2/shared-models";
+import { AvatarInfo } from "@bk2/shared-models";
 import { FullNamePipe } from '@bk2/shared-pipes';
 import { coerceBoolean } from "@bk2/shared-util-core";
 
@@ -13,7 +12,7 @@ import { getDefaultIcon } from "@bk2/avatar-util";
   selector: 'bk-avatar-display',
   standalone: true,
   imports: [
-    AvatarPipe, AsyncPipe, FullNamePipe,
+    AvatarPipe, FullNamePipe,
     IonAvatar, IonLabel, IonImg, IonChip
   ],
   styles: [`
@@ -36,13 +35,13 @@ import { getDefaultIcon } from "@bk2/avatar-util";
             @if(shouldShowName()) {
               <ion-chip color="light">
                 <ion-avatar>
-                  <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) | async }}" alt="Avatar of person or org" />
+                  <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) }}" alt="Avatar of person or org" />
                 </ion-avatar>
                   <ion-label><small>{{ avatars[0].name1 | fullName:avatars[0].name2 }}</small></ion-label>
               </ion-chip>   
             } @else {
               <ion-avatar>
-                <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) | async }}" alt="Avatar of person or org" />
+                <ion-img src="{{ avatars[0].modelType + '.' + avatars[0].key | avatar:getDefaultIcon(avatars[0].modelType) }}" alt="Avatar of person or org" />
               </ion-avatar>
             }
           } @else {
@@ -55,7 +54,7 @@ import { getDefaultIcon } from "@bk2/avatar-util";
               @for(avatar of avatars; track $index) {
                 @if(avatar.key && avatar.key.length > 0) {
                   <ion-avatar [class.stacked-avatar]="true" [style.zIndex]="avatars.length - $index">
-                    <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) | async }}" alt="Avatar of person or org" />
+                    <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar of person or org" />
                   </ion-avatar>
                 } 
               }

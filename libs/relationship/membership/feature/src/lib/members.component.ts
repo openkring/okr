@@ -1,6 +1,5 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonContent, IonDatetime, IonImg, IonItem, IonLabel, IonList, IonModal, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
 import { MembershipModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, FullNamePipe } from '@bk2/shared-pipes';
@@ -17,7 +16,7 @@ import { MembershipStore } from './membership.store';
   selector: 'bk-members',
   standalone: true,
   imports: [
-    DurationPipe, AsyncPipe, CategoryLogPipe, AvatarPipe, FullNamePipe,
+    DurationPipe, CategoryLogPipe, AvatarPipe, FullNamePipe,
     EmptyListComponent,
     IonItem, IonLabel, IonList, IonImg, IonThumbnail, IonContent
   ],
@@ -34,7 +33,7 @@ import { MembershipStore } from './membership.store';
           @for(member of members(); track $index) {
             <ion-item (click)="showActions(member)">
               <ion-thumbnail slot="start">
-                <ion-img src="{{ 'person.' + member.memberKey | avatar:'membership' | async}}" alt="membership avatar" />
+                <ion-img src="{{ 'person.' + member.memberKey | avatar:'membership' }}" alt="membership avatar" />
               </ion-thumbnail>
               <ion-label>{{member.memberName1 | fullName:member.memberName2}}</ion-label>      
               <ion-label>{{ member.relLog | categoryLog }} / {{ member.dateOfEntry | duration:member.dateOfExit }}</ion-label>
