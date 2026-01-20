@@ -5,13 +5,30 @@ import { Observable, of, take } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventModel, CalEventModelName, CommentCollection, CommentModel, DocumentCollection, DocumentModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
+import { AccountCollection, AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryCollection, CommentCollection, CommentModel, DocumentCollection, DocumentModel, GroupCollection, LocationCollection, LogInfo, MembershipCollection, MembershipModel, MenuItemCollection, OrgCollection, OrgModel, OwnershipCollection, PageCollection, PersonalRelCollection, PersonCollection, PersonModel, ReservationCollection, ResourceCollection, TaskCollection, TransferCollection, UserCollection, WorkrelCollection } from '@bk2/shared-models';
 import { getSystemQuery } from '@bk2/shared-util-core';
 
 import { addressValidations, getAddressIndex } from '@bk2/subject-address-util';
 import { commentValidations, getCommentIndex } from '@bk2/comment-util';
 import { calEventValidations, getCaleventIndex } from '@bk2/calevent-util';
 import { StaticSuite } from 'vest';
+import { documentValidations } from 'libs/document/util/src/lib/document.validations';
+import { locationValidations } from '@bk2/location-util';
+import { membershipValidations } from 'libs/relationship/membership/util/src/lib/membership.validations';
+import { menuItemValidations } from '@bk2/cms-menu-util';
+import { orgValidations } from '@bk2/subject-org-util';
+import { ownershipValidations } from '@bk2/relationship-ownership-util';
+import { pageValidations } from '@bk2/cms-page-util';
+import { personValidations } from '@bk2/subject-person-util';
+import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
+import { reservationValidations } from '@bk2/relationship-reservation-util';
+import { resourceValidations } from '@bk2/resource-util';
+import { taskValidations } from '@bk2/task-util';
+import { transferValidations } from '@bk2/relationship-transfer-util';
+import { workrelValidations } from '@bk2/relationship-workrel-util';
+import { userValidations } from '@bk2/user-util';
+import { categoryListValidations } from '@bk2/category-util';
+import { groupValidations } from '@bk2/subject-group-util';
 
 export type AocDataState = {
   modelType: string | undefined;
@@ -123,63 +140,61 @@ export const AocDataStore = signalStore(
             this.validate<CommentModel>(CommentCollection, commentValidations, tenants, store.appStore.getTags('comment'), 'createdAt');
             break;
           case 'document':
-          //  this.validate(DocumentCollection, documentValidations, tenants, store.appStore.getTags('document'), 'title');
+            this.validate(DocumentCollection, documentValidations, tenants, store.appStore.getTags('document'), 'title');
             break;
           case 'calevent':
             this.validate(CalEventCollection, calEventValidations, tenants, store.appStore.getTags(CalEventModelName), 'title');
             break;
           case 'location':
-          //  this.validate(LocationCollection, locationValidations, tenants, store.appStore.getTags('location'), 'name');
+            this.validate(LocationCollection, locationValidations, tenants, store.appStore.getTags('location'), 'name');
             break;
           case 'membership':
-          //  this.validate(MembershipCollection, membershipValidations, tenants, store.appStore.getTags('membership'), 'memberName2');
+            this.validate(MembershipCollection, membershipValidations, tenants, store.appStore.getTags('membership'), 'memberName2');
             break;
           case 'menuitem':
-          //  this.validate(MenuItemCollection, menuItemValidations, tenants, store.appStore.getTags('menuitem'));
+            this.validate(MenuItemCollection, menuItemValidations, tenants, store.appStore.getTags('menuitem'));
             break;
           case 'org':
-          //  this.validate(OrgCollection, orgValidations, tenants, store.appStore.getTags('org'), 'name');
+            this.validate(OrgCollection, orgValidations, tenants, store.appStore.getTags('org'), 'name');
             break;
           case 'ownership':
-          //  this.validate(OwnershipCollection, ownershipValidations, tenants, store.appStore.getTags('ownership'));
+            this.validate(OwnershipCollection, ownershipValidations, tenants, store.appStore.getTags('ownership'));
             break;
           case 'page':
-          //  this.validate(PageCollection, pageValidations, tenants, store.appStore.getTags('page'));
+            this.validate(PageCollection, pageValidations, tenants, store.appStore.getTags('page'));
             break;
           case 'person':
-          //  this.validate(PersonCollection, personValidations, tenants, store.appStore.getTags('person'), 'lastName');
+            this.validate(PersonCollection, personValidations, tenants, store.appStore.getTags('person'), 'lastName');
             break;
           case 'personal_rel':
-          //  this.validate(PersonalRelCollection, personalRelValidations, tenants, store.appStore.getTags('personal_rel'));
+            this.validate(PersonalRelCollection, personalRelValidations, tenants, store.appStore.getTags('personal_rel'));
             break;
           case 'reservation':
-          //  this.validate(ReservationCollection, reservationValidations, tenants, store.appStore.getTags('reservation'));
+            this.validate(ReservationCollection, reservationValidations, tenants, store.appStore.getTags('reservation'));
             break;
           case 'resource':
-          //  this.validate(ResourceCollection, resourceValidations, tenants, store.appStore.getTags('resource'));
+            this.validate(ResourceCollection, resourceValidations, tenants, store.appStore.getTags('resource'));
             break;
           case 'todo':
-          //  this.validate(TaskCollection, taskValidations, tenants, store.appStore.getTags('todo'));
+            this.validate(TaskCollection, taskValidations, tenants, store.appStore.getTags('todo'));
             break;
           case 'transfer':
-          //  this.validate(TransferCollection, transferValidations, tenants, store.appStore.getTags('transfer'));
+            this.validate(TransferCollection, transferValidations, tenants, store.appStore.getTags('transfer'));
             break;
           case 'user':
-            // split into auth, display, settings, privacy validations
-          //  this.validate(UserCollection, userValidations, tenants, store.appStore.getTags('user'));
+            this.validate(UserCollection, userValidations, tenants, store.appStore.getTags('user'));
             break;
           case 'workrel':
-          //  this.validate(WorkrelCollection, workrelValidations, tenants, store.appStore.getTags('workrel'));
+            this.validate(WorkrelCollection, workrelValidations, tenants, store.appStore.getTags('workrel'));
             break;
           case 'category':
-          //  this.validate(CategoryCollection, categoryListValidations, tenants, store.appStore.getTags('category'));
+            this.validate(CategoryCollection, categoryListValidations, tenants, store.appStore.getTags('category'));
             break;
           case 'group':
-          //  this.validate(GroupCollection, groupValidations, tenants, store.appStore.getTags('group'));
+            this.validate(GroupCollection, groupValidations, tenants, store.appStore.getTags('group'));
             break;
           case 'account': 
             // this.validate(AccountCollection, accountValidations, tenants, store.appStore.getTags('account'), 'name');
-            break;
           case 'avatar':
           case 'bill':
           case 'competitionLevel':
