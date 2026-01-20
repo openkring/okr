@@ -7,13 +7,12 @@ import { ColorIonic } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
 import { AvatarToolbarStore } from './avatar-toolbar.store';
-import { JsonPipe } from '@angular/common';
 
 @Component({
   selector: 'bk-avatar-toolbar',
   standalone: true,
   imports: [
-    SvgIconPipe, JsonPipe,
+    SvgIconPipe,
     IonToolbar, IonAvatar, IonImg, IonTitle, IonIcon, IonItem, IonLabel
   ],
   providers: [AvatarToolbarStore],

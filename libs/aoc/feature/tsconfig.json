@@ -28,6 +28,8 @@
     {"path": "../../auth/data-access/tsconfig.lib.json"},
     {"path": "../../aoc/util/tsconfig.lib.json"},
     {"path": "../../calevent/util/tsconfig.lib.json"},
+    {"path": "../../document/util/tsconfig.lib.json"},
+    {"path": "../../relationship/membership/util/tsconfig.lib.json"},
     {"path": "../../user/data-access/tsconfig.lib.json"},
     {"path": "../../user/feature/tsconfig.lib.json"},
     {"path": "../../user/util/tsconfig.lib.json"},
