@@ -27,12 +27,14 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   public memberName2 = DEFAULT_NAME; // e.g. lastname or company name
   public memberModelType: 'person' | 'org' | 'group' = 'person';
   public memberType = DEFAULT_GENDER;
+
   public memberNickName = DEFAULT_NAME;
   public memberAbbreviation = '';
   public memberDateOfBirth = DEFAULT_DATE;
   public memberDateOfDeath = DEFAULT_DATE;
   public memberZipCode = '';
   public memberBexioId = DEFAULT_ID;
+  public memberId = DEFAULT_ID;
 
   // object = the membership organization
   public orgKey = DEFAULT_KEY;
@@ -40,11 +42,10 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   public orgModelType: 'org' | 'group' = 'org';
 
   // membership
-  public memberId = DEFAULT_ID;
   public dateOfEntry = DEFAULT_DATE;
   public dateOfExit = DEFAULT_DATE;
-  public membershipCategory = DEFAULT_MCAT;
-  public membershipState = DEFAULT_MSTATE;
+  public category = DEFAULT_MCAT;
+  public state = DEFAULT_MSTATE;
   public orgFunction = '';
 
   public order = 1; // timely sequence of the same membership e.g. J -> A -> P

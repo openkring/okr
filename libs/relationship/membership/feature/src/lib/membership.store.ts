@@ -154,20 +154,20 @@ export const _MembershipStore = signalStore(
         membership.memberModelType === 'org') ?? []),
 
       appliedMembers: computed(() => state.members()?.filter((membership: MembershipModel) => 
-        membership.memberModelType === 'person' && membership.membershipState === "applied") ?? []),
+        membership.memberModelType === 'person' && membership.state === "applied") ?? []),
 
       activeMembers: computed(() => state.members()?.filter((membership: MembershipModel) => 
-        membership.memberModelType === 'person' && membership.membershipState === "active") ?? []),
+        membership.memberModelType === 'person' && membership.state === "active") ?? []),
 
       passiveMembers: computed(() => state.members()?.filter((membership: MembershipModel) => 
-        membership.memberModelType === 'person' && membership.membershipState === "passive") ?? []),
+        membership.memberModelType === 'person' && membership.state === "passive") ?? []),
 
       cancelledMembers: computed(() => state.allMembershipsResource.value()?.filter((membership: MembershipModel) => 
         membership.orgKey === state.orgId() && 
         membership.memberModelType === 'person' &&
         membership.relIsLast === true &&
         isAfterDate(getTodayStr(DateFormat.StoreDate), membership.dateOfExit) &&
-        membership.membershipState === "cancelled") ?? []),
+        membership.state === "cancelled") ?? []),
 
       deceasedMembers: computed(() => state.allMembershipsResource.value()?.filter((membership: MembershipModel) => 
         membership.orgKey === state.orgId() && 
@@ -209,7 +209,7 @@ export const _MembershipStore = signalStore(
       filteredPersons: computed(() => {
         return state.personMembers()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
-          nameMatches(membership.membershipCategory, state.selectedMembershipCategory()) &&
+          nameMatches(membership.category, state.selectedMembershipCategory()) &&
           nameMatches(membership.memberType, state.selectedGender(), true) &&
           chipMatches(membership.tags, state.selectedTag()))
       }
@@ -238,7 +238,7 @@ export const _MembershipStore = signalStore(
       filteredActive: computed(() => 
         state.activeMembers()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
-          nameMatches(membership.membershipCategory, state.selectedMembershipCategory()) &&
+          nameMatches(membership.category, state.selectedMembershipCategory()) &&
           memberTypeMatches(membership, state.selectedGender()) &&
           chipMatches(membership.tags, state.selectedTag()))
       ),
@@ -257,7 +257,7 @@ export const _MembershipStore = signalStore(
       filteredCancelled: computed(() => 
         state.cancelledMembers()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
-          nameMatches(membership.membershipCategory, state.selectedMembershipCategory()) &&
+          nameMatches(membership.category, state.selectedMembershipCategory()) &&
           memberTypeMatches(membership, state.selectedGender()) &&
           chipMatches(membership.tags, state.selectedTag()))
       ),
@@ -267,7 +267,7 @@ export const _MembershipStore = signalStore(
       filteredDeceased: computed(() => 
         state.deceasedMembers()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
-          nameMatches(membership.membershipCategory, state.selectedMembershipCategory()) &&
+          nameMatches(membership.category, state.selectedMembershipCategory()) &&
           memberTypeMatches(membership, state.selectedGender()) &&
           chipMatches(membership.tags, state.selectedTag()))
       ),
@@ -277,7 +277,7 @@ export const _MembershipStore = signalStore(
       filteredEntries: computed(() => 
         state.entries()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
-          nameMatches(membership.membershipCategory, state.selectedMembershipCategory()) &&
+          nameMatches(membership.category, state.selectedMembershipCategory()) &&
           memberTypeMatches(membership, state.selectedGender()) &&
           chipMatches(membership.tags, state.selectedTag()))
       ),
@@ -287,7 +287,7 @@ export const _MembershipStore = signalStore(
       filteredExits: computed(() => 
         state.exits()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
-          nameMatches(membership.membershipCategory, state.selectedMembershipCategory()) &&
+          nameMatches(membership.category, state.selectedMembershipCategory()) &&
           memberTypeMatches(membership, state.selectedGender()) &&
           chipMatches(membership.tags, state.selectedTag()))
       )
@@ -415,7 +415,7 @@ export const _MembershipStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isMembership(data, store.tenantId())) {
-            const mcatAbbreviation = getCategoryAbbreviation(store.membershipCategory(), data.membershipCategory);
+            const mcatAbbreviation = getCategoryAbbreviation(store.membershipCategory(), data.category);
             data.relLog = getRelLogEntry(data.order, '', data.dateOfEntry, mcatAbbreviation);
             await (!data.bkey ? 
               store.membershipService.create(data, store.currentUser()) : 

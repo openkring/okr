@@ -110,8 +110,8 @@ export function convertNewPersonFormToMembership(vm: PersonNewFormModel, personK
   member.orgName = vm.orgName ?? DEFAULT_NAME;
   member.dateOfEntry = vm.dateOfEntry ?? getTodayStr();
   member.dateOfExit = END_FUTURE_DATE_STR;
-  member.membershipCategory = vm.membershipCategory ?? 'active';
-  member.membershipState = 'active';
+  member.category = vm.membershipCategory ?? 'active';
+  member.state = 'active';
   member.order = 1;
   member.relLog = member.dateOfEntry + ':' + (vm.membershipCategoryAbbreviation ?? 'A');
   member.relIsLast = true;

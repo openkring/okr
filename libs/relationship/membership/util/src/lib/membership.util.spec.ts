@@ -33,7 +33,7 @@ describe('Membership Utils', () => {
     membership.orgKey = 'org-1';
     membership.orgName = 'Test Club';
     membership.dateOfEntry = '20200101';
-    membership.membershipCategory = 'active';
+    membership.category = 'active';
     membership.price = 100;
     membership.periodicity = 'yearly';
   });

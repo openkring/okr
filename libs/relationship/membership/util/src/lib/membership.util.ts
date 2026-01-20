@@ -23,7 +23,7 @@ export function newMembershipForPerson(person: PersonModel, orgKey: string, orgN
 
   membership.dateOfEntry = dateOfEntry;
   membership.dateOfExit = END_FUTURE_DATE_STR;
-  membership.membershipCategory = membershipCategory.name;
+  membership.category = membershipCategory.name;
 
   membership.order = 1;
   membership.relLog = getRelLogEntry(membership.order, '', membership.dateOfEntry, membershipCategory.abbreviation);
@@ -53,7 +53,7 @@ export function newMembershipForOrg(org: OrgModel, orgKey: string, orgName: stri
 
   membership.dateOfEntry = dateOfEntry;
   membership.dateOfExit = END_FUTURE_DATE_STR;
-  membership.membershipCategory = membershipCategory.name;
+  membership.category = membershipCategory.name;
 
   membership.order = 1;
   membership.relLog = getRelLogEntry(membership.order, '', membership.dateOfEntry, membershipCategory.abbreviation);
@@ -70,8 +70,8 @@ export function convertMembershipToCategoryChangeForm(membership: MembershipMode
     memberName: membership.memberName1 + ' ' + membership.memberName2, // readonly
     orgName: membership.orgName ?? DEFAULT_NAME, // readonly
     dateOfChange: getTodayStr(DateFormat.StoreDate),
-    membershipCategoryOld: membership.membershipCategory ?? DEFAULT_MCAT, // readonly
-    membershipCategoryNew: membership.membershipCategory ?? DEFAULT_MCAT,
+    membershipCategoryOld: membership.category ?? DEFAULT_MCAT, // readonly
+    membershipCategoryNew: membership.category ?? DEFAULT_MCAT,
   };
 }
 
@@ -92,7 +92,7 @@ export function convertMemberAndOrgToMembership(member: PersonModel | OrgModel |
   membership.orgName = org.name;
   membership.dateOfEntry = getTodayStr();
   membership.dateOfExit = END_FUTURE_DATE_STR;
-  membership.membershipCategory = DEFAULT_MCAT;
+  membership.category = DEFAULT_MCAT;
   return membership;
 }
 

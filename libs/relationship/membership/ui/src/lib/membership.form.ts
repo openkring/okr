@@ -203,8 +203,8 @@ export class MembershipFormComponent {
   protected memberId = computed(() => this.formData().memberId ?? DEFAULT_ID);
   protected dateOfEntry = linkedSignal(() => this.formData().dateOfEntry ?? DEFAULT_DATE);
   protected dateOfExit = linkedSignal(() => this.formData().dateOfExit ?? DEFAULT_DATE);
-  protected membershipCategory = computed(() => getItemLabel(this.membershipCategories(), this.formData().membershipCategory));
-  protected currentMembershipCategoryItem = linkedSignal(() => this.formData().membershipCategory ?? '');
+  protected membershipCategory = computed(() => getItemLabel(this.membershipCategories(), this.formData().category));
+  protected currentMembershipCategoryItem = linkedSignal(() => this.formData().category ?? '');
   protected orgFunction = linkedSignal(() => this.formData().orgFunction ?? '');
   protected order = computed(() => this.formData().order ?? 0);
   protected relLog = computed(() => this.formData().relLog ?? '');
@@ -214,7 +214,7 @@ export class MembershipFormComponent {
   protected periodicity = computed(() => this.formData().periodicity ?? 'yearly');
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected membershipState = computed(() => this.formData().membershipCategory ?? DEFAULT_MSTATE);
+  protected membershipState = computed(() => this.formData().category ?? DEFAULT_MSTATE);
   protected i18nBase = computed(() => this.membershipCategories().i18nBase);
   protected name = computed(() => this.membershipCategories().name);
   protected readonly locale = linkedSignal(() => this.appStore.appConfig().locale);

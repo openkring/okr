@@ -37,8 +37,8 @@ export const membershipValidations = staticSuite((model: MembershipModel, tenant
   stringValidations('memberId', model.memberId, SHORT_NAME_LENGTH);
   dateValidations('dateOfEntry', model.dateOfEntry);
   dateValidations('dateOfExit', model.dateOfExit);
-  stringValidations('membershipCategory', model.membershipCategory, SHORT_NAME_LENGTH, 4, true); 
-  stringValidations('membershipState', model.membershipState, SHORT_NAME_LENGTH, 4, true); 
+  stringValidations('membershipCategory', model.category, SHORT_NAME_LENGTH, 4, true); 
+  stringValidations('membershipState', model.state, SHORT_NAME_LENGTH, 4, true); 
   stringValidations('orgFunction', model.orgFunction, SHORT_NAME_LENGTH);
 
   numberValidations('priority', model.order, true, 0, 10);

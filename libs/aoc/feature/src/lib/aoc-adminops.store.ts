@@ -71,10 +71,11 @@ export const AocAdminOpsStore = signalStore(
             .data()
             .filter(model => {
               if (isMembership(model, store.appStore.env.tenantId)) {
-                if (model.membershipCategory === 'junior' && model.orgKey === orgKey && model.relIsLast === true && compareDate(model.dateOfExit, getEndOfYear() + '')) {
+                const m = model as MembershipModel;
+                if (m.category === 'junior' && m.orgKey === orgKey && m.relIsLast === true && compareDate(m.dateOfExit, getEndOfYear() + '')) {
                   // we have all current juniors of the given org
                   // now we filter the ones that are older than the given age or have no dateOfBirth
-                  const age = getAge(model.memberDateOfBirth, false, refYear);
+                  const age = getAge(m.memberDateOfBirth, false, refYear);
                   if (age < 0 || age > age) return true;
                 }
               }
@@ -82,13 +83,15 @@ export const AocAdminOpsStore = signalStore(
             })
             .map(model => {
               if (isMembership(model, store.appStore.env.tenantId)) {
-                const name = getFullName(model.memberName1, model.memberName2);
-                const age = getAge(model.memberDateOfBirth, false, refYear);
-                const message = age < 0 ? 'no dateOfBirth' : `old junior: ${model.memberDateOfBirth} -> ${age}`;
-                if (age < 0) return { id: model.bkey, name: name, message: 'no dateOfBirth' };
-                return { id: model.bkey, name: name, message: message };
+                const m = model as MembershipModel;
+                const name = getFullName(m.memberName1, m.memberName2);
+                const age = getAge(m.memberDateOfBirth, false, refYear);
+                const message = age < 0 ? 'no dateOfBirth' : `old junior: ${m.memberDateOfBirth} -> ${age}`;
+                if (age < 0) return { id: m.bkey, name: name, message: 'no dateOfBirth' };
+                return { id: m.bkey, name: name, message: message };
               }
-              return { id: model.bkey, name: '', message: 'not a membership ?' };
+              const m = model as BkModel;
+              return { id: m.bkey, name: '', message: 'not a membership ?' };
             });
           patchState(store, { log: log, logTitle: 'old juniors' });
         }

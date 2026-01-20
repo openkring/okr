@@ -90,7 +90,7 @@ export class MembershipService {
     await this.update(oldMembership, currentUser);
 
     // add a comment about the category change to the current membership
-    const message = getMembershipCategoryChangeComment(oldMembership.membershipCategory, membershipChange.membershipCategoryNew);;
+    const message = getMembershipCategoryChangeComment(oldMembership.category, membershipChange.membershipCategoryNew);;
     const comment = createComment(currentUser.bkey, currentUser.firstName + ' ' + currentUser.lastName, message, MembershipCollection + '.' + oldMembership.bkey, this.env.tenantId);
     await this.firestoreService.saveComment(MembershipCollection, oldMembership.bkey, comment);
 
@@ -116,15 +116,15 @@ export class MembershipService {
   public copyMembershipWithNewType(oldMembership: MembershipModel, membershipChange: CategoryChangeFormModel, membershipCategory: CategoryListModel): MembershipModel {
     const newMembership = structuredClone(oldMembership);
     newMembership.bkey = '';  // the new membership gets a new key (generated in create method)
-    newMembership.membershipCategory = membershipChange.membershipCategoryNew ?? 'active';
-    newMembership.membershipState = getCategoryAttribute(membershipCategory, newMembership.membershipCategory, 'state') as string;
+    newMembership.category = membershipChange.membershipCategoryNew ?? 'active';
+    newMembership.state = getCategoryAttribute(membershipCategory, newMembership.category, 'state') as string;
     newMembership.dateOfEntry = membershipChange.dateOfChange ?? getTodayStr();
     newMembership.dateOfExit = END_FUTURE_DATE_STR;
     newMembership.order = (oldMembership.order ?? 0) + 1;
     newMembership.relIsLast = true;
-    const cat = getCategoryAttribute(membershipCategory, newMembership.membershipCategory, 'abbreviation') + '';
+    const cat = getCategoryAttribute(membershipCategory, newMembership.category, 'abbreviation') + '';
     newMembership.relLog = getRelLogEntry(newMembership.order, oldMembership.relLog, newMembership.dateOfEntry, cat);
-    newMembership.price = getCategoryAttribute(membershipCategory, newMembership.membershipCategory, 'price') as number;
+    newMembership.price = getCategoryAttribute(membershipCategory, newMembership.category, 'price') as number;
     return newMembership;
   }
 
