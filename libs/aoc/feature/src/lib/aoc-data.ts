@@ -112,6 +112,7 @@ export class AocDataComponent {
    * Fix models of a given type. THIS CHANGES MANY DATA IN THE DATABASE.
    */
   public async fixModels(): Promise<void> {
+    console.log('Starting to fix models. This may take some time...');
     await this.aocDataStore.fixModels();
   }
 

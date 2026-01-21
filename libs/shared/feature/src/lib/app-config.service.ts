@@ -38,7 +38,7 @@ export class AppConfigService {
    * @returns the document id of the updated AppConfig or undefined if the operation failed
    */
   public async update(appConfig: AppConfig, key: string, message = '@appConfig.operation.update'): Promise<string | undefined> {
-    return await this.firestoreService.updateObject<AppConfig>(AppConfigCollection, key, appConfig, message);
+    return await this.firestoreService.updateObject<AppConfig>(AppConfigCollection, key, appConfig, false, message);
   }
 
   /**
