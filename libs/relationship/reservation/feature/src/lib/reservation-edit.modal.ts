@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonRow, ModalController, IonButton } from '@ionic/angular/standalone';
 
-import { AvatarInfo, CalEventModel, CategoryListModel, PersonModel, ReservationModel, ReservationModelName, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
+import { AvatarInfo, CalEventModel, CategoryListModel, PersonModel, PersonModelName, ReservationModel, ReservationModelName, ResourceModel, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
 import { coerceBoolean, getAvatarName, hasRole, isPerson, isResource } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
@@ -11,7 +11,6 @@ import { CalEventEditModalComponent } from '@bk2/calevent-feature';
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { ReservationFormComponent } from '@bk2/relationship-reservation-ui';
 import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
-import { ENV } from '@bk2/shared-config';
 import { isCalEvent } from '@bk2/calevent-util';
 
 @Component({
@@ -38,7 +37,9 @@ import { isCalEvent } from '@bk2/calevent-util';
               relType="reservation"
               title="@reservation.reldesc"
               [subjectAvatar]="resource"
+              [subjectDefaultIcon]="subjectDefaultIcon()"
               [objectAvatar]="reserver"
+              [objectDefaultIcon]="objectDefaultIcon()"
               [currentUser]="currentUser"
               icon="reservation"
               relLabel="Reservation"
@@ -138,7 +139,10 @@ export class ReservationEditModalComponent {
   protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.reservation().reserver);
   protected readonly reserverName = computed(() => this.reserverAvatar() ? getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay) : '');
   protected readonly resourceAvatar = computed<AvatarInfo | undefined>(() => this.reservation().resource);
+  protected readonly defaultIcon = computed(() => this.appstore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
   protected readonly tenantId = computed(() => this.appstore.tenantId());
+  protected readonly subjectDefaultIcon = computed(() => this.appstore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
+  protected readonly objectDefaultIcon = computed(() => this.appstore.getDefaultIcon(PersonModelName));
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {

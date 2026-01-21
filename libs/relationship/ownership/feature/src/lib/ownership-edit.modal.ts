@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
-import { AvatarInfo, OwnershipModel, OwnershipModelName, RoleName, UserModel } from '@bk2/shared-models';
+import { AvatarInfo, OwnershipModel, OwnershipModelName, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, newAvatarInfo } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
@@ -31,8 +31,10 @@ import { getOwnerName } from '@bk2/relationship-ownership-util';
         <bk-relationship-toolbar
           relType="ownership"
           [subjectAvatar]="resourceAvatar()"
+          [subjectDefaultIcon]="subjectDefaultIcon()"
           [types]="resourceTypes()"
           [objectAvatar]="ownerAvatar()"
+          [objectDefaultIcon]="objectDefaultIcon()"
           [currentUser]="currentUser"
         />
         
@@ -95,6 +97,8 @@ export class OwnershipEditModalComponent {
     return newAvatarInfo(o.resourceKey, '', o.resourceName, o.resourceModelType, o.resourceType, o.resourceSubType, o.resourceName);
   });
   protected bkey = computed(() => this.ownership().bkey);
+  protected readonly subjectDefaultIcon = computed(() => this.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
+  protected readonly objectDefaultIcon = computed(() => this.appStore.getDefaultIcon(this.ownerAvatar()?.modelType));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

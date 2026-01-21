@@ -1,6 +1,6 @@
 import { effect, Inject, Injectable, Injector, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map, Observable, of, shareReplay, take } from 'rxjs';
+import { map, Observable, of, take } from 'rxjs';
 import { Platform } from '@ionic/angular/standalone';
 import { Photo } from '@capacitor/camera';
 
@@ -8,7 +8,7 @@ import { BkEnvironment, ENV } from '@bk2/shared-config';
 import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AvatarCollection, AvatarModel } from '@bk2/shared-models';
-import { addImgixParams, getSystemQuery } from '@bk2/shared-util-core';
+import { addImgixParams } from '@bk2/shared-util-core';
 
 import { newAvatarModel, readAsFile } from '@bk2/avatar-util';
 import { UploadService } from './upload.service';
@@ -48,16 +48,13 @@ export class AvatarService {
 
     // Use effect to reactively update cache when avatars change
     effect(() => {
-      const avatarList = avatars();
-      console.log('AvatarService: Received', avatarList?.length ?? 0, 'avatars from Firestore');
-      
+      const avatarList = avatars();      
       const newCache = new Map<string, string | null>();
       for (const avatar of avatarList) {
         newCache.set(avatar.bkey, avatar.storagePath || null);
       }
       
       this.storagePathCache.set(newCache);
-      console.log('AvatarService: Cache updated with', this.storagePathCache().size, 'entries');
     }, { injector: this.injector, allowSignalWrites: true });
   }
 
@@ -145,6 +142,4 @@ export class AvatarService {
     const cache = this.storagePathCache();
     return cache.get(key) ?? null;
   }
-
-
 }

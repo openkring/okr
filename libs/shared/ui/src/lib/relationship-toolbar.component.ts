@@ -33,7 +33,7 @@ import { AvatarComponent } from './avatar.component';
       <ion-row>
         <ion-col size="5" class="ion-align-items-center ion-justify-content-center">
           <ion-item lines="none" (click)="goto(subjectUrl())" [color]="color() | categoryPlainName:colorsIonic" class="ion-align-items-center ion-justify-content-center">
-            <bk-avatar [avatarInfo]="subjectAvatar()" [types]="types()" [currentUser]="currentUser()"  class="ion-align-items-center ion-justify-content-center"/>
+            <bk-avatar [avatarInfo]="subjectAvatar()" [types]="types()" [defaultIcon]="subjectDefaultIcon()" [currentUser]="currentUser()"  class="ion-align-items-center ion-justify-content-center"/>
           </ion-item>
         </ion-col>
         <ion-col size="2" class="ion-align-items-center ion-justify-content-center">
@@ -43,7 +43,7 @@ import { AvatarComponent } from './avatar.component';
         </ion-col>
         <ion-col size="5" class="ion-align-items-center ion-justify-content-center">
           <ion-item lines="none" (click)="goto(objectUrl())" [color]="color() | categoryPlainName:colorsIonic" class="ion-align-items-center ion-justify-content-center">
-            <bk-avatar [avatarInfo]="objectAvatar()" [currentUser]="currentUser()" />
+            <bk-avatar [avatarInfo]="objectAvatar()" [defaultIcon]="objectDefaultIcon()" [currentUser]="currentUser()" />
           </ion-item>
         </ion-col>
       </ion-row>
@@ -69,6 +69,8 @@ export class RelationshipToolbarComponent {
   public objectAvatar = input.required<AvatarInfo>();
   public currentUser = input.required<UserModel>();
   public color = input<ColorIonic>(ColorIonic.Primary);
+  public subjectDefaultIcon = input<string>('other');
+  public objectDefaultIcon = input<string>('other');
 
   // passing constants to the template
   protected colorsIonic = ColorsIonic;

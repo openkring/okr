@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, ResourceModelName, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { AppConfig, AvatarInfo, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, ResourceModelName, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { die, getSystemQuery } from '@bk2/shared-util-core';
 
 import { AppConfigService } from './app-config.service';
@@ -252,31 +252,27 @@ export const AppStore = signalStore(
         return this.getCategoryItem(categoryName, itemName)?.icon ?? '';
       },
       /**
-       * This returns the name of the default icon for a given modelType.
-       * For most modelTypes, this is the icon of the category of the modelType.
-       * ModelType[.ResourceType[_SubType]]:key
-       * For Resources, the given key consists of resourceType:key and the icon is derived from the resourceType, e.g. 20.0:key.
+       * This returns the name of the default icon for a given ModelType.
+       * For most ModelTypes, this is the icon defined in categories model_type.
+       * For most Resources, it is the icon defined in categories resource_type.
+       * For rowing boats (resource_type = 'rboat'), it is the icon defined in categories rboat_type and the subType.
        * @param modelType
-       * @param key
-       * @returns
+       * @param type
+       * @param subType
+       * @returns the name of the default icon (without path and without file extension)
        */
-       getDefaultIcon(modelType?: string, key?: string): string {
-        if (!modelType || !key) return 'other';
-        if (modelType === ResourceModelName) {
-          const resourceTypePart = key.split(':')[0];
-          if (resourceTypePart.includes('_')) {
-            const [resourceType, subType] = resourceTypePart.split('_');
-            if (resourceType === 'rboat') {
+       getDefaultIcon(modelType?: string, type?: string, subType?: string): string {
+        if (!modelType) return 'other';
+        if (modelType === ResourceModelName && type && type.length) {
+            if (type === 'rboat' && subType && subType?.length) { 
               return this.getCategoryIcon('rboat_type', subType);
             } else {
-              return this.getCategoryIcon('resource_type', resourceType);
+              return this.getCategoryIcon('resource_type', type);
             }
-          }
-          return this.getCategoryIcon('resource_type', resourceTypePart);
         } else {
           return this.getCategoryIcon('model_type', modelType);
         }
-      }
+      },
     }
   }),
 

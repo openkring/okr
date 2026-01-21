@@ -271,9 +271,6 @@ export class ReservationListComponent {
   
   private imgixBaseUrl = this.reservationStore.appStore.env.services.imgixBaseUrl;
 
-  // Track which avatar storagePaths have been loaded (triggers re-render when loaded)
-  protected avatarUrls = signal(new Map<string, boolean>());
-
   constructor() {
     effect(() => {
       this.reservationStore.setListId(this.listId());
