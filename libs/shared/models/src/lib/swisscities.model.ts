@@ -1,5 +1,5 @@
 export interface SwissCity {
-  zipCode: number;
+  zipCode: string;
   name: string;
   stateCode: string;
   countryCode: string;

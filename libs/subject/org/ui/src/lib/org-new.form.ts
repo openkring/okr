@@ -198,7 +198,7 @@ export class OrgNewFormComponent {
 
   protected onCitySelected(city: SwissCity): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: String(city.zipCode) }));
+    this.formData.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: city.zipCode }));
     debugFormErrors('OrgNewForm.onCitySelected', this.validationResult().errors, this.currentUser());
   }
 

@@ -221,7 +221,7 @@ export class AddressFormComponent {
    protected swissCity = computed(() => {
     return {
       countryCode: this.countryCode(),
-      zipCode: parseInt(this.zipCode()),
+      zipCode: this.zipCode(),
       name: this.city(),
       stateCode: ''
     };
@@ -240,7 +240,7 @@ export class AddressFormComponent {
       ...data!,
       city: city.name,
       countryCode: city.countryCode,
-      zipCode: city.zipCode + ''
+      zipCode: city.zipCode
     }));
   }
 
