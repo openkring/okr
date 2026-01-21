@@ -56,7 +56,7 @@ import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservab
       @if(resource(); as resource) {
         <ion-accordion-group [multiple]="true">
           @if (isReservable(resource.type)) {
-            <bk-reservations-accordion [resource]="resource" [readOnly]="isReadOnly()" />
+            <bk-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
           }
           @if(hasRole('privileged') || hasRole('resourceAdmin')) {
               <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
@@ -95,6 +95,7 @@ export class ResourceEditModalComponent {
   protected tenantId = computed(() => this.appStore.env.tenantId);
   protected type = linkedSignal(() => this.formData()?.type ?? DEFAULT_RESOURCE_TYPE);
   protected resourceKey = computed(() => this.resource()?.bkey ?? '');
+  protected listId = computed(() => `r_${this.resourceKey()}`);
 
   private rowingBoatIcon = computed(() => this.appStore.getCategoryIcon('rboat_type', this.formData()?.subType));
   private resourceIcon = computed(() => this.appStore.getCategoryIcon('resource_type', this.formData()?.type));

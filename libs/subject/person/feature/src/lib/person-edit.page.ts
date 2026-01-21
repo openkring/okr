@@ -64,7 +64,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
               <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
               <bk-membership-accordion [member]="person" [readOnly]="isReadOnly()"/>
               <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="isReadOnly()" />
-              <bk-reservations-accordion [reserver]="person" [resource]="defaultResource()" [readOnly]="isReadOnly()" />
+              <bk-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
               @if(hasRole('privileged') || hasRole('memberAdmin')) {
                 <bk-personal-rel-accordion [personKey]="personKey()" [readOnly]="isReadOnly()" />
                 <bk-workrel-accordion [personKey]="personKey()" [readOnly]="isReadOnly()" />
@@ -104,6 +104,7 @@ export class PersonEditPageComponent {
   protected tags = computed(() => this.personEditStore.getTags());
   protected tenantId = computed(() => this.personEditStore.tenantId());
   protected genders = computed(() => this.personEditStore.appStore.getCategory('gender'));
+  protected listId = computed(() => 'p_' + this.personEditStore.person()?.bkey);
 
   constructor() {
     effect(() => {

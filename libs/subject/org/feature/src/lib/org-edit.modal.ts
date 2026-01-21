@@ -67,7 +67,7 @@ import { OrgFormComponent } from '@bk2/subject-org-ui';
                 @if(hasRole('privileged') || !isReadOnly()) {
                     @if(resource(); as resource) {
                       <bk-ownerships-accordion [owner]="org" [defaultResource]="resource" ownerModelType="org" [readOnly]="isReadOnly()" />
-                      <bk-reservations-accordion [reserver]="org" [readOnly]="isReadOnly()" reserverModelType="org" [resource]="resource" />
+                      <bk-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
                       <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                     }
                     <bk-members-accordion [orgKey]="orgKey()" [readOnly]="isReadOnly()" />
@@ -110,6 +110,7 @@ export class OrgEditModalComponent {
   protected path = computed(() => getDocumentStoragePath(this.env.tenantId, 'org', this.org()?.bkey));
   protected orgKey = computed(() => this.org()?.bkey ?? '');
   protected isNew = computed(() => !this.org()?.bkey.length);
+  protected listId = computed(() => 'o_' + this.orgKey());
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
