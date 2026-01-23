@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, of, take } from 'rxjs';
+import { firstValueFrom, Observable, of, take } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
@@ -36,6 +36,8 @@ import { getWorkrelIndex, workrelValidations } from '@bk2/relationship-workrel-u
 import { getUserIndex, userValidations } from '@bk2/user-util';
 import { categoryListValidations, getCategoryIndex } from '@bk2/category-util';
 import { getGroupIndex, groupValidations } from '@bk2/subject-group-util';
+import { confirm } from '@bk2/shared-util-angular';
+import { AlertController } from '@ionic/angular/standalone';
 
 export type AocDataState = {
   modelType: string | undefined;
@@ -54,6 +56,7 @@ export const AocDataStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
+    alertController: inject(AlertController)
   })),
   withProps(store => ({
     dataResource: rxResource({
@@ -101,86 +104,55 @@ export const AocDataStore = signalStore(
       async fixModels(): Promise<void> {
         // configuration: adapt these value to your needs
         const isDryRun = false; // if true, no changes are written to the database;   TEST IT BEFORE SETTING TO FALSE !
-        const restrictToOneDocument = false; // for testing, only fix one document, if false, all documents are fixed
-        const collectionName = 'orgs';
-        const isBkModel = true;
+        const maxDocs = undefined; // for testing, you can restrict the amount of documents to process. 
+        // set it to undefined to process all documents.
+        
+        const collectionName = 'comments';
 
         // fixing fields (types and undefined)
-        // use s:string, n:number, b:boolean m:map {} a:array []
-        const fieldsToCheckForUndefined: string[] = ['s:dateOfFoundation', 's:dateOfLiquidation', 's:favEmail', 's:favPhone', 's:favStreetNumber', 's:favZipCode', 's:notes', 's:tags', 's:taxId'];
-        const fieldsToFixTypes: string[] = ['s:favStreetNumber', 's:favZipCode', 's:dateOfFoundation', 's:bexioId'];
+        // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values
+        const fieldsToCheckForUndefined: string[] = []; 
+        const fieldsToFixTypes: string[] = ['s:creationDateTime'];
 
-        // converting enums
-        const enumField = ''; // e.g. 'status'
-        const enumMappingRules: string[] = []; // e.g. ['1:active', '2:inactive']
-        // example scs member category: ['1:active', '2:active2', '3:active3', '4:junior', '5:free', '6:honorary', '7:candidate', '8:passive']
-        // example srv membber category: ['1:active', '2:junior', '3:double']
-        // example default member category: ['1:active', '2:junior', '3:passive']
-
-        // migrating from old model to new model
-        const doMigration = false;
-        const newCollectionName = '';
-        const newDoc = new OrgModel(store.appStore.tenantId());
-        // use oldFieldName[:newFieldName][=value]
-        const fieldMappings: string[] = [];
+        // change the field names in the database directly
+        // move the corrected data to a new collection in the database directly
 
         // CHECK THE IMPLEMENTATION OF FIXCUSTOMISSUES !
 
         console.log('AocDataStore.fixModels has the following configuration:');
         console.log(`  - isDryRun: ${isDryRun}`);
-        console.log(`  - restrictToOneDocument: ${restrictToOneDocument}`);
+        console.log(`  - maxDocs: ${maxDocs}`);
         console.log(`  - collectionName: ${collectionName}`);
-        console.log(`  - isBkModel: ${isBkModel}`);
         console.log(`  - fieldsToCheckForUndefined: ${fieldsToCheckForUndefined}`);
         console.log(`  - fieldsToFixTypes: ${fieldsToFixTypes}`);
-        console.log(`  - enumField: ${enumField}`);
-        console.log(`  - enumMappingRules: ${enumMappingRules}`);
-        console.log('Migration settings:');
-        console.log(`  - doMigration: ${doMigration}`);
-        console.log(`  - newCollectionName: ${newCollectionName}`);
-        console.log(`  - fieldMappings: ${fieldMappings}`);
         // end of configuration -> you will also need to adapt the applied fixes below
 
+        const result = await confirm(store.alertController, 'Bitte Konfiguration im Console log prüfen und bestätigen', true);
+        if (result !== true) return;
 
         // reading the collection and iterating over all documents
         console.log(`AocDataStore.fixModels: fixing all documents of collection ${collectionName}...`);
-        const dbQuery = isBkModel ? getSystemQuery(store.appStore.tenantId()) : [];
-        const rawData$ = isBkModel ?
-          store.appStore.firestoreService.searchData<typeof newDoc>(collectionName, dbQuery, 'none') :
-          store.appStore.firestoreService.listAllObjects<any>(collectionName, true);
+        const rawData$ = store.appStore.firestoreService.listAllObjects<any>(collectionName, true);
         rawData$
           .pipe(take(1))
           .subscribe(async (documents) => {
+            let processed = 0;
             for (const doc of documents) {
               const originalDoc = JSON.stringify(doc);
               let changed = false;
-              if (isBkModel) {
-                this.fixUndefinedFields<typeof newDoc>(doc, fieldsToCheckForUndefined);
-                this.fixTypes<typeof newDoc>(doc, fieldsToFixTypes);
-                this.fixCustomIssues<typeof newDoc>(doc);
-                changed = JSON.stringify(doc) !== originalDoc;
-                if (changed) {
-                  await this.saveDoc<typeof newDoc>(collectionName, doc, isBkModel, isDryRun);
-                }
-              } else {
-                this.fixUndefinedFields<any>(doc, fieldsToCheckForUndefined);
-                this.fixTypes<any>(doc, fieldsToFixTypes);
-                if (doMigration) {
-                  const migratedDoc = this.migrateModel(doc, fieldMappings) as typeof newDoc;
-                  changed = true;
-                  if (changed) {
-                    await this.saveDoc<typeof newDoc>(newCollectionName, migratedDoc, isBkModel, isDryRun);
-                  }
-                } else {
-                  changed = JSON.stringify(doc) !== originalDoc;
-                  if (changed) {
-                    await this.saveDoc<any>(newCollectionName, doc, isBkModel, isDryRun);
-                  }
-                }
+
+              this.fixUndefinedFields<any>(doc, fieldsToCheckForUndefined);
+              this.fixTypes<any>(doc, fieldsToFixTypes);
+              this.fixCustomIssues<any>(doc);
+
+              changed = JSON.stringify(doc) !== originalDoc;
+              if (changed) {
+                await this.saveDoc<any>(collectionName, doc, isDryRun);
               }
-              if (restrictToOneDocument) break;
+              processed++;
+              if (maxDocs !== undefined && processed >= maxDocs) break;
             }
-            console.log(`AocDataStore.fixModels: finished processing all ${documents.length} documents.`);
+            console.log(`AocDataStore.fixModels: finished processing ${processed} documents (out of ${documents.length}).`);
         });
       },
 
@@ -189,8 +161,15 @@ export const AocDataStore = signalStore(
        * This implementation is for BkModels where we know the model.
        */
       fixCustomIssues<T>(doc: T): T {
-        (doc as OrgModel).index = getOrgIndex(doc as OrgModel);
-        return doc;
+        console.log(`  - custom fixes of document ${(doc as any).bkey} ...`);
+        const d = doc as any;
+
+        //d.tenants = ['scs'];
+
+        // create the index here directly without using the getXXindex function, just with string operations.
+        d.index = 'ak:' + d.authorKey + ' d:' + d.creationDateTime.substring(0, 8) + ' pk:' + d.parentKey;
+        
+        return d;
       },
 
       /**
@@ -201,19 +180,35 @@ export const AocDataStore = signalStore(
       fixUndefinedFields<T>(doc: T, fieldsToCheck: string[]): T {
         console.log(`  - fixing undefined fields of document ${(doc as any).bkey} ...`);
         for (const field of fieldsToCheck) {
-          const [type, attr] = field.split(':');
+          // Support syntax: n:priority=1, s:name=foo, etc.
+          let type = '', attr = '', defaultValue: any = undefined;
+          const colonIdx = field.indexOf(':');
+          if (colonIdx === -1) continue;
+          type = field.substring(0, colonIdx);
+          let rest = field.substring(colonIdx + 1);
+          const eqIdx = rest.indexOf('=');
+          if (eqIdx !== -1) {
+            attr = rest.substring(0, eqIdx);
+            defaultValue = rest.substring(eqIdx + 1);
+          } else {
+            attr = rest;
+          }
           if (!attr) continue;
           const value = doc[attr as keyof T];
           if (value === undefined || value === null) {
             switch (type) {
               case 's':
-                (doc as any)[attr] = '';
+                (doc as any)[attr] = defaultValue !== undefined ? String(defaultValue) : '';
                 break;
               case 'n':
-                (doc as any)[attr] = 0;
+                (doc as any)[attr] = defaultValue !== undefined ? Number(defaultValue) : 0;
                 break;
               case 'b':
-                (doc as any)[attr] = false;
+                if (defaultValue !== undefined) {
+                  (doc as any)[attr] = defaultValue === 'true' || defaultValue === true;
+                } else {
+                  (doc as any)[attr] = false;
+                }
                 break;
               case 'm':
                 (doc as any)[attr] = {};
@@ -251,7 +246,9 @@ export const AocDataStore = signalStore(
             case 'm':
               if (typeof value === 'string') {
                 try {
-                  (doc as any)[attr] = JSON.parse(value);
+                  const myArray: string[] = [];
+                  myArray.push(value as string);
+                  (doc as any)[attr] = myArray;
                 } catch {
                   (doc as any)[attr] = {};
                 }
@@ -261,11 +258,7 @@ export const AocDataStore = signalStore(
               break;
             case 'a':
               if (typeof value === 'string') {
-                try {
-                  (doc as any)[attr] = JSON.parse(value);
-                } catch {
-                  (doc as any)[attr] = [];
-                }
+                (doc as any)[attr] = [value];
               } else if (!Array.isArray(value)) {
                 (doc as any)[attr] = [];
               }
@@ -273,25 +266,6 @@ export const AocDataStore = signalStore(
           }
         }
         return doc;
-      },
-
-      /**
-       * Takes a document of any type and converts its fields according to the given field mappings.
-       * @param doc 
-       */
-      migrateModel(oldDoc: any, fieldMappings: string[]): any {
-        console.log(`  - migrating model of document ${(oldDoc as any).bkey} ...`);
-        const newDoc: any = {};
-        for (const mapping of fieldMappings) {
-          // Parse mapping: oldFieldName[:newFieldName][=value]
-          // Examples: 'foo', 'foo:bar', 'foo=42', 'foo:bar=42'
-          let [fieldPart, valuePart] = mapping.split('=');
-          let [oldField, newField] = fieldPart.split(':');
-          const hasValue = valuePart !== undefined;
-          const fieldName = newField ? newField : oldField;
-          newDoc[fieldName] = hasValue ? valuePart : oldDoc?.[oldField];
-        }
-        return newDoc;
       },
 
       /**
@@ -314,47 +288,18 @@ export const AocDataStore = signalStore(
       },
 
       /**
-       * Convert an enum with numeric index values into string values.
-       * The mapping rules are provided as an array of strings. Each entry starts .
-       * @param doc 
-       * @param fieldName 
-       * @param mappingRules:  index:string, e.g. 1:active, 2:inactive means that index 1 is mapped to 'active', index 2 to 'inactive' 
-       */
-      convertEnumField<T>(doc: T, fieldName: string, mappingRules: string[]): T {
-        console.log(`  - converting enum field ${fieldName} of document ${(doc as any).bkey}...`);
-        const index = (doc as any)[fieldName];
-        // mappingRules: e.g. ['1:active', '2:inactive']
-        const mapping: Record<string, string> = {};
-        for (const rule of mappingRules) {
-          const [idx, value] = rule.split(':');
-          if (idx !== undefined && value !== undefined) {
-            mapping[idx] = value;
-          }
-        }
-        if (index !== undefined && mapping.hasOwnProperty(String(index))) {
-          (doc as any)[fieldName] = mapping[String(index)];
-        }
-        return doc;
-      },
-
-      /**
        * Save a document to the database. The document is created (if not yet existing) or updated (if existing).
        * No bkey/id check is performed here.
        */
-      async saveDoc<T extends BkModel | any>(collectionName: string, doc: T, isBkModel: boolean, isDryRun = true): Promise<void> {
+      async saveDoc<T>(collectionName: string, doc: T, isDryRun = true): Promise<void> {
         console.log(`  - saving document ${collectionName}/${(doc as any).bkey ?? ''} ...`);
-        // tbd: createIndex
         if (isDryRun) {
           console.log(doc);
         } else {
-          if (isBkModel) {
-            await store.appStore.firestoreService.updateModel(collectionName, doc as BkModel, true);
-          } else {
-            const key = (doc as any)['bkey'];
-            // contrary to updateModel, updateObject does not remove the bkey property from the stored object. So we need to remove it here.
-            const storedModel = removeProperty(doc as any, 'bkey');
-            await store.appStore.firestoreService.updateObject<T>(collectionName, key, storedModel as any, true);
-          }
+          const key = (doc as any)['bkey'];
+          // updateObject does not remove the bkey property from the stored object. So we need to remove it here.
+          const storedModel = removeProperty(doc as any, 'bkey');
+          await store.appStore.firestoreService.updateObject<T>(collectionName, key, storedModel as any, true);
         }
       },
 
