@@ -27,9 +27,9 @@ export function createComment(authorKey: string, authorName: string, commentStr:
 
 // as long as we don't show list of comments, we don't need an index
 export function getCommentIndex(comment: CommentModel): string {
-  return `an:${comment.authorName}, cd:${comment.creationDateTime}, pk:${comment.parentKey}`;
+  return `ak:${comment.authorKey}, d:${comment.creationDateTime}, pk:${comment.parentKey}`;
 }
 
 export function getCommentIndexInfo(): string {
-  return 'an:authorname, cd:creationDateTime, pk:parentKey';
+  return 'ak:authorKey, d:creationDateTime, pk:parentKey';
 }

@@ -11,7 +11,6 @@ export const commentValidations = staticSuite((model: CommentModel, tenants: str
   stringValidations('authorKey', model.authorKey, SHORT_NAME_LENGTH, 5, true);
   dateValidations('creationDateTime', model.creationDateTime);
   stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH, 5, true);
-  stringValidations('parentCollection', model.parentCollection, SHORT_NAME_LENGTH, 5, true);
   
   // check the parentCollection to be a supported collection: subject, resource, membership, ownership
   

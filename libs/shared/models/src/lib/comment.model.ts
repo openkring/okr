@@ -8,7 +8,6 @@ export class CommentModel implements BkModel, SearchableModel {
   authorName = DEFAULT_NAME;
   creationDateTime = DEFAULT_DATETIME;
   parentKey = DEFAULT_KEY;
-  parentCollection = '';
   description = DEFAULT_NOTES;
   isArchived = false;
   tenants: string[] = DEFAULT_TENANTS;
