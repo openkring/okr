@@ -1,4 +1,4 @@
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { CategoryItemModel, GroupModel, GroupModelName, MembershipModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@bk2/shared-models';
 import { addIndexElement, DateFormat, die, getTodayStr } from '@bk2/shared-util-core';
 
@@ -29,7 +29,7 @@ export function newMembershipForPerson(person: PersonModel, orgKey: string, orgN
   membership.relLog = getRelLogEntry(membership.order, '', membership.dateOfEntry, membershipCategory.abbreviation);
   membership.relIsLast = true;
 
-  membership.price = 0;
+  // membership.price may be undefined
 
   return membership;
 }
@@ -59,7 +59,7 @@ export function newMembershipForOrg(org: OrgModel, orgKey: string, orgName: stri
   membership.relLog = getRelLogEntry(membership.order, '', membership.dateOfEntry, membershipCategory.abbreviation);
   membership.relIsLast = true;
 
-  membership.price = DEFAULT_PRICE;
+  // membership.price may be undefined
 
   return membership;
 }

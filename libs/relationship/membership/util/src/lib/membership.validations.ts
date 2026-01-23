@@ -45,10 +45,8 @@ export const membershipValidations = staticSuite((model: MembershipModel, tenant
   stringValidations('relLog', model.relLog, SHORT_NAME_LENGTH);
   booleanValidations('relIsLast', model.relIsLast);
 
-  numberValidations('price', model.price, false, 0, 1000000);
-  stringValidations('currency', model.currency, CURRENCY_LENGTH);
-  stringValidations('periodicity', model.periodicity, WORD_LENGTH);
-
+  // tbd: Membership validations for price as MoneyModel
+  
    // cross field validations
   omitWhen(model.dateOfEntry === '' || model.dateOfExit === '', () => {
     test('dateOfExit', '@membershipExitAfterEntry', () => {

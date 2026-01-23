@@ -8,7 +8,7 @@ import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getFullName, getItemLabel, hasRole, isOrg, isPerson, isVisibleToUser } from '@bk2/shared-util-core';
 
 import { membershipValidations } from '@bk2/relationship-membership-util';
@@ -21,7 +21,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
     vestForms,
     TranslatePipe, AsyncPipe, AvatarPipe,
     TextInputComponent, DateInputComponent,
-    NumberInputComponent, ChipsComponent, NotesInputComponent, CategorySelectComponent,
+    ChipsComponent, NotesInputComponent, CategorySelectComponent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonCard, IonCardContent, IonAvatar, IonImg, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -119,9 +119,11 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                       </ion-item>
                     </ion-col>
                     
+<!--                     
+                    tbd: MembershipForm: change price to MoneyModel input
                     <ion-col size="12" size-md="6">
                       <bk-number-input name="price" [value]="price()" (valueChange)="onFieldChange('price', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />                                        
-                    </ion-col>
+                    </ion-col> -->
                   </ion-row>
                 </ion-grid>
               }
@@ -210,8 +212,6 @@ export class MembershipFormComponent {
   protected relLog = computed(() => this.formData().relLog ?? '');
   protected relIsLast = computed(() => this.formData().relIsLast ?? true);
   protected price = linkedSignal(() => this.formData().price ?? 0);
-  protected currency = computed(() => this.formData().currency ?? DEFAULT_CURRENCY);
-  protected periodicity = computed(() => this.formData().periodicity ?? 'yearly');
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected membershipState = computed(() => this.formData().category ?? DEFAULT_MSTATE);

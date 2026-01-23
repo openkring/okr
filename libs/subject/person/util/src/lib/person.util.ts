@@ -115,9 +115,6 @@ export function convertNewPersonFormToMembership(vm: PersonNewFormModel, personK
   member.order = 1;
   member.relLog = member.dateOfEntry + ':' + (vm.membershipCategoryAbbreviation ?? 'A');
   member.relIsLast = true;
-  member.price = DEFAULT_PRICE;
-  member.currency = DEFAULT_CURRENCY;
-  member.periodicity = 'yearly';
   member.index = 'mn:' + member.memberName1 + ' ' + member.memberName2 + ', mk:' + member.memberKey + ', ok:' + member.orgKey;
   return member;
 }

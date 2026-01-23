@@ -1,5 +1,6 @@
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { MoneyModel } from 'libs/shared/models/src/lib/money.model';
 
 /**
  * A membership of a person or organization in a group or organization.
@@ -21,8 +22,7 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   public tags = DEFAULT_TAGS;
   public notes = DEFAULT_NOTES;
 
-  // member
-  //public member: AvatarInfo | undefined; // avatar for person, org or group
+  // member (we deliberately do not use a nested object here to simplify queries)
   public memberKey = DEFAULT_KEY;
   public memberName1 = DEFAULT_NAME; // e.g. firstname of person
   public memberName2 = DEFAULT_NAME; // e.g. lastname or company name
@@ -38,11 +38,9 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   public memberId = DEFAULT_ID;
 
   // object = the membership organization
-  //public org: AvatarInfo | undefined; // avatar for org or group
   public orgKey = DEFAULT_KEY;
   public orgName = DEFAULT_NAME;
   public orgModelType: 'org' | 'group' = 'org';
-  // orgType could be added here
 
   // membership
   public dateOfEntry = DEFAULT_DATE;
@@ -55,9 +53,8 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   public relLog = ''; // log of changes e.g.  20200715:K->A->P
   public relIsLast = true; // is this the last membership of the same kind ? (building a linked list of memberships, ordered by priority)
 
-  public price = DEFAULT_PRICE; // overwrites the default membership price MembershipCategories[membership.membershipCategory].price
-  public currency = DEFAULT_CURRENCY;
-  public periodicity = 'yearly';
+  // if >= 0: overwrites the default membership price MembershipCategories[membership.membershipCategory].price
+  public price: MoneyModel | undefined;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];
