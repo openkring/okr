@@ -54,6 +54,24 @@ module.exports = [
     },
   },
   {
-    ignores: ['node_modules', 'tmp', '**/android', '**/ios', '**/web', '**/test-setup.ts', '**/vite.config.*.timestamp*', '**/vitest.config.*.timestamp*'],
+    ignores: [
+      'node_modules/',
+      'dist/',
+      'coverage/',
+      'apps/*/node_modules/',
+      'libs/*/dist/',
+      '.angular',
+      '.github',
+      '.idx',
+      '.nx',
+      '.vscode',
+      'tmp',
+      '**/android',
+      '**/ios',
+      '**/web',
+      '**/test-setup.ts',
+      '**/vite.config.*.timestamp*',
+      '**/vitest.config.*.timestamp*'
+    ],
   },
 ];
