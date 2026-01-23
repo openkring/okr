@@ -12,7 +12,6 @@ export const userDisplayFormValidations = staticSuite((model: UserDisplayFormMod
   categoryValidations('personSortCriteria', model.personSortCriteria, PersonSortCriteria);
   categoryValidations('userLanguage', model.userLanguage, Language);
   categoryValidations('nameDisplay', model.nameDisplay, NameDisplay);
-  booleanValidations('useDisplayName', model.useDisplayName);
   booleanValidations('showArchivedData', model.showArchivedData);
   booleanValidations('showDebugInfo', model.showDebugInfo);
   booleanValidations('showHelpers', model.showHelpers);

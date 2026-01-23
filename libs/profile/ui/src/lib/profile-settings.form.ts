@@ -135,7 +135,6 @@ export class ProfileSettingsAccordionComponent {
   protected gravatarEmail = linkedSignal(() => this.formData().gravatarEmail ?? '');
   protected nameDisplay = linkedSignal(() => this.formData().nameDisplay ?? NameDisplay.FirstLast);
   protected personSortCriteria = linkedSignal(() => this.formData().personSortCriteria ?? PersonSortCriteria.Fullname);
-  protected useDisplayName = computed(() => this.formData().useDisplayName ?? false);
   protected newsDelivery = linkedSignal(() => this.formData().newsDelivery ?? DeliveryType.EmailAttachment);
   protected invoiceDelivery = linkedSignal(() => this.formData().invoiceDelivery ?? DeliveryType.EmailAttachment);
 

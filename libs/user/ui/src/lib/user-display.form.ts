@@ -50,9 +50,6 @@ import { USER_DISPLAY_FORM_SHAPE, UserDisplayFormModel, userDisplayFormValidatio
                 <bk-cat name="nameDisplay" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [categories]="nameDisplays" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="useDisplayName" [checked]="useDisplayName()" (checkedChange)="onFieldChange('useDisplayName', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
                 <bk-checkbox name="showArchivedData" [checked]="showArchivedData()" (checkedChange)="onFieldChange('showArchivedData', $event)" [showHelper]="showHelpers()"  [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
@@ -89,7 +86,6 @@ export class UserDisplayFormComponent {
   protected personSortCriteria = linkedSignal(() => this.formData().personSortCriteria);
   protected userLanguage = linkedSignal(() => this.formData().userLanguage);
   protected nameDisplay = linkedSignal(() => this.formData().nameDisplay);
-  protected useDisplayName = linkedSignal(() => this.formData().useDisplayName);
   protected showArchivedData = linkedSignal(() => this.formData().showArchivedData);
   protected showDebugInfo = linkedSignal(() => this.formData().showDebugInfo);
   protected showHelpers = linkedSignal(() => this.formData().showHelpers);

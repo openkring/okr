@@ -30,7 +30,6 @@ export class UserModel implements BkModel, TaggedModel, SearchableModel {
   public avatarUsage = AvatarUsage.PhotoFirst; // PhotoFirst
   public gravatarEmail = DEFAULT_EMAIL;
   public nameDisplay = NameDisplay.FirstLast; // FirstLast
-  public useDisplayName = false;
   public personSortCriteria = PersonSortCriteria.Lastname; // Lastname
   public newsDelivery = DeliveryType.EmailAttachment; // EmailAttachment
   public invoiceDelivery = DeliveryType.EmailAttachment; // EmailAttachment

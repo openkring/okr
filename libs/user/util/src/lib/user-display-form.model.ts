@@ -5,7 +5,6 @@ export type UserDisplayFormModel = {
   personSortCriteria: PersonSortCriteria;
   userLanguage: Language;
   nameDisplay: NameDisplay;
-  useDisplayName: boolean;
   showArchivedData: boolean;
   showDebugInfo: boolean;
   showHelpers: boolean;
@@ -16,7 +15,6 @@ export const USER_DISPLAY_FORM_SHAPE: UserDisplayFormModel = {
   personSortCriteria: PersonSortCriteria.Lastname,
   userLanguage: Language.GE,
   nameDisplay: NameDisplay.FirstLast,
-  useDisplayName: false,
   showArchivedData: false,
   showDebugInfo: false,
   showHelpers: true,
