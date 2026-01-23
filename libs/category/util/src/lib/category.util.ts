@@ -20,7 +20,7 @@ export function getCategoryIcon(cat: CategoryListModel | undefined, catName: str
   return getCategoryAttribute(cat, catName, 'icon') + '';
 }
 
-export function getCategoryAbbreviation(cat: CategoryListModel | undefined, catName: string): string {
+export function getCatAbbreviation(cat: CategoryListModel | undefined, catName: string): string {
   if (!cat) return '';
   return getCategoryAttribute(cat, catName, 'abbreviation') + '';
 }

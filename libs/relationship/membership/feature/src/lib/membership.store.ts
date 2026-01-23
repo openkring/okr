@@ -12,12 +12,12 @@ import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, de
 import { confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 
-import { getCategoryAbbreviation } from '@bk2/category-util';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { convertMemberAndOrgToMembership, getMemberEmailAddresses, getRelLogEntry } from '@bk2/relationship-membership-util';
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
 import { of, switchMap, take } from 'rxjs';
+import { getCatAbbreviation } from '@bk2/category-util';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -96,16 +96,20 @@ export const _MembershipStore = signalStore(
       allMemberships: computed(() => state.showOnlyCurrent() ? 
         state.allMembershipsResource.value()?.filter(m => isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? [] : 
         state.allMembershipsResource.value() ?? []),
+    };
+  }),
 
+  withComputed((state) => {
+    return {
       // members of a given org or group (if orgId is set), otherwise []
       members: computed(() => { 
-        return state.allMembershipsResource.value()?.filter((membership: MembershipModel) => membership.orgKey === state.orgId()) ?? []
+        return state.allMemberships()?.filter((membership: MembershipModel) => membership.orgKey === state.orgId()) ?? []
       }),
 
       // memberships of the current member 
       memberships: computed(() => {
         if (!state.member() || !state.modelType) return [];
-        return state.allMembershipsResource.value()?.filter((membership: MembershipModel) => 
+        return state.allMemberships()?.filter((membership: MembershipModel) => 
           membership.memberKey === state.member()?.bkey && 
           membership.memberModelType === state.modelType()) ?? []
       }),
@@ -415,7 +419,7 @@ export const _MembershipStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isMembership(data, store.tenantId())) {
-            const mcatAbbreviation = getCategoryAbbreviation(store.membershipCategory(), data.category);
+            const mcatAbbreviation = getCatAbbreviation(store.membershipCategory(), data.category);
             data.relLog = getRelLogEntry(data.order, '', data.dateOfEntry, mcatAbbreviation);
             await (!data.bkey ? 
               store.membershipService.create(data, store.currentUser()) : 
