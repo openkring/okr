@@ -31,7 +31,6 @@ import { AvatarService } from '@bk2/avatar-data-access';
   `
 })
 export class AvatarComponent {
-  private avatarService = inject(AvatarService);
 
   // inputs
   public avatarInfo = input.required<AvatarInfo>();
@@ -45,6 +44,11 @@ export class AvatarComponent {
   protected avatarKey = computed(() => `${this.avatarInfo()?.modelType}.${this.avatarInfo()?.key}`);
   protected name = computed(() => getFullName(this.avatarInfo()?.name1, this.avatarInfo()?.name2, this.currentUser()?.nameDisplay));
   protected modelType = computed(() => this.avatarInfo()?.modelType);
-  public avatarUrl = computed(() => this.avatarService.getAvatarUrl(this.avatarKey(), this.defaultIcon(), 60));
+
+  // we need to inject AvatarService here to avoid cyclic dependency issues
+  public avatarUrl = computed(() => {
+    const avatarService = inject(AvatarService);
+    return avatarService.getAvatarUrl(this.avatarKey(), this.defaultIcon(), 60);
+  });
 }
 

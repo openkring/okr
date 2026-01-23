@@ -4,12 +4,12 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 
-import { memberTypeMatches } from '@bk2/shared-categories';
+import { ExportFormats, memberTypeMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryCollection, CategoryListModel, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, debugMessage, getSystemQuery, getTodayStr, isAfterDate, isMembership, nameMatches } from '@bk2/shared-util-core';
-import { confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
+import { CategoryCollection, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, debugMessage, generateRandomString, getSystemQuery, getTodayStr, isAfterDate, isMembership, nameMatches } from '@bk2/shared-util-core';
+import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
@@ -469,6 +469,20 @@ export const _MembershipStore = signalStore(
 
       async export(type: string): Promise<void> {
         console.log(`MembershipListStore.export(${type}) is not yet implemented.`);
+        const _table: string[][] = [];
+        const _fn = generateRandomString(10) + '.' + ExportFormats[ExportFormat.XLSX].abbreviation;
+        _table.push(HeaderRow[isFull ? 0 : 1]);
+        for (const _item of this.filteredItems()) {
+            const _member = _item as RelationshipModel;
+            if (_member.subType > 0 && _member.subType < 4) { // Active, Junior, Double
+                const _person = await firstValueFrom(readSubject(this.afs, _member.subjectKey));
+                if (_person) {
+                    const _dataRow = await convertToSrvDataRow(_person, _member, isFull);
+                    if (_dataRow !== undefined) _table.push(_dataRow);    
+                }
+            }
+        }
+        exportXlsx(_table, _fn, tableName);
       },
 
       async delete(membership?: MembershipModel, readOnly = true): Promise<void> {
