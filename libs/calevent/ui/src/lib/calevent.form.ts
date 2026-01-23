@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, model, output, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
@@ -150,6 +150,7 @@ export class CalEventFormComponent {
   public readonly currentUser = input.required<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
   public readonly periodicities = input.required<CategoryListModel>();
   public readonly locale = input.required<string>();
@@ -162,7 +163,7 @@ export class CalEventFormComponent {
 
   // validation and errors
   protected readonly suite = calEventValidations;
-  private readonly validationResult = computed(() => calEventValidations(this.formData()));
+  private readonly validationResult = computed(() => calEventValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
 
   // fields
@@ -172,7 +173,7 @@ export class CalEventFormComponent {
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
   protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
-  protected fullDay = linkedSignal(() => this.formData().fullDay ?? false);
+  protected fullDay = linkedSignal(() => this.formData().durationMinutes === 1440);
   protected endDate = linkedSignal(() => this.formData().endDate ?? this.startDate());
   protected durationMinutes = linkedSignal(() => this.formData().durationMinutes ?? 60);
   protected periodicity = linkedSignal(() => this.formData().periodicity ?? DEFAULT_PERIODICITY);
@@ -221,6 +222,15 @@ export class CalEventFormComponent {
         break;
       case 'calendars':
         this.formData.update(vm => ({ ...vm, calendars: fieldValue as string[] }));
+        break;
+      case 'fullDay':
+        this.formData.update(vm => {
+          const isFullDay = fieldValue as boolean;
+          return {
+            ...vm,
+            durationMinutes: isFullDay ? 1440 : 60
+          };
+        });
         break;
       default:
         this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
