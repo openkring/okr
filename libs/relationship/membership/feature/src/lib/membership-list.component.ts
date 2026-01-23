@@ -3,8 +3,8 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupModel, MembershipModel, MembershipModelName, NameDisplay, PersonModelName, RoleName } from '@bk2/shared-models';
-import { DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName } from '@bk2/shared-models';
+import { CatAbbreviationFromRelLogPipe, DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { DateFormat, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
@@ -19,12 +19,15 @@ import { MembershipStore } from './membership.store';
   selector: 'bk-membership-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryLogPipe, AvatarPipe, FullNamePipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryLogPipe, AvatarPipe, FullNamePipe, CatAbbreviationFromRelLogPipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover,
     IonBackdrop
-],
+  ],
+  styles: [`
+    ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
+  `],
   template: `
     <ion-header>
       <!-- title and context menu -->
@@ -93,14 +96,13 @@ import { MembershipStore } from './membership.store';
         <ion-list lines="inset">
           @for(membership of filteredMemberships(); track $index) {
               <ion-item (click)="showActions(membership)">
-                <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                  <ion-img src="{{ personModelName + '.' + membership.memberKey | avatar:membershipDefaultIcon() }}" alt="Avatar Logo" />
+                <ion-avatar slot="start">
+                  <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>      
-                @if(view() !== 'simple') {
-                  <ion-label>{{membership.relLog | duration:membership.dateOfExit}}</ion-label>      
-                  <ion-label class="ion-hide-md-down">{{membership.relLog|categoryLog}}</ion-label>
-                }
+                  <ion-label class="ion-hide-md-down">{{membership.relLog | duration:membership.dateOfExit}}</ion-label>      
+                  <ion-label class="ion-hide-md-down" slot="end">{{membership.relLog|categoryLog}}</ion-label>
+                  <ion-label class="ion-hide-md-up" slot="end">{{membership.relLog|catAbbreviationFromRelLog}}</ion-label>
               </ion-item>
           }
         </ion-list>
@@ -141,7 +143,6 @@ export class MembershipListComponent {
   protected currentUser = computed(() => this.membershipStore.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
-  protected membershipDefaultIcon = computed(() => this.membershipStore.appStore.getDefaultIcon(MembershipModelName));
   protected selectedType = linkedSignal(() => {
     return this.listId() === 'orgs' ? this.membershipStore.selectedOrgType() : this.membershipStore.selectedGender();
   });

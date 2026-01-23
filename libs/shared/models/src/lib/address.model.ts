@@ -18,7 +18,7 @@ export class AddressModel implements BkModel, TaggedModel {
   public zipCode = '';
   public city = '';
   public countryCode = '';
-  public url = DEFAULT_URL; // for BankAccount: ezs url
+  public url = DEFAULT_URL; // for BankAccount: ezs url; url is also used for all website addresses including social media links or ids
 
   public isFavorite = false;
   public isCc = false;
@@ -30,7 +30,7 @@ export class AddressModel implements BkModel, TaggedModel {
 
   public tenants: string[] = DEFAULT_TENANTS;
   public index = DEFAULT_INDEX; // for search
-  public parentKey = DEFAULT_KEY; // modelType.key, e.g. 14.key for orgs or 17.key for persons
+  public parentKey = DEFAULT_KEY; // modelType.key, e.g. org.key for orgs or person.key for persons
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

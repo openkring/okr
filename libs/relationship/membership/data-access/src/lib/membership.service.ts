@@ -110,13 +110,16 @@ export class MembershipService {
    * Clone a membership with a new type and apply the changes needed for a category change. 
    * It is used for membership category changes, where we end the existing membership and create a new one with the new type.
    * @param oldMembership the existing membership that is cloned into a new one
-   * @param newMembershipType the new membership type
+   * @param membershipChange the data neede for the category change (old and new category, date of change)
+   * @param membershipCategory the list of membership categories to use for the new membership
    * @returns the copied membership
    */
   public copyMembershipWithNewType(oldMembership: MembershipModel, membershipChange: CategoryChangeFormModel, membershipCategory: CategoryListModel): MembershipModel {
     const newMembership = structuredClone(oldMembership);
     newMembership.bkey = '';  // the new membership gets a new key (generated in create method)
     newMembership.category = membershipChange.membershipCategoryNew ?? 'active';
+
+    // finds the mcat category and returns its state attribute (mapping the category to its state)
     newMembership.state = getCategoryAttribute(membershipCategory, newMembership.category, 'state') as string;
     newMembership.dateOfEntry = membershipChange.dateOfChange ?? getTodayStr();
     newMembership.dateOfExit = END_FUTURE_DATE_STR;
@@ -124,7 +127,6 @@ export class MembershipService {
     newMembership.relIsLast = true;
     const cat = getCategoryAttribute(membershipCategory, newMembership.category, 'abbreviation') + '';
     newMembership.relLog = getRelLogEntry(newMembership.order, oldMembership.relLog, newMembership.dateOfEntry, cat);
-    newMembership.price = getCategoryAttribute(membershipCategory, newMembership.category, 'price') as number;
     return newMembership;
   }
 
