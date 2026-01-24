@@ -4,7 +4,7 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 
-import { ExportFormats, memberTypeMatches } from '@bk2/shared-categories';
+import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryCollection, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
@@ -13,7 +13,7 @@ import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl } f
 import { selectDate } from '@bk2/shared-ui';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { convertMemberAndOrgToMembership, getMemberEmailAddresses, getRelLogEntry } from '@bk2/relationship-membership-util';
+import { convertMemberAndOrgToMembership, convertToAddressDataRow, convertToMemberDataRow, convertToRawDataRow, convertToSrvDataRow, getMemberEmailAddresses, getRelLogEntry } from '@bk2/relationship-membership-util';
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
 import { of, switchMap, take } from 'rxjs';
@@ -281,8 +281,7 @@ export const _MembershipStore = signalStore(
       filteredEntries: computed(() => 
         state.entries()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
-          nameMatches(membership.category, state.selectedMembershipCategory()) &&
-          memberTypeMatches(membership, state.selectedGender()) &&
+          yearMatches(membership.dateOfEntry, state.selectedYear()) &&
           chipMatches(membership.tags, state.selectedTag()))
       ),
 
@@ -291,8 +290,7 @@ export const _MembershipStore = signalStore(
       filteredExits: computed(() => 
         state.exits()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
-          nameMatches(membership.category, state.selectedMembershipCategory()) &&
-          memberTypeMatches(membership, state.selectedGender()) &&
+          yearMatches(membership.dateOfExit, state.selectedYear()) &&
           chipMatches(membership.tags, state.selectedTag()))
       )
     }
@@ -468,21 +466,86 @@ export const _MembershipStore = signalStore(
       },
 
       async export(type: string): Promise<void> {
-        console.log(`MembershipListStore.export(${type}) is not yet implemented.`);
-        const _table: string[][] = [];
-        const _fn = generateRandomString(10) + '.' + ExportFormats[ExportFormat.XLSX].abbreviation;
-        _table.push(HeaderRow[isFull ? 0 : 1]);
-        for (const _item of this.filteredItems()) {
-            const _member = _item as RelationshipModel;
-            if (_member.subType > 0 && _member.subType < 4) { // Active, Junior, Double
-                const _person = await firstValueFrom(readSubject(this.afs, _member.subjectKey));
-                if (_person) {
-                    const _dataRow = await convertToSrvDataRow(_person, _member, isFull);
-                    if (_dataRow !== undefined) _table.push(_dataRow);    
-                }
-            }
+        const table: string[][] = [];
+        const fn = generateRandomString(10) + '.' + ExportFormats[ExportFormat.XLSX].abbreviation;
+        let tableName = 'Memberships';
+
+        // prepare the header row
+        switch(type) {
+          case 'raw':
+            // tbd: MembershipStore: header row with all membership fields
+            table.push([
+              'bkey',
+              'tenants',
+              'isArchived',
+              'index',
+              'tags',
+              'notes',
+              'memberKey',
+              'memberName1',
+              'memberName2',
+              'memberModelType',
+              'memberType',
+              'memberNickName',
+              'memberAbbreviation',
+              'memberDateOfBirth',
+              'memberDateOfDeath',
+              'memberZipCode',
+              'memberBexioId',
+              'memberId',
+              'orgKey',
+              'orgName',
+              'orgModelType',
+              'dateOfEntry',
+              'dateOfExit',
+              'category',
+              'state',
+              'orgFunction',
+              'order',
+              'relLog',
+              'relIsLast',
+              'price'
+            ]);
+            tableName = 'Rohdaten Mitgliedschaften';
+            break;
+          case 'srv':
+            table.push(['ClubName', 'Status', 'MC', 'Name/Vorname', 'Adresse', 'PLZ', 'Ort', 'GebDatum', 'SRV-Nr', 'SRV Datum', 'Haupt-Club', 'Handy', 'E-Mail Privat', 'SRV-Beitrag', 'Funktion', 'Rudern']);
+            tableName = 'SRV Mitgliedschaften';
+            break;
+          case 'address':
+            table.push(['Vorname', 'Name', 'Strasse', 'PLZ', 'Ort', 'Tel', 'E-Mail']);
+            tableName = 'Adressliste';
+            break;
+          case 'member':
+            table.push(['Mitgliedschafts-Nr', 'Vorname', 'Name', 'GebDatum', 'Eintrittsdatum', 'Kategorie', 'Funktion']);
+            tableName = 'Mitglieder';
+            break;
+          default:
+            console.error(`MembershipStore.export: unknown export type ${type}`);
+            return;
         }
-        exportXlsx(_table, _fn, tableName);
+        for (const member of store.filteredActive()) {
+          const person = store.appStore.getPerson(member.memberKey);
+          if (!person) continue;
+          switch(type) {
+            case 'raw':
+              table.push(convertToRawDataRow(member));
+              break;
+            case 'srv':
+              const mcatSrv = store.appStore.getCategoryItem('mcat_srv', member.category);
+              table.push(convertToSrvDataRow(person, member, mcatSrv?.price + ''));
+              break;
+            case 'address':
+              const addrRow = await convertToAddressDataRow(person);
+              if (addrRow !== undefined) table.push(addrRow);
+              break;
+            case 'member':
+              const memRow = await convertToMemberDataRow(member);
+              if (memRow !== undefined) table.push(memRow);
+              break;
+          }
+        }
+        exportXlsx(table, fn, tableName);
       },
 
       async delete(membership?: MembershipModel, readOnly = true): Promise<void> {

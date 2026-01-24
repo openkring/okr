@@ -59,15 +59,13 @@ import { MembershipStore } from './membership.store';
           />
       }
       @default {
-        @if(membershipCategory(); as cat) {
           <bk-list-filter
             (searchTermChanged)="onSearchtermChange($event)"
             (tagChanged)="onTagSelected($event)" [tags]="tags()"
             (typeChanged)="onTypeSelected($event)" [types]="types()"
             (categoryChanged)="onCategorySelected($event)" [categories]="membershipCategory()"
-            (yearChanged)="onYearSelected($event)"
+            (yearChanged)="onYearSelected($event)" [years]="years()"
           />
-        }
       }
     }
 
@@ -132,14 +130,15 @@ export class MembershipListComponent {
 
   // computed
   protected membershipListUrl = computed(() => 'membership/' + this.listId() + '/' + this.orgId() + '/' + this.contextMenuName());
-  protected membershipCategory = linkedSignal(() => this.membershipStore.membershipCategory());
+  protected hasYearFilter = computed(() => this.listId() === 'entries' || this.listId() === 'exits'); 
+  protected membershipCategory = linkedSignal(() => this.hasYearFilter() ? undefined : this.membershipStore.membershipCategory());
   protected genders = computed(() => this.membershipStore.genders());
   protected orgTypes = computed(() => this.membershipStore.orgTypes());
   protected popupId = computed(() => 'c_memberships_' + this.listId() + '_' + this.orgId());
   protected orgName = computed(() => this.membershipStore.orgName());
-  protected tags = computed(() => this.membershipStore.getTags());
-  protected types = computed(() => this.listId() === 'orgs' ? this.orgTypes() : this.genders());
-  protected years = computed(() => this.listId() === 'entries' || this.listId() === 'exits' ? getYearList() : undefined);
+  protected tags = computed(() => this.hasYearFilter() ? '' :this.membershipStore.getTags());
+  protected types = computed(() => this.hasYearFilter() ? undefined : (this.listId() === 'orgs' ? this.orgTypes() : this.genders()));
+  protected years = computed(() => this.hasYearFilter() ? getYearList() : undefined);
   protected currentUser = computed(() => this.membershipStore.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
@@ -239,6 +238,9 @@ export class MembershipListComponent {
         }
         break;
       case 'exportRaw': await this.membershipStore.export("raw"); break;
+      case 'exportSrv': await this.membershipStore.export("srv"); break;
+      case 'exportMembers': await this.membershipStore.export("member"); break;
+      case 'exportAddresses': await this.membershipStore.export("address"); break;
       case 'copyEmailAddresses': await this.membershipStore.copyEmailAddresses(this.listId(), this.readOnly()); break;
       default: error(undefined, `MembershipListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }

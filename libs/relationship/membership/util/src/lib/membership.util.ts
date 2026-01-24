@@ -1,5 +1,5 @@
 import { DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { CategoryItemModel, GroupModel, GroupModelName, MembershipModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@bk2/shared-models';
+import { CategoryItemModel, GroupModel, GroupModelName, MembershipModel, MoneyModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@bk2/shared-models';
 import { addIndexElement, convertDateFormatToString, DateFormat, die, getTodayStr } from '@bk2/shared-util-core';
 
 import { CategoryChangeFormModel } from './category-change-form.model';
@@ -200,32 +200,102 @@ export function getMembershipIndexInfo(): string {
   }
 
   // ---------------------- SRV List -------------------------------
-  export async function convertToSrvDataRow(person: PersonModel, member: MembershipModel, isFull: boolean): Promise<string[] | undefined> {
-  if (person !== undefined) {
-    const _name = member.memberName1 + ' ' + member.memberName2;
-    const _mc = getSrvMemberCategory(person.dateOfBirth);
-    const _bdate = getSafeDateInSrvFormat(person.dateOfBirth);
-    const _srvDate = getSafeDateInSrvFormat(member.dateOfEntry);
-    const _function = !member.orgFunction ? '' : member.orgFunction;
-    if (isFull === true) {
-      const _status = member.subType === MemberType.Double ? 'Doppelmitglieder' : 'Zahlende Mitglieder';
-      const _mainClub = member.subType === MemberType.Double ? 'Nein' : 'Ja';
-      return ['Seeclub Stäfa', _status, _mc, _name, person.fav_street, person.fav_zip, person.fav_city, _bdate, member.name, _srvDate, _mainClub, person.fav_phone, person.fav_email, member.price.toString(), _function, 'WAHR'];
-    } else {
-      return [_mc, _name, person.fav_street, person.fav_zip, person.fav_city, _bdate, member.name, _srvDate, member.price.toString()];
-    }
-  };
-  return undefined;
-}
+  export function convertToSrvDataRow(person: PersonModel, srvMember: MembershipModel, price: string): string[] {
+    return [
+      'Seeclub Stäfa', 
+      srvMember.category === 'double' ? 'Doppelmitglieder' : 'Zahlende Mitglieder', 
+      getSrvMemberCategory(person.dateOfBirth), 
+      person.firstName + ' ' + person.lastName, 
+      person.favStreetName + ' ' + person.favStreetNumber,
+      person.favZipCode,
+      person.favCity,
+      getSafeDateInSrvFormat(person.dateOfBirth),
+      srvMember.memberId,
+      getSafeDateInSrvFormat(srvMember.dateOfEntry),
+      srvMember.category === 'double' ? 'Nein' : 'Ja',
+      person.favPhone,
+      person.favEmail,
+      price,
+      srvMember.orgFunction ?? '',
+      'WAHR'
+    ];
+  }
 
-export function getSafeDateInSrvFormat(dateStr: string): string {
-  if (!dateStr || dateStr.length === 0) return '';
-  return convertDateFormatToString(dateStr, DateFormat.StoreDate, DateFormat.SrvDate);
-}
+  export function getSafeDateInSrvFormat(dateStr: string): string {
+    if (!dateStr || dateStr.length !== 8) return '';
+    return convertDateFormatToString(dateStr, DateFormat.StoreDate, DateFormat.SrvDate);
+  }
 
-export function getSrvMemberCategory(birthdate: string): string {
-  const _currentYear = Number(getTodayStr(DateFormat.Year));
-  if (!birthdate || birthdate.length === 0) return '';
-  const _birthYear = Number(convertDateFormatToString(birthdate, DateFormat.StoreDate, DateFormat.Year));
-  return (_currentYear - _birthYear > 18) ? 'A' : 'J';
-}
+  export function getSrvMemberCategory(birthdate: string): string {
+    const currentYear = Number(getTodayStr(DateFormat.Year));
+    if (!birthdate || birthdate.length !== 8) return '';
+    const birthYear = Number(convertDateFormatToString(birthdate, DateFormat.StoreDate, DateFormat.Year));
+    return (currentYear - birthYear > 18) ? 'A' : 'J';
+  }
+
+  // ---------------------- Raw List -------------------------------
+  export function convertToRawDataRow(membership: MembershipModel): string[] {
+    return [
+      membership.bkey,
+      membership.tenants.join('|'),
+      membership.isArchived.toString(),
+      membership.index,
+      membership.tags,
+      membership.notes,
+      membership.memberKey,
+      membership.memberName1,
+      membership.memberName2,
+      membership.memberModelType as string,
+      membership.memberType,
+      membership.memberNickName,
+      membership.memberAbbreviation,
+      membership.memberDateOfBirth,
+      membership.memberDateOfDeath,
+      membership.memberZipCode,
+      membership.memberBexioId,
+      membership.memberId,
+      membership.orgKey,
+      membership.orgName,
+      membership.orgModelType as string,
+      membership.dateOfEntry,
+      membership.dateOfExit,
+      membership.category,
+      membership.state,
+      membership.orgFunction,
+      membership.order.toString(),
+      membership.relLog,
+      membership.relIsLast.toString(),
+      getPrice(membership.price)
+    ];
+  }
+
+  function getPrice(price: MoneyModel | undefined): string {
+    if (!price) return '';
+    return (price.amount / 100).toFixed(2) + ' ' + price.currency;
+  }
+
+  // ---------------------- Address List -------------------------------
+  export function convertToAddressDataRow(person: PersonModel): string[] {
+    return [
+      person.firstName,
+      person.lastName, 
+      person.favStreetName + ' ' + person.favStreetNumber,
+      person.favZipCode,
+      person.favCity,
+      person.favPhone,
+      person.favEmail
+    ];
+  }
+
+  // ---------------------- Member List -------------------------------
+  export function convertToMemberDataRow(membership: MembershipModel): string[] {
+    return [
+      membership.memberId,
+      membership.memberName1,
+      membership.memberName2,
+      membership.memberDateOfBirth,
+      membership.dateOfEntry,
+      membership.category,
+      membership.orgFunction
+    ];
+  }
