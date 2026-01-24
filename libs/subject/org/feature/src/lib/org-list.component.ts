@@ -27,6 +27,9 @@ import { OrgStore } from './org.store';
     IonAvatar, IonImg, IonList
   ],
   providers: [OrgStore],
+  styles: [`
+    ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
+  `],
   template: `
   <ion-header>
     <!-- title and actions -->
@@ -85,7 +88,7 @@ import { OrgStore } from './org.store';
         <ion-list lines="inset">
           @for(org of filteredOrgs(); track $index) {
             <ion-item (click)="showActions(org)">
-              <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
+              <ion-avatar slot="start">
                 <ion-img src="{{ 'org.' + org.bkey | avatar:'org' }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{org.name}}</ion-label>      

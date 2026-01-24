@@ -26,6 +26,9 @@ import { GroupStore } from './group.store';
     IonAvatar, IonImg, IonList
   ],
   providers: [GroupStore],
+  styles: [`
+    ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
+  `],
   template: `
     <ion-header>
       <!-- title and actions -->
@@ -78,7 +81,7 @@ import { GroupStore } from './group.store';
         <ion-list lines="inset">
           @for(group of filteredGroups(); track $index) {
             <ion-item (click)="showActions(group)">
-              <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
+              <ion-avatar slot="start">
                 <ion-img src="{{ 'group.' + group.bkey | avatar:'people' }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{group.name}}</ion-label>      
