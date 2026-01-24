@@ -16,6 +16,7 @@ dist
 tmp
 /out-tsc
 **/data
+*.js.map
 
 # TypeScript compilation artifacts in source directories
 libs/**/*.js

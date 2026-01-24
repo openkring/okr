@@ -103,16 +103,19 @@ export const AocDataStore = signalStore(
        */
       async fixModels(): Promise<void> {
         // configuration: adapt these value to your needs
-        const isDryRun = false; // if true, no changes are written to the database;   TEST IT BEFORE SETTING TO FALSE !
-        const maxDocs = undefined; // for testing, you can restrict the amount of documents to process. 
+        const isDryRun = true; // if true, no changes are written to the database;   TEST IT BEFORE SETTING TO FALSE !
+        const maxDocs = 10; // for testing, you can restrict the amount of documents to process. 
         // set it to undefined to process all documents.
         
-        const collectionName = 'comments';
+        const collectionName = 'persons';
 
         // fixing fields (types and undefined)
         // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values
-        const fieldsToCheckForUndefined: string[] = []; 
-        const fieldsToFixTypes: string[] = ['s:creationDateTime'];
+        const fieldsToCheckForUndefined: string[] = ['s:bexioId', 's:dateOfBirth', 's:dateOfDeath',
+          's:favCity', 's:favCountryCode=CH', 's:favEmail', 's:favPhone', 's:favStreetName', 's:favZipCode',
+          's:favZipCode', 's:notes', 's:ssnId', 's:tags'
+        ]; 
+        const fieldsToFixTypes: string[] = ['s:dateOfBirth', 's:favZipCode'];
 
         // change the field names in the database directly
         // move the corrected data to a new collection in the database directly
@@ -167,7 +170,7 @@ export const AocDataStore = signalStore(
         //d.tenants = ['scs'];
 
         // create the index here directly without using the getXXindex function, just with string operations.
-        d.index = 'ak:' + d.authorKey + ' d:' + d.creationDateTime.substring(0, 8) + ' pk:' + d.parentKey;
+        //d.index = 'ak:' + d.authorKey + ' d:' + d.creationDateTime.substring(0, 8) + ' pk:' + d.parentKey;
         
         return d;
       },
