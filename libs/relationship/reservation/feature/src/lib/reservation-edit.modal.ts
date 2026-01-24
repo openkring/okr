@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonAccordionGroup, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonRow, ModalController, IonButton } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CalEventModel, CategoryListModel, PersonModel, PersonModelName, ReservationModel, ReservationModelName, ResourceModel, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, getAvatarName, hasRole, isPerson, isResource } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
@@ -12,6 +12,7 @@ import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { ReservationFormComponent } from '@bk2/relationship-reservation-ui';
 import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
 import { isCalEvent } from '@bk2/calevent-util';
+import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-reservation-edit-modal',

@@ -3,7 +3,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 
 import { AppStore } from '@bk2/shared-feature';
 import { AvatarInfo, OwnershipModel, OwnershipModelName, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, newAvatarInfo } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
@@ -11,6 +11,7 @@ import { DocumentsAccordionComponent } from '@bk2/document-feature';
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { OwnershipFormComponent } from '@bk2/relationship-ownership-ui';
 import { getOwnerName } from '@bk2/relationship-ownership-util';
+import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-ownership-edit-modal',

@@ -1,5 +1,4 @@
 export * from './lib/autofocus.directive';
-export * from './lib/avatar.component';
 export * from './lib/avatar-user.component';
 export * from './lib/button-copy.component';
 export * from './lib/button.component';
@@ -44,7 +43,6 @@ export * from './lib/optional-card-header.component';
 export * from './lib/password-input.component';
 export * from './lib/phone-input.component';
 export * from './lib/property-list.component';
-export * from './lib/relationship-toolbar.component';
 export * from './lib/result-log.component';
 export * from './lib/search-toolbar.component';
 export * from './lib/searchbar.component';

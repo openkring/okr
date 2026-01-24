@@ -2,13 +2,14 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
-import { ChangeConfirmationComponent, HeaderComponent, RelationshipToolbarComponent } from '@bk2/shared-ui';
+import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole, newAvatarInfo } from '@bk2/shared-util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
 
 import { MembershipFormComponent } from '@bk2/relationship-membership-ui';
+import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-membership-edit-modal',
