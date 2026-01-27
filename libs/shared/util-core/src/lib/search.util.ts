@@ -24,19 +24,20 @@ export function getQuery(dbQuery: DbQuery[], orderByParam = 'name', sortOrderPar
 }
 
 /** 
- * Retrieve the first item in a list of items that has the given key.
- * This is typically used in services read() function to find a model object by its key. 
+ * Retrieve the first item in a list of items that has the given value in the given field.
+ * This is typically used in services read() function to find a model object by its key (fieldName='bkey').
+ * But it can also be used to find an item by e.g. an id or name.
  * The items$ parameter is then taken from the list() function of the service to use the cached data.
  * The key is the Firestore Document ID.
  * @param items$ the list of items to search in
- * @param key the key to search for
+ * @param key the value key to search for
  * @returns the first item that has the given key or undefined if no such item exists
  */
-export function findByKey<T extends BkModel>(items$: Observable<T[]>, key: string | undefined | null): Observable<T | undefined> {
-  if (!key || key.length === 0) return of(undefined);
+export function findByKey<T extends BkModel>(items$: Observable<T[]>, searchValue: string | undefined | null, fieldName = 'bkey'): Observable<T | undefined> {
+  if (!searchValue || searchValue.length === 0) return of(undefined);
   return items$.pipe(
     map((items: T[]) => {
-      return items.find((item: T) => item.bkey === key);
+      return items.find((item: T) => item[fieldName as keyof T] === searchValue);
     }));
 }
 
