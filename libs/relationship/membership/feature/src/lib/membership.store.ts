@@ -8,7 +8,7 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categ
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryCollection, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, debugMessage, generateRandomString, getSystemQuery, getTodayStr, isAfterDate, isMembership, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, debugMessage, generateRandomString, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 
@@ -18,6 +18,7 @@ import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
 import { of, switchMap, take } from 'rxjs';
 import { getCatAbbreviation } from '@bk2/category-util';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -124,7 +125,7 @@ export const _MembershipStore = signalStore(
     };   
   }),
 
-  withProps((store) => ({
+/*   withProps((store) => ({
     mcatResource: rxResource({
       params: () => ({
         mcatId: store.membershipCategoryKey(),
@@ -146,7 +147,7 @@ export const _MembershipStore = signalStore(
         );
       }
     })
-  })),
+  })), */
 
   withComputed((state) => {
     return {
@@ -170,7 +171,7 @@ export const _MembershipStore = signalStore(
         membership.orgKey === state.orgId() && 
         membership.memberModelType === 'person' &&
         membership.relIsLast === true &&
-        isAfterDate(getTodayStr(DateFormat.StoreDate), membership.dateOfExit) &&
+        isAfterOrEqualDate(getTodayStr(DateFormat.StoreDate), membership.dateOfExit) &&
         membership.state === "cancelled") ?? []),
 
       deceasedMembers: computed(() => state.allMembershipsResource.value()?.filter((membership: MembershipModel) => 
@@ -182,23 +183,24 @@ export const _MembershipStore = signalStore(
         membership.orgKey === state.orgId() && 
         membership.memberModelType === 'person' &&
         membership.order === 1 && 
-        isAfterDate(state.selectedYear() + '1231', membership.dateOfEntry)) ?? []),
+        isAfterOrEqualDate(state.selectedYear() + '1231', membership.dateOfEntry)) ?? []),
 
       exits: computed(() => state.allMembershipsResource.value()?.filter((membership: MembershipModel) =>
         membership.orgKey === state.orgId() &&
         membership.memberModelType === 'person' &&
         membership.relIsLast === true && 
-        isAfterDate(state.selectedYear() + '1231', membership.dateOfExit)) ?? []),
+        isAfterOrEqualDate(state.selectedYear() + '1231', membership.dateOfExit)) ?? []),
     };
   }),
 
   withComputed((state) => {
     return {
-      membershipCategory: computed(() => state.mcatResource.value() ?? undefined),
+      //membershipCategory: computed(() => state.mcatResource.value() ?? undefined),
+      membershipCategory: computed<CategoryListModel | undefined>(() => state.appStore.getCategory('mcat_' + state.orgId())),
       defaultOrg: computed(() => state.org()),
       currentPerson : computed(() => state.appStore.currentPerson()),
-      isLoading: computed(() => state.allMembershipsResource.isLoading()
-        || state.mcatResource.isLoading()),
+      isLoading: computed(() => state.allMembershipsResource.isLoading()),
+   //     || state.mcatResource.isLoading()),
 
       // all members (= orgs and persons)
       membersCount: computed(() => state.members().length), 
@@ -271,8 +273,7 @@ export const _MembershipStore = signalStore(
       filteredDeceased: computed(() => 
         state.deceasedMembers()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
-          nameMatches(membership.category, state.selectedMembershipCategory()) &&
-          memberTypeMatches(membership, state.selectedGender()) &&
+          yearMatches(membership.memberDateOfDeath, state.selectedYear()) &&
           chipMatches(membership.tags, state.selectedTag()))
       ),
 
@@ -286,7 +287,7 @@ export const _MembershipStore = signalStore(
       ),
 
       // entries
-      exitsCount: computed(() => state.entries().length), 
+      exitsCount: computed(() => state.exits().length), 
       filteredExits: computed(() => 
         state.exits()?.filter((membership: MembershipModel) => 
           nameMatches(membership.index, state.searchTerm()) &&
@@ -301,11 +302,12 @@ export const _MembershipStore = signalStore(
     return {
       reload() {
         store.allMembershipsResource.reload();
-        store.mcatResource.reload();
+      //  store.mcatResource.reload();
       },
 
       /******************************** setters (filter) ******************************************* */
-      setOrgId(orgId: string) {
+      setOrgId(orgId?: string) {
+        if (!orgId) orgId = store.appStore.defaultOrg()?.bkey;
         console.log(`MembershipStore.setOrgId: ${orgId}`);
         // Only reset filters if orgId actually changed
         if (store.orgId() !== orgId) {
@@ -369,7 +371,7 @@ export const _MembershipStore = signalStore(
        */
       async add(readOnly = true): Promise<void> {
         if (readOnly) { console.log('MembershipStore.add: readOnly mode.'); return; }
-        const member = store.appStore.currentPerson();
+        const member = store.member() ?? store.appStore.currentPerson();
         const org = store.org();
         if (!member) { console.log('MembershipStore.add: no member.'); return; }
         if (!org) { console.log('MembershipStore.add: no org.'); return; }
@@ -388,7 +390,7 @@ export const _MembershipStore = signalStore(
        */
       async addMemberToGroup(group: GroupModel, readOnly = true): Promise<void> {
         if (readOnly) { console.log('MembershipStore.addMemberToGroup: readOnly mode.'); return; }
-        const member = store.appStore.currentPerson();
+        const member = store.member() ?? store.appStore.currentPerson();
         if (!member) { console.log('MembershipStore.addMemberToGroup: no member.'); return; }
         const membership = convertMemberAndOrgToMembership(member, group, store.tenantId(), PersonModelName);
         this.edit(membership, readOnly, true);
@@ -400,6 +402,7 @@ export const _MembershipStore = signalStore(
        */
       async edit(membership?: MembershipModel, readOnly = true, isNew = false): Promise<void> {
         if (!membership) return;
+        this.setOrgId(membership.orgKey);
 
         const modal = await store.modalController.create({
           component: MembershipEditModalComponent,
@@ -446,6 +449,7 @@ export const _MembershipStore = signalStore(
 
       async changeMembershipCategory(membership?: MembershipModel, readOnly = true): Promise<void> {
         if (readOnly || !membership) return;
+        this.setOrgId(membership.orgKey);
         const membershipCategory = store.membershipCategory();
         if (membershipCategory) {
           const modal = await store.modalController.create({
@@ -465,7 +469,7 @@ export const _MembershipStore = signalStore(
         }
       },
 
-      async export(type: string): Promise<void> {
+      async export(type: string, memberships: MembershipModel[]): Promise<void> {
         const table: string[][] = [];
         const fn = generateRandomString(10) + '.' + ExportFormats[ExportFormat.XLSX].abbreviation;
         let tableName = 'Memberships';
@@ -509,7 +513,7 @@ export const _MembershipStore = signalStore(
             tableName = 'Rohdaten Mitgliedschaften';
             break;
           case 'srv':
-            table.push(['ClubName', 'Status', 'MC', 'Name/Vorname', 'Adresse', 'PLZ', 'Ort', 'GebDatum', 'SRV-Nr', 'SRV Datum', 'Haupt-Club', 'Handy', 'E-Mail Privat', 'SRV-Beitrag', 'Funktion', 'Rudern']);
+            table.push(['Clubname', 'MGRART_Titel', 'Beitrag', 'LastName', 'FirstName', 'SRVNR', 'Birthday', 'Street', 'Postcode', 'City', 'Mobile', 'Email', 'Funktion', 'Kommentar']);
             tableName = 'SRV Mitgliedschaften';
             break;
           case 'address':
@@ -524,25 +528,46 @@ export const _MembershipStore = signalStore(
             console.error(`MembershipStore.export: unknown export type ${type}`);
             return;
         }
-        for (const member of store.filteredActive()) {
-          const person = store.appStore.getPerson(member.memberKey);
-          if (!person) continue;
-          switch(type) {
-            case 'raw':
-              table.push(convertToRawDataRow(member));
-              break;
-            case 'srv':
-              const mcatSrv = store.appStore.getCategoryItem('mcat_srv', member.category);
-              table.push(convertToSrvDataRow(person, member, mcatSrv?.price + ''));
-              break;
-            case 'address':
-              const addrRow = await convertToAddressDataRow(person);
-              if (addrRow !== undefined) table.push(addrRow);
-              break;
-            case 'member':
-              const memRow = await convertToMemberDataRow(member);
-              if (memRow !== undefined) table.push(memRow);
-              break;
+        if (type = 'srv') { // hardcoded and not considering any current membership filters. 
+          // That's why it can be used from any membership (SCS, SRV, other).
+          // Get all persons
+          const persons = store.appStore.allPersons();
+          // Get all memberships (stateless)
+          const allMemberships = store.allMembershipsResource.value() ?? [];
+          for (const person of persons) {
+            // Current SCS membership (active, orgKey = SCS org, memberModelType = 'person')
+            const currentScs = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'scs' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
+            // SCS exit in last year
+            const lastYear = (new Date()).getFullYear() - 1;
+            const lastYearExit = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'scs' && m.dateOfExit?.startsWith(lastYear.toString()));
+
+            // Current SRV membership (active, orgKey = SRV org, memberModelType = 'person')
+            const currentSrv = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'srv' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
+
+            // we export a row for each person with a current SCS membership or an exit in the last year or a current SRV membership
+            if (currentScs || currentSrv) {
+              table.push(convertToSrvDataRow(person, currentScs, lastYearExit, currentSrv));
+            }
+          }
+        } else {    // normal membership export for the currently filtered memberships
+          for (const member of memberships) {
+            const person = store.appStore.getPerson(member.memberKey);
+            if (!person) continue;
+            switch(type) {
+              case 'raw':
+                table.push(convertToRawDataRow(member));
+                break;
+              case 'srv': 
+                break;
+              case 'address':
+                const addrRow = await convertToAddressDataRow(person);
+                if (addrRow !== undefined) table.push(addrRow);
+                break;
+              case 'member':
+                const memRow = await convertToMemberDataRow(member);
+                if (memRow !== undefined) table.push(memRow);
+                break;
+            }
           }
         }
         exportXlsx(table, fn, tableName);

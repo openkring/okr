@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 
@@ -18,11 +18,11 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
   standalone: true,
   imports: [
     TranslatePipe, DurationPipe, AsyncPipe, SvgIconPipe, CategoryLogPipe, AvatarPipe, EmptyListComponent,
-    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonImg, IonThumbnail
+    IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonImg, IonAvatar
   ],
   providers: [MembershipStore],
   styles: [`
-    ion-thumbnail { width: 30px; height: 30px; }
+      ion-avatar { width: 30px; height: 30px;  background-color: var(--ion-color-light);}
   `],
   template: `
   <ion-accordion toggle-icon-slot="start" value="memberships">
@@ -41,9 +41,9 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
         <ion-list lines="inset">
           @for(membership of memberships(); track $index) {
             <ion-item (click)="showActions(membership)">
-              <ion-thumbnail slot="start">
-                <ion-img src="{{ 'org.' + membership.orgKey | avatar:'membership' }}" alt="membership avatar" />
-              </ion-thumbnail>
+              <ion-avatar slot="start">
+                <ion-img src="{{ 'org.' + membership.orgKey | avatar:'membership' }}" alt="Membership Avatar Logo" />
+              </ion-avatar>
               <ion-label>{{ membership.orgName }}</ion-label>
               <ion-label>{{ membership.relLog | categoryLog }} / {{ membership.dateOfEntry | duration:membership.dateOfExit }}</ion-label>
             </ion-item>
@@ -76,8 +76,11 @@ export class MembershipAccordionComponent {
   private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.membershipStore.setMember(this.member(), this.modelType()));
-    effect(() => this.membershipStore.setShowMode(this.showOnlyCurrent()));
+    effect(() => { 
+      this.membershipStore.setMember(this.member(), this.modelType()),
+      this.membershipStore.setOrgId();
+      this.membershipStore.setShowMode(this.showOnlyCurrent());
+    });
   }
 
   /******************************* actions *************************************** */

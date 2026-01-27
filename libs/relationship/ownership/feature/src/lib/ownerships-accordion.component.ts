@@ -40,7 +40,7 @@ import { OwnershipStore } from './ownership.store';
             @for(ownership of ownerships(); track $index) {
               <ion-item (click)="showActions(ownership)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ getIcon(ownership.resourceType) | svgIcon }}" alt="Avatar Logo" />
+                  <ion-img src="{{ getIcon(ownership.resourceType) | svgIcon }}" alt="Ownership Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ownership.resourceName}}</ion-label>
                 <ion-label>{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>

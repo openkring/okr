@@ -33,7 +33,11 @@ import { MembershipStore } from './membership.store';
       <!-- title and context menu -->
       <ion-toolbar [color]="color()">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ '@membership.list.header.titleRel' | translate | async }} {{ orgName() }}</ion-title>
+        @if (hasYearFilter()) {
+          <ion-title>{{ selectedMembershipsCount()}} {{ title() | translate | async }} {{ '@membership.list.header.titleRel' | translate | async }} {{ orgName() }}</ion-title>
+        } @else {
+          <ion-title>{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ '@membership.list.header.titleRel' | translate | async }} {{ orgName() }}</ion-title>
+        }
         @if(hasRole('privileged') || hasRole('memberAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -130,7 +134,7 @@ export class MembershipListComponent {
 
   // computed
   protected membershipListUrl = computed(() => 'membership/' + this.listId() + '/' + this.orgId() + '/' + this.contextMenuName());
-  protected hasYearFilter = computed(() => this.listId() === 'entries' || this.listId() === 'exits'); 
+  protected hasYearFilter = computed(() => this.listId() === 'entries' || this.listId() === 'exits' || this.listId() === 'deceased'); 
   protected membershipCategory = linkedSignal(() => this.hasYearFilter() ? undefined : this.membershipStore.membershipCategory());
   protected genders = computed(() => this.membershipStore.genders());
   protected orgTypes = computed(() => this.membershipStore.orgTypes());
@@ -237,10 +241,10 @@ export class MembershipListComponent {
           await this.membershipStore.add(this.readOnly());
         }
         break;
-      case 'exportRaw': await this.membershipStore.export("raw"); break;
-      case 'exportSrv': await this.membershipStore.export("srv"); break;
-      case 'exportMembers': await this.membershipStore.export("member"); break;
-      case 'exportAddresses': await this.membershipStore.export("address"); break;
+      case 'exportRaw': await this.membershipStore.export("raw", this.filteredMemberships()); break;
+      case 'exportSrv': await this.membershipStore.export("srv", this.filteredMemberships()); break;
+      case 'exportMembers': await this.membershipStore.export("member", this.filteredMemberships()); break;
+      case 'exportAddresses': await this.membershipStore.export("address", this.filteredMemberships()); break;
       case 'copyEmailAddresses': await this.membershipStore.copyEmailAddresses(this.listId(), this.readOnly()); break;
       default: error(undefined, `MembershipListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }

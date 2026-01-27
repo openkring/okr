@@ -27,12 +27,12 @@ export class MenuService {
   }
 
   /**
-   * Lookup a menuitem in the cached list by its document id and return it as an Observable.
-   * @param key the document id of the menuitem
+   * Lookup a menuitem in the cached list by its name and return it as an Observable.
+   * @param name the name of the menuitem
    * @returns an Observable of the MenuItemModel
    */
-  public read(key?: string): Observable<MenuItemModel | undefined> {
-    return findByKey<MenuItemModel>(this.list(), key);
+  public read(name?: string): Observable<MenuItemModel | undefined> {
+    return findByKey<MenuItemModel>(this.list(), name, 'name');
   }
 
   /**
@@ -47,7 +47,8 @@ export class MenuService {
   /**
    * Delete a menuitem.
    * We are not actually deleting a menuitem. We are just archiving it.
-   * @param key 
+   * @param menuItem the MenuItemModel to delete
+   * @param currentUser the current user performing the delete operation 
    */
   public async delete(menuItem: MenuItemModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<MenuItemModel>(MenuItemCollection, menuItem, '@content.menuItem.operation.delete', currentUser);
@@ -61,8 +62,8 @@ export class MenuService {
   /*-------------------------- OTHER --------------------------------*/
   /**
    * Remove the sub-menu-item itemId from the menu menuItem
-   * @param menuItem 
-   * @param itemId 
+   * @param menuItem the MenuItemModel from which to remove the sub-menu-item
+   * @param itemId the id of the sub-menu-item to remove
    */
   public async deleteSubMenu(menuItem: MenuItemModel, itemId: string): Promise<void> {
     if (menuItem.menuItems) {

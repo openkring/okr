@@ -131,6 +131,10 @@ import { AvatarPipe } from '@bk2/avatar-ui';
               <!--------------------------------------------------- properties --------------------------------------------------->
               <ion-grid>
                 <ion-row>
+                  <ion-col size="12" size-md="6"> 
+                    <bk-text-input name="memberId" [value]="memberId()" (valueChange)="onFieldChange('memberId', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
+                  </ion-col>
+
                   <ion-col size="12" size-md="6">
                     <bk-text-input name="memberBexioId" [value]="memberBexioId()" (valueChange)="onFieldChange('memberBexioId', $event)" [maxLength]=6 [mask]="bexioMask" [readOnly]="isReadOnly()" />                                        
                   </ion-col>
@@ -139,13 +143,13 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                     <bk-text-input name="memberAbbreviation" [value]="memberAbbreviation()" (valueChange)="onFieldChange('memberAbbreviation', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
                   </ion-col>
 
-                  <ion-col size="12" size-md="6"> 
-                    <bk-text-input name="orgFunction" [value]="orgFunction()" (valueChange)="onFieldChange('orgFunction', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
-                  </ion-col>
-
                   @if(hasRole('memberAdmin')) {
                   <ion-col size="12" size-md="6">
                     <bk-text-input name="memberNickName" [value]="memberNickName()" (valueChange)="onFieldChange('memberNickName', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
+                  </ion-col>
+
+                  <ion-col size="12" size-md="6"> 
+                    <bk-text-input name="orgFunction" [value]="orgFunction()" (valueChange)="onFieldChange('orgFunction', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
                   </ion-col>
                   }
                 </ion-row>
