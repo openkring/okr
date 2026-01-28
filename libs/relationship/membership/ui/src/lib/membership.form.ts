@@ -1,10 +1,11 @@
 import { AsyncPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask } from '@bk2/shared-config';
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
@@ -18,7 +19,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   selector: 'bk-membership-form',
   standalone: true,
   imports: [
-    vestForms,
+    vestForms, FormsModule,
     TranslatePipe, AsyncPipe, AvatarPipe,
     TextInputComponent, DateInputComponent,
     ChipsComponent, NotesInputComponent, CategorySelectComponent,
@@ -173,12 +174,12 @@ export class MembershipFormComponent {
   private readonly appStore = inject(AppStore);
 
   // inputs
-  public formData = model.required<MembershipModel>();
-  public currentUser = input<UserModel | undefined>();
+  public readonly formData = model.required<MembershipModel>();
+  public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public membershipCategories = input.required<CategoryListModel>();
-  public allTags = input.required<string>();
-  public priv = input.required<PrivacySettings>();
+  public readonly allTags = input.required<string>();
+  public readonly priv = input.required<PrivacySettings>();
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -303,12 +304,14 @@ export class MembershipFormComponent {
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
   }
+  
   protected isTagsVisible(): boolean {
     if (!this.isReadOnly()) return true;
     if (!isVisibleToUser(this.priv().showTags, this.currentUser())) return false;
     return (this.tags() && this.tags().length > 0) ? true : false;
   }
-    protected isNotesVisible(): boolean {
+
+  protected isNotesVisible(): boolean {
     if (!this.isReadOnly()) return true;
     if (!isVisibleToUser(this.priv().showNotes, this.currentUser())) return false;
     return (this.notes() && this.notes().length > 0) ? true : false;

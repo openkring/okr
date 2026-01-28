@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -109,7 +109,7 @@ import { menuItemValidations } from '@bk2/cms-menu-util';
 })
 export class MenuItemFormComponent {
   // inputs
-  public readonly formData = model.required<MenuItemModel>()
+  public readonly formData = model.required<MenuItemModel>();
   public readonly types = input.required<CategoryListModel>();
   public readonly roles = input.required<CategoryListModel>();
   public readonly currentUser = input.required<UserModel | undefined>();
@@ -147,9 +147,9 @@ export class MenuItemFormComponent {
   protected nameLength = NAME_LENGTH;
 
   /******************************* actions *************************************** */
-  protected onFieldChange(fieldName: string, $event: string | string[] | number | BaseProperty[]): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | BaseProperty[]): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
   protected onFormChange(value: MenuItemModel): void {

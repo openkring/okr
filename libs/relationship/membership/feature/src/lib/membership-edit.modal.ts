@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
@@ -34,17 +34,19 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
           [currentUser]="currentUser"
         />
         @if(mcat(); as mcat) {
-          <bk-membership-form
-            [formData]="formData()"
-            (formDataChange)="onFormDataChange($event)"
-            [currentUser]="currentUser"
-            [membershipCategories]="mcat"
-            [allTags]="tags()"
-            [readOnly]="isReadOnly()"
-            [priv]="priv()"
-            (dirty)="manualDirty.set($event)"
-            (valid)="formValid.set($event)"
-          />
+          @if(formData(); as formData) {
+            <bk-membership-form 
+              [formData]="formData"
+              (formDataChange)="onFormDataChange($event)"
+              [currentUser]="currentUser"
+              [membershipCategories]="mcat"
+              [allTags]="tags()"
+              [readOnly]="isReadOnly()"
+              [priv]="priv()"
+              (dirty)="manualDirty.set($event)"
+              (valid)="formValid.set($event)"
+            />
+          }
         }
       }
 

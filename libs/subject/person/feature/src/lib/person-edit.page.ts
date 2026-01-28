@@ -39,22 +39,32 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-avatar-toolbar key="{{parentKey()}}" title="{{ toolbarTitle() }}" modelType="person" [readOnly]="isReadOnly()" (imageSelected)="onImageSelected($event)"/>
 
-      @if(formData(); as formData) {
-        <bk-person-form
-          [formData]="formData" 
-          (formDataChange)="onFormDataChange($event)"
-          [currentUser]="currentUser()"
-          [priv]="priv()"
-          [genders]="genders()"
-          [allTags]="tags()"
-          [tenantId]="tenantId()" 
-          [readOnly]="isReadOnly()"
-          [showForm]="showForm()"
-          (dirty)="formDirty.set($event)"
-          (valid)="formValid.set($event)"
-        />
+      <bk-avatar-toolbar 
+        key="{{parentKey()}}" 
+        title="{{ toolbarTitle() }}" 
+        modelType="person" 
+        [readOnly]="isReadOnly()" 
+        (imageSelected)="onImageSelected($event)"
+        #avatarToolbar
+      />
+
+      @if(!avatarLoading()) {
+        @if(formData(); as formData) {
+          <bk-person-form
+            [formData]="formData" 
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser()"
+            [priv]="priv()"
+            [genders]="genders()"
+            [allTags]="tags()"
+            [tenantId]="tenantId()" 
+            [readOnly]="isReadOnly()"
+            [showForm]="showForm()"
+            (dirty)="formDirty.set($event)"
+            (valid)="formValid.set($event)"
+          />
+        }
       }
 
       @if(person(); as person) {
@@ -81,6 +91,8 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 export class PersonEditPage implements ViewWillEnter   {
   protected readonly personEditStore = inject(PersonEditStore);
   private cdr = inject(ChangeDetectorRef);
+  // Track avatar loading state
+  protected avatarLoading = signal(true);
 
   // inputs
   public personKey = input.required<string>();
@@ -111,6 +123,28 @@ export class PersonEditPage implements ViewWillEnter   {
     effect(() => {
       this.personEditStore.setPersonKey(this.personKey());
     });
+    // Wait for avatar toolbar to be available in the view, then subscribe to its loading state
+    setTimeout(() => {
+      const avatarToolbarEl = document.querySelector('bk-avatar-toolbar');
+      if (avatarToolbarEl && 'avatarToolbarStore' in avatarToolbarEl) {
+        // @ts-ignore
+        const store = avatarToolbarEl.avatarToolbarStore as { isLoading?: () => boolean };
+        if (store && typeof store.isLoading === 'function') {
+          effect(() => {
+            if (typeof store.isLoading === 'function') {
+              this.avatarLoading.set(store.isLoading());
+              if (!store.isLoading()) {
+                this.cdr.markForCheck();
+              }
+            }
+          });
+        } else {
+          this.avatarLoading.set(false);
+        }
+      } else {
+        this.avatarLoading.set(false);
+      }
+    }, 0);
   }
 
   ionViewWillEnter() {
