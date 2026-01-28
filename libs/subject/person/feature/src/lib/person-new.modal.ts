@@ -32,7 +32,7 @@ import { PersonNewStore } from './person-new.store';
     </ion-content>
   `
 })
-export class PersonNewModalComponent {
+export class PersonNewModal {
   private readonly modalController = inject(ModalController);
   protected readonly personNewStore = inject(PersonNewStore);
 

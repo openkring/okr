@@ -78,7 +78,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
     </ion-content>
   `
 })
-export class PersonEditPageComponent {
+export class PersonEditPage {
   protected readonly personEditStore = inject(PersonEditStore);
 
   // inputs

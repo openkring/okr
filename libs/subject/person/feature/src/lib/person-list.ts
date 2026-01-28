@@ -109,7 +109,7 @@ import { SIZE_MD } from '@bk2/shared-constants';
     </ion-content>
     `
 })
-export class PersonListComponent {
+export class PersonList {
   protected readonly personListStore = inject(PersonListStore);
   private readonly actionSheetController = inject(ActionSheetController);
 

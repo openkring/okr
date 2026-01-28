@@ -15,7 +15,7 @@ import { AddressService, GeocodingService } from '@bk2/subject-address-data-acce
 import { PersonService } from '@bk2/subject-person-data-access';
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/subject-person-util';
 
-import { PersonNewModalComponent } from './person-new.modal';
+import { PersonNewModal } from './person-new.modal';
 import { browseUrl } from '@bk2/subject-address-util';
 import { Languages } from '@bk2/shared-categories';
 import { MapViewModalComponent } from '@bk2/shared-ui';
@@ -137,7 +137,7 @@ export const PersonListStore = signalStore(
       /******************************* actions *************************************** */
       async add(readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
-          component: PersonNewModalComponent,
+          component: PersonNewModal,
           componentProps: {
             readOnly
           }
