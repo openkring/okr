@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { PeopleSection, ViewPosition } from "@bk2/shared-models";
-import { OptionalCardHeaderComponent, SpinnerComponent } from "@bk2/shared-ui";
+import { SpinnerComponent } from "@bk2/shared-ui";
 
 import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
 import { PreviewSectionModal } from '@bk2/cms-section-feature';
@@ -11,7 +11,7 @@ import { PreviewSectionModal } from '@bk2/cms-section-feature';
   selector: 'bk-people-section',
   standalone: true,
   imports: [
-    SpinnerComponent, PersonsWidgetComponent, OptionalCardHeaderComponent,
+    SpinnerComponent, PersonsWidgetComponent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
   styles: [`
@@ -21,9 +21,8 @@ import { PreviewSectionModal } from '@bk2/cms-section-feature';
   template: `
     @if(section(); as section) {
       <ion-card>
-        <bk-optional-card-header  [title]="sectionTitle()" [subTitle]="subTitle()" />
         <ion-card-content>
-          <ion-grid>
+          <ion-grid class="ion-no-padding">
             <ion-row>
               @if(avatarTitle(); as avatarTitle) {
                 <ion-col size="12" size-md="3">
@@ -57,6 +56,7 @@ export class PeopleSectionComponent {
   // fields
   protected readonly sectionTitle = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
+  protected doShowTitle = computed(() => !!this.sectionTitle() || !!this.subTitle());
 
   protected readonly avatarConfig = computed(() => this.section()?.properties.avatar);
   protected readonly avatarTitle = computed(() => this.avatarConfig()?.title);

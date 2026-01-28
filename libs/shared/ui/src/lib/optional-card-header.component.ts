@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -16,7 +16,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   ion-card-header { display: flex; flex-flow: column-reverse; }
 `],
   template: `
-      @if(title() || subTitle()) {
+      @if(doShowHeader()) {
       <ion-card-header>
         @if(title()) {
           <ion-card-title>{{ title() | translate | async }}</ion-card-title>
@@ -32,4 +32,6 @@ export class OptionalCardHeaderComponent {
   // inputs
   public title = input<string | undefined>();
   public subTitle = input<string | undefined>();
+
+  protected doShowHeader = computed(() => !!this.title() || !!this.subTitle());
 }

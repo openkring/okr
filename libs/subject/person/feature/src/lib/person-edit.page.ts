@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter } from '@ionic/angular/standalone';
 
 import { PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
@@ -78,7 +78,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
     </ion-content>
   `
 })
-export class PersonEditPage {
+export class PersonEditPage implements ViewWillEnter   {
   protected readonly personEditStore = inject(PersonEditStore);
   private cdr = inject(ChangeDetectorRef);
 
@@ -111,6 +111,10 @@ export class PersonEditPage {
     effect(() => {
       this.personEditStore.setPersonKey(this.personKey());
     });
+  }
+
+  ionViewWillEnter() {
+    setTimeout(() => this.cdr.detectChanges(), 300);
   }
 
   /******************************* actions *************************************** */
