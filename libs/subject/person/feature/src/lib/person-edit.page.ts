@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent } from '@ionic/angular/standalone';
 
@@ -80,6 +80,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 })
 export class PersonEditPage {
   protected readonly personEditStore = inject(PersonEditStore);
+  private cdr = inject(ChangeDetectorRef);
 
   // inputs
   public personKey = input.required<string>();
@@ -96,7 +97,7 @@ export class PersonEditPage {
   // derived signals
   protected headerTitle = computed(() => getTitleLabel('subject.person', this.person()?.bkey, this.isReadOnly()));
   protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
-  protected parentKey = computed(() => `${PersonModelName}.${this.personKey()}`);
+  protected parentKey = computed(() => PersonModelName + '.' + this.personKey());
   protected priv = computed(() => this.personEditStore.privacySettings());
   protected currentUser = computed(() => this.personEditStore.currentUser());
   protected person = computed(() => this.personEditStore.person());
@@ -124,11 +125,15 @@ export class PersonEditPage {
     this.formData.set(structuredClone(this.person()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
-    setTimeout(() => this.showForm.set(true), 0);
+      setTimeout(() => {
+        this.showForm.set(true);
+        this.cdr.markForCheck();
+      }, 0);
   }
 
   protected onFormDataChange(formData: PersonModel): void {
     this.formData.set(formData);
+    this.cdr.markForCheck();
   }
 
   /**
