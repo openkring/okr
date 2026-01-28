@@ -399,3 +399,55 @@ export function getMembershipIndexInfo(): string {
     if (category === 'double') return '0';
     return getSrvMemberCategory(dob) === 'J' ? '0' : '75';
   }
+
+  export interface McatChange {
+    memberKey: string;
+    memberName1: string;
+    memberName2: string;
+    dateOfChange: string;
+    oldCategory: string;
+    newCategory: string;
+  };
+
+  export function getMembershipCategoryChanges(
+  memberships: MembershipModel[],
+  orgId: string,
+  year: number
+): McatChange[] {
+  // Group memberships by memberKey
+  const byMember = new Map<string, MembershipModel[]>();
+  for (const m of memberships) {
+    if (m.orgKey === orgId) {
+      if (!byMember.has(m.memberKey)) byMember.set(m.memberKey, []);
+      byMember.get(m.memberKey)!.push(m);
+    }
+  }
+  const changes: McatChange[] = [];
+  for (const [memberKey, memberMemberships] of byMember.entries()) {
+    // Sort by order ascending
+    const sorted = [...memberMemberships].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    for (let i = 0; i < sorted.length - 1; ++i) {
+      const oldM = sorted[i];
+      const newM = sorted[i + 1];
+      // relIsLast=false and order+1
+      if (
+        oldM.relIsLast === false &&
+        newM.order === (oldM.order ?? 0) + 1 &&
+        oldM.memberKey === newM.memberKey &&
+        oldM.orgKey === newM.orgKey &&
+        oldM.dateOfExit &&
+        oldM.dateOfExit.startsWith(year.toString())
+      ) {
+        changes.push({
+          memberKey: oldM.memberKey,
+          memberName1: oldM.memberName1,
+          memberName2: oldM.memberName2,
+          dateOfChange: oldM.dateOfExit,
+          oldCategory: oldM.category,
+          newCategory: newM.category
+        });
+      }
+    }
+  }
+  return changes;
+}

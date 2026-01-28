@@ -1,10 +1,10 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ButtonComponent, HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
+import { ButtonComponent, HeaderComponent, ResultLogComponent, StringSelectComponent } from '@bk2/shared-ui';
 
 import { AocAdminOpsStore } from './aoc-adminops.store';
 
@@ -13,8 +13,9 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
-    HeaderComponent, ButtonComponent, ResultLogComponent, 
-    IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, FormsModule
+    HeaderComponent, ButtonComponent, ResultLogComponent, StringSelectComponent,
+    IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, IonLabel,
+    FormsModule
   ],
   providers: [AocAdminOpsStore],
   template: `
@@ -40,28 +41,20 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
                 <bk-button label=" {{ '@aoc.adminops.oldJuniors.button' | translate | async }}" iconName="checkbox-circle" (click)="listOldJuniors()" />
               </ion-col>
             </ion-row>
-            <!-- Membership Prices -->
             <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.membershipPrices.label' | translate | async }}</ion-col>
+              <ion-col><ion-label>Änderungen der Mitgliederkategorie</ion-label></ion-col>
+            </ion-row>
+            <ion-row>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.membershipPrices.button' | translate | async }}" iconName="checkbox-circle" (click)="updateMembershipPrices()" />
+                <bk-string-select name="club"  [selectedString]="club()" (selectedStringChange)="onFieldChange('club', $event)" [readOnly]="false" [stringList] = "['scs', 'srv']" />
               </ion-col>
-            </ion-row>
-            <!-- Membership Attributes -->
-            <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.membershipAttributes.label' | translate | async }}</ion-col>
-              <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.membershipAttributes.button' | translate | async }}" iconName="checkbox-circle" (click)="updateMembershipAttributes()" />
+              <ion-col size="6">      
+                <bk-string-select name="year"  [selectedString]="year()" (selectedStringChange)="onFieldChange('year', $event)" [readOnly]="false" [stringList] = "['2026', '2025', '2024', '2023', '2022', '2021']" />           
               </ion-col>
-            </ion-row>
-            <!-- Check entry date for juniors -->
-            <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.checkJuniorEntry.label' | translate | async }}</ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="6">{{ '@aoc.adminops.checkJuniorEntry.description' | translate | async }}</ion-col>
               <ion-col size="6">
-                <bk-button label=" {{ '@aoc.adminops.checkJuniorEntry.button' | translate | async }}" iconName="checkbox-circle" (click)="checkJuniorEntry()" />
+              </ion-col>
+              <ion-col size="6">
+                <bk-button label="Anzeigen" iconName="checkbox-circle" (click)="showMembershipCategoryChanges()" />
               </ion-col>
             </ion-row>
             <!-- Find orphaned sections -->
@@ -80,6 +73,9 @@ export class AocAdminOpsComponent {
   protected readonly logInfo = computed(() => this.aocAdminOpsStore.log());
   protected readonly isLoading = computed(() => this.aocAdminOpsStore.isLoading());
 
+  protected club = signal('scs');
+  protected year = signal('2025'); 
+
   public listIban(): void {
     this.aocAdminOpsStore.listIban();
   }
@@ -88,15 +84,16 @@ export class AocAdminOpsComponent {
     this.aocAdminOpsStore.listJuniorsOlderThan();
   }
 
-  public updateMembershipPrices(): void {
-    this.aocAdminOpsStore.updateMembershipPrices();
+  public showMembershipCategoryChanges(): void {
+    this.aocAdminOpsStore.setModelType('membership');
+    this.aocAdminOpsStore.showMembershipCategoryChanges(this.club(), parseInt(this.year(), 10));
   }
 
-  public updateMembershipAttributes(): void {
-    this.aocAdminOpsStore.updateMembershipAttributes();
-  }
-
-  public checkJuniorEntry(): void {
-    this.aocAdminOpsStore.checkJuniorEntry();
+  protected onFieldChange(fieldName: string, $event: string): void {
+    if (fieldName === 'club') {
+      this.club.set($event);
+    } else if (fieldName === 'year') {
+      this.year.set($event);
+    }
   }
 }

@@ -12,7 +12,7 @@ import { DateFormat, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/s
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
-import { CategoryLogPipe } from '@bk2/relationship-membership-util';
+import { CategoryLogPipe, getMembershipCategoryChanges } from '@bk2/relationship-membership-util';
 import { MembershipStore } from './membership.store';
 
 @Component({

@@ -1,12 +1,13 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, of } from 'rxjs';
+import { firstValueFrom, Observable, of, take } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { BkModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
+import { AddressChannel, AddressCollection, AddressModel, BkModel, DbQuery, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { compareDate, getAge, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@bk2/shared-util-core';
+import { getMembershipCategoryChanges } from '@bk2/relationship-membership-util';
 
 export type AocAdminOpsState = {
   modelType: string | undefined;
@@ -38,6 +39,7 @@ export const AocAdminOpsStore = signalStore(
           case 'org':
             return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc');
           case 'membership':
+            console.log('AocAdminOpsStore: loading memberships ...');
             return store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.env.tenantId), 'memberName2', 'asc');
           default:
             return of(undefined);
@@ -61,8 +63,27 @@ export const AocAdminOpsStore = signalStore(
         patchState(store, { modelType, log: [], logTitle: '' });
       },
 
-      listIban(modelType = 'person'): void {
-        console.log('AocAdminOpsStore.listIban: not yet implemented', modelType);
+      async listIban(): Promise<void> {
+        const query = getSystemQuery(store.appStore.env.tenantId);
+        query.push({ key: 'channelType', operator: '==', value: AddressChannel.BankAccount });
+        store.firestoreService.searchData<AddressModel>( AddressCollection, query, 'none')
+        .pipe(take(1))
+        .subscribe((addresses) => {
+          const log: LogInfo[] = [];
+          addresses.forEach((address) => {
+            const [modelType, pkey] = address.parentKey.split('.');
+            let name = '';
+            if (modelType === 'person') {
+              const person = store.appStore.getPerson(pkey);
+              name = getFullName(person?.firstName, person?.lastName);
+            } else if (modelType === 'org') {
+              const org = store.appStore.getOrg(pkey);
+              name = org?.name || '';
+            }
+                log.push({ id: address.bkey, name: name, message: address.iban });
+          });
+          patchState(store, { log, logTitle: 'IBAN List' });
+        }); 
       },
 
       listJuniorsOlderThan(age = 18, orgKey = 'scs', refYear = getYear()): void {
@@ -94,19 +115,28 @@ export const AocAdminOpsStore = signalStore(
               return { id: m.bkey, name: '', message: 'not a membership ?' };
             });
           patchState(store, { log: log, logTitle: 'old juniors' });
+        } else {
+          console.error('AocAdminOpsStore.listJuniorsOlderThan: modelType is not membership');
         }
       },
 
-      updateMembershipPrices(): void {
-        console.log('AocAdminOpsStore.updateMembershipPrices: not yet implemented');
-      },
+      async showMembershipCategoryChanges(club: string, year: number): Promise<void> {
+        const log: LogInfo[] = [];
 
-      updateMembershipAttributes(): void {
-        console.log('AocAdminOpsStore.updateMembershipAttributes: not yet implemented');
-      },
-
-      checkJuniorEntry(): void {
-        console.log('AocAdminOpsStore.checkJuniorEntry: not yet implemented');
+        // Wait for dataResource to finish loading
+        while (store.dataResource.isLoading()) {
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise(res => setTimeout(res, 50));
+        }
+        if (store.modelType() === 'membership') {
+          const changes = getMembershipCategoryChanges(store.data() as MembershipModel[], club, year);
+          for (const change of changes) {
+            log.push({ id: change.memberKey, name: getFullName(change.memberName1, change.memberName2), message: `${change.dateOfChange}: ${change.oldCategory} -> ${change.newCategory}` }); 
+          }
+          patchState(store, { log: log, logTitle: 'Änderungen der Mitgliederkategorie' });
+        } else {
+          console.error('AocAdminOpsStore.showMembershipCategoryChanges: modelType is not membership');
+        }
       },
     };
   })
