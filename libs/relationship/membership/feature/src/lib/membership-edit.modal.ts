@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
+import { ChangeDetectorRef, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController, ViewWillEnter } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
@@ -26,6 +26,7 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
+
       @if(currentUser(); as currentUser) {
         <bk-relationship-toolbar
           relType="membership"
@@ -63,8 +64,9 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
     </ion-content>
   `
 })
-export class MembershipEditModalComponent {
+export class MembershipEditModalComponent implements ViewWillEnter {
   private readonly modalController = inject(ModalController);
+  private cdr = inject(ChangeDetectorRef);
 
   // inputs
   public membership = input.required<MembershipModel>();
@@ -100,6 +102,15 @@ export class MembershipEditModalComponent {
     return newAvatarInfo(m.orgKey, '', m.orgName, m.orgModelType, '', '', m.orgName);
   });
   protected memberKey = computed(() => this.formData().memberKey ?? '');
+
+  /**
+   * Lifecycle hook that is called when the view is about to enter and become the active page.
+   * Give some time for the avatar toolbar to initialize before triggering change detection.
+   * This prevents a potential race condition that could lead to data not being displayed correctly.
+   */
+  ionViewWillEnter() {
+    setTimeout(() => this.cdr.detectChanges(), 0);
+  }
 
   /******************************* actions *************************************** */
   public async save(): Promise<boolean> {

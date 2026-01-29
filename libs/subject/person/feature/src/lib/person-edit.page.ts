@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter } from '@ionic/angular/standalone';
 
@@ -49,22 +49,20 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
         #avatarToolbar
       />
 
-      @if(!avatarLoading()) {
-        @if(formData(); as formData) {
-          <bk-person-form
-            [formData]="formData" 
-            (formDataChange)="onFormDataChange($event)"
-            [currentUser]="currentUser()"
-            [priv]="priv()"
-            [genders]="genders()"
-            [allTags]="tags()"
-            [tenantId]="tenantId()" 
-            [readOnly]="isReadOnly()"
-            [showForm]="showForm()"
-            (dirty)="formDirty.set($event)"
-            (valid)="formValid.set($event)"
-          />
-        }
+      @if(formData(); as formData) {
+        <bk-person-form
+          [formData]="formData" 
+          (formDataChange)="onFormDataChange($event)"
+          [currentUser]="currentUser()"
+          [priv]="priv()"
+          [genders]="genders()"
+          [allTags]="tags()"
+          [tenantId]="tenantId()" 
+          [readOnly]="isReadOnly()"
+          [showForm]="showForm()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+        />
       }
 
       @if(person(); as person) {
@@ -91,8 +89,6 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 export class PersonEditPage implements ViewWillEnter   {
   protected readonly personEditStore = inject(PersonEditStore);
   private cdr = inject(ChangeDetectorRef);
-  // Track avatar loading state
-  protected avatarLoading = signal(true);
 
   // inputs
   public personKey = input.required<string>();
@@ -119,36 +115,14 @@ export class PersonEditPage implements ViewWillEnter   {
   protected genders = computed(() => this.personEditStore.appStore.getCategory('gender'));
   protected listId = computed(() => 'p_' + this.personEditStore.person()?.bkey);
 
-  constructor() {
-    effect(() => {
-      this.personEditStore.setPersonKey(this.personKey());
-    });
-    // Wait for avatar toolbar to be available in the view, then subscribe to its loading state
-    setTimeout(() => {
-      const avatarToolbarEl = document.querySelector('bk-avatar-toolbar');
-      if (avatarToolbarEl && 'avatarToolbarStore' in avatarToolbarEl) {
-        // @ts-ignore
-        const store = avatarToolbarEl.avatarToolbarStore as { isLoading?: () => boolean };
-        if (store && typeof store.isLoading === 'function') {
-          effect(() => {
-            if (typeof store.isLoading === 'function') {
-              this.avatarLoading.set(store.isLoading());
-              if (!store.isLoading()) {
-                this.cdr.markForCheck();
-              }
-            }
-          });
-        } else {
-          this.avatarLoading.set(false);
-        }
-      } else {
-        this.avatarLoading.set(false);
-      }
-    }, 0);
-  }
-
+  /**
+   * Lifecycle hook that is called when the view is about to enter and become the active page.
+   * Give some time for the avatar toolbar to initialize before triggering change detection.
+   * This prevents a potential race condition that could lead to data not being displayed correctly.
+   */
   ionViewWillEnter() {
-    setTimeout(() => this.cdr.detectChanges(), 300);
+    this.personEditStore.setPersonKey(this.personKey());
+    setTimeout(() => this.cdr.detectChanges(), 0);
   }
 
   /******************************* actions *************************************** */

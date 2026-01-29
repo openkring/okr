@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel, ViewWillEnter } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
 import { I18nService } from '@bk2/shared-i18n';
@@ -94,9 +94,10 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
     </ion-content>
   `
 })
-export class ProfileEditPageComponent {
+export class ProfileEditPageComponent implements ViewWillEnter {
   private readonly profileEditStore = inject(ProfileEditStore);
   private readonly i18nService = inject(I18nService);
+  private cdr = inject(ChangeDetectorRef);
 
   // inputs
   // readOnly is always false for profile page as we work with the current user's own profile
@@ -131,13 +132,14 @@ export class ProfileEditPageComponent {
   });
   protected tags = computed(() => this.profileEditStore.getTags());
 
-  constructor() {
-    effect(() => {
-      const user = this.currentUser();
-      if (user) {
-        this.profileEditStore.setPersonKey(user.personKey);
-      }
-    });
+  /**
+   * Lifecycle hook that is called when the view is about to enter and become the active page.
+   * Give some time for the avatar toolbar to initialize before triggering change detection.
+   * This prevents a potential race condition that could lead to data not being displayed correctly.
+   */
+  ionViewWillEnter() {
+    this.profileEditStore.setPersonKey(this.personKey());
+    setTimeout(() => this.cdr.detectChanges(), 0);
   }
 
   /******************************* actions *************************************** */

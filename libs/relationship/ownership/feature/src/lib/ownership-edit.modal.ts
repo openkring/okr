@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
+import { ChangeDetectorRef, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController, ViewWillEnter } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { AvatarInfo, OwnershipModel, OwnershipModelName, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
@@ -66,10 +66,11 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
     </ion-content>
   `
 })
-export class OwnershipEditModalComponent {
+export class OwnershipEditModalComponent implements ViewWillEnter {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
-
+  private cdr = inject(ChangeDetectorRef);
+  
   // inputs
   public ownership = input.required<OwnershipModel>();
   public currentUser = input<UserModel | undefined>();
@@ -100,6 +101,15 @@ export class OwnershipEditModalComponent {
   protected bkey = computed(() => this.ownership().bkey);
   protected readonly subjectDefaultIcon = computed(() => this.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
   protected readonly objectDefaultIcon = computed(() => this.appStore.getDefaultIcon(this.ownerAvatar()?.modelType));
+
+    /**
+   * Lifecycle hook that is called when the view is about to enter and become the active page.
+   * Give some time for the avatar toolbar to initialize before triggering change detection.
+   * This prevents a potential race condition that could lead to data not being displayed correctly.
+   */
+  ionViewWillEnter() {
+    setTimeout(() => this.cdr.detectChanges(), 0);
+  }
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

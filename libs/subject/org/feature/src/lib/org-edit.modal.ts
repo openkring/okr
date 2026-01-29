@@ -1,6 +1,6 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController, ViewWillEnter } from '@ionic/angular/standalone';
 
 import { CategoryListModel, OrgModel, OrgModelName, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
@@ -81,10 +81,11 @@ import { OrgFormComponent } from '@bk2/subject-org-ui';
     </ion-content>
   `
 })
-export class OrgEditModalComponent {
+export class OrgEditModalComponent implements ViewWillEnter {
   private readonly modalController = inject(ModalController);
   private readonly avatarService = inject(AvatarService);
   private readonly env = inject(ENV);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   // inputs
   public org = input.required<OrgModel>();
@@ -111,6 +112,15 @@ export class OrgEditModalComponent {
   protected orgKey = computed(() => this.org()?.bkey ?? '');
   protected isNew = computed(() => !this.org()?.bkey.length);
   protected listId = computed(() => 'o_' + this.orgKey());
+
+  /**
+   * Lifecycle hook that is called when the view is about to enter and become the active page.
+   * Give some time for the avatar toolbar to initialize before triggering change detection.
+   * This prevents a potential race condition that could lead to data not being displayed correctly.
+   */
+  ionViewWillEnter() {
+    setTimeout(() => this.cdr.detectChanges(), 0);
+  }
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
