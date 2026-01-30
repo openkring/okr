@@ -49,6 +49,9 @@ import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
           <ion-col size="12">
             <bk-text-input name="subTitle" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [readOnly]="isReadOnly()" />
           </ion-col>
+          <ion-col size="12">
+            <bk-text-input name="colSize" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
+          </ion-col>
           <ion-col size="6">
             <ion-item lines="none">
               <ion-label>{{ '@content.section.forms.roleNeeded.title' | translate | async }}</ion-label>
@@ -79,6 +82,7 @@ export class SectionConfigComponent {
   protected subTitle = linkedSignal(() => this.formData().subTitle ?? '');
   protected type = computed(() => this.formData().type);
   protected roleNeeded = linkedSignal(() => this.formData().roleNeeded ?? 'registered');
+  protected colSize = linkedSignal(() => this.formData().colSize ?? '12');
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | RoleName): void {
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));

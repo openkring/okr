@@ -40,6 +40,7 @@ export const BASE_SECTION_SHAPE = {
   subTitle: DEFAULT_TITLE,
   index: DEFAULT_INDEX,
   color: ColorIonic.Primary,
+  colSize: '12',
   roleNeeded: 'contentAdmin',
   isArchived: false,
   content: {

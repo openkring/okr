@@ -32,6 +32,7 @@ export interface BaseSection {
   subTitle: string;
   index: string;
   color: ColorIonic;
+  colSize: string; // col size(s) of the section card itself, e.g. '12' or '12,6,4' (default, md, lg)
   roleNeeded: RoleName;
   isArchived: boolean;
   content: EditorConfig; // content from rich text editor

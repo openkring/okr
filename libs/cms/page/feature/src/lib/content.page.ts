@@ -1,12 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AccordionSection, ArticleSection, ButtonSection, RoleName, SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@bk2/shared-util-angular';
 import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -20,7 +20,8 @@ import { PageStore } from './page.store';
   imports: [
     SectionComponent, MenuComponent,
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent, IonList, IonItem, IonLabel, IonPopover
+    IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
+    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonPopover
   ],
   providers: [PageStore, SectionStore],
   styles: [`
@@ -131,19 +132,27 @@ import { PageStore } from './page.store';
             </ion-button>
           </ion-item>
         } @else {     <!-- page contains sections -->
-          <ion-list>
-            @for(section of visibleSections(); track section.bkey) {
-              <ion-item lines="none" class="section-item" (click)="showActions(section.bkey)" [class.edit-mode]="editMode()">
-                @if(editMode()) {
-                  <div class="section-wrapper" [class.editable]="editMode()">
-                    <bk-section [id]="section.bkey" />
-                  </div>  
-                } @else {
-                  <bk-section [id]="section.bkey" />
+          <ion-grid>
+            <ion-row>
+              @for(section of visibleSections(); track section.bkey) {
+                @if(getColSizes(section.colSize); as colSizes) {
+                  <ion-col size="{{colSizes.size}}" 
+                    class="section-item" (click)="showActions(section.bkey)"
+                    [class.edit-mode]="editMode()"
+                    [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
+                  >
+                    @if(editMode()) {
+                      <div class="section-wrapper" [class.editable]="editMode()">
+                        <bk-section [id]="section.bkey" />
+                      </div>  
+                    } @else {
+                      <bk-section [id]="section.bkey" />
+                    }
+                  </ion-col>
                 }
-              </ion-item>
-            }
-          </ion-list>
+              }
+            </ion-row>
+          </ion-grid>
         }
       } @else { <!-- not contentAdmin; also: not logged-in for public content -->
         @if(pageStore.isEmptyPage()) {
@@ -339,5 +348,13 @@ export class ContentPageComponent {
   protected getAccordionItems(section: SectionModel) {
     if (section.type !== 'accordion') return [];
     return (section as AccordionSection).properties.items;
+  }
+
+  /**
+   * Parses a col size config string (e.g. "6,4,3") and returns an object for attribute binding.
+   * { size: 6, sizeMd: 4, sizeLg: 3 }
+   */
+  protected getColSizes(colSizeConfig: string): { size?: number, sizeMd?: number, sizeLg?: number } {
+    return getColSizes(colSizeConfig);
   }
 }
