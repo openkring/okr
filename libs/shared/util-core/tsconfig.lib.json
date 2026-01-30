@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "../../../dist/libs/shared/util-core",
     "declaration": true,
+    "composite": true,
     "types": ["node"],
     "paths": {
       "@bk2/shared-models": ["../../../dist/libs/shared/models/src/index.d.ts"],

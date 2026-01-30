@@ -2,7 +2,8 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "../../../dist/libs/shared/models",
-    "declaration": true
+    "declaration": true,
+    "composite": true
   },
   "include": ["src/**/*"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"]

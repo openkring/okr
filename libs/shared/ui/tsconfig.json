@@ -2,7 +2,8 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["node", "vitest"],
-    "declaration": true
+    "declaration": true,
+    "composite": true
   },
   "angularCompilerOptions": {
     "strictTemplates": true,

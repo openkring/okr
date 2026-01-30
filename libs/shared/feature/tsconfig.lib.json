@@ -1,7 +1,9 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",    "tsBuildInfoFile": "../../../dist/out-tsc/shared-feature.tsbuildinfo"
+    "outDir": "../../../dist/out-tsc",
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-feature.tsbuildinfo",
+    "composite": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]
