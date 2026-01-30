@@ -13,7 +13,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   ],
   styles: [`
   /* iOS places the subtitle above the title */
-  ion-card-header { display: flex; flex-flow: column-reverse; }
+  ion-card-header { display: flex; flex-flow: column-reverse; padding-bottom: 0px; }
 `],
   template: `
       @if(doShowHeader()) {

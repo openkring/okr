@@ -32,6 +32,18 @@ export class AvatarLabelComponent {
 
   // computed
   protected colorName = computed(() => getCategoryStringField(ColorsIonic, this.color(), 'name') );
-  public url = computed(() => this.avatarService.getAvatarUrl(this.key(), 'other'));
+  public url = computed(() => this.avatarService.getAvatarUrl(this.key(), this.getDefaultIcon()));
+
+  private getDefaultIcon(): string {
+    const [modelType, key] = this.key().split('.');
+    switch (modelType) {
+      case 'person':
+      case 'org':
+      case 'resource':
+        return modelType;
+      default:
+        return 'other';
+    }
+  }
 }
 

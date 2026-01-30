@@ -55,10 +55,10 @@ export class PersonsWidgetComponent {
   protected cols = computed(() => {
     const count = this.count();
     if (this.avatarTitle().length > 0) {  // distribute the avatars to max 9 columns if title is shown
-      if (count === 1) return 9;
-      if (count === 2) return 4;
-      if (count === 3) return 3;
-      return 2; // for 4 or more avatars
+      if (count === 1) return 12;
+      if (count === 2) return 6;
+      if (count === 3) return 4;
+      return 3; // for 4 or more avatars
     } else {      // distribute the avatars to max 12 columns if no title is shown
       if (count > 4) return 2;
       return 12/count;

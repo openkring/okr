@@ -24,6 +24,7 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
       <ion-card>
         <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
+          @if (image() || (content() && content()!.length > 7)) {
           @switch(position()) {
             @case(VP.Left) {
               <ion-grid>
@@ -34,7 +35,7 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
                     </ion-col>
                   }
                   <ion-col size="12" [sizeMd]="colSizeText()">
-                    <ion-item lines="none">
+                    <ion-item lines="none" class="ion-no-padding">
                       <div [innerHTML]="content()"></div>
                     </ion-item>
                   </ion-col>
@@ -45,7 +46,7 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" [sizeMd]="colSizeText()">
-                    <ion-item lines="none">
+                    <ion-item lines="none" class="ion-no-padding">
                       <div [innerHTML]="content()"></div>
                     </ion-item>
                   </ion-col>
@@ -66,24 +67,32 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
                     </ion-col>
                   </ion-row>
                 }
-                <ion-row>
-                  <ion-col size="12">
-                    <ion-item lines="none">
-                      <div [innerHTML]="content()"></div>
-                    </ion-item>
-                  </ion-col>
-                </ion-row>
+                @if (content(); as content) {
+                  @if(content.length > 7) {
+                    <ion-row>
+                      <ion-col size="12">
+                        <ion-item lines="none" class="ion-no-padding">
+                          <div [innerHTML]="content"></div>
+                        </ion-item>
+                      </ion-col>
+                    </ion-row>
+                  }
+                }
               </ion-grid>
             }
             @case(VP.Bottom) {
               <ion-grid>
-                <ion-row>
-                  <ion-col size="12">
-                    <ion-item lines="none">
-                      <div [innerHTML]="content()"></div>
-                    </ion-item>
-                  </ion-col>
-                </ion-row>
+                @if (content(); as content) {
+                  @if(content.length > 7) {
+                    <ion-row>
+                      <ion-col size="12">
+                        <ion-item lines="none" class="ion-no-padding">
+                          <div [innerHTML]="content"></div>
+                        </ion-item>
+                      </ion-col>
+                    </ion-row>
+                  }
+                }
                 @if(image(); as image) {
                   <ion-row>
                     <ion-col size="12">
@@ -99,6 +108,7 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
               </ion-item>
             }
           }
+        }
         </ion-card-content>
       </ion-card>
     } @else {
