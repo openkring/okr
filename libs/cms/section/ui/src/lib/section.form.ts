@@ -573,7 +573,6 @@ export class SectionFormComponent {
       // peopleConfig
       const people = this.peopleConfig()?.persons || [];
       people.push(avatar);
-      this.onFieldChange('persons', people);
     }
   }
 }
