@@ -22,14 +22,15 @@ module.exports = [
       },
     },
     rules: {
-      ...prettierConfig.rules, // Disable conflicting ESLint rules
-      'prettier/prettier': ['error', {}, { usePrettierrc: true }], // Run Prettier as ESLint rule
+   //   ...prettierConfig.rules, // Disable conflicting ESLint rules
+   //   'prettier/prettier': ['error', {}, { usePrettierrc: true }], // Run Prettier as ESLint rule
       '@nx/enforce-module-boundaries': [
         'error',
         {
           enforceBuildableLibDependency: true,
           allow: [],
           depConstraints: [
+            // Type-based layering (existing)
             { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['type:feature', 'type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
             { sourceTag: 'type:feature', onlyDependOnLibsWithTags: ['type:feature', 'type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
             { sourceTag: 'type:ui', onlyDependOnLibsWithTags: ['type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
@@ -39,6 +40,15 @@ module.exports = [
             { sourceTag: 'type:constants', onlyDependOnLibsWithTags: [] },
             { sourceTag: 'type:config', onlyDependOnLibsWithTags: [] },
             { sourceTag: 'type:api', onlyDependOnLibsWithTags: ['type:util', 'type:model', 'type:constants', 'platform:node'] },
+
+            // Scope-based domain enforcement (add your actual scopes as needed)
+            { sourceTag: 'scope:person', onlyDependOnLibsWithTags: ['scope:person', 'scope:shared', 'type:util', 'type:model', 'type:constants', 'type:config'] },
+            { sourceTag: 'scope:org', onlyDependOnLibsWithTags: ['scope:org', 'scope:shared', 'type:util', 'type:model', 'type:constants', 'type:config'] },
+            { sourceTag: 'scope:resource', onlyDependOnLibsWithTags: ['scope:resource', 'scope:shared', 'type:util', 'type:model', 'type:constants', 'type:config'] },
+            { sourceTag: 'scope:membership', onlyDependOnLibsWithTags: ['scope:membership', 'scope:shared', 'type:util', 'type:model', 'type:constants', 'type:config'] },
+            { sourceTag: 'scope:calevent', onlyDependOnLibsWithTags: ['scope:calevent', 'scope:shared', 'type:util', 'type:model', 'type:constants', 'type:config'] },
+            // Shared scope for cross-domain utilities/models
+            { sourceTag: 'scope:shared', onlyDependOnLibsWithTags: ['scope:shared', 'type:util', 'type:model', 'type:constants', 'type:config'] },
           ],
         },
       ],
@@ -49,8 +59,8 @@ module.exports = [
   {
     files: ['**/*.js', '**/*.jsx'],
     rules: {
-      ...prettierConfig.rules,
-      'prettier/prettier': ['error', {}, { usePrettierrc: true }],
+   //   ...prettierConfig.rules,
+   //   'prettier/prettier': ['error', {}, { usePrettierrc: true }],
     },
   },
   {
