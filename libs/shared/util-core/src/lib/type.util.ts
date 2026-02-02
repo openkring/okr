@@ -607,3 +607,77 @@ export function removeUndefinedFields(obj: Record<string, any>): Record<string, 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== undefined));
 }
+
+/**
+ * Parses a string in the format yyyymmdd[,hhmm]:name[,location][//type] into its components.
+ * @param input The input string.
+ * @returns An object with startDate, startTime, name, location, type (all strings, empty if missing)
+ * Example: 20260130,1830:Event Name,Zurich//meeting
+ *   → { startDate: '20260130', startTime: '1830', name: 'Event Name', location: 'Zurich', type: 'meeting' }
+ */
+export function parseEventString(input: string): {
+  startDate: string;
+  startTime: string;
+  name: string;
+  location: string;
+  type: string;
+} {
+  let startDate = '', startTime = '', name = '', location = '', type = '';
+  if (!input) return { startDate, startTime, name, location, type };
+
+  // Split off type if present
+  const [main, typePart] = input.split('//');
+  if (typePart) type = typePart.trim();
+
+  // Split date/time from rest
+  const [dateTime, rest] = main.split(':');
+  if (dateTime) {
+    const [date, time] = dateTime.split(',');
+    startDate = (date || '').trim();
+    startTime = (time || '').trim();
+  }
+  if (rest) {
+    const [n, loc] = rest.split(',');
+    name = (n || '').trim();
+    location = (loc || '').trim();
+  }
+  return { startDate, startTime, name, location, type };
+}
+
+  /**
+   * Returns a title string based on the current calendar view.
+   * - dayGridMonth: SSS (e.g. JAN, FEB)
+   * - timeGridWeek: Knn (e.g. K05 for week 5)
+   * - timeGridDay: dd.mm.yyyy (e.g. 04.12.2025)
+   * @param viewType e.g. 'dayGridMonth'
+   * @param startDate the start date of the current view (currentStart attribute of FullCalendar view)
+   */
+  export function getCalendarTitle(viewType: string, startDate: Date): string {
+    switch (viewType) {
+      case 'dayGridMonth': {
+        // Return month as SSS (JAN, FEB, ...)
+        return startDate.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+      }
+      case 'timeGridWeek': {
+        // Return week number as Knn
+        // ISO week: Thursday in current week determines the year
+        const d = new Date(Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()));
+        // Set to nearest Thursday: current date + 4 - current day number
+        // (Monday is 1, Sunday is 7)
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
+        return `K${weekNo.toString().padStart(2, '0')}`;
+      }
+      case 'timeGridDay': {
+        // Return date as dd.mm.yyyy
+        const dd = startDate.getDate().toString().padStart(2, '0');
+        const mm = (startDate.getMonth() + 1).toString().padStart(2, '0');
+        const yyyy = startDate.getFullYear();
+        return `${dd}.${mm}.${yyyy}`;
+      }
+      default:
+        return '';
+    }
+  }
