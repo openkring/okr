@@ -22,6 +22,7 @@ import { TableSectionComponent } from './table-section.component';
 import { TrackerSectionComponent } from './tracker-section.component';
 import { VideoSectionComponent } from './video-section.component';
 import { SectionStore } from './section.store';
+import { EventsSectionComponent } from './events-section.component';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -33,7 +34,7 @@ import { SectionStore } from './section.store';
   standalone: true,
   imports: [
     AccordionSectionComponent,
-    ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent,
+    ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleSectionComponent, GallerySectionComponent, TrackerSectionComponent,
     HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent, ChatSectionComponent,
@@ -91,6 +92,9 @@ import { SectionStore } from './section.store';
           }
           @case('video') {
             <bk-video-section [section]="section" />
+          }
+          @case('events') {
+            <bk-events-section [section]="section" />
           }
           @default {
             <bk-missing-section [section]="section" />

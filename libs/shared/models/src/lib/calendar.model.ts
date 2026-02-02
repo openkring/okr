@@ -5,10 +5,10 @@ export class CalendarModel implements BkModel, NamedModel, SearchableModel, Tagg
   public bkey = DEFAULT_KEY; // unique key of the model in the database
   public tenants: string[] = DEFAULT_TENANTS; // tenant IDs that this model belongs to
   public isArchived = false; // whether the model is archived
-  public name = DEFAULT_NAME; // a meaningful name for the event, will be used as its title
+  public name = DEFAULT_NAME; // a meaningful name for the calendar, will be used as its title
   public index = DEFAULT_INDEX; // for search
   public tags = DEFAULT_TAGS; // tags for searching and filtering
-  public description = DEFAULT_NOTES; // a detailed description of the event, e.g. agenda or describe a conference
+  public description = DEFAULT_NOTES; // a detailed description of the calendar
   public owner = ''; // modelType.key of the owner of the calendar, e.g. group.test01
   public title = ''; // title of the calendar, shown in the calendar view
 

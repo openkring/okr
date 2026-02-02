@@ -1,4 +1,4 @@
-import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CategoryItemModel, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, GALLERY_SECTION_SHAPE, GallerySection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, MAP_SECTION_SHAPE, MapSection, PEOPLE_SECTION_SHAPE, PeopleSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection } from '@bk2/shared-models';
+import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CategoryItemModel, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, EVENTS_CONFIG_SHAPE, EVENTS_SECTION_SHAPE, EventsSection, GALLERY_SECTION_SHAPE, GallerySection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, MAP_SECTION_SHAPE, MapSection, PEOPLE_SECTION_SHAPE, PeopleSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection } from '@bk2/shared-models';
 import { die } from '@bk2/shared-util-core';
 
 /**
@@ -26,6 +26,7 @@ export function createSection(type: SectionType, tenantId: string, name?: string
     case 'table': section = { ...TABLE_SECTION_SHAPE } as TableSection; break;
     case 'tracker': section = { ...TRACKER_SECTION_SHAPE } as TrackerSection; break;
     case 'video': section = { ...VIDEO_SECTION_SHAPE } as VideoSection; break;
+    case 'events': section = { ...EVENTS_SECTION_SHAPE } as EventsSection; break;
     default: 
       die(`section.util.createSection: unknown section type '${type}'`);
   }
@@ -54,6 +55,7 @@ export function narrowSection(section: any): SectionModel | undefined {
     case 'table': return section as TableSection;
     case 'tracker': return section as TrackerSection;
     case 'video': return section as VideoSection;
+    case 'events': return section as EventsSection;
     default: return undefined;
   }
 }

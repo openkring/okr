@@ -2,6 +2,11 @@ import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_ID, DEF
 import { AvatarInfo } from './avatar-info';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
+export type Attendee = {
+  person: AvatarInfo;
+  status: 'invited' | 'accepted' | 'declined';
+}
+
 export class CalEventModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
   public bkey = DEFAULT_KEY; // unique key of the model in the database
   public tenants: string[] = DEFAULT_TENANTS; // tenant IDs that this model belongs to
@@ -26,6 +31,10 @@ export class CalEventModel implements BkModel, NamedModel, SearchableModel, Tagg
   public calendars: string[] = DEFAULT_CALENDARS; // list of calendar keys this event belongs to
   public url = DEFAULT_URL; // a link to a website or a document
   public responsiblePersons: AvatarInfo[] = []; // list of persons responsible for the event
+
+  // attendees are only used for open events, where there are no invitations sent
+  public isOpen = false; // whether the event is open to all users or only to invited persons
+  public attendees: Attendee[] = []; // list of attendees with their status
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

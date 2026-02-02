@@ -15,13 +15,14 @@ export const SectionCollection = 'sections';
 export const SectionModelName = 'section';
 
 export type SectionType = 
-    'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' |'gallery' | 'hero' | 'iframe' | 'map' | 'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion';
+    'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' |'gallery' | 'hero' | 'iframe' | 'map' | 
+    'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     GallerySection | HeroSection | IframeSection | MapSection | PeopleSection | SliderSection | 
-    TableSection | TrackerSection | VideoSection | AccordionSection;
+    TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 export interface BaseSection {
@@ -36,7 +37,8 @@ export interface BaseSection {
   roleNeeded: RoleName;
   isArchived: boolean;
   content: EditorConfig; // content from rich text editor
-  properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | GalleryConfig | HeroConfig | IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig;
+  properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | GalleryConfig | HeroConfig | 
+  IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -136,6 +138,8 @@ export interface ButtonActionConfig {
 // calendar
 export interface CalendarSection extends BaseSection {
   type: 'cal';
+  // title is from BaseSection
+  // name is from BaseSection:  calendar name to show (all, my, explicit)
   properties: CalendarOptions;   // from FullCalendar
 }
 
@@ -157,6 +161,25 @@ export interface CalendarSection extends BaseSection {
 }
   see:  https://fullcalendar.io/docs#toc
 */
+
+export interface EventsSection extends BaseSection {
+  type: 'events';
+  properties: EventsConfig;
+}
+
+export interface EventsConfig {
+  // the list of calendars is typically resolved by the caller based on the currentUser
+  // calendarName: string; // calendar name to show: all, my or an explicit calendar name; its name from BaseSection
+  // title is from BaseSection
+  moreUrl: string; // url to navigate to when 'more' button is clicked
+  // later: showPager: boolean; // if true, show pager to navigate between months/weeks/days
+  // later: pageSize: number; // number of events per page
+  maxEvents: number; // maximum number of events to show
+  showPastEvents: boolean; // if true, show past events
+  showUpcomingEvents: boolean; // if true, show upcoming events
+  showEventTime: boolean; // if true, show event time
+  showEventLocation: boolean; // if true, show event location
+}
 
 // chart
 export interface ChartSection extends BaseSection {

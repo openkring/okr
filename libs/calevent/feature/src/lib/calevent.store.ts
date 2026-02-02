@@ -64,7 +64,7 @@ export const CalEventStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
-        return store.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
+        return store.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'startDate', 'asc').pipe(
           debugListLoaded<CalEventModel>('CalEventStore.calevents', params.currentUser)
         );
       }
@@ -143,6 +143,11 @@ export const CalEventStore = signalStore(
 
       /******************************** setters (filter) ******************************************* */
       setCalendarName(calendarName: string) {
+        const calendarNames = calendarName.split(',');
+        if (calendarNames.length !== 1) {
+          warn(`CalEventStore.setCalendarName: exactly one calendar name expected (${calendarNames.join(', ')}).`);
+          return;
+        }
         patchState(store, { calendarName });
       },
       
@@ -248,6 +253,10 @@ export const CalEventStore = signalStore(
           }
           this.reload();
         }
+      },
+
+      async quickEntry(calevent: CalEventModel): Promise<void> {
+        await store.calEventService.create(calevent, store.currentUser());
       },
 
       /******************************* CRUD on calevent series *************************************** */

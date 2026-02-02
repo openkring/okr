@@ -5,7 +5,7 @@ import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL,
 import type { 
   AccordionSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection, 
   AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection, 
-  ChartSection, ChatConfig, ChatSection, EditorConfig, GalleryConfig, 
+  ChartSection, ChatConfig, ChatSection, EditorConfig, EventsConfig, EventsSection, GalleryConfig, 
   GallerySection, HeroConfig, HeroSection, IconConfig, IframeConfig, 
   IframeSection, MapConfig, MapSection, PeopleConfig, 
   PeopleSection, SliderConfig, SliderSection, TableConfig, TableSection, 
@@ -112,6 +112,16 @@ export const CHAT_CONFIG_SHAPE = {
   description: '',
   type: 'messaging',
 } as ChatConfig;
+
+// events
+export const EVENTS_CONFIG_SHAPE = {
+  moreUrl: '',
+  maxEvents: 5,
+  showPastEvents: false,
+  showUpcomingEvents: true,
+  showEventTime: true,
+  showEventLocation: false,
+} as EventsConfig;
 
 // gallery
 export const GALLERY_CONFIG_SHAPE = {
@@ -311,3 +321,9 @@ export const VIDEO_SECTION_SHAPE = {
   type: 'video',
   properties: VIDEO_CONFIG_SHAPE
 } as VideoSection;
+
+export const EVENTS_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'events',
+  properties: EVENTS_CONFIG_SHAPE
+} as EventsSection;

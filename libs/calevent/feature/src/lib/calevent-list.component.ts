@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, PLATFORM_ID, signal, viewChild } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, viewChild } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CalEventModel, RoleName } from '@bk2/shared-models';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { addTime, debugData, getYear, getYearList, hasRole, warn } from '@bk2/shared-util-core';
+import { addTime, debugData, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
 
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import { EventInput } from '@fullcalendar/core';
@@ -29,13 +29,14 @@ import { CalEventStore } from './calevent.store';
       FullCalendarModule,
       SpinnerComponent, EmptyListComponent, AvatarDisplayComponent,
       MenuComponent, ListFilterComponent,
-      IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
+      IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonTextarea,
       IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     styles: [`
       ion-card-content { padding: 0px;}
       ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
+      ion-textarea { margin-top: 10px;}
       full-calendar { width: 100%; height: 800px;}
       .fc-toolbar-title { font-size: 1em;}
       :host ::ng-deep .fc .fc-button {
@@ -75,6 +76,24 @@ import { CalEventStore } from './calevent.store';
           }
         </ion-toolbar>
       }
+
+      <!-- quick entry -->
+      <ion-item lines="none">
+        <ion-textarea #bkQuickEntry 
+          (keyup.enter)="quickEntry(bkQuickEntry)"
+          label = "{{'@input.eventQuickEntry.label' | translate | async }}"
+          labelPlacement = "floating"
+          placeholder = "{{'@input.eventQuickEntry.placeholder' | translate | async }}"
+          [counter]="true"
+          fill="outline"
+          [maxlength]="1000"
+          [rows]="1"
+          inputmode="text"
+          type="text"
+          [autoGrow]="true">
+        </ion-textarea>
+        <ion-icon slot="end" src="{{'close_cancel' | svgIcon }}" (click)="clear(bkQuickEntry)" />
+      </ion-item>
 
       <!-- search and filters -->
       <bk-list-filter
@@ -169,8 +188,8 @@ export class CalEventListComponent {
   protected calendarEvents = computed<EventInput[]>(() => {    
     return this.filteredCalEvents().map(event => ({
       title: event.name,
-      start: this.toIsoDateTime(event.startDate, event.startTime),
-      end: this.toIsoDateTime(event.endDate || event.startDate, addTime(event.startTime, 0, event.durationMinutes)),
+      start: getIsoDateTime(event.startDate, event.startTime),
+      end: getIsoDateTime(event.endDate || event.startDate, addTime(event.startTime, 0, event.durationMinutes)),
       extendedProps: { eventKey: event.bkey },
       backgroundColor: '#3788d8', // optional
       borderColor: '#3788d8'
@@ -221,6 +240,43 @@ export class CalEventListComponent {
   }
 
   /******************************* actions *************************************** */
+  /**
+   * This is the quick entry. It just takes the name of the event together with a date and optional time and adds it to the list.
+   * @param eventName 
+   */
+  protected async quickEntry(bkQuickEntry: IonTextarea): Promise<void> {
+    const calevent = new CalEventModel(this.calEventStore.tenantId());
+    const calname = this.calEventStore.calendarName();
+    if (!calname || calname === '') {
+      error(undefined, 'CalEventListComponent.quickEntry: missing calendar name');
+      return;
+    }
+    calevent.calendars = [calname];
+    const parts = parseEventString(bkQuickEntry.value?.trim() ?? '');
+    if (!parts.startDate || parts.startDate === '') {
+      error(undefined, 'CalEventListComponent.quickEntry: startDate is mandatory in quick entry');
+      return;
+    }
+    calevent.startDate = parts.startDate;
+    if (parts.startTime && parts.startTime.length === 4) {
+      calevent.startTime = parts.startTime.substring(0, 2) + ':' + parts.startTime.substring(2, 4);
+      calevent.endDate = calevent.startDate;
+    } else {  // daily event, once, one day
+      calevent.endDate = calevent.startDate;  
+      calevent.startTime = '';
+      calevent.fullDay = true;
+    }
+    calevent.name = parts.name || '';
+    calevent.locationKey = parts.location || '';
+    calevent.type = parts.type || '';
+    await this.calEventStore.quickEntry(calevent);
+    bkQuickEntry.value = '';
+  }
+
+  protected clear(bkQuickEntry: IonTextarea): void {
+    bkQuickEntry.value = '';
+  }
+
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
@@ -325,10 +381,5 @@ export class CalEventListComponent {
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
-  }
-
-  private toIsoDateTime(date: string, time: string): string {
-    if (!date) return '';
-    return `${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}T${time || '00:00'}:00`;
   }
 }
