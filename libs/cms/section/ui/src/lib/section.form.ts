@@ -1,9 +1,10 @@
 import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, GallerySection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, MapConfig, MapSection, PeopleConfig, PeopleSection, RoleName, SectionModel, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, GallerySection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, MapConfig, MapSection, PeopleConfig, PeopleSection, RoleName, SectionModel, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
 import { ChipsComponent, ImageConfigComponent, NotesInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { ModelSelectService } from '@bk2/shared-feature';
 
 import { SectionConfigComponent } from './section-config';
 import { EditorConfigComponent } from './editor-config';
@@ -21,7 +22,7 @@ import { TrackerConfigComponent } from './tracker-config';
 import { TableGridComponent } from './table-grid';
 import { TableStyleComponent } from './table-style';
 import { TableDataComponent } from './table-data';
-import { ModelSelectService } from '@bk2/shared-feature';
+import { EventsConfigComponent } from './events-config';
 
 @Component({
   selector: 'bk-section-form',
@@ -30,7 +31,8 @@ import { ModelSelectService } from '@bk2/shared-feature';
     ChipsComponent, NotesInputComponent,
     SectionConfigComponent, EditorConfigComponent, ImageConfigComponent, ImageStyleComponent, AlbumConfigComponent,
     IframeConfigComponent, PeopleConfigComponent, VideoConfigComponent, ButtonStyleComponent, ButtonActionComponent, IconConfigComponent,
-    ChatConfigComponent, MapConfigComponent, TrackerConfigComponent, TableGridComponent, TableStyleComponent, TableDataComponent
+    ChatConfigComponent, MapConfigComponent, TrackerConfigComponent, TableGridComponent, TableStyleComponent, TableDataComponent,
+    EventsConfigComponent
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -82,6 +84,11 @@ import { ModelSelectService } from '@bk2/shared-feature';
         @case('chat') {
           @if(chatConfig(); as chatConfig) {
             <bk-chat-config [formData]="chatConfig" (formDataChange)="onChatConfigChange($event)" [readOnly]="isReadOnly()" />
+          }
+        }
+        @case('events') {
+          @if(eventsConfig(); as eventsConfig) {
+            <bk-events-config [formData]="eventsConfig" (formDataChange)="onEventsConfigChange($event)" [readOnly]="isReadOnly()" />
           }
         }
         @case('gallery') {
@@ -188,6 +195,7 @@ export class SectionFormComponent {
   protected buttonStyle = linkedSignal(() => this.getButtonStyle());
   protected iconConfig = linkedSignal(() => this.getIconConfig());
   protected chatConfig = linkedSignal(() => this.getChatConfig());
+  protected eventsConfig = linkedSignal(() => this.getEventsConfig());
   protected logoConfig = linkedSignal(() => this.getLogoConfig());
   protected heroConfig = linkedSignal(() => this.getHeroConfig());
   protected iframeConfig = linkedSignal(() => this.getIframeConfig());
@@ -278,6 +286,12 @@ export class SectionFormComponent {
   private getChatConfig(): ChatConfig | undefined {
     if (this.formData().type === 'chat') {
       return ((this.formData() as ChatSection).properties as ChatConfig);
+    }
+  }
+
+  private getEventsConfig(): EventsConfig | undefined {
+    if (this.formData().type === 'events') {
+      return ((this.formData() as any).properties as EventsConfig);
     }
   }
 
@@ -461,6 +475,16 @@ export class SectionFormComponent {
         ...section,
         properties: config
       } as any);
+    }
+  }
+
+  protected onEventsConfigChange(config: EventsConfig): void {
+    const section = this.formData();
+    if (section.type === 'events') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as EventsSection);
     }
   }
 
