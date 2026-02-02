@@ -73,7 +73,7 @@ import { PartPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
             @if(showMoreButton()) {
               <ion-row>
                 <ion-col size="3">
-                  <ion-button expand="block" fill="outline" href="{{ moreUrl() }}">
+                  <ion-button expand="block" fill="clear" href="{{ moreUrl() }}">
                     Mehr...
                   </ion-button>
                 </ion-col>
