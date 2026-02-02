@@ -63,11 +63,11 @@ import { TaskStore } from './task.store';
 
       <!-- quick entry -->
       <ion-item lines="none">
-        <ion-textarea #bkTaskName 
-          (keyup.enter)="addName(bkTaskName)"
-          label = "{{'@input.taskName.label' | translate | async }}"
+        <ion-textarea #bkQuickEntry 
+          (keyup.enter)="quickEntry(bkQuickEntry)"
+          label = "{{'@input.taskQuickEntry.label' | translate | async }}"
           labelPlacement = "floating"
-          placeholder = "{{'@input.taskName.placeholder' | translate | async }}"
+          placeholder = "{{'@input.taskQuickEntry.placeholder' | translate | async }}"
           [counter]="true"
           fill="outline"
           [maxlength]="1000"
@@ -76,7 +76,7 @@ import { TaskStore } from './task.store';
           type="text"
           [autoGrow]="true">
         </ion-textarea>
-        <ion-icon slot="end" src="{{'close_cancel' | svgIcon }}" (click)="clear(bkTaskName)" />
+        <ion-icon slot="end" src="{{'close_cancel' | svgIcon }}" (click)="clear(bkQuickEntry)" />
       </ion-item>
 
       <!-- search and filters -->
@@ -196,12 +196,12 @@ export class TaskListComponent {
    * This is the quick entry. It just takes the name of the task and adds it to the list.
    * @param taskName 
    */
-  protected async addName(bkTaskName: IonTextarea): Promise<void> {
+  protected async quickEntry(bkQuickEntry: IonTextarea): Promise<void> {
     const task = new TaskModel(this.taskStore.tenantId());
-    [task.tags, task.dueDate, task.name] = extractTagAndDate(bkTaskName.value?.trim() ?? '');
+    [task.tags, task.dueDate, task.name] = extractTagAndDate(bkQuickEntry.value?.trim() ?? '');
     task.author = getAvatarInfo(this.taskStore.currentUser(), 'user');
-    await this.taskStore.addName(task);
-    bkTaskName.value = '';
+    await this.taskStore.quickEntry(task);
+    bkQuickEntry.value = '';
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
@@ -275,8 +275,8 @@ export class TaskListComponent {
     await this.taskStore.setCompleted(task);
   }
 
-  protected clear(bkTaskName: IonTextarea): void {
-    bkTaskName.value = '';
+  protected clear(bkQuickEntry: IonTextarea): void {
+    bkQuickEntry.value = '';
   }
 
   /******************************* helpers *************************************** */

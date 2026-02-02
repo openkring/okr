@@ -45,10 +45,10 @@ import { TaskStore } from './task.store';
         <!-- quick entry -->
         <ion-item lines="none">
           <ion-textarea #bkTaskName 
-            (keyup.enter)="addName(bkTaskName)"
-            label = "{{'@input.taskName.label' | translate | async }}"
+            (keyup.enter)="quickEntry(bkTaskName)"
+            label = "{{'@input.taskQuickEntry.label' | translate | async }}"
             labelPlacement = "floating"
-            placeholder = "{{'@input.taskName.placeholder' | translate | async }}"
+            placeholder = "{{'@input.taskQuickEntry.placeholder' | translate | async }}"
             [counter]="true"
             fill="outline"
             [maxlength]="1000"
@@ -156,11 +156,11 @@ export class SimpleTaskListComponent {
    * This is the quick entry. It just takes the name of the task and adds it to the list.
    * @param taskName 
    */
-  protected async addName(bkTaskName: IonTextarea): Promise<void> {
+  protected async quickEntry(bkTaskName: IonTextarea): Promise<void> {
     const task = new TaskModel(this.taskListStore.tenantId());
     [task.tags, task.dueDate, task.name] = extractTagAndDate(bkTaskName.value?.trim() ?? '');
     task.author = getAvatarInfo(this.taskListStore.currentUser(), 'user');
-    await this.taskListStore.addName(task);
+    await this.taskListStore.quickEntry(task);
     bkTaskName.value = '';
   }
 

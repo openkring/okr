@@ -176,7 +176,7 @@ export const TaskStore = signalStore(
       }
     },
 
-    async addName(task: TaskModel): Promise<void> {
+    async quickEntry(task: TaskModel): Promise<void> {
       await store.taskService.create(task, store.currentUser());
     },
 
