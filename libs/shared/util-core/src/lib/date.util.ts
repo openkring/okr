@@ -454,12 +454,6 @@ export function getYearList(startYear = getYear() + 1, numberOfYears = 10): numb
     return yearList;
 }
 
-export function migrateDate(dateStr: string, isOptional: boolean): string {
-    if (!dateStr || dateStr.length < 8) return (isOptional === true) ? '' : '20000101120000';
-    if (dateStr.length === 8) return dateStr + '120000';
-    return dateStr;
-}
-
 export function getFormatFromDateLength(dateStr: string): DateFormat | undefined {
   if (!dateStr || dateStr.length === 0) return undefined;
   switch(dateStr.length) {
@@ -544,13 +538,20 @@ export function getMinutesFromTime(time: string): string {
   return time.substring(3, 5);
 }
 
-// yyyyMMdd hh:mm -> yyyy-MM-ddTHH:mm:ss
+ /**
+   * Convert a date in StoreDate format yyyymmdd and time hh:mm to ISO date time string yyyy-mm-ddThh:mm:ss
+   * @param date a date in StoreDate format yyyymmdd
+   * @param time a time in hh:mm or hhmm format
+   * @returns the ISO date time string yyyy-mm-ddThh:mm:ss
+   */
 export function getIsoDateTime(date: string, time: string): string {
-  if (!date || date.length !== 8) die('date.util/getIsoDateTime: invalid date ' + date);
-  if (!time || time.length !== 5) die('date.util/getIsoDateTime: invalid time ' + time);
-  return getYearStrFromDate(date) + '-' + getMonthFromDate(date) + '-' + getDayFromDate(date) + 'T' + time + ':00';
+  if (!date || date.length !== 8) return '';
+  if (!time) return '';
+  if (time.length === 4) time = time.slice(0,2) + ':' + time.slice(2,4);
+  if (time.length !== 5) return '';
+  return `${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}T${time || '00:00'}:00`;
+  //return getYearStrFromDate(date) + '-' + getMonthFromDate(date) + '-' + getDayFromDate(date) + 'T' + time + ':00';
 }
-
 
 export function calculateRecurringDates(startDate: string, endDate: string, periodicity: string): string[] {
     const dates: string[] = [];
