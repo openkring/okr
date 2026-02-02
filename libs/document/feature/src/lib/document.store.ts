@@ -65,7 +65,8 @@ export const DocumentStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
-        if (!params.documentKey?.length) return new Observable<DocumentModel>(() => {});
+        const key = params.documentKey;
+        if (!key || key.length === 0) return new Observable<DocumentModel>(() => {});
         return store.documentService.read(params.documentKey).pipe(
           debugItemLoaded('DocumentStore.document', params.currentUser)
         );
@@ -76,7 +77,7 @@ export const DocumentStore = signalStore(
  withComputed((state) => {
     return {
       documents: computed(() => state.documentsResource.value()) ?? [],
-      isLoading: computed(() => state.documentsResource.isLoading() || state.documentResource.isLoading()),
+      isLoading: computed(() => state.documentsResource.isLoading()),
     }
   }),
 
