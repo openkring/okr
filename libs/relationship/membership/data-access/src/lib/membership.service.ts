@@ -150,6 +150,29 @@ export class MembershipService {
   }
 
   /**
+   * Returns a list of unique org|group keys for the given member.
+   * @param memberKey The member's key (person or org).
+   * @param modelType The model type ('person' or 'org').
+   * @returns Observable<string[]> of unique org|group keys.
+   */
+  public listOrgsOfMember(memberKey: string, modelType: string): Observable<string[]> {
+    return this.listMembershipsOfMember(memberKey, modelType).pipe(
+      map(memberships => {
+        const seen = new Set<string>();
+        const orgKeys: string[] = [];
+        for (const m of memberships) {
+          const key = `${m.orgModelType}.${m.orgKey}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            orgKeys.push(key);
+          }
+        }
+        return orgKeys;
+      })
+    );
+  }
+
+  /**
  * List the members of a given organization or group.
  * @param orgKey the given organization or group to list its members for.
  * @returns a list of the memberships as an Observable
