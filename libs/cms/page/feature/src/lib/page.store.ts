@@ -312,7 +312,7 @@ export const _PageStore = signalStore(
       async show(page: PageModel, readOnly = true): Promise<void> {
         if (!page.bkey) return;
         //  store.appStore.appNavigationService.pushLink('page/all/c-' + store.tenantId() + '-pages');
-          await navigateByUrl(store.router, `/private/${page.bkey}/c-${store.tenantId()}-contentpage`, { readOnly });
+          await navigateByUrl(store.router, `/private/${page.bkey}/c-contentpage`, { readOnly });
       },
 
       async navigateByUrl(url: string): Promise<void> {

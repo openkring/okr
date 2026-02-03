@@ -301,6 +301,10 @@ export function getAvatarInfo(model?: PersonModel | OrgModel | ResourceModel | U
   }
 }
 
+export function getAvatarInfoForCurrentUser(cu: UserModel): AvatarInfo | undefined {
+  return newAvatarInfo(cu.personKey, cu.firstName, cu.lastName, 'person', '', '', '');
+}
+
 export function getAvatarInfoArray(model?: PersonModel | OrgModel | ResourceModel, modelType?: 'person' | 'org' | 'resource'): AvatarInfo[] {
   const avatarInfo = getAvatarInfo(model, modelType);
   return avatarInfo ? [avatarInfo] : [];

@@ -4,7 +4,7 @@ import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model'
 
 export type Attendee = {
   person: AvatarInfo;
-  status: 'invited' | 'accepted' | 'declined';
+  state: 'invited' | 'accepted' | 'declined';
 }
 
 export class CalEventModel implements BkModel, NamedModel, SearchableModel, TaggedModel {

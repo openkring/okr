@@ -114,14 +114,14 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
           <!--
           @case ('files') {
             @defer (on immediate) {
-              <bk-content-page id="{{id + '_files'}}" contextMenuName="c-test-contentpage" color="light" />
+              <bk-content-page id="{{id + '_files'}}" contextMenuName="c-contentpage" color="light" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('album') {
             @defer (on immediate) {
-              <bk-content-page id="{{id + '_album'}}" contextMenuName="c-test-contentpage" color="light" />
+              <bk-content-page id="{{id + '_album'}}" contextMenuName="c-contentpage" color="light" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }

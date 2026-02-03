@@ -10,7 +10,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 
 import { CalendarSection } from '@bk2/shared-models';
 import { SpinnerComponent } from '@bk2/shared-ui';
-import { addTime, debugData, debugMessage, getCalendarTitle, getIsoDateTime } from '@bk2/shared-util-core';
+import { addTime, debugData, debugMessage, getIsoDateTime } from '@bk2/shared-util-core';
 
 import { CalendarStore } from './calendar-section.store';
 

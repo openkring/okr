@@ -78,22 +78,24 @@ import { CalEventStore } from './calevent.store';
       }
 
       <!-- quick entry -->
-      <ion-item lines="none">
-        <ion-textarea #bkQuickEntry 
-          (keyup.enter)="quickEntry(bkQuickEntry)"
-          label = "{{'@input.eventQuickEntry.label' | translate | async }}"
-          labelPlacement = "floating"
-          placeholder = "{{'@input.eventQuickEntry.placeholder' | translate | async }}"
-          [counter]="true"
-          fill="outline"
-          [maxlength]="1000"
-          [rows]="1"
-          inputmode="text"
-          type="text"
-          [autoGrow]="true">
-        </ion-textarea>
-        <ion-icon slot="end" src="{{'close_cancel' | svgIcon }}" (click)="clear(bkQuickEntry)" />
-      </ion-item>
+      @if(!readOnly()) {
+        <ion-item lines="none">
+          <ion-textarea #bkQuickEntry 
+            (keyup.enter)="quickEntry(bkQuickEntry)"
+            label = "{{'@input.eventQuickEntry.label' | translate | async }}"
+            labelPlacement = "floating"
+            placeholder = "{{'@input.eventQuickEntry.placeholder' | translate | async }}"
+            [counter]="true"
+            fill="outline"
+            [maxlength]="1000"
+            [rows]="1"
+            inputmode="text"
+            type="text"
+            [autoGrow]="true">
+          </ion-textarea>
+          <ion-icon slot="end" src="{{'close_cancel' | svgIcon }}" (click)="clear(bkQuickEntry)" />
+        </ion-item>
+      }
 
       <!-- search and filters -->
       <bk-list-filter

@@ -14,6 +14,7 @@ export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedMo
   public state = DEFAULT_CONTENT_STATE; // the state of the page
   public notes = DEFAULT_NOTES; // a detailed description of the trip
   public sections = DEFAULT_SECTIONS; // section.bkey, section.name
+  public isPrivate = true; // if true, page requires authentication and should not be accessible via /public/ routes
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

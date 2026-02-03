@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { RoleName, SectionModel } from '@bk2/shared-models';
+import { RoleName } from '@bk2/shared-models';
 import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
 import { AccordionSectionComponent } from './accordion-section';
@@ -23,6 +23,7 @@ import { TrackerSectionComponent } from './tracker-section.component';
 import { VideoSectionComponent } from './video-section.component';
 import { SectionStore } from './section.store';
 import { EventsSectionComponent } from './events-section.component';
+import { InvitationsSectionComponent } from './invitations-section.component';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -38,6 +39,7 @@ import { EventsSectionComponent } from './events-section.component';
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleSectionComponent, GallerySectionComponent, TrackerSectionComponent,
     HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent, ChatSectionComponent,
+    InvitationsSectionComponent,
     IonItem, IonLabel
   ],
   providers: [SectionStore],
@@ -95,6 +97,9 @@ import { EventsSectionComponent } from './events-section.component';
           }
           @case('events') {
             <bk-events-section [section]="section" />
+          }
+          @case('invitations') {
+            <bk-invitations-section [section]="section" />
           }
           @default {
             <bk-missing-section [section]="section" />

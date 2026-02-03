@@ -5,19 +5,20 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, ModelSelectService } from '@bk2/shared-feature';
-import { AvatarInfo, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
-import { chipMatches, DateFormat, extractSecondPartOfOptionalTupel, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
-import { confirm } from '@bk2/shared-util-angular';
+import { CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
+import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@bk2/shared-util-core';
 
 import { InvitationService } from '@bk2/relationship-invitation-data-access';
-import { isInvitation } from '@bk2/relationship-invitation-util';
 
-import { InvitationEditModalComponent } from './invitation-edit.modal';
-
-export type InvitationState = {
+export type InvitationSectionState = {
   showOnlyCurrent: boolean;  // whether to show only current memberships or all memberships that ever existed
   caleventKey: string;
   inviteeKey: string;
+
+  // config
+  maxItems: number | undefined; // max items to show, undefined means all
+  showPastItems: boolean; // whether to show past items
+  showUpcomingItems: boolean; // whether to show upcoming items
 
   // filters
   searchTerm: string;
@@ -25,10 +26,15 @@ export type InvitationState = {
   selectedState: string;
 };
 
-export const initialInvitationState: InvitationState = {
+export const initialInvitationState: InvitationSectionState = {
   showOnlyCurrent: true,
   caleventKey: '',
   inviteeKey: '',
+
+  // config
+  maxItems: undefined,
+  showPastItems: false,
+  showUpcomingItems: true,
 
   // filters
   searchTerm: '',
@@ -36,7 +42,7 @@ export const initialInvitationState: InvitationState = {
   selectedState: 'all',
 };
 
-export const InvitationStore = signalStore(
+export const InvitationSectionStore = signalStore(
   withState(initialInvitationState),
   withProps(() => ({
     invitationService: inject(InvitationService),
@@ -104,6 +110,10 @@ export const InvitationStore = signalStore(
         patchState(store, { showOnlyCurrent });
       },
 
+      setConfig(maxItems: number | undefined, showPastItems: boolean, showUpcomingItems: boolean) {
+        patchState(store, { maxItems, showPastItems, showUpcomingItems });
+      },
+
       setScope(caleventKey: string, inviteeKey: string, showOnlyCurrent = true) {
         patchState(store, { caleventKey, inviteeKey, showOnlyCurrent });
       },
@@ -131,75 +141,11 @@ export const InvitationStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      // add an invitation of a person to a calevent
-      async invitePerson(calevent: CalEventModel, readOnly = false): Promise<string | undefined> {
-        const avatar = await store.modelSelectService.selectPersonAvatar('', '');
-        if (avatar && !readOnly) {
-          const inv = new InvitationModel(store.tenantId());
-          inv.inviteeKey = extractSecondPartOfOptionalTupel(avatar.key);
-          inv.inviteeFirstName = avatar.name1;
-          inv.inviteeLastName = avatar.name2;
-          inv.inviterKey = store.currentUser()?.personKey || '';
-          inv.inviterFirstName = store.currentUser()?.firstName || '';
-          inv.inviterLastName = store.currentUser()?.lastName || '';
-          inv.caleventKey = calevent.bkey;
-          inv.name = calevent.name;
-          inv.date = calevent.startDate;
-          inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
-          return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, '@invitation.operation.create', store.currentUser());
-        }
-
-      },
-      /**
-       * Show a modal to edit, view (readOnly = true) or create a invitation relationship.
-       * @param invitation the invitation relationship to edit
-       * @param readOnly 
-       */
-      async edit(invitation?: InvitationModel, readOnly = true): Promise<void> {
-        const modal = await store.modalController.create({
-          component: InvitationEditModalComponent,
-          componentProps: {
-            invitation,
-            currentUser: store.currentUser(),
-            tags: this.getTags(),
-            locale: this.getLocale(),
-            readOnly
-          }
-        });
-        modal.present();
-        const { data, role } = await modal.onDidDismiss();
-        if (role === 'confirm' && data && !readOnly) {
-          if (isInvitation(data, store.tenantId())) {
-            await (!data.bkey ? 
-              store.invitationService.create(data, store.currentUser()) : 
-              store.invitationService.update(data, store.currentUser()));
-          }
-        }
-        this.reload();
-      },
-
-      async delete(invitation: InvitationModel, readOnly = true): Promise<void> {
-        if (readOnly) return;
-        const result = await confirm(store.alertController, '@calevent.operation.delete.confirm', true);
-        if (result === true) {
-          await store.invitationService.delete(invitation, store.currentUser());
-          this.reload();
-        }
-      },
-
       async changeState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
         invitation.state = newState;
         invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
         await store.invitationService.update(invitation, store.currentUser());
         this.reload();
-      },
-
-      async export(type: string): Promise<void> {
-        console.log(`InvitationStore.export(${type}) is not yet implemented.`);
-      },
-
-      async selectPersonAvatar(): Promise<AvatarInfo | undefined> {
-        return await store.modelSelectService.selectPersonAvatar('','');
       },
     }
   })

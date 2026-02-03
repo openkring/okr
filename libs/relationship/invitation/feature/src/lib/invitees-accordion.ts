@@ -71,6 +71,7 @@ export class InviteesAccordionComponent {
   public calevent = input.required<CalEventModel>();
   public readonly color = input('light');
   public readonly title = input('@invitation.plural');
+  public showOnlyCurrent = input<boolean>(true);
   public readonly readOnly = input<boolean>(true);
 
   // coerced boolean inputs
@@ -85,7 +86,7 @@ export class InviteesAccordionComponent {
   private imgixBaseUrl = this.invitationStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.invitationStore.setCalevent(this.calevent().bkey));
+    effect(() => this.invitationStore.setScope(this.calevent().bkey, '', this.showOnlyCurrent()));
   }
 
   /******************************* actions *************************************** */

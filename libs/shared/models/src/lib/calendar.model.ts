@@ -11,6 +11,10 @@ export class CalendarModel implements BkModel, NamedModel, SearchableModel, Tagg
   public description = DEFAULT_NOTES; // a detailed description of the calendar
   public owner = ''; // modelType.key of the owner of the calendar, e.g. group.test01
   public title = ''; // title of the calendar, shown in the calendar view
+  public defaultIsOpen = true; // whether the calendar is open to all users or only to invited persons
+  // this is the default for each calevent created in this calendar
+  // The parameter can be overwritten in each CalEventModel
+  // usually, group calendars are closed, org calendards are open
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

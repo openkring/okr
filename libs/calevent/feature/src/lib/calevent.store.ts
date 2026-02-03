@@ -9,7 +9,7 @@ import { doc } from 'firebase/firestore';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, ModelSelectService } from '@bk2/shared-feature';
 import { CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
-import { calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getSystemQuery, getTodayStr, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, tenantValidations, warn } from '@bk2/shared-util-core';
+import { calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, tenantValidations, warn } from '@bk2/shared-util-core';
 import { error, navigateByUrl, confirm } from '@bk2/shared-util-angular';
 import { yearMatches } from '@bk2/shared-categories';
 import { MAX_DATES_PER_SERIES } from '@bk2/shared-constants';
@@ -21,11 +21,14 @@ import { getCaleventIndex, isCalEvent } from '@bk2/calevent-util';
 import { RegressionSelectionModalComponent } from '@bk2/calevent-ui';
 
 import { CalEventEditModalComponent } from './calevent-edit.modal';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, map, of } from 'rxjs';
 
 export type CalEventState = {
-  calendarName: string;
+  calendarName: string; // all, my, or specific calendar name
   seriesId: string;
+  maxEvents: number | undefined; // max events to show, undefined means all
+  showPastEvents: boolean; // whether to show past events
+  showUpcomingEvents: boolean; // whether to show upcoming events
 
   //filters
   searchTerm: string;
@@ -37,6 +40,9 @@ export type CalEventState = {
 export const initialState: CalEventState = {
   calendarName: '',
   seriesId: '',
+  maxEvents: undefined,
+  showPastEvents: false,
+  showUpcomingEvents: true,
 
   // filters
   searchTerm: '',
@@ -59,13 +65,92 @@ export const CalEventStore = signalStore(
     modelSelectService: inject(ModelSelectService),
   })),
   withProps((store) => ({
-    caleventsResource: rxResource({
+    // returns a list of unigue organization keys for the current user
+    // ie. all orgs that the current user is a member of
+    membershipsForCurrentUserResource: rxResource({
       params: () => ({
-        currentUser: store.appStore.currentUser()
+        personKey: store.appStore.currentUser()?.personKey
       }),
       stream: ({params}) => {
-        return store.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'startDate', 'asc').pipe(
-          debugListLoaded<CalEventModel>('CalEventStore.calevents', params.currentUser)
+        const personKey = params.personKey;
+        if (!personKey) return of([]);
+        return store.membershipService.listOrgsOfMember(personKey, 'person');
+      }
+    }),
+  })),
+  
+  // returns all calendars that belong to orgs of the current user
+  withProps((store) => ({
+    calendarsForCurrentUserResource: rxResource({
+      params: () => ({
+        orgKeys: store.membershipsForCurrentUserResource.value() ?? []
+      }),
+      stream: ({params}) => {
+        const orgKeys: string[] = params.orgKeys;
+        if (!orgKeys || orgKeys.length === 0) return of([]);
+        // Get all calendars and filter by owner
+        return store.appStore.firestoreService.searchData<CalendarModel>(CalendarCollection, getSystemQuery(store.appStore.env.tenantId), 'owner', 'asc').pipe(
+          map((calendars: CalendarModel[]) => {
+            // Find calendar keys where owner matches any orgKey
+            const calendarKeys: string[] = [];
+            for (const cal of calendars) {
+              if (orgKeys.includes(cal.owner)) {
+                calendarKeys.push(cal.bkey);
+              }
+            }
+            return calendarKeys;
+          })
+        );
+      }
+    })
+  })),
+
+  withProps((store) => ({
+    caleventsResource: rxResource({
+      params: () => ({
+        calendarName: store.calendarName(),
+        calendarsOfCurrentUser: store.calendarsForCurrentUserResource.value() ?? []
+      }),
+      stream: ({ params }) => {
+        const calName = params.calendarName;
+        if (!calName || calName.length === 0) {
+          return of([]);
+        }
+        const allEvents$ = store.appStore.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.env.tenantId), 'startDate', 'asc');
+        const maxEvents = store.maxEvents();
+        return allEvents$.pipe(
+          map(events => {
+            const seen = new Set<string>();
+            const today = getTodayStr();
+            const result: CalEventModel[] = [];
+            for (const e of events) {
+              // Deduplicate by bkey (always)
+              if (seen.has(e.bkey)) {
+                continue;
+              }
+              // Filter by calendar(s)
+              if (calName === 'my') {
+                if (!store.calendarsForCurrentUserResource.value()?.some(key => e.calendars?.includes(key))) {
+                  continue;
+                }
+              } else if (calName !== 'all') { // explicit calendar name
+                if (!e.calendars?.includes(calName)) {
+                  continue;
+                }
+              }
+              // Filter by showPastEvents/showUpcomingEvents for all calendar types
+              if (store.showPastEvents() === false && isAfterDate(today, e.startDate)) {
+                continue;
+              }
+              if (store.showUpcomingEvents() === false && isAfterOrEqualDate(e.startDate, today)) {
+                continue;
+              }
+              seen.add(e.bkey);
+              result.push(e);
+              if (maxEvents && result.length >= maxEvents) break;
+            }
+            return result;
+          })
         );
       }
     }),
@@ -83,13 +168,8 @@ export const CalEventStore = signalStore(
 
   withComputed((state) => {
     return {
-      calEvents: computed(() => {
-        if (state.calendarName() === 'all') {
-          return state.caleventsResource.value() ?? [];
-        } else {
-          return state.caleventsResource.value()?.filter((calEvent: CalEventModel) => calEvent.calendars.includes(state.calendarName())) ?? [];
-        }
-      }),
+      calEvents: computed(() => state.caleventsResource.value() ?? []),
+
       calendar: computed(() => {
         const calName = state.calendarName();
         if (calName.length === 0 || calName === 'all') return undefined;
@@ -191,6 +271,7 @@ export const CalEventStore = signalStore(
         newCalevent.startDate = getTodayStr();
         newCalevent.startTime = '09:00';
         newCalevent.calendars = [store.calendarName()];
+        newCalevent.isOpen = store.calendar()?.defaultIsOpen ?? true;
         const untilDate = addMonths(new Date(), 3);
         newCalevent.repeatUntilDate = format(untilDate, DateFormat.StoreDate);
         await this.edit(newCalevent, true, readOnly);

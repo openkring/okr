@@ -2,13 +2,14 @@ import { isPlatformBrowser } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { Attendee, CalEventModel, EventsConfig, EventsSection } from '@bk2/shared-models';
+import { CalEventModel, EventsConfig, EventsSection } from '@bk2/shared-models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { CalendarStore } from './calendar-section.store';
-import { debugMessage, hasRole } from '@bk2/shared-util-core';
+import { debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@bk2/shared-util-core';
 import { CalEventDurationPipe } from '@bk2/calevent-util';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, navigateByUrl } from '@bk2/shared-util-angular';
 import { PartPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'bk-events-section',
@@ -46,8 +47,10 @@ import { PartPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
             @for(event of calevents(); track event.bkey) {
               <ion-row (click)="showActions(event)">
                 <ion-col size="1">
-                  @if(event.isOpen) {
-                    <ion-icon size="large" src="{{getAttendanceIcon(event.attendees) | svgIcon }}" color="{{getColor(event.attendees)}}" />
+                  @if(event.isOpen) { <!-- attendee -->
+                    <ion-icon size="large" src="{{getAttendanceIcon(event.bkey) | svgIcon }}" color="{{getAttendanceColor(event.bkey)}}" />
+                  } @else { <!-- invitation -->
+                    <ion-icon size="large" src="{{getInvitationIcon(event.bkey) | svgIcon }}" color="{{getInvitationColor(event.bkey)}}" />
                   }
                 </ion-col>
                 @if(showEventTime()) {
@@ -73,7 +76,7 @@ import { PartPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
             @if(showMoreButton()) {
               <ion-row>
                 <ion-col size="3">
-                  <ion-button expand="block" fill="clear" href="{{ moreUrl() }}">
+                  <ion-button expand="block" fill="clear" (click)="openMoreUrl()">
                     Mehr...
                   </ion-button>
                 </ion-col>
@@ -89,6 +92,7 @@ export class EventsSectionComponent implements OnInit {
   protected calendarStore = inject(CalendarStore);
   private readonly platformId = inject(PLATFORM_ID);
   private actionSheetController = inject(ActionSheetController);
+  private router = inject(Router);
 
   // inputs
   public section = input<EventsSection>();
@@ -137,22 +141,40 @@ export class EventsSectionComponent implements OnInit {
   /**
    * Displays an ActionSheet with all possible actions on a CalEvent. Only actions are shown, that the user has permission for.
    * After user selected an action this action is executed.
-   * @param calEvent 
+   * @param calevent 
    */
-  protected async showActions(calEvent: CalEventModel): Promise<void> {
+  protected async showActions(calevent: CalEventModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, calEvent);
-    await this.executeActions(actionSheetOptions, calEvent);
+    this.addActionSheetButtons(actionSheetOptions, calevent);
+    await this.executeActions(actionSheetOptions, calevent);
   }
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param calEvent 
+   * @param calevent 
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
     if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.imgixBaseUrl, 'close_cancel_circle'));
+      if (calevent.isOpen) {
+        const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
+        if (state !== 'accepted') {
+          actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
+        }
+        if (state !== 'declined') {
+          actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.imgixBaseUrl, 'close_cancel_circle'));
+        }
+      } else {  // invitation
+        // get invitation for current user
+        const inv = this.calendarStore.invitations().find(inv => inv.caleventKey === calevent.bkey);
+        if (inv) {
+          if (inv.state !== 'accepted') {
+            actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
+          }
+          if (inv.state !== 'declined') {
+            actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.imgixBaseUrl, 'close_cancel_circle'));
+          }
+        }
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
   }
@@ -179,39 +201,27 @@ export class EventsSectionComponent implements OnInit {
     }
   }
 
-  protected getAttendanceStatus(attendees: Attendee[]): string {
-    const my_pkey = this.currentUser()?.personKey;
-    for (const attendee of attendees) {
-      console.log('getAttendanceStatus: checking for my_pkey=' + my_pkey + ', attendee=', attendee);
-      if (attendee.person.key === my_pkey) {
-        return attendee.status;
-      }
-    }
-    return 'invited';
+  protected getAttendanceIcon(caleventKey: string): string {
+    const state = this.calendarStore.states()[caleventKey];
+    return getAttendanceIcon(state);
   }
 
-  protected getAttendanceIcon(attendees: Attendee[]): string {
-    const status = this.getAttendanceStatus(attendees);
-    console.log('getAttendanceIcon: status=', status);
-    switch (status) {
-      case 'accepted':
-        return 'checkbox_circle';
-      case 'declined':
-        return 'close_cancel_circle';
-      default:
-        return 'help-circle';
-    }
+  protected getAttendanceColor(caleventKey: string): string {
+    const state = this.calendarStore.states()[caleventKey];
+    return getAttendanceColor(state);
   }
 
-  protected getColor(attendees: Attendee[]): string {
-    const status = this.getAttendanceStatus(attendees);
-    switch (status) {
-      case 'accepted':
-        return 'success';
-      case 'declined':
-        return 'danger';
-      default:
-        return '';
-    }
+  protected getInvitationIcon(caleventKey: string): string {
+    const state = this.calendarStore.invitationStates()[caleventKey];
+    return state ? getAttendanceIcon(state) : '';
+  }
+
+  protected getInvitationColor(caleventKey: string): string {
+    const state = this.calendarStore.invitationStates()[caleventKey];
+    return state ? getAttendanceColor(state) : '';
+  }
+
+  protected openMoreUrl(): void {
+    navigateByUrl(this.router, this.moreUrl());
   }
 }

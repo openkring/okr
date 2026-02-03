@@ -1,4 +1,4 @@
-import { BkModel, MembershipModel, PersonModel } from '@bk2/shared-models';
+import { Attendee, BkModel, CalEventModel, InvitationModel } from '@bk2/shared-models';
 import { sortAscending, SortCriteria, sortDescending, SortDirection } from './sort.util';
 
 /*-------------------------SORT --------------------------------------------*/
@@ -24,3 +24,84 @@ export function addIndexElement(index: string, key: string, value: string | numb
 }
 
 
+  /**
+   * For each event, returns a map of (calevent.bkey, attendance state) for the current user (personKey).
+   * If the user is not listed as an attendee, returns 'invited' by default.
+   * use like this:  
+   *     const states = calendarStore.getAttendanceStates(filteredEvents(), currentUser.personKey);
+   *     const state = states[calevent.bkey] ?? 'invited';
+   * for closed calevents, state is undefined (ie the calevent is not listed in the result)
+   * @param calevents Array of CalEventModel
+   * @param personKey Person key, typically of the current user
+   * @returns Map of [calevent.bkey, state] for all attendances
+   */
+  export function getAttendanceStates(calevents: CalEventModel[], personKey: string): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const event of calevents) {
+      const state = getAttendanceState(event, personKey);
+      if (state) {
+        result[event.bkey] = state;
+      }
+    }
+    return result;
+  }
+
+  export function getAttendanceState(calevent: CalEventModel, personKey: string): string | undefined {
+    if (calevent.isOpen) {
+      if (personKey && calevent.attendees) {
+        const attendee = calevent.attendees.find((a: any) => a.person.key === personKey);
+        if (attendee && attendee.state) {
+          return attendee.state;
+        }
+      }
+      return 'invited'; // default state
+    }
+    return undefined;
+  }
+
+  export function getAttendee(calevent: CalEventModel, personKey: string): Attendee | undefined {
+    if (calevent.attendees) {
+      return calevent.attendees.find((a: any) => a.person.key === personKey);
+    }
+    return undefined;
+  }
+
+
+  export function getAttendanceIcon(state: string): string {
+    switch (state) {
+      case 'accepted':
+        return 'checkbox-circle';
+      case 'declined':
+        return 'close_cancel_circle';
+      default:
+        return 'help-circle';
+    }
+  }
+
+  export function getAttendanceColor(state: string): string {
+    switch (state) {
+      case 'accepted':
+        return 'success';
+      case 'declined':
+        return 'danger';
+      default:
+        return '';
+    }
+  }
+
+  /**
+   * For each event, returns a map of (calevent.bkey, invitation state).
+   * Matches invitations to events by caleventKey.
+   * @param calevents Array of CalEventModel
+   * @returns Map of calevent.bkey to invitation state (string)
+   */
+  export function getInvitationStates(calevents: CalEventModel[], invitations: InvitationModel[]): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const event of calevents) {
+      const invitation = invitations.find(inv => inv.caleventKey === event.bkey);
+      if (invitation) {
+        result[event.bkey] = invitation.state ?? 'pending';
+      }
+    }
+    return result;
+  }

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -92,8 +92,9 @@ export class InvitationListComponent {
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
-  public listId = input.required<string>();
+  public listId = input.required<string>(); // my, all, or calevent key
   public contextMenuName = input.required<string>();
+ // public showOnlyCurrent = input<boolean>(true);
 
   // filters
   protected searchTerm = linkedSignal(() => this.invitationStore.searchTerm());
@@ -112,6 +113,19 @@ export class InvitationListComponent {
 
   protected years = getYearList();
   private imgixBaseUrl = this.invitationStore.appStore.env.services.imgixBaseUrl;
+
+  constructor() {
+    effect(() => {
+      console.log(`InvitationListComponent: setting scope for listId=${this.listId()}`);  
+      if (this.listId() === 'my') {
+        this.invitationStore.setScope('', this.currentUser()?.personKey ?? '', true);
+      } else if (this.listId() === 'all') {
+        this.invitationStore.setScope('', '', true);
+      } else { // explicit calevent key given
+        this.invitationStore.setScope(this.listId(), '', true);
+      }
+    })
+  }
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {

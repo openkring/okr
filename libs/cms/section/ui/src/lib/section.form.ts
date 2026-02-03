@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, GallerySection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, MapConfig, MapSection, PeopleConfig, PeopleSection, RoleName, SectionModel, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, GallerySection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, RoleName, SectionModel, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
 import { ChipsComponent, ImageConfigComponent, NotesInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
@@ -23,6 +23,7 @@ import { TableGridComponent } from './table-grid';
 import { TableStyleComponent } from './table-style';
 import { TableDataComponent } from './table-data';
 import { EventsConfigComponent } from './events-config';
+import { InvitationsConfigComponent } from './invitations-config';
 
 @Component({
   selector: 'bk-section-form',
@@ -32,7 +33,7 @@ import { EventsConfigComponent } from './events-config';
     SectionConfigComponent, EditorConfigComponent, ImageConfigComponent, ImageStyleComponent, AlbumConfigComponent,
     IframeConfigComponent, PeopleConfigComponent, VideoConfigComponent, ButtonStyleComponent, ButtonActionComponent, IconConfigComponent,
     ChatConfigComponent, MapConfigComponent, TrackerConfigComponent, TableGridComponent, TableStyleComponent, TableDataComponent,
-    EventsConfigComponent
+    EventsConfigComponent, InvitationsConfigComponent
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -89,6 +90,11 @@ import { EventsConfigComponent } from './events-config';
         @case('events') {
           @if(eventsConfig(); as eventsConfig) {
             <bk-events-config [formData]="eventsConfig" (formDataChange)="onEventsConfigChange($event)" [readOnly]="isReadOnly()" />
+          }
+        }
+        @case('invitations') {
+          @if(invitationsConfig(); as invitationsConfig) {
+            <bk-invitations-config [formData]="invitationsConfig" (formDataChange)="onInvitationsConfigChange($event)" [readOnly]="isReadOnly()" />
           }
         }
         @case('gallery') {
@@ -196,6 +202,7 @@ export class SectionFormComponent {
   protected iconConfig = linkedSignal(() => this.getIconConfig());
   protected chatConfig = linkedSignal(() => this.getChatConfig());
   protected eventsConfig = linkedSignal(() => this.getEventsConfig());
+  protected invitationsConfig = linkedSignal(() => this.getInvitationsConfig());
   protected logoConfig = linkedSignal(() => this.getLogoConfig());
   protected heroConfig = linkedSignal(() => this.getHeroConfig());
   protected iframeConfig = linkedSignal(() => this.getIframeConfig());
@@ -292,6 +299,12 @@ export class SectionFormComponent {
   private getEventsConfig(): EventsConfig | undefined {
     if (this.formData().type === 'events') {
       return ((this.formData() as any).properties as EventsConfig);
+    }
+  }
+
+  private getInvitationsConfig(): InvitationsConfig | undefined {
+    if (this.formData().type === 'invitations') {
+      return ((this.formData() as any).properties as InvitationsConfig);
     }
   }
 
@@ -485,6 +498,16 @@ export class SectionFormComponent {
         ...section,
         properties: config
       } as EventsSection);
+    }
+  }
+
+  protected onInvitationsConfigChange(config: InvitationsConfig): void {
+    const section = this.formData();
+    if (section.type === 'invitations') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as InvitationsSection);
     }
   }
 

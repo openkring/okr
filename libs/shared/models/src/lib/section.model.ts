@@ -16,13 +16,13 @@ export const SectionModelName = 'section';
 
 export type SectionType = 
     'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' |'gallery' | 'hero' | 'iframe' | 'map' | 
-    'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events';
+    'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     GallerySection | HeroSection | IframeSection | MapSection | PeopleSection | SliderSection | 
-    TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection;
+    TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 export interface BaseSection {
@@ -38,7 +38,7 @@ export interface BaseSection {
   isArchived: boolean;
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | GalleryConfig | HeroConfig | 
-  IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig;
+  IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -51,8 +51,7 @@ export interface EditorConfig {
 }
 
 // --------------------------------------- CONCRETE SECTION MODELS ----------------------------------------
-
-// accordion
+// --------------------------------------- ACCORDION ----------------------------------------
 export interface AccordionSection extends BaseSection {
   type: 'accordion';
   properties: AccordionConfig;
@@ -72,7 +71,7 @@ export interface AccordionItem {
   sectionId?: string;   // reference to section to render in accordion content
 }
 
-// album
+// --------------------------------------- ALBUM ----------------------------------------
 export interface AlbumSection extends BaseSection {
   type: 'album';
   properties: AlbumConfig;
@@ -90,7 +89,7 @@ export interface AlbumConfig {
   effect: GalleryEffect;
 }
 
-// article
+// --------------------------------------- ARTICLE ----------------------------------------
 export interface ArticleSection extends BaseSection {
   type: 'article';
   properties: ArticleConfig;
@@ -101,7 +100,7 @@ export interface ArticleConfig {
     imageStyle: ImageStyle;
 }
 
-// button
+// --------------------------------------- BUTTON ----------------------------------------
 export interface ButtonSection extends BaseSection {
   type: 'button';
   properties: ButtonConfig;
@@ -135,7 +134,7 @@ export interface ButtonActionConfig {
   altText: string; // alt text for the button, default is the label
 }
 
-// calendar
+// --------------------------------------- CALENDAR ----------------------------------------
 export interface CalendarSection extends BaseSection {
   type: 'cal';
   // title is from BaseSection
@@ -162,6 +161,32 @@ export interface CalendarSection extends BaseSection {
   see:  https://fullcalendar.io/docs#toc
 */
 
+// --------------------------------------- CHART ----------------------------------------
+export interface ChartSection extends BaseSection {
+  type: 'chart';
+  properties: EChartsOption;
+}
+
+/*
+see: https://echarts.apache.org/en/option.html#title
+*/
+
+// --------------------------------------- CHAT ----------------------------------------
+export interface ChatSection extends BaseSection {
+  type: 'chat';
+  properties: ChatConfig;
+}
+
+export interface ChatConfig {
+  id: string; // the id of the chat channel, default is 'chat'
+  name: string; // the name of the chat channel, default is 'Chat'
+  url: string; // the image of the chat channel, default is ''
+  description: string; // the description of the chat channel, default is ''
+  type: string; // the type of the chat channel, default is 'messaging'
+  showChannelList: boolean; // if true, the channel list is shown, default is true
+}
+
+// --------------------------------------- EVENTS ----------------------------------------
 export interface EventsSection extends BaseSection {
   type: 'events';
   properties: EventsConfig;
@@ -181,32 +206,7 @@ export interface EventsConfig {
   showEventLocation: boolean; // if true, show event location
 }
 
-// chart
-export interface ChartSection extends BaseSection {
-  type: 'chart';
-  properties: EChartsOption;
-}
-
-/*
-see: https://echarts.apache.org/en/option.html#title
-*/
-
-// chat
-export interface ChatSection extends BaseSection {
-  type: 'chat';
-  properties: ChatConfig;
-}
-
-export interface ChatConfig {
-  id: string; // the id of the chat channel, default is 'chat'
-  name: string; // the name of the chat channel, default is 'Chat'
-  url: string; // the image of the chat channel, default is ''
-  description: string; // the description of the chat channel, default is ''
-  type: string; // the type of the chat channel, default is 'messaging'
-  showChannelList: boolean; // if true, the channel list is shown, default is true
-}
-
-// gallery
+// --------------------------------------- GALLERY ----------------------------------------
 export interface GallerySection extends BaseSection {
   type: 'gallery';
   properties: GalleryConfig;
@@ -217,7 +217,7 @@ export interface GalleryConfig {
   imageStyle: ImageStyle;
 }
 
-// hero
+// --------------------------------------- HERO ----------------------------------------
 export interface HeroSection extends BaseSection {
   type: 'hero';
   properties: HeroConfig;
@@ -229,7 +229,7 @@ export interface HeroConfig {
   imageStyle: ImageStyle;
 }
 
-// iframe
+// --------------------------------------- IFRAME ----------------------------------------
 export interface IframeSection extends BaseSection {
   type: 'iframe';
   properties: IframeConfig;
@@ -240,7 +240,25 @@ export interface IframeConfig {
   url: string; // the url of the iframe
 }
 
-// map
+// --------------------------------------- INVITATIONS ----------------------------------------
+export interface InvitationsSection extends BaseSection {
+  type: 'invitations';
+  properties: InvitationsConfig;
+}
+
+export interface InvitationsConfig {
+  // the list of invitations is typically resolved by the caller based on the currentUser
+  // scope: string; // determines the invitations to show: all, my or an explicit calevent key; stored as the name from BaseSection
+  // title is from BaseSection
+  moreUrl: string; // url to navigate to when 'more' button is clicked
+  // later: showPager: boolean; // if true, show pager to navigate between months/weeks/days
+  // later: pageSize: number; // number of events per page
+  maxItems: number; // maximum number of invitations to show
+  showPastItems: boolean; // if true, show past events
+  showUpcomingItems: boolean; // if true, show upcoming events
+}
+
+// --------------------------------------- MAP ----------------------------------------
 export interface MapSection extends BaseSection {
   type: 'map';
     properties: MapConfig;
@@ -253,7 +271,7 @@ export interface MapConfig {
   useCurrentLocationAsCenter: boolean;
 }
 
-// people
+// --------------------------------------- PEOPLE ----------------------------------------
 export interface PeopleSection extends BaseSection {
   type: 'people';
   properties: PeopleConfig;
@@ -274,7 +292,7 @@ export interface AvatarConfig {
   title: string; // to add a short text besides the avatar (e.g. Finanzen:   Bruno Kaiser (bkaiser))
 }
 
-// slider
+// --------------------------------------- SLIDER ----------------------------------------
 export interface SliderSection extends BaseSection {
   type: 'slider';
   properties: SliderConfig;
@@ -285,7 +303,7 @@ export interface SliderConfig {
   imageStyle: ImageStyle;
 }
 
-// table
+// --------------------------------------- TABLE ----------------------------------------
 export interface TableSection extends BaseSection {
   type: 'table';
   properties: TableConfig;
@@ -319,7 +337,7 @@ export interface TableStyle {
   border: string;
 }
 
-// tracker
+// --------------------------------------- TRACKER ----------------------------------------
 export interface TrackerSection extends BaseSection {
   type: 'tracker';
   properties: TrackerConfig;
@@ -333,7 +351,7 @@ export interface TrackerConfig {
   exportFormat: 'kmz' | 'json' | 'csv'; // the format for exporting the data, default is 'kmz'
 }
 
-// video
+// --------------------------------------- VIDEO ----------------------------------------
 export interface VideoSection extends BaseSection {
   type: 'video';
   properties: VideoConfig;

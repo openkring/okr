@@ -5,8 +5,8 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { map, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { CalendarCollection, CalendarModel, CalEventCollection, CalEventModel } from '@bk2/shared-models';
-import { getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@bk2/shared-util-core';
+import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
+import { DateFormat, getAttendanceStates, getAttendee, getAvatarInfo, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@bk2/shared-util-core';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 
@@ -44,6 +44,19 @@ export const CalendarStore = signalStore(
         return store.membershipService.listOrgsOfMember(personKey, 'person');
       }
     }),
+
+    invitationsForCurrentUserResource: rxResource({
+      params: () => ({
+        personKey: store.appStore.currentUser()?.personKey
+      }),
+      stream: ({params}) => {
+        const personKey = params.personKey;
+        if (!personKey) return of([]);
+        return store.appStore.firestoreService.searchData<InvitationModel>(InvitationCollection, getSystemQuery(store.appStore.env.tenantId), 'inviteeKey', 'asc').pipe(
+          map(invitations => invitations.filter(inv => inv.inviteeKey === personKey))
+        );
+      }
+    })
   })),
   
   // returns all calendars that belong to orgs of the current user
@@ -73,20 +86,17 @@ export const CalendarStore = signalStore(
   })),
 
   withProps((store) => ({
-      calEventsResource: rxResource({
-      params: () => ({
-        calendarName: store.calendarName(),
-        calendarsOfCurrentUser: store.calendarsForCurrentUserResource.value() ?? []
-      }),
-      stream: ({params}) => {
-        const calName = params.calendarName;
-        if ((!calName || calName.length === 0)) {
-          return of([]);
-        } else {
-          const allEvents$ = store.appStore.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.env.tenantId), 'startDate', 'asc');
-          if (calName === 'all') {
-            return allEvents$;            
+      caleventsResource: rxResource({
+        params: () => ({
+          calendarName: store.calendarName(),
+          calendarsOfCurrentUser: store.calendarsForCurrentUserResource.value() ?? []
+        }),
+        stream: ({ params }) => {
+          const calName = params.calendarName;
+          if (!calName || calName.length === 0) {
+            return of([]);
           }
+          const allEvents$ = store.appStore.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.env.tenantId), 'startDate', 'asc');
           const maxEvents = store.maxEvents();
           return allEvents$.pipe(
             map(events => {
@@ -94,7 +104,7 @@ export const CalendarStore = signalStore(
               const today = getTodayStr();
               const result: CalEventModel[] = [];
               for (const e of events) {
-                // Deduplicate by bkey
+                // Deduplicate by bkey (always)
                 if (seen.has(e.bkey)) {
                   continue;
                 }
@@ -103,12 +113,12 @@ export const CalendarStore = signalStore(
                   if (!store.calendarsForCurrentUserResource.value()?.some(key => e.calendars?.includes(key))) {
                     continue;
                   }
-                } else {    // explicit calendar name
+                } else if (calName !== 'all') { // explicit calendar name
                   if (!e.calendars?.includes(calName)) {
                     continue;
                   }
                 }
-                // Filter by showPastEvents/showUpcomingEvents
+                // Filter by showPastEvents/showUpcomingEvents for all calendar types
                 if (store.showPastEvents() === false && isAfterDate(today, e.startDate)) {
                   continue;
                 }
@@ -121,25 +131,18 @@ export const CalendarStore = signalStore(
               }
               return result;
             })
-          )
+          );
         }
-      }
-    })
+      })
   })),
 
   withComputed((state) => {
     return {
-      calevents: computed(() => {
-        const events = state.calEventsResource.value() ?? [];
-        const showPast = state.showPastEvents();
-        const showUpcoming = state.showUpcomingEvents();
-        const today = getTodayStr();
-        return events.filter(e =>
-          (showPast && isAfterDate(today, e.startDate)) ||
-          (showUpcoming && isAfterOrEqualDate(e.startDate, today))
-        );
-      }),
-      isLoading: computed(() => state.calEventsResource.isLoading() || state.calendarsForCurrentUserResource.isLoading() || state.membershipsForCurrentUserResource.isLoading()),
+      calevents: computed(() => state.caleventsResource.value() ?? []),
+      invitations: computed(() => state.invitationsForCurrentUserResource.value() ?? []),
+      states: computed(() => getAttendanceStates(state.caleventsResource.value() ?? [], state.appStore.currentUser()?.personKey ?? '')),
+      invitationStates: computed(() => getInvitationStates(state.caleventsResource.value() ?? [], state.invitationsForCurrentUserResource.value() ?? [])),
+      isLoading: computed(() => state.caleventsResource.isLoading() || state.calendarsForCurrentUserResource.isLoading() || state.membershipsForCurrentUserResource.isLoading()),
       currentUser: computed(() => state.appStore.currentUser()),
     }
   }),
@@ -155,17 +158,58 @@ export const CalendarStore = signalStore(
       },
 
       reload(): void {
-        store.calEventsResource.reload();
+        store.caleventsResource.reload();
         store.calendarsForCurrentUserResource.reload();
         store.membershipsForCurrentUserResource.reload();
       },
 
       async subscribe(calEvent: CalEventModel): Promise<void> {
-        console.log(`CalendarStore.subscribe(): subscribing to event ${calEvent.bkey}`);
+        if (calEvent.isOpen) {
+          await this.changeAttendanceState(calEvent, 'accepted');
+        } else {
+          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.bkey);
+          if (inv) {
+            await this.changeInvitationState(inv, 'accepted');
+          }
+        }
       },
 
       async unsubscribe(calEvent: CalEventModel): Promise<void> {
-        console.log(`CalendarStore.unsubscribe(): unsubscribing from event ${calEvent.bkey}`);
+        if (calEvent.isOpen) {
+          await this.changeAttendanceState(calEvent, 'declined');
+        } else {
+          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.bkey);
+          if (inv) {
+            await this.changeInvitationState(inv, 'declined');
+          }
+        }
+      },
+
+      async changeAttendanceState(calEvent: CalEventModel, newState: 'accepted' | 'declined' | 'invited'): Promise<void> {
+        const currentUser = store.currentUser();
+        if (!currentUser) return;
+        const attendee = getAttendee(calEvent, currentUser.personKey ?? '');
+        if (attendee) {
+          attendee.state = newState;
+        } else {
+          const avatar = getAvatarInfoForCurrentUser(currentUser);
+          if (!avatar) return;
+          const newAttendee: Attendee = {
+            person: avatar,
+            state: newState
+          };
+          calEvent.attendees.push(newAttendee);
+        }
+        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, '@calevent.operation.update', currentUser);
+      },
+
+      async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
+        const currentUser = store.currentUser();
+        if (!currentUser) return;
+        invitation.state = newState;
+        invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
+        await store.appStore.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, '@invitation.operation.update', currentUser);
+        // this.reload();
       },
     }
   })

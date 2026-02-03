@@ -7,7 +7,7 @@ import type {
   AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection, 
   ChartSection, ChatConfig, ChatSection, EditorConfig, EventsConfig, EventsSection, GalleryConfig, 
   GallerySection, HeroConfig, HeroSection, IconConfig, IframeConfig, 
-  IframeSection, MapConfig, MapSection, PeopleConfig, 
+  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, 
   PeopleSection, SliderConfig, SliderSection, TableConfig, TableSection, 
   TrackerConfig, TrackerSection, VideoConfig, VideoSection 
 } from "./section.model";
@@ -54,7 +54,7 @@ export const BASE_SECTION_SHAPE = {
 };
 
 // --------------------------------------- CONCRETE SECTION CONFIG SHAPES ----------------------------------------
-// album
+// --------------------------------------- ALBUM ----------------------------------------
 export const ALBUM_CONFIG_SHAPE = {
     directory: '',
     imageStyle: IMAGE_STYLE_SHAPE,
@@ -67,13 +67,13 @@ export const ALBUM_CONFIG_SHAPE = {
     effect: GalleryEffect.Slide
 } as AlbumConfig;
 
-// article
+// --------------------------------------- ARTICLE ----------------------------------------
 export const ARTICLE_CONFIG_SHAPE = {
     image: IMAGE_CONFIG_SHAPE,
     imageStyle: IMAGE_STYLE_SHAPE,
 } as ArticleConfig;
 
-// button
+// --------------------------------------- BUTTON ----------------------------------------
 export const ICON_CONFIG_SHAPE = {
     name: 'filetypes:pdf',
     size: 60,
@@ -98,13 +98,13 @@ export const BUTTON_CONFIG_SHAPE = {
     }
 } as ButtonConfig;
 
-// calendar
+// --------------------------------------- CALENDAR ----------------------------------------
 export const CALENDAR_OPTIONS_SHAPE = {} as CalendarOptions;    // from FullCalendar
 
-// chart
+// --------------------------------------- CHART ----------------------------------------
 export const ECHARTS_OPTIONS_SHAPE = {} as EChartsOption;
 
-// chat
+// --------------------------------------- CHAT ----------------------------------------
 export const CHAT_CONFIG_SHAPE = {
   id: `chat-${Math.random().toString(36).substring(2)}`,
   name: 'Gruppenchat',
@@ -113,7 +113,7 @@ export const CHAT_CONFIG_SHAPE = {
   type: 'messaging',
 } as ChatConfig;
 
-// events
+// --------------------------------------- EVENTS ----------------------------------------
 export const EVENTS_CONFIG_SHAPE = {
   moreUrl: '',
   maxEvents: 5,
@@ -123,26 +123,34 @@ export const EVENTS_CONFIG_SHAPE = {
   showEventLocation: false,
 } as EventsConfig;
 
-// gallery
+// --------------------------------------- GALLERY ----------------------------------------
 export const GALLERY_CONFIG_SHAPE = {
     images: [] as ImageConfig[],
     imageStyle: IMAGE_STYLE_SHAPE,
 } as GalleryConfig;
 
-// hero
+// --------------------------------------- HERO ----------------------------------------
 export const HERO_CONFIG_SHAPE = {
     logo: IMAGE_CONFIG_SHAPE,
     hero: IMAGE_CONFIG_SHAPE,
     imageStyle: IMAGE_STYLE_SHAPE,
 } as HeroConfig;
 
-// iframe
+// --------------------------------------- IFRAME ----------------------------------------
 export const IFRAME_CONFIG_SHAPE = {
     url: DEFAULT_URL,
     style: 'width: 100%; min-height:400px; border: none;'
 } as IframeConfig;
 
-// map
+// --------------------------------------- INVITATIONS ----------------------------------------
+export const INVITATIONS_CONFIG_SHAPE = {
+  moreUrl: '',
+  maxItems: 5,
+  showPastItems: false,
+  showUpcomingItems: true,
+} as InvitationsConfig;
+
+// --------------------------------------- MAP ----------------------------------------
 export const MAP_CONFIG_SHAPE = {
     centerLatitude: 0,
     centerLongitude: 0,
@@ -150,7 +158,7 @@ export const MAP_CONFIG_SHAPE = {
     useCurrentLocationAsCenter: true
 } as MapConfig;
 
-// people
+// --------------------------------------- PEOPLE ----------------------------------------
 export const AVATAR_CONFIG_SHAPE = {
   cols: 2,
   color: ColorIonic.Light,
@@ -167,13 +175,13 @@ export const PEOPLE_CONFIG_SHAPE = {
   persons: [] as AvatarInfo[]
 } as PeopleConfig;
 
-// slider
+// --------------------------------------- SLIDER ----------------------------------------
 export const SLIDER_CONFIG_SHAPE = {
     images: [] as ImageConfig[],
     imageStyle: IMAGE_STYLE_SHAPE,
 } as SliderConfig;
 
-// table
+// --------------------------------------- TABLE ----------------------------------------
 export const TABLE_CONFIG_SHAPE = {
     data: {
         header: [] as string[],
@@ -201,7 +209,7 @@ export const TABLE_CONFIG_SHAPE = {
     }
 } as TableConfig;
 
-// tracker
+// --------------------------------------- TRACKER ----------------------------------------
 export const TRACKER_CONFIG_SHAPE = {
     autostart: false,
     intervalInSeconds: 900,
@@ -210,7 +218,7 @@ export const TRACKER_CONFIG_SHAPE = {
     exportFormat: 'kmz'
 } as TrackerConfig;
 
-// video
+// --------------------------------------- VIDEO ----------------------------------------
 export const VIDEO_CONFIG_SHAPE = {
     url: DEFAULT_URL,
     width: '100%',
@@ -327,3 +335,9 @@ export const EVENTS_SECTION_SHAPE = {
   type: 'events',
   properties: EVENTS_CONFIG_SHAPE
 } as EventsSection;
+
+export const INVITATIONS_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'invitations',
+  properties: INVITATIONS_CONFIG_SHAPE
+} as InvitationsSection;

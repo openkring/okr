@@ -1,6 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -175,6 +176,7 @@ export class ContentPageComponent {
   private sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
+  private readonly router = inject(Router);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -223,6 +225,16 @@ export class ContentPageComponent {
       this.pageStore.setPageId(id);
     });
     effect(() => {
+      const page = this.pageStore.page();
+      if (page && page.isPrivate) {
+        const currentUrl = this.router.url;
+        if (currentUrl.includes('/public/')) {
+          console.warn(`ContentPageComponent: page ${page.name} is private but accessed via /public/, redirecting to login`);
+          this.router.navigateByUrl('/auth/login');
+        }
+      }
+    });
+    effect(() => {
       const meta = this.pageStore.meta();
       if (meta) {
         this.meta.addTags(meta);
@@ -241,6 +253,12 @@ export class ContentPageComponent {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
       case 'toggleEditMode':  this.editMode.update(value => !value); break;
+      case 'editPage': 
+        const page = this.pageStore.page();
+        if (page) {
+          await this.pageStore.edit(page, false);
+        }
+        break;
       case 'sortSections':  await this.pageStore.sortSections(); break;
       case 'selectSection': await this.pageStore.selectSection(); break;
       case 'addSection':    await this.addSection(); break;
