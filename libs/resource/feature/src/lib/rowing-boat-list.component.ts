@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -92,7 +92,6 @@ export class RowingBoatListComponent {
 
   // inputs
   public listId = input.required<string>();
-  public filter = input.required<string>();
   public contextMenuName = input.required<string>();
 
   // data
@@ -129,7 +128,7 @@ export class RowingBoatListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.resourceListStore.add(false); break;
+      case 'add':  await this.resourceListStore.add(false, false); break;
       case 'exportRaw': await this.resourceListStore.export("raw"); break;
       default: error(undefined, `RowingBoatListComponent.call: unknown method ${selectedMethod}`);
     }

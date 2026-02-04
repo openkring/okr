@@ -1,7 +1,7 @@
 import { ResourceModel } from '@bk2/shared-models';
 import { addIndexElement, extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@bk2/shared-util-core';
 
-import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_RBOAT_TYPE } from '@bk2/shared-constants';
+import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_PET_TYPE, DEFAULT_RBOAT_TYPE } from '@bk2/shared-constants';
 
   // locker:  name = lockerNr/keyNr, subType = GenderType
   // key:     name = keyNr
@@ -28,10 +28,10 @@ export function getDefaultForResourceType(resourceType?: string): string {
     case 'rboat': return DEFAULT_RBOAT_TYPE;
     case 'car': return DEFAULT_CAR_TYPE;
     case 'locker': return DEFAULT_GENDER;
+    case 'pet': return DEFAULT_PET_TYPE;
     case 'boat': // tbd: default boat_type
     case 'key':  // no subType
     case 'realestate': // tbd: default realestate_type
-    case 'pet': // tbd: default pet_type
     case 'other': // no subType
     default: return '';
   }
@@ -43,10 +43,10 @@ export function getCategoryNameForResourceType(resourceType?: string): string | 
     case 'rboat': return 'rboat_type';
     case 'car': return 'car_type';
     case 'locker': return 'gender';
-    case 'boat': // tbd: boat_type
+    case 'pet': return 'pet_type';
     case 'key':  // no subType
     case 'realestate': // tbd: realestate_type
-    case 'pet': // tbd: pet_type
+    case 'boat': // tbd: return 'boat_type';
     case 'other': // no subType
     default: return undefined;
   }

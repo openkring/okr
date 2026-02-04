@@ -304,6 +304,7 @@ export const OwnershipStore = signalStore(
         if (readOnly) return;
         const owner = givenOwner ?? store.appStore.currentPerson();
         const resource = givenResource ?? store.appStore.defaultResource();
+        console.log('OwnershipStore.add: owner=', owner, ' resource=', resource);
         if (!owner || !resource) return;
         const ownership = newOwnership(owner, resource, store.tenantId(), ownerModelType);
         const modal = await store.modalController.create({

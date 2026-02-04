@@ -137,7 +137,7 @@ export class LockerListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.resourceListStore.add(false); break;
+      case 'add':  await this.resourceListStore.add(false, false); break;
       case 'exportRaw': await this.resourceListStore.export("raw"); break;
       default: error(undefined, `LockerListComponent.call: unknown method ${selectedMethod}`);
     }

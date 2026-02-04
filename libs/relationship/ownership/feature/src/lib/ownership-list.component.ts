@@ -175,14 +175,6 @@ export class OwnershipListComponent {
     }
   });
 
-  // if the ownership resource has a subtype, use the subtype, otherwise use the resource type
-/*   protected resolvedTypes = computed(() => {
-    switch (this.listId()) {
-      case 'privateBoats':
-      case 'scsBoats': return this.ownershipListStore.appStore.getCategory('rboat_type');
-      default: return this.ownershipListStore.appStore.getCategory('resource_type');
-    }
-  }); */
   protected readonly years = getYearList();
 
   protected selectedOwnershipsCount = computed(() => this.filteredOwnerships().length);

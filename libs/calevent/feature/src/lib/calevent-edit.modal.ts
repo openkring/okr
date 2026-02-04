@@ -10,7 +10,7 @@ import { CalEventFormComponent } from '@bk2/calevent-ui';
 import { InviteesAccordionComponent } from '@bk2/relationship-invitation-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
-import { AttendeesAccordionComponent } from 'libs/calevent/feature/src/lib/attendees-accordion';
+import { AttendeesAccordionComponent } from './attendees-accordion';
 
 @Component({
   selector: 'bk-calevent-edit-modal',

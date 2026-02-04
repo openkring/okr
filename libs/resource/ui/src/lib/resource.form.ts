@@ -85,9 +85,10 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
                       <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
                       <bk-error-note [errors]="nameErrors()" />                                                                                                                                                             
                     </ion-col>
+  <!--                   tbd. boat subtype and category
                     <ion-col size="12">
                       <bk-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
-                    </ion-col>
+                    </ion-col> -->
                     <ion-col size="12" size-md="6">
                       <bk-text-input name="load" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
                       <bk-error-note [errors]="loadErrors()" />                                                                                                                                                             
