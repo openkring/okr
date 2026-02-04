@@ -8,7 +8,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { Attendee, CalEventModel, MembershipModel } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@bk2/shared-util-core';
+import { coerceBoolean, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 

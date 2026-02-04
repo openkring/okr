@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, forwardRef, inject, input } from '@angular/core';
+import { Component, computed, effect, forwardRef, inject, input, Version } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -10,6 +10,7 @@ import { DEFAULT_MENU_ACTION } from '@bk2/shared-constants';
 
 import { MenuStore } from './menu.store';
 import { MultiAvatarComponent } from '@bk2/cms-menu-ui';
+import { VersionCheckService } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-menu',
@@ -87,6 +88,7 @@ import { MultiAvatarComponent } from '@bk2/cms-menu-ui';
 })
 export class MenuComponent {
   protected readonly menuStore = inject(MenuStore);
+  private versionService = inject(VersionCheckService);
 
   // inputs
   public menuName = input.required<string>();
@@ -97,7 +99,16 @@ export class MenuComponent {
   protected roleNeeded = computed(() => this.menuItem()?.roleNeeded);
   protected action = computed(() => this.menuItem()?.action ?? DEFAULT_MENU_ACTION);
   protected icon = computed(() => this.menuItem()?.icon ?? 'help-circle');
-  protected label = computed(() => this.menuItem()?.label ?? 'LABEL_UNDEFINED');
+  protected label = computed(() => {
+    const menuLabel = this.menuItem()?.label;
+    if (!menuLabel) return 'LABEL_UNDEFINED';
+    // Check for version placeholder and replace it
+    if (menuLabel.includes('@VERSION@')) {
+      const appVersion = this.versionService.getCurrentVersion();
+      return menuLabel.replace('@VERSION@', 'v' + appVersion);
+    }
+    return menuLabel;
+  });
   protected readonly isVisible = computed(() => hasRole(this.roleNeeded(), this.currentUser()));
 
   constructor() {
