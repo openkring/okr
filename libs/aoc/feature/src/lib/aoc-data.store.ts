@@ -107,15 +107,12 @@ export const AocDataStore = signalStore(
         const maxDocs = 10; // for testing, you can restrict the amount of documents to process. 
         // set it to undefined to process all documents.
         
-        const collectionName = 'persons';
+        const collectionName = 'comments';
 
         // fixing fields (types and undefined)
         // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values
-        const fieldsToCheckForUndefined: string[] = ['s:bexioId', 's:dateOfBirth', 's:dateOfDeath',
-          's:favCity', 's:favCountryCode=CH', 's:favEmail', 's:favPhone', 's:favStreetName', 's:favZipCode',
-          's:favZipCode', 's:notes', 's:ssnId', 's:tags'
-        ]; 
-        const fieldsToFixTypes: string[] = ['s:dateOfBirth', 's:favZipCode'];
+        const fieldsToCheckForUndefined: string[] = []; 
+        const fieldsToFixTypes: string[] = [];
 
         // change the field names in the database directly
         // move the corrected data to a new collection in the database directly
@@ -168,9 +165,15 @@ export const AocDataStore = signalStore(
         const d = doc as any;
 
         //d.tenants = ['scs'];
-
+        switch(d.authorName) {
+          case 'Bruno Kaiser':              d.authorKey = 'kaiser'; break;
+          case 'Barbara Kaiser-Gubelmann':  d.authorKey = 'kaiser_barbara'; break;
+          case 'Nadia Hungerbühler':        d.authorKey = 'qxUjdi6wcbz2uuZseFFe'; break;
+          case 'Rolf Brüggemann':           d.authorKey = 'GP8BkeeouNKyaPPtc72R'; break;
+        }
         // create the index here directly without using the getXXindex function, just with string operations.
         //d.index = 'ak:' + d.authorKey + ' d:' + d.creationDateTime.substring(0, 8) + ' pk:' + d.parentKey;
+        d.index = `ak:${d.authorKey}, d:${d.creationDateTime.substring(0, 8)}, pk:${d.parentKey}`;
         
         return d;
       },
