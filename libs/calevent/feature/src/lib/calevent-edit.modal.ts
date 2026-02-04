@@ -10,15 +10,16 @@ import { CalEventFormComponent } from '@bk2/calevent-ui';
 import { InviteesAccordionComponent } from '@bk2/relationship-invitation-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
+import { AttendeesAccordionComponent } from 'libs/calevent/feature/src/lib/attendees-accordion';
 
 @Component({
   selector: 'bk-calevent-edit-modal',
   standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent,
-    CalEventFormComponent, InviteesAccordionComponent, DocumentsAccordionComponent, CommentsAccordionComponent,
-    IonContent, IonCard, IonCardContent,
-    IonAccordionGroup
+    CalEventFormComponent, InviteesAccordionComponent, DocumentsAccordionComponent, 
+    CommentsAccordionComponent, AttendeesAccordionComponent,
+    IonContent, IonCard, IonCardContent, IonAccordionGroup
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -48,7 +49,12 @@ import { CommentsAccordionComponent } from '@bk2/comment-feature';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="invitees">
-              <bk-invitees-accordion [calevent]="formData()" [readOnly]="isReadOnly()" />
+              @if(calevent().isOpen) {
+                <bk-attendees-accordion [calevent]="formData()" [readOnly]="isReadOnly()" />
+              } 
+              @else {
+                <bk-invitees-accordion [calevent]="formData()" [readOnly]="isReadOnly()" />
+              }
               <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
               <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
             </ion-accordion-group>
