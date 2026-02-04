@@ -16,7 +16,7 @@ import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { convertMemberAndOrgToMembership, convertToAddressDataRow, convertToMemberDataRow, convertToRawDataRow, convertToSrvDataRow, getMemberEmailAddresses, getRelLogEntry } from '@bk2/relationship-membership-util';
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
-import { of, switchMap, take } from 'rxjs';
+import { take } from 'rxjs';
 import { getCatAbbreviation } from '@bk2/category-util';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
@@ -75,20 +75,7 @@ export const _MembershipStore = signalStore(
           debugListLoaded('MembershipStore.allMemberships', params.currentUser)
         );
       },
-    }),
-    
-    // default membership category - loaded once and reused as fallback
-    defaultMcatResource: rxResource({
-      params: () => ({
-        currentUser: store.appStore.currentUser()
-      }),
-      stream: ({params}) => {
-        return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, 'mcat_default').pipe(
-          take(1),
-          debugItemLoaded<CategoryListModel>('mcat_default', params.currentUser)
-        );
-      }
-    }),
+    })
   })),
 
   withComputed((state) => {
@@ -97,6 +84,7 @@ export const _MembershipStore = signalStore(
       allMemberships: computed(() => state.showOnlyCurrent() ? 
         state.allMembershipsResource.value()?.filter(m => isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? [] : 
         state.allMembershipsResource.value() ?? []),
+      defaultMcat: computed(() => state.appStore.getCategory('mcat_default'))
     };
   }),
 
@@ -124,30 +112,6 @@ export const _MembershipStore = signalStore(
       tenantId: computed(() => state.appStore.tenantId()),
     };   
   }),
-
-/*   withProps((store) => ({
-    mcatResource: rxResource({
-      params: () => ({
-        mcatId: store.membershipCategoryKey(),
-        currentUser: store.currentUser()
-      }),  
-      stream: ({params}) => {
-        return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId).pipe(
-          take(1),
-          switchMap(mcat => {
-            if (!mcat) {
-              // fallback to preloaded default membership category
-              debugMessage(`MembershipStore: mcat ${params.mcatId} not found, falling back to mcat_default`, params.currentUser);
-              return of(store.defaultMcatResource.value());
-            }
-            return of(mcat).pipe(
-              debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, params.currentUser)
-            );
-          })
-        );
-      }
-    })
-  })), */
 
   withComputed((state) => {
     return {
@@ -195,12 +159,13 @@ export const _MembershipStore = signalStore(
 
   withComputed((state) => {
     return {
-      //membershipCategory: computed(() => state.mcatResource.value() ?? undefined),
-      membershipCategory: computed<CategoryListModel | undefined>(() => state.appStore.getCategory('mcat_' + state.orgId())),
+      membershipCategory: computed<CategoryListModel>(() => state.appStore.getCategory('mcat_' + state.orgId()) ?? state.defaultMcat()),
       defaultOrg: computed(() => state.org()),
       currentPerson : computed(() => state.appStore.currentPerson()),
-      isLoading: computed(() => state.allMembershipsResource.isLoading()),
-   //     || state.mcatResource.isLoading()),
+      isLoading: computed(() => 
+        state.allMembershipsResource.isLoading() || 
+        state.appStore.orgsResource.isLoading()
+      ),
 
       // all members (= orgs and persons)
       membersCount: computed(() => state.members().length), 
