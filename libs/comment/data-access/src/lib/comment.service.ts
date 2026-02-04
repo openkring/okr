@@ -38,7 +38,7 @@ export class CommentService {
     if (!currentUser) {
       return error(undefined, 'CommentService.create: inconsistent app state: there is no current user.');
     }
-    const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), message, parentKey, this.tenantId);
+    const comment = createComment(currentUser.personKey, getFullName(currentUser.firstName, currentUser.lastName), message, parentKey, this.tenantId);
     // Save the comment to the database, but do neither set the confirmMessage nor the currentUser to avoid adding a comment to the comment.
     return await this.firestoreService.createModel<CommentModel>(`${CommentCollection}`, comment);
   }

@@ -4,7 +4,7 @@ import { DateFormat, generateRandomString, getTodayStr } from "@bk2/shared-util-
 /* ---------------------- Model  -------------------------------*/
  /**
    * Convenience function to create a new CommentModel with given values.
-   * @param authorKey 
+   * @param authorKey personKey of the currentUser (to resolve avatar image)
    * @param authorName 
    * @param commentStr 
    * @param parentKey modelType.key of the parent model
