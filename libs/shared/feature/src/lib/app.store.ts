@@ -87,33 +87,45 @@ export const AppStore = signalStore(
       }
     }),
     personsResource: rxResource({
-      stream: () => {
-        return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.tenantId()), 'lastName', 'asc');
+      params: () => ({ tenantId: store.tenantId() }),
+      stream: ({params}) => {
+        if (!params.tenantId) return of([]);
+        return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(params.tenantId), 'lastName', 'asc');
       }
     }),
     orgsResource: rxResource({
-      stream: () => {
-        return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
+      params: () => ({ tenantId: store.tenantId() }),
+      stream: ({params}) => {
+        if (!params.tenantId) return of([]);
+        return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     groupsResource: rxResource({
-      stream: () => {
-        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
+      params: () => ({ tenantId: store.tenantId() }),
+      stream: ({params}) => {
+        if (!params.tenantId) return of([]);
+        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     resourcesResource: rxResource({
-      stream: () => {
-        return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
+      params: () => ({ tenantId: store.tenantId() }),
+      stream: ({params}) => {
+        if (!params.tenantId) return of([]);
+        return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     tagsResource: rxResource({
-      stream: () => {
-        return store.firestoreService.searchData<TagModel>(TagCollection, getSystemQuery(store.tenantId()), 'tagModel', 'asc');
+      params: () => ({ tenantId: store.tenantId() }),
+      stream: ({params}) => {
+        if (!params.tenantId) return of([]);
+        return store.firestoreService.searchData<TagModel>(TagCollection, getSystemQuery(params.tenantId), 'tagModel', 'asc');
       }
     }),
     categoriesResource: rxResource({
-      stream: () => {
-        return store.firestoreService.searchData<CategoryListModel>(CategoryCollection, getSystemQuery(store.tenantId()), 'name', 'asc');
+      params: () => ({ tenantId: store.tenantId() }),
+      stream: ({params}) => {
+        if (!params.tenantId) return of([]);
+        return store.firestoreService.searchData<CategoryListModel>(CategoryCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     appConfigResource: rxResource({
