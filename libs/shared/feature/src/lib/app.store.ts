@@ -87,44 +87,62 @@ export const AppStore = signalStore(
       }
     }),
     personsResource: rxResource({
-      params: () => ({ tenantId: store.tenantId() }),
+      params: () => ({ 
+        fbUser: store.fbUser(), 
+        tenantId: store.tenantId() 
+      }),
       stream: ({params}) => {
-        if (!params.tenantId) return of([]);
+        if (!params.fbUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(params.tenantId), 'lastName', 'asc');
       }
     }),
     orgsResource: rxResource({
-      params: () => ({ tenantId: store.tenantId() }),
+      params: () => ({ 
+        fbUser: store.fbUser(), 
+        tenantId: store.tenantId() 
+      }),
       stream: ({params}) => {
-        if (!params.tenantId) return of([]);
+        if (!params.fbUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     groupsResource: rxResource({
-      params: () => ({ tenantId: store.tenantId() }),
+      params: () => ({ 
+        fbUser: store.fbUser(), 
+        tenantId: store.tenantId() 
+      }),
       stream: ({params}) => {
-        if (!params.tenantId) return of([]);
+        if (!params.fbUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     resourcesResource: rxResource({
-      params: () => ({ tenantId: store.tenantId() }),
+      params: () => ({ 
+        fbUser: store.fbUser(), 
+        tenantId: store.tenantId() 
+      }),
       stream: ({params}) => {
-        if (!params.tenantId) return of([]);
+        if (!params.fbUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     tagsResource: rxResource({
-      params: () => ({ tenantId: store.tenantId() }),
+      params: () => ({ 
+        fbUser: store.fbUser(), 
+        tenantId: store.tenantId() 
+      }),
       stream: ({params}) => {
-        if (!params.tenantId) return of([]);
+        if (!params.fbUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<TagModel>(TagCollection, getSystemQuery(params.tenantId), 'tagModel', 'asc');
       }
     }),
     categoriesResource: rxResource({
-      params: () => ({ tenantId: store.tenantId() }),
+      params: () => ({
+        fbUser: store.fbUser(),
+        tenantId: store.tenantId()
+      }),
       stream: ({params}) => {
-        if (!params.tenantId) return of([]);
+        if (!params.fbUser || !params.tenantId) return of([]);
         return store.firestoreService.searchData<CategoryListModel>(CategoryCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
