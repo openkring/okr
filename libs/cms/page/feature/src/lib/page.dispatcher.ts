@@ -57,7 +57,7 @@ export class PageDispatcher {
 
   // inputs
   public id = input.required<string>();
-  public contextMenuName = input.required<string>();
+  public contextMenuName = input<string>();
   public color = input('secondary');
 
   constructor() {

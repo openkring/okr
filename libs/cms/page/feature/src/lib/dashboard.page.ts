@@ -108,13 +108,15 @@ import { PageStore } from './page.store';
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if(contextMenuName(); as contextMenuName) {
+                <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ng-template>
+                    <ion-content>
+                    <bk-menu [menuName]="contextMenuName"/>
+                    </ion-content>
+                </ng-template>
+                </ion-popover>
+            }
           </ion-buttons>          
         }
       </ion-toolbar>
@@ -178,7 +180,7 @@ export class DashboardPage {
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
-  public contextMenuName = input.required<string>();
+  public contextMenuName = input<string>();
   public color = input('secondary');
 
   // derived signals
