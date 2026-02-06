@@ -15,7 +15,7 @@ import { SectionComponent, SectionStore } from '@bk2/cms-section-feature';
 import { PageStore } from './page.store';
 
 @Component({
-  selector: 'bk-content-page',
+  selector: 'bk-blog-page',
   standalone: true,
   imports: [
     SectionComponent, MenuComponent,
@@ -170,7 +170,7 @@ import { PageStore } from './page.store';
     </ion-content>
   `
 })
-export class ContentPage {
+export class BlogPage {
   protected pageStore = inject(PageStore);
   private sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);
@@ -184,7 +184,7 @@ export class ContentPage {
   // derived signals
   protected tenantId = computed(() => this.pageStore.tenantId());
   protected showDebugInfo = computed(() => this.pageStore.showDebugInfo());
-  protected popupId = computed(() => 'c_contentpage_' + this.pageStore.page()?.bkey);
+  protected popupId = computed(() => 'c_blogpage_' + this.pageStore.page()?.bkey);
   protected editMode = signal(false);
 
   /**
@@ -246,7 +246,7 @@ export class ContentPage {
       case 'addSection':    await this.addSection(); break;
       case 'exportRaw': await this.pageStore.export("raw"); break;
       case 'print': await this.pageStore.print(); break;
-      default: error(undefined, `ContentPage.onPopoverDismiss: unknown method ${selectedMethod}`);
+      default: error(undefined, `BlogPage.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 

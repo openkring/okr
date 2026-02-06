@@ -8,8 +8,13 @@ import { HeaderComponent } from '@bk2/shared-ui';
 
 import { PageStore } from './page.store';
 
+/**
+ * LandingPage is the welcome page component that greets users when they visit the application.
+ * It displays a logo, title, subtitle, and a login button if the user is not authenticated.
+ * The page also includes a background image and help text for user assistance.
+ */
 @Component({
-  selector: 'bk-welcome-page',
+  selector: 'bk-landing-page',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
@@ -100,7 +105,7 @@ import { PageStore } from './page.store';
     </ion-content>
   `
 })
-export class BkWelcomePageComponent {
+export class LandingPage {
   private readonly pageStore = inject(PageStore);
 
   protected logoUrl = computed (() => this.pageStore.getImgixUrl('logoUrl'));

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -8,8 +8,15 @@ import { HeaderComponent } from '@bk2/shared-ui';
 
 import { PageStore } from './page.store';
 
+/**
+ * ErrorPage is a simple component that displays a user-friendly error message.
+ * Currently, it is used to display a "Not Found" message when a user navigates to a non-existent page.
+ * Later, we will extend it to handle other error types (500, 403, etc.).
+ * 
+ * The component displays a background image, logo, title, subtitle, and help text.
+ */
 @Component({
-  selector: 'bk-page-not-found',
+  selector: 'bk-error-page',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
@@ -17,13 +24,13 @@ import { PageStore } from './page.store';
     IonContent, IonGrid, IonRow, IonCol, IonLabel, IonIcon, IonImg
   ],
   styles: [`
-    .notfound-container {
+    .error-container {
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100%;
     }
-    .notfound-image {
+    .error-image {
       filter: blur(8px);
       -webkit-filter: blur(8px);
       position: absolute;
@@ -35,7 +42,7 @@ import { PageStore } from './page.store';
       opacity: 0.7;
       z-index: 1;
     }
-    .notfound-form {
+    .error-form {
       padding: 20px;
       border-radius: 10px;
       width: 600px;
@@ -58,11 +65,11 @@ import { PageStore } from './page.store';
     }
   `],
   template: `
-    <bk-header title="@cms.notfound.title" [showCloseButton]="false" />
+    <bk-header [title]="title()" [showCloseButton]="false" />
     <ion-content>
-      <div class="notfound-container">
-        <img class="notfound-image" [src]="backgroundImageUrl()" alt="Background" />
-        <ion-grid class="notfound-form">
+      <div class="error-container">
+        <img class="error-image" [src]="backgroundImageUrl()" alt="Background" />
+        <ion-grid class="error-form">
           <ion-row>
             <ion-col>
               <ion-img class="logo" [src]="logoUrl()" (click)="gotoHome()" alt="{{ logoAlt() }}" />
@@ -70,19 +77,19 @@ import { PageStore } from './page.store';
           </ion-row>
           <ion-row>
             <ion-col>
-              <ion-label class="title"><strong>{{ '@cms.notfound.title' | translate | async }}</strong></ion-label>
+              <ion-label class="title"><strong>{{ title() | translate | async }}</strong></ion-label>
             </ion-col>
           </ion-row>
           <ion-row class="ion-hide-md-down">
             <ion-col>
-              <ion-label class="subtitle">{{ '@cms.notfound.subTitle' | translate | async }}</ion-label><br />
+              <ion-label class="subtitle">{{ subTitle() | translate | async }}</ion-label><br />
             </ion-col>
           </ion-row>
           <ion-row class="ion-hide-md-down">
             <ion-col color="light">
               <ion-label class="help">
                 <ion-icon src="{{'info-circle' | svgIcon }}" slot="start" />
-                {{ '@cms.notfound.help' | translate | async }}
+                {{ helpText() | translate | async }}
               </ion-label>
             </ion-col>
           </ion-row>
@@ -91,8 +98,14 @@ import { PageStore } from './page.store';
     </ion-content>
   `
 })
-export class PageNotFoundComponent {
+export class ErrorPage {
   private readonly pageStore = inject(PageStore);
+
+  public readonly errorName = input('notfound');
+
+  protected title = computed (() => `@cms.${this.errorName()}.title`);
+  protected subTitle = computed (() => `@cms.${this.errorName()}.subTitle`);
+  protected helpText = computed (() => `@cms.${this.errorName()}.help`);
 
   protected logoUrl = computed (() => this.pageStore.getImgixUrl('logoUrl'));
   protected backgroundImageUrl = computed(() => this.pageStore.getImgixUrl('notfoundBannerUrl'));

@@ -15,7 +15,7 @@ import { SectionComponent, SectionStore } from '@bk2/cms-section-feature';
 import { PageStore } from './page.store';
 
 @Component({
-  selector: 'bk-content-page',
+  selector: 'bk-dashboard-page',
   standalone: true,
   imports: [
     SectionComponent, MenuComponent,
@@ -170,7 +170,7 @@ import { PageStore } from './page.store';
     </ion-content>
   `
 })
-export class ContentPage {
+export class DashboardPage {
   protected pageStore = inject(PageStore);
   private sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);

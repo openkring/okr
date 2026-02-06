@@ -10,7 +10,7 @@ import { error } from '@bk2/shared-util-angular';
 import { coerceBoolean, debugData, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 
-import { ContentPageComponent } from '@bk2/cms-page-feature';
+import { ContentPage } from '@bk2/cms-page-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { MembershipListComponent } from '@bk2/relationship-membership-feature';
 import { SimpleTaskListComponent } from '@bk2/task-feature';
@@ -23,7 +23,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    ChangeConfirmationComponent, ContentPageComponent, SimpleTaskListComponent,
+    ChangeConfirmationComponent, ContentPage, SimpleTaskListComponent,
     CalEventListComponent, MembershipListComponent,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
     IonHeader, IonButtons, IonTitle, IonMenuButton
