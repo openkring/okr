@@ -4,13 +4,13 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AccordionSection, ArticleSection, ButtonSection, RoleName, SectionModel } from '@bk2/shared-models';
+import { ArticleSection, ButtonSection, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@bk2/shared-util-angular';
 import { hasRole, replaceSubstring } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
-import { SectionComponent, SectionStore } from '@bk2/cms-section-feature';
+import { SectionDispatcher, SectionStore } from '@bk2/cms-section-feature';
 
 import { PageStore } from './page.store';
 
@@ -18,85 +18,91 @@ import { PageStore } from './page.store';
   selector: 'bk-dashboard-page',
   standalone: true,
   imports: [
-    SectionComponent, MenuComponent,
+    SectionDispatcher, MenuComponent,
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonPopover
   ],
-  providers: [PageStore, SectionStore],
   styles: [`
-  bk-section { width: 100%; display: block; }
+    :host {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
 
-  .section-wrapper.editable {
-    border: 3px solid;
-    border-radius: 8px;
-    border-color: yellow;
-    margin: 8px 0;
-    padding: 4px;
-    width: calc(100% - 16px);
-    cursor: pointer;
-  }
+    bk-section { width: 100%; display: block; }
 
-  ion-item.edit-mode {
-    --padding-start: 0;
-    --inner-padding-end: 0;
-  }
+    .section-wrapper.editable {
+        border: 3px solid;
+        border-radius: 8px;
+        border-color: yellow;
+        margin: 8px 0;
+        padding: 4px;
+        width: calc(100% - 16px);
+        cursor: pointer;
+    }
 
-@media (width <= 600px) {
-    .section-item {
-    --padding-start: 2px;
-    --inner-padding-end: 2px;
-  }
-}
+    ion-item.edit-mode {
+        --padding-start: 0;
+        --inner-padding-end: 0;
+    }
 
-@media print {
-  @page {
-    size: A4;
-    margin: 15mm;
-  }
+    @media (width <= 600px) {
+        .section-item {
+        --padding-start: 2px;
+        --inner-padding-end: 2px;
+    }
+    }
 
-  /* FORCE FULL HEIGHT */
-  html, body, ion-app, ion-router-outlet {
-    height: auto !important;
-    overflow: visible !important;
-  }
+    @media print {
+    @page {
+        size: A4;
+        margin: 15mm;
+    }
 
-  ion-content {
-    --offset-bottom: 0px !important;
-    --overflow: visible !important;
-    overflow: visible !important;
-    contain: none !important;
-  }
+    /* FORCE FULL HEIGHT */
+    html, body, ion-app, ion-router-outlet {
+        height: auto !important;
+        overflow: visible !important;
+    }
 
-  /* PRINT CONTAINER */
-  .print-content {
-    display: block !important;
-    width: 210mm;
-    min-height: 297mm;
-    padding: 15mm;
-    box-sizing: border-box;
-    page-break-after: always;
-    overflow: visible !important;
-    position: relative !important;
-  }
+    ion-content {
+        --offset-bottom: 0px !important;
+        --overflow: visible !important;
+        overflow: visible !important;
+        contain: none !important;
+    }
 
-  /* ENSURE CHILDREN DON'T CLIP */
-  .print-content > * {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
+    /* PRINT CONTAINER */
+    .print-content {
+        display: block !important;
+        width: 210mm;
+        min-height: 297mm;
+        padding: 15mm;
+        box-sizing: border-box;
+        page-break-after: always;
+        overflow: visible !important;
+        position: relative !important;
+    }
 
-  /* FORCE PAGE BREAKS */
-  .page-break {
-    page-break-before: always;
-    height: 0;
-  }
+    /* ENSURE CHILDREN DON'T CLIP */
+    .print-content > * {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
 
-  /* HIDE UI */
-  ion-header, ion-footer, ion-toolbar, .print-btn, .no-print {
-    display: none !important;
-  }
-}
+    /* FORCE PAGE BREAKS */
+    .page-break {
+        page-break-before: always;
+        height: 0;
+    }
+
+    /* HIDE UI */
+    ion-header, ion-footer, ion-toolbar, .print-btn, .no-print {
+        display: none !important;
+    }
+    }
 `],
   template: `
     <ion-header>
@@ -123,7 +129,7 @@ import { PageStore } from './page.store';
     </ion-header>
     <ion-content class="ion-no-padding">
       @if(hasRole('contentAdmin')) {
-        @if(pageStore.isEmptyPage()) {
+        @if(isEmptyPage()) {
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPage' | translate | async }}</ion-label>
           </ion-item>
@@ -136,7 +142,7 @@ import { PageStore } from './page.store';
         } @else {     <!-- page contains sections -->
           <ion-grid>
             <ion-row>
-              @for(section of visibleSections(); track section.bkey) {
+              @for(section of sections(); track section.bkey) {
                 @if(getColSizes(section.colSize); as colSizes) {
                   <ion-col size="{{colSizes.size}}" 
                     class="section-item" (click)="showActions(section.bkey)"
@@ -145,10 +151,10 @@ import { PageStore } from './page.store';
                   >
                     @if(editMode()) {
                       <div class="section-wrapper" [class.editable]="editMode()">
-                        <bk-section [id]="section.bkey" />
+                        <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
                       </div>  
                     } @else {
-                      <bk-section [id]="section.bkey" />
+                      <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
                     }
                   </ion-col>
                 }
@@ -157,14 +163,14 @@ import { PageStore } from './page.store';
           </ion-grid>
         }
       } @else { <!-- not contentAdmin; also: not logged-in for public content -->
-        @if(pageStore.isEmptyPage()) {
+        @if(isEmptyPage()) {
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPageReadOnly' | translate | async }}</ion-label>
           </ion-item>
         } @else {
           <div class="print-content" #printContent>
-            @for(section of visibleSections(); track section.bkey) {
-              <bk-section [id]="section.bkey" />
+            @for(section of sections(); track section.bkey) {
+              <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
             } 
           </div>
         }
@@ -173,11 +179,11 @@ import { PageStore } from './page.store';
   `
 })
 export class DashboardPage {
-  protected pageStore = inject(PageStore);
-  private sectionStore = inject(SectionStore);
+  protected readonly pageStore = inject(PageStore);
+  private readonly sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
-  private actionSheetController = inject(ActionSheetController);
+  private readonly actionSheetController = inject(ActionSheetController);
 
   // inputs
   public contextMenuName = input<string>();
@@ -185,37 +191,12 @@ export class DashboardPage {
 
   // derived signals
   protected tenantId = computed(() => this.pageStore.tenantId());
-  protected showDebugInfo = computed(() => this.pageStore.showDebugInfo());
   protected popupId = computed(() => 'c_contentpage_' + this.pageStore.page()?.bkey);
   protected editMode = signal(false);
-
-  /**
-   * Get all nested section IDs from accordion sections.
-   * These sections are rendered inside accordions via content projection,
-   * so they should be excluded from the top-level section list.
-   */
-  private nestedSectionIds = computed(() => {
-    const nestedIds = new Set<string>();
-    this.pageStore.pageSections()
-      .filter(s => s.type === 'accordion')
-      .forEach(section => {
-        const accordion = section as AccordionSection;
-        accordion.properties.items.forEach(item => {
-          if (item.sectionId) nestedIds.add(item.sectionId);
-        });
-      });
-    return nestedIds;
-  });
-
-  /**
-   * Get only top-level sections (exclude nested accordion sections).
-   * Nested sections are rendered inside their parent accordions via content projection,
-   * so they shouldn't appear at the top level to avoid duplication.
-   */
-  protected visibleSections = computed(() => {
-    const nested = this.nestedSectionIds();
-    return this.pageStore.pageSections().filter(s => !nested.has(s.bkey));
-  });
+  protected page = computed(() => this.pageStore.page());
+  // Accordion sections are not supported in Dashboard pages. Makes the implementation easier.
+  protected sections = computed(() => this.pageStore.pageSections());
+  protected isEmptyPage = computed(() => this.sections().length === 0);
 
   constructor() {
     effect(() => {
@@ -305,6 +286,7 @@ export class DashboardPage {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'page.removesection':
           if (sectionId) {
@@ -327,29 +309,6 @@ export class DashboardPage {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.pageStore.currentUser());
-  }
-
-  /**
-   * Get nested sections for a given section (only relevant for accordion sections).
-   * Returns an array of SectionModel objects that should be rendered inside accordion items.
-   * Note: Uses item.key as the section reference (sectionId is optional and may not be populated).
-   */
-  protected getNestedSections(section: SectionModel): SectionModel[] {
-    if (section.type !== 'accordion') return [];
-    const accordion = section as AccordionSection;
-    const sectionIds = accordion.properties.items
-      .map(item => item.key)
-      .filter(id => id !== undefined) as string[];
-    return this.pageStore.pageSections().filter(s => sectionIds.includes(s.bkey));
-  }
-
-  /**
-   * Get accordion items from an accordion section.
-   * Each item contains a sectionId that references a section to be rendered inside that accordion item.
-   */
-  protected getAccordionItems(section: SectionModel) {
-    if (section.type !== 'accordion') return [];
-    return (section as AccordionSection).properties.items;
   }
 
   /**

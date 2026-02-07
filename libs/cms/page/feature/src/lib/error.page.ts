@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -7,6 +7,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { HeaderComponent } from '@bk2/shared-ui';
 
 import { PageStore } from './page.store';
+import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
 
 /**
  * ErrorPage is a simple component that displays a user-friendly error message.
@@ -24,6 +25,13 @@ import { PageStore } from './page.store';
     IonContent, IonGrid, IonRow, IonCol, IonLabel, IonIcon, IonImg
   ],
   styles: [`
+    :host {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+
     .error-container {
       display: flex;
       justify-content: center;
@@ -65,14 +73,15 @@ import { PageStore } from './page.store';
     }
   `],
   template: `
+  @if(page(); as page) {
     <bk-header [title]="title()" [showCloseButton]="false" />
     <ion-content>
       <div class="error-container">
-        <img class="error-image" [src]="backgroundImageUrl()" alt="Background" />
+        <img class="error-image" [src]="bannerUrl()" alt="Background" />
         <ion-grid class="error-form">
           <ion-row>
             <ion-col>
-              <ion-img class="logo" [src]="logoUrl()" (click)="gotoHome()" alt="{{ logoAlt() }}" />
+              <ion-img class="logo" [src]="logoUrl()" (click)="gotoHome()" alt="{{ logoAltText() }}" />
             </ion-col>
           </ion-row>
           <ion-row>
@@ -89,13 +98,14 @@ import { PageStore } from './page.store';
             <ion-col color="light">
               <ion-label class="help">
                 <ion-icon src="{{'info-circle' | svgIcon }}" slot="start" />
-                {{ helpText() | translate | async }}
+                {{ abstract() | translate | async }}
               </ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
       </div>
     </ion-content>
+  }
   `
 })
 export class ErrorPage {
@@ -103,13 +113,20 @@ export class ErrorPage {
 
   public readonly errorName = input('notfound');
 
-  protected title = computed (() => `@cms.${this.errorName()}.title`);
-  protected subTitle = computed (() => `@cms.${this.errorName()}.subTitle`);
-  protected helpText = computed (() => `@cms.${this.errorName()}.help`);
+  protected page = computed(() => this.pageStore.page());
+  protected title = computed (() => this.page()?.title ?? 'Title missing');
+  protected subTitle = computed (() => this.page()?.subTitle ?? 'Subtitle missing');
+  protected abstract = computed (() => this.page()?.abstract);
+  protected logoUrl = computed (() => this.pageStore.getImgixUrl(this.page()?.logoUrl));
+  protected logoAltText = computed(() => this.page()?.logoAltText || `${this.pageStore.tenantId()} Logo`);
+  protected bannerUrl = computed(() => this.pageStore.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
+  protected bannerAltText = computed(() => this.page()?.bannerAltText || `${this.pageStore.tenantId()} Banner`);
 
-  protected logoUrl = computed (() => this.pageStore.getImgixUrl('logoUrl'));
-  protected backgroundImageUrl = computed(() => this.pageStore.getImgixUrl('notfoundBannerUrl'));
-  protected logoAlt = computed(() => `${this.pageStore.tenantId()} Logo`);
+  constructor() {
+    effect(() => {
+      this.pageStore.setPageId(this.errorName());
+    });
+  }
 
   protected async gotoHome(): Promise<void> {
     await this.pageStore.navigateByUrl(this.pageStore.getConfigAttribute('rootUrl') + '');

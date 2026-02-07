@@ -155,7 +155,7 @@ export const DEFAULT_MIMETYPES = [
     'application/zip',
     'public.data'
     ];
-
+export const DEFAULT_BANNER_URL = 'tenant/default/app/banner.jpg';
 
 /**-------------------------------------------------------------------------
  * Styling

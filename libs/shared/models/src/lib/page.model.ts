@@ -9,6 +9,12 @@ export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedMo
   public index = DEFAULT_INDEX;
   public tags = DEFAULT_TAGS;
   public title = DEFAULT_TITLE; // used for SEO
+  public subTitle = DEFAULT_TITLE; 
+  public abstract = ''; // short description, used on landing and error pages
+  public logoUrl = ''; // URL to the logo image, used on landing and error pages
+  public logoAltText = ''; // alt text for the logo image
+  public bannerUrl = ''; // URL to the welcome banner image, used on landing page (often a hero image or background image)
+  public bannerAltText = ''; // alt text for the banner image
   public meta?: MetaTag[] = []; // meta tags for SEO
   public type = DEFAULT_PAGE_TYPE;
   public state = DEFAULT_CONTENT_STATE; // the state of the page

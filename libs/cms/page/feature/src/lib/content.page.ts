@@ -7,10 +7,10 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { AccordionSection, ArticleSection, ButtonSection, RoleName, SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@bk2/shared-util-angular';
-import { hasRole, replaceSubstring } from '@bk2/shared-util-core';
+import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
-import { SectionComponent, SectionStore } from '@bk2/cms-section-feature';
+import { SectionDispatcher, SectionStore } from '@bk2/cms-section-feature';
 
 import { PageStore } from './page.store';
 
@@ -18,13 +18,18 @@ import { PageStore } from './page.store';
   selector: 'bk-content-page',
   standalone: true,
   imports: [
-    SectionComponent, MenuComponent,
+    SectionDispatcher, MenuComponent,
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonPopover
   ],
-  providers: [PageStore, SectionStore],
   styles: [`
+    :host {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
   bk-section { width: 100%; display: block; }
 
   .section-wrapper.editable {
@@ -123,7 +128,7 @@ import { PageStore } from './page.store';
     </ion-header>
     <ion-content class="ion-no-padding">
       @if(hasRole('contentAdmin')) {
-        @if(pageStore.isEmptyPage()) {
+        @if(isEmptyPage()) {
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPage' | translate | async }}</ion-label>
           </ion-item>
@@ -139,16 +144,16 @@ import { PageStore } from './page.store';
               @for(section of visibleSections(); track section.bkey) {
                 @if(getColSizes(section.colSize); as colSizes) {
                   <ion-col size="{{colSizes.size}}" 
-                    class="section-item" (click)="showActions(section.bkey)"
+                    class="section-item" (click)="showActions(section)"
                     [class.edit-mode]="editMode()"
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
                     @if(editMode()) {
                       <div class="section-wrapper" [class.editable]="editMode()">
-                        <bk-section [id]="section.bkey" />
+                        <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
                       </div>  
                     } @else {
-                      <bk-section [id]="section.bkey" />
+                      <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
                     }
                   </ion-col>
                 }
@@ -157,14 +162,14 @@ import { PageStore } from './page.store';
           </ion-grid>
         }
       } @else { <!-- not contentAdmin; also: not logged-in for public content -->
-        @if(pageStore.isEmptyPage()) {
+        @if(isEmptyPage()) {
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPageReadOnly' | translate | async }}</ion-label>
           </ion-item>
         } @else {
           <div class="print-content" #printContent>
             @for(section of visibleSections(); track section.bkey) {
-              <bk-section [id]="section.bkey" />
+              <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
             } 
           </div>
         }
@@ -188,6 +193,10 @@ export class ContentPage {
   protected showDebugInfo = computed(() => this.pageStore.showDebugInfo());
   protected popupId = computed(() => 'c_contentpage_' + this.pageStore.page()?.bkey);
   protected editMode = signal(false);
+  protected page = computed(() => this.pageStore.page());
+  protected sections = computed(() => this.pageStore.pageSections());
+  protected isEmptyPage = computed(() => this.sections().length === 0);
+
 
   /**
    * Get all nested section IDs from accordion sections.
@@ -196,7 +205,7 @@ export class ContentPage {
    */
   private nestedSectionIds = computed(() => {
     const nestedIds = new Set<string>();
-    this.pageStore.pageSections()
+    this.sections()
       .filter(s => s.type === 'accordion')
       .forEach(section => {
         const accordion = section as AccordionSection;
@@ -214,7 +223,7 @@ export class ContentPage {
    */
   protected visibleSections = computed(() => {
     const nested = this.nestedSectionIds();
-    return this.pageStore.pageSections().filter(s => !nested.has(s.bkey));
+    return this.sections().filter(s => !nested.has(s.bkey));
   });
 
   constructor() {
@@ -264,30 +273,25 @@ export class ContentPage {
    * After user selected an action this action is executed.
    * @param sectionId 
    */
-  protected async showActions(sectionId: string): Promise<void> {
+  protected async showActions(section: SectionModel): Promise<void> {
     if (this.editMode()) {
-      const id = replaceSubstring(sectionId, '@TID@', this.tenantId());
-      this.sectionStore.setSectionId(id);
-
-      // Section will be available via the store's rxResource
-      // No need to poll - the UI will update when data loads
       const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-      this.addActionSheetButtons(actionSheetOptions);
-      await this.executeActions(actionSheetOptions, sectionId);
+      this.addActionSheetButtons(actionSheetOptions, section.type);
+      await this.executeActions(actionSheetOptions, section);
     }
   }
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, sectionType: string): void {
     if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
 
       actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'create_edit'));
-      if (this.sectionStore.section()?.type === 'article') {
+      if (sectionType === 'article') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
       }
-      if (this.sectionStore.section()?.type === 'button') {
+      if (sectionType === 'button') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.pageStore.imgixBaseUrl(), 'upload'));
       }
       actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.pageStore.imgixBaseUrl(), 'trash_delete'));
@@ -300,25 +304,24 @@ export class ContentPage {
    * @param actionSheetOptions 
    * @param sectionId 
    */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, sectionId: string): Promise<void> {
+  private async executeActions(actionSheetOptions: ActionSheetOptions, section: SectionModel): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'page.removesection':
-          if (sectionId) {
-            await this.pageStore.removeSectionById(sectionId);
-          }
+          await this.pageStore.removeSectionById(section.bkey);
           break;
         case 'section.edit':
-          await this.sectionStore.edit(this.sectionStore.section(), false);
+          await this.sectionStore.edit(section, false);
           break;
         case 'section.image.upload':
-          await this.sectionStore.uploadImage(this.sectionStore.section() as ArticleSection);
+          await this.sectionStore.uploadImage(section as ArticleSection);
           break;
         case 'section.file.upload':
-          await this.sectionStore.uploadFile(this.sectionStore.section() as ButtonSection);
+          await this.sectionStore.uploadFile(section as ButtonSection);
           break;
 
       }

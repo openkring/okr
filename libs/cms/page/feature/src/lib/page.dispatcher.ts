@@ -1,4 +1,4 @@
-import { Component, effect, inject, input } from "@angular/core";
+import { Component, computed, effect, inject, input } from "@angular/core";
 import { ContentPage } from "./content.page";
 import { PageStore } from "./page.store";
 import { debugMessage, replaceSubstring } from "@bk2/shared-util-core";
@@ -7,6 +7,7 @@ import { DashboardPage } from "./dashboard.page";
 import { BlogPage } from "./blog.page";
 import { LandingPage } from "./landing.page";
 import { ErrorPage } from "./error.page";
+import { SpinnerComponent } from "@bk2/shared-ui";
 /**
  * PageDispatcher is a routable component that dispatches to the correct page component based 
  * on the pageType of the page. It receives the page id as an input, reads the page from the 
@@ -28,26 +29,37 @@ import { ErrorPage } from "./error.page";
   selector: 'bk-page-dispatcher',
   standalone: true,
   imports: [
-    ContentPage, DashboardPage, BlogPage, LandingPage, ErrorPage
+    ContentPage, DashboardPage, BlogPage, LandingPage, ErrorPage,
+    SpinnerComponent
 ],
-providers: [PageStore],
   template: `
-    @switch (pageStore.page()?.type) {
-      @case ('landing') {
-        <bk-landing-page  />
-      }
-      @case ('content') {
-        <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" />
-      }
-      @case ('dashboard') {
-        <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" />
-      }
-      @case ('blog') {
-        <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" />
-      }
-      @default {
-        <bk-error-page  />
-      }
+    @if(pageStore.isLoading()) {
+          <bk-spinner />
+    } @else { <!-- not loading anymore -->
+        @if(page(); as page) {
+            @switch (page.type) {
+                @case ('landing') {
+                    <bk-landing-page  />
+                }
+                @case ('content') {
+                    <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" />
+                }
+                @case ('dashboard') {
+                    <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" />
+                }
+                @case ('blog') {
+                    <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" />
+                }
+                @case ('error') {
+                    <bk-error-page [errorName]="page.bkey" />
+                }
+                @default {
+                    <bk-error-page errorName="unknownPageType" />
+                }
+            }
+        } @else {
+            <bk-error-page errorName="pageNotFound" />
+        }
     }
   `
 })
@@ -60,11 +72,15 @@ export class PageDispatcher {
   public contextMenuName = input<string>();
   public color = input('secondary');
 
+  protected page = computed(() => this.pageStore.page());
+
   constructor() {
     effect(() => {
-      const id = replaceSubstring(this.id(), '@TID@', this.pageStore.tenantId());
-      debugMessage(`PageDispatcher: pageId=${this.id()} -> ${id}`, this.pageStore.currentUser());
-      this.pageStore.setPageId(id);
+      if (this.id()) {
+        const id = replaceSubstring(this.id(), '@TID@', this.pageStore.tenantId());
+        debugMessage(`PageDispatcher: pageId=${this.id()} -> ${id}`, this.pageStore.currentUser());
+        this.pageStore.setPageId(id);
+      }
     });
     effect(() => {
       const page = this.pageStore.page();

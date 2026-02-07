@@ -7,9 +7,10 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { HeaderComponent } from '@bk2/shared-ui';
 
 import { PageStore } from './page.store';
+import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
 
 /**
- * LandingPage is the welcome page component that greets users when they visit the application.
+ * LandingPage is a page that greets users when they visit the application.
  * It displays a logo, title, subtitle, and a login button if the user is not authenticated.
  * The page also includes a background image and help text for user assistance.
  */
@@ -23,7 +24,18 @@ import { PageStore } from './page.store';
     HeaderComponent
   ],
   styles: [`
-    .welcome-container { 
+    :host {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+    
+    ion-content {
+      --background: transparent;
+    }
+
+    .landing-container { 
     display: flex; 
     align-items: center;
   justify-content: center;
@@ -41,7 +53,7 @@ import { PageStore } from './page.store';
   opacity: 0.7;
   z-index: 1;
 }
-.welcome-form {
+.landing-form {
   padding: 20px;
   border-radius: 10px;
   width: 600px;
@@ -64,24 +76,26 @@ import { PageStore } from './page.store';
 }
   `],
   template: `
-    <bk-header title="@cms.welcome.header" [isRoot]="true" />
+    <bk-header [title]="title()" [isRoot]="true" />
     <ion-content>
-      <div class="welcome-container">
-        <img class="background-image" [src]="backgroundImageUrl()" alt="Background" />
-        <ion-grid class="welcome-form">
+      <div class="landing-container">
+        <img class="background-image" [src]="bannerUrl()" alt="Background" />
+        <ion-grid class="landing-form">
+          @if(logoUrl(); as logoUrl) {
+            <ion-row>
+              <ion-col>
+                <ion-img class="logo" [src]="logoUrl" alt="{{ logoAltText() }}" (click)="gotoHome()" />
+              </ion-col>
+            </ion-row>
+          }
           <ion-row>
             <ion-col>
-              <ion-img class="logo" [src]="logoUrl()" alt="{{ logoAlt() }}" (click)="gotoHome()" />
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col>
-              <ion-label class="title"><strong>{{ '@cms.welcome.title' | translate | async }}</strong></ion-label>
+              <ion-label class="title"><strong>{{ title() | translate | async }}</strong></ion-label>
             </ion-col>
           </ion-row>
           <ion-row class="ion-hide-md-down">
             <ion-col>
-              <ion-label class="subtitle">{{ '@cms.welcome.subTitle' | translate | async }}</ion-label><br />
+              <ion-label class="subtitle">{{ subTitle() | translate | async }}</ion-label><br />
             </ion-col>
           </ion-row>
           @if (isAuthenticated() === false) {
@@ -96,7 +110,7 @@ import { PageStore } from './page.store';
             <ion-col color="light">
               <ion-label class="help">
                 <ion-icon src="{{'info-circle' | svgIcon }}" slot="start" />
-                {{ '@cms.welcome.help' | translate | async }}
+                {{ abstract() | translate | async }}
               </ion-label>
             </ion-col>
           </ion-row>
@@ -108,9 +122,14 @@ import { PageStore } from './page.store';
 export class LandingPage {
   private readonly pageStore = inject(PageStore);
 
-  protected logoUrl = computed (() => this.pageStore.getImgixUrl('logoUrl'));
-  protected backgroundImageUrl = computed(() => this.pageStore.getImgixUrl('welcomeBannerUrl'));
-  protected logoAlt = computed(() => `${this.pageStore.tenantId()} Logo`);
+  protected page = computed(() => this.pageStore.page());
+  protected title = computed (() => this.page()?.title ?? 'Title missing');
+  protected subTitle = computed (() => this.page()?.subTitle ?? 'Subtitle missing');
+  protected abstract = computed (() => this.page()?.abstract);
+  protected logoUrl = computed (() => this.pageStore.getImgixUrl(this.page()?.logoUrl));
+  protected logoAltText = computed(() => this.page()?.logoAltText || `${this.pageStore.tenantId()} Logo`);
+  protected bannerUrl = computed(() => this.pageStore.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
+  protected bannerAltText = computed(() => this.page()?.bannerAltText || `${this.pageStore.tenantId()} Banner`);
   protected isAuthenticated = computed(() => this.pageStore.appStore.isAuthenticated());
 
   protected async gotoHome(): Promise<void> {
