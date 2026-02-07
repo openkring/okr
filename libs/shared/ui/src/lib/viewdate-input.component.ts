@@ -62,7 +62,7 @@ export class ViewDateInputComponent {
 
   // derived fields
   protected label = computed(() => '@input.' + this.name() + '.label');
-  protected placeholder = computed(() => '@input.' + this.name() + '.label');
+  protected placeholder = computed(() => '@input.' + this.name() + '.placeholder');
 
   // passing constants to the template
   readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
