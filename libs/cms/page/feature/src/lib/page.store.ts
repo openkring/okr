@@ -80,11 +80,13 @@ export const _PageStore = signalStore(
           return of({ page: undefined, sections: [] });
         }
         return store.pageService.read(params.pageId).pipe(
-          debugItemLoaded<PageModel>(`PageStore.pageResource`, params.currentUser),
+          debugItemLoaded<PageModel>(`PageStore.pageResource (page only)`, params.currentUser),
           switchMap(page => {
             if (!page || !page.sections || page.sections.length === 0) {
+              console.log('PageStore.pageResource: No sections to load', { page: page?.bkey, sectionCount: page?.sections?.length });
               return of({ page, sections: [] as SectionModel[] });
             }
+            console.log('PageStore.pageResource: Loading sections', { page: page.bkey, sectionIds: page.sections });
             // Load all sections for this page
             const sectionObservables = page.sections.map(sectionId => 
               store.sectionService.read(sectionId).pipe(
@@ -92,10 +94,19 @@ export const _PageStore = signalStore(
               )
             );
             return forkJoin(sectionObservables).pipe(
-              map(sections => ({
-                page,
-                sections: sections.filter(s => s !== undefined) as SectionModel[]
-              }))
+              map(sections => {
+                const filteredSections = sections.filter(s => s !== undefined) as SectionModel[];
+                console.log('PageStore.pageResource: Sections loaded', { 
+                  page: page.bkey, 
+                  requestedCount: page.sections.length,
+                  loadedCount: filteredSections.length,
+                  sectionIds: filteredSections.map(s => s.bkey)
+                });
+                return {
+                  page,
+                  sections: filteredSections
+                };
+              })
             );
           })
         );
@@ -120,7 +131,6 @@ export const _PageStore = signalStore(
       meta: computed(() => state.pageResource.value()?.page?.meta),
       sections: computed(() => state.pageResource.value()?.page?.sections ?? []),
       pageSections: computed(() => state.pageResource.value()?.sections ?? []),
-      isEmptyPage: computed(() => state.pageResource.value()?.page?.sections === undefined || state.pageResource.value()?.page?.sections.length === 0),
       sectionTypes: computed(() => state.appStore.getCategory('section_type')),
 
       isLoading: computed(() => state.pagesResource.isLoading() || state.pageResource.isLoading()),
@@ -160,7 +170,14 @@ export const _PageStore = signalStore(
        */
       setPageId(pageId: string) {
         debugMessage(`PageStore.setPageId(${pageId})`, store.currentUser());
+        const currentPageId = store.pageId();
         patchState(store, { pageId });
+        
+        // If setting the same pageId, force reload since rxResource won't detect the change
+        if (currentPageId === pageId && pageId !== '') {
+          console.log('PageStore: Same pageId detected, forcing reload');
+          store.pageResource.reload();
+        }
       },
 
       /******************************** getters ******************************************* */
@@ -184,8 +201,8 @@ export const _PageStore = signalStore(
         return store.appStore.appConfig()[key];
       },
 
-      getImgixUrl(key: keyof AppConfig): string {
-        const url = store.appStore.appConfig()[key] + '';
+      getImgixUrl(url: string | undefined): string | undefined {
+        if (!url) return undefined;
         const imgixBaseUrl = store.imgixBaseUrl();
         return `${imgixBaseUrl}/${getImgixUrlWithAutoParams(url)}`;
       },
