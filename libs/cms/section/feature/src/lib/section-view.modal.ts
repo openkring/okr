@@ -1,27 +1,30 @@
 import { Component, inject, input } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
-import { SectionComponent } from "./section.component";
+
 import { HeaderComponent } from '@bk2/shared-ui';
+import { SectionModel } from '@bk2/shared-models';
+
+import { SectionDispatcher } from "./section-dispatcher";
 
 @Component( {
-  selector: 'bk-preview-section-modal',
+  selector: 'bk-section-view-modal',
   standalone: true,
   imports: [
     IonContent,
-    SectionComponent, HeaderComponent
+    SectionDispatcher, HeaderComponent
 ],
   template: `
     <bk-header [title]="title()" [isModal]="true" />
     <ion-content>
-      <bk-section [id]="id()" />
+      <bk-section-dispatcher [section]="section()" [currentUser]="undefined" [editMode]="false" />
     </ion-content>
   `
 } )
-export class PreviewSectionModal {
+export class SectionViewModal {
   private modalController = inject(ModalController);
 
   // inputs
-  public id = input.required<string>();
+  public section = input.required<SectionModel>();
   public title = input('Preview');
 
   public close(): void {

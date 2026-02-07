@@ -1,8 +1,8 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
-import { RoleName } from '@bk2/shared-models';
-import { debugMessage, hasRole, replaceSubstring } from '@bk2/shared-util-core';
+import { RoleName, SectionModel, UserModel } from '@bk2/shared-models';
+import { hasRole } from '@bk2/shared-util-core';
 
 import { AccordionSectionComponent } from './accordion-section';
 import { AlbumSectionComponent } from './album-section.component';
@@ -21,17 +21,16 @@ import { SwiperSectionComponent } from './swiper-section.component';
 import { TableSectionComponent } from './table-section.component';
 import { TrackerSectionComponent } from './tracker-section.component';
 import { VideoSectionComponent } from './video-section.component';
-import { SectionStore } from './section.store';
 import { EventsSectionComponent } from './events-section.component';
 import { InvitationsSectionComponent } from './invitations-section.component';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
  * The section renders differently depending on the type property.
- * Use it like this: <bk-section sectionType="name of the sectionType"></bk-section>
+ * Use it like this: <bk-section-dispatcher sectionType="name of the sectionType"></bk-section-dispatcher>
  */
 @Component({
-  selector: 'bk-section',
+  selector: 'bk-section-dispatcher',
   standalone: true,
   imports: [
     AccordionSectionComponent,
@@ -42,7 +41,6 @@ import { InvitationsSectionComponent } from './invitations-section.component';
     InvitationsSectionComponent,
     IonItem, IonLabel
   ],
-  providers: [SectionStore],
   template: `
     @if (section(); as section) {
       @if (hasRole(roleNeeded())) {
@@ -51,16 +49,16 @@ import { InvitationsSectionComponent } from './invitations-section.component';
             <bk-accordion-section [section]="section" />
           }
           @case('album') { 
-            <bk-album-section [section]="section" />
+            <bk-album-section [section]="section" [editMode]="editMode()" />
           }
           @case('article') {
             <bk-article-section [section]="section" />
           }
           @case('button') {  
-            <bk-button-section [section]="section" />
+            <bk-button-section [section]="section" [editMode]="editMode()" />
           }
           @case('cal') {
-            <bk-calendar-section [section]="section" />
+            <bk-calendar-section [section]="section" [editMode]="editMode()" />
           }
           @case('chart') {
             <bk-chart-section [section]="section" />
@@ -69,7 +67,7 @@ import { InvitationsSectionComponent } from './invitations-section.component';
             <bk-chat-section [section]="section" />
           }
           @case('gallery') {
-            <bk-gallery-section [section]="section" />
+            <bk-gallery-section [section]="section" [editMode]="editMode()" />
           }
           @case('hero') {
             <bk-hero-section [section]="section" />
@@ -78,10 +76,10 @@ import { InvitationsSectionComponent } from './invitations-section.component';
             <bk-iframe-section [section]="section" />
           }
           @case('map') {
-            <bk-map-section [section]="section" />
+            <bk-map-section [section]="section" [editMode]="editMode()" />
           }
           @case('people') {
-            <bk-people-section [section]="section" />
+            <bk-people-section [section]="section" [editMode]="editMode()" />
           }
           @case('slider') {
             <bk-swiper-section [section]="section" />
@@ -90,16 +88,16 @@ import { InvitationsSectionComponent } from './invitations-section.component';
             <bk-table-section [section]="section" />
           }
           @case('tracker') {
-            <bk-tracker-section [section]="section" />
+            <bk-tracker-section [section]="section" [editMode]="editMode()" />
           }
           @case('video') {
             <bk-video-section [section]="section" />
           }
           @case('events') {
-            <bk-events-section [section]="section" />
+            <bk-events-section [section]="section" [editMode]="editMode()" />
           }
           @case('invitations') {
-            <bk-invitations-section [section]="section" />
+            <bk-invitations-section [section]="section" [editMode]="editMode()" />
           }
           @default {
             <bk-missing-section [section]="section" />
@@ -108,30 +106,19 @@ import { InvitationsSectionComponent } from './invitations-section.component';
       }
     } @else {
       <ion-item color="warning">
-        <ion-label>Missing type on section {{ id() }}</ion-label>
+        <ion-label>Missing type on section {{ section().bkey }}</ion-label>
       </ion-item>
     }
   `
 })
-export class SectionComponent {
-  private readonly sectionStore = inject(SectionStore);
+export class SectionDispatcher {
+  public section = input.required<SectionModel>();
+  public currentUser = input.required<UserModel | undefined>();
+  public editMode = input.required<boolean>();
 
-  public id = input.required<string>();     // sectionId
-  public readOnly = input<boolean>(true);
-  protected isReadOnly = computed(() => this.readOnly());
-
-  protected readonly section = computed(() => this.sectionStore.section());
   protected readonly roleNeeded = computed(() => this.section()?.roleNeeded as RoleName);
 
-  constructor() {
-    effect(() => {
-      const id = replaceSubstring(this.id(), '@TID@', this.sectionStore.appStore.env.tenantId);
-      debugMessage(`SectionComponent: sectionId=${this.id()} -> ${id}`, this.sectionStore.currentUser());
-      this.sectionStore.setSectionId(id);
-    });
-  }
-
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.sectionStore.currentUser());
+    return hasRole(role, this.currentUser());
   }
 }
