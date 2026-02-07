@@ -96,6 +96,8 @@ export class EventsSectionComponent implements OnInit {
 
   // inputs
   public section = input<EventsSection>();
+  public editMode = input<boolean>(false);
+
   // derived values
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
@@ -144,6 +146,7 @@ export class EventsSectionComponent implements OnInit {
    * @param calevent 
    */
   protected async showActions(calevent: CalEventModel): Promise<void> {
+    if (this.editMode()) return;
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
     this.addActionSheetButtons(actionSheetOptions, calevent);
     await this.executeActions(actionSheetOptions, calevent);
@@ -222,6 +225,7 @@ export class EventsSectionComponent implements OnInit {
   }
 
   protected openMoreUrl(): void {
+    if (this.editMode()) return;
     navigateByUrl(this.router, this.moreUrl());
   }
 }

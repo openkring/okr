@@ -209,6 +209,7 @@ export class AlbumSectionComponent {
   private readonly platformId = inject(PLATFORM_ID);
 
   public section = input<AlbumSection>();
+  public editMode = input<boolean>(false);
 
   protected imgixBaseUrl = computed(() => this.albumStore.imgixBaseUrl());
   protected imageContainer = viewChild('.imgix-image', { read: ElementRef });
@@ -238,6 +239,7 @@ export class AlbumSectionComponent {
   }
   
   protected async onImageClicked(image: ImageConfig, index = 0): Promise<void> {
+    if (this.editMode()) return;
     this.albumStore.setImage(image);    // loads metadata
     debugData('AlbumSectionComponent.onImageClicked -> image: ', image, this.albumStore.currentUser());
     debugData('AlbumSectionComponent.onImageClicked -> metaData: ', this.metaData(), this.albumStore.currentUser());
@@ -263,6 +265,7 @@ export class AlbumSectionComponent {
   }
 
   protected goUp(): void {
+    if (this.editMode()) return;
     this.albumStore.goUp();
   }
 

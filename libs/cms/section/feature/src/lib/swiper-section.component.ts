@@ -49,7 +49,12 @@ register(); // globally register Swiper's custom elements.
   `
 })
 export class SwiperSectionComponent {
+
+  // inputs
   public section = input<SliderSection>();
+  public editMode = input(false);
+
+  // derived signals
   protected images = computed(() => this.section()?.properties.images ?? []);
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
   protected readonly title = computed(() => this.section()?.title);

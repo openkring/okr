@@ -29,7 +29,7 @@ import { ButtonWidgetComponent } from '@bk2/cms-section-ui';
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" [sizeMd]="colSizeButton()">
-                    <bk-button-widget [section]="section" />
+                    <bk-button-widget [section]="section" [editMode]="editMode()" />
                   </ion-col>
                   <ion-col size="12" [sizeMd]="colSizeText()">
                     <div [innerHTML]="content()"></div>
@@ -44,7 +44,7 @@ import { ButtonWidgetComponent } from '@bk2/cms-section-ui';
                     <div [innerHTML]="content()"></div>
                   </ion-col>
                   <ion-col size="12" [sizeMd]="colSizeButton()">
-                    <bk-button-widget [section]="section" />
+                    <bk-button-widget [section]="section" [editMode]="editMode()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -53,7 +53,7 @@ import { ButtonWidgetComponent } from '@bk2/cms-section-ui';
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <bk-button-widget [section]="section" />
+                    <bk-button-widget [section]="section" [editMode]="editMode()" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
@@ -72,13 +72,13 @@ import { ButtonWidgetComponent } from '@bk2/cms-section-ui';
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <bk-button-widget [section]="section" />
+                    <bk-button-widget [section]="section" [editMode]="editMode()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
             }
             @default {  <!-- VP.None -->
-              <bk-button-widget [section]="section" />
+              <bk-button-widget [section]="section" [editMode]="editMode()" />
             }
           }
         </ion-card-content>
@@ -91,6 +91,7 @@ import { ButtonWidgetComponent } from '@bk2/cms-section-ui';
 export class ButtonSectionComponent {
   // inputs
   public section = input<ButtonSection>();
+  public editMode = input<boolean>(false);
 
   // computed
   protected content = computed(() => this.section()?.content?.htmlContent ?? '<p></p>');

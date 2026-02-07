@@ -1,11 +1,13 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { firstValueFrom } from 'rxjs/internal/firstValueFrom';
 
 import { PeopleSection, ViewPosition } from "@bk2/shared-models";
 import { SpinnerComponent } from "@bk2/shared-ui";
 
 import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
-import { PreviewSectionModal } from '@bk2/cms-section-feature';
+import { SectionViewModal } from '@bk2/cms-section-feature';
+import { SectionService } from '@bk2/cms-section-data-access';
 
 @Component({
   selector: 'bk-people-section',
@@ -31,11 +33,11 @@ import { PreviewSectionModal } from '@bk2/cms-section-feature';
                   </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="9">
-                  <bk-persons-widget [section]="section" />
+                  <bk-persons-widget [section]="section" [editMode]="editMode()" />
                 </ion-col>
               } @else {
               <ion-col size="12">
-                <bk-persons-widget [section]="section" />
+                <bk-persons-widget [section]="section" [editMode]="editMode()" />
               </ion-col>
               }
             </ion-row>
@@ -49,9 +51,11 @@ import { PreviewSectionModal } from '@bk2/cms-section-feature';
 })
 export class PeopleSectionComponent {
   private readonly modalController = inject(ModalController);
+  private readonly sectionService = inject(SectionService);
 
   // inputs
   public section = input<PeopleSection>();
+  public editMode = input(false);
 
   // fields
   protected readonly sectionTitle = computed(() => this.section()?.title);
@@ -60,22 +64,26 @@ export class PeopleSectionComponent {
 
   protected readonly avatarConfig = computed(() => this.section()?.properties.avatar);
   protected readonly avatarTitle = computed(() => this.avatarConfig()?.title);
-  protected readonly linkedSection = computed(() => this.section()?.properties.avatar?.linkedSection);
+  protected readonly linkedSectionId = computed(() => this.section()?.properties.avatar?.linkedSection);
 
   // passing constants to template
   public VP = ViewPosition;
 
   protected async showLinkedSection(): Promise<void> {
-    const linkedSection = this.linkedSection();
-    if (!linkedSection || linkedSection.length === 0) return;
-      const _modal = await this.modalController.create({
-        component: PreviewSectionModal,
-        cssClass: 'wide-modal',
-        componentProps: { 
-          id: linkedSection,
-          title: this.avatarTitle()
-        }
-      });
-      _modal.present();
-      await _modal.onDidDismiss();  }
+    if (this.editMode()) return; // prevent showing linked section in edit mode
+    const linkedSectionId = this.linkedSectionId();
+    if (!linkedSectionId || linkedSectionId.length === 0) return;
+    const linkedSection = await firstValueFrom(this.sectionService.read(linkedSectionId));
+    if (!linkedSection) return;
+    const _modal = await this.modalController.create({
+      component: SectionViewModal,
+      cssClass: 'wide-modal',
+      componentProps: { 
+        section: linkedSection,
+        title: this.avatarTitle()
+      }
+    });
+    _modal.present();
+    await _modal.onDidDismiss();
+  }
 }

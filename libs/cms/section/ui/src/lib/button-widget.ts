@@ -50,6 +50,7 @@ export class ButtonWidgetComponent {
 
   // inputs
   public section = input.required<ButtonSection>();
+  public editMode = input<boolean>(false);
 
   private readonly imgixBaseUrl = this.env.services.imgixBaseUrl;
 
@@ -105,6 +106,7 @@ export class ButtonWidgetComponent {
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
 
   protected async action(): Promise<void> {
+    if (this.editMode()) return;
     const url = this.url();
     if (url) {
       switch (this.actionType()) {

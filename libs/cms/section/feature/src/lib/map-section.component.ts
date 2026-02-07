@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, inject, input } from '@angular/core';
+import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
@@ -88,8 +88,10 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   private readonly firestoreService = inject(FirestoreService);
   private readonly platformId = inject(PLATFORM_ID);
 
+  // inputs
   public section = input.required<MapSection>();
-  
+  public editMode = input<boolean>(false);
+
   protected mapId: string;
   protected locationError: string | null = null;
 
@@ -106,6 +108,27 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     this.mapId = `bk-map-${Math.random().toString(36).substring(2)}`; // Unique per instance
+    
+    // Watch for editMode changes and update map configuration
+    effect(() => {
+      if (this.map && isPlatformBrowser(this.platformId)) {
+        console.log('MapSectionComponent: editMode changed, updating map config', this.editMode());
+        // Note: Google Maps API doesn't have a direct method to update these options after creation
+        // We need to call setOptions if available, or recreate the map
+        if (this.map.setOptions) {
+          this.map.setOptions({
+            gestureHandling: this.editMode() ? 'none' : 'auto',
+            clickableIcons: !this.editMode(),
+            disableDefaultUI: this.editMode(),
+            draggable: !this.editMode(),
+            zoomControl: !this.editMode(),
+            scrollwheel: !this.editMode(),
+            disableDoubleClickZoom: this.editMode(),
+            keyboardShortcuts: !this.editMode()
+          });
+        }
+      }
+    });
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -134,6 +157,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   }
 
   public async triggerGeolocation(): Promise<void> {
+    if (this.editMode()) return;
     this.locationError = null;
     try {
       const position = await this.getCurrentPosition();
@@ -183,7 +207,8 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
         apiKey: this.appStore.env.services.gmapKey,
         config: {
           center: { lat: centerLatitude, lng: centerLongitude },
-          zoom
+          zoom,
+          mapType: MapType.Satellite
         }
       });
       debugMessage(`MapSectionComponent.loadMap: map ${this.mapId} initialized successfully.`);

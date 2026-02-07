@@ -80,7 +80,8 @@ export class InvitationsSectionComponent implements OnInit {
 
   // inputs
   public section = input<InvitationsSection>();
-  
+  public editMode = input<boolean>(false);
+
   // derived values
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
@@ -144,6 +145,7 @@ export class InvitationsSectionComponent implements OnInit {
    * @param calevent 
    */
   protected async showActions(inv: InvitationModel): Promise<void> {
+    if (this.editMode()) return;
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
     this.addActionSheetButtons(actionSheetOptions, inv);
     await this.executeActions(actionSheetOptions, inv);

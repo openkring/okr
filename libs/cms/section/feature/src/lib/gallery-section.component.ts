@@ -66,6 +66,7 @@ export class GallerySectionComponent {
 
   // inputs
   public section = input<GallerySection>();
+  public editMode = input<boolean>(false);
   protected initialSlide = input(2);
   protected imageEffect = input('slide');
 
@@ -78,6 +79,7 @@ export class GallerySectionComponent {
   private readonly height = computed(() => this.imageStyle().height);
 
   public show(image: ImageConfig): void {
+    if (this.editMode()) return;
     downloadToBrowser(this.getImgixUrlFromImage(image));
   }
 

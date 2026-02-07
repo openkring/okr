@@ -46,6 +46,7 @@ export class PersonsWidgetComponent {
   
   // inputs
   public section = input<PeopleSection>();
+  public editMode = input(false);
 
   // signals
   protected persons = computed(() => this.section()?.properties.persons ?? []);
@@ -78,6 +79,7 @@ export class PersonsWidgetComponent {
 
   // tbd: add a group and show all persons of this group
   public showPerson(person: AvatarInfo): void {
+    if (this.editMode()) return; // prevent navigation in edit mode
     navigateByUrl(this.router, `/person/${person.key}`);
   }
 }

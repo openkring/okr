@@ -72,6 +72,7 @@ export class CalendarSectionComponent implements OnInit {
 
   // inputs
   public section = input<CalendarSection>();
+  public editMode = input<boolean>(false);
   private fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
 
   // derived values
@@ -146,11 +147,13 @@ export class CalendarSectionComponent implements OnInit {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onDateClick(arg: any) {
+    if (this.editMode()) return;
     debugData<unknown>('CalendarSection(): onDateClick: ', arg);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async onEventClick(arg: any) {
+    if (this.editMode()) return;
     debugMessage('CalendarSection.onEventClick: event selected', this.calendarStore.currentUser());
     debugData<string>('event: ', arg);
     debugData<string>('title: ', arg.event.title);

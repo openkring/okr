@@ -44,26 +44,26 @@ import { TrackerSectionStore } from './tracker-section.store';
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              @if(trackerStore.autoStart() === false && (trackerStore.state() === 'idle' || trackerStore.state() === 'paused')) {
+              @if(autoStart() === false && (state() === 'idle' || state() === 'paused')) {
                 <ion-col size="6" size-md="4">
-                  <ion-button (click)="trackerStore.start()">Start</ion-button>
-                  <ion-note><small>interval: {{ trackerStore.timeout() }} msec</small></ion-note>
+                  <ion-button (click)="start()">Start</ion-button>
+                  <ion-note><small>interval: {{ timeout() }} msec</small></ion-note>
                 </ion-col>
               }
-              @if(trackerStore.state() === 'started') {
+              @if(state() === 'started') {
                 <ion-col size="6" size-md="4">
-                  <ion-button (click)="trackerStore.pause()">Pause</ion-button>                
+                  <ion-button (click)="pause()">Pause</ion-button>                
                 </ion-col>   
                 <ion-col size="6" size-md="4">
-                  <ion-button (click)="trackerStore.stop()">Stop</ion-button>                
+                  <ion-button (click)="stop()">Stop</ion-button>                
                 </ion-col>
               }            
-              @if(trackerStore.state() === 'stopped') {
+              @if(state() === 'stopped') {
                 <ion-col size="6" size-md="4">
-                  <ion-button (click)="trackerStore.reset()">Reset</ion-button>                
+                  <ion-button (click)="reset()">Reset</ion-button>                
                 </ion-col>
                 <ion-col size="6" size-md="4">
-                  <ion-button (click)="trackerStore.export()">Export</ion-button>                
+                  <ion-button (click)="export()">Export</ion-button>                
                 </ion-col>
               }
             </ion-row>
@@ -72,20 +72,27 @@ import { TrackerSectionStore } from './tracker-section.store';
                 <ion-item lines="none">
                   <ion-label>Longitude: </ion-label>
                   <ion-label>{{ longitude()}}</ion-label>
-                  <bk-button-copy [value]="longitude()" />
+                  @if(!editMode()) {
+                    <bk-button-copy [value]="longitude()" />
+                  }
                 </ion-item>
               </ion-col>
               <ion-col size="12" size-md="4">
                 <ion-item lines="none">
                   <ion-label>Latitude: </ion-label>
                   <ion-label>{{ latitude()}}</ion-label>
-                  <bk-button-copy [value]="latitude()" />
+                  @if(!editMode()) {
+                    <bk-button-copy [value]="latitude()" />
+                  }
                 </ion-item>
               </ion-col>
               <ion-col size="12" size-md="4">
                 <ion-item lines="none">
                   <ion-label>Altitude: </ion-label>
                   <ion-label>{{ altitude()}}</ion-label>
+                  @if(!editMode()) {
+                    <bk-button-copy [value]="altitude()" />
+                  }
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -99,9 +106,13 @@ import { TrackerSectionStore } from './tracker-section.store';
   `
 })
 export class TrackerSectionComponent {
-  public section = input<TrackerSection>();
   protected trackerStore = inject(TrackerSectionStore);
 
+  // inputs
+  public section = input<TrackerSection>();
+  public editMode = input(false);
+
+  // derived signals
   protected title = computed(() => this.section()?.title);  
   protected subTitle = computed(() => this.section()?.subTitle);
 
@@ -110,7 +121,10 @@ export class TrackerSectionComponent {
   protected longitude = computed(() => this.currentPosition()?.coords?.longitude);
   protected altitude = computed(() => this.currentPosition()?.coords?.altitude);
   protected address = computed(() => lookupAddress(this.latitude(), this.longitude()));
-  protected exportFormat = computed(() => this.trackerStore.exportFormat());  
+  protected exportFormat = computed(() => this.trackerStore.exportFormat());
+  protected state = computed(() => this.trackerStore.state());
+  protected timeout = computed(() => this.trackerStore.timeout());
+  protected autoStart = computed(() => this.trackerStore.autoStart());
 
   constructor() {
     effect(() => {
@@ -120,5 +134,29 @@ export class TrackerSectionComponent {
       }
     });
   }
-}
 
+  protected start(): void {
+    if (this.editMode()) return; // prevent operation in edit mode
+    this.trackerStore.start();
+  }
+
+  protected pause(): void {
+    if (this.editMode()) return; // prevent operation in edit mode
+    this.trackerStore.pause();
+  }
+
+  protected stop(): void {
+    if (this.editMode()) return; // prevent operation in edit mode
+    this.trackerStore.stop();
+  }
+
+  protected reset(): void {
+    if (this.editMode()) return; // prevent operation in edit mode
+    this.trackerStore.reset();
+  }
+
+  protected export(): void {
+    if (this.editMode()) return; // prevent operation in edit mode
+    this.trackerStore.export();
+  }
+}
