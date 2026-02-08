@@ -277,7 +277,7 @@ export function newAvatarInfo(key: string, name1: string, name2: string, modelTy
   };
 }
 
-export function getAvatarInfo(model?: PersonModel | OrgModel | ResourceModel | UserModel | GroupModel | AccountModel, modelType?: 'person' | 'org' | 'resource' | 'user' | 'group' | 'account'): AvatarInfo | undefined {
+export function getAvatarInfo(model?: PersonModel | OrgModel | ResourceModel | UserModel | GroupModel | AccountModel, modelType?: 'person' | 'org' | 'resource' | 'user' | 'user-person' | 'group' | 'account'): AvatarInfo | undefined {
   if (!model || !modelType) return undefined;
   switch (modelType) {
     case 'person':
@@ -295,6 +295,9 @@ export function getAvatarInfo(model?: PersonModel | OrgModel | ResourceModel | U
     case 'user':
       const user = model as UserModel;
       return newAvatarInfo(user.bkey, user.firstName, user.lastName, 'user', '', '', user.firstName + ' ' + user.lastName);
+    case 'user-person':
+      const u_p = model as UserModel;
+      return newAvatarInfo(u_p.personKey, u_p.firstName, u_p.lastName, 'person', '', '', u_p.firstName + ' ' + u_p.lastName);
     case 'account':
       const account = model as AccountModel;
       return newAvatarInfo(account.bkey, '', account.name, 'account', account.type, '', account.name);

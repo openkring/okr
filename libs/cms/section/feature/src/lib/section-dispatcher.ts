@@ -23,6 +23,7 @@ import { TrackerSectionComponent } from './tracker-section.component';
 import { VideoSectionComponent } from './video-section.component';
 import { EventsSectionComponent } from './events-section.component';
 import { InvitationsSectionComponent } from './invitations-section.component';
+import { TasksSectionComponent } from './tasks-section.component';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -38,7 +39,7 @@ import { InvitationsSectionComponent } from './invitations-section.component';
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleSectionComponent, GallerySectionComponent, TrackerSectionComponent,
     HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent, ChatSectionComponent,
-    InvitationsSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent,
     IonItem, IonLabel
   ],
   template: `
@@ -86,6 +87,9 @@ import { InvitationsSectionComponent } from './invitations-section.component';
           }
           @case('table') {
             <bk-table-section [section]="section" />
+          }
+          @case('tasks') {
+            <bk-tasks-section [section]="section" [editMode]="editMode()" />
           }
           @case('tracker') {
             <bk-tracker-section [section]="section" [editMode]="editMode()" />

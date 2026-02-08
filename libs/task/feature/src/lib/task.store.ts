@@ -142,11 +142,17 @@ export const TaskStore = signalStore(
 
     async add(readOnly = true): Promise<void> {
       if (readOnly) return;
-      const author = getAvatarInfo(store.currentUser(), 'user');
+      const author = getAvatarInfo(store.currentUser(), 'user-person');
       if (!author) return;
       const task = new TaskModel(store.tenantId());
       task.author = author;
-      task.calendars = [store.calendarName()];
+      task.assignee = author; // by default, the task is self-assigned, user can change this in the edit modal
+      const calendar = store.calendarName();
+      if (!calendar || calendar === 'all' || calendar === 'my' || calendar === '') {
+        task.calendars = [store.tenantId()];
+      } else {
+        task.calendars = [calendar];
+      }
       await this.edit(task, readOnly);
     },
 

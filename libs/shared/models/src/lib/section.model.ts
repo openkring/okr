@@ -16,13 +16,15 @@ export const SectionModelName = 'section';
 
 export type SectionType = 
     'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' |'gallery' | 'hero' | 'iframe' | 'map' | 
-    'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations';
+    'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
+    'news' | 'activities' | 'messages' | 'files' | 'links' | 'rag';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     GallerySection | HeroSection | IframeSection | MapSection | PeopleSection | SliderSection | 
-    TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection;
+    TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
+    NewsSection | ActivitiesSection | MessagesSection | FilesSection | LinksSection | RagSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 export interface BaseSection {
@@ -38,7 +40,8 @@ export interface BaseSection {
   isArchived: boolean;
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | GalleryConfig | HeroConfig | 
-  IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig;
+  IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig | 
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | FilesConfig | LinksConfig | RagConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -69,6 +72,25 @@ export interface AccordionItem {
   label: string;
   value: string;        // used for accordion state (which item is open)
   sectionId?: string;   // reference to section to render in accordion content
+}
+
+// --------------------------------------- ACTIVITIES ----------------------------------------
+/**
+ * Shows the latest activities.
+ * Activities are changes in the system that are relevant to the user, e.g. entries, exits, category changes etc.
+ * The activities section properties can be used to configure how many activities to show, whether to show past activities (e.g. activities that are older than a certain date), and whether to show upcoming activities (e.g. activities that are newer than a certain date).
+ * The activities section can also show the time and location of the activities if available.
+ * The activities section can also have a "more" button that navigates to a specified url, normally the list of all activities.
+ */
+export interface ActivitiesSection extends BaseSection {
+  type: 'activities';
+  properties: ActivitiesConfig;
+}
+
+export interface ActivitiesConfig {
+  // title is from BaseSection
+  moreUrl: string; // url to navigate to when 'more' button is clicked
+  maxItems: number; // maximum number of activities to show
 }
 
 // --------------------------------------- ALBUM ----------------------------------------
@@ -206,6 +228,25 @@ export interface EventsConfig {
   showEventLocation: boolean; // if true, show event location
 }
 
+// --------------------------------------- FILES ----------------------------------------
+/**
+ * Shows the a file list.
+ * Files are a selection of documents.
+ * The files section properties can be used to configure how many files to show, and how to select these files.
+ * The files section can also have a "more" button that navigates to a specified url, normally the list of all documents.
+ * tbd: only the most recent updated files ?
+ */
+export interface FilesSection extends BaseSection {
+  type: 'files';
+  properties: FilesConfig;
+}
+
+export interface FilesConfig {
+  // title is from BaseSection
+  moreUrl: string; // url to navigate to when 'more' button is clicked
+  maxItems: number; // maximum number of files to show
+}
+
 // --------------------------------------- GALLERY ----------------------------------------
 export interface GallerySection extends BaseSection {
   type: 'gallery';
@@ -258,10 +299,29 @@ export interface InvitationsConfig {
   showUpcomingItems: boolean; // if true, show upcoming events
 }
 
+// --------------------------------------- LINKS ----------------------------------------
+/**
+ * Shows the a list of links.
+ * Links are a selection of URLs, nicely presented with a logo, title and description.
+ * The links section properties can be used to configure how many links to show, and how to select these links.
+ * The links section can also have a "more" button that navigates to a specified url, normally the list of all links.
+ * tbd: only the most recent updated links ?
+ */
+export interface LinksSection extends BaseSection {
+  type: 'links';
+  properties: LinksConfig;
+}
+
+export interface LinksConfig {
+  // title is from BaseSection
+  moreUrl: string; // url to navigate to when 'more' button is clicked
+  maxItems: number; // maximum number of links to show
+}
+
 // --------------------------------------- MAP ----------------------------------------
 export interface MapSection extends BaseSection {
   type: 'map';
-    properties: MapConfig;
+  properties: MapConfig;
 }
 
 export interface MapConfig {
@@ -271,7 +331,51 @@ export interface MapConfig {
   useCurrentLocationAsCenter: boolean;
 }
 
+// --------------------------------------- MESSAGES ----------------------------------------
+/**
+ * Shows the latest messages.
+ * Messages are chat messages to the current user in her channels.
+ * The messages section properties can be used to configure how many messages to show, whether to show past messages (e.g. messages that are older than a certain date), and whether to show upcoming messages (e.g. messages that are newer than a certain date).
+ * The messages section can also show the time and location of the messages if available.
+ * The messages section can also have a "more" button that navigates to a specified url, normally the list of all messages.
+ */
+export interface MessagesSection extends BaseSection {
+  type: 'messages';
+  properties: MessagesConfig;
+}
+
+export interface MessagesConfig {
+  // title is from BaseSection
+  moreUrl: string; // url to navigate to when 'more' button is clicked
+  maxItems: number; // maximum number of messages to show
+}
+
+// --------------------------------------- NEWS ----------------------------------------
+/**
+ * Shows the latest news.
+ * News are written as Articles on a BlogPage, and the news section lists links to the latest news articles based on the creation date.
+ * The news section properties can be used to configure how many news items to show, whether to show past news (e.g. news that are older than a certain date), and whether to show upcoming news (e.g. news that are newer than a certain date).
+ * The news section can also show the time and location of the news if available.
+ * The news section can also have a "more" button that navigates to a specified url, normally the blog page that shows all news articles.
+ */
+export interface NewsSection extends BaseSection {
+  type: 'news';
+  properties: NewsConfig;
+}
+
+export interface NewsConfig {
+  // title is from BaseSection
+  moreUrl: string; // url to navigate to when 'more' button is clicked
+  maxItems: number; // maximum number of news items to show
+  blogPageKey: string; // the key of the blog page where the news articles are stored, used for navigation when clicking on a news item
+}
+
 // --------------------------------------- PEOPLE ----------------------------------------
+/**
+ * The people section shows a list of persons with their avatars and names. 
+ * The properties of the people section can be used to configure how the avatars are displayed (e.g. color, size, shape), 
+ * how the names are displayed (e.g. first name, last name, both), and whether to show a label (e.g. role) next to the name.
+ */
 export interface PeopleSection extends BaseSection {
   type: 'people';
   properties: PeopleConfig;
@@ -292,6 +396,25 @@ export interface AvatarConfig {
   title: string; // to add a short text besides the avatar (e.g. Finanzen:   Bruno Kaiser (bkaiser))
 }
 
+// --------------------------------------- RAG ----------------------------------------
+/**
+ * A RAG (retrieval augmented generation) section as a chat interface with specific domain knowledge. 
+ * The RAG section can be used to ask questions and get answers based on the domain knowledge, 
+ * which is typically stored in documents that are embedded into a vector database and connected to the RAG system.
+ * Essentially, this section lets the user input his question, sends it to the external RAG system, 
+ * and shows the answer from the RAG system in a chat-like interface.
+ */
+export interface RagSection extends BaseSection {
+  type: 'rag';
+  properties: RagConfig;
+}
+
+export interface RagConfig {
+  // title is from BaseSection
+  moreUrl: string; // url to the external RAG system, shown when clicking on "more" button
+  maxItems: number; // maximum number of links to show
+}
+
 // --------------------------------------- SLIDER ----------------------------------------
 export interface SliderSection extends BaseSection {
   type: 'slider';
@@ -304,6 +427,13 @@ export interface SliderConfig {
 }
 
 // --------------------------------------- TABLE ----------------------------------------
+/**
+ * The table section shows a table with a header and body. 
+ * The properties of the table section can be used to configure the content of the table (header and body), 
+ * the grid style (e.g. gap, background color, padding), and the style of the header and body (e.g. text color, font size, border).
+ * The data property contains the content of the table, where the header is a list of strings that represent the column headers, 
+ * and the body is a list of strings that represent the content of the fields, from top left to bottom right (row by row and column by column).
+ */
 export interface TableSection extends BaseSection {
   type: 'table';
   properties: TableConfig;
@@ -335,6 +465,23 @@ export interface TableStyle {
   padding: string;
   textColor: string;
   border: string;
+}
+
+// --------------------------------------- TASKS ----------------------------------------
+/**
+ * Shows the tasks of the current user.
+ */
+export interface TasksSection extends BaseSection {
+  type: 'tasks';
+  properties: TasksConfig;
+}
+
+export interface TasksConfig {
+  // title is from BaseSection
+  moreUrl: string; // url to navigate to when 'more' button is clicked
+  // later: showPager: boolean; // if true, show pager to navigate between months/weeks/days
+  // later: pageSize: number; // number of events per page
+  maxItems: number; // maximum number of tasks to show
 }
 
 // --------------------------------------- TRACKER ----------------------------------------
