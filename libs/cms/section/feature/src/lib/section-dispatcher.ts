@@ -24,6 +24,8 @@ import { VideoSectionComponent } from './video-section.component';
 import { EventsSectionComponent } from './events-section.component';
 import { InvitationsSectionComponent } from './invitations-section.component';
 import { TasksSectionComponent } from './tasks-section.component';
+import { MessagesSectionComponent } from './messages-section.component';
+import { NewsSectionComponent } from './news-section.component';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -39,7 +41,7 @@ import { TasksSectionComponent } from './tasks-section.component';
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleSectionComponent, GallerySectionComponent, TrackerSectionComponent,
     HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent, ChatSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent,
     IonItem, IonLabel
   ],
   template: `
@@ -67,6 +69,9 @@ import { TasksSectionComponent } from './tasks-section.component';
           @case('chat') {
             <bk-chat-section [section]="section" />
           }
+          @case('events') {
+            <bk-events-section [section]="section" [editMode]="editMode()" />
+          }
           @case('gallery') {
             <bk-gallery-section [section]="section" [editMode]="editMode()" />
           }
@@ -76,8 +81,17 @@ import { TasksSectionComponent } from './tasks-section.component';
           @case('iframe') { 
             <bk-iframe-section [section]="section" />
           }
+          @case('invitations') {
+            <bk-invitations-section [section]="section" [editMode]="editMode()" />
+          }
           @case('map') {
             <bk-map-section [section]="section" [editMode]="editMode()" />
+          }
+          @case('messages') {
+            <bk-messages-section [section]="section" [editMode]="editMode()" />
+          }
+          @case('news') {
+            <bk-news-section [section]="section" [editMode]="editMode()" />
           }
           @case('people') {
             <bk-people-section [section]="section" [editMode]="editMode()" />
@@ -96,12 +110,6 @@ import { TasksSectionComponent } from './tasks-section.component';
           }
           @case('video') {
             <bk-video-section [section]="section" />
-          }
-          @case('events') {
-            <bk-events-section [section]="section" [editMode]="editMode()" />
-          }
-          @case('invitations') {
-            <bk-invitations-section [section]="section" [editMode]="editMode()" />
           }
           @default {
             <bk-missing-section [section]="section" />

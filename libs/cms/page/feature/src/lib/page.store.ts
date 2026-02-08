@@ -4,11 +4,11 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { firstValueFrom, forkJoin, of } from 'rxjs';
-import { map, switchMap, take, tap } from 'rxjs/operators';
+import { map, switchMap, take } from 'rxjs/operators';
 
 import { AppStore } from '@bk2/shared-feature';
 import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@bk2/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
+import { chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData } from '@bk2/shared-util-core';
 import { bkPrompt, confirm, navigateByUrl } from '@bk2/shared-util-angular';
 
 import { PageService } from '@bk2/cms-page-data-access';
@@ -83,10 +83,10 @@ export const _PageStore = signalStore(
           debugItemLoaded<PageModel>(`PageStore.pageResource (page only)`, params.currentUser),
           switchMap(page => {
             if (!page || !page.sections || page.sections.length === 0) {
-              console.log('PageStore.pageResource: No sections to load', { page: page?.bkey, sectionCount: page?.sections?.length });
+              debugData('PageStore.pageResource: No sections to load', { page: page?.bkey, sectionCount: page?.sections?.length }, params.currentUser);
               return of({ page, sections: [] as SectionModel[] });
             }
-            console.log('PageStore.pageResource: Loading sections', { page: page.bkey, sectionIds: page.sections });
+            debugData('PageStore.pageResource: Loading sections', { page: page.bkey, sectionIds: page.sections }, params.currentUser);
             // Load all sections for this page
             const sectionObservables = page.sections.map(sectionId => 
               store.sectionService.read(sectionId).pipe(
@@ -96,12 +96,12 @@ export const _PageStore = signalStore(
             return forkJoin(sectionObservables).pipe(
               map(sections => {
                 const filteredSections = sections.filter(s => s !== undefined) as SectionModel[];
-                console.log('PageStore.pageResource: Sections loaded', { 
+                debugData('PageStore.pageResource: Sections loaded', { 
                   page: page.bkey, 
                   requestedCount: page.sections.length,
                   loadedCount: filteredSections.length,
                   sectionIds: filteredSections.map(s => s.bkey)
-                });
+                }, params.currentUser);
                 return {
                   page,
                   sections: filteredSections
