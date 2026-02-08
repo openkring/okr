@@ -167,7 +167,7 @@ export class GroupListComponent {
     actionSheetOptions.buttons.push(createActionSheetButton('group.show', this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     if (hasRole('registered', this.groupStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('group.view', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('group.view', this.imgixBaseUrl, 'eye-on'));
     }
     if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('group.edit', this.imgixBaseUrl, 'create_edit'));
