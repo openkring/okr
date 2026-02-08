@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
-import { SectionModel } from 'libs/shared/models/src/lib/section.model';
+import { SectionModel } from '@bk2/shared-models';
 
 export type NewsState = {
   maxItems: number | undefined; // max items to show, undefined means all
