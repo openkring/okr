@@ -1,6 +1,7 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": true,
     "types": ["node", "vitest"],
     "declaration": true
   },
@@ -35,6 +36,11 @@
     {"path": "../../../document/ui/tsconfig.lib.json"},
     {"path": "../../../calevent/data-access/tsconfig.lib.json"},
     {"path": "../../../calevent/util/tsconfig.lib.json"},
-    
+    {"path": "../../../relationship/membership/data-access/tsconfig.lib.json"},
+    {"path": "../../../subject/person/data-access/tsconfig.lib.json"},
+    {"path": "../../../subject/person/util/tsconfig.lib.json"},
+    {"path": "../../../subject/person/ui/tsconfig.lib.json"},
+    {"path": "../../../task/data-access/tsconfig.lib.json"},
+    {"path": "../../../task/feature/tsconfig.lib.json"}    
   ]
 }
