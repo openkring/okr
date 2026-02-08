@@ -5,7 +5,7 @@ import { Browser } from '@capacitor/browser';
 
 import { BkEnvironment, ENV } from '@bk2/shared-config';
 import { ImageActionType, ImageConfig, ImageStyle } from '@bk2/shared-models';
-import { die, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@bk2/shared-util-core';
+import { die, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl, warn } from '@bk2/shared-util-core';
 import { downloadToBrowser } from '@bk2/shared-util-angular';
 
 import { showZoomedImage } from './ui.util';
@@ -100,6 +100,7 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
     `],
   template: `
       @if(image(); as image) {
+        @if(url(); as url) {
         @if(isThumbnail() === true) {
           <ion-thumbnail [slot]="slot()" [ngStyle]="style()" (click)="onImageClicked()">
             <img [ngSrc]="thumbnailUrl()" [alt]="altText()" /> 
@@ -109,7 +110,7 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
           <div class="image-container">
             @if(isExternalImage()) {
               <img
-                [src]="url()"
+                [src]="url"
                 [width]="numericWidth()"
                 [height]="numericHeight()"
                 [alt]="altText()"
@@ -133,6 +134,7 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
           </div>
         }
       }
+    } 
     `
 })
 export class ImageComponent {
@@ -161,9 +163,13 @@ export class ImageComponent {
   protected srcset = computed(() => this.generateSrcset());
 
   protected generateSrcset(): string {
+    const url = this.url();
+    const width = this.width();
+    const height = this.height();
+    
     // keep your existing srcset logic for internal images
-    const params = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
-    const base = getImgixUrl(this.url(), '');
+    const params = getSizedImgixParamsByExtension(url, width, height);
+    const base = getImgixUrl(url, '');
     const widths = [320, 640, 960, 1280, 1920];
     return widths.map(w => `${base}?${params}&w=${w} ${w}w`).join(', ');
   }
@@ -177,12 +183,10 @@ export class ImageComponent {
   });
   protected width = computed(() => {
     const _width = this.imageStyle()?.width;
-    console.log('ImageComponent.width -> imageStyle width:', _width);
     return _width ?? this.getValue('width', 'auto');
   });
   protected height = computed(() => {
     const _height = this.imageStyle()?.height;
-    console.log('ImageComponent.height -> imageStyle height:', _height);
     return _height ?? this.getValue('height', 'auto');
   });
 
