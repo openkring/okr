@@ -22,19 +22,23 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
     } 
     <ion-content class="ion-no-padding">
       @if (currentUser(); as currentUser) {
-        <bk-relationship-toolbar
-          relType="membership"
-          [subjectAvatar]="memberAvatar()"
-          [objectAvatar]="orgAvatar()"
-          [currentUser]="currentUser"
-        />
+        @if (memberAvatar(); as memberAvatar) {
+          @if (orgAvatar(); as orgAvatar) {
+            <bk-relationship-toolbar
+              relType="membership"
+              [subjectAvatar]="memberAvatar"
+              [objectAvatar]="orgAvatar"
+              [currentUser]="currentUser"
+            />
 
-        <bk-category-change-form
-          [formData]="formData()"
-          [membershipCategory]="membershipCategory()"
-          [readOnly]=false
-          (formDataChange)="onFormDataChange($event)"
-        />
+            <bk-category-change-form
+              [formData]="formData()"
+              [membershipCategory]="membershipCategory()"
+              [readOnly]=false
+              (formDataChange)="onFormDataChange($event)"
+            />
+          }
+        }
       }
     </ion-content>
   `,

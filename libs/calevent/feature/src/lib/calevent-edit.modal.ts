@@ -28,11 +28,11 @@ import { AttendeesAccordionComponent } from './attendees-accordion';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      @if(currentUser(); as currentUser) {
+      @if(formData(); as formData) {
         <bk-calevent-form
-          [formData]="formData()" 
+          [formData]="formData" 
           (formDataChange)="onFormDataChange($event)"
-          [currentUser]="currentUser"
+          [currentUser]="currentUser()"
           [showForm]="showForm()"
           [types]="types()"
           [periodicities]="periodicities()"
