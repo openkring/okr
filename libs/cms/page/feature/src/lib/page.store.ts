@@ -175,7 +175,7 @@ export const _PageStore = signalStore(
         
         // If setting the same pageId, force reload since rxResource won't detect the change
         if (currentPageId === pageId && pageId !== '') {
-          console.log('PageStore: Same pageId detected, forcing reload');
+          debugMessage('PageStore: Same pageId detected, forcing reload', store.currentUser());
           store.pageResource.reload();
         }
       },
