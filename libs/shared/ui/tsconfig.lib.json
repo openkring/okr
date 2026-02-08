@@ -1,9 +1,8 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-ui.tsbuildinfo",
-    "composite": true,
+    "outDir": "../../../dist/libs/shared/ui",
+    "declaration": true,
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]

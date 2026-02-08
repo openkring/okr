@@ -1,8 +1,8 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-categories.tsbuildinfo",
+    "outDir": "../../../dist/libs/shared/categories",
+    "declaration": true,
     "composite": true
   },
   "include": ["src/**/*.ts"],

@@ -1,7 +1,8 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../../dist/out-tsc/libs/cms/menu/feature",    "declaration": true,
+    "outDir": "../../../../dist/libs/cms/menu/feature",
+    "declaration": true,
     "composite": true,
     "module": "es2020",
     "target": "es2020",

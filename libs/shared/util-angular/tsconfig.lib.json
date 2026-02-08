@@ -1,8 +1,8 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-util-angular.tsbuildinfo",
+    "outDir": "../../../dist/libs/shared/util-angular",
+    "declaration": true,
     "composite": true
   },
   "include": ["src/**/*.ts"],

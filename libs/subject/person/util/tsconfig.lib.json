@@ -1,7 +1,8 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../../dist/out-tsc/libs/subject/person/util",    "declaration": true,
+    "outDir": "../../../../dist/libs/subject/person/util",
+    "declaration": true,
     "composite": true,
     "module": "es2020",
     "target": "es2020",

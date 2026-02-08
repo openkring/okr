@@ -1,8 +1,8 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-data-access.tsbuildinfo",
+    "outDir": "../../../dist/libs/shared/data-access",
+    "declaration": true,
     "composite": true
   },
   "include": ["src/**/*.ts"],

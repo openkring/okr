@@ -1,8 +1,8 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-i18n.tsbuildinfo",
+    "outDir": "../../../dist/libs/shared/i18n",
+    "declaration": true,
     "composite": true
   },
   "include": ["src/**/*.ts"],

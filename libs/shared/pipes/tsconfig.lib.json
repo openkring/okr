@@ -1,8 +1,8 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-pipes.tsbuildinfo",
+    "outDir": "../../../dist/libs/shared/pipes",
+    "declaration": true,
     "composite": true
   },
   "include": ["src/**/*.ts"],

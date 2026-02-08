@@ -1,7 +1,8 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../../dist/out-tsc/libs/relationship/invitation/feature",    "declaration": true,
+    "outDir": "../../../../dist/libs/relationship/invitation/feature",
+    "declaration": true,
     "composite": true,
     "module": "es2020",
     "target": "es2020",
