@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { OrgModel } from '@bk2/shared-models';
@@ -23,12 +23,22 @@ import { PersonNewStore } from './person-new.store';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-person-new-form
-        [formData]="formData()"
-        [priv]="priv()"
-        [membershipCategories]="mcat()"
-        (formDataChange)="onFormDataChange($event)"
-      />
+      @if(formData(); as formData) {
+        <bk-person-new-form
+          [formData]="formData"
+          (formDataChange)="onFormDataChange($event)"
+          [currentUser]="currentUser()"
+          [priv]="priv()"
+          [genders]="genders()"
+          [allTags]="tags()"
+          [tenantId]="tenantId()" 
+          [readOnly]="false"
+          [membershipCategories]="mcat()"
+          [showForm]="showForm()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+        />
+      }
     </ion-content>
   `
 })
@@ -40,6 +50,7 @@ export class PersonNewModal {
   public org = input<OrgModel>();
 
   // signals
+  protected showForm = signal(true);
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
@@ -49,6 +60,9 @@ export class PersonNewModal {
   protected priv = computed(() => this.personNewStore.privacySettings());
   protected currentUser = computed(() => this.personNewStore.currentUser());
   protected mcat = computed(() => this.personNewStore.membershipCategory());
+  protected tags = computed(() => this.personNewStore.getTags());
+  protected tenantId = computed(() => this.personNewStore.tenantId());
+  protected genders = computed(() => this.personNewStore.appStore.getCategory('gender'));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

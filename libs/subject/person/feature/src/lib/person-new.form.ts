@@ -7,7 +7,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
 import { AppStore, OrgSelectModalComponent } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, SwissCity } from '@bk2/shared-models';
+import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole, isOrg, isVisibleToUser } from '@bk2/shared-util-core';
 
@@ -15,7 +15,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
 import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
 
 import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel, personNewFormValidations } from '@bk2/subject-person-util';
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
+import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
 import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 
 @Component({
@@ -33,18 +33,18 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
   styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
   template: `
     <form scVestForm
-      [formShape]="shape"
       [formValue]="formData()"
       [suite]="suite" 
       (dirtyChange)="dirty.emit($event)"
+      (validChange)="valid.emit($event)"
       (formValueChange)="onFormChange($event)">
 
       <!-------------------------------------- PERSON ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Angaben zur Person</ion-card-title>
+          <ion-card-title>{{ '@subject.person.field.details' | translate | async}}</ion-card-title>
         </ion-card-header>
-        <ion-card-content>
+        <ion-card-content class="ion-no-padding">
           <ion-grid>
             <ion-row> 
               <ion-col size="12" size-md="6">
@@ -88,64 +88,66 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
       </ion-card>
 
       <!-------------------------------------- ADDRESSES ------------------------------------->
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Adressen</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              <ion-col size="9">
-                <bk-text-input name="streetName" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="streetNameErrors()" />                                                                                                                     
-              </ion-col>
-              <ion-col size="3">
-                <bk-text-input name="streetNumber" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="streetNumberErrors()" />                                                                                                                     
-              </ion-col>
-            </ion-row>
+      @if(showAddressInputs()) {
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ '@subject.person.field.address' | translate | async}}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content class="ion-no-padding">
+            <ion-grid>
+              <ion-row>
+                <ion-col size="9">
+                  <bk-text-input name="streetName" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [readOnly]="isReadOnly()" />
+                  <bk-error-note [errors]="streetNameErrors()" />                                                                                                                     
+                </ion-col>
+                <ion-col size="3">
+                  <bk-text-input name="streetNumber" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
+                  <bk-error-note [errors]="streetNumberErrors()" />                                                                                                                     
+                </ion-col>
+              </ion-row>
 
-            <bk-swisscity-search (citySelected)="onCitySelected($event)" />
+              <bk-swisscity-search (citySelected)="onCitySelected($event)" [setFocus]="false" />
 
-            <ion-row>
-              <ion-col size="12" size-md="3">
-                <bk-text-input name="countryCode" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
-              </ion-col>
-      
-              <ion-col size="12" size-md="3">
-                <bk-text-input name="zipCode" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
-              </ion-col>
-              
-              <ion-col size="12" size-md="6">
-                <bk-text-input name="city" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
-              </ion-col>
-            </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="3">
+                  <bk-text-input name="countryCode" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+        
+                <ion-col size="12" size-md="3">
+                  <bk-text-input name="zipCode" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+                
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="city" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
 
-            <ion-row>
-              <ion-col size="12" size-md="6"> 
-                <bk-phone [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="phoneErrors()" />                                                                                                                     
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-email [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="emailErrors()" />                                                                                                                     
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-text-input name="web" [value]="web()" (valueChange)="onFieldChange('web', $event)" [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="webErrors()" />                                                                                                                     
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
+              <ion-row>
+                <ion-col size="12" size-md="6"> 
+                  <bk-phone [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
+                  <bk-error-note [errors]="phoneErrors()" />                                                                                                                     
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <bk-email [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
+                  <bk-error-note [errors]="emailErrors()" />                                                                                                                     
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="web" [value]="web()" (valueChange)="onFieldChange('web', $event)" [readOnly]="isReadOnly()" />
+                  <bk-error-note [errors]="webErrors()" />                                                                                                                     
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+        </ion-card>
+      } <!-- end of address inputs -->
 
       <!-------------------------------------- OTHER ------------------------------------->
       @if(isVisibleToUser(priv().showTaxId) || isVisibleToUser(priv().showBexioId)) {
         <ion-card>
           <ion-card-header>
-            <ion-card-title>Verschiedenes</ion-card-title>
+            <ion-card-title>{{ '@subject.person.field.misc' | translate | async}}</ion-card-title>
           </ion-card-header>
-          <ion-card-content>
+          <ion-card-content class="ion-no-padding">
             <ion-grid>
               <ion-row>
                 @if(isVisibleToUser(priv().showTaxId)) {
@@ -167,9 +169,9 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
       <!-------------------------------------- MEMBERSHIP (optional) ------------------------------------->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Mitgliedschaft (optional)</ion-card-title>
+          <ion-card-title>{{ '@subject.person.field.membership' | translate | async}}</ion-card-title>
         </ion-card-header>
-        <ion-card-content>
+        <ion-card-content class="ion-no-padding">
           <ion-grid>
             <ion-row>
               <ion-col size="12">                               
@@ -217,15 +219,21 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 })
 export class PersonNewFormComponent {
   private readonly modalController = inject(ModalController)
-  protected readonly appStore = inject(AppStore);
 
   // inputs
-  public formData = model.required<PersonNewFormModel>();
-  public membershipCategories = input.required<CategoryListModel>();
-  public priv = input.required<PrivacySettings>();
+  public readonly formData = model.required<PersonNewFormModel>();
+  public readonly currentUser = input<UserModel | undefined>();
+  public readonly showForm = input(true);   // used for initializing the form and resetting vest validations
+  public readonly showAddressInputs = input(true);
+  public readonly allTags = input.required<string>();
+  public readonly tenantId = input.required<string>();
+  public readonly priv = input.required<PrivacySettings>();
+  public readonly genders = input.required<CategoryListModel>();
+  public readonly locale = input<string>(DEFAULT_LOCALE);
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
+  public membershipCategories = input.required<CategoryListModel>();
   // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
@@ -243,9 +251,6 @@ export class PersonNewFormComponent {
   protected webErrors = computed(() => this.validationResult().getErrors('web'));
 
   // fields
-  protected allTags = computed(() => this.appStore.getTags('person'));
-  protected genders = computed(() => this.appStore.getCategory('gender'));
-  protected currentUser = computed(() => this.appStore.currentUser());
   protected firstName = linkedSignal(() => this.formData().firstName ?? DEFAULT_NAME);
   protected lastName = linkedSignal(() => this.formData().lastName ?? DEFAULT_NAME);
   protected dateOfBirth = linkedSignal(() => this.formData().dateOfBirth ?? DEFAULT_DATE);
@@ -256,7 +261,6 @@ export class PersonNewFormComponent {
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected shouldAddMembership = linkedSignal(() => this.formData().shouldAddMembership ?? false);
-  protected readonly locale = computed(() => this.appStore.appConfig().locale);
 
   // address
   protected streetName = linkedSignal(() => this.formData().streetName ?? DEFAULT_NAME);
@@ -296,7 +300,7 @@ export class PersonNewFormComponent {
     modal.present();
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
-      if (isOrg(data, this.appStore.tenantId())) {
+      if (isOrg(data, this.tenantId())) {
         this.formData.update((vm) => ({
           ...vm,
           orgKey: data.bkey,

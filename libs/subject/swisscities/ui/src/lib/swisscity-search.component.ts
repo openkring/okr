@@ -57,6 +57,7 @@ export class SwissCitySearchComponent implements OnInit {
   public searchTerm = input('');
   public placeholder = input('Stadt oder PLZ suchen');
   public debounce = input(500);
+  public setFocus = input(true);
 
   public citySelected = output<SwissCity>();
   protected isPopoverOpen = signal(false);
@@ -71,9 +72,11 @@ export class SwissCitySearchComponent implements OnInit {
    * see https://stackoverflow.com/questions/45786205/how-to-focus-ion-searchbar-on-button-click#45786266
    */
   ngOnInit() {
-    setTimeout(() => {
-      if (this.bkSearchCity()) this.bkSearchCity()?.setFocus();
-    }, 500);
+    if (this.setFocus()) {
+      setTimeout(() => {
+        if (this.bkSearchCity()) this.bkSearchCity()?.setFocus();
+      }, 500);
+    }
   }
 
   protected onSearchtermChange($event: Event): void {
