@@ -16,7 +16,7 @@ export class TaskModel implements BkModel, PersistedModel, NamedModel, Searchabl
 
   public state = DEFAULT_TASK_STATE;
   public dueDate = DEFAULT_DATE; // date when the task should be completed
-  public completionDate = DEFAULT_DATE; // date when the task should be completed; if set, the task is considered completed
+  public completionDate = DEFAULT_DATE; // date when the task was completed; if set, the task is considered completed
   public priority = DEFAULT_PRIORITY; // Priority: 0: low, 1: medium, 2: high
   public importance = DEFAULT_IMPORTANCE; // Importance: 0: low, 1: medium, 2: high
 
