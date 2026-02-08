@@ -16,12 +16,26 @@ import { TranslatePipe } from '@bk2/shared-i18n';
     IonIcon, IonAvatar, IonImg, IonItem, IonLabel
 ],
   styles: [`
+    ion-item::part(native) {
+      transition: background-color 0.2s ease;
+    }
+    
+    ion-item:hover::part(native) {
+      background: rgba(0, 0, 0, 0.08);
+    }
+    
     ion-icon { color: var(--ion-color-dark); }
     .letter { color: black; }
+    
     @media (prefers-color-scheme: dark) {
+      ion-item:hover::part(native) {
+        background: rgba(255, 255, 255, 0.12);
+      }
+      
       ion-icon { color: var(--ion-color-white); }
       .letter { color: white; }
     }
+    
     .letter-avatar {
       background: var(--ion-color-light);
       .letter {
@@ -39,7 +53,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
     @if(icon(); as icon) {
       @if(name(); as name) {
         @if (icon.startsWith('@@')) {  <!-- textual avatar, shows 1 letter -->
-          <ion-item>
+          <ion-item [button]="true">
             <ion-avatar slot="start" class="letter-avatar">
               <div class="letter">{{ name }}</div>
             </ion-avatar> 
@@ -47,7 +61,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           </ion-item>
         } @else {         <!-- real avatar, showing an image from avatar collection or a default icon -->
           @if(icon.startsWith('//')) {
-            <ion-item>
+            <ion-item [button]="true">
               <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
                 <ion-img src="{{ name | avatar:getModelName(name) }}" alt="Avatar Logo" />
               </ion-avatar>
@@ -56,7 +70,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           }
         }
       } @else {       <!-- icon -->
-        <ion-item>
+        <ion-item [button]="true">
           <ion-icon slot="start" src="{{icon | svgIcon }}" />
           <ion-label>{{ label() | translate | async }}</ion-label>
         </ion-item>
