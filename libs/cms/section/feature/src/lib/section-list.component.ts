@@ -141,7 +141,7 @@ export class SectionAllListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
     if (hasRole('registered', this.currentUser())) {
-            actionSheetOptions.buttons.push(createActionSheetButton('section.view', this.sectionStore.imgixBaseUrl(), 'create_edit'));
+            actionSheetOptions.buttons.push(createActionSheetButton('section.view', this.sectionStore.imgixBaseUrl(), 'eye-on'));
             actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.sectionStore.imgixBaseUrl(), 'close_cancel'));
     }
     if (!this.readOnly()) {
