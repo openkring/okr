@@ -1,8 +1,12 @@
-import { DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { CategoryItemModel, GroupModel, GroupModelName, MembershipModel, MoneyModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@bk2/shared-models';
+import { DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { AddressModel, AddressUsage, CategoryItemModel, GroupModel, GroupModelName, MembershipModel, MoneyModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@bk2/shared-models';
 import { addIndexElement, convertDateFormatToString, DateFormat, die, getTodayStr } from '@bk2/shared-util-core';
+import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
+
+import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
 
 import { CategoryChangeFormModel } from './category-change-form.model';
+import { MEMBER_NEW_FORM_SHAPE, MemberNewFormModel } from './member-new-form.model';
 
 export function newMembershipForPerson(person: PersonModel, orgKey: string, orgName: string, membershipCategory: CategoryItemModel, dateOfEntry = getTodayStr(DateFormat.StoreDate)): MembershipModel {
   const membership = new MembershipModel('dummy');
@@ -450,4 +454,86 @@ export function getMembershipIndexInfo(): string {
     }
   }
   return changes;
+}
+
+// new member
+export function createNewMemberFormModel(org?: OrgModel): MemberNewFormModel {
+  const model = { ...MEMBER_NEW_FORM_SHAPE };
+  model.orgKey = org?.bkey ?? DEFAULT_KEY;
+  model.orgName = org?.name ?? DEFAULT_NAME;
+  model.membershipCategory = 'active';
+  return model;
+} 
+
+export function convertFormToNewPerson(vm: MemberNewFormModel, tenantId: string): PersonModel {
+  const person = new PersonModel(tenantId);
+  person.bkey = DEFAULT_KEY;
+  person.firstName = vm.firstName ?? DEFAULT_NAME;
+  person.lastName = vm.lastName ?? DEFAULT_NAME;
+  person.gender = vm.gender ?? DEFAULT_GENDER;
+  person.dateOfBirth = vm.dateOfBirth ?? DEFAULT_DATE;
+  person.dateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
+  person.ssnId = formatAhv(vm.ssnId ?? DEFAULT_ID, AhvFormat.Electronic);
+  person.bexioId = vm.bexioId ?? DEFAULT_ID;
+
+  person.favEmail = vm.email ?? DEFAULT_EMAIL;
+  person.favPhone = vm.phone ?? DEFAULT_PHONE;
+  person.favStreetName = vm.streetName ?? DEFAULT_STREETNAME;
+  person.favStreetNumber = vm.streetNumber ?? DEFAULT_STREETNUMBER;
+  person.favZipCode = vm.zipCode ?? DEFAULT_ZIP;
+  person.favCity = vm.city ?? DEFAULT_CITY;
+  person.favCountryCode = vm.countryCode ?? DEFAULT_COUNTRY;
+
+  person.notes = vm.notes ?? DEFAULT_NOTES;
+  person.tags = vm.tags ?? DEFAULT_TAGS;
+
+  return person;
+}
+
+export function convertNewMemberFormToEmailAddress(vm: MemberNewFormModel, tenantId: string): AddressModel {
+  return createFavoriteEmailAddress(AddressUsage.Work, vm.email ?? DEFAULT_EMAIL, tenantId);
+}
+
+export function convertNewMemberFormToPhoneAddress(vm: MemberNewFormModel, tenantId: string): AddressModel {
+  return createFavoritePhoneAddress(AddressUsage.Work, vm.phone ?? DEFAULT_PHONE, tenantId);
+}
+
+export function convertNewMemberFormToWebAddress(vm: MemberNewFormModel, tenantId: string): AddressModel {
+  return createFavoriteWebAddress(AddressUsage.Work, vm.web ?? DEFAULT_URL, tenantId);
+}
+
+export function convertNewMemberFormToPostalAddress(vm: MemberNewFormModel, tenantId: string): AddressModel {
+  return createFavoritePostalAddress(
+    AddressUsage.Work, 
+    vm.streetName ?? DEFAULT_STREETNAME,
+    vm.streetNumber ?? DEFAULT_STREETNUMBER, 
+    vm.zipCode ?? DEFAULT_ZIP, 
+    vm.city ?? DEFAULT_CITY, 
+    vm.countryCode ?? DEFAULT_COUNTRY, 
+    tenantId,
+  );
+}
+
+export function convertNewMemberFormToMembership(vm: MemberNewFormModel, personKey: string, tenantId: string): MembershipModel {
+  const member = new MembershipModel(tenantId);
+  member.memberKey = personKey;
+  member.memberName1 = vm.firstName ?? DEFAULT_NAME;
+  member.memberName2 = vm.lastName ?? DEFAULT_NAME;
+  member.memberModelType = 'person';
+  member.memberType = vm.gender ?? DEFAULT_GENDER;
+  member.memberDateOfBirth = vm.dateOfBirth ?? DEFAULT_DATE;
+  member.memberDateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
+  member.memberZipCode = vm.zipCode ?? DEFAULT_ZIP;
+  member.memberBexioId = vm.bexioId ?? DEFAULT_ID;
+  member.orgKey = vm.orgKey ?? die('membership.util.convertFormToNewMembership: orgKey is mandatory');
+  member.orgName = vm.orgName ?? DEFAULT_NAME;
+  member.dateOfEntry = vm.dateOfEntry ?? getTodayStr();
+  member.dateOfExit = END_FUTURE_DATE_STR;
+  member.category = vm.membershipCategory ?? 'active';
+  member.state = 'active';
+  member.order = 1;
+  member.relLog = member.dateOfEntry + ':' + (vm.membershipCategoryAbbreviation ?? 'A');
+  member.relIsLast = true;
+  member.index = 'mn:' + member.memberName1 + ' ' + member.memberName2 + ', mk:' + member.memberKey + ', ok:' + member.orgKey;
+  return member;
 }

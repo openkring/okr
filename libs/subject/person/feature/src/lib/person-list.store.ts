@@ -9,16 +9,16 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressModel, DefaultLanguage, MembershipCollection, MembershipModel, PersonModel, PersonModelName } from '@bk2/shared-models';
 import { confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, debugListLoaded, getCountryName, hasRole, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, getCountryName, hasRole, nameMatches } from '@bk2/shared-util-core';
+import { Languages } from '@bk2/shared-categories';
+import { MapViewModalComponent } from '@bk2/shared-ui';
 
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/subject-person-util';
+import { browseUrl } from '@bk2/subject-address-util';
 
 import { PersonNewModal } from './person-new.modal';
-import { browseUrl } from '@bk2/subject-address-util';
-import { Languages } from '@bk2/shared-categories';
-import { MapViewModalComponent } from '@bk2/shared-ui';
 
 export type PersonListState = {
   orgId: string;
@@ -47,27 +47,15 @@ export const PersonListStore = signalStore(
     toastController: inject(ToastController),
     geocodeService: inject(GeocodingService),
   })),
-  withProps((store) => ({
-    personsResource: rxResource({
-      params: () => ({
-        currentUser: store.appStore.currentUser()
-      }),
-      stream: ({params}) => {
-        return store.personService.list().pipe(
-          debugListLoaded('PersonListStore.persons$', params.currentUser)
-        );
-      }
-    }),
-  })),
 
   withComputed((state) => {
     return {
-      persons: computed(() => state.personsResource.value()),
-      deceased: computed(() => state.personsResource.value()?.filter((person: PersonModel) => person.dateOfDeath !== undefined && person.dateOfDeath.length > 0) ?? []),
+      persons: computed(() => state.appStore.allPersons()),
+      deceased: computed(() => state.appStore.allPersons().filter((person: PersonModel) => person.dateOfDeath !== undefined && person.dateOfDeath.length > 0) ?? []),
       showGender: computed(() => hasRole(state.appStore.privacySettings().showGender, state.appStore.currentUser())),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
-      membershipCategoryKey: computed(() => 'mcat_' + state.orgId()),
+      membershipCategoryKey: computed(() => state.appStore.getOrg(state.orgId())?.membershipCategoryKey ?? 'mcat_default'),
     };
   }),
 
@@ -84,9 +72,9 @@ export const PersonListStore = signalStore(
   withComputed((state) => {
     return {
       // all persons
-      personsCount: computed(() => state.personsResource.value()?.length ?? 0), 
+      personsCount: computed(() => state.persons().length ?? 0), 
       filteredPersons: computed(() => 
-        state.personsResource.value()?.filter((person: PersonModel) => 
+        state.persons().filter((person: PersonModel) => 
           nameMatches(person.index, state.searchTerm()) &&
           nameMatches(person.gender, state.selectedGender(), true) &&
           chipMatches(person.tags, state.selectedTag())) ?? []
@@ -101,7 +89,7 @@ export const PersonListStore = signalStore(
           chipMatches(person.tags, state.selectedTag())) ?? []
       ),
       membershipCategory: computed(() => state.mcatResource.value() ?? undefined),
-      isLoading: computed(() => state.personsResource.isLoading() || state.mcatResource.isLoading()),
+      isLoading: computed(() => state.mcatResource.isLoading()),
     }
   }),
 
@@ -109,11 +97,10 @@ export const PersonListStore = signalStore(
     return {
       reset() {
         patchState(store, initialState);
-        store.personsResource.reload();
       },
 
       reload() {
-        store.personsResource.reload();
+        store.mcatResource.reload();
       },
       
       /******************************** setters (filter) ******************************************* */
@@ -140,7 +127,7 @@ export const PersonListStore = signalStore(
         const modal = await store.modalController.create({
           component: PersonNewModal,
           componentProps: {
-            readOnly
+            org: store.appStore.defaultOrg()
           }
         });
         modal.present();
@@ -172,7 +159,6 @@ export const PersonListStore = signalStore(
             }
           }
         }
-        store.personsResource.reload();
       },
 
       /**
@@ -204,7 +190,6 @@ export const PersonListStore = signalStore(
         if (!person) return; // we pass readonly to the edit form
         store.appStore.appNavigationService.pushLink('/person/all' );
         await navigateByUrl(store.router, `/person/${person.bkey}`, { readOnly });
-        store.personsResource.reload();
       },
 
       async delete(person?: PersonModel, readOnly = true): Promise<void> {

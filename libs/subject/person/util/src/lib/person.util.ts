@@ -1,42 +1,19 @@
-import { DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_PRICE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { AddressModel, AddressUsage, MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
 import { addIndexElement, die, getTodayStr } from '@bk2/shared-util-core';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
 
-import { PersonNewFormModel } from './person-new-form.model';
+import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel } from './person-new-form.model';
 import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 
 // new person
 export function createNewPersonFormModel(org?: OrgModel): PersonNewFormModel {
-  return {
-    firstName: DEFAULT_NAME,
-    lastName: DEFAULT_NAME,
-    gender: DEFAULT_GENDER,
-    dateOfBirth: DEFAULT_DATE,
-    dateOfDeath: DEFAULT_DATE,
-    ssnId: DEFAULT_ID,
-    bexioId: DEFAULT_ID,
-
-    streetName: DEFAULT_STREETNAME,
-    streetNumber: DEFAULT_STREETNUMBER,
-    zipCode: DEFAULT_ZIP,
-    city: DEFAULT_CITY,
-    countryCode: DEFAULT_COUNTRY,
-    phone: DEFAULT_PHONE,
-    email: DEFAULT_EMAIL,
-    web: DEFAULT_URL,
-
-    shouldAddMembership: false,
-    orgKey: org?.bkey ?? DEFAULT_KEY,
-    orgName: org?.name ?? DEFAULT_NAME,
-    membershipCategory: 'active',
-    membershipCategoryAbbreviation: 'A',
-    dateOfEntry: getTodayStr(),
-
-    notes: DEFAULT_NOTES,
-    tags: DEFAULT_TAGS,
-  };
+  const model = { ...PERSON_NEW_FORM_SHAPE };
+  model.orgKey = org?.bkey ?? DEFAULT_KEY;
+  model.orgName = org?.name ?? DEFAULT_NAME;
+  model.membershipCategory = 'active';
+  return model;
 }
 
 export function convertFormToNewPerson(vm: PersonNewFormModel, tenantId: string): PersonModel {

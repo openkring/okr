@@ -2,12 +2,12 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
+import { of, take } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryCollection, CategoryListModel, getDefaultMembershipCategory, OrgCollection, OrgModel } from '@bk2/shared-models';
+import { CategoryListModel, OrgCollection, OrgModel } from '@bk2/shared-models';
 import { debugItemLoaded } from '@bk2/shared-util-core';
-import { take } from 'rxjs';
 
 export type PersonNewState = {
   orgId: string | undefined;
@@ -33,6 +33,7 @@ export const PersonNewStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),  
       stream: ({params}) => {
+        if (!params.orgId) return of(undefined);
         return store.firestoreService.readModel<OrgModel>(OrgCollection, params.orgId).pipe(
           take(1),
           debugItemLoaded(`org ${params.orgId}`, params.currentUser)
@@ -44,30 +45,18 @@ export const PersonNewStore = signalStore(
   withComputed((state) => {
     return {
       org: computed(() => state.orgResource.value() ?? undefined),
-      membershipCategoryKey: computed(() => `mcat_${state.orgId()}`),
+      membershipCategoryKey: computed(() => state.orgResource.value()?.membershipCategoryKey ?? 'mcat_default'),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
       privacySettings: computed(() => state.appStore.privacySettings()),
+      defaultMcat: computed(() => state.appStore.getCategory('mcat_default'))
     };
   }),
-  withProps((store) => ({
-    mcatResource: rxResource({
-      params: () => ({
-        mcatId: store.membershipCategoryKey()
-      }),  
-      stream: ({params}) => {
-        return store.firestoreService.readModel<CategoryListModel>(CategoryCollection, params.mcatId).pipe(
-          take(1),
-          debugItemLoaded<CategoryListModel>(`mcat ${params.mcatId}`, store.appStore.currentUser())          
-        );
-      }
-    }),
-  })),
   
   withComputed((state) => {
     return {
-      membershipCategory: computed(() => state.mcatResource.value() ?? getDefaultMembershipCategory(state.appStore.tenantId())),
-      isLoading: computed(() => state.orgResource.isLoading() || state.mcatResource.isLoading()),
+      membershipCategory: computed<CategoryListModel>(() => state.appStore.getCategory(state.membershipCategoryKey()) ?? state.defaultMcat()),
+      isLoading: computed(() => state.orgResource.isLoading()),
     };
   }),
 

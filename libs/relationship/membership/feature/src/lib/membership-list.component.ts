@@ -241,6 +241,7 @@ export class MembershipListComponent {
           await this.membershipStore.add(this.readOnly());
         }
         break;
+      case 'memberAdd': await this.membershipStore.addNewMember(); break;
       case 'exportRaw': await this.membershipStore.export("raw", this.filteredMemberships()); break;
       case 'exportSrv': await this.membershipStore.export("srv", this.filteredMemberships()); break;
       case 'exportMembers': await this.membershipStore.export("member", this.filteredMemberships()); break;

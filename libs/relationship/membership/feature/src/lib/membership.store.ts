@@ -7,18 +7,23 @@ import { Router } from '@angular/router';
 import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryCollection, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, debugMessage, generateRandomString, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches } from '@bk2/shared-util-core';
+import { AddressModel, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+
+import { getCatAbbreviation } from '@bk2/category-util';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { convertMemberAndOrgToMembership, convertToAddressDataRow, convertToMemberDataRow, convertToRawDataRow, convertToSrvDataRow, getMemberEmailAddresses, getRelLogEntry } from '@bk2/relationship-membership-util';
+import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToMemberDataRow, convertToRawDataRow, convertToSrvDataRow, getMemberEmailAddresses, getRelLogEntry } from '@bk2/relationship-membership-util';
+import { AddressService } from '@bk2/subject-address-data-access';
+import { PersonService } from '@bk2/subject-person-data-access';
+
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
-import { take } from 'rxjs';
-import { getCatAbbreviation } from '@bk2/category-util';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { MemberNewModal } from 'libs/relationship/membership/feature/src/lib/member-new.modal';
+import { MemberNewFormModel } from 'libs/relationship/membership/util/src/lib/member-new-form.model';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -61,7 +66,9 @@ export const _MembershipStore = signalStore(
     modalController: inject(ModalController),
     toastController: inject(ToastController),
     alertController: inject(AlertController),
-    router: inject(Router)
+    router: inject(Router),
+    personService: inject(PersonService),
+    addressService: inject(AddressService),
   })),
 
   withProps((store) => ({
@@ -104,7 +111,6 @@ export const _MembershipStore = signalStore(
       }),
 
       org: computed(() => state.appStore.getOrg(state.orgId()) ?? undefined),
-      membershipCategoryKey: computed(() => 'mcat_' + state.orgId()),
       currentUser: computed(() => state.appStore.currentUser()),
       genders: computed(() => state.appStore.getCategory('gender')),
       privacySettings: computed(() => state.appStore.privacySettings()),
@@ -116,6 +122,8 @@ export const _MembershipStore = signalStore(
   withComputed((state) => {
     return {
       orgName: computed(() => state.org()?.name ?? ''),
+      membershipCategoryKey: computed(() => state.org()?.membershipCategoryKey ?? 'mcat_default'),
+
       personMembers: computed(() => state.members().filter((membership: MembershipModel) =>
         membership.memberModelType === 'person') ?? []),
 
@@ -159,7 +167,7 @@ export const _MembershipStore = signalStore(
 
   withComputed((state) => {
     return {
-      membershipCategory: computed<CategoryListModel>(() => state.appStore.getCategory('mcat_' + state.orgId()) ?? state.defaultMcat()),
+      membershipCategory: computed<CategoryListModel>(() => state.appStore.getCategory(state.membershipCategoryKey()) ?? state.defaultMcat()),
       defaultOrg: computed(() => state.org()),
       currentPerson : computed(() => state.appStore.currentPerson()),
       isLoading: computed(() => 
@@ -267,7 +275,6 @@ export const _MembershipStore = signalStore(
     return {
       reload() {
         store.allMembershipsResource.reload();
-      //  store.mcatResource.reload();
       },
 
       /******************************** setters (filter) ******************************************* */
@@ -359,6 +366,64 @@ export const _MembershipStore = signalStore(
         if (!member) { console.log('MembershipStore.addMemberToGroup: no member.'); return; }
         const membership = convertMemberAndOrgToMembership(member, group, store.tenantId(), PersonModelName);
         this.edit(membership, readOnly, true);
+      },
+
+      /**
+       * Show a modal to create a new person and add it as member to the current org. 
+       * The current org from the membership store is used as default org in the person creation modal.
+       */
+      async addNewMember(): Promise<void> {
+        const modal = await store.modalController.create({
+          component: MemberNewModal,
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data) {
+          const newMember = data as MemberNewFormModel;
+          if (store.personService.checkIfExists(store.appStore.allPersons(), newMember.firstName, newMember.lastName)) {
+            if (!confirm(store.alertController, '@membership.operation.createMember.exists.error', true)) return;           
+          }
+
+          const personKey = await store.personService.create(convertFormToNewPerson(newMember, store.tenantId()), store.currentUser());
+          const avatarKey = `person.${personKey}`;
+          if ((newMember.email ?? '').length > 0) {
+            this.saveAddress(convertNewMemberFormToEmailAddress(newMember, store.tenantId()), avatarKey);
+          }
+          if ((newMember.phone ?? '').length > 0) {
+            this.saveAddress(convertNewMemberFormToPhoneAddress(newMember, store.tenantId()), avatarKey);
+          }
+          if ((newMember.web ?? '').length > 0) {
+            this.saveAddress(convertNewMemberFormToWebAddress(newMember, store.tenantId()), avatarKey);
+          }
+          if ((newMember.city ?? '').length > 0) {
+            this.saveAddress(convertNewMemberFormToPostalAddress(newMember, store.tenantId()), avatarKey);
+          }
+          if ((newMember.orgKey ?? '').length > 0 && (newMember.membershipCategory ?? '').length > 0) {
+            await this.saveMembership(newMember, personKey);
+          }
+          this.reload();
+        }
+      },
+
+        /**
+       * Add the membership to the new person and make it a member.
+       * We do not want to use MembershipService.create() in order to avoid the dependency to the membership module
+       * @param vm  the form data for a new member
+       * @param personKey the key of the newly created person
+       */
+      async saveMembership(vm: MemberNewFormModel, personKey?: string): Promise<string | undefined> {
+        if (!personKey || personKey.length === 0) {
+          console.warn('MembershipStore.saveMembership: personKey is empty, cannot save membership');
+          return undefined;
+        }
+        const membership = convertNewMemberFormToMembership(vm, personKey, store.tenantId());
+        membership.index = 'mn:' + membership.memberName1 + ' ' + membership.memberName2 + ' mk:' + membership.memberKey + ' ok:' + membership.orgKey;
+        return await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', store.appStore.currentUser());
+      },
+
+      saveAddress(address: AddressModel, avatarKey: string): void {
+        address.parentKey = avatarKey;
+        store.addressService.create(address, store.currentUser());
       },
 
       /**

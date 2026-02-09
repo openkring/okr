@@ -1,22 +1,21 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
-import { AppStore, OrgSelectModalComponent } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole, isOrg, isVisibleToUser } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
+import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
 
 import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel, personNewFormValidations } from '@bk2/subject-person-util';
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
-import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-person-new-form',
@@ -58,31 +57,21 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
               </ion-col>
             </ion-row>
 
-            @if(isVisibleToUser(priv().showGender)) {
-              <ion-row>
-                <ion-col size="12" size-md="6">
-                  <bk-cat-select [category]="genders()!" [selectedItemName]="gender()" (selectedItemNameChange)="onFieldChange('gender', $event)" [readOnly]="isReadOnly()" />
-                </ion-col>
-              </ion-row>
-            }
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <bk-cat-select [category]="genders()!" [selectedItemName]="gender()" (selectedItemNameChange)="onFieldChange('gender', $event)" [readOnly]="isReadOnly()" />
+              </ion-col>
+            </ion-row>
 
-            <!-- tbd: these role checks are currently only checking against the default
-              they need to be extended to consider the settings of this person's user -->
-            @if(isVisibleToUser(priv().showDateOfBirth) || isVisibleToUser(priv().showDateOfDeath)) {
-              <ion-row>
-                @if(isVisibleToUser(priv().showDateOfBirth)) {
-                  <ion-col size="12" size-md="6"> 
-                    <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" [locale]="locale()" [readOnly]="isReadOnly()" autocomplete="bday" [showHelper]=true />
-                  </ion-col>
-                }
+            <ion-row>
+              <ion-col size="12" size-md="6"> 
+                <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" [locale]="locale()" [readOnly]="isReadOnly()" autocomplete="bday" [showHelper]=true />
+              </ion-col>
 
-                @if(isVisibleToUser(priv().showDateOfDeath)) {
-                  <ion-col size="12" size-md="6">
-                    <bk-date-input name="dateOfDeath"  [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
-                  </ion-col>
-                }
-              </ion-row>
-            }
+              <ion-col size="12" size-md="6">
+                <bk-date-input name="dateOfDeath"  [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+              </ion-col>
+            </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
@@ -142,29 +131,23 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
       } <!-- end of address inputs -->
 
       <!-------------------------------------- OTHER ------------------------------------->
-      @if(isVisibleToUser(priv().showTaxId) || isVisibleToUser(priv().showBexioId)) {
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ '@subject.person.field.misc' | translate | async}}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content class="ion-no-padding">
-            <ion-grid>
-              <ion-row>
-                @if(isVisibleToUser(priv().showTaxId)) {
-                  <ion-col size="12" size-md="6">
-                    <bk-text-input name="ssnId" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [readOnly]="isReadOnly()" [copyable]=true />
-                  </ion-col>
-                }
-                @if(isVisibleToUser(priv().showBexioId)) {
-                  <ion-col size="12" size-md="6">
-                    <bk-text-input name="bexioId" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
-                  </ion-col>
-                }
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>
-      }
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ '@subject.person.field.misc' | translate | async}}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content class="ion-no-padding">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <bk-text-input name="ssnId" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [readOnly]="isReadOnly()" [copyable]=true />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-text-input name="bexioId" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
 
       <!-------------------------------------- MEMBERSHIP (optional) ------------------------------------->
       <ion-card>
@@ -178,7 +161,6 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
                 <bk-checkbox name="shouldAddMembership" [checked]="shouldAddMembership()" (checkedChange)="onFieldChange('shouldAddMembership', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
-            {{shouldAddMembership()}}
             @if(shouldAddMembership()) {
               <ion-row>
                 <ion-col size="9">
@@ -191,7 +173,7 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
                 </ion-col>
                 <ion-col size="3">
                   <ion-item lines="none">
-                  <ion-button slot="start" fill="clear" (click)="selectOrg()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                  <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ '@general.operation.select.label' | translate | async }}</ion-button>
                   </ion-item>
                 </ion-col>
               </ion-row>
@@ -208,27 +190,18 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
         </ion-card-content>
       </ion-card>
     
-      @if(isVisibleToUser(priv().showTags)) {
-            <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
-      }
-
-      @if(isVisibleToUser(priv().showNotes)) {
-            <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
-      }
+      <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+      <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
     </form>
   `
 })
-export class PersonNewFormComponent {
-  private readonly modalController = inject(ModalController)
-
+export class PersonNewForm {
   // inputs
   public readonly formData = model.required<PersonNewFormModel>();
   public readonly currentUser = input<UserModel | undefined>();
-  public readonly showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly showAddressInputs = input(true);
   public readonly allTags = input.required<string>();
   public readonly tenantId = input.required<string>();
-  public readonly priv = input.required<PrivacySettings>();
   public readonly genders = input.required<CategoryListModel>();
   public readonly locale = input<string>(DEFAULT_LOCALE);
   public readonly readOnly = input(true);
@@ -238,10 +211,10 @@ export class PersonNewFormComponent {
   // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
+  public selectClicked = output<void>();
 
  // validation and errors
   protected readonly suite = personNewFormValidations;
-  protected readonly shape = PERSON_NEW_FORM_SHAPE;
   private readonly validationResult = computed(() => personNewFormValidations(this.formData()));
   protected firstNameErrors = computed(() => this.validationResult().getErrors('firstName'));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
@@ -289,29 +262,6 @@ export class PersonNewFormComponent {
     });
   }
 
-  protected async selectOrg(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: OrgSelectModalComponent,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: 'selectable',
-        currentUser: this.currentUser()
-      }
-    });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm') {
-      if (isOrg(data, this.tenantId())) {
-        this.formData.update((vm) => ({
-          ...vm,
-          orgKey: data.bkey,
-          orgName: data.name,
-        }));
-        debugFormErrors('PersonNewForm.selectOrg', this.validationResult().errors, this.currentUser());
-      }
-    }
-  }
-
   protected onCitySelected(city: SwissCity): void {
     this.formData.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: city.zipCode }));
   }
@@ -330,9 +280,5 @@ export class PersonNewFormComponent {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
-  }
-
-  protected isVisibleToUser(privacyAccessor: PrivacyAccessor): boolean {
-    return isVisibleToUser(privacyAccessor, this.currentUser());
   }
 }

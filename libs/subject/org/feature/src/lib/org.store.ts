@@ -141,7 +141,6 @@ export const OrgStore = signalStore(
           currentUser: store.currentUser(),
           tags: store.tags(),
           types: store.types(),
-          readOnly,
         }
       });
       modal.present();

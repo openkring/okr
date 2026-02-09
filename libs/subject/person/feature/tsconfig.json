@@ -12,7 +12,7 @@
     "compileNonExportedClasses": true,
     "skipTemplateCodegen": false
   },
-  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts", "../ui/src/lib/person-new.form.ts"],
   "exclude": ["dist/**/*"],
   "references": [
     {"path": "../../../shared/models/tsconfig.lib.json"},

@@ -1,32 +1,30 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { OrgModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { OrgSelectModalComponent } from '@bk2/shared-feature';
 import { isOrg } from '@bk2/shared-util-core';
 
-import { convertFormToNewPerson, createNewPersonFormModel, PersonNewFormModel } from '@bk2/subject-person-util';
-import { PersonNewForm } from '@bk2/subject-person-ui';
+import { convertFormToNewPerson, createNewMemberFormModel, MemberNewFormModel } from '@bk2/relationship-membership-util';
+import { MemberNewForm } from '@bk2/relationship-membership-ui';
 
-import { PersonNewStore } from './person-new.store';
+import { MembershipStore } from './membership.store';
 
 @Component({
-  selector: 'bk-person-new-modal',
+  selector: 'bk-member-new-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, PersonNewForm,
+    HeaderComponent, ChangeConfirmationComponent, MemberNewForm,
     IonContent
   ],
-  providers: [PersonNewStore],
   template: `
-    <bk-header title="@subject.person.operation.create.label" [isModal]="true" />
+    <bk-header title="@membership.operation.createMember.label" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
-        <bk-person-new-form
+        <bk-member-new-form
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
@@ -43,29 +41,22 @@ import { PersonNewStore } from './person-new.store';
     </ion-content>
   `
 })
-export class PersonNewModal {
+export class MemberNewModal {
   private readonly modalController = inject(ModalController);
-  protected readonly personNewStore = inject(PersonNewStore);
-
-  // inputs
-  public org = input.required<OrgModel>();
+  protected readonly membershipStore = inject(MembershipStore);
 
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => createNewPersonFormModel(this.org()));
+  public formData = linkedSignal(() => createNewMemberFormModel(this.membershipStore.org()));
 
   // derived signals and fields
-  protected currentUser = computed(() => this.personNewStore.currentUser());
-  protected mcat = computed(() => this.personNewStore.membershipCategory());
-  protected tags = computed(() => this.personNewStore.getTags());
-  protected tenantId = computed(() => this.personNewStore.tenantId());
-  protected genders = computed(() => this.personNewStore.appStore.getCategory('gender'));
-
-  constructor() {
-    effect(() => this.personNewStore.setOrgId(this.org()?.bkey));
-  }
+  protected currentUser = computed(() => this.membershipStore.currentUser());
+  protected mcat = computed(() => this.membershipStore.membershipCategory());
+  protected tags = computed(() => this.membershipStore.getTags());
+  protected tenantId = computed(() => this.membershipStore.tenantId());
+  protected genders = computed(() => this.membershipStore.appStore.getCategory('gender'));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -75,10 +66,10 @@ export class PersonNewModal {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(createNewPersonFormModel(this.org()));  // reset the form
+    this.formData.set(createNewMemberFormModel(this.membershipStore.org()));  // reset the form
   }
 
-  protected onFormDataChange(formData: PersonNewFormModel): void {
+  protected onFormDataChange(formData: MemberNewFormModel): void {
     this.formData.set(formData);
   }
 
@@ -95,7 +86,7 @@ export class PersonNewModal {
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isOrg(data, this.tenantId())) {
-        this.personNewStore.setOrgId(data.bkey); // Use newly selected org
+        this.membershipStore.setOrgId(data.bkey); // Use newly selected org
         this.formData.update((vm) => ({
           ...vm,
           orgKey: data.bkey,

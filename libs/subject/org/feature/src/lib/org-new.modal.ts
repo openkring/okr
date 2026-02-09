@@ -3,7 +3,6 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { OrgNewFormComponent } from '@bk2/subject-org-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
 
 import { ORG_NEW_FORM_SHAPE, OrgNewFormModel } from '@bk2/subject-org-util';
@@ -42,8 +41,6 @@ export class OrgNewModalComponent {
   public currentUser = input.required<UserModel>();
   public tags = input.required<string>();
   public types = input.required<CategoryListModel>();
-  public readonly readOnly = input(false);
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals
   protected formDirty = signal(false);

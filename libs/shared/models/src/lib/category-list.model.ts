@@ -53,16 +53,3 @@ export class CategoryItemModel {
 export const CategoryCollection = 'categories';
 export const CategoryModelName = 'category';
 
-export function getDefaultMembershipCategory(tenantId: string): CategoryListModel {
-  const cat = new CategoryListModel(tenantId);
-  cat.name = 'mcat_default';
-  cat.tags = DEFAULT_TAGS;
-  cat.i18nBase = 'membership.category';
-  cat.translateItems = true;
-  cat.notes = 'Default membership categories';
-  cat.items = [
-    new CategoryItemModel('active', 'A', 'member_active', 'active', 30, 'CHF', 'yearly'), 
-    new CategoryItemModel('junior', 'J', 'member_junior', 'active', 10, 'CHF', 'yearly'), 
-    new CategoryItemModel('passive', 'P', 'member_passive', 'passive', 20, 'CHF', 'yearly')];
-  return cat;
-}
