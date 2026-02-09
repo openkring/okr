@@ -89,14 +89,12 @@ import { userValidations } from "@bk2/user-util";
   `,
 })
 export class ProfilePrivacyAccordionComponent {
-  protected readonly modalController = inject(ModalController);
-
   // inputs
   public formData = model.required<UserModel>();
-  public currentUser = input<UserModel | undefined>();
+  public readonly currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
   public color = input('light'); // color of the accordion
-  public title = input('@profile.privacy.title'); // title of the accordion
+  public readonly title = input('@profile.privacy.title'); // title of the accordion
   public readonly tenantId = input.required<string>();
   public readonly tags = input.required<string>();
   public readonly readOnly = input<boolean>(true);
@@ -125,9 +123,9 @@ export class ProfilePrivacyAccordionComponent {
   protected privacyUsages = PrivacyUsages;
 
   /******************************* actions *************************************** */
-  protected onFieldChange(fieldName: string, $event: string | string[] | number | boolean): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
   protected onFormChange(value: UserModel): void {

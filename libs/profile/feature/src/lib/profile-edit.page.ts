@@ -48,18 +48,20 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
         <ion-card-content class="ion-no-padding">
           <ion-accordion-group value="addresses" [multiple]="true">
             @if(personFormData(); as personFormData) {
-              <bk-profile-data-accordion
-                [formData]="personFormData"
-                (formDataChange)="onPersonChange($event)"
-                [currentUser]="currentUser()"
-                [genders]="genders()"
-                [tags]="tags()"
-                [tenantId]="tenantId()"
-                [showForm]="showForm()"
-                [readOnly]="false"
-                (valid)="formValid.set($event)" 
-                (dirty)="formDirty.set($event)"
-              />
+              @if(currentUser(); as currentUser) {
+                <bk-profile-data-accordion
+                  [formData]="personFormData"
+                  (formDataChange)="onPersonChange($event)"
+                  [currentUser]="currentUser"
+                  [genders]="genders()"
+                  [tags]="tags()"
+                  [tenantId]="tenantId()"
+                  [showForm]="showForm()"
+                  [readOnly]="false"
+                  (valid)="formValid.set($event)" 
+                  (dirty)="formDirty.set($event)"
+                />
+              }
             }
             <bk-addresses-accordion [parentKey]="parentKey()" description="@profile.addresses.description" [readOnly]="false" />
             @if(userFormData(); as userFormData) {

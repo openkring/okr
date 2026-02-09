@@ -7,13 +7,12 @@ import { ChSsnMask } from "@bk2/shared-config";
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { CategoryListModel, PersonModel, UserModel } from "@bk2/shared-models";
 import { CategorySelectComponent, DateInputComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
+import { coerceBoolean, debugFormErrors, debugFormModel } from "@bk2/shared-util-core";
 import { DEFAULT_GENDER } from "@bk2/shared-constants";
-import { personValidations } from "@bk2/subject-person-util";
 import { AhvFormat, formatAhv } from "@bk2/shared-util-angular";
 
-// tslint:disable-next-line:no-inline-template-typecheck
-// @ts-ignore: -998900 – inline template type-checking not supported
+import { personValidations } from "@bk2/subject-person-util";
+
 @Component({
   selector: 'bk-profile-data-accordion',
   standalone: true,
@@ -39,6 +38,7 @@ import { AhvFormat, formatAhv } from "@bk2/shared-util-angular";
           [formValue]="formData()"
           [suite]="suite" 
           (dirtyChange)="dirty.emit($event)"
+          (validChange)="valid.emit($event)"
           (formValueChange)="onFormChange($event)">
 
           <ion-grid>
@@ -91,12 +91,12 @@ import { AhvFormat, formatAhv } from "@bk2/shared-util-angular";
 export class ProfileDataAccordionComponent {
   // inputs
   public formData = model.required<PersonModel>();
+  public readonly currentUser = input<UserModel | undefined>();
+  public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
   public color = input('light'); // color of the accordion
   public readonly title = input('@profile.data.title'); // title of the accordion
-  public readonly currentUser = input<UserModel | undefined>();
   public readonly tenantId = input.required<string>();
   public readonly tags = input.required<string>();
-  public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
   public readonly genders = input.required<CategoryListModel>();
   public readonly readOnly = input<boolean>(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -126,6 +126,7 @@ export class ProfileDataAccordionComponent {
 
   protected onFormChange(value: PersonModel): void {
     this.formData.update((vm) => ({...vm, ...value}));
+    debugFormModel('ProfilePrivacy.onFormChange', this.formData(), this.currentUser());
     debugFormErrors('ProfileData.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 }
