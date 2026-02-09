@@ -3,7 +3,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 
 import { InvitationModel, InvitationModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 import { ModelSelectService } from '@bk2/shared-feature';
 
@@ -27,18 +27,20 @@ import { InvitationFormComponent } from '@bk2/relationship-invitation-ui';
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
-        <bk-invitation-form
-          [formData]="formData()"
-          (formDataChange)="onFormDataChange($event)"
-          [currentUser]="currentUser"
-          [allTags]="tags()"
-          [locale]="locale()"
-          [readOnly]="readOnly()"
-          [showForm]="showForm()"
-          (dirty)="formDirty.set($event)"
-          (valid)="formValid.set($event)"
-          (selectClicked)="select($event)"
-        />
+        @if(formData(); as formData) {
+          <bk-invitation-form
+            [formData]="formData"
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser"
+            [allTags]="tags()"
+            [locale]="locale()"
+            [readOnly]="readOnly()"
+            [showForm]="showForm()"
+            (dirty)="formDirty.set($event)"
+            (valid)="formValid.set($event)"
+            (selectClicked)="select($event)"
+          />
+        }
       }
 
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
@@ -69,7 +71,7 @@ export class InvitationEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => structuredClone(this.invitation()));
+  protected formData = linkedSignal(() => safeStructuredClone(this.invitation()));
   protected showForm = signal(true);
 
   // derived signals
@@ -84,7 +86,7 @@ export class InvitationEditModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.invitation()));  // reset the form
+    this.formData.set(safeStructuredClone(this.invitation()));  // reset the form
       // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
@@ -100,19 +102,19 @@ export class InvitationEditModalComponent {
 
   protected async select(object: string): Promise<void> {
     const avatar = await this.modelSelectService.selectPersonAvatar();
-    if (avatar) {
-      const invitation = this.formData();
-      if (object === 'inviter') {
-        invitation.inviterKey = avatar.key;
-        invitation.inviterFirstName = avatar.name1;
-        invitation.inviterLastName = avatar.name2;
-      }
-      else { // invitee
-        invitation.inviteeKey = avatar.key;
-        invitation.inviteeFirstName = avatar.name1;
-        invitation.inviteeLastName = avatar.name2;
-      }
-      this.formData.set(invitation);
+    if (!avatar) return;
+    const invitation = this.formData();
+    if (!invitation) return;
+    if (object === 'inviter') {
+      invitation.inviterKey = avatar.key;
+      invitation.inviterFirstName = avatar.name1;
+      invitation.inviterLastName = avatar.name2;
     }
+    else { // invitee
+      invitation.inviteeKey = avatar.key;
+      invitation.inviteeFirstName = avatar.name1;
+      invitation.inviteeLastName = avatar.name2;
+    }
+    this.formData.set(invitation);
   }
 }

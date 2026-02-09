@@ -3,7 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, SectionModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent} from '@bk2/shared-ui';
-import { coerceBoolean, deepEqual } from '@bk2/shared-util-core';
+import { coerceBoolean, deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 import { AppStore } from '@bk2/shared-feature';
 import { SectionFormComponent } from '@bk2/cms-section-ui';
@@ -56,12 +56,12 @@ export class SectionEditModalComponent {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals
-  protected initialData = signal<SectionModel | null>(null);
+  protected initialData = signal<SectionModel | undefined>(undefined);
   protected formDirty = linkedSignal(() => {
     const fd = this.formData();
     return fd ? !fd.bkey || fd.bkey.length === 0 : false;
   });
-  protected formData = linkedSignal(() => structuredClone(this.section()));
+  protected formData = linkedSignal(() => safeStructuredClone(this.section()));
   protected showForm = signal(true);
 
   // derived signals
@@ -70,8 +70,7 @@ export class SectionEditModalComponent {
   constructor() {
     effect(() => {
       const orig = this.section();
-      this.initialData.set(structuredClone(orig));
-      this.formData.set(structuredClone(orig));
+      this.initialData.set(safeStructuredClone(orig));
       console.log('SectionEditModalComponent initialized', orig);
     });
     effect(() => {
@@ -91,14 +90,14 @@ export class SectionEditModalComponent {
   }
 
   public async cancel(): Promise<void> {
-    this.formData.set(structuredClone(this.section()));  // reset the form
+    this.formData.set(safeStructuredClone(this.section()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
-    this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
+    this.formData.update(vm => vm ? { ...vm, [fieldName]: fieldValue } : vm);
   }
 
   protected onFormDataChange(formData: SectionModel): void {

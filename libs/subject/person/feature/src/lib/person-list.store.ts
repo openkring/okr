@@ -136,6 +136,7 @@ export const PersonListStore = signalStore(
 
       /******************************* actions *************************************** */
       async add(readOnly = true): Promise<void> {
+        if (readOnly) return;
         const modal = await store.modalController.create({
           component: PersonNewModal,
           componentProps: {
@@ -144,7 +145,7 @@ export const PersonListStore = signalStore(
         });
         modal.present();
         const { data, role } = await modal.onWillDismiss();
-        if (role === 'confirm' && data && !readOnly) {
+        if (role === 'confirm' && data) {
           const person = data as PersonNewFormModel;
 
           if (store.personService.checkIfExists(store.persons(), person.firstName, person.lastName)) {

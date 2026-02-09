@@ -3,7 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { GroupModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { GroupFormComponent } from '@bk2/subject-group-ui';
 import { getTitleLabel } from '@bk2/shared-util-angular';
@@ -22,18 +22,20 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
-        <bk-group-form
-            [formData]="formData()"
-            (formDataChange)="onFormDataChange($event)" 
-            [currentUser]="currentUser"
-            [showForm]="showForm()"
-            [allTags]="tags()"
-            [tenantId]="tenantId()"
-            [isNew]="isNew()"
-            [readOnly]="isReadOnly()"
-            (dirty)="formDirty.set($event)"
-            (valid)="formValid.set($event)"
-        />
+        @if(formData(); as formData) {
+          <bk-group-form
+              [formData]="formData"
+              (formDataChange)="onFormDataChange($event)" 
+              [currentUser]="currentUser"
+              [showForm]="showForm()"
+              [allTags]="tags()"
+              [tenantId]="tenantId()"
+              [isNew]="isNew()"
+              [readOnly]="isReadOnly()"
+              (dirty)="formDirty.set($event)"
+              (valid)="formValid.set($event)"
+          />
+        }
       }
     </ion-content>
   `
@@ -54,7 +56,7 @@ export class GroupEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => structuredClone(this.group()));
+  protected formData = linkedSignal(() => safeStructuredClone(this.group()));
   protected showForm = signal(true);
 
   // fields
@@ -67,7 +69,7 @@ export class GroupEditModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.group()));  // reset the form
+    this.formData.set(safeStructuredClone(this.group()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

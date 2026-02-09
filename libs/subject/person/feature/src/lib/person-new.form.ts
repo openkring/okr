@@ -178,6 +178,7 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
                 <bk-checkbox name="shouldAddMembership" [checked]="shouldAddMembership()" (checkedChange)="onFieldChange('shouldAddMembership', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
+            {{shouldAddMembership()}}
             @if(shouldAddMembership()) {
               <ion-row>
                 <ion-col size="9">

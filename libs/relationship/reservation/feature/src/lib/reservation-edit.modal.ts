@@ -3,7 +3,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonCardHeader, IonCardTitle
 
 import { AvatarInfo, CalEventModel, CategoryListModel, PersonModel, PersonModelName, ReservationModel, ReservationModelName, ResourceModel, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, getAvatarName, hasRole, isPerson, isResource } from '@bk2/shared-util-core';
+import { coerceBoolean, getAvatarName, hasRole, isPerson, isResource, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CalEventEditModalComponent } from '@bk2/calevent-feature';
@@ -47,7 +47,7 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
             />
           }
         }
-     <ion-card>
+      <ion-card>
         <ion-card-header>
           <ion-card-title>Zeitliche Angaben</ion-card-title>
         </ion-card-header>
@@ -79,8 +79,9 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
         </ion-card-content>
       </ion-card>
 
+      @if(formData(); as formData) {
         <bk-reservation-form
-          [formData]="formData()"
+          [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser"
           [allTags]="tags()"
@@ -96,6 +97,7 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
           (valid)="formValid.set($event)"
         />
       }
+    }
 
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-card>
@@ -128,7 +130,7 @@ export class ReservationEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => structuredClone(this.reservation()));
+  protected formData = linkedSignal(() => safeStructuredClone(this.reservation()));
   protected showForm = signal(true);
   protected calevent = signal<CalEventModel | undefined>(undefined);
 
@@ -152,7 +154,7 @@ export class ReservationEditModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.reservation()));  // reset the form
+    this.formData.set(safeStructuredClone(this.reservation()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
@@ -170,16 +172,18 @@ export class ReservationEditModalComponent {
     const person = await this.selectPersonModal();
     if (!person) return;
 
-    this.formData.update((vm) => ({
-      ...vm,
-      reserverKey: person.bkey,
-      reserverName: person.firstName,
-      reserverName2: person.lastName,
-      reserverModelType: 'person',
-      reserverType: person.gender,
-    }));
+    this.formData.update((vm) => {
+      if (!vm) return vm;
+      return {
+        ...vm,
+        reserverKey: person.bkey,
+        reserverName: person.firstName,
+        reserverName2: person.lastName,
+        reserverModelType: 'person',
+        reserverType: person.gender
+      };
+    });
   }
-
   async selectPersonModal(): Promise<PersonModel | undefined> {
     const modal = await this.modalController.create({
       component: PersonSelectModalComponent,
@@ -219,13 +223,15 @@ export class ReservationEditModalComponent {
     if (role === 'confirm' && data) {
       if (isCalEvent(data, this.tenantId())) {
         this.calevent.set(data);
-        console.log('selected calevent:', data);
-        this.formData.update((vm) => ({
-          ...vm,
-          caleventKey: data.bkey,
-          startDate: data.startDate,
-          endDate: data.endDate ?? data.startDate,
-        }));
+        this.formData.update((vm: ReservationModel | undefined) => {
+          if (!vm) return vm;
+          return {
+            ...vm,
+            caleventKey: data.bkey,
+            startDate: data.startDate,
+            endDate: data.endDate ?? data.startDate,
+          };
+        });
       }
     }
   }
@@ -233,14 +239,17 @@ export class ReservationEditModalComponent {
   protected async selectResource(): Promise<void> {
     const resource = await this.selectResourceModal();
     if (!resource) return;
-    this.formData.update((vm) => ({
-      ...vm,
-      resourceKey: resource.bkey,
-      resourceName: resource.name,
-      resourceModelType: 'resource',
-      resourceType: resource.type,
-      resourceSubType: resource.subType,
-    }));
+    this.formData.update((vm) => {
+      if (!vm) return vm;
+      return {
+        ...vm,
+        resourceKey: resource.bkey,
+        resourceName: resource.name,
+        resourceModelType: 'resource',
+        resourceType: resource.type,
+        resourceSubType: resource.subType,
+      };
+    });      
   }
 
     async selectResourceModal(): Promise<ResourceModel | undefined> {

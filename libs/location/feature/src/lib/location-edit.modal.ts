@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { AppStore } from '@bk2/shared-feature';
 import { LocationModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { LocationFormComponent } from '@bk2/location-ui';
@@ -23,15 +23,17 @@ import { LocationFormComponent } from '@bk2/location-ui';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
       } 
     <ion-content>
-      <bk-location-form
-        [formData]="formData()" 
-        [currentUser]="currentUser()"
-        [types]="types()"
-        [allTags]="tags()"
-        [tenantId]="appStore.env.tenantId"
-        [readOnly]="isReadOnly()"
-        (formDataChange)="onFormDataChange($event)"
-      />
+      @if(formData(); as formData) {
+        <bk-location-form
+          [formData]="formData" 
+          [currentUser]="currentUser()"
+          [types]="types()"
+          [allTags]="tags()"
+          [tenantId]="appStore.env.tenantId"
+          [readOnly]="isReadOnly()"
+          (formDataChange)="onFormDataChange($event)"
+        />
+      }
     </ion-content>
   `
 })
@@ -49,7 +51,7 @@ export class LocationEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => structuredClone(this.location()));
+  public formData = linkedSignal(() => safeStructuredClone(this.location()));
   protected showForm = signal(true);
 
   // derived signals
@@ -64,7 +66,7 @@ export class LocationEditModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.location()));  // reset the form
+    this.formData.set(safeStructuredClone(this.location()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

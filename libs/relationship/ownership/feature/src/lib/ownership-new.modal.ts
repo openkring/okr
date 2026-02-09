@@ -3,7 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
+import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { OwnershipNewFormComponent } from './ownership-new.form';
 
@@ -43,7 +43,7 @@ export class OwnershipNewModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(true);   // default to true as the form is prefilled
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => structuredClone(this.ownership()));
+  protected formData = linkedSignal(() => safeStructuredClone(this.ownership()));
   protected showForm = signal(true);
 
   // derived signals
@@ -56,7 +56,7 @@ export class OwnershipNewModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.ownership()));  // reset the form
+    this.formData.set(safeStructuredClone(this.ownership()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

@@ -681,3 +681,34 @@ export function parseEventString(input: string): {
         return '';
     }
   }
+
+/**
+ * 18.1.2023 structuredClone was introduced: https://www.builder.io/blog/structured-clone
+ * - Clone infinitely nested objects and arrays
+ * - Clone circular references
+ * - Clone a wide variety of JavaScript types, such as Date, Set, Map, Error, RegExp, ArrayBuffer, Blob, File, ImageData, and many more
+ * - Transfer any transferable objects
+ * Therefore, the deepCopy functions are not needed anymore.
+ * Use this instead: 
+ * - deep:      const clonedSink = structuredClone(kitchenSink)
+ * - shallow:   const shallowCopy = {...calendarEvent}
+ */
+/**
+ * structuredClone(undefined) throws DataCloneError: which resulted in runtime errors in some cases where the value was undefined:
+ * TypeError: Cannot read properties of undefined (reading 'ecmp')
+ * This method checks for undefined and only calls structuredClone if the value is defined.
+ * usage: protected formData = linkedSignal(() => safeStructuredClone(this.person()));
+ * Normally, our formData is derived from required input parameter which can not become undefined, once the component is initialized.
+ * However, in some cases, the input parameter can become undefined after initialization (e.g. when the person is deleted 
+ * while the component is still open). In this case, we want to avoid the runtime error and return undefined instead.
+ * Edge cases where the input parameter could be undefined:
+ * - during SSR/hydration brief moment before hydration is completed
+ * - parent passes undefined
+ * - very early in lifecycle before angular sets the input parameter
+ * So the reason is usually either the parent component is not providing the parameter or a timing issue with SSR/hydration.
+ * @param value  a value of any type that may be undefined
+ * @returns a deep copy of the value if it is defined, otherwise undefined
+ */
+export function safeStructuredClone<T>(value: T | undefined): T | undefined {
+  return value !== undefined ? structuredClone(value) : undefined;
+}

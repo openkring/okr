@@ -1,10 +1,10 @@
-import { ChangeDetectorRef, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter } from '@ionic/angular/standalone';
 
 import { PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, getFullName, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
@@ -98,10 +98,7 @@ export class PersonEditPage implements ViewWillEnter   {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => {
-    const person = this.person();
-    return person ? structuredClone(person) : undefined;
-  });
+  public formData = linkedSignal(() => safeStructuredClone(this.person()));
   protected showForm = signal(true);
 
   // derived signals
@@ -135,7 +132,7 @@ export class PersonEditPage implements ViewWillEnter   {
     this.formDirty.set(false);
     const person = this.person();
     if (person) {
-      this.formData.set(structuredClone(person));  // reset the form
+      this.formData.set(safeStructuredClone(person));  // reset the form
     }
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);

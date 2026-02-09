@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/s
 import { ENV, LowercaseWordMask } from '@bk2/shared-config';
 import { AvatarInfo, CategoryListModel, GroupModel, PersonModel, RoleName, TaskModel, TaskModelName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent, StringsComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, isGroup, isPerson, newAvatarInfo } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole, isGroup, isPerson, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 
@@ -85,17 +85,17 @@ export class TaskEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => structuredClone(this.task()));
+  public formData = linkedSignal(() => safeStructuredClone(this.task()));
   protected showForm = signal(true);
 
   // derived signals
   protected defaultAvatar = computed(() => newAvatarInfo(this.currentUser()!.personKey, this.currentUser()!.firstName, this.currentUser()!.lastName, 'person', '', '', ''));  
   protected headerTitle = computed(() => getTitleLabel('task', this.task().bkey, this.isReadOnly()));
   protected readonly parentKey = computed(() => `${TaskModelName}.${this.task().bkey}`);
-  protected calendars = linkedSignal(() => (this.formData().calendars ?? []) as string[]);
-  protected author = linkedSignal(() => this.formData().author ?? this.defaultAvatar());
-  protected assignee = linkedSignal(() => this.formData().assignee ?? this.defaultAvatar());
-  protected scope = linkedSignal(() => this.formData().scope);
+  protected calendars = linkedSignal(() => (this.formData()?.calendars ?? []) as string[]);
+  protected author = linkedSignal(() => this.formData()?.author ?? this.defaultAvatar());
+  protected assignee = linkedSignal(() => this.formData()?.assignee ?? this.defaultAvatar());
+  protected scope = linkedSignal(() => this.formData()?.scope);
 
   // passing constants to template
   protected calendarMask = LowercaseWordMask;
@@ -107,7 +107,7 @@ export class TaskEditModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.task()));  // reset the form
+    this.formData.set(safeStructuredClone(this.task()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
@@ -115,7 +115,10 @@ export class TaskEditModalComponent {
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
     this.formDirty.set(true);
-    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    this.formData.update((vm: TaskModel | undefined) => {
+      if (!vm) return vm;
+      return { ...vm, [fieldName]: fieldValue };
+    });      
   }
 
   protected onFormDataChange(formData: TaskModel): void {
@@ -126,7 +129,10 @@ export class TaskEditModalComponent {
     const person = await this.selectPersonModal();
     if (!person) return;
     const avatar = newAvatarInfo(person.bkey, person.firstName, person.lastName, 'person', person.gender, '', '');
-    this.formData.update((vm) => ({...vm, [type]: avatar }));
+    this.formData.update((vm) => {
+      if (!vm) return vm;
+      return ({...vm, [type]: avatar });
+    });      
     this.formDirty.set(true);
   }
 
@@ -153,7 +159,10 @@ export class TaskEditModalComponent {
     const group = await this.selectGroupModal();
     if (!group) return;
     const avatar = newAvatarInfo(group.bkey, '', group.name, 'group', '', '', '');
-    this.formData.update((vm) => ({...vm, scope: avatar }));
+    this.formData.update((vm) => {
+      if (!vm) return vm;
+      return ({...vm, scope: avatar });
+    });      
     this.formDirty.set(true);
   }
 

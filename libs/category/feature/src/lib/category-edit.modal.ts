@@ -3,7 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CategoryListFormComponent } from '@bk2/category-ui';
@@ -23,16 +23,18 @@ import { ENV } from '@bk2/shared-config';
     }
     <ion-content>
       @if(currentUser(); as currentUser) {
-        <bk-category-list-form
-          [formData]="formData()"
-          (formDataChange)="onFormDataChange($event)"
-          [currentUser]="currentUser"
-          [allTags]="tags()"
-          [tenants]="env.tenantId"
-          [readOnly]="isReadOnly()"
-          (dirty)="formDirty.set($event)"
-          (valid)="formValid.set($event)"
-        />
+        @if(formData(); as formData) {
+          <bk-category-list-form
+            [formData]="formData"
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser"
+            [allTags]="tags()"
+            [tenants]="env.tenantId"
+            [readOnly]="isReadOnly()"
+            (dirty)="formDirty.set($event)"
+            (valid)="formValid.set($event)"
+          />
+        }
       }
     </ion-content>
   `
@@ -52,7 +54,7 @@ export class CategoryEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => structuredClone(this.category()));
+  public formData = linkedSignal(() => safeStructuredClone(this.category()));
   protected showForm = signal(true);
 
   // derived signals
@@ -65,7 +67,7 @@ export class CategoryEditModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.category()));  // reset the form
+    this.formData.set(safeStructuredClone(this.category()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

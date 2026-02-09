@@ -1,10 +1,10 @@
-import { ChangeDetectorRef, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController, ViewWillEnter } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, OrgModel, OrgModelName, ResourceModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_TITLE } from '@bk2/shared-constants';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
@@ -81,11 +81,10 @@ import { OrgFormComponent } from '@bk2/subject-org-ui';
     </ion-content>
   `
 })
-export class OrgEditModalComponent implements ViewWillEnter {
+export class OrgEditModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly avatarService = inject(AvatarService);
   private readonly env = inject(ENV);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   // inputs
   public org = input.required<OrgModel>();
@@ -101,7 +100,7 @@ export class OrgEditModalComponent implements ViewWillEnter {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => structuredClone(this.org()));
+  public formData = linkedSignal(() => safeStructuredClone(this.org()));
   protected showForm = signal(true);
 
   // derived signals and fields
@@ -113,15 +112,6 @@ export class OrgEditModalComponent implements ViewWillEnter {
   protected isNew = computed(() => !this.org()?.bkey.length);
   protected listId = computed(() => 'o_' + this.orgKey());
 
-  /**
-   * Lifecycle hook that is called when the view is about to enter and become the active page.
-   * Give some time for the avatar toolbar to initialize before triggering change detection.
-   * This prevents a potential race condition that could lead to data not being displayed correctly.
-   */
-  ionViewWillEnter() {
-    setTimeout(() => this.cdr.detectChanges(), 0);
-  }
-
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     await this.modalController.dismiss(this.formData(), 'confirm');
@@ -129,7 +119,7 @@ export class OrgEditModalComponent implements ViewWillEnter {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.org()));  // reset the form
+    this.formData.set(safeStructuredClone(this.org()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

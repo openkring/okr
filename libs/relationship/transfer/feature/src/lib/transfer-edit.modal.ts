@@ -3,7 +3,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 
 import { CategoryListModel, RoleName, TransferModel, TransferModelName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { hasRole } from '@bk2/shared-util-core';
+import { hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
@@ -25,23 +25,25 @@ import { ModelSelectService } from '@bk2/shared-feature';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-transfer-form
-        [formData]="formData()"
-        (formDataChange)="onFormDataChange($event)"
-        [currentUser]="currentUser()"
-        [allTags]="tags()"
-        [tenantId]="tenantId()"
-        [types]="types()"
-        [states]="states()"
-        [periodicities]="periodicities()"
-        [readOnly]="readOnly()"
-        [showForm]="showForm()"
-        (dirty)="formDirty.set($event)"
-        (valid)="formValid.set($event)"
-        (selectSubject)="selectSubject()"
-        (selectObject)="selectObject()"
-        (selectResource)="selectResource()"
-      />
+      @if(formData(); as formData) {
+        <bk-transfer-form
+          [formData]="formData"
+          (formDataChange)="onFormDataChange($event)"
+          [currentUser]="currentUser()"
+          [allTags]="tags()"
+          [tenantId]="tenantId()"
+          [types]="types()"
+          [states]="states()"
+          [periodicities]="periodicities()"
+          [readOnly]="readOnly()"
+          [showForm]="showForm()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+          (selectSubject)="selectSubject()"
+          (selectObject)="selectObject()"
+          (selectResource)="selectResource()"
+        />
+      }
 
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-card>
@@ -72,7 +74,7 @@ export class TransferEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => structuredClone(this.transfer()));
+  protected formData = linkedSignal(() => safeStructuredClone(this.transfer()));
   protected showForm = signal(true);
 
   // derived signals
@@ -87,7 +89,7 @@ export class TransferEditModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.transfer()));  // reset the form
+    this.formData.set(safeStructuredClone(this.transfer()));  // reset the form
       // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
@@ -103,26 +105,37 @@ export class TransferEditModalComponent {
 
   protected async selectSubject(): Promise<void> {
     const avatar = await this.modelSelectService.selectPersonAvatar();
-    if (avatar) {
-      const subjects = this.formData().subjects;
+    const formData = this.formData();
+    if (avatar && formData) {
+      const subjects = formData.subjects;
       subjects.push(avatar);
-      this.formData.update((vm) => ({ ...vm, subjects }));
+      this.formData.update((vm: TransferModel | undefined) => {
+        if (!vm) return vm;
+        return { ...vm, subjects };
+      });
     }
   }
 
   protected async selectObject(): Promise<void> {
     const avatar = await this.modelSelectService.selectPersonAvatar();
-    if (avatar) {
-      const objects = this.formData().objects;
+    const formData = this.formData();
+    if (avatar && formData) {
+      const objects = formData.objects;
       objects.push(avatar);
-      this.formData.update((vm) => ({ ...vm, objects }));
+      this.formData.update((vm: TransferModel | undefined) => {
+        if (!vm) return vm;
+        return { ...vm, objects };
+      });
     }
   }
 
   protected async selectResource(): Promise<void> {
     const resource = await this.modelSelectService.selectResourceAvatar();
     if (resource) {
-      this.formData.update((vm) => ({ ...vm, resource }) );
+      this.formData.update((vm: TransferModel | undefined) => {
+        if (!vm) return vm;
+        return { ...vm, resource };
+      });
     }
   }
 }

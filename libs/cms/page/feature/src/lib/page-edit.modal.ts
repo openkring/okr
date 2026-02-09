@@ -3,7 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, PageModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { PageFormComponent } from '@bk2/cms-page-ui';
@@ -24,19 +24,21 @@ import { ENV } from '@bk2/shared-config';
     }
     <ion-content class="ion-no-padding">
       @if(currentUser(); as currentUser) {
-        <bk-page-form
-          [formData]="formData()"
-          (formDataChange)="onFormDataChange($event)"
-          [currentUser]="currentUser"
-          [showForm]="showForm()"
-          [types]="types()"
-          [states]="states()"
-          [allTags]="tags()"
-          [tenantId]="env.tenantId"
-          [readOnly]="isReadOnly()"
-          (dirty)="formDirty.set($event)"
-          (valid)="formValid.set($event)"
-        />
+        @if(formData(); as formData) {
+          <bk-page-form
+            [formData]="formData"
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser"
+            [showForm]="showForm()"
+            [types]="types()"
+            [states]="states()"
+            [allTags]="tags()"
+            [tenantId]="env.tenantId"
+            [readOnly]="isReadOnly()"
+            (dirty)="formDirty.set($event)"
+            (valid)="formValid.set($event)"
+          />
+        }
       }
     </ion-content>
   `,
@@ -59,7 +61,7 @@ export class PageEditModalComponent {
   protected formDirty = signal(true);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => structuredClone(this.page()));
+  public formData = linkedSignal(() => safeStructuredClone(this.page()));
   protected showForm = signal(true);
 
   // derived signals
@@ -72,7 +74,7 @@ export class PageEditModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.page()));  // reset the form
+    this.formData.set(safeStructuredClone(this.page()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

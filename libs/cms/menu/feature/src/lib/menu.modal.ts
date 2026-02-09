@@ -3,7 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, MenuItemModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
@@ -58,7 +58,7 @@ export class MenuItemModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => structuredClone(this.menuItem()));
+  protected formData = linkedSignal(() => safeStructuredClone(this.menuItem()));
   protected showForm = signal(true);
 
   // derived signals
@@ -71,7 +71,7 @@ export class MenuItemModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.menuItem()));  // reset the form
+    this.formData.set(safeStructuredClone(this.menuItem()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

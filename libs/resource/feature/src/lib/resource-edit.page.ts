@@ -3,7 +3,7 @@ import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow } from '@ionic/a
 
 import { ResourceModel, ResourceModelName, RoleName } from '@bk2/shared-models';
 import { CategorySelectComponent, ChangeConfirmationComponent, HeaderComponent, IconToolbarComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_RESOURCE_TYPE, DEFAULT_TITLE } from '@bk2/shared-constants';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
@@ -82,7 +82,7 @@ export class ResourceEditPageComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => structuredClone(this.resource()));
+  public formData = linkedSignal(() => safeStructuredClone(this.resource()));
   protected showForm = signal(true);
 
   // derived signals
@@ -121,7 +121,7 @@ export class ResourceEditPageComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.resource()));  // reset the form
+    this.formData.set(safeStructuredClone(this.resource()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

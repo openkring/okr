@@ -67,19 +67,6 @@ export async function pasteFromClipboard(): Promise<string> {
 }
 
 /**
- * 18.1.2023 structuredClone was introduced: https://www.builder.io/blog/structured-clone
- * - Clone infinitely nested objects and arrays
- * - Clone circular references
- * - Clone a wide variety of JavaScript types, such as Date, Set, Map, Error, RegExp, ArrayBuffer, Blob, File, ImageData, and many more
- * - Transfer any transferable objects
- * Therefore, the deepCopy functions are not needed anymore.
- * Use this instead: 
- * - deep:      const clonedSink = structuredClone(kitchenSink)
- * - shallow:   const shallowCopy = {...calendarEvent}
- */
-
-
-/**
  * Executes a function several times.
  * source: https://stackoverflow.com/questions/30452263/is-there-a-mechanism-to-loop-x-times-in-es6-ecmascript-6-without-mutable-varia
  * use it like this:   times (3) (() => console.log('hi'))

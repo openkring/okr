@@ -3,7 +3,7 @@ import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup
 
 import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CalEventFormComponent } from '@bk2/calevent-ui';
@@ -43,23 +43,23 @@ import { AttendeesAccordionComponent } from './attendees-accordion';
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
-      }
 
-      @if(!isNew()) {
-        <ion-card>
-          <ion-card-content class="ion-no-padding">
-            <ion-accordion-group value="invitees">
-              @if(calevent().isOpen) {
-                <bk-attendees-accordion [calevent]="formData()" [readOnly]="isReadOnly()" />
-              } 
-              @else {
-                <bk-invitees-accordion [calevent]="formData()" [readOnly]="isReadOnly()" />
-              }
-              <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
-              <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
-            </ion-accordion-group>
-          </ion-card-content>
-        </ion-card>
+        @if(!isNew()) {
+          <ion-card>
+            <ion-card-content class="ion-no-padding">
+              <ion-accordion-group value="invitees">
+                @if(calevent().isOpen) {
+                  <bk-attendees-accordion [calevent]="formData" [readOnly]="isReadOnly()" />
+                } 
+                @else {
+                  <bk-invitees-accordion [calevent]="formData" [readOnly]="isReadOnly()" />
+                }
+                <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+                <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              </ion-accordion-group>
+            </ion-card-content>
+          </ion-card>
+        }
       }
     </ion-content>
     
@@ -83,13 +83,13 @@ export class CalEventEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => structuredClone(this.calevent()));
+  protected formData = linkedSignal(() => safeStructuredClone(this.calevent()));
   protected showForm = signal(true);
 
   // derived signals
   protected headerTitle = computed(() => getTitleLabel('calevent', this.calevent().bkey, this.isReadOnly()));
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().bkey}`);
-  protected isNew = computed(() => !this.formData().bkey);
+  protected isNew = computed(() => !this.formData()?.bkey);
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -98,7 +98,7 @@ export class CalEventEditModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.calevent()));  // reset the form
+    this.formData.set(safeStructuredClone(this.calevent()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController, ViewWillEnter } from '@ionic/angular/standalone';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, getFullName, hasRole, newAvatarInfo } from '@bk2/shared-util-core';
+import { coerceBoolean, getFullName, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
@@ -64,9 +64,8 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
     </ion-content>
   `
 })
-export class MembershipEditModalComponent implements ViewWillEnter {
+export class MembershipEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private cdr = inject(ChangeDetectorRef);
 
   // inputs
   public membership = input.required<MembershipModel>();
@@ -80,7 +79,7 @@ export class MembershipEditModalComponent implements ViewWillEnter {
 
   // signals
   protected formValid = signal(false);
-  public formData = linkedSignal(() => structuredClone(this.membership()));
+  public formData = linkedSignal(() => safeStructuredClone(this.membership()));
   protected showForm = signal(true);
   protected formDirty = computed(() => {
     // Always dirty for new memberships, or when explicitly set
@@ -101,16 +100,7 @@ export class MembershipEditModalComponent implements ViewWillEnter {
     const m = this.membership();
     return newAvatarInfo(m.orgKey, '', m.orgName, m.orgModelType, '', '', m.orgName);
   });
-  protected memberKey = computed(() => this.formData().memberKey ?? '');
-
-  /**
-   * Lifecycle hook that is called when the view is about to enter and become the active page.
-   * Give some time for the avatar toolbar to initialize before triggering change detection.
-   * This prevents a potential race condition that could lead to data not being displayed correctly.
-   */
-  ionViewWillEnter() {
-    setTimeout(() => this.cdr.detectChanges(), 0);
-  }
+  protected memberKey = computed(() => this.formData()?.memberKey ?? '');
 
   /******************************* actions *************************************** */
   public async save(): Promise<boolean> {
@@ -119,7 +109,7 @@ export class MembershipEditModalComponent implements ViewWillEnter {
 
   public async cancel(): Promise<void> {
     this.manualDirty.set(false);
-    this.formData.set(structuredClone(this.membership()));  // reset the form
+    this.formData.set(safeStructuredClone(this.membership()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

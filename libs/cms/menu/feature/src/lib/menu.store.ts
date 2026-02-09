@@ -8,7 +8,7 @@ import { Browser } from '@capacitor/browser';
 import { ENV } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel, MenuItemModel } from '@bk2/shared-models';
-import { debugListLoaded, die, nameMatches, warn } from '@bk2/shared-util-core';
+import { debugListLoaded, die, nameMatches, safeStructuredClone, warn } from '@bk2/shared-util-core';
 import { AppNavigationService, isInSplitPane, navigateByUrl } from '@bk2/shared-util-angular';
 
 import { AuthService } from '@bk2/auth-data-access';
@@ -120,7 +120,7 @@ export const _MenuStore = signalStore(
       
       async edit(menuItem?: MenuItemModel, readOnly = true): Promise<void> {
         // we need to clone the menuItem to avoid changing the original object (NG0100: ExpressionChangeAfterItHasBeenCheckedError)
-        const _menuItem = structuredClone(menuItem) ?? new MenuItemModel(store.env.tenantId);
+        const _menuItem = safeStructuredClone(menuItem) ?? new MenuItemModel(store.env.tenantId);
         const modal = await store.modalController.create({
           component: MenuItemModalComponent,
           componentProps: {

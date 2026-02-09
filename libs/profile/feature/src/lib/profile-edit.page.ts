@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel, ViewWillEnter } from '@ionic/angular/standalone';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
 import { I18nService } from '@bk2/shared-i18n';
@@ -15,6 +15,7 @@ import { ProfileDataAccordionComponent, ProfilePrivacyAccordionComponent, Profil
 import { PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 import { ProfileEditStore } from './profile-edit.store';
 import { getTitleLabel } from '@bk2/shared-util-angular';
+import { safeStructuredClone } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-profile-edit-page',
@@ -96,10 +97,9 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
     </ion-content>
   `
 })
-export class ProfileEditPageComponent implements ViewWillEnter {
+export class ProfileEditPageComponent {
   private readonly profileEditStore = inject(ProfileEditStore);
   private readonly i18nService = inject(I18nService);
-  //private cdr = inject(ChangeDetectorRef);
 
   // inputs
   // readOnly is always false for profile page as we work with the current user's own profile
@@ -108,14 +108,8 @@ export class ProfileEditPageComponent implements ViewWillEnter {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected personFormData = linkedSignal(() => {
-    const person = this.currentPerson();
-    return person ? structuredClone(person) : undefined;
-  });
-  protected userFormData = linkedSignal(() => {
-    const user = this.currentUser();
-    return user ? structuredClone(user) : undefined;
-  });
+  protected personFormData = linkedSignal(() => safeStructuredClone(this.currentPerson()));
+  protected userFormData = linkedSignal(() => safeStructuredClone(this.currentUser()));
   protected showForm = signal(true);
 
   // derived signals
@@ -134,14 +128,10 @@ export class ProfileEditPageComponent implements ViewWillEnter {
   });
   protected tags = computed(() => this.profileEditStore.getTags());
 
-  /**
-   * Lifecycle hook that is called when the view is about to enter and become the active page.
-   * Give some time for the avatar toolbar to initialize before triggering change detection.
-   * This prevents a potential race condition that could lead to data not being displayed correctly.
-   */
-  ionViewWillEnter() {
-    this.profileEditStore.setPersonKey(this.personKey());
-    // setTimeout(() => this.cdr.detectChanges(), 0);
+  constructor() {
+    effect(() => {
+      this.profileEditStore.setPersonKey(this.personKey());
+    });
   }
 
   /******************************* actions *************************************** */
@@ -152,8 +142,8 @@ export class ProfileEditPageComponent implements ViewWillEnter {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.personFormData.set(structuredClone(this.currentPerson()));  // reset
-    this.userFormData.set(structuredClone(this.currentUser()));  // reset
+    this.personFormData.set(safeStructuredClone(this.currentPerson()));  // reset
+    this.userFormData.set(safeStructuredClone(this.currentUser()));  // reset
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

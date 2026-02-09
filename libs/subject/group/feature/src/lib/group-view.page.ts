@@ -7,7 +7,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, GroupModelName, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent } from '@bk2/shared-ui';
 import { error } from '@bk2/shared-util-angular';
-import { coerceBoolean, debugData, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugData, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 
 import { ContentPage } from '@bk2/cms-page-feature';
@@ -152,7 +152,7 @@ export class GroupViewPageComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => structuredClone(this.group()));
+  public formData = linkedSignal(() => safeStructuredClone(this.group()));
   protected showForm = signal(true);
 
   // derived signals and fields
@@ -187,7 +187,7 @@ export class GroupViewPageComponent {
 
   protected async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.group()));  // reset the form
+    this.formData.set(safeStructuredClone(this.group()));  // reset the form
       // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

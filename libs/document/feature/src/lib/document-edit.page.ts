@@ -3,7 +3,7 @@ import { IonContent } from '@ionic/angular/standalone';
 
 import { DocumentModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean } from '@bk2/shared-util-core';
+import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { DocumentFormComponent } from '@bk2/document-ui';
@@ -26,18 +26,20 @@ import { DocumentStore } from './document.store';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-document-form
-        [formData]="formData()"
-        (formDataChange)="onFormDataChange($event)" 
-        [currentUser]="currentUser()"
-        [types]="types()"
-        [sources]="sources()"
-        [showForm]="showForm()"
-        [allTags]="tags()"
-        [readOnly]="isReadOnly()"
-        (dirty)="formDirty.set($event)"
-        (valid)="formValid.set($event)"
-      />
+      @if(formData(); as formData) {
+        <bk-document-form
+          [formData]="formData"
+          (formDataChange)="onFormDataChange($event)" 
+          [currentUser]="currentUser()"
+          [types]="types()"
+          [sources]="sources()"
+          [showForm]="showForm()"
+          [allTags]="tags()"
+          [readOnly]="isReadOnly()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+        />
+      }
     </ion-content>
   `
 })
@@ -54,7 +56,7 @@ export class DocumentEditPageComponent {
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected document = linkedSignal(() => this.documentStore.document() ?? new DocumentModel(this.documentStore.tenantId()));
-  protected formData = linkedSignal(() => structuredClone(this.document()));
+  protected formData = linkedSignal(() => safeStructuredClone(this.document()));
   protected showForm = signal(true);
 
   // derived signals
@@ -77,7 +79,7 @@ export class DocumentEditPageComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.document()));  // reset the form
+    this.formData.set(safeStructuredClone(this.document()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

@@ -3,7 +3,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 
 import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, isPerson } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
@@ -28,18 +28,20 @@ import { ENV } from '@bk2/shared-config';
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      <bk-personal-rel-form
-        [formData]="formData()"
-        (formDataChange)="onFormDataChange($event)"
-        [currentUser]="currentUser()" 
-        [types]="types()"
-        [allTags]="tags()"
-        [readOnly]="isReadOnly()"
-        [tenants]="env.tenantId"
-        (selectPerson)="selectPerson($event)"
-        (dirty)="formDirty.set($event)"
-        (valid)="formValid.set($event)"
-      />
+      @if(formData(); as formData) {
+        <bk-personal-rel-form
+          [formData]="formData"
+          (formDataChange)="onFormDataChange($event)"
+          [currentUser]="currentUser()" 
+          [types]="types()"
+          [allTags]="tags()"
+          [readOnly]="isReadOnly()"
+          [tenants]="env.tenantId"
+          (selectPerson)="selectPerson($event)"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+        />
+      }
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-card>
@@ -72,12 +74,12 @@ export class PersonalRelEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => structuredClone(this.personalRel()));
+  protected formData = linkedSignal(() => safeStructuredClone(this.personalRel()));
   protected showForm = signal(true);
 
   // derived signals
   protected readonly headerTitle = computed(() => getTitleLabel('personalRel', this.personalRel()?.bkey, this.isReadOnly()));
-  protected readonly parentKey = computed(() => `${PersonalRelModelName}.${this.personalRel().bkey}`);
+  protected readonly parentKey = computed(() => `${PersonalRelModelName}.${this.personalRel().bkey ?? ''}`);
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -86,7 +88,7 @@ export class PersonalRelEditModalComponent {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.personalRel()));  // reset the form
+    this.formData.set(safeStructuredClone(this.personalRel()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
@@ -99,22 +101,36 @@ export class PersonalRelEditModalComponent {
   protected async selectPerson(isSubject: boolean): Promise<void> {
     const person = await this.selectPersonModal();
     if (!person) return;
+    
+    const personData = {
+      bkey: person.bkey ?? '',
+      firstName: person.firstName ?? '',
+      lastName: person.lastName ?? '',
+      gender: person.gender ?? ''
+    };
+    
     if (isSubject) {
-      this.formData.update((vm) => ({
-        ...vm, 
-        subjectKey: person.bkey, 
-        subjectFirstName: person.firstName,
-        subjectLastName: person.lastName,
-        subjectGender: person.gender,
-      }));
+      this.formData.update((vm) => {
+        if (!vm) return vm;
+        return {
+          ...vm, 
+          subjectKey: personData.bkey, 
+          subjectFirstName: personData.firstName,
+          subjectLastName: personData.lastName,
+          subjectGender: personData.gender,
+        };
+      });
     } else {
-      this.formData.update((vm) => ({
-        ...vm, 
-        objectKey: person.bkey, 
-        objectFirstName: person.firstName,
-        objectLastName: person.lastName,
-        objectGender: person.gender,
-      }));
+      this.formData.update((vm) => {
+        if (!vm) return vm;
+        return {
+          ...vm, 
+          objectKey: personData.bkey, 
+          objectFirstName: personData.firstName,
+          objectLastName: personData.lastName,
+          objectGender: personData.gender,
+        };
+      });
     }
   }
 

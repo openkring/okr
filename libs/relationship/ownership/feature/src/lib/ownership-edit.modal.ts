@@ -1,10 +1,10 @@
-import { ChangeDetectorRef, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController, ViewWillEnter } from '@ionic/angular/standalone';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { AvatarInfo, OwnershipModel, OwnershipModelName, ResourceModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, hasRole, newAvatarInfo } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
@@ -66,10 +66,9 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
     </ion-content>
   `
 })
-export class OwnershipEditModalComponent implements ViewWillEnter {
+export class OwnershipEditModalComponent {
   private readonly modalController = inject(ModalController);
   protected readonly appStore = inject(AppStore);
-  private cdr = inject(ChangeDetectorRef);
   
   // inputs
   public ownership = input.required<OwnershipModel>();
@@ -81,7 +80,7 @@ export class OwnershipEditModalComponent implements ViewWillEnter {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => structuredClone(this.ownership()));
+  public formData = linkedSignal(() => safeStructuredClone(this.ownership()));
   protected showForm = signal(true);
 
   // derived signals
@@ -102,15 +101,6 @@ export class OwnershipEditModalComponent implements ViewWillEnter {
   protected readonly subjectDefaultIcon = computed(() => this.appStore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
   protected readonly objectDefaultIcon = computed(() => this.appStore.getDefaultIcon(this.ownerAvatar()?.modelType));
 
-    /**
-   * Lifecycle hook that is called when the view is about to enter and become the active page.
-   * Give some time for the avatar toolbar to initialize before triggering change detection.
-   * This prevents a potential race condition that could lead to data not being displayed correctly.
-   */
-  ionViewWillEnter() {
-    setTimeout(() => this.cdr.detectChanges(), 0);
-  }
-
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     await this.modalController.dismiss(this.formData(), 'confirm');    
@@ -118,7 +108,7 @@ export class OwnershipEditModalComponent implements ViewWillEnter {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.ownership()));  // reset the form
+    this.formData.set(safeStructuredClone(this.ownership()));  // reset the form
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
