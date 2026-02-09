@@ -88,7 +88,6 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 })
 export class PersonEditPage implements ViewWillEnter   {
   protected readonly personEditStore = inject(PersonEditStore);
-  private cdr = inject(ChangeDetectorRef);
 
   // inputs
   public personKey = input.required<string>();
@@ -99,7 +98,10 @@ export class PersonEditPage implements ViewWillEnter   {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected formData = linkedSignal(() => structuredClone(this.person()));
+  protected formData = linkedSignal(() => {
+    const person = this.person();
+    return person ? structuredClone(person) : undefined;
+  });
   protected showForm = signal(true);
 
   // derived signals
@@ -117,12 +119,9 @@ export class PersonEditPage implements ViewWillEnter   {
 
   /**
    * Lifecycle hook that is called when the view is about to enter and become the active page.
-   * Give some time for the avatar toolbar to initialize before triggering change detection.
-   * This prevents a potential race condition that could lead to data not being displayed correctly.
    */
   ionViewWillEnter() {
     this.personEditStore.setPersonKey(this.personKey());
-    setTimeout(() => this.cdr.detectChanges(), 0);
   }
 
   /******************************* actions *************************************** */
@@ -134,18 +133,19 @@ export class PersonEditPage implements ViewWillEnter   {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(structuredClone(this.person()));  // reset the form
+    const person = this.person();
+    if (person) {
+      this.formData.set(structuredClone(person));  // reset the form
+    }
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
-      setTimeout(() => {
-        this.showForm.set(true);
-        this.cdr.markForCheck();
-      }, 0);
+    setTimeout(() => {
+      this.showForm.set(true);
+    }, 0);
   }
 
   protected onFormDataChange(formData: PersonModel): void {
     this.formData.set(formData);
-    this.cdr.markForCheck();
   }
 
   /**

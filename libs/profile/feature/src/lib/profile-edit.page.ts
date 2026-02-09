@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel, ViewWillEnter } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
@@ -99,7 +99,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 export class ProfileEditPageComponent implements ViewWillEnter {
   private readonly profileEditStore = inject(ProfileEditStore);
   private readonly i18nService = inject(I18nService);
-  private cdr = inject(ChangeDetectorRef);
+  //private cdr = inject(ChangeDetectorRef);
 
   // inputs
   // readOnly is always false for profile page as we work with the current user's own profile
@@ -141,7 +141,7 @@ export class ProfileEditPageComponent implements ViewWillEnter {
    */
   ionViewWillEnter() {
     this.profileEditStore.setPersonKey(this.personKey());
-    setTimeout(() => this.cdr.detectChanges(), 0);
+    // setTimeout(() => this.cdr.detectChanges(), 0);
   }
 
   /******************************* actions *************************************** */
