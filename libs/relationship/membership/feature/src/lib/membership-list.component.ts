@@ -12,7 +12,7 @@ import { DateFormat, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/s
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
-import { CategoryLogPipe, getMembershipCategoryChanges } from '@bk2/relationship-membership-util';
+import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 import { MembershipStore } from './membership.store';
 
 @Component({
@@ -40,10 +40,10 @@ import { MembershipStore } from './membership.store';
         }
         @if(hasRole('privileged') || hasRole('memberAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
-              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+            <ion-button [id]="popupId">
+              <ion-icon slot="icon-only" [src]="'menu' | svgIcon" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
                   <bk-menu [menuName]="contextMenuName()"/>
@@ -138,7 +138,7 @@ export class MembershipListComponent {
   protected membershipCategory = linkedSignal(() => this.hasYearFilter() ? undefined : this.membershipStore.membershipCategory());
   protected genders = computed(() => this.membershipStore.genders());
   protected orgTypes = computed(() => this.membershipStore.orgTypes());
-  protected popupId = computed(() => 'c_memberships_' + this.listId() + '_' + this.orgId());
+  protected readonly popupId = crypto.randomUUID();
   protected orgName = computed(() => this.membershipStore.orgName());
   protected tags = computed(() => this.hasYearFilter() ? '' :this.membershipStore.getTags());
   protected types = computed(() => this.hasYearFilter() ? undefined : (this.listId() === 'orgs' ? this.orgTypes() : this.genders()));

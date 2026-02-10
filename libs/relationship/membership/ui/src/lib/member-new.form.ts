@@ -199,8 +199,8 @@ export class MemberNewForm {
   public readonly locale = input<string>(DEFAULT_LOCALE);
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-
   public membershipCategories = input.required<CategoryListModel>();
+  
   // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
