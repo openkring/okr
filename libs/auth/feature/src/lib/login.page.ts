@@ -38,9 +38,7 @@ import { LoginFormComponent } from '@bk2/auth-ui';
         <img class="background-image" [src]="backgroundImageUrl()" alt="Background" />
         <div class="login-form">
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
-          <ion-label class="title"
-            ><strong>{{ '@auth.operation.login.title' | translate | async }}</strong></ion-label
-          >
+          <ion-label class="title"><strong>{{ '@auth.operation.login.title' | translate | async }}</strong></ion-label>
           <bk-login-form [(vm)]="currentCredentials" (validChange)="onValidChange($event)" />
           <div class="button-container">
             <ion-grid>

@@ -4,14 +4,14 @@ import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { AuthCredentials, AUTH_CREDENTIAL_SHAPE } from '@bk2/shared-models';
-import { EmailInputComponent, ErrorNoteComponent, PasswordInputComponent } from '@bk2/shared-ui';
+import { EmailInputComponent, ErrorNoteComponent } from '@bk2/shared-ui';
 
-import { authCredentialsValidations } from '@bk2/auth-util';
+import { pwdresetValidations } from '@bk2/auth-util';
 
 @Component({
-  selector: 'bk-login-form',
+  selector: 'bk-pwdreset-form',
   standalone: true,
-  imports: [vestForms, FormsModule, IonGrid, IonRow, IonCol, EmailInputComponent, PasswordInputComponent, ErrorNoteComponent],
+  imports: [vestForms, FormsModule, IonGrid, IonRow, IonCol, EmailInputComponent, ErrorNoteComponent],
   template: `
     <form scVestForm
       [formValue]="vm()"
@@ -32,39 +32,26 @@ import { authCredentialsValidations } from '@bk2/auth-util';
             <bk-error-note [errors]="emailErrors()" />
           </ion-col>
         </ion-row>
-
-        <ion-row>
-          <ion-col size="12">
-            <bk-password-input
-              name="loginPassword" 
-              [(value)]="loginPassword"
-              [showHelper]="true" />
-            <bk-error-note [errors]="passwordErrors()" />
-          </ion-col>
-        </ion-row>
       </ion-grid>
     </form>
   `,
 })
-export class LoginFormComponent {
+export class PwdResetForm {
   // inputs
   public readonly vm = model.required<AuthCredentials>(); // vm always contains the current values of the form
-  public readonly suite = authCredentialsValidations;
+  public readonly suite = pwdresetValidations;
   public validChange = output<boolean>();
 
   // fields
   protected loginEmail = linkedSignal(() => this.vm().loginEmail);
-  protected loginPassword = linkedSignal(() => this.vm().loginPassword);
 
   // errors
   protected emailErrors = signal<string[]>([]);
-  protected passwordErrors = signal<string[]>([]);
 
   protected onFormChange(value: AuthCredentials): void {
     this.vm.set(value);
-    const result = authCredentialsValidations(this.vm());
+    const result = pwdresetValidations(this.vm());
     this.emailErrors.set(result.getErrors('loginEmail'));
-    this.passwordErrors.set(result.getErrors('loginPassword'));
     this.validChange.emit(result.isValid());
   }
 }

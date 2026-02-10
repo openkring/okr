@@ -1,20 +1,27 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonInput, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { AuthService } from '@bk2/auth-data-access';
 import { EMAIL_LENGTH } from '@bk2/shared-constants';
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { HeaderComponent } from '@bk2/shared-ui';
 import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
+import { AuthCredentials } from '@bk2/shared-models';
+
+import { AuthService } from '@bk2/auth-data-access';
+import { PwdResetForm } from '@bk2/auth-ui';
 
 @Component({
   selector: 'bk-password-reset-page',
   standalone: true,
-  imports: [TranslatePipe, AsyncPipe, HeaderComponent, IonContent, IonImg, IonLabel, IonItem, IonInput, IonNote, IonGrid, IonRow, IonCol, IonButton],
+  imports: [
+    TranslatePipe, AsyncPipe, 
+    HeaderComponent, PwdResetForm,
+    IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton
+  ],
   styles: `
       .background-image { filter: blur(8px); -webkit-filter: blur(8px); position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; z-index: 1;}
       .title { text-align: center; font-size: 2rem; padding: 20px; }
@@ -30,36 +37,14 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
       }
     `,
   template: `
-    <bk-header title="@auth.operation.pwdreset.title" />
+    <bk-header title="@auth.operation.pwdreset.title" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Background Image" />
         <div class="login-form">
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()"></ion-img>
-          <ion-label class="title"
-            ><strong>{{ '@auth.operation.pwdreset.title' | translate | async }}</strong></ion-label
-          >
-          <ion-item lines="none">
-            <ion-input
-              name="email"
-              [value]="email"
-              (ionChange)="changeEmail($event)"
-              [autofocus]="true"
-              type="email"
-              [clearInput]="true"
-              [counter]="true"
-              [maxlength]="maxLength"
-              label="{{ '@input.loginEmail.label' | translate | async }}"
-              labelPlacement="floating"
-              required
-              errorText="{{ '@input.loginEmail.error' | translate | async }}"
-              placeholder="{{ '@input.loginEmail.placeholder' | translate | async }}"
-            >
-            </ion-input>
-          </ion-item>
-          <ion-item lines="none">
-            <ion-note>{{ '@auth.operation.pwdreset.note' | translate | async }}</ion-note>
-          </ion-item>
+          <ion-label class="title"><strong>{{ '@auth.operation.pwdreset.title' | translate | async }}</strong></ion-label>
+          <bk-pwdreset-form [(vm)]="currentCredentials" (validChange)="onValidChange($event)" />
           <div class="button-container">
             <ion-grid>
               <ion-row>
@@ -67,7 +52,7 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
                   <ion-button expand="block" fill="outline" (click)="gotoHome()">{{ '@general.operation.change.cancel' | translate | async }}</ion-button>
                 </ion-col>
                 <ion-col size="2" offset="6">
-                  <ion-button expand="block" [disabled]="!email || email.length < 5 || !email.includes('@') || !email.includes('.')" (click)="resetPassword()">{{ '@general.operation.change.ok' | translate | async }}</ion-button>
+                  <ion-button expand="block" [disabled]="!formIsValid()" (click)="resetPassword()">{{ '@general.operation.change.ok' | translate | async }}</ion-button>
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -85,11 +70,15 @@ export class PasswordResetPageComponent {
   public logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
   public backgroundImageUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`);
 
-  public email: string | undefined;
+  protected formIsValid = signal(false);
+  public currentCredentials = signal<AuthCredentials>({
+    loginEmail: '',
+    loginPassword: '',
+  });
   protected maxLength = EMAIL_LENGTH;
 
-  protected changeEmail(event: CustomEvent): void {
-    this.email = event.detail.value.trim();
+  protected onValidChange(isValid: boolean): void {
+    this.formIsValid.set(isValid);
   }
 
   /**
@@ -97,8 +86,9 @@ export class PasswordResetPageComponent {
    * component while the user waits.
    */
   public async resetPassword(): Promise<void> {
-    if (this.email) {
-      await this.authService.resetPassword(this.email, this.appStore.appConfig().loginUrl);
+    const email = this.currentCredentials().loginEmail;
+    if (email) {
+      await this.authService.resetPassword(email, this.appStore.appConfig().loginUrl);
     }
   }
 
