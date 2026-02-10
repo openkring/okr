@@ -4,7 +4,7 @@ import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonBut
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName } from '@bk2/shared-models';
-import { CatAbbreviationFromRelLogPipe, DurationPipe, FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { FullNamePipe, RellogPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { DateFormat, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
@@ -12,14 +12,13 @@ import { DateFormat, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/s
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
-import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 import { MembershipStore } from './membership.store';
 
 @Component({
   selector: 'bk-membership-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, DurationPipe, CategoryLogPipe, AvatarPipe, FullNamePipe, CatAbbreviationFromRelLogPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, RellogPipe, AvatarPipe, FullNamePipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover,
@@ -79,8 +78,7 @@ import { MembershipStore } from './membership.store';
       <ion-item lines="none" color="primary">
         <ion-label><strong>{{'@membership.list.header.name' | translate | async}}</strong></ion-label>
         @if(view() !== 'simple') {
-          <ion-label><strong>{{'@membership.list.header.entryExit' | translate | async}}</strong></ion-label>
-          <ion-label class="ion-hide-md-down"><strong>{{'@membership.list.header.category' | translate | async}}</strong></ion-label>
+          <ion-label><strong>{{'@membership.list.header.category' | translate | async}}</strong></ion-label>
          }
       </ion-item>
     </ion-toolbar>
@@ -102,9 +100,7 @@ import { MembershipStore } from './membership.store';
                   <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>      
-                  <ion-label class="ion-hide-md-down">{{membership.relLog | duration:membership.dateOfExit}}</ion-label>      
-                  <ion-label class="ion-hide-md-down" slot="end">{{membership.relLog|categoryLog}}</ion-label>
-                  <ion-label class="ion-hide-md-up" slot="end">{{membership.relLog|catAbbreviationFromRelLog}}</ion-label>
+                <ion-label class="ion-hide-md-down">{{membership.relLog | rellog}}</ion-label>      
               </ion-item>
           }
         </ion-list>

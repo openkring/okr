@@ -87,7 +87,7 @@ export const _MembershipStore = signalStore(
       // all memberships, either only the current ones or all that ever existed (based on showOnlyCurrent)
       allMemberships: computed(() => state.showOnlyCurrent() ? 
         state.allMembershipsResource.value()?.filter(m => isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? [] : 
-        state.allMembershipsResource.value() ?? []),
+        state.allMembershipsResource.value()?.filter(m => m.relIsLast === true) ?? []),
       defaultMcat: computed(() => state.appStore.getCategory('mcat_default'))
     };
   }),

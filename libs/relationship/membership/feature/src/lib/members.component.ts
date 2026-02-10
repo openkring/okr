@@ -2,13 +2,12 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { ActionSheetController, ActionSheetOptions, IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
 import { MembershipModel, RoleName } from '@bk2/shared-models';
-import { DurationPipe, FullNamePipe } from '@bk2/shared-pipes';
+import { FullNamePipe, RellogPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
 import { DateFormat, getTodayStr, hasRole, isOngoing } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
-import { CategoryLogPipe } from '@bk2/relationship-membership-util';
 
 import { MembershipStore } from './membership.store';
 
@@ -16,7 +15,7 @@ import { MembershipStore } from './membership.store';
   selector: 'bk-members',
   standalone: true,
   imports: [
-    DurationPipe, CategoryLogPipe, AvatarPipe, FullNamePipe,
+    RellogPipe, AvatarPipe, FullNamePipe,
     EmptyListComponent,
     IonItem, IonLabel, IonList, IonImg, IonThumbnail, IonContent
   ],
@@ -36,7 +35,7 @@ import { MembershipStore } from './membership.store';
                 <ion-img src="{{ 'person.' + member.memberKey | avatar:'membership' }}" alt="membership avatar" />
               </ion-thumbnail>
               <ion-label>{{member.memberName1 | fullName:member.memberName2}}</ion-label>      
-              <ion-label>{{ member.relLog | categoryLog }} / {{ member.dateOfEntry | duration:member.dateOfExit }}</ion-label>
+              <ion-label>{{ member.relLog | rellog }}</ion-label>
             </ion-item>
           }
         </ion-list>
@@ -60,7 +59,7 @@ export class MembersComponent {
 
   constructor() {
     effect(() => this.membershipStore.setOrgId(this.orgKey()));
-    effect(() => this.membershipStore.setShowMode(hasRole('admin', this.currentUser())));
+    effect(() => this.membershipStore.setShowMode(!hasRole('admin', this.currentUser())));
   }
 
   /******************************* actions *************************************** */

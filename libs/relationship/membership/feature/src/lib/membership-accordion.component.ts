@@ -2,22 +2,22 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { CategoryLogPipe } from '@bk2/relationship-membership-util';
-
-import { AvatarPipe } from '@bk2/avatar-ui';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
-import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { RellogPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, isOngoing } from '@bk2/shared-util-core';
-import { MembershipStore } from './membership.store';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+
+import { AvatarPipe } from '@bk2/avatar-ui';
+
+import { MembershipStore } from './membership.store';
 
 @Component({
   selector: 'bk-membership-accordion',
   standalone: true,
   imports: [
-    TranslatePipe, DurationPipe, AsyncPipe, SvgIconPipe, CategoryLogPipe, AvatarPipe, EmptyListComponent,
+    TranslatePipe, RellogPipe, AsyncPipe, SvgIconPipe, AvatarPipe, EmptyListComponent,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonImg, IonAvatar
   ],
   providers: [MembershipStore],
@@ -45,7 +45,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-u
                 <ion-img src="{{ 'org.' + membership.orgKey | avatar:'membership' }}" alt="Membership Avatar Logo" />
               </ion-avatar>
               <ion-label>{{ membership.orgName }}</ion-label>
-              <ion-label>{{ membership.relLog | categoryLog }} / {{ membership.dateOfEntry | duration:membership.dateOfExit }}</ion-label>
+              <ion-label>{{ membership.relLog | rellog }}</ion-label>
             </ion-item>
           }
         </ion-list>
@@ -71,7 +71,7 @@ export class MembershipAccordionComponent {
   // derived fields
   protected memberships = computed(() => this.membershipStore.memberships());
   private currentUser = computed(() => this.membershipStore.currentUser());
-  private showOnlyCurrent = computed(() => hasRole('admin', this.currentUser())); // admins also see past memberships
+  private showOnlyCurrent = computed(() => !hasRole('admin', this.currentUser())); // admins also see past memberships
 
   private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
 
