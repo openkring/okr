@@ -20,9 +20,7 @@ import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemb
 import { AddressService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 
-import { MembershipEditModalComponent } from './membership-edit.modal';
-import { CategoryChangeModalComponent } from './membership-category-change.modal';
-import { MemberNewModal } from './member-new.modal';
+// Modals are lazy loaded to avoid SSR hydration issues
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -372,6 +370,7 @@ export const _MembershipStore = signalStore(
        * The current org from the membership store is used as default org in the person creation modal.
        */
       async addNewMember(): Promise<void> {
+        const { MemberNewModal } = await import('./member-new.modal');
         const modal = await store.modalController.create({
           component: MemberNewModal,
         });
@@ -433,6 +432,7 @@ export const _MembershipStore = signalStore(
         if (!membership) return;
         this.setOrgId(membership.orgKey);
 
+        const { MembershipEditModalComponent } = await import('./membership-edit.modal');
         const modal = await store.modalController.create({
           component: MembershipEditModalComponent,
           componentProps: {
@@ -481,6 +481,7 @@ export const _MembershipStore = signalStore(
         this.setOrgId(membership.orgKey);
         const membershipCategory = store.membershipCategory();
         if (membershipCategory) {
+          const { CategoryChangeModalComponent } = await import('./membership-category-change.modal');
           const modal = await store.modalController.create({
             component: CategoryChangeModalComponent,
             componentProps: {
