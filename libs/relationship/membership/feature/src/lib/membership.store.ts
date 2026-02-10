@@ -370,12 +370,18 @@ export const _MembershipStore = signalStore(
        * The current org from the membership store is used as default org in the person creation modal.
        */
       async addNewMember(): Promise<void> {
-        const { MemberNewModal } = await import('./member-new.modal');
+        const module = await import('./member-new.modal');
+        console.log('Loaded module:', module);
+        const { MemberNewModal } = module;
+        if (!MemberNewModal) {
+          console.error('MemberNewModal is undefined in module:', module);
+          throw new Error('MemberNewModal component not found');
+        }
         const modal = await store.modalController.create({
           component: MemberNewModal,
         });
         modal.present();
-        const { data, role } = await modal.onDidDismiss();
+        const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data) {
           const newMember = data as MemberNewFormModel;
           if (store.personService.checkIfExists(store.appStore.allPersons(), newMember.firstName, newMember.lastName)) {
