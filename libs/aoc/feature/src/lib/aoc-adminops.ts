@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonToggle } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ButtonComponent, HeaderComponent, ResultLogComponent, StringSelectComponent } from '@bk2/shared-ui';
@@ -14,13 +14,32 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
   imports: [
     TranslatePipe, AsyncPipe, 
     HeaderComponent, ButtonComponent, ResultLogComponent, StringSelectComponent,
-    IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, IonLabel,
+    IonContent, IonCardHeader, IonCardTitle, IonCardContent, IonCard, IonGrid, IonRow, IonCol, IonLabel, IonToggle,
     FormsModule
   ],
   providers: [AocAdminOpsStore],
   template: `
     <bk-header title="@aoc.title" />
     <ion-content>
+      <!-- Debug Card -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Debug Tools</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="8">
+                <ion-label>Enable Focus Event Logging</ion-label>
+              </ion-col>
+              <ion-col size="4">
+                <ion-toggle [checked]="enableFocusLogging()" (ionChange)="onToggleChange($event)" />
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@aoc.adminops.title' | translate | async }}</ion-card-title>
@@ -75,6 +94,36 @@ export class AocAdminOpsComponent {
 
   protected club = signal('scs');
   protected year = signal('2025'); 
+  protected enableFocusLogging = signal(false);
+
+  constructor() {
+    // Setup focus event listener based on toggle
+    effect((onCleanup) => {
+      if (typeof document === 'undefined') return;
+
+      const enabled = this.enableFocusLogging();
+      
+      if (enabled) {
+        const focusListener = (e: FocusEvent) => {
+          console.log('🔍 Focus on:', e.target, {
+            tagName: (e.target as HTMLElement).tagName,
+            className: (e.target as HTMLElement).className,
+            id: (e.target as HTMLElement).id,
+            tabIndex: (e.target as HTMLElement).tabIndex,
+            name: (e.target as HTMLInputElement).name
+          });
+        };
+        
+        document.addEventListener('focusin', focusListener);
+        console.log('✅ Focus logging enabled');
+        
+        onCleanup(() => {
+          document.removeEventListener('focusin', focusListener);
+          console.log('❌ Focus logging disabled');
+        });
+      }
+    });
+  }
 
   public listIban(): void {
     this.aocAdminOpsStore.listIban();
@@ -95,5 +144,11 @@ export class AocAdminOpsComponent {
     } else if (fieldName === 'year') {
       this.year.set($event);
     }
+  }
+
+  protected onToggleChange(event: any): void {
+    const checked = event.detail.checked;
+    console.log('Toggle changed:', checked);
+    this.enableFocusLogging.set(checked);
   }
 }
