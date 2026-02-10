@@ -37,6 +37,8 @@ import { MembershipStore } from './membership.store';
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
+      } @else {
+        <div style="padding: 20px;">Loading form data...</div>
       }
     </ion-content>
   `
@@ -49,7 +51,13 @@ export class MemberNewModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => createNewMemberFormModel(this.membershipStore.org()));
+  public formData = linkedSignal(() => {
+    const org = this.membershipStore.org();
+    console.log('MemberNewModal formData init, org:', org);
+    const model = createNewMemberFormModel(org);
+    console.log('MemberNewModal formData model:', model);
+    return model;
+  });
 
   // derived signals and fields
   protected currentUser = computed(() => this.membershipStore.currentUser());
