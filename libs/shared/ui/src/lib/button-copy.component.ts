@@ -16,12 +16,12 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   ],
   template: `
   @if (label().length > 0 && !isReadOnly()) {
-    <ion-button fill="clear" (click)="copyValue()">
+    <ion-button fill="clear" (click)="copyValue()" tabindex="-1">
       <ion-icon slot="start" src="{{'copy' | svgIcon }}" />
       {{ label() | translate | async }}
     </ion-button>
   } @else {
-    <ion-icon slot="end" src="{{'copy' | svgIcon }}" (click)="copyValue()" />
+    <ion-icon slot="end" src="{{'copy' | svgIcon }}" (click)="copyValue()" tabindex="-1" />
   }
   `
 })

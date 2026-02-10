@@ -32,7 +32,7 @@ import { LoginFormComponent } from '@bk2/auth-ui';
    }
   `,
   template: `
-    <bk-header title="@auth.operation.login.title" />
+    <bk-header title="@auth.operation.login.title" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
         <img class="background-image" [src]="backgroundImageUrl()" alt="Background" />

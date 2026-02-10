@@ -27,7 +27,7 @@ import { ButtonCopyComponent } from './button-copy.component';
   viewProviders: [vestFormsViewProviders],
   styles: [`ion-item.helper { --min-height: 0; }`],
   template: `
-    <ion-item lines="none">
+    <ion-item lines="none" [button]="false">
       @if(mask(); as mask) {
         <ion-input (ionInput)="onPasswordChange($event)"
           type="password"
@@ -44,7 +44,7 @@ import { ButtonCopyComponent } from './button-copy.component';
           [maskito]="mask"
           [maskitoElement]="maskPredicate"
         >
-          <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+          <ion-input-password-toggle slot="end" tabindex="-1"></ion-input-password-toggle>
         </ion-input>
         @if (isCopyable()) {
           <bk-button-copy [value]="value()" />
@@ -52,7 +52,7 @@ import { ButtonCopyComponent } from './button-copy.component';
       }
     </ion-item>
     @if(shouldShowHelper()) {
-      <ion-item lines="none" class="helper">
+      <ion-item lines="none" class="helper" [button]="false">
         <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
       </ion-item>
     }
