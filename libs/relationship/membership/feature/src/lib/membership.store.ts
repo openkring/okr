@@ -16,9 +16,10 @@ import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { getCatAbbreviation } from '@bk2/category-util';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToMemberDataRow, convertToRawDataRow, convertToSrvDataRow, getMemberEmailAddresses, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
+import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToMemberDataRow, convertToRawDataRow, convertToSrvDataRow, getMemberEmailAddresses, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
 import { AddressService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
+import { table } from 'console';
 
 // Modals are lazy loaded to avoid SSR hydration issues
 
@@ -549,12 +550,16 @@ export const _MembershipStore = signalStore(
             tableName = 'Rohdaten Mitgliedschaften';
             break;
           case 'srv':
-            table.push(['Clubname', 'MGRART_Titel', 'Beitrag', 'LastName', 'FirstName', 'SRVNR', 'Birthday', 'Street', 'Postcode', 'City', 'Mobile', 'Email', 'Funktion', 'Kommentar']);
+            table.push(['Clubname', 'MGRART_Titel', 'Beitrag', 'LastName', 'FirstName', 'SrvId', 'Birthday', 'Street', 'Postcode', 'City', 'Mobile', 'Email', 'Funktion', 'Kommentar']);
             tableName = 'SRV Mitgliedschaften';
             break;
           case 'address':
             table.push(['Vorname', 'Name', 'Strasse', 'PLZ', 'Ort', 'Tel', 'E-Mail']);
             tableName = 'Adressliste';
+            break;
+          case 'clubdesk': 
+            table.push(['Vorname', 'Nachname', 'Geschlecht', 'Anrede', 'Adresse', 'Ort', 'PLZ', 'Land', 'E-Mail', 'Telefon', 'Geburtsdatum', 'Eintritt', 'BexioId', 'Kategorie', 'Status', 'Funktion', 'RelLog']);
+            tableName = 'Clubdesk Import';
             break;
           case 'member':
             table.push(['Mitgliedschafts-Nr', 'Vorname', 'Name', 'GebDatum', 'Eintrittsdatum', 'Kategorie', 'Funktion']);
@@ -564,27 +569,8 @@ export const _MembershipStore = signalStore(
             console.error(`MembershipStore.export: unknown export type ${type}`);
             return;
         }
-        if (type = 'srv') { // hardcoded and not considering any current membership filters. 
-          // That's why it can be used from any membership (SCS, SRV, other).
-          // Get all persons
-          const persons = store.appStore.allPersons();
-          // Get all memberships (stateless)
-          const allMemberships = store.allMembershipsResource.value() ?? [];
-          for (const person of persons) {
-            // Current SCS membership (active, orgKey = SCS org, memberModelType = 'person')
-            const currentScs = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'scs' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
-            // SCS exit in last year
-            const lastYear = (new Date()).getFullYear() - 1;
-            const lastYearExit = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'scs' && m.dateOfExit?.startsWith(lastYear.toString()));
-
-            // Current SRV membership (active, orgKey = SRV org, memberModelType = 'person')
-            const currentSrv = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'srv' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
-
-            // we export a row for each person with a current SCS membership or an exit in the last year or a current SRV membership
-            if (currentScs || currentSrv) {
-              table.push(convertToSrvDataRow(person, currentScs, lastYearExit, currentSrv));
-            }
-          }
+        if (type === 'srv') { 
+          this.exportSrv(table);
         } else {    // normal membership export for the currently filtered memberships
           for (const member of memberships) {
             const person = store.appStore.getPerson(member.memberKey);
@@ -593,11 +579,13 @@ export const _MembershipStore = signalStore(
               case 'raw':
                 table.push(convertToRawDataRow(member));
                 break;
-              case 'srv': 
-                break;
               case 'address':
                 const addrRow = await convertToAddressDataRow(person);
                 if (addrRow !== undefined) table.push(addrRow);
+                break;
+              case 'clubdesk':
+                const cdRow = await convertToClubdeskImportRow(member, person);
+                if (cdRow !== undefined) table.push(cdRow);
                 break;
               case 'member':
                 const memRow = await convertToMemberDataRow(member);
@@ -607,6 +595,30 @@ export const _MembershipStore = signalStore(
           }
         }
         exportXlsx(table, fn, tableName);
+      },
+
+      exportSrv(table: string[][]): void {
+        // hardcoded and not considering any current membership filters. 
+        // That's why it can be used from any membership (SCS, SRV, other).
+        // Get all persons
+        const persons = store.appStore.allPersons();
+        // Get all memberships (stateless)
+        const allMemberships = store.allMembershipsResource.value() ?? [];
+        for (const person of persons) {
+          // Current SCS membership (active, orgKey = SCS org, memberModelType = 'person')
+          const currentScs = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'scs' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
+          // SCS exit in last year
+          const lastYear = (new Date()).getFullYear() - 1;
+          const lastYearExit = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'scs' && m.dateOfExit?.startsWith(lastYear.toString()));
+
+          // Current SRV membership (active, orgKey = SRV org, memberModelType = 'person')
+          const currentSrv = allMemberships.find(m => m.memberKey === person.bkey && m.orgKey === 'srv' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
+
+          // we export a row for each person with a current SCS membership or an exit in the last year or a current SRV membership
+          if (currentScs || currentSrv) {
+            table.push(convertToSrvDataRow(person, currentScs, lastYearExit, currentSrv));
+          }
+        }
       },
 
       async delete(membership?: MembershipModel, readOnly = true): Promise<void> {

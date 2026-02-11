@@ -358,6 +358,29 @@ export function getMembershipIndexInfo(): string {
     ];
   }
 
+  // ---------------------- Clubdesk Import list -------------------------------
+    export function convertToClubdeskImportRow(membership: MembershipModel, person: PersonModel): string[] {
+    return [
+      person.firstName,
+      person.lastName,
+      person.gender === 'male' ? 'männlich':'weiblich',
+      person.gender === 'male' ? 'Herr':'Frau',
+      person.favStreetName + ' ' + person.favStreetNumber,
+      person.favCity,
+      person.favZipCode,
+      person.favCountryCode === 'CH' ? 'Schweiz' : person.favCountryCode,
+      person.favEmail,
+      person.favPhone,
+      convertDateFormatToString(person.dateOfBirth, DateFormat.StoreDate, DateFormat.ViewDate, false),
+      convertDateFormatToString(membership.dateOfEntry, DateFormat.StoreDate, DateFormat.ViewDate, false),
+      membership.memberBexioId,
+      membership.category,
+      membership.state === 'passive' ? 'Passivmitglied' : 'Aktivmitglied',
+      membership.orgFunction,
+      membership.relLog
+    ];
+  }
+
   // Returns true if any address-relevant field differs between SCS and SRV membership
   export function checkForChanges(scsMember: MembershipModel, srvMember: MembershipModel, srvCat: string): string {
     let answer = '';

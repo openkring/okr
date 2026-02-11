@@ -241,6 +241,7 @@ export class MembershipListComponent {
       case 'exportRaw': await this.membershipStore.export("raw", this.filteredMemberships()); break;
       case 'exportSrv': await this.membershipStore.export("srv", this.filteredMemberships()); break;
       case 'exportMembers': await this.membershipStore.export("member", this.filteredMemberships()); break;
+      case 'exportClubdesk': await this.membershipStore.export("clubdesk", this.filteredMemberships()); break;
       case 'exportAddresses': await this.membershipStore.export("address", this.filteredMemberships()); break;
       case 'copyEmailAddresses': await this.membershipStore.copyEmailAddresses(this.listId(), this.readOnly()); break;
       default: error(undefined, `MembershipListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
