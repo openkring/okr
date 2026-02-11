@@ -31,7 +31,12 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants
         <ion-card-content class="ion-no-padding">
           <ion-grid>
             <ion-row>
-              <ion-col size="12">
+              @if(hasRole('admin')) {
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                </ion-col>
+              }
+              <ion-col size="12" size-md="6">
                 <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)"  [autofocus]="true" [copyable]="true" [readOnly]="isReadOnly()" /> 
                 <bk-error-note [errors]="nameErrors()" />                                                                               
               </ion-col>
@@ -89,6 +94,7 @@ export class CategoryListFormComponent {
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected items = linkedSignal(() => this.formData().items ?? []);
   protected translateItems = linkedSignal(() => this.formData().translateItems ?? false);
+  protected bkey = computed(() => this.formData().bkey ?? '');
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | CategoryItemModel[] | boolean): void {

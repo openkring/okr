@@ -4,9 +4,9 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { vestForms } from 'ngx-vest-forms';
 
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
-import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, isVisibleToUser } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, debugFormModel, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
 import { personValidations } from '@bk2/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
@@ -33,6 +33,13 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
+            @if(hasRole('admin')) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                </ion-col>
+              </ion-row>
+            }
             <ion-row> 
               <ion-col size="12" size-md="6">
                 <bk-text-input name="firstName" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [autofocus]="true" [maxLength]=30 [readOnly]="isReadOnly()" />                                        
@@ -125,6 +132,7 @@ export class PersonFormComponent {
   protected bexioId = linkedSignal(() => this.formData().bexioId ?? DEFAULT_ID);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected bkey = computed(() => this.formData().bkey ?? '');
 
   // passing constants to template
   protected bexioMask = BexioIdMask;
@@ -151,14 +159,20 @@ export class PersonFormComponent {
     if (!isVisibleToUser(this.priv().showDateOfDeath, this.currentUser())) return false;
     return this.dateOfDeath().length > 0 ? true : false;
   }
+
   protected isTagsVisible(): boolean {
     if (!this.isReadOnly()) return true;
     if (!isVisibleToUser(this.priv().showTags, this.currentUser())) return false;
     return (this.tags() && this.tags().length > 0) ? true : false;
   }
-    protected isNotesVisible(): boolean {
+
+  protected isNotesVisible(): boolean {
     if (!this.isReadOnly()) return true;
     if (!isVisibleToUser(this.priv().showNotes, this.currentUser())) return false;
     return (this.notes() && this.notes().length > 0) ? true : false;
+  }
+
+  protected hasRole(role: RoleName): boolean {
+    return hasRole(role, this.currentUser());
   }
 }

@@ -38,10 +38,10 @@ import { calEventValidations } from '@bk2/calevent-util';
           @if(hasRole('admin')) {
             <ion-row>
               <ion-col size="12" size-md="6">
-                bkey: {{ bkey() }}
+                <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                seriesId: {{ seriesId() }}
+                <bk-text-input name="seriesId" [value]="seriesId()" label="seriesId" [readOnly]="true" [copyable]="true" />
               </ion-col>
             </ion-row>
           }

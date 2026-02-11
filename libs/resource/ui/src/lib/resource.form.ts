@@ -43,6 +43,13 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
+                  @if(hasRole('admin')) {
+                    <ion-row>
+                      <ion-col size="12" size-md="6">
+                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row>
                     <ion-col size="12">
                       <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
@@ -80,6 +87,13 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
+                  @if(hasRole('admin')) {
+                    <ion-row>
+                      <ion-col size="12" size-md="6">
+                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row>
                     <ion-col size="12">
                       <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
@@ -115,6 +129,13 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
+                  @if(hasRole('admin')) {
+                    <ion-row>
+                      <ion-col size="12" size-md="6">
+                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row>
                     <ion-col size="12">
                       <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
@@ -149,6 +170,13 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
+                  @if(hasRole('admin')) {
+                    <ion-row>
+                      <ion-col size="12" size-md="6">
+                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row>
                     <ion-col size="12" size-md="6">
                       <bk-number-input name="lockerNr" [value]="lockerNr()" (valueChange)="onFieldChange('lockerNr', $event)" [maxLength]=3 [showHelper]=true [readOnly]="isReadOnly()" />
@@ -176,6 +204,13 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
+                  @if(hasRole('admin')) {
+                    <ion-row>
+                      <ion-col size="12" size-md="6">
+                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row>
                     <ion-col size="12">
                     <bk-text-input name="keyNr" [value]="keyNr() + ''" (valueChange)="onFieldChange('keyNr', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
@@ -195,6 +230,13 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
+                  @if(hasRole('admin')) {
+                    <ion-row>
+                      <ion-col size="12" size-md="6">
+                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row>
                     <ion-col size="12">
                       <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
@@ -221,6 +263,13 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
+                  @if(hasRole('admin')) {
+                    <ion-row>
+                      <ion-col size="12" size-md="6">
+                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row>
                     <ion-col size="12">
                       <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
@@ -244,6 +293,13 @@ import { resourceValidations, getKeyNr, getLockerNr } from '@bk2/resource-util';
               </ion-card-header>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
+                  @if(hasRole('admin')) {
+                    <ion-row>
+                      <ion-col size="12" size-md="6">
+                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row >
                     <ion-col size="12">
                       <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=30 [readOnly]="isReadOnly()" />
@@ -325,6 +381,7 @@ export class ResourceFormComponent {
   protected data = linkedSignal(() => this.formData().data ?? []);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
+  protected bkey = computed(() => this.formData().bkey ?? DEFAULT_NAME);
 
   /******************************* actions *************************************** */
   private getDefaultType(type: string): string {

@@ -34,6 +34,13 @@ import { AsyncPipe } from '@angular/common';
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
+            @if(hasRole('admin')) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                </ion-col>
+              </ion-row>
+            }
             <ion-row>
               <ion-col size="12"> 
                 <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameLength" [autofocus]="true" [readOnly]="isReadOnly()" [copyable]="true" /> 
@@ -114,6 +121,7 @@ export class TaskFormComponent {
   protected importance = linkedSignal(() => this.formData().importance);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected bkey = computed(() => this.formData().bkey ?? '');
 
   // passing constants to template
   protected nameLength = LONG_NAME_LENGTH;

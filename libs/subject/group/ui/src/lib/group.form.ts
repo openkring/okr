@@ -38,6 +38,13 @@ import { groupValidations } from '@bk2/subject-group-util';
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
+            @if(hasRole('admin')) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                </ion-col>
+              </ion-row>
+            }
             <ion-row> 
               <ion-col size="12">
                 @if(isNew()) {

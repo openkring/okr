@@ -41,6 +41,13 @@ import { workrelValidations } from '@bk2/relationship-workrel-util';
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
+            @if(hasRole('admin')) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                </ion-col>
+              </ion-row>
+            }
             <ion-row>
               <ion-col size="9">
                 <ion-item lines="none">
@@ -186,6 +193,7 @@ export class WorkrelFormComponent {
   protected periodicity = linkedSignal(() => this.formData().periodicity ?? 'monthly');
   protected order = linkedSignal(() => this.formData().order ?? DEFAULT_ORDER);
   protected state = linkedSignal(() => this.formData().state ?? DEFAULT_WORKREL_STATE);
+  protected bkey = computed(() => this.formData().bkey ?? DEFAULT_KEY);
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

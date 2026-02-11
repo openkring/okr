@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 
 import { DEFAULT_DATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@bk2/shared-constants';
 import { AvatarInfo, CategoryListModel, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@bk2/shared-models';
-import { ChipsComponent, DateInputComponent, NotesInputComponent, StringSelectComponent } from '@bk2/shared-ui';
+import { ChipsComponent, DateInputComponent, NotesInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getTodayStr, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarDisplayComponent, AvatarInputComponent } from '@bk2/avatar-ui';
@@ -19,6 +19,7 @@ import { PrettyDatePipe } from '@bk2/shared-pipes';
     vestForms,
     PrettyDatePipe,
     ChipsComponent, AvatarDisplayComponent, AvatarInputComponent, NotesInputComponent, StringSelectComponent, DateInputComponent,
+    TextInputComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -38,6 +39,13 @@ import { PrettyDatePipe } from '@bk2/shared-pipes';
             </ion-card-header>
             <ion-card-content class="ion-no-padding">
               <ion-grid>
+                @if(hasRole('admin')) {
+                  <ion-row>
+                    <ion-col size="12" size-md="6">
+                      <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                    </ion-col>
+                  </ion-row>
+                }
                 <ion-row>
                   <!-- calevent -->
                   <ion-col size="12" size-md="6">
@@ -144,6 +152,7 @@ export class InvitationFormComponent {
   protected respondedAt = linkedSignal(() => this.formData().respondedAt ?? DEFAULT_DATE);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected bkey = computed(() => this.formData().bkey ?? '');
 
   // passing constants to template
   protected nameLength = NAME_LENGTH;

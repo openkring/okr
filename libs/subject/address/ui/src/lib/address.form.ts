@@ -34,6 +34,13 @@ import { addressValidations } from '@bk2/subject-address-util';
     <ion-card>
       <ion-card-content class="ion-no-padding">
         <ion-grid>
+          @if(hasRole('admin')) {
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+              </ion-col>
+            </ion-row>
+          }
           <!---------------------------------------------------
             CHANNEL, USAGE, VALUE 
             --------------------------------------------------->
@@ -217,6 +224,7 @@ export class AddressFormComponent {
   protected isFavorable = computed(() => this.formData()?.isCc === false);
   protected notes = linkedSignal(() => this.formData()?.notes ?? DEFAULT_NOTES);
   protected tags = linkedSignal(() => this.formData()?.tags ?? DEFAULT_TAGS);
+  protected bkey = linkedSignal(() => this.formData()?.bkey ?? '');
 
    protected swissCity = computed(() => {
     return {

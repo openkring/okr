@@ -41,6 +41,13 @@ import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
+            @if(hasRole('admin')) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                </ion-col>
+              </ion-row>
+            }
             <ion-row>
               <ion-col size="9">
                 <ion-item lines="none" (click)="showPerson(subjectKey())">
@@ -155,8 +162,8 @@ export class PersonalRelFormComponent {
   protected validFrom = linkedSignal(() => this.formData().validFrom ?? DEFAULT_DATE);
   protected validTo = linkedSignal(() => this.formData().validTo ?? DEFAULT_DATE);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
-  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES
-);
+  protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
+  protected bkey = computed(() => this.formData().bkey ?? DEFAULT_KEY);
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

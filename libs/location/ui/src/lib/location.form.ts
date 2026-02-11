@@ -31,6 +31,13 @@ import { locationValidations } from '@bk2/location-util';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
+              @if(hasRole('admin')) {
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                  </ion-col>
+                </ion-row>
+              }
               <!---------------------------------------------------
                 Latitude, Longitude, PlaceId, What3Words, Height, Speed, Direction 
                 --------------------------------------------------->
@@ -114,6 +121,7 @@ export class LocationFormComponent {
   protected direction = linkedSignal(() => this.formData().direction ?? 0);
   protected tags = linkedSignal(() => this.formData().tags ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
+  protected bkey = computed(() => this.formData().bkey ?? '');
   
   // passing constants to template
   protected what3wordMask = What3WordMask;

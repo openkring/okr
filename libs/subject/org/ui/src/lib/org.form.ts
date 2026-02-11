@@ -29,6 +29,13 @@ import { orgValidations } from '@bk2/subject-org-util';
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
+            @if(hasRole('admin')) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                </ion-col>
+              </ion-row>
+            }
             @if(isOrgTypeVisible()) {
               <ion-row>
                 <ion-col size="12" size-md="6">
@@ -106,6 +113,7 @@ export class OrgFormComponent {
   protected bexioId = linkedSignal(() => this.formData().bexioId ?? '');
   protected tags = linkedSignal(() => this.formData().tags ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
+  protected bkey = computed(() => this.formData().bkey ?? '');
 
   // passing constants to template
   protected bexioMask = BexioIdMask;

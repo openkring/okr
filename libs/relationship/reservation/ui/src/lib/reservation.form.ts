@@ -37,6 +37,13 @@ import { AvatarPipe } from '@bk2/avatar-ui';
         <ion-card>
           <ion-card-content>
             <ion-grid>
+              @if(hasRole('admin')) {
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                  </ion-col>
+                </ion-row>
+              }
               <ion-row>
                 <ion-col size="9">
                   <ion-item lines="none">
@@ -193,6 +200,7 @@ export class ReservationFormComponent {
   protected notes = linkedSignal(() => this.formData().notes ?? '');
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected description = linkedSignal(() => this.formData().description ?? '');
+  protected bkey = computed(() => this.formData().bkey ?? '');
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

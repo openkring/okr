@@ -89,6 +89,13 @@ import { AvatarPipe } from '@bk2/avatar-ui';
               } @else {
                 <!-------------------------existing membership: category and state can not be changed here, only with separate methods ------------------------------>
                 <ion-grid>
+                  @if(hasRole('admin')) {
+                    <ion-row>
+                      <ion-col size="12" size-md="6">
+                        <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row>
                     <ion-col size="12" size-md="6">
                       <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
@@ -223,6 +230,7 @@ export class MembershipFormComponent {
   protected i18nBase = computed(() => this.membershipCategories().i18nBase);
   protected name = computed(() => this.membershipCategories().name);
   protected readonly locale = linkedSignal(() => this.appStore.appConfig().locale);
+  protected bkey = computed(() => this.formData().bkey ?? '');
   
   // passing constants to template
   protected bexioMask = BexioIdMask;

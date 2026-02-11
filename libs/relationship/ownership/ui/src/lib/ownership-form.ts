@@ -29,6 +29,13 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
+              @if(hasRole('admin')) {
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
+                  </ion-col>
+                </ion-row>
+              }
               <ion-row>
                 <!---------------------------------------------------
                 OWNER: PERSON or ORGANISATION 
@@ -110,6 +117,7 @@ export class OwnershipFormComponent {
   protected price = linkedSignal(() => this.formData().price ?? 0);
   protected tags = linkedSignal(() => this.formData().tags ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
+  protected bkey = computed(() => this.formData().bkey ?? '');
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
