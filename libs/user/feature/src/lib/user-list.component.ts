@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -20,7 +20,7 @@ import { UserListStore } from './user-list.store';
       SpinnerComponent, EmptyListComponent, ListFilterComponent,
       MenuComponent,
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-      IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
+      IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
     providers: [UserListStore],
     template: `
@@ -53,16 +53,10 @@ import { UserListStore } from './user-list.store';
 
     <!-- list header -->
     <ion-toolbar color="primary">
-      <ion-grid>
-        <ion-row>
-          <ion-col size="6" size-lg="3">
-            <ion-label><strong>Login Email</strong></ion-label>
-          </ion-col>
-          <ion-col size="6" size-lg="3">
-            <ion-label><strong>Name</strong></ion-label>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
+      <ion-item lines="none" color="primary">
+        <ion-label><strong>{{ '@user.field.loginEmail' | translate | async }}</strong></ion-label>
+        <ion-label><strong>{{ '@user.field.name' | translate | async }}</strong></ion-label>
+      </ion-item>
     </ion-toolbar>
   </ion-header>
 
