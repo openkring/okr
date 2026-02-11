@@ -20,7 +20,7 @@ import { CategoryPlainNamePipe } from '@bk2/shared-pipes';
 })
 export class LabelComponent {
   // inputs
-  public lines = input<'none' | 'full' | 'inset'>('inset');
+  public lines = input<'none' | 'full' | 'inset'>('none');
   public label = input<string>();
   public color = input<ColorIonic>(ColorIonic.Primary);
   public slot = input<'start' | 'end' | 'icon-only'>('start');
