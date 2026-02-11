@@ -147,7 +147,7 @@ export class UserListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, user: UserModel): void {
     if (hasRole('privileged', this.userListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('user.view', this.imgixBaseUrl, 'eye_view'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
     }
     if (hasRole('admin', this.userListStore.appStore.currentUser())) {
