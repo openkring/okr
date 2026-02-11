@@ -54,12 +54,13 @@ export class MembersComponent {
   protected isModalOpen = signal(false);
   protected isoDate = signal(getTodayStr(DateFormat.IsoDate));
   private currentUser = computed(() => this.membershipStore.currentUser());
+  private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => this.membershipStore.setOrgId(this.orgKey()));
-    effect(() => this.membershipStore.setShowMode(!hasRole('admin', this.currentUser())));
+    effect(() => this.membershipStore.setShowMode(!this.maySeeOldMemberships()));
   }
 
   /******************************* actions *************************************** */

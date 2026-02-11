@@ -71,15 +71,14 @@ export class MembershipAccordionComponent {
   // derived fields
   protected memberships = computed(() => this.membershipStore.memberships());
   private currentUser = computed(() => this.membershipStore.currentUser());
-  private showOnlyCurrent = computed(() => !hasRole('admin', this.currentUser())); // admins also see past memberships
-
+  private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
   private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => { 
       this.membershipStore.setMember(this.member(), this.modelType()),
       this.membershipStore.setOrgId();
-      this.membershipStore.setShowMode(this.showOnlyCurrent());
+      this.membershipStore.setShowMode(!this.maySeeOldMemberships());
     });
   }
 

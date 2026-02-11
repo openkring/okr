@@ -30,7 +30,7 @@ export function newMembershipForPerson(person: PersonModel, orgKey: string, orgN
   membership.category = membershipCategory.name;
 
   membership.order = 1;
-  membership.relLog = getRelLogEntry(membership.order, '', membership.dateOfEntry, membershipCategory.abbreviation);
+  membership.relLog = getRelLogEntry(membership.dateOfEntry, membershipCategory.abbreviation);
   membership.relIsLast = true;
 
   // membership.price may be undefined
@@ -60,7 +60,7 @@ export function newMembershipForOrg(org: OrgModel, orgKey: string, orgName: stri
   membership.category = membershipCategory.name;
 
   membership.order = 1;
-  membership.relLog = getRelLogEntry(membership.order, '', membership.dateOfEntry, membershipCategory.abbreviation);
+  membership.relLog = getRelLogEntry(membership.dateOfEntry, membershipCategory.abbreviation);
   membership.relIsLast = true;
 
   // membership.price may be undefined
@@ -136,21 +136,14 @@ export function addGroupInfoToMembership(membership: MembershipModel, group: Gro
 
 /**
  * Generate a relLog entry for a membership change.
- * @param priority the priority of the current membership
- * @param priorRelLog the relLog entry of the previous membership
  * @param dateOfEntry the start date of the current membership
  * @param category the membership category abbreviation for the current membership
+ * @param priorRelLog the relLog entry of the previous membership (optional, only needed if there was a previous membership and you want to keep the history of all changes in the relLog)
  * @returns
  */
-export function getRelLogEntry(priority: number, priorRelLog: string, dateOfEntry: string, category: string): string {
-  let relLog = '';
-  if (priority === 1) {
-    // first membership
-    relLog = `${dateOfEntry}:${category}`;
-  } else {
-    relLog = `${priorRelLog},${category}`;
-  }
-  return relLog;
+export function getRelLogEntry(dateOfEntry: string, category: string, priorRelLog?: string): string {
+  const newRelLogEntry = `${dateOfEntry}:${category}`;
+  return priorRelLog ? `${priorRelLog},${newRelLogEntry}` : newRelLogEntry;
 }
 
 /**

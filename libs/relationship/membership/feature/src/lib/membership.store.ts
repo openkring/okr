@@ -457,7 +457,7 @@ export const _MembershipStore = signalStore(
         if (role === 'confirm' && data && !readOnly) {
           if (isMembership(data, store.tenantId())) {
             const mcatAbbreviation = getCatAbbreviation(store.membershipCategory(), data.category);
-            data.relLog = getRelLogEntry(data.order, '', data.dateOfEntry, mcatAbbreviation);
+            data.relLog = getRelLogEntry(data.dateOfEntry, mcatAbbreviation);
             await (!data.bkey ? 
               store.membershipService.create(data, store.currentUser()) : 
               store.membershipService.update(data, store.currentUser()));

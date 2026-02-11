@@ -126,7 +126,7 @@ export class MembershipService {
     newMembership.order = (oldMembership.order ?? 0) + 1;
     newMembership.relIsLast = true;
     const cat = getCategoryAttribute(membershipCategory, newMembership.category, 'abbreviation') + '';
-    newMembership.relLog = getRelLogEntry(newMembership.order, oldMembership.relLog, newMembership.dateOfEntry, cat);
+    newMembership.relLog = getRelLogEntry(newMembership.dateOfEntry, cat, oldMembership.relLog);
     return newMembership;
   }
 
