@@ -89,7 +89,7 @@ export const _PageStore = signalStore(
             debugData('PageStore.pageResource: Loading sections', { page: page.bkey, sectionIds: page.sections }, params.currentUser);
             // Load all sections for this page
             const sectionObservables = page.sections.map(sectionId => 
-              store.sectionService.read(sectionId).pipe(
+              store.sectionService.read(sectionId.replace('@TID@', store.tenantId())).pipe(
                 take(1) // Ensure the observable completes after first emission
               )
             );
