@@ -193,6 +193,9 @@ export class WorkrelListComponent {
       if (hasRole('admin', this.currentUser())) {
         actionSheetOptions.buttons.push(createActionSheetButton('workrel.delete', this.imgixBaseUrl, 'trash_delete'));
       }
+      if (actionSheetOptions.buttons.length === 1) { // only cancel button
+        actionSheetOptions.buttons = [];
+      }
     }
   
     /**

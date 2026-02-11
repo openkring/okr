@@ -167,6 +167,9 @@ export class ResourceListComponent {
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('resource.delete', this.imgixBaseUrl, 'trash_delete'));
     }
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
+    }
   }
 
   /**

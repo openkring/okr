@@ -193,6 +193,9 @@ export class OrgListComponent {
     if (hasRole('admin', this.orgStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('org.delete', this.imgixBaseUrl, 'trash_delete'));
     }
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
+    }
   }
 
   /**

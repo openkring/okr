@@ -240,6 +240,9 @@ export class TaskListComponent {
     if (hasRole('admin', this.taskStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.imgixBaseUrl, 'trash_delete'));
     }
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
+    }
   }
 
   /**

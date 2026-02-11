@@ -137,6 +137,9 @@ export class NewsSectionComponent implements OnInit {
         actionSheetOptions.buttons.push(createActionSheetButton('news.edit', this.imgixBaseUrl, 'create_edit'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
+    }
   }
 
   /**

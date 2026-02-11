@@ -265,7 +265,6 @@ export class BlogPage {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
     if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
-
       actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'create_edit'));
       if (this.sectionStore.section()?.type === 'article') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
@@ -275,6 +274,9 @@ export class BlogPage {
       }
       actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.pageStore.imgixBaseUrl(), 'trash_delete'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.pageStore.imgixBaseUrl(), 'close_cancel'));
+      if (actionSheetOptions.buttons.length === 1) { // only cancel button
+        actionSheetOptions.buttons = [];
+      }
     }
   }
 

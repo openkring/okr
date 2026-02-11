@@ -152,6 +152,9 @@ export class KeyListComponent {
     if (hasRole('admin', this.resourceListStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('key.delete', this.imgixBaseUrl, 'trash_delete'));
     }
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
+    }
   }
 
   /**

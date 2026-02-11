@@ -175,6 +175,9 @@ export class GroupListComponent {
     if (hasRole('admin', this.groupStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('group.delete', this.imgixBaseUrl, 'trash_delete'));
     }
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
+    }
   }
 
   /**
