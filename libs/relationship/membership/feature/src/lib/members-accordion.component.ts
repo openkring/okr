@@ -69,6 +69,7 @@ export class MembersAccordionComponent {
 
   private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
   protected members = computed(() => this.membershipStore.members());
+  private currentUser = computed(() => this.membershipStore.currentUser());
   private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
 
   constructor() {
