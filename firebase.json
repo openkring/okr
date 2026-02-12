@@ -20,7 +20,7 @@
           "headers": [
             {
               "key": "Content-Security-Policy",
-              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://apis.google.com https://static.imgix.net https://maps.googleapis.com 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://*.stream-io-api.com wss://*.stream-io-api.com; frame-src https://www.google.com https://recaptcha.google.com;"
+              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://apis.google.com https://static.imgix.net https://maps.googleapis.com 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://*.imgix.net https://*.stream-io-api.com wss://*.stream-io-api.com; frame-src https://www.google.com https://recaptcha.google.com https://*.firebaseapp.com https://www.youtube.com https://www.youtube-nocookie.com;"
             }
           ]
         }
@@ -46,7 +46,7 @@
           "headers": [
             {
               "key": "Content-Security-Policy",
-              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://apis.google.com https://static.imgix.net https://maps.googleapis.com 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://*.stream-io-api.com wss://*.stream-io-api.com; frame-src https://www.google.com https://recaptcha.google.com;"
+              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://apis.google.com https://static.imgix.net https://maps.googleapis.com 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://*.imgix.net https://*.stream-io-api.com wss://*.stream-io-api.com; frame-src https://www.google.com https://recaptcha.google.com https://*.firebaseapp.com https://www.youtube.com https://www.youtube-nocookie.com;"
             }
           ]
         }
