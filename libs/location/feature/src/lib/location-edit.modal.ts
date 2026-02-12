@@ -25,13 +25,15 @@ import { LocationFormComponent } from '@bk2/location-ui';
     <ion-content>
       @if(formData(); as formData) {
         <bk-location-form
-          [formData]="formData" 
+          [formData]="formData"
+          (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [types]="types()"
           [allTags]="tags()"
           [tenantId]="appStore.env.tenantId"
           [readOnly]="isReadOnly()"
-          (formDataChange)="onFormDataChange($event)"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
         />
       }
     </ion-content>

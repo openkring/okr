@@ -24,9 +24,11 @@ import { OwnershipNewFormComponent } from './ownership-new.form';
       @if(formData(); as formData) {
         <bk-ownership-new-form
           [formData]="formData"
+          (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [readOnly]="readOnly()"
-          (formDataChange)="onFormDataChange($event)"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
         />
       }
     </ion-content>
