@@ -36,6 +36,8 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
               [membershipCategory]="membershipCategory()"
               [readOnly]=false
               (formDataChange)="onFormDataChange($event)"
+              (dirty)="formDirty.set($event)"
+              (valid)="formValid.set($event)"
             />
           }
         }
