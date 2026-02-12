@@ -7,14 +7,13 @@ import { OwnershipModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { DurationPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { getCategoryIcon, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { getOwnerName } from '@bk2/relationship-ownership-util';
 import { OwnershipStore } from './ownership.store';
-import { getCategoryIcon } from '@bk2/category-util';
 
 @Component({
   selector: 'bk-ownership-list',

@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
+
 import { getCategoryAbbreviation } from '@bk2/shared-categories';
 import { CategoryListModel, CategoryModel } from '@bk2/shared-models';
-import { getCatAbbreviation } from '@bk2/category-util';
+import { getCatAbbreviation } from '@bk2/shared-util-core';
 
 @Pipe({
   name: 'categoryAbbreviation',

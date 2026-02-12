@@ -8,10 +8,9 @@ import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent, Resource
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { OwnershipModel, OwnershipModelName, ResourceModelName, UserModel } from '@bk2/shared-models';
 import { DateInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarKey, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarKey, getCategoryIcon, getFullName, getTodayStr, isOrg, isPerson, isResource } from '@bk2/shared-util-core';
 
 import { ownershipValidations } from '@bk2/relationship-ownership-util';
-import { getCategoryIcon } from '@bk2/category-util';
 
 
 @Component({

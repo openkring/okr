@@ -4,9 +4,7 @@ import { Observable } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { CategoryCollection, CategoryListModel, UserModel } from '@bk2/shared-models';
-import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
-
-import { getCategoryIndex } from '@bk2/category-util';
+import { findByKey, getCategoryIndex, getSystemQuery } from '@bk2/shared-util-core';
 
 @Injectable({
   providedIn: 'root'

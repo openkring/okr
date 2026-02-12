@@ -6,10 +6,9 @@ import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel } from '@bk2/shared-models';
-import { chipMatches, debugListLoaded, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugListLoaded, isCategoryList, nameMatches } from '@bk2/shared-util-core';
 
 import { CategoryService } from '@bk2/category-data-access';
-import { isCategoryList } from '@bk2/category-util';
 
 import { CategoryEditModalComponent } from './category-edit.modal';
 

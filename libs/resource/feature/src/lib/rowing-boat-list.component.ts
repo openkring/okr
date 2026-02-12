@@ -7,8 +7,7 @@ import { ResourceModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { hasRole } from '@bk2/shared-util-core';
-import { getCategoryIcon } from '@bk2/category-util';
+import { getCategoryIcon, hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 

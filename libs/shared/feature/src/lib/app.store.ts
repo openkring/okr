@@ -6,11 +6,11 @@ import { of } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppConfig, AvatarInfo, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, ResourceModelName, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, ResourceModelName, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { die, getSystemQuery } from '@bk2/shared-util-core';
+import { AppNavigationService } from '@bk2/shared-util-angular';
 
 import { AppConfigService } from './app-config.service';
-import { AppNavigationService } from '@bk2/shared-util-angular';
 
 export type AppState = {
   tenantId: string;

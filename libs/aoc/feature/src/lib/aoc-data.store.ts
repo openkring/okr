@@ -13,7 +13,7 @@ import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventM
   AvatarInfo,
   AVATAR_INFO_SHAPE,
   CategoryListModel} from '@bk2/shared-models';
-import { getSystemQuery, removeProperty } from '@bk2/shared-util-core';
+import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
 
 import { addressValidations, getAddressIndex } from '@bk2/subject-address-util';
 import { commentValidations, getCommentIndex } from '@bk2/comment-util';
@@ -34,7 +34,7 @@ import { getTaskIndex, taskValidations } from '@bk2/task-util';
 import { getTransferIndex, transferValidations } from '@bk2/relationship-transfer-util';
 import { getWorkrelIndex, workrelValidations } from '@bk2/relationship-workrel-util';
 import { getUserIndex, userValidations } from '@bk2/user-util';
-import { categoryListValidations, getCategoryIndex } from '@bk2/category-util';
+import { categoryListValidations } from '@bk2/category-util';
 import { getGroupIndex, groupValidations } from '@bk2/subject-group-util';
 import { confirm } from '@bk2/shared-util-angular';
 import { AlertController } from '@ionic/angular/standalone';
