@@ -25,7 +25,7 @@ import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-
     FormsModule,
     AvatarPipe, AsyncPipe, TranslatePipe,
     TextInputComponent, DateInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
-    ErrorNoteComponent, PhoneInputComponent, EmailInputComponent, CategorySelectComponent,
+    ErrorNoteComponent, PhoneInputComponent, EmailInputComponent,
     SwissCitySearchComponent,
     IonGrid, IonRow, IonCol, IonItem, IonAvatar, IonImg, IonButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
