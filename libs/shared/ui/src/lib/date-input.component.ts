@@ -9,10 +9,10 @@ import { DATE_LENGTH, InputMode } from '@bk2/shared-constants';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { coerceBoolean, convertDateFormatToString, DateFormat, getTodayStr } from '@bk2/shared-util-core';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { DatePickerModalComponent } from '@bk2/shared-ui';
 import { ChAnyDate } from '@bk2/shared-config';
 
 import { ViewDateInputComponent } from './viewdate-input.component';
+import { DatePickerModalComponent } from './date-picker.modal';
 
 @Component({
   selector: 'bk-date-input',

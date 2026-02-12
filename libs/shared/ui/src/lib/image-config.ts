@@ -4,8 +4,10 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ImageConfig, ImageType } from '@bk2/shared-models';
-import { CategoryComponent, TextInputComponent } from '@bk2/shared-ui';
 import { ImageTypes } from '@bk2/shared-categories';
+
+import { CategoryComponent } from './category.component';
+import { TextInputComponent } from './text-input.component';
 
 @Component({
   selector: 'bk-image-config',

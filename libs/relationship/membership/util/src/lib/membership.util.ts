@@ -475,9 +475,12 @@ export function getMembershipIndexInfo(): string {
 // new member
 export function createNewMemberFormModel(org?: OrgModel): MemberNewFormModel {
   const model = { ...MEMBER_NEW_FORM_SHAPE };
+  console.log('createNewMemberFormModel, org:', org);
+  console.log('createNewMemberFormModel, model before setting org:', model);
   model.orgKey = org?.bkey ?? DEFAULT_KEY;
   model.orgName = org?.name ?? DEFAULT_NAME;
   model.membershipCategory = 'active';
+  console.log('createNewMemberFormModel, model after setting org:', model);
   return model;
 } 
 
