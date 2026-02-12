@@ -19,9 +19,10 @@ import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToMemberDataRow, convertToRawDataRow, convertToSrvDataRow, getMemberEmailAddresses, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
 import { AddressService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
-import { table } from 'console';
 
-// Modals are lazy loaded to avoid SSR hydration issues
+import { MemberNewModal } from './member-new.modal';
+import { MembershipEditModalComponent } from './membership-edit.modal';
+import { CategoryChangeModalComponent } from './membership-category-change.modal';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -278,7 +279,6 @@ export const _MembershipStore = signalStore(
       /******************************** setters (filter) ******************************************* */
       setOrgId(orgId?: string) {
         if (!orgId) orgId = store.appStore.defaultOrg()?.bkey;
-        console.log(`MembershipStore.setOrgId: ${orgId}`);
         // Only reset filters if orgId actually changed
         if (store.orgId() !== orgId) {
           patchState(store, { 
@@ -371,20 +371,22 @@ export const _MembershipStore = signalStore(
        * The current org from the membership store is used as default org in the person creation modal.
        */
       async addNewMember(): Promise<void> {
-        const module = await import('./member-new.modal');
-        console.log('Loaded module:', module);
-        const { MemberNewModal } = module;
-        if (!MemberNewModal) {
-          console.error('MemberNewModal is undefined in module:', module);
-          throw new Error('MemberNewModal component not found');
-        }
         const modal = await store.modalController.create({
           component: MemberNewModal,
+          componentProps: {
+            currentUser: store.currentUser(),
+            mcat: store.membershipCategory(),
+            tags: this.getTags(),
+            tenantId: store.tenantId(),
+            genders: store.genders(),
+            org: store.org() 
+          }
         });
         modal.present();
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data) {
           const newMember = data as MemberNewFormModel;
+          this.setOrgId(newMember.orgKey);
           if (store.personService.checkIfExists(store.appStore.allPersons(), newMember.firstName, newMember.lastName)) {
             if (!confirm(store.alertController, '@membership.operation.createMember.exists.error', true)) return;           
           }
@@ -439,7 +441,6 @@ export const _MembershipStore = signalStore(
         if (!membership) return;
         this.setOrgId(membership.orgKey);
 
-        const { MembershipEditModalComponent } = await import('./membership-edit.modal');
         const modal = await store.modalController.create({
           component: MembershipEditModalComponent,
           componentProps: {
@@ -488,7 +489,6 @@ export const _MembershipStore = signalStore(
         this.setOrgId(membership.orgKey);
         const membershipCategory = store.membershipCategory();
         if (membershipCategory) {
-          const { CategoryChangeModalComponent } = await import('./membership-category-change.modal');
           const modal = await store.modalController.create({
             component: CategoryChangeModalComponent,
             componentProps: {

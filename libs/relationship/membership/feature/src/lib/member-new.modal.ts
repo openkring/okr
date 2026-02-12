@@ -1,4 +1,4 @@
-import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
@@ -8,7 +8,7 @@ import { isOrg } from '@bk2/shared-util-core';
 import { convertFormToNewPerson, createNewMemberFormModel, MemberNewFormModel } from '@bk2/relationship-membership-util';
 import { MemberNewForm } from '@bk2/relationship-membership-ui';
 
-import { MembershipStore } from './membership.store';
+import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-member-new-modal',
@@ -45,26 +45,23 @@ import { MembershipStore } from './membership.store';
 })
 export class MemberNewModal {
   private readonly modalController = inject(ModalController);
-  protected readonly membershipStore = inject(MembershipStore);
+
+  // inputs
+  public currentUser = input.required<UserModel>();
+  public mcat = input.required<CategoryListModel>();
+  public tags = input.required<string>();
+  public tenantId = input.required<string>();
+  public genders = input.required<CategoryListModel>();
+  public org = input.required<OrgModel>();
 
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => {
-    const org = this.membershipStore.org();
-    console.log('MemberNewModal formData init, org:', org);
-    const model = createNewMemberFormModel(org);
-    console.log('MemberNewModal formData model:', model);
-    return model;
+    const org = this.org();
+    return createNewMemberFormModel(org);
   });
-
-  // derived signals and fields
-  protected currentUser = computed(() => this.membershipStore.currentUser());
-  protected mcat = computed(() => this.membershipStore.membershipCategory());
-  protected tags = computed(() => this.membershipStore.getTags());
-  protected tenantId = computed(() => this.membershipStore.tenantId());
-  protected genders = computed(() => this.membershipStore.appStore.getCategory('gender'));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
@@ -74,7 +71,7 @@ export class MemberNewModal {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(createNewMemberFormModel(this.membershipStore.org()));  // reset the form
+    this.formData.set(createNewMemberFormModel(this.org()));  // reset the form
   }
 
   protected onFormDataChange(formData: MemberNewFormModel): void {
@@ -94,7 +91,6 @@ export class MemberNewModal {
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isOrg(data, this.tenantId())) {
-        this.membershipStore.setOrgId(data.bkey); // Use newly selected org
         this.formData.update((vm) => ({
           ...vm,
           orgKey: data.bkey,
