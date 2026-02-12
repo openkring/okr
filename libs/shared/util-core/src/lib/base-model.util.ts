@@ -105,3 +105,20 @@ export function addIndexElement(index: string, key: string, value: string | numb
     }
     return result;
   }
+
+  /**
+   * A generic function to convert an object to a data row (array of strings) for export, based on the specified keys.
+   * 
+   * @param data the data object to convert.
+   * @param keys the keys of the object to include in the data row. The order of keys determines the order of values in the row.
+   * @returns An array of strings representing the data row.
+   */
+  export function getDataRow<T>(data: T, keys: (keyof T)[]): string[] {
+  return keys.map(key => {
+    const value = data[key];
+    if (value === null || value === undefined) return '';
+    if (Array.isArray(value)) return value.join(', ');
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  });
+}

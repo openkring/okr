@@ -120,6 +120,7 @@ export class UserListComponent {
     switch(selectedMethod) {
       case 'add':  await this.userListStore.add(); break;
       case 'exportRaw': await this.userListStore.export('raw'); break;
+      case 'exportUsers': await this.userListStore.export('users'); break;
       default: error(undefined, `UserListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }

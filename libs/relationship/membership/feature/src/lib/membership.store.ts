@@ -8,7 +8,7 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categ
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressModel, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getDataRow, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
@@ -507,61 +507,43 @@ export const _MembershipStore = signalStore(
       },
 
       async export(type: string, memberships: MembershipModel[]): Promise<void> {
+        let keys: (keyof MembershipModel)[] = [];
         const table: string[][] = [];
         const fn = generateRandomString(10) + '.' + ExportFormats[ExportFormat.XLSX].abbreviation;
-        let tableName = 'Memberships';
+        let tableName = '';
 
-        // prepare the header row
         switch(type) {
           case 'raw':
-            // tbd: MembershipStore: header row with all membership fields
-            table.push([
-              'bkey',
-              'tenants',
-              'isArchived',
-              'index',
-              'tags',
-              'notes',
-              'memberKey',
-              'memberName1',
-              'memberName2',
-              'memberModelType',
-              'memberType',
-              'memberNickName',
-              'memberAbbreviation',
-              'memberDateOfBirth',
-              'memberDateOfDeath',
-              'memberZipCode',
-              'memberBexioId',
-              'memberId',
-              'orgKey',
-              'orgName',
-              'orgModelType',
-              'dateOfEntry',
-              'dateOfExit',
-              'category',
-              'state',
-              'orgFunction',
-              'order',
-              'relLog',
-              'relIsLast',
-              'price'
-            ]);
+            keys = Object.keys(new MembershipModel(store.appStore.tenantId())) as (keyof MembershipModel)[];
+            table.push(keys);
             tableName = 'Rohdaten Mitgliedschaften';
             break;
           case 'srv':
             table.push(['Clubname', 'MGRART_Titel', 'Beitrag', 'LastName', 'FirstName', 'SrvId', 'Birthday', 'Street', 'Postcode', 'City', 'Mobile', 'Email', 'Funktion', 'Kommentar']);
-            tableName = 'SRV Mitgliedschaften';
-            break;
+            this.exportSrv(table);
+            exportXlsx(table, fn, 'SRV Mitgliedschaften');
+            return;
           case 'address':
-            table.push(['Vorname', 'Name', 'Strasse', 'PLZ', 'Ort', 'Tel', 'E-Mail']);
-            tableName = 'Adressliste';
-            break;
+            const pkeys = ['firstName', 'lastName', 'favStreetName', 'favStreetNumber', 'favZipCode', 'favCity', 'favPhone', 'favEmail'] as (keyof PersonModel)[];
+            table.push(['Vorname', 'Name', 'Strassenname', 'Hausnummer', 'PLZ', 'Ort', 'Tel', 'E-Mail']);
+            for (const member of memberships) {
+              const person = store.appStore.getPerson(member.memberKey);
+              if (!person) continue;
+              table.push(getDataRow<PersonModel>(person, pkeys));
+            }
+            exportXlsx(table, fn, 'Adressliste');
+            return;
           case 'clubdesk': 
             table.push(['Vorname', 'Nachname', 'Geschlecht', 'Anrede', 'Adresse', 'Ort', 'PLZ', 'Land', 'E-Mail', 'Telefon', 'Geburtsdatum', 'Eintritt', 'BexioId', 'Kategorie', 'Status', 'Funktion', 'RelLog']);
-            tableName = 'Clubdesk Import';
-            break;
+            for (const member of memberships) {
+              const person = store.appStore.getPerson(member.memberKey);
+              if (!person) continue;
+              table.push(convertToClubdeskImportRow(member, person));
+            }
+            exportXlsx(table, fn, 'Clubdesk Import');
+            return;
           case 'member':
+            keys = ['memberId', 'memberName1', 'memberName2', 'memberDateOfBirth', 'dateOfEntry', 'memberCategory', 'orgFunction'] as (keyof MembershipModel)[];
             table.push(['Mitgliedschafts-Nr', 'Vorname', 'Name', 'GebDatum', 'Eintrittsdatum', 'Kategorie', 'Funktion']);
             tableName = 'Mitglieder';
             break;
@@ -569,30 +551,8 @@ export const _MembershipStore = signalStore(
             console.error(`MembershipStore.export: unknown export type ${type}`);
             return;
         }
-        if (type === 'srv') { 
-          this.exportSrv(table);
-        } else {    // normal membership export for the currently filtered memberships
-          for (const member of memberships) {
-            const person = store.appStore.getPerson(member.memberKey);
-            if (!person) continue;
-            switch(type) {
-              case 'raw':
-                table.push(convertToRawDataRow(member));
-                break;
-              case 'address':
-                const addrRow = await convertToAddressDataRow(person);
-                if (addrRow !== undefined) table.push(addrRow);
-                break;
-              case 'clubdesk':
-                const cdRow = await convertToClubdeskImportRow(member, person);
-                if (cdRow !== undefined) table.push(cdRow);
-                break;
-              case 'member':
-                const memRow = await convertToMemberDataRow(member);
-                if (memRow !== undefined) table.push(memRow);
-                break;
-            }
-          }
+        for (const member of memberships) {
+          table.push(getDataRow<MembershipModel>(member, keys));
         }
         exportXlsx(table, fn, tableName);
       },
