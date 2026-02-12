@@ -90,7 +90,7 @@ export class FirestoreService {
       if (currentUser) {
         debugMessage(`FirestoreService.createModel(${collectionName}/${ref.id}) -> OK`, currentUser);
         const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), '@comment.operation.initial.conf', collectionName + '.' +ref.id, this.env.tenantId);
-        await this.saveComment(collectionName, ref.id, comment);
+        await this.saveComment(comment);
       }
       return Promise.resolve(ref.id);
     }
@@ -249,7 +249,7 @@ export class FirestoreService {
       if (currentUser) {
         debugMessage(`FirestoreService.updateModel(${collectionName}/${key}) -> OK`, currentUser);
         const comment = createComment(currentUser.bkey, getFullName(currentUser.firstName, currentUser.lastName), '@comment.operation.update.conf', collectionName + '.' + key, this.env.tenantId);
-        await this.saveComment(collectionName, key, comment);
+        await this.saveComment(comment);
       }
       return Promise.resolve(key);
     }
@@ -315,12 +315,10 @@ export class FirestoreService {
 
   /**
    * Save a comment to a Firestore document.
-   * @param parentCollection the name of the parent collection
-   * @param parentKey the document id of the parent document
-   * @param comment the comment to save
+   * @param comment the comment model to save
    */
-  public async saveComment(parentCollection: string, parentKey: string, comment: CommentModel): Promise<void> {
-    const commentRef = doc(collection(this.firestore, `${parentCollection}/${parentKey}/${CommentCollection}`));
+  public async saveComment(comment: CommentModel): Promise<void> {
+    const commentRef = doc(collection(this.firestore, CommentCollection));
     await setDoc(commentRef, structuredClone(comment));
   }
 

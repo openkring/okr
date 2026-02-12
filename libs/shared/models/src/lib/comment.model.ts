@@ -10,6 +10,7 @@ export class CommentModel implements BkModel, SearchableModel {
   parentKey = DEFAULT_KEY;
   description = DEFAULT_NOTES;
   isArchived = false;
+  tags = '';
   tenants: string[] = DEFAULT_TENANTS;
 }
 

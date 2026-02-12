@@ -6,9 +6,8 @@ import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { CategoryListModel, MembershipCollection, MembershipModel, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
-import { addDuration, findByKey, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
+import { addDuration, findByKey, getCategoryAttribute, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
-import { getCategoryAttribute } from '@bk2/category-util';
 import { createComment } from '@bk2/comment-util';
 
 import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipIndex, getRelLogEntry } from '@bk2/relationship-membership-util';
@@ -92,7 +91,7 @@ export class MembershipService {
     // add a comment about the category change to the current membership
     const message = getMembershipCategoryChangeComment(oldMembership.category, membershipChange.membershipCategoryNew);;
     const comment = createComment(currentUser.bkey, currentUser.firstName + ' ' + currentUser.lastName, message, MembershipCollection + '.' + oldMembership.bkey, this.env.tenantId);
-    await this.firestoreService.saveComment(MembershipCollection, oldMembership.bkey, comment);
+    await this.firestoreService.saveComment(comment);
 
     // create a new membership with the new type and the start date
     const newMembership = this.copyMembershipWithNewType(oldMembership, membershipChange, membershipCategory);
@@ -100,7 +99,7 @@ export class MembershipService {
 
     if (key) {
       // add a comment about the category change to the new membership
-      await this.firestoreService.saveComment(MembershipCollection, key, comment);
+      await this.firestoreService.saveComment(comment);
       return key;
     }
     return undefined;
