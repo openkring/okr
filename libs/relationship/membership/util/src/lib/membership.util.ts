@@ -479,7 +479,7 @@ export function createNewMemberFormModel(org?: OrgModel): MemberNewFormModel {
   console.log('createNewMemberFormModel, model before setting org:', model);
   model.orgKey = org?.bkey ?? DEFAULT_KEY;
   model.orgName = org?.name ?? DEFAULT_NAME;
-  model.membershipCategory = 'active';
+  model.category = 'active';
   console.log('createNewMemberFormModel, model after setting org:', model);
   return model;
 } 
@@ -533,7 +533,7 @@ export function convertNewMemberFormToPostalAddress(vm: MemberNewFormModel, tena
   );
 }
 
-export function convertNewMemberFormToMembership(vm: MemberNewFormModel, personKey: string, tenantId: string): MembershipModel {
+export function convertNewMemberFormToMembership(vm: MemberNewFormModel, personKey: string, tenantId: string, mcatAbbreviation: string): MembershipModel {
   const member = new MembershipModel(tenantId);
   member.memberKey = personKey;
   member.memberName1 = vm.firstName ?? DEFAULT_NAME;
@@ -548,10 +548,10 @@ export function convertNewMemberFormToMembership(vm: MemberNewFormModel, personK
   member.orgName = vm.orgName ?? DEFAULT_NAME;
   member.dateOfEntry = vm.dateOfEntry ?? getTodayStr();
   member.dateOfExit = END_FUTURE_DATE_STR;
-  member.category = vm.membershipCategory ?? 'active';
+  member.category = vm.category ?? 'active';
   member.state = 'active';
   member.order = 1;
-  member.relLog = member.dateOfEntry + ':' + (vm.membershipCategoryAbbreviation ?? 'A');
+  member.relLog = member.dateOfEntry + ':' + mcatAbbreviation;
   member.relIsLast = true;
   member.index = 'mn:' + member.memberName1 + ' ' + member.memberName2 + ', mk:' + member.memberKey + ', ok:' + member.orgKey;
   return member;

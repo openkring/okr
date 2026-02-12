@@ -8,12 +8,10 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categ
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressModel, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getDataRow, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getCatAbbreviation, getDataRow, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-
-import { getCatAbbreviation } from '@bk2/category-util';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToMemberDataRow, convertToRawDataRow, convertToSrvDataRow, getMemberEmailAddresses, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
@@ -371,13 +369,14 @@ export const _MembershipStore = signalStore(
        * The current org from the membership store is used as default org in the person creation modal.
        */
       async addNewMember(): Promise<void> {
+        const tenantId = store.tenantId();
         const modal = await store.modalController.create({
           component: MemberNewModal,
           componentProps: {
             currentUser: store.currentUser(),
             mcat: store.membershipCategory(),
             tags: this.getTags(),
-            tenantId: store.tenantId(),
+            tenantId,
             genders: store.genders(),
             org: store.org() 
           }
@@ -386,26 +385,25 @@ export const _MembershipStore = signalStore(
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data) {
           const newMember = data as MemberNewFormModel;
-          this.setOrgId(newMember.orgKey);
           if (store.personService.checkIfExists(store.appStore.allPersons(), newMember.firstName, newMember.lastName)) {
             if (!confirm(store.alertController, '@membership.operation.createMember.exists.error', true)) return;           
           }
 
-          const personKey = await store.personService.create(convertFormToNewPerson(newMember, store.tenantId()), store.currentUser());
+          const personKey = await store.personService.create(convertFormToNewPerson(newMember, tenantId), store.currentUser());
           const avatarKey = `person.${personKey}`;
-          if ((newMember.email ?? '').length > 0) {
-            this.saveAddress(convertNewMemberFormToEmailAddress(newMember, store.tenantId()), avatarKey);
+          if (newMember.email.length > 0) {
+            this.saveAddress(convertNewMemberFormToEmailAddress(newMember, tenantId), avatarKey);
           }
-          if ((newMember.phone ?? '').length > 0) {
-            this.saveAddress(convertNewMemberFormToPhoneAddress(newMember, store.tenantId()), avatarKey);
+          if (newMember.phone.length > 0) {
+            this.saveAddress(convertNewMemberFormToPhoneAddress(newMember, tenantId), avatarKey);
           }
-          if ((newMember.web ?? '').length > 0) {
-            this.saveAddress(convertNewMemberFormToWebAddress(newMember, store.tenantId()), avatarKey);
+          if (newMember.web.length > 0) {
+            this.saveAddress(convertNewMemberFormToWebAddress(newMember, tenantId), avatarKey);
           }
-          if ((newMember.city ?? '').length > 0) {
-            this.saveAddress(convertNewMemberFormToPostalAddress(newMember, store.tenantId()), avatarKey);
+          if (newMember.city.length > 0) {
+            this.saveAddress(convertNewMemberFormToPostalAddress(newMember, tenantId), avatarKey);
           }
-          if ((newMember.orgKey ?? '').length > 0 && (newMember.category ?? '').length > 0) {
+          if (newMember.orgKey.length > 0 && newMember.category.length > 0) {
             await this.saveMembership(newMember, personKey);
           }
           this.reload();
@@ -423,7 +421,8 @@ export const _MembershipStore = signalStore(
           console.warn('MembershipStore.saveMembership: personKey is empty, cannot save membership');
           return undefined;
         }
-        const membership = convertNewMemberFormToMembership(vm, personKey, store.tenantId());
+        const mcatAbbreviation = getCatAbbreviation(store.membershipCategory(), vm.category);
+        const membership = convertNewMemberFormToMembership(vm, personKey, store.tenantId(), mcatAbbreviation);
         membership.index = 'mn:' + membership.memberName1 + ' ' + membership.memberName2 + ' mk:' + membership.memberKey + ' ok:' + membership.orgKey;
         return await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', store.appStore.currentUser());
       },

@@ -26,8 +26,7 @@ export const memberNewFormValidations = staticSuite((model: MemberNewFormModel, 
 
   stringValidations('orgKey', model.orgKey, SHORT_NAME_LENGTH);
   stringValidations('orgName', model.orgName, SHORT_NAME_LENGTH);
-  stringValidations('membershipCategory', model.membershipCategory, SHORT_NAME_LENGTH);
-  stringValidations('membershipCategoryAbbreviation', model.membershipCategoryAbbreviation, 2);
+  stringValidations('category', model.category, SHORT_NAME_LENGTH);
   dateValidations('dateOfEntry', model.dateOfEntry);
 
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);

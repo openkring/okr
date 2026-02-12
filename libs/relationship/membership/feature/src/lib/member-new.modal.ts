@@ -2,13 +2,13 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { OrgSelectModalComponent } from '@bk2/shared-feature';
-import { isOrg } from '@bk2/shared-util-core';
+import { AppStore, OrgSelectModalComponent } from '@bk2/shared-feature';
+import { getDefaultCategoryName, isOrg } from '@bk2/shared-util-core';
+import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
 
 import { convertFormToNewPerson, createNewMemberFormModel, MemberNewFormModel } from '@bk2/relationship-membership-util';
 import { MemberNewForm } from '@bk2/relationship-membership-ui';
 
-import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-member-new-modal',
@@ -32,7 +32,7 @@ import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
           [allTags]="tags()"
           [tenantId]="tenantId()" 
           [readOnly]="false"
-          [membershipCategories]="mcat()"
+          [membershipCategories]="selectedMembershipCategory()"
           (selectClicked)="selectOrg()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -45,6 +45,8 @@ import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
 })
 export class MemberNewModal {
   private readonly modalController = inject(ModalController);
+  private readonly appStore = inject(AppStore);
+  // we can not use the membership store here, because the membership store is used to open this modal, which would cause a circular dependency.
 
   // inputs
   public currentUser = input.required<UserModel>();
@@ -58,6 +60,8 @@ export class MemberNewModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+  protected selectedMembershipCategory = linkedSignal(() => this.mcat());
+  
   public formData = linkedSignal(() => {
     const org = this.org();
     return createNewMemberFormModel(org);
@@ -65,8 +69,7 @@ export class MemberNewModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    this.formDirty.set(false);
-    await this.modalController.dismiss(convertFormToNewPerson(this.formData(), this.tenantId()), 'confirm');  
+    await this.modalController.dismiss(this.formData(), 'confirm');  
   }
 
   public async cancel(): Promise<void> {
@@ -91,10 +94,21 @@ export class MemberNewModal {
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isOrg(data, this.tenantId())) {
+        // Get the full org from AppStore to extract membershipCategoryKey
+        const selectedOrg = this.appStore.getOrg(data.bkey);
+        const membershipCategoryKey = selectedOrg?.membershipCategoryKey;
+        
+        // Get the CategoryListModel using AppStore.getCategory
+        if (membershipCategoryKey) {
+          const membershipCategory = this.appStore.getCategory(membershipCategoryKey);
+          this.selectedMembershipCategory.set(membershipCategory);
+        }
+        
         this.formData.update((vm) => ({
           ...vm,
           orgKey: data.bkey,
           orgName: data.name,
+          category: getDefaultCategoryName(this.selectedMembershipCategory()),
         }));
       }
     }
