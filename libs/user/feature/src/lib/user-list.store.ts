@@ -8,9 +8,9 @@ import { AppStore } from '@bk2/shared-feature';
 import { ExportFormat, UserCollection, UserModel } from '@bk2/shared-models';
 import { AppNavigationService, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, generateRandomString, getDataRow, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { ExportFormats } from '@bk2/shared-categories';
 
 import { UserService } from '@bk2/user-data-access';
-import { ExportFormats } from 'libs/shared/categories/src/lib/export-format';
 
 export type UserListState = {
   searchTerm: string;
