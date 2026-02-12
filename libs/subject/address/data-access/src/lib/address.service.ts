@@ -1,14 +1,12 @@
 import { Injectable, inject } from "@angular/core";
-import { ToastController } from "@ionic/angular/standalone";
 import { Observable, map, of } from "rxjs";
 
-import { Languages } from "@bk2/shared-categories";
 import { ENV } from "@bk2/shared-config";
 import { FirestoreService } from "@bk2/shared-data-access";
-import { AddressChannel, AddressCollection, AddressModel, DefaultLanguage, UserModel } from "@bk2/shared-models";
+import { AddressChannel, AddressCollection, AddressModel, UserModel } from "@bk2/shared-models";
 import { die, getSystemQuery } from "@bk2/shared-util-core";
 
-import { copyAddress, getAddressIndex } from "@bk2/subject-address-util";
+import { getAddressIndex } from "@bk2/subject-address-util";
 
 @Injectable({
     providedIn: 'root'
@@ -16,7 +14,6 @@ import { copyAddress, getAddressIndex } from "@bk2/subject-address-util";
 export class AddressService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
-  private readonly toastController = inject(ToastController);
 
   public groupedItems$ = of([]);
 
@@ -34,11 +31,10 @@ export class AddressService {
 
  /**
    * Return an Observable of an Address by uid from the database.
-   * @param parentKey  the key of the parent model; format:  modelType.key
    * @param addressKey the key of the address document
    * @return an Observable of the AddressModel or undefined if not found
    */
-  public read(parentKey: string, addressKey: string): Observable<AddressModel | undefined> {
+  public read(addressKey: string): Observable<AddressModel | undefined> {
     return this.firestoreService.readModel<AddressModel>(AddressCollection, addressKey);
   }
 
@@ -78,11 +74,10 @@ export class AddressService {
   /***************************  favorite address  *************************** */
   /**
    * Returns either the favorite address of the given channel or null if there is no favorite address for this channel.
-   * @param parentKey the key of the parent subject (persons.key or orgs.key)
    * @param channel the channel type (e.g. phone, email, web) to look for
    * @returns the favorite address fo the given channel or null
    */
-  public getFavoriteAddressByChannel(parentKey: string, channel: AddressChannel): Observable<AddressModel | null> {
+  public getFavoriteAddressByChannel(channel: AddressChannel): Observable<AddressModel | null> {
     const query = getSystemQuery(this.env.tenantId);
     query.push({ key: 'channelType', operator: '==', value: channel });
     query.push({ key: 'isFavorite', operator: '==', value: true });
