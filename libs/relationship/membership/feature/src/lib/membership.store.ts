@@ -405,7 +405,7 @@ export const _MembershipStore = signalStore(
           if ((newMember.city ?? '').length > 0) {
             this.saveAddress(convertNewMemberFormToPostalAddress(newMember, store.tenantId()), avatarKey);
           }
-          if ((newMember.orgKey ?? '').length > 0 && (newMember.membershipCategory ?? '').length > 0) {
+          if ((newMember.orgKey ?? '').length > 0 && (newMember.category ?? '').length > 0) {
             await this.saveMembership(newMember, personKey);
           }
           this.reload();

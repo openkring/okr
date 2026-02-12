@@ -20,8 +20,7 @@ export type MemberNewFormModel = {
 
   orgKey: string,
   orgName: string,
-  membershipCategory: string,
-  membershipCategoryAbbreviation: string      // we cache this to the form in order to avoid re-loading of the Category 
+  category: string,
   dateOfEntry: string,
 
   notes: string,
@@ -50,8 +49,7 @@ export const MEMBER_NEW_FORM_SHAPE: MemberNewFormModel = {
   // membership
   orgKey: '',
   orgName: '',
-  membershipCategory: '',
-  membershipCategoryAbbreviation: 'A',
+  category: '',
   dateOfEntry: getTodayStr(),
 
   notes: '',

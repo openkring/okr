@@ -173,7 +173,7 @@ import { MemberNewFormModel, memberNewFormValidations } from '@bk2/relationship-
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('membershipCategory', $event)" [readOnly]="isReadOnly()" />
+                  <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12"> 
                   <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
@@ -241,7 +241,7 @@ export class MemberNewForm {
   // membership
   protected orgKey = linkedSignal(() => this.formData().orgKey ?? DEFAULT_KEY);
   protected orgName = linkedSignal(() => this.formData().orgName ?? DEFAULT_NAME);
-  protected currentMembershipCategoryItem = linkedSignal(() => this.formData().membershipCategory ?? '');
+  protected currentMembershipCategoryItem = linkedSignal(() => this.formData().category ?? '');
   protected dateOfEntry = linkedSignal(() => this.formData().dateOfEntry ?? getTodayStr());
 
   // passing constants to template

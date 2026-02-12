@@ -79,7 +79,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                   </ion-row>
                   <ion-row>
                     <ion-col size="12">
-                      <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('membershipCategory', $event)" [readOnly]="isReadOnly()" />
+                      <bk-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12"> 
                       <bk-date-input name="dateOfEntry" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [locale]="locale()" [showHelper]=true [readOnly]="isReadOnly()" />

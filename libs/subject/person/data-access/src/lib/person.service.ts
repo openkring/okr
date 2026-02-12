@@ -4,7 +4,7 @@ import { map, Observable, of, take } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
-import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { getSystemQuery } from '@bk2/shared-util-core';
 
 import {getPersonIndex} from '@bk2/subject-person-util'
 
