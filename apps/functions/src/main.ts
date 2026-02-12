@@ -19,8 +19,23 @@ import * as Fcm from './fcm';
 // in AppHosting, we start an Express server
 const app: Express = express();
 
-// Enable CORS for requests from your local development server
-app.use(cors({ origin: 'http://localhost:4200' }));
+// Enable CORS for requests from your local development server and hosting domains
+app.use(cors({ 
+  origin: [
+    'http://localhost:4200',
+    'https://scs-app-54aef.web.app',
+    'https://scs-app-54aef.firebaseapp.com',
+    'https://bkaiser-org.web.app',
+    'https://bkaiser-org.firebaseapp.com',
+    'https://seeclub.org',
+    'https://bkaiser.ch',
+    'https://bkaiser.com',
+    'https://bkaiser.org',
+    'https://p13.ch',
+    'https://kwa.ch',
+    'https://silcrest7.ch'
+  ] 
+}));
 
 
 export { app };
