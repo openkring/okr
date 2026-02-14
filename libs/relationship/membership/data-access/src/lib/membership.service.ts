@@ -61,6 +61,7 @@ export class MembershipService {
     if (membership.dateOfExit.startsWith('9999') && dateOfExit && dateOfExit.length === 8) {
       membership.dateOfExit = dateOfExit;
       membership.relIsLast = true;
+      membership.relLog = getRelLogEntry(dateOfExit, 'X', membership.relLog);
       return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, '@membership.operation.end', currentUser);
     }
     return undefined;

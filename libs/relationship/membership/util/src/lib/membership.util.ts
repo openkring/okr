@@ -136,13 +136,13 @@ export function addGroupInfoToMembership(membership: MembershipModel, group: Gro
 
 /**
  * Generate a relLog entry for a membership change.
- * @param dateOfEntry the start date of the current membership
+ * @param date the relevant date to write to the relLog. This is usually the date of entry or date of exit, but can be any relevant date for the change (e.g. category change date).
  * @param category the membership category abbreviation for the current membership
  * @param priorRelLog the relLog entry of the previous membership (optional, only needed if there was a previous membership and you want to keep the history of all changes in the relLog)
  * @returns
  */
-export function getRelLogEntry(dateOfEntry: string, category: string, priorRelLog?: string): string {
-  const newRelLogEntry = `${dateOfEntry}:${category}`;
+export function getRelLogEntry(date: string, category: string, priorRelLog?: string): string {
+  const newRelLogEntry = `${date}:${category}`;
   return priorRelLog ? `${priorRelLog},${newRelLogEntry}` : newRelLogEntry;
 }
 
