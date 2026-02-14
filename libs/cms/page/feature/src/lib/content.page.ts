@@ -35,11 +35,28 @@ import { PageStore } from './page.store';
   .section-wrapper.editable {
     border: 3px solid;
     border-radius: 8px;
-    border-color: yellow;
     margin: 8px 0;
     padding: 4px;
     width: calc(100% - 16px);
     cursor: pointer;
+  }
+
+  .section-wrapper.state-draft {
+    border-color: #3880ff; /* blue */
+  }
+
+  .section-wrapper.state-inReview {
+    border-color: #ffc409; /* yellow */
+  }
+
+  .section-wrapper.state-published {
+    border-color: #2dd36f; /* green */
+  }
+
+  .section-wrapper.state-cancelled,
+  .section-wrapper.state-decommitted,
+  .section-wrapper.state-archived {
+    border-color: #eb445a; /* red */
   }
 
   ion-item.edit-mode {
@@ -149,7 +166,7 @@ import { PageStore } from './page.store';
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
                     @if(editMode()) {
-                      <div class="section-wrapper" [class.editable]="editMode()">
+                      <div class="section-wrapper editable state-{{ section.state }}">
                         <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
                       </div>  
                     } @else {
