@@ -167,7 +167,7 @@ export const _SectionStore = signalStore(
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data) { // data = selected CategoryItemModel
           const item = data as CategoryItemModel;
-          const section = createSection(item.name as SectionType, store.tenantId(), item.name);
+          const section = createSection(item.name as SectionType, store.tenantId());
           const sectionId = await this.edit(section, readOnly);
           this.reload();
           return sectionId;

@@ -8,7 +8,7 @@ import { die } from '@bk2/shared-util-core';
  * @param name
  * @returns 
  */
-export function createSection(type: SectionType, tenantId: string, name?: string): SectionModel {
+export function createSection(type: SectionType, tenantId: string): SectionModel {
   let section: SectionModel;
   switch (type) {
     case 'album': section = { ...ALBUM_SECTION_SHAPE } as AlbumSection; break;
@@ -39,7 +39,6 @@ export function createSection(type: SectionType, tenantId: string, name?: string
       die(`section.util.createSection: unknown section type '${type}'`);
   }
   section.tenants = [tenantId];
-  section.name = name || type;
   section.color = ColorIonic.Primary;
   section.roleNeeded = 'contentAdmin';
   section.index = getSectionIndex(section);
