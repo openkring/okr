@@ -6,6 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, RoleName, SectionModel, UserModel } from '@bk2/shared-models';
 import { ButtonCopyComponent, CategorySelectComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
+import { LONG_NAME_LENGTH } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-section-config',
@@ -44,10 +45,10 @@ import { coerceBoolean, hasRole } from '@bk2/shared-util-core';
             <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [readOnly]="isReadOnly()" />
           </ion-col>
           <ion-col size="12">
-            <bk-text-input name="title" [value]="title()" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" />
+            <bk-text-input name="title" [value]="title()" (valueChange)="onFieldChange('title', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
           </ion-col>
           <ion-col size="12">
-            <bk-text-input name="subTitle" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [readOnly]="isReadOnly()" />
+            <bk-text-input name="subTitle" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
           </ion-col>
           <ion-col size="12">
             <bk-text-input name="colSize" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
@@ -93,6 +94,8 @@ export class SectionConfigComponent {
   protected state = computed(() => this.formData().state);
   protected roleNeeded = linkedSignal(() => this.formData().roleNeeded ?? 'registered');
   protected colSize = linkedSignal(() => this.formData().colSize ?? '12');
+
+  protected maxLength = LONG_NAME_LENGTH;
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | RoleName): void {
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));

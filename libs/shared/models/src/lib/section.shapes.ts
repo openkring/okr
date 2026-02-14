@@ -77,8 +77,8 @@ export const ARTICLE_CONFIG_SHAPE = {
 // --------------------------------------- BUTTON ----------------------------------------
 export const ICON_CONFIG_SHAPE = {
     name: 'filetypes:pdf',
-    size: 60,
-    slot: 'iconOnly' as Slot
+    size: 40,
+    slot: 'icon-only' as Slot
 } as IconConfig;
 
 export const BUTTON_STYLE_SHAPE = {

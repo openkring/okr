@@ -66,7 +66,7 @@ export class ButtonActionComponent {
   public readonly readOnly = input(true);
 
   // fields
-  protected type = linkedSignal(() => this.formData().type ?? ButtonAction.None);
+  protected type = linkedSignal(() => this.formData().type ?? ButtonAction.Download);
   protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
   protected altText = linkedSignal(() => this.formData().altText ?? DEFAULT_LABEL);
 

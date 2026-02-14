@@ -1,4 +1,4 @@
-import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, EVENTS_SECTION_SHAPE, EventsSection, GALLERY_SECTION_SHAPE, GallerySection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, PEOPLE_SECTION_SHAPE, PeopleSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection } from '@bk2/shared-models';
+import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, EVENTS_SECTION_SHAPE, EventsSection, GALLERY_SECTION_SHAPE, GallerySection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, PEOPLE_SECTION_SHAPE, PeopleSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition } from '@bk2/shared-models';
 import { die } from '@bk2/shared-util-core';
 
 /**
@@ -12,8 +12,15 @@ export function createSection(type: SectionType, tenantId: string, name?: string
   let section: SectionModel;
   switch (type) {
     case 'album': section = { ...ALBUM_SECTION_SHAPE } as AlbumSection; break;
-    case 'article': section = { ...ARTICLE_SECTION_SHAPE } as ArticleSection; break;
-    case 'button': section = { ...BUTTON_SECTION_SHAPE } as ButtonSection; break;
+    case 'article': 
+      section = { ...ARTICLE_SECTION_SHAPE } as ArticleSection; 
+      section.content.position = ViewPosition.Top;
+      break;
+    case 'button': 
+      section = { ...BUTTON_SECTION_SHAPE } as ButtonSection; 
+      section.content.position = ViewPosition.Left;
+      section.properties.action.type = ButtonAction.Download;
+      break;
     case 'cal': section = { ...CAL_SECTION_SHAPE } as CalendarSection; break;
     case 'chart': section = { ...CHART_SECTION_SHAPE } as ChartSection; break;
     case 'chat': section = { ...CHAT_SECTION_SHAPE } as ChatSection; break;
