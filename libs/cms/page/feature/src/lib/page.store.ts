@@ -3,8 +3,8 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
-import { firstValueFrom, forkJoin, of } from 'rxjs';
-import { map, switchMap, take } from 'rxjs/operators';
+import { combineLatest, firstValueFrom, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 
 import { AppStore } from '@bk2/shared-feature';
 import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@bk2/shared-models';
@@ -87,13 +87,11 @@ export const _PageStore = signalStore(
               return of({ page, sections: [] as SectionModel[] });
             }
             debugData('PageStore.pageResource: Loading sections', { page: page.bkey, sectionIds: page.sections }, params.currentUser);
-            // Load all sections for this page
+            // Load all sections for this page - use combineLatest to get live updates
             const sectionObservables = page.sections.map(sectionId => 
-              store.sectionService.read(sectionId.replace('@TID@', store.tenantId())).pipe(
-                take(1) // Ensure the observable completes after first emission
-              )
+              store.sectionService.read(sectionId.replace('@TID@', store.tenantId()))
             );
-            return forkJoin(sectionObservables).pipe(
+            return combineLatest(sectionObservables).pipe(
               map(sections => {
                 const filteredSections = sections.filter(s => s !== undefined) as SectionModel[];
                 debugData('PageStore.pageResource: Sections loaded', { 
@@ -283,7 +281,7 @@ export const _PageStore = signalStore(
         const page = store.page() ?? die('PageStore.deleteSectionFromPage: page is mandatory.');
         page.sections.splice(page.sections.indexOf(sectionKey), 1);
         await store.pageService.update(page, store.currentUser());
-        this.reload();
+        this.reloadCurrentPage();
       },
 
      /**
@@ -314,7 +312,7 @@ export const _PageStore = signalStore(
           const page = store.page() ?? die('PageStore.sortSections: page is mandatory.');
           page.sections = sortedSections;
           await store.pageService.update(page, store.currentUser());
-          this.reload();
+          this.reloadCurrentPage();
         }
       },
 
@@ -326,7 +324,7 @@ export const _PageStore = signalStore(
         if (!page) return;
         page.sections.push(sectionId);
         store.pageService.update(page, store.currentUser());
-        this.reload();
+        this.reloadCurrentPage();
       },
 
       /**
