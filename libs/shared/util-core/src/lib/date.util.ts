@@ -91,9 +91,10 @@ export function convertDateFromAnyFormatToString(value: string, toFormat = DateF
  * 
  * @param storeDate 
  * @param showYear if true, the year is shown, otherwise not
+ * @param shortWeekday if true, the weekday is shown in short form (e.g., "Mo" for Monday), otherwise in long form (e.g., "Monday"). If the parameter is undefined, it is not shown.
  * @returns 
  */
-export function prettyFormatDate(storeDate: string | undefined, showYear = true): string {
+export function prettyFormatDate(storeDate: string | undefined, showYear = true, shortWeekday?: boolean): string {
     if (!storeDate || storeDate.length < 8) return '';
     if (storeDate.substring(0, 8).endsWith('0000')) {
       return showYear ? storeDate.substring(0, 4) : '';
@@ -174,16 +175,21 @@ export function getWeekday(date: Date | number): number {
   return getISODay(date);
 }
 
-export function getWeekdayI18nKey(date: Date | number): string {
+export function getWeekdayI18nKey(storeDate: string, shortWeekday = true): string {
+  const date = parseDate(storeDate, DateFormat.StoreDate, false);
+  const key = shortWeekday ? 'weekDayAbbreviation' : 'weekDay';
+  if (!date) return '';
   switch(getWeekday(date)) {
-    case 1: return 'event.weekDay.monday';
-    case 2: return 'event.weekDay.tuesday';
-    case 3: return 'event.weekDay.wednesday';
-    case 4: return 'event.weekDay.thursday';
-    case 5: return 'event.weekDay.friday';
-    case 6: return 'event.weekDay.saturday';
-    case 7: return 'event.weekDay.sunday';
-    default: die('date.util/getWeekdayI18nKey: invalid weekday: ' + getWeekday(date));
+    case 1: return `calevent.${key}.monday`;
+    case 2: return `calevent.${key}.tuesday`;
+    case 3: return `calevent.${key}.wednesday`;
+    case 4: return `calevent.${key}.thursday`;
+    case 5: return `calevent.${key}.friday`;
+    case 6: return `calevent.${key}.saturday`;
+    case 7: return `calevent.${key}.sunday`;
+    default: 
+      warn('date.util/getWeekdayI18nKey: invalid weekday: ' + storeDate);
+      return '';
   }
 }
 

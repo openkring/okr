@@ -1,15 +1,15 @@
-import { isPlatformBrowser } from '@angular/common';
+import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular/standalone';
 
 import { CalEventModel, EventsConfig, EventsSection } from '@bk2/shared-models';
-import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { CalendarStore } from './calendar-section.store';
+import { MoreButton, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@bk2/shared-util-core';
-import { CalEventDurationPipe } from '@bk2/calevent-util';
-import { createActionSheetButton, createActionSheetOptions, navigateByUrl } from '@bk2/shared-util-angular';
-import { PartPipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { Router } from '@angular/router';
+import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { PrettyDatePipe, SvgIconPipe, WeekdayPipe } from '@bk2/shared-pipes';
+
+import { CalendarStore } from './calendar-section.store';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-events-section',
@@ -31,9 +31,9 @@ import { Router } from '@angular/router';
   ],
   providers: [CalendarStore], 
   imports: [
-    CalEventDurationPipe, SvgIconPipe, PrettyDatePipe, PartPipe,
-    OptionalCardHeaderComponent, SpinnerComponent,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonLabel
+    SvgIconPipe, PrettyDatePipe, WeekdayPipe, TranslatePipe, AsyncPipe,
+    OptionalCardHeaderComponent, SpinnerComponent, MoreButton,
+    IonCard, IonCardContent, IonLabel
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
@@ -43,23 +43,44 @@ import { Router } from '@angular/router';
     <ion-card>
       <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
-          <ion-grid>
+        @if(numberOfEvents() === 0) {
+          <bk-empty-list message="@events.field.empty" />
+        } @else {
+          <ion-list lines="inset">
+            @for(event of calevents(); track event.bkey) {
+              <ion-item (click)="showActions(event)">
+                <ion-icon src="{{ getIcon(event) | svgIcon }}" color="{{ getIconColor(event) }}" slot="start" />
+                <ion-label>{{ (event.startDate | weekday) | translate | async }} {{ event.startDate | prettyDate:false }} {{event.name}}</ion-label>
+              </ion-item>
+            }
+            @if(showMoreButton() && !editMode()) {
+              <bk-more-button [url]="moreUrl()" />
+            }
+          </ion-list>
+        }
+  <!--         <ion-grid>
             @for(event of calevents(); track event.bkey) {
               <ion-row (click)="showActions(event)">
                 <ion-col size="1">
-                  @if(event.isOpen) { <!-- attendee -->
-                    <ion-icon size="large" src="{{getAttendanceIcon(event.bkey) | svgIcon }}" color="{{getAttendanceColor(event.bkey)}}" />
-                  } @else { <!-- invitation -->
-                    <ion-icon size="large" src="{{getInvitationIcon(event.bkey) | svgIcon }}" color="{{getInvitationColor(event.bkey)}}" />
+                  <ion-item>
+                  @if(event.isOpen) { 
+                    <ion-icon slot="start"size="large" src="{{getAttendanceIcon(event.bkey) | svgIcon }}" color="{{getAttendanceColor(event.bkey)}}" />
+                  } @else {
+                    <ion-icon slot="start" size="large" src="{{getInvitationIcon(event.bkey) | svgIcon }}" color="{{getInvitationColor(event.bkey)}}" />
                   }
+                  </ion-item>
                 </ion-col>
                 @if(showEventTime()) {
+                  <ion-item>
                   <ion-col size="4">
                     <ion-label>{{ event | calEventDuration }}</ion-label>
                   </ion-col>
+                  </ion-item>
                 } @else {
                   <ion-col size="3">
+                    <ion-item>
                     <ion-label>{{ event.startDate | prettyDate }}</ion-label>
+                    </ion-item>
                   </ion-col>
                 }
                 <ion-col>
@@ -82,7 +103,7 @@ import { Router } from '@angular/router';
                 </ion-col>
               </ion-row>
             }
-          </ion-grid>
+          </ion-grid> -->
       </ion-card-content>
     </ion-card>
     }
@@ -92,7 +113,6 @@ export class EventsSectionComponent implements OnInit {
   protected calendarStore = inject(CalendarStore);
   private readonly platformId = inject(PLATFORM_ID);
   private actionSheetController = inject(ActionSheetController);
-  private router = inject(Router);
 
   // inputs
   public section = input<EventsSection>();
@@ -105,6 +125,7 @@ export class EventsSectionComponent implements OnInit {
   protected readonly config = computed(() => this.section()?.properties as EventsConfig | undefined);
   protected readonly moreUrl = computed(() => this.config()?.moreUrl ?? '');
   protected readonly showMoreButton = computed(() => this.moreUrl().length > 0);
+  protected readonly numberOfEvents = computed(() => this.calevents().length);
   protected readonly maxEvents = computed(() => this.config()?.maxEvents ?? undefined); // undefined = show all calevents
   protected readonly showPastEvents = computed(() => this.config()?.showPastEvents ?? false);
   protected readonly showUpcomingEvents = computed(() => this.config()?.showUpcomingEvents ?? true);
@@ -150,6 +171,16 @@ export class EventsSectionComponent implements OnInit {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
     this.addActionSheetButtons(actionSheetOptions, calevent);
     await this.executeActions(actionSheetOptions, calevent);
+  }
+
+  protected getIcon(event: CalEventModel): string {
+    const state = event.isOpen ? this.calendarStore.states()[event.bkey] : this.calendarStore.invitationStates()[event.bkey];
+    return getAttendanceIcon(state);
+  }
+
+  protected getIconColor(event: CalEventModel): string {
+    const state = event.isOpen ? this.calendarStore.states()[event.bkey] : this.calendarStore.invitationStates()[event.bkey];
+    return getAttendanceColor(state);
   }
 
   /**
@@ -205,30 +236,5 @@ export class EventsSectionComponent implements OnInit {
           break;
       }
     }
-  }
-
-  protected getAttendanceIcon(caleventKey: string): string {
-    const state = this.calendarStore.states()[caleventKey];
-    return getAttendanceIcon(state);
-  }
-
-  protected getAttendanceColor(caleventKey: string): string {
-    const state = this.calendarStore.states()[caleventKey];
-    return getAttendanceColor(state);
-  }
-
-  protected getInvitationIcon(caleventKey: string): string {
-    const state = this.calendarStore.invitationStates()[caleventKey];
-    return state ? getAttendanceIcon(state) : '';
-  }
-
-  protected getInvitationColor(caleventKey: string): string {
-    const state = this.calendarStore.invitationStates()[caleventKey];
-    return state ? getAttendanceColor(state) : '';
-  }
-
-  protected openMoreUrl(): void {
-    if (this.editMode()) return;
-    navigateByUrl(this.router, this.moreUrl());
   }
 }

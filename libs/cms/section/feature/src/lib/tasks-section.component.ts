@@ -1,11 +1,10 @@
 import { isPlatformBrowser } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
-import { Router } from '@angular/router';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular/standalone';
 
-import { EmptyListComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyListComponent, MoreButton, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions, navigateByUrl } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { TaskModel, TasksConfig, TasksSection } from '@bk2/shared-models';
 
@@ -34,8 +33,8 @@ import { TasksStore } from './tasks-section.store';
   providers: [TasksStore], 
   imports: [
     SvgIconPipe, PrettyDatePipe, AvatarPipe,
-    OptionalCardHeaderComponent, SpinnerComponent, EmptyListComponent,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonLabel
+    OptionalCardHeaderComponent, SpinnerComponent, EmptyListComponent, MoreButton,
+    IonCard, IonCardContent, IonLabel
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
@@ -71,17 +70,9 @@ import { TasksStore } from './tasks-section.store';
                                 </ion-avatar>
                                 }
                             </ion-item>
-                        } 
-                        @if(showMoreButton()) {
-                            <ion-grid>
-                                <ion-row>
-                                    <ion-col size="3">
-                                        <ion-button expand="block" fill="clear" (click)="openMoreUrl()">
-                                            Mehr...
-                                        </ion-button>
-                                    </ion-col>
-                                </ion-row>
-                            </ion-grid>
+                        }
+                        @if(showMoreButton() && !editMode()) {
+                          <bk-more-button [url]="moreUrl()" />
                         }
                     </ion-list>
                 }
@@ -93,7 +84,6 @@ import { TasksStore } from './tasks-section.store';
 export class TasksSectionComponent implements OnInit {
   protected tasksStore = inject(TasksStore);
   private readonly platformId = inject(PLATFORM_ID);
-  private router = inject(Router);
   private actionSheetController = inject(ActionSheetController);
   
   // inputs
@@ -193,10 +183,5 @@ export class TasksSectionComponent implements OnInit {
 
   protected getIcon(task: TaskModel): string {
     return task.completionDate.length > 0 ? 'checkbox-circle' : 'circle';
-  }
-
-  protected openMoreUrl(): void {
-    if (this.editMode()) return;
-    navigateByUrl(this.router, this.moreUrl());
   }
 }

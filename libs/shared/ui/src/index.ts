@@ -37,6 +37,7 @@ export * from './lib/label-select.modal';
 export * from './lib/list-filter.component';
 export * from './lib/map-view.modal';
 export * from './lib/meta-tag-list.component';
+export * from './lib/more-button';
 export * from './lib/notes-input.component';
 export * from './lib/number-input.component';
 export * from './lib/optional-card-header.component';

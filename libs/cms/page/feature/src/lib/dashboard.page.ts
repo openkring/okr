@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ArticleSection, ButtonSection, RoleName } from '@bk2/shared-models';
@@ -21,7 +21,7 @@ import { PageStore } from './page.store';
     SectionDispatcher, MenuComponent,
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
-    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonPopover
+    IonGrid, IonRow, IonCol, IonLabel, IonPopover
   ],
   styles: [`
     :host {
