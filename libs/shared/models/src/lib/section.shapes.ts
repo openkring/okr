@@ -94,7 +94,7 @@ export const BUTTON_CONFIG_SHAPE = {
     icon: ICON_CONFIG_SHAPE,
     style: BUTTON_STYLE_SHAPE,
     action: {
-      type: ButtonAction.None,
+      type: ButtonAction.Download,
       url: ''
     }
 } as ButtonConfig;
