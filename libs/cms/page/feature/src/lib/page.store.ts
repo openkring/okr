@@ -147,6 +147,11 @@ export const _PageStore = signalStore(
         store.pagesResource.reload();
         store.pageResource.reload();
       },
+      
+      reloadCurrentPage() {
+        // Force reload of the current page to get fresh data
+        store.pageResource.reload();
+      },
       /******************************** setters (filter) ******************************************* */
       setSearchTerm(searchTerm: string) {
         patchState(store, { searchTerm });
@@ -209,6 +214,11 @@ export const _PageStore = signalStore(
 
       /******************************** actions ... ******************************************* */
       /******************************** ... page-related  ******************************************* */
+      /**
+       * Add a new page with the given name and open the edit modal for this page.
+       * @param readOnly 
+       * @returns 
+       */
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
         const pageName = await bkPrompt(store.alertController, '@content.page.operation.add.label', '@content.page.field.name');
@@ -216,10 +226,14 @@ export const _PageStore = signalStore(
           const page = new PageModel(store.tenantId());
           page.name = pageName;
           await this.edit(page, readOnly);
-          this.reload();
         }
       },
 
+      /**
+       * Edit a page by opening the edit modal. If the page has no key, it will be created after saving the modal. Otherwise, the existing page will be updated.
+       * @param page 
+       * @param readOnly 
+       */
       async edit(page: PageModel, readOnly = true): Promise<void> {
         const modal = await store.modalController.create({
           component: PageEditModalComponent,
@@ -245,10 +259,19 @@ export const _PageStore = signalStore(
         }
       },
 
+      /**
+       * Deletes the given page after asking for confirmation.
+       * @param page 
+       * @param readOnly 
+       * @returns 
+       */
       async delete(page: PageModel, readOnly = true): Promise<void> {
         if (readOnly) return;
-        await store.pageService.delete(page, store.currentUser());
-        this.reload();
+        const result = await confirm(store.alertController, '@content.page.operation.delete.confirm', true);
+        if (result === true) {
+          await store.pageService.delete(page, store.currentUser());
+          this.reload();
+        }
       },
 
       /******************************** ... section-related ******************************************* */
