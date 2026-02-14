@@ -202,6 +202,17 @@ export class MembershipListComponent {
         this.membershipStore.setOrgId(orgId);
       }
     });
+
+    effect(() => {
+      // Reset filters when listId changes
+      const listId = this.listId();
+      const currentListId = this.membershipStore.listId();
+      
+      if (listId && listId !== currentListId) {
+        this.membershipStore.setListId(listId);
+        this.membershipStore.resetFilters();
+      }
+    });
   }
 
   /******************************** setters (filter) ******************************************* */

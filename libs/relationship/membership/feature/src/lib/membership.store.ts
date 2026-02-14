@@ -8,7 +8,7 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categ
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressModel, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getCatAbbreviation, getDataRow, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getCatAbbreviation, getDataRow, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches, warn } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
@@ -24,6 +24,7 @@ import { CategoryChangeModalComponent } from './membership-category-change.modal
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
+  listId: string;  // the current list view (active, exits, etc.) - used to detect view changes and reset filters
   showOnlyCurrent: boolean;  // whether to show only current memberships or all memberships that ever existed
 
   // for accordion-like display of memberships of a given member
@@ -42,6 +43,7 @@ export type MembershipState = {
 
 const initialState: MembershipState = {
   orgId: '',
+  listId: '',
   showOnlyCurrent: true,
   member: undefined,
   modelType: undefined,
@@ -290,6 +292,21 @@ export const _MembershipStore = signalStore(
         }
       },
 
+      setListId(listId: string) {
+        patchState(store, { listId });
+      },
+
+      resetFilters() {
+        patchState(store, {
+          searchTerm: '',
+          selectedTag: '',
+          selectedMembershipCategory: 'all',
+          selectedYear: parseInt(getTodayStr(DateFormat.Year)),
+          selectedGender: 'all',
+          selectedOrgType: 'all'
+        });
+      },
+
       setYearField(yearField: 'dateOfEntry' | 'dateOfExit') {
         patchState(store, { yearField });
       },
@@ -475,9 +492,12 @@ export const _MembershipStore = signalStore(
       async end(membership: MembershipModel, endDate?: string, readOnly = true): Promise<void> {
         if (!membership || readOnly) return;
         if (!endDate) {
-          endDate =  await selectDate(store.modalController, undefined, '@membership.operation.end.select', '@membership.operation.end.intro');
+          endDate =  await selectDate(store.modalController, getTodayStr(DateFormat.IsoDate), '@membership.operation.end.select', '@membership.operation.end.intro');
         }
-        if (!endDate) return;
+        if (!endDate) { 
+          warn('MembershipStore.end: no end date selected, cannot end membership');
+          return;
+        }
         const sDate = convertDateFormatToString(endDate.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate, false);
         await store.membershipService.endMembershipByDate(membership, sDate, store.currentUser());              
         this.reload();  
