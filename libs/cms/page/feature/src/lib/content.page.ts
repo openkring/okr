@@ -214,7 +214,6 @@ export class ContentPage {
   protected sections = computed(() => this.pageStore.pageSections());
   protected isEmptyPage = computed(() => this.sections().length === 0);
 
-
   /**
    * Get all nested section IDs from accordion sections.
    * These sections are rendered inside accordions via content projection,
@@ -237,10 +236,23 @@ export class ContentPage {
    * Get only top-level sections (exclude nested accordion sections).
    * Nested sections are rendered inside their parent accordions via content projection,
    * so they shouldn't appear at the top level to avoid duplication.
+   * 
+   * For regular users, only show published sections.
+   * For contentAdmin users, show all sections regardless of state.
    */
   protected visibleSections = computed(() => {
     const nested = this.nestedSectionIds();
-    return this.sections().filter(s => !nested.has(s.bkey));
+    
+    return this.sections().filter(s => {
+      // Exclude nested sections
+      if (nested.has(s.bkey)) return false;
+      
+      // ContentAdmin sees all sections
+      if (this.hasRole('contentAdmin')) return true;
+      
+      // Regular users only see published sections
+      return s.state === 'published';
+    });
   });
 
   constructor() {
@@ -353,6 +365,9 @@ export class ContentPage {
    * Get nested sections for a given section (only relevant for accordion sections).
    * Returns an array of SectionModel objects that should be rendered inside accordion items.
    * Note: Uses item.key as the section reference (sectionId is optional and may not be populated).
+   * 
+   * For regular users, only show published sections.
+   * For contentAdmin users, show all sections regardless of state.
    */
   protected getNestedSections(section: SectionModel): SectionModel[] {
     if (section.type !== 'accordion') return [];
@@ -360,7 +375,14 @@ export class ContentPage {
     const sectionIds = accordion.properties.items
       .map(item => item.key)
       .filter(id => id !== undefined) as string[];
-    return this.pageStore.pageSections().filter(s => sectionIds.includes(s.bkey));
+    
+    const nestedSections = this.pageStore.pageSections().filter(s => sectionIds.includes(s.bkey));
+    
+    // ContentAdmin sees all nested sections
+    if (this.hasRole('contentAdmin')) return nestedSections;
+    
+    // Regular users only see published nested sections
+    return nestedSections.filter(s => s.state === 'published');
   }
 
   /**
