@@ -38,7 +38,7 @@ import { InvitationsConfigComponent } from './invitations-config';
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
-      <bk-section-config [(formData)]="formData" [currentUser]="currentUser()" [roles]="roles()" [readOnly]="isReadOnly()" />
+      <bk-section-config [(formData)]="formData" [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [readOnly]="isReadOnly()" />
 
       @switch (formData().type) {
         @case('album') {
@@ -188,6 +188,7 @@ export class SectionFormComponent {
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
   public readonly roles = input.required<CategoryListModel>();
+  public readonly states = input.required<CategoryListModel>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 

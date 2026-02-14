@@ -28,10 +28,10 @@ import { ButtonWidgetComponent } from '@bk2/cms-section-ui';
             @case(VP.Left) {
               <ion-grid>
                 <ion-row>
-                  <ion-col size="12" [sizeMd]="colSizeButton()">
+                  <ion-col [size]="colSizeButton()">
                     <bk-button-widget [section]="section" [editMode]="editMode()" />
                   </ion-col>
-                  <ion-col size="12" [sizeMd]="colSizeText()">
+                  <ion-col [size]="colSizeText()">
                     <div [innerHTML]="content()"></div>
                   </ion-col>
                 </ion-row>
@@ -40,10 +40,10 @@ import { ButtonWidgetComponent } from '@bk2/cms-section-ui';
             @case(VP.Right) {
               <ion-grid>
                 <ion-row>
-                  <ion-col size="12" [sizeMd]="colSizeText()">
+                  <ion-col [size]="colSizeText()">
                     <div [innerHTML]="content()"></div>
                   </ion-col>
-                  <ion-col size="12" [sizeMd]="colSizeButton()">
+                  <ion-col [size]="colSizeButton()">
                     <bk-button-widget [section]="section" [editMode]="editMode()" />
                   </ion-col>
                 </ion-row>
