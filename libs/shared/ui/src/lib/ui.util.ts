@@ -68,7 +68,6 @@ export async function selectDate(modalController: ModalController, isoDate?: str
   const { data, role } = await modal.onWillDismiss();
   if (role === 'confirm' && data) {
     if (typeof(data) === 'string') {
-      console.log('ui.util.selectDate: selected date: ' + data);
       return data;
     } else {
       warn('ui.util.selectDate: type of returned data is not string: ' + data);

@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, input } from '@angular/core';
-import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
+import { Component, inject, input, viewChild } from '@angular/core';
+import { IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
@@ -25,6 +25,7 @@ import { HeaderComponent } from './header.component';
       }        
 
       <ion-datetime
+        #datetimePicker
         min="1900-01-01" max="2100-12-31"
         presentation="date"
         [value]="isoDate()"
@@ -38,13 +39,14 @@ import { HeaderComponent } from './header.component';
         [preferWheel]="false"
         style="height: 380px; --padding-start: 0;"
         (ionCancel)="cancel()"
-        (ionChange)="onDateSelected($event.detail)"
+        (ionChange)="onDateChange($event)"
       />
     </ion-content>
   `,
 })
 export class DateSelectModalComponent {
-  private readonly modalController = inject(ModalController);
+  private modalController = inject(ModalController);
+  protected readonly datetimePicker = viewChild.required<IonDatetime>('datetimePicker');
 
   // inputs
   public isoDate = input(getTodayStr(DateFormat.IsoDate)); // mandatory date in isoDate format (yyyy-MM-dd)
@@ -53,11 +55,18 @@ export class DateSelectModalComponent {
   public intro = input<string>();
 
   /**
-   * @param detail 
-   * @returns string in ISO format (yyyy-mm-dd)
+   * ionChange fires when OK button is clicked (with showDefaultButtons=true)
+   * If user doesn't change the date, event.detail.value might be undefined
+   * Fall back to the datetime component's actual value, then to isoDate input
    */
-  protected async onDateSelected(detail: DatetimeChangeEventDetail): Promise<boolean> {
-    return await this.modalController.dismiss(detail.value, 'confirm');
+  protected async onDateChange(event: any): Promise<void> {
+    const selectedDate = event.detail.value || this.datetimePicker().value || this.isoDate();
+    console.log('event.detail.value:', event.detail.value);
+    console.log('datetimePicker.value:', this.datetimePicker().value);
+    console.log('isoDate():', this.isoDate());
+    console.log('final selectedDate:', selectedDate);
+    console.log('DateSelectModalComponent: selected date: ' + selectedDate); // for debugging
+    await this.modalController.dismiss(selectedDate, 'confirm');
   }
 
   protected async cancel(): Promise<boolean> {
