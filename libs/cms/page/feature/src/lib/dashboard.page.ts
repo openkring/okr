@@ -31,28 +31,140 @@ import { PageStore } from './page.store';
       width: 100%;
     }
 
-    bk-section { width: 100%; display: block; }
+    ion-content {
+      --background: var(--ion-color-light);
+    }
+
+    bk-section { 
+      width: 100%; 
+      display: block; 
+    }
+
+    ion-grid {
+      padding: 16px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .section-item {
+      padding: 8px;
+    }
+
+    .section-wrapper {
+      background: var(--ion-color-light-contrast);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section-wrapper bk-section-dispatcher {
+      flex: 1;
+      display: block;
+    }
+
+    /* Card header styling */
+    .section-wrapper ::ng-deep ion-card-header,
+    .section-wrapper ::ng-deep h1,
+    .section-wrapper ::ng-deep h2,
+    .section-wrapper ::ng-deep h3 {
+      background: var(--ion-color-light-shade);
+      padding: 20px 24px;
+      margin: 0;
+      border-bottom: 1px solid var(--ion-color-step-150, #e0e0e0);
+    }
+    @media (prefers-color-scheme: dark) {
+      .section-wrapper ::ng-deep ion-card-header,
+      .section-wrapper ::ng-deep h1,
+      .section-wrapper ::ng-deep h2,
+      .section-wrapper ::ng-deep h3 {
+        background: var(--ion-color-light-shade);
+        border-bottom: 1px solid var(--ion-color-step-200, #2a2a2a);
+      }
+    }
+    .section-wrapper ::ng-deep ion-card-header ion-card-title,
+    .section-wrapper ::ng-deep ion-card-header ion-card-subtitle {
+      padding: 0;
+    }
+
+    .section-wrapper ::ng-deep h1:first-child,
+    .section-wrapper ::ng-deep h2:first-child,
+    .section-wrapper ::ng-deep h3:first-child,
+    .section-wrapper ::ng-deep ion-card-header:first-child {
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+    }
+
+    .section-wrapper:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
 
     .section-wrapper.editable {
-        border: 3px solid;
-        border-radius: 8px;
-        border-color: yellow;
-        margin: 8px 0;
-        padding: 4px;
-        width: calc(100% - 16px);
-        cursor: pointer;
+      border: 3px solid var(--ion-color-warning);
+      cursor: pointer;
+    }
+
+    .section-wrapper.editable:hover {
+      border-color: var(--ion-color-warning-shade);
+      box-shadow: 0 4px 20px rgba(255, 196, 9, 0.3);
     }
 
     ion-item.edit-mode {
-        --padding-start: 0;
-        --inner-padding-end: 0;
+      --padding-start: 0;
+      --inner-padding-end: 0;
+    }
+
+    /* Empty state styling */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+      min-height: 400px;
+    }
+
+    .empty-state ion-icon {
+      font-size: 80px;
+      color: var(--ion-color-medium);
+      margin-bottom: 16px;
+    }
+
+    .empty-state ion-label {
+      font-size: 18px;
+      color: var(--ion-color-medium-shade);
+      margin-bottom: 24px;
+    }
+
+    .empty-state ion-button {
+      --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     @media (width <= 600px) {
-        .section-item {
-        --padding-start: 2px;
-        --inner-padding-end: 2px;
-    }
+      ion-grid {
+        padding: 8px;
+      }
+      
+      .section-item {
+        padding: 4px;
+      }
+
+      .empty-state {
+        padding: 32px 16px;
+        min-height: 300px;
+      }
+
+      .empty-state ion-icon {
+        font-size: 60px;
+      }
+
+      .empty-state ion-label {
+        font-size: 16px;
+      }
     }
 
     @media print {
@@ -130,15 +242,14 @@ import { PageStore } from './page.store';
     <ion-content class="ion-no-padding">
       @if(hasRole('contentAdmin')) {
         @if(isEmptyPage()) {
-          <ion-item lines="none">
+          <div class="empty-state">
+            <ion-icon src="{{'grid' | svgIcon }}"></ion-icon>
             <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPage' | translate | async }}</ion-label>
-          </ion-item>
-          <ion-item lines="none">
-            <ion-button (click)="this.addSection()">
+            <ion-button size="large" (click)="this.addSection()">
               <ion-icon slot="start" src="{{'add-circle' | svgIcon }}" />
               {{ '@content.section.operation.add.label' | translate | async }}
             </ion-button>
-          </ion-item>
+          </div>
         } @else {     <!-- page contains sections -->
           <ion-grid>
             <ion-row>
@@ -149,13 +260,9 @@ import { PageStore } from './page.store';
                     [class.edit-mode]="editMode()"
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
-                    @if(editMode()) {
-                      <div class="section-wrapper" [class.editable]="editMode()">
-                        <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
-                      </div>  
-                    } @else {
+                    <div class="section-wrapper" [class.editable]="editMode()">
                       <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
-                    }
+                    </div>
                   </ion-col>
                 }
               }
@@ -164,15 +271,27 @@ import { PageStore } from './page.store';
         }
       } @else { <!-- not contentAdmin; also: not logged-in for public content -->
         @if(isEmptyPage()) {
-          <ion-item lines="none">
+          <div class="empty-state">
+            <ion-icon src="{{'document' | svgIcon }}"></ion-icon>
             <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPageReadOnly' | translate | async }}</ion-label>
-          </ion-item>
-        } @else {
-          <div class="print-content" #printContent>
-            @for(section of sections(); track section.bkey) {
-              <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
-            } 
           </div>
+        } @else {
+          <ion-grid>
+            <ion-row>
+              @for(section of sections(); track section.bkey) {
+                @if(getColSizes(section.colSize); as colSizes) {
+                  <ion-col size="{{colSizes.size}}" 
+                    class="section-item"
+                    [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
+                  >
+                    <div class="section-wrapper">
+                      <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
+                    </div>
+                  </ion-col>
+                }
+              }
+            </ion-row>
+          </ion-grid>
         }
       }
     </ion-content>
