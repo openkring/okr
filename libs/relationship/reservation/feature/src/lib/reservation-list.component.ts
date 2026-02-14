@@ -32,7 +32,7 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title class="ion-hide-md-down">
-          {{ selectedReservationsCount()}}/{{reservationsCount()}} {{ title() }}
+          {{ selectedReservationsCount()}} {{ title() }}
         </ion-title>
         <ion-title class="ion-hide-md-up">
           {{ selectedReservationsCount()}}/{{reservationsCount()}} {{ title() }}
@@ -111,8 +111,6 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
                 <ion-label><strong>{{'@reservation.list.header.state' | translate | async}}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-item lines="none" color="primary">
-            </ion-item>
           } @else { <!-- all -->
             <ion-col size="auto" size-md="2"class="ion-hide-md-down">
               <ion-item lines="none" color="primary">
