@@ -36,6 +36,7 @@ import { SectionFormComponent } from '@bk2/cms-section-ui';
             [currentUser]="currentUser()"
             [showForm]="showForm()"
             [roles]="roles()"
+            [states]="states()"
             [allTags]="tags()"
             [readOnly]="isReadOnly()"
           />
@@ -52,6 +53,7 @@ export class SectionEditModalComponent {
   public currentUser = input.required<UserModel>();
   public tags = input.required<string>();
   public roles = input.required<CategoryListModel>();
+  public states = input.required<CategoryListModel>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 

@@ -30,6 +30,7 @@ export type SectionModel =
 export interface BaseSection {
   bkey: string;
   type: SectionType;
+  state: string;
   name: string;
   title: string;
   subTitle: string;

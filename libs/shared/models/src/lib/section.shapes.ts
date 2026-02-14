@@ -1,7 +1,7 @@
 import { CalendarOptions } from "@fullcalendar/core";
 import { EChartsOption } from "echarts";
 
-import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DEFAULT_URL } from "@bk2/shared-constants";
+import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DEFAULT_URL } from "@bk2/shared-constants";
 import type { 
   AccordionSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection, 
   AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection, 
@@ -35,6 +35,7 @@ export const EDITOR_CONFIG_SHAPE = {
 export const BASE_SECTION_SHAPE = {
   bkey: DEFAULT_KEY,
   type: DEFAULT_SECTION_TYPE,
+  state: DEFAULT_CONTENT_STATE,
   name: DEFAULT_NAME,
   title: DEFAULT_TITLE,
   subTitle: DEFAULT_TITLE,

@@ -1,19 +1,21 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, ImageActionType, SectionModel, SectionType } from '@bk2/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, SectionModel, SectionType } from '@bk2/shared-models';
 import { CardSelectModalComponent } from '@bk2/shared-ui';
 import { chipMatches, debugItemLoaded, debugMessage, nameMatches } from '@bk2/shared-util-core';
+import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
+import { confirm } from '@bk2/shared-util-angular';
+
+import { UploadService } from '@bk2/avatar-data-access';
 
 import { SectionService } from '@bk2/cms-section-data-access';
 import { createSection, narrowSection } from '@bk2/cms-section-util';
 
 import { SectionEditModalComponent } from './section-edit.modal';
-import { UploadService } from '@bk2/avatar-data-access';
-import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
 
 export type SectionState = {
   sectionId: string;
@@ -23,6 +25,7 @@ export type SectionState = {
   selSearchTerm: string;    // for the section select modal
   selectedTag: string;
   selectedCategory: string;
+  selectedState: string;
 };
 
 export const initialState: SectionState = {
@@ -30,7 +33,8 @@ export const initialState: SectionState = {
   searchTerm: '',
   selSearchTerm: '',
   selectedTag: '',
-  selectedCategory: 'all'
+  selectedCategory: 'all',
+  selectedState: 'all',
 };
 
 export const _SectionStore = signalStore(
@@ -39,7 +43,8 @@ export const _SectionStore = signalStore(
     sectionService: inject(SectionService),
     uploadService: inject(UploadService),
     appStore: inject(AppStore),
-    modalController: inject(ModalController),  
+    modalController: inject(ModalController),
+    alertController: inject(AlertController),
   })),
   withProps((store) => ({
     sectionsResource: rxResource({
@@ -70,7 +75,8 @@ export const _SectionStore = signalStore(
         state.sectionsResource.value()?.filter((section: SectionModel) => 
           nameMatches(section.index, state.searchTerm()) && 
           nameMatches(section.type, state.selectedCategory()) &&
-          chipMatches(section.tags, state.selectedTag())
+          chipMatches(section.tags, state.selectedTag()) &&
+          nameMatches(section.state, state.selectedState())
         )),
 
       selFilteredSections: computed(() => 
@@ -129,6 +135,10 @@ export const _SectionStore = signalStore(
         patchState(store, { selectedCategory });
       },
 
+      setSelectedState(selectedState: string) {
+        patchState(store, { selectedState });
+      },
+
       /******************************** getters ******************************************* */
       getTags(): string {
         return store.appStore.getTags('section');
@@ -168,6 +178,7 @@ export const _SectionStore = signalStore(
         if (!section) return;
         const tags = this.getTags();
         const roles = this.getRoles();
+        const states = store.appStore.getCategory('content_state');
         const modal = await store.modalController.create({
           component: SectionEditModalComponent,
           cssClass: 'full-modal',
@@ -176,6 +187,7 @@ export const _SectionStore = signalStore(
             currentUser: store.currentUser(),
             tags,
             roles,
+            states,
             readOnly
           }
         });
@@ -195,8 +207,11 @@ export const _SectionStore = signalStore(
 
       async delete(section?: SectionModel, readOnly = true): Promise<void> {
         if (readOnly || !section) return;
-        await store.sectionService.delete(section, store.currentUser());
-        this.reset();
+        const result = await confirm(store.alertController, '@content.section.operation.delete.confirm', true);
+        if (result === true) {
+          await store.sectionService.delete(section, store.currentUser());
+          this.reset();
+        }
       },
 
       async uploadImage(section?: ArticleSection): Promise<void> {

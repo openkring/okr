@@ -47,6 +47,7 @@ import { SectionStore } from './section.store';
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
+      (stateChanged)="onStateSelected($event)" [states]="states()"
      />
 
     <!-- list header -->
@@ -109,6 +110,7 @@ export class SectionAllListComponent {
   protected types = computed(() => this.sectionStore.getTypes());
   private currentUser = computed(() => this.sectionStore.currentUser());
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
+  protected states = computed(() => this.sectionStore.appStore.getCategory('content_state'));
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -121,6 +123,10 @@ export class SectionAllListComponent {
 
   protected onTypeSelected(type: string): void {
     this.sectionStore.setSelectedCategory(type);
+  }
+
+  protected onStateSelected(state: string): void {
+    this.sectionStore.setSelectedState(state);
   }
 
   /******************************** actions ******************************************* */
