@@ -148,10 +148,11 @@ export const AppStore = signalStore(
     }),
     appConfigResource: rxResource({
       params: () => ({ 
+        fbUser: store.fbUser(),
         tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.tenantId) return of(undefined);
+        if (!params.fbUser || !params.tenantId) return of(undefined);
         return store.appConfigService.read(params.tenantId);
       }
     })
