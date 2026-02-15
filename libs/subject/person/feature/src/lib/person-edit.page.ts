@@ -74,7 +74,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
               <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="isReadOnly()" />
               <bk-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
               @if(hasRole('privileged') || hasRole('memberAdmin')) {
-                <bk-personal-rel-accordion [personKey]="personKey()" [readOnly]="isReadOnly()" />
+                <bk-personal-rel-accordion [person]="person" [readOnly]="isReadOnly()" />
                 <bk-workrel-accordion [personKey]="personKey()" [readOnly]="isReadOnly()" />
                 <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                 <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>

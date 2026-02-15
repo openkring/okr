@@ -114,6 +114,7 @@ export class TransferEditModalComponent {
         return { ...vm, subjects };
       });
     }
+    this.formDirty.set(true);
   }
 
   protected async selectObject(): Promise<void> {
@@ -127,6 +128,7 @@ export class TransferEditModalComponent {
         return { ...vm, objects };
       });
     }
+    this.formDirty.set(true);
   }
 
   protected async selectResource(): Promise<void> {
@@ -137,5 +139,6 @@ export class TransferEditModalComponent {
         return { ...vm, resource };
       });
     }
+    this.formDirty.set(true);
   }
 }

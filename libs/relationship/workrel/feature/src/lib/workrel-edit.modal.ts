@@ -118,6 +118,7 @@ export class WorkrelEditModalComponent {
         subjectType: person.gender
       };
     });
+    this.formDirty.set(true);
   }
 
   async selectPersonModal(): Promise<PersonModel | undefined> {
@@ -153,6 +154,7 @@ export class WorkrelEditModalComponent {
         objectType: org.type,
       };
     });
+    this.formDirty.set(true);
   }
 
   async selectOrgModal(): Promise<OrgModel | undefined> {

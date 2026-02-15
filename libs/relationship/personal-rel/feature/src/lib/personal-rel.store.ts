@@ -3,29 +3,32 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel, PersonalRelModel, PersonModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
 import { confirm } from '@bk2/shared-util-angular';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isPerson, isPersonalRel, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isPersonalRel, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
 import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
 
 import { PersonalRelEditModalComponent } from './personal-rel-edit.modal';
 
 export type PersonalRelState = {
+  person: PersonModel | undefined;
+  showOnlyCurrent: boolean;
+
+  // filters
   searchTerm: string;
   selectedTag: string;
   selectedPersonalRelType: string;
-  personKey: string | undefined;
-  showOnlyCurrent: boolean;
 };
 
 const initialState: PersonalRelState = {
   searchTerm: '',
   selectedTag: '',
   selectedPersonalRelType: 'all',
-  personKey: undefined,
+  person: undefined,
   showOnlyCurrent: true,
 };
 
@@ -40,11 +43,11 @@ export const PersonalRelStore = signalStore(
   withProps((store) => ({
     personalRelsResource: rxResource({
       params: () => ({
-        personKey: store.personKey(),
+        person: store.person(),
       }),
       stream: ({params}) => {
-        const personalRels$ = params.personKey ?
-          store.personalRelService.listPersonalRelsOfPerson(params.personKey) :  
+        const personalRels$ = params.person ?
+          store.personalRelService.listPersonalRelsOfPerson(params.person.bkey) :  
           store.personalRelService.list();        
         return personalRels$.pipe(
           debugListLoaded('PersonalRelStore.personalRels', store.appStore.currentUser())
@@ -97,9 +100,8 @@ export const PersonalRelStore = signalStore(
         patchState(store, { selectedPersonalRelType });
       },
 
-      setPersonKey(personKey: string) {
-        patchState(store, { personKey });
-        store.personalRelsResource.reload();
+      setPerson(person: PersonModel) {
+        patchState(store, { person });
       },
 
       setShowMode(showOnlyCurrent: boolean) {
@@ -118,20 +120,22 @@ export const PersonalRelStore = signalStore(
       /******************************** actions ******************************************* */
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
+        const person = store.person();
+        if (!person) return;
         const newPersonalRel = new PersonalRelModel(store.tenantId());
-        newPersonalRel.subjectKey = store.currentPerson().bkey;
-        newPersonalRel.subjectFirstName = store.currentPerson().firstName;
-        newPersonalRel.subjectLastName = store.currentPerson().lastName;
-        newPersonalRel.subjectGender = store.currentPerson().gender;
+        newPersonalRel.subjectKey = person.bkey;
+        newPersonalRel.subjectFirstName = person.firstName;
+        newPersonalRel.subjectLastName = person.lastName;
+        newPersonalRel.subjectGender = person.gender;
 
-        newPersonalRel.objectKey = store.currentPerson().bkey;
-        newPersonalRel.objectFirstName = store.currentPerson().firstName;
-        newPersonalRel.objectLastName = store.currentPerson().lastName;
-        newPersonalRel.objectGender = store.currentPerson().gender;
+        newPersonalRel.objectKey = person.bkey;
+        newPersonalRel.objectFirstName = person.firstName;
+        newPersonalRel.objectLastName = person.lastName;
+        newPersonalRel.objectGender = person.gender;
 
         newPersonalRel.type = 'partner';
         newPersonalRel.validFrom = getTodayStr();
-        newPersonalRel.validTo = getTodayStr();
+        newPersonalRel.validTo = END_FUTURE_DATE_STR;
         await this.edit(newPersonalRel, readOnly);
       },
 

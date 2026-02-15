@@ -132,6 +132,9 @@ export class PersonalRelEditModalComponent {
         };
       });
     }
+    
+    // Mark form as dirty since we changed the data
+    this.formDirty.set(true);
   }
 
   async selectPersonModal(): Promise<PersonModel | undefined> {
