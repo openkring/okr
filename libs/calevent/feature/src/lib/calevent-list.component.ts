@@ -266,7 +266,7 @@ export class CalEventListComponent {
     } else {  // daily event, once, one day
       calevent.endDate = calevent.startDate;  
       calevent.startTime = '';
-      calevent.fullDay = true;
+      calevent.durationMinutes = 1440;  // full day event
     }
     calevent.name = parts.name || '';
     calevent.locationKey = parts.location || '';

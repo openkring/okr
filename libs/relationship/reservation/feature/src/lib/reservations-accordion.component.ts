@@ -7,7 +7,6 @@ import { ReservationModel, RoleName } from '@bk2/shared-models';
 import { DurationPipe, getSvgIconUrl, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent } from '@bk2/shared-ui';
 import { coerceBoolean, getCategoryIcon, hasRole, isOngoing } from '@bk2/shared-util-core';
-
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 import { ReservationStore } from './reservation.store';

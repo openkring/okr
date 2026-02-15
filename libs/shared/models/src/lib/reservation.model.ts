@@ -1,4 +1,4 @@
-import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME } from '@bk2/shared-constants';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarInfo } from './avatar-info';
 import { MoneyModel } from './money.model';
@@ -41,9 +41,12 @@ export class ReservationModel implements BkModel, NamedModel, SearchableModel, T
   public resource: AvatarInfo | undefined; // avatar for resource or account
 
   // event details
-  public caleventKey: string | undefined;  // for more details. Set caleventId in the reservation store to load the CalEventModel
   public startDate = DEFAULT_DATE;
+  public startTime = DEFAULT_TIME; // start time of the reservation
+  public fullDay = false; // whether the reservation is a full-day event (affects durationMinutes and which fields are shown)
+  public durationMinutes = 60; // duration of the event in minutes, 60, 120, 1440 = full day
   public endDate = DEFAULT_DATE;
+  // repeating reservations are not supported for now
 
   public participants = '';
   public area = '';

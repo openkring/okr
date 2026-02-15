@@ -279,6 +279,10 @@ export const ReservationStore = signalStore(
         return store.appStore.getResource(resourceKey);
       },
 
+      getLocale(): string {
+        return store.appStore.appConfig().locale;
+      },
+
       /******************************** actions ******************************************* */
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
@@ -304,6 +308,7 @@ export const ReservationStore = signalStore(
             reasons: this.getReasons(),
             states: this.getStates(),
             periodicities: this.getPeriodicities(),
+            locale: this.getLocale(),
             isSelectable,
             readOnly
           }

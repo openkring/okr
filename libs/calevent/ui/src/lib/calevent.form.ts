@@ -17,8 +17,8 @@ import { calEventValidations } from '@bk2/calevent-util';
   standalone: true,
   imports: [
     vestForms,
-    CategorySelectComponent, ChipsComponent, NotesInputComponent, DateInputComponent, TimeInputComponent, NumberInputComponent, CheckboxComponent,
-    TextInputComponent, ChipsComponent, ErrorNoteComponent, StringsComponent, AvatarsComponent,
+    CategorySelectComponent, ChipsComponent, NotesInputComponent, DateInputComponent, TimeInputComponent, NumberInputComponent,
+    TextInputComponent, ChipsComponent, ErrorNoteComponent, StringsComponent, AvatarsComponent, CheckboxComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -58,7 +58,7 @@ import { calEventValidations } from '@bk2/calevent-util';
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-checkbox name="fullDay" [checked]="fullDay()" (checkedChange)="onFieldChange('fullDay', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <bk-checkbox name="fullDay" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             @if(!fullDay()) {
@@ -171,9 +171,9 @@ export class CalEventFormComponent {
   protected seriesId = linkedSignal(() => this.formData().seriesId ?? '');
   protected type = linkedSignal(() => this.formData().type ?? DEFAULT_CALEVENT_TYPE);
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
+  protected fullDay = linkedSignal(() => this.formData().fullDay ?? false);
   protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
   protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
-  protected fullDay = linkedSignal(() => this.formData().durationMinutes === 1440);
   protected endDate = linkedSignal(() => this.formData().endDate ?? this.startDate());
   protected durationMinutes = linkedSignal(() => this.formData().durationMinutes ?? 60);
   protected periodicity = linkedSignal(() => this.formData().periodicity ?? DEFAULT_PERIODICITY);
@@ -200,11 +200,6 @@ export class CalEventFormComponent {
   protected nameLength = NAME_LENGTH;
 
   /******************************* actions *************************************** */
-  protected toggleFullDay(): void {
-
-    this.fullDay.update(fd => !fd);
-  }
-
   public async selectPerson(): Promise<void> {
     const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL);
     if (avatar) {
@@ -212,6 +207,24 @@ export class CalEventFormComponent {
         responsiblePersons.push(avatar);
         this.onFieldChange('responsiblePersons', responsiblePersons);
     }
+  }
+
+  protected onFullDayChange(isFullDay: boolean): void {
+    if (isFullDay) {
+      this.formData.update(vm => ({
+        ...vm,
+        fullDay: true,
+        durationMinutes: 1440,
+        startTime: ''
+      }));
+    } else {
+      this.formData.update(vm => ({
+        ...vm,
+        fullDay: false,
+        endDate: vm.startDate
+      }));
+    }
+    this.dirty.emit(true);
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo[]): void {
@@ -222,15 +235,6 @@ export class CalEventFormComponent {
         break;
       case 'calendars':
         this.formData.update(vm => ({ ...vm, calendars: fieldValue as string[] }));
-        break;
-      case 'fullDay':
-        this.formData.update(vm => {
-          const isFullDay = fieldValue as boolean;
-          return {
-            ...vm,
-            durationMinutes: isFullDay ? 1440 : 60
-          };
-        });
         break;
       default:
         this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));

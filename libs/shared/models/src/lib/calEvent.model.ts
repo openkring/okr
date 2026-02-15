@@ -19,8 +19,8 @@ export class CalEventModel implements BkModel, NamedModel, SearchableModel, Tagg
 
   public startDate = DEFAULT_DATE; // start date of the event
   public startTime = DEFAULT_TIME; // start time of the event
-  public durationMinutes = 60; // duration of the event in minutes, 60, 120
-  public fullDay = false; // whether the event lasts the whole day or several whole days
+  public fullDay = false; // whether the event is a full-day event (affects durationMinutes and which fields are shown)
+  public durationMinutes = 60; // duration of the event in minutes, 60, 120, 1440 = full day
   public endDate = DEFAULT_DATE; // end date of the event, only for fullDay, multi-day events
 
   public periodicity = DEFAULT_PERIODICITY; // how often the event repeats

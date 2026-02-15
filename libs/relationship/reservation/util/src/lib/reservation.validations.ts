@@ -12,7 +12,6 @@ export const reservationValidations = staticSuite((model: ReservationModel, tena
   avatarValidations('reserver', model.reserver);
   avatarValidations('resource', model.resource);
 
-  stringValidations('caleventKey', model.caleventKey, SHORT_NAME_LENGTH);
   dateValidations('startDate', model.startDate);
   dateValidations('endDate', model.endDate);
   stringValidations('participants', model.participants, SHORT_NAME_LENGTH);

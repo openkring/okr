@@ -3,9 +3,9 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTi
 import { vestForms } from 'ngx-vest-forms';
 import { AsyncPipe } from '@angular/common';
 
-import { DEFAULT_CURRENCY, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_RES_STATE } from '@bk2/shared-constants';
+import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME } from '@bk2/shared-constants';
 import { CategoryListModel, ReservationModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategorySelectComponent, CheckboxComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent, TimeInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getAvatarName, hasRole } from '@bk2/shared-util-core';
 import { TranslatePipe } from '@bk2/shared-i18n';
 
@@ -19,7 +19,8 @@ import { AvatarPipe } from '@bk2/avatar-ui';
     vestForms,
     AsyncPipe, TranslatePipe, AvatarPipe,
     TextInputComponent,
-    NumberInputComponent, ChipsComponent, NotesInputComponent, CategorySelectComponent,
+    NumberInputComponent, ChipsComponent, NotesInputComponent, CategorySelectComponent, DateInputComponent, 
+    CheckboxComponent, TimeInputComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonImg, IonLabel, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -88,10 +89,52 @@ import { AvatarPipe } from '@bk2/avatar-ui';
 
       <ion-card>
         <ion-card-header>
+          <ion-card-title>Zeitliche Angaben</ion-card-title>
+        </ion-card-header>
+        <ion-card-content class="ion-no-padding">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <bk-checkbox name="fullDay" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+              </ion-col>
+            </ion-row>
+            @if(!fullDay()) {
+              <ion-row>
+                <ion-col size="12" size-md="6" size-lg="4">
+                  <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                </ion-col>
+                <ion-col size="12" size-md="6" size-lg="4">
+                  <bk-time-input name="startTime" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                </ion-col>
+                <ion-col size="12" size-md="6" size-lg="4">
+                  <bk-number-input name="durationMinutes" [value]="durationMinutes()" (valueChange)="onFieldChange('durationMinutes', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+            } @else {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <bk-date-input name="startDate"  [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <bk-date-input name="endDate"  [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [showHelper]=true />
+                </ion-col>
+              </ion-row>
+            }
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card>
+        <ion-card-header>
           <ion-card-title>Angaben zum Anlass</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
+            <ion-row>
+              <ion-col size="12">
+                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" /> 
+              </ion-col>
+            </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6"> 
                 <bk-cat-select [category]="reasons()" [selectedItemName]="reason()" (selectedItemNameChange)="onFieldChange('reason', $event)" [withAll]=false [readOnly]="isReadOnly()" />
@@ -160,6 +203,7 @@ export class ReservationFormComponent {
   public readonly reasons = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
   public readonly periodicities = input.required<CategoryListModel>();
+  public readonly locale = input.required<string>();
   public readonly isSelectable = input(false);
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -187,6 +231,12 @@ export class ReservationFormComponent {
   protected resourceKey = computed(() => this.resourceAvatar()?.key ?? DEFAULT_KEY);
   protected resourceAvatarKey = computed(() => `resource.${this.resourceType()}:${this.resourceKey()}`);
 
+  protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
+  protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
+  protected durationMinutes = linkedSignal(() => this.formData().durationMinutes ?? 60);
+  protected endDate = linkedSignal(() => this.formData().endDate ?? this.startDate());
+  protected fullDay = linkedSignal(() => this.formData().fullDay ?? false);
+
   protected participants = linkedSignal(() => this.formData().participants ?? '');
   protected area = linkedSignal(() => this.formData().area ?? '');
   protected ref = linkedSignal(() => this.formData().ref ?? '');
@@ -212,6 +262,24 @@ export class ReservationFormComponent {
     this.formData.update((vm) => ({...vm, ...value}));
     debugFormModel('ReservationForm.onFormChange', this.formData(), this.currentUser());
     debugFormErrors('ReservationForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onFullDayChange(isFullDay: boolean): void {
+    if (isFullDay) {
+      this.formData.update(vm => ({
+        ...vm,
+        fullDay: true,
+        durationMinutes: 1440,
+        startTime: ''
+      }));
+    } else {
+      this.formData.update(vm => ({
+        ...vm,
+        fullDay: false,
+        endDate: vm.startDate
+      }));
+    }
+    this.dirty.emit(true);
   }
 
   protected hasRole(role: RoleName): boolean {

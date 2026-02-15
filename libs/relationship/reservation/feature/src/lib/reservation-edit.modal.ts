@@ -5,13 +5,13 @@ import { AvatarInfo, CalEventModel, CategoryListModel, PersonModel, PersonModelN
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, getAvatarName, hasRole, isPerson, isResource, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
+import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
 
 import { CalEventEditModalComponent } from '@bk2/calevent-feature';
+import { isCalEvent } from '@bk2/calevent-util';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { ReservationFormComponent } from '@bk2/relationship-reservation-ui';
-import { AppStore, PersonSelectModalComponent, ResourceSelectModalComponent } from '@bk2/shared-feature';
-import { isCalEvent } from '@bk2/calevent-util';
 import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
 
 @Component({
@@ -20,9 +20,7 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
   imports: [
     CommentsAccordionComponent, RelationshipToolbarComponent, HeaderComponent,
     ChangeConfirmationComponent, ReservationFormComponent,
-    IonContent, IonAccordionGroup, IonCard, IonCardContent,
-    IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol,
-    IonButton
+    IonContent, IonAccordionGroup, IonCard, IonCardContent
 ],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -47,57 +45,27 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
             />
           }
         }
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Zeitliche Angaben</ion-card-title>
-        </ion-card-header>
-        <ion-card-content class="ion-no-padding">
-          <ion-grid>
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <ion-button expand="block" (click)="selectCalevent()">Ändern</ion-button>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                tbd
-                <!-- <bk-date-input name="startDate" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [showHelper]=true [readOnly]="isReadOnly()" /> -->
-              </ion-col>
-              <!--
-              <ion-col size="12" size-md="6"> 
-                <bk-text-input name="startTime" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [maxLength]=5 [mask]="timeMask" [readOnly]="isReadOnly()" />                                        
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-date-input name="endDate" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
-              </ion-col>
-              <ion-col size="12" size-md="6"> 
-                <bk-text-input name="endTime" [value]="endTime()" (valueChange)="onFieldChange('endTime', $event)" [maxLength]=5 [mask]="timeMask" [readOnly]="isReadOnly()" />                                        
-              </ion-col>
-    -->
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
 
-      @if(formData(); as formData) {
-        <bk-reservation-form
-          [formData]="formData"
-          (formDataChange)="onFormDataChange($event)"
-          [currentUser]="currentUser"
-          [allTags]="tags()"
-          [tenantId]="tenantId()"
-          [reasons]="reasons()"
-          [states]="states()"
-          [readOnly]="isReadOnly()"
-          [isSelectable]="isSelectable()"
-          [periodicities]="periodicities()"
-          (selectReserver)="selectReserver()"
-          (selectResource)="selectResource()"
-          (dirty)="formDirty.set($event)"
-          (valid)="formValid.set($event)"
-        />
+        @if(formData(); as formData) {
+          <bk-reservation-form
+            [formData]="formData"
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser"
+            [allTags]="tags()"
+            [tenantId]="tenantId()"
+            [reasons]="reasons()"
+            [states]="states()"
+            [locale]="locale()"
+            [readOnly]="isReadOnly()"
+            [isSelectable]="isSelectable()"
+            [periodicities]="periodicities()"
+            (selectReserver)="selectReserver()"
+            (selectResource)="selectResource()"
+            (dirty)="formDirty.set($event)"
+            (valid)="formValid.set($event)"
+          />
+        }
       }
-    }
 
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-card>
@@ -123,6 +91,7 @@ export class ReservationEditModalComponent {
   public states = input.required<CategoryListModel>();
   public periodicities = input.required<CategoryListModel>();
   public isSelectable = input<boolean>(false);
+  public locale = input.required<string>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
