@@ -207,6 +207,7 @@ export interface ChatConfig {
   description: string; // the description of the chat channel, default is ''
   type: string; // the type of the chat channel, default is 'messaging'
   showChannelList: boolean; // if true, the channel list is shown, default is true
+  matrixHomeserver?: string; // Matrix homeserver URL, default is 'https://matrix.bkchat.etke.host'
 }
 
 // --------------------------------------- EVENTS ----------------------------------------

@@ -230,45 +230,6 @@ import { AocRolesStore } from './aoc-roles.store';
         </ion-card-content>
       </ion-card>
       <bk-chips chipName="role" [storedChips]="roles()" (storedChipsChange)="onRoleChange($event)" [allChips]="allRoleNames()" [readOnly]="false" />
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>{{ '@aoc.roles.chat.title' | translate | async }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              <ion-col>{{ '@aoc.roles.chat.content' | translate | async }}</ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="6"></ion-col>
-              <ion-col size="6">
-                <ion-button (click)="checkChatUser()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{ 'chatbox' | svgIcon }}" slot="start" />
-                  {{ '@aoc.roles.chat.check' | translate | async }}
-                </ion-button>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="6"></ion-col>
-              <ion-col size="6">
-                <ion-button (click)="createStreamUser()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{ 'chatbox' | svgIcon }}" slot="start" />
-                  {{ '@aoc.roles.chat.add' | translate | async }}
-                </ion-button>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="6"></ion-col>
-              <ion-col size="6">
-                <ion-button (click)="revokeStreamUserToken()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{ 'chatbox' | svgIcon }}" slot="start" />
-                  {{ '@aoc.roles.chat.revoke' | translate | async }}
-                </ion-button>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
       <bk-result-log [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
   `,
@@ -340,18 +301,6 @@ export class AocRolesComponent {
 
   public async checkAuthorisation(): Promise<void> {
     await this.aocRolesStore.checkAuthorisation();
-  }
-
-  public checkChatUser(): void {
-    this.aocRolesStore.checkChatUser();
-  }
-
-  public revokeStreamUserToken(): void {
-    this.aocRolesStore.revokeStreamUserToken();
-  }
-
-  public createStreamUser(): void {
-    this.aocRolesStore.createStreamUser();
   }
 
   public impersonateUser(): void {

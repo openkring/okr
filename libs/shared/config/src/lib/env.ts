@@ -14,7 +14,7 @@ export interface BkEnvironment {
     measurementId: string;
   },
   services: {
-    chatStreamApiKey: string;
+    matrixHomeserver: string;
     appcheckRecaptchaEnterpriseKey: string;
     gmapKey: string;
     nxCloudAccessToken: string;

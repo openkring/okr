@@ -14,7 +14,6 @@ import { TrackerSectionComponent } from './tracker-section.component';
 import { HeroSectionComponent } from './hero-section.component';
 import { SwiperSectionComponent } from './swiper-section.component';
 import { ChartSectionComponent } from './chart-section.component';
-import { ChatSectionComponent } from './chat-section.component';
 import { MissingSectionComponent } from './missing-section.component';
 
 /**
@@ -29,7 +28,7 @@ import { MissingSectionComponent } from './missing-section.component';
     ArticleSectionComponent, TableSectionComponent, VideoSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleSectionComponent, GallerySectionComponent, TrackerSectionComponent,
-    HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent, ChatSectionComponent,
+    HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent,
     MissingSectionComponent
   ],
   providers: [SectionStore],
@@ -50,7 +49,6 @@ import { MissingSectionComponent } from './missing-section.component';
         @case('hero') { <bk-hero-section [section]="section" /> }
         @case('slider') { <bk-swiper-section [section]="section" /> }
         @case('chart') { <bk-chart-section [section]="section" /> }
-        @case('chat') { <bk-chat-section [section]="section" /> }
         @default { <bk-missing-section [section]="section" /> }
       }
     }

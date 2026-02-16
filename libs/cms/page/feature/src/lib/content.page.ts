@@ -90,6 +90,10 @@ import { PageStore } from './page.store';
     contain: none !important;
   }
 
+  ion-grid, ion-row {
+    height: 100%;
+  }
+
   /* PRINT CONTAINER */
   .print-content {
     display: block !important;

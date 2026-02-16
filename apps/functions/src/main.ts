@@ -5,9 +5,8 @@ import * as functions from 'firebase-functions'; // needed for logger
 
 import * as Test from './test';
 import * as Replication from './replication';
-import * as Stream from './stream';
 import * as Auth from './auth';
-import * as Fcm from './fcm';
+import * as Matrix from './matrix';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -23,6 +22,7 @@ const app: Express = express();
 app.use(cors({ 
   origin: [
     'http://localhost:4200',
+    'http://localhost:4201',
     'https://scs-app-54aef.web.app',
     'https://scs-app-54aef.firebaseapp.com',
     'https://bkaiser-org.web.app',
@@ -57,19 +57,10 @@ export const onPersonChange = Replication.onPersonChange;
 export const onOrgChange = Replication.onOrgChange;
 export const onGroupChange = Replication.onGroupChange;
 
-// stream
-export const getStreamUserToken = Stream.getStreamUserToken;
-export const getOtherStreamUserToken = Stream.getOtherStreamUserToken; // uid
-export const revokeOtherStreamUserToken = Stream.revokeOtherStreamUserToken; // uid 
-
-export const onUserCreated = Stream.onUserCreated;
-export const onUserDeleted = Stream.onUserDeleted;
-export const createOtherStreamUser = Stream.createOtherStreamUser; // uid, name, email, image
-
-// fcm (Firebase Cloud Messaging)
-export const sendChatNotification = Fcm.sendChatNotification;
-export const saveFcmToken = Fcm.saveFcmToken;
-export const checkUnreadMessagesScheduled = Fcm.checkUnreadMessagesScheduled;
+// matrix (Matrix chat integration)
+export const ensureMatrixUser = Matrix.ensureMatrixUser;
+export const ensureGroupRoom = Matrix.ensureGroupRoom;
+export const syncUserProfileToMatrix = Matrix.syncUserProfileToMatrix;
 
 // test
 export const getEcho = Test.getEcho;

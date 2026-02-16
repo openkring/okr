@@ -11,3 +11,7 @@ export * from './lib/section-config';
 
 export * from './lib/button-widget';
 export * from './lib/persons-widget';
+
+export * from './lib/matrix-room-list.component';
+export * from './lib/matrix-message-list.component';
+export * from './lib/matrix-message-input.component';

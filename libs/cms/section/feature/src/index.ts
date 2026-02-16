@@ -3,7 +3,7 @@ export * from './lib/article-section.component';
 export * from './lib/button-section.component';
 export * from './lib/calendar-section.component';
 export * from './lib/chart-section.component';
-export * from './lib/chat-section.component';
+export * from './lib/matrix-chat-section.component';
 export * from './lib/gallery-section.component';
 export * from './lib/gallery.modal';
 export * from './lib/hero-section.component';

@@ -12,7 +12,6 @@ let firebaseConfig = {
   measurementId: '',
 };
 const servicesConfig = {
-  chatStreamApiKey: '',
   appcheckRecaptchaEnterpriseKey: '', // Always from NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY
   gmapKey: '',
   nxCloudAccessToken: '',
@@ -85,7 +84,6 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   console.log('NODE_ENV!=production (' + process.env.NODE_ENV + '), assuming local or CI. Loading .env for variables.');
 }
-servicesConfig.chatStreamApiKey = process.env.STREAM_API_KEY || '';
 
 // load service configuration from separate environment variables
 servicesConfig.appcheckRecaptchaEnterpriseKey = process.env.NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY || '';
@@ -107,7 +105,6 @@ function checkRequiredSettings() {
   if (!firebaseConfig.messagingSenderId) errors.push('messagingSenderId (from parsed FIREBASE_WEBAPP_CONFIG)');
   if (!firebaseConfig.appId) errors.push('appId (from parsed FIREBASE_WEBAPP_CONFIG)');
   if (!tenantId) errors.push('tenantId (derived from NX_TASK_TARGET_PROJECT)');
-  if (!servicesConfig.chatStreamApiKey) errors.push('chatStreamApiKey (from STREAM_API_KEY)');
   if (!servicesConfig.appcheckRecaptchaEnterpriseKey) errors.push('appcheckRecaptchaEnterpriseKey (from NEXT_PUBLIC_FIREBASE_RECAPTCHA_KEY)');
   if (!servicesConfig.gmapKey) errors.push('gmapKey (from NEXT_PUBLIC_SVC_GMAP_KEY)');
   if (!servicesConfig.nxCloudAccessToken) errors.push('nxCloudAccessToken (from NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN)');
@@ -144,7 +141,7 @@ export const environment: BkEnvironment = {
     measurementId: '${firebaseConfig.measurementId}',
   },
   services: {
-    chatStreamApiKey: '${servicesConfig.chatStreamApiKey}',
+    matrixHomeserver: 'https://matrix.bkchat.etke.host',
     appcheckRecaptchaEnterpriseKey: '${servicesConfig.appcheckRecaptchaEnterpriseKey}',
     gmapKey: '${servicesConfig.gmapKey}',
     nxCloudAccessToken: '${servicesConfig.nxCloudAccessToken}',
