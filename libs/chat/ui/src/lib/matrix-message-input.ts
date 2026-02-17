@@ -162,7 +162,7 @@ import {  IonTextarea, IonButton, IonIcon, ActionSheetController } from '@ionic/
     />
   `
 })
-export class MatrixMessageInputComponent {
+export class MatrixMessageInput {
   private actionSheetController = inject(ActionSheetController);
 
   placeholder = input<string>('Type a message...');

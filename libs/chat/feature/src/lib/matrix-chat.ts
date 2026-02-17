@@ -1,26 +1,25 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Component, PLATFORM_ID, computed, effect, inject, input, OnDestroy, OnInit } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { menuOutline, informationCircleOutline, chatbubblesOutline } from 'ionicons/icons';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge } from '@ionic/angular/standalone';
 
-import { ChatSection } from '@bk2/shared-models';
-import { SpinnerComponent, OptionalCardHeaderComponent } from '@bk2/shared-ui';
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { SpinnerComponent } from '@bk2/shared-ui';
 
-import { MatrixRoomListComponent, MatrixMessageListComponent, MatrixMessageInputComponent } from '@bk2/cms-section-ui';
+import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
 
-import { MatrixChatSectionStore } from './matrix-chat-section.store';
+import { MatrixChatStore } from './matrix-chat.store';
 
 @Component({
-  selector: 'bk-matrix-chat-section',
+  selector: 'bk-matrix-chat-overview',
   standalone: true,
   imports: [
-    SpinnerComponent, OptionalCardHeaderComponent,
-    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
-    MatrixRoomListComponent, MatrixMessageListComponent, MatrixMessageInputComponent,
+    SpinnerComponent,
+    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge,
+    MatrixRoomList, MatrixMessageList, MatrixMessageInput,
+    SvgIconPipe,
   ],
-  providers: [MatrixChatSectionStore],
+  providers: [MatrixChatStore],
   styles: [`
     :host {
       display: block;
@@ -106,17 +105,20 @@ import { MatrixChatSectionStore } from './matrix-chat-section.store';
   `],
   template: `
     @if (isMatrixReady()) {
-      <ion-card>
-        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
-        
-        <!-- Sync status indicator -->
-        @if (syncState() !== 'PREPARED') {
+      <ion-card>        
+        <!-- Sync status indicator - only show for non-ready states -->
+        @if (syncState() !== 'PREPARED' && syncState() !== 'SYNCING') {
           <div class="sync-status">
             @switch (syncState()) {
-              @case ('SYNCING') { Syncing messages... }
-              @case ('RECONNECTING') { Reconnecting... }
-              @case ('ERROR') { Connection error }
-              @default { Connecting... }
+              @case ('RECONNECTING') { 
+                <ion-badge color="warning">Reconnecting...</ion-badge>
+              }
+              @case ('ERROR') { 
+                <ion-badge color="danger">Connection error</ion-badge>
+              }
+              @default { 
+                <ion-badge color="medium">Connecting...</ion-badge>
+              }
             }
           </div>
         }
@@ -143,7 +145,7 @@ import { MatrixChatSectionStore } from './matrix-chat-section.store';
                     @if (showRoomList()) {
                       <ion-buttons slot="start">
                         <ion-button (click)="toggleMobileRoomList()">
-                          <ion-icon name="menu-outline"></ion-icon>
+                          <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
                         </ion-button>
                       </ion-buttons>
                     }
@@ -152,7 +154,7 @@ import { MatrixChatSectionStore } from './matrix-chat-section.store';
                     
                     <ion-buttons slot="end">
                       <ion-button (click)="onRoomInfo()">
-                        <ion-icon name="information-circle-outline"></ion-icon>
+                        <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
                       </ion-button>
                     </ion-buttons>
                   </ion-toolbar>
@@ -183,7 +185,7 @@ import { MatrixChatSectionStore } from './matrix-chat-section.store';
                 />
               } @else {
                 <div class="empty-state">
-                  <ion-icon name="chatbubbles-outline" size="large"></ion-icon>
+                  <ion-icon src="{{'chatbubbles' | svgIcon}}" size="large"></ion-icon>
                   <div>
                     <h3>Select a room to start chatting</h3>
                     @if (rooms().length === 0) {
@@ -202,13 +204,13 @@ import { MatrixChatSectionStore } from './matrix-chat-section.store';
     }
   `
 })
-export class MatrixChatSectionComponent implements OnInit, OnDestroy {
-  private readonly store = inject(MatrixChatSectionStore);
+export class MatrixChat implements OnInit, OnDestroy {
+  private readonly store = inject(MatrixChatStore);
   private readonly platformId = inject(PLATFORM_ID);
   private isInitializing = false; // Guard flag to prevent multiple initializations
 
-  // Inputs
-  public section = input<ChatSection>();
+  // inputs
+  public showRoomList = input<boolean>(true);
 
   // Computed values from store
   protected readonly syncState = this.store.matrixSyncState;
@@ -217,6 +219,7 @@ export class MatrixChatSectionComponent implements OnInit, OnDestroy {
   protected readonly currentRoomId = computed(() => this.store.currentRoomId());
   protected readonly totalUnreadCount = this.store.totalUnreadCount;
   protected readonly matrixUserId = computed(() => this.store.matrixUser()?.id);
+  protected readonly homeserverUrl = computed(() => this.store.homeServerUrl());
   
   // Local state
   protected readonly mobileRoomListVisible = computed(() => false); // TODO: make this stateful
@@ -226,12 +229,6 @@ export class MatrixChatSectionComponent implements OnInit, OnDestroy {
   protected readonly messages = toSignal(this.store.getMessages(), { initialValue: [] });
   protected readonly typingUsers = computed(() => this.currentRoom()?.typingUsers || []);
 
-  // Derived from section input
-  protected readonly title = computed(() => this.section()?.title);
-  protected readonly subTitle = computed(() => this.section()?.subTitle);
-  protected readonly showRoomList = computed(() => this.section()?.properties.showChannelList ?? true);
-  protected readonly homeserverUrl = computed(() => 'https://matrix.bkchat.etke.host'); // TODO: get from env
-
   // Ready state
   protected readonly isMatrixReady = computed(() => 
     this.store.matrixUser() && 
@@ -240,16 +237,8 @@ export class MatrixChatSectionComponent implements OnInit, OnDestroy {
   );
 
   constructor() {
-    // Register icons
-    addIcons({ menuOutline, informationCircleOutline, chatbubblesOutline });
-    
-    // Set up config when section changes
     effect(() => {
-      const section = this.section();
-      if (section) {
-        this.store.setConfig(section.properties);
-        this.store.setShowRoomList(section.properties.showChannelList ?? true);
-      }
+      this.store.setShowRoomList(this.showRoomList());
     });
   }
 
@@ -277,43 +266,27 @@ export class MatrixChatSectionComponent implements OnInit, OnDestroy {
     this.isInitializing = true;
 
     try {
-      // Check if we returned from OIDC redirect and need to exchange the login token
-      const needsTokenExchange = sessionStorage.getItem('matrix_needs_token_exchange');
-      const loginToken = localStorage.getItem('matrix_login_token');
-
-      if (needsTokenExchange === 'true' && loginToken) {
-        console.log('MatrixChatSectionComponent: Handling OIDC callback');
-        
-        // Exchange login token for access token
-        const token = await this.store.handleMatrixOidcCallback(loginToken);
-        
-        // Clean up
-        sessionStorage.removeItem('matrix_needs_token_exchange');
-        localStorage.removeItem('matrix_login_token');
-        
-        // Initialize with the token
-        await this.store.initializeMatrix(matrixUser, token);
-        return;
-      }
-
-      // Try to get existing token or initiate OIDC flow
+      console.log('MatrixChat: Getting Matrix credentials via Cloud Function');
+      
+      // Call Cloud Function to get Matrix credentials
+      // This works for any Firebase auth method (email, phone, Google, etc.)
       const token = await this.store.getMatrixToken();
       
-      if (token) {
-        // We have a valid token, initialize Matrix
-        await this.store.initializeMatrix(matrixUser, token);
-      } else {
-        // No token available, need to initiate OIDC login
-        console.log('MatrixChatSectionComponent: No Matrix token, initiating OIDC login');
-        
-        // Store current URL to return to after authentication
-        sessionStorage.setItem('matrix_return_url', window.location.pathname);
-        
-        // This will redirect to Matrix SSO
-        await this.store.initiateMatrixOidcLogin();
+      if (!token) {
+        throw new Error('Failed to get Matrix credentials');
       }
+
+      // Initialize Matrix client with the credentials
+      await this.store.initializeMatrix(matrixUser, token);
+      
+      console.log('MatrixChat: Matrix initialized successfully');
     } catch (error) {
-      console.error('MatrixChatSectionComponent: Failed to initialize Matrix:', error);
+      console.error('MatrixChat: Failed to initialize Matrix:', error);
+      // Clear cached tokens on failure
+      localStorage.removeItem('matrix_access_token');
+      localStorage.removeItem('matrix_user_id');
+      localStorage.removeItem('matrix_device_id');
+      localStorage.removeItem('matrix_homeserver');
     } finally {
       this.isInitializing = false;
     }
@@ -405,7 +378,9 @@ export class MatrixChatSectionComponent implements OnInit, OnDestroy {
     // TODO: Show thread view
   }
 
+  // show room info (e.g., members, settings)
   onRoomInfo() {
+
     // Show room information
     console.log('Room info clicked');
     // TODO: Show room info modal

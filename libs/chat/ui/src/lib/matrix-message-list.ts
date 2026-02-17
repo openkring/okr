@@ -1,14 +1,17 @@
 import { Component, computed, input, output, viewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonAvatar, IonIcon, IonChip } from '@ionic/angular/standalone';
-import { MatrixMessage } from '@bk2/cms-section-data-access';
+
+import { SvgIconPipe } from '@bk2/shared-pipes';
+import { MatrixMessage } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-matrix-message-list',
   standalone: true,
   imports: [
     CommonModule, 
-    IonAvatar, IonIcon, IonChip
+    IonAvatar, IonIcon, IonChip,
+    SvgIconPipe,
   ],
   styles: [`
     :host {
@@ -242,7 +245,7 @@ import { MatrixMessage } from '@bk2/cms-section-data-access';
                       }
                       @case ('m.file') {
                         <div class="message-file" (click)="fileClicked.emit(message); $event.stopPropagation()">
-                          <ion-icon name="document-outline"></ion-icon>
+                          <ion-icon src="{{'document' | svgIcon}}"></ion-icon>
                           <span>{{ message.body }}</span>
                         </div>
                       }
@@ -255,7 +258,7 @@ import { MatrixMessage } from '@bk2/cms-section-data-access';
                             class="location-link"
                             (click)="$event.stopPropagation()"
                           >
-                            <ion-icon name="location-outline"></ion-icon>
+                            <ion-icon src="{{'location' | svgIcon}}"></ion-icon>
                             View on map
                           </a>
                         </div>
@@ -289,7 +292,7 @@ import { MatrixMessage } from '@bk2/cms-section-data-access';
                     class="thread-indicator"
                     (click)="message.relatesTo && threadClicked.emit(message.relatesTo.eventId)"
                   >
-                    <ion-icon name="chatbox-outline"></ion-icon>
+                    <ion-icon src="{{'chatbox' | svgIcon}}"></ion-icon>
                     View thread
                   </div>
                 }
@@ -301,7 +304,7 @@ import { MatrixMessage } from '@bk2/cms-section-data-access';
     </div>
   `
 })
-export class MatrixMessageListComponent implements AfterViewInit {
+export class MatrixMessageList implements AfterViewInit {
   messages = input.required<MatrixMessage[]>();
   currentUserId = input<string>();
   homeserverUrl = input<string>('https://matrix.bkchat.etke.host');

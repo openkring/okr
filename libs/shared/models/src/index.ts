@@ -11,6 +11,7 @@ export * from './lib/calendar.model';
 export * from './lib/calEvent.model';
 export * from './lib/category-list.model';
 export * from './lib/category.model';
+export * from './lib/chat.model';
 export * from './lib/comment.model';
 export * from './lib/competition-level.model';
 export * from './lib/db-query.model';

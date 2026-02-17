@@ -10,7 +10,6 @@ import { ArticleSectionComponent } from './article-section.component';
 import { ButtonSectionComponent } from './button-section.component';
 import { CalendarSectionComponent } from './calendar-section.component';
 import { ChartSectionComponent } from './chart-section.component';
-import { MatrixChatSectionComponent } from './matrix-chat-section.component';
 import { GallerySectionComponent } from './gallery-section.component';
 import { HeroSectionComponent } from './hero-section.component';
 import { IframeSectionComponent } from './iframe-section.component';
@@ -40,7 +39,7 @@ import { NewsSectionComponent } from './news-section.component';
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleSectionComponent, GallerySectionComponent, TrackerSectionComponent,
-    HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent, MatrixChatSectionComponent,
+    HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent,
     InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent,
     IonItem, IonLabel
   ],
@@ -65,9 +64,6 @@ import { NewsSectionComponent } from './news-section.component';
           }
           @case('chart') {
             <bk-chart-section [section]="section" />
-          }
-          @case('chat') {
-            <bk-matrix-chat-section [section]="section" />
           }
           @case('events') {
             <bk-events-section [section]="section" [editMode]="editMode()" />

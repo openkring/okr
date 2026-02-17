@@ -2,7 +2,8 @@ import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonList, IonItem, IonLabel, IonBadge, IonAvatar } from '@ionic/angular/standalone';
 
-import { MatrixRoom } from '@bk2/cms-section-data-access';
+import { MatrixRoom } from '@bk2/shared-models';
+
 
 @Component({
   selector: 'bk-matrix-room-list',
@@ -144,7 +145,7 @@ import { MatrixRoom } from '@bk2/cms-section-data-access';
     </ion-list>
   `
 })
-export class MatrixRoomListComponent {
+export class MatrixRoomList {
   rooms = input.required<MatrixRoom[]>();
   selectedRoomId = input<string>();
 

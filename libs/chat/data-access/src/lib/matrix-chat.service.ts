@@ -1,57 +1,10 @@
+
 import { Injectable } from '@angular/core';
 import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 
-export interface MatrixConfig {
-  homeserverUrl: string;
-  userId?: string;
-  accessToken?: string;
-  deviceId?: string;
-}
-
-export interface MatrixMessage {
-  eventId: string;
-  roomId: string;
-  sender: string;
-  senderName: string;
-  senderAvatar?: string;
-  body: string;
-  timestamp: number;
-  type: string;
-  content: any;
-  relatesTo?: {
-    eventId: string;
-    relationType: string;
-  };
-  reactions?: Map<string, Set<string>>; // emoji -> Set of user IDs
-  isRedacted: boolean;
-  isEdited: boolean;
-}
-
-export interface MatrixRoom {
-  roomId: string;
-  name: string;
-  avatar?: string;
-  topic?: string;
-  isDirect: boolean;
-  unreadCount: number;
-  lastMessage?: MatrixMessage;
-  members: MatrixMember[];
-  typingUsers: string[];
-}
-
-export interface MatrixMember {
-  userId: string;
-  displayName: string;
-  avatarUrl?: string;
-  membership: string;
-}
-
-export interface TypingNotification {
-  roomId: string;
-  users: string[];
-}
+import { MatrixConfig, MatrixMessage, MatrixRoom, TypingNotification } from '@bk2/shared-models';
 
 @Injectable({
   providedIn: 'root'
@@ -121,15 +74,25 @@ export class MatrixChatService {
       console.log('MatrixChatService: Client startClient() completed');
       
       // Wait for initial sync to reach PREPARED state (with timeout)
-      const syncReady = await this.waitForSyncState('PREPARED', 10000).catch(() => {
-        console.warn('MatrixChatService: Initial sync timeout - continuing anyway');
+      const syncReady = await this.waitForSyncState('PREPARED', 30000).catch(() => {
+        console.warn('MatrixChatService: Initial sync timeout after 30s');
+        
+        // After timeout, check if we have rooms - if so, consider it "ready enough"
+        const rooms = this.client?.getRooms() || [];
+        if (rooms.length > 0 || this.syncState$.value === 'SYNCING') {
+          console.log('MatrixChatService: Forcing sync state to PREPARED (have rooms or actively syncing)');
+          this.syncState$.next('PREPARED');
+          this.updateRoomsList();
+          return true;
+        }
+        
         return false;
       });
       
       if (syncReady) {
         console.log('MatrixChatService: Initial sync completed successfully');
       } else {
-        console.warn('MatrixChatService: Proceeding without waiting for sync completion');
+        console.warn('MatrixChatService: Proceeding without successful sync');
       }
     } catch (error) {
       console.error('MatrixChatService: Failed to initialize client', error);
@@ -182,6 +145,13 @@ export class MatrixChatService {
 
     // Room events
     this.client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined) => {
+      console.log(`MatrixChatService: Timeline event`, {
+        roomId: room?.roomId,
+        eventType: event.getType(),
+        eventId: event.getId(),
+        isRoomMessage: event.getType() === EventType.RoomMessage
+      });
+      
       if (room && event.getType() === EventType.RoomMessage) {
         this.handleNewMessage(event, room);
       }
@@ -257,15 +227,38 @@ export class MatrixChatService {
       return;
     }
 
-    const timeline = room.getLiveTimeline();
-    const events = timeline.getEvents();
-    const messages = events
-      .filter(e => e.getType() === EventType.RoomMessage)
-      .map(e => this.eventToMessage(e, room));
+    try {
+      const timeline = room.getLiveTimeline();
+      const events = timeline.getEvents();
+      
+      console.log(`MatrixChatService: Loading messages for room ${roomId}, found ${events.length} events in timeline`);
+      
+      // If we have few or no events, try to paginate back to load more
+      if (events.length < 20) {
+        console.log('MatrixChatService: Timeline has few events, attempting to paginate back');
+        try {
+          // Paginate backwards to load more messages
+          await this.client.paginateEventTimeline(timeline, { backwards: true, limit: 50 });
+          console.log(`MatrixChatService: After pagination, timeline has ${timeline.getEvents().length} events`);
+        } catch (paginateError) {
+          console.warn('MatrixChatService: Failed to paginate timeline:', paginateError);
+        }
+      }
+      
+      // Get all events from timeline and convert to messages
+      const allEvents = timeline.getEvents();
+      const messages = allEvents
+        .filter(e => e.getType() === EventType.RoomMessage)
+        .map(e => this.eventToMessage(e, room));
 
-    const subject = this.messages$.get(roomId);
-    if (subject) {
-      subject.next(messages);
+      console.log(`MatrixChatService: Loaded ${messages.length} messages for room ${roomId}`);
+
+      const subject = this.messages$.get(roomId);
+      if (subject) {
+        subject.next(messages);
+      }
+    } catch (error) {
+      console.error('MatrixChatService: Error loading messages for room:', error);
     }
   }
 
@@ -273,12 +266,22 @@ export class MatrixChatService {
    * Handle new incoming messages
    */
   private handleNewMessage(event: MatrixEvent, room: Room): void {
+    console.log(`MatrixChatService: New message in room ${room.roomId}`, {
+      eventId: event.getId(),
+      sender: event.getSender(),
+      type: event.getType(),
+      content: event.getContent()
+    });
+    
     const message = this.eventToMessage(event, room);
     const subject = this.messages$.get(room.roomId);
     
     if (subject) {
       const currentMessages = subject.value;
+      console.log(`MatrixChatService: Adding message to list (current: ${currentMessages.length}, new total: ${currentMessages.length + 1})`);
       subject.next([...currentMessages, message]);
+    } else {
+      console.warn(`MatrixChatService: No message subject found for room ${room.roomId}, message not added to list`);
     }
 
     this.updateRoomsList();
@@ -620,5 +623,64 @@ export class MatrixChatService {
       console.error('MatrixChatService: User search failed', error);
       return [];
     }
+  }
+
+  /**
+   * Set user avatar from existing URL
+   * Downloads the image from the URL, uploads it to Matrix, and sets it as avatar
+   */
+  async setUserAvatarFromUrl(avatarUrl: string): Promise<string> {
+    if (!this.client) throw new Error('Client not initialized');
+
+    try {
+      console.log('MatrixChatService: Fetching avatar from URL:', avatarUrl);
+
+      // Fetch the image from the URL
+      const response = await fetch(avatarUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch avatar: ${response.statusText}`);
+      }
+
+      // Convert to blob
+      const blob = await response.blob();
+      const file = new File([blob], 'avatar.jpg', { type: blob.type });
+
+      console.log('MatrixChatService: Uploading avatar to Matrix', {
+        size: file.size,
+        type: file.type
+      });
+
+      // Upload the image file to Matrix content repository
+      const upload = await this.client.uploadContent(file);
+      const matrixAvatarUrl = upload.content_uri;
+
+      console.log('MatrixChatService: Avatar uploaded, setting as user avatar:', matrixAvatarUrl);
+
+      // Set the uploaded image as the user's avatar
+      await this.client.setAvatarUrl(matrixAvatarUrl);
+
+      console.log('MatrixChatService: Avatar set successfully');
+
+      // Return the Matrix content URI (mxc://)
+      return matrixAvatarUrl;
+    } catch (error) {
+      console.error('MatrixChatService: Failed to set user avatar from URL', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get the current user's avatar URL
+   */
+  getUserAvatarUrl(width: number = 96, height: number = 96): string | undefined {
+    if (!this.client) return undefined;
+
+    const userId = this.client.getUserId();
+    if (!userId) return undefined;
+
+    const user = this.client.getUser(userId);
+    if (!user) return undefined;
+
+    return (user as any).getAvatarUrl?.(this.client.baseUrl, width, height, 'crop');
   }
 }
