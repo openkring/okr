@@ -141,7 +141,7 @@ export const environment: BkEnvironment = {
     measurementId: '${firebaseConfig.measurementId}',
   },
   services: {
-    matrixHomeserver: 'https://matrix.bkchat.etke.host',
+    matrixHomeserver: 'matrix.bkchat.etke.host',
     appcheckRecaptchaEnterpriseKey: '${servicesConfig.appcheckRecaptchaEnterpriseKey}',
     gmapKey: '${servicesConfig.gmapKey}',
     nxCloudAccessToken: '${servicesConfig.nxCloudAccessToken}',
