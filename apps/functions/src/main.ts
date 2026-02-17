@@ -7,6 +7,8 @@ import * as Test from './test';
 import * as Replication from './replication';
 import * as Auth from './auth';
 import * as Matrix from './matrix';
+import * as OidcBridge from './oidc-bridge';
+import * as MatrixSimple from './matrix-simple';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -61,6 +63,18 @@ export const onGroupChange = Replication.onGroupChange;
 export const ensureMatrixUser = Matrix.ensureMatrixUser;
 export const ensureGroupRoom = Matrix.ensureGroupRoom;
 export const syncUserProfileToMatrix = Matrix.syncUserProfileToMatrix;
+
+// matrix-simple (Simpler Firebase → Matrix token exchange)
+export const getMatrixCredentials = MatrixSimple.getMatrixCredentials;
+export const syncFirebaseProfileToMatrix = MatrixSimple.syncFirebaseProfileToMatrix;
+
+// oidc-bridge (Full OIDC Identity Provider for Matrix - Complex but native Matrix SSO)
+export const oidcDiscovery = OidcBridge.oidcDiscovery;
+export const oidcAuthorize = OidcBridge.oidcAuthorize;
+export const oidcCallback = OidcBridge.oidcCallback;
+export const oidcExchange = OidcBridge.oidcExchange;
+export const oidcToken = OidcBridge.oidcToken;
+export const oidcUserInfo = OidcBridge.oidcUserInfo;
 
 // test
 export const getEcho = Test.getEcho;
