@@ -13,6 +13,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { MembershipStore } from './membership.store';
+import { SIZE_SM } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-membership-list',
@@ -21,8 +22,7 @@ import { MembershipStore } from './membership.store';
     TranslatePipe, AsyncPipe, SvgIconPipe, RellogPipe, AvatarPipe, FullNamePipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover,
-    IonBackdrop
+    IonLabel, IonContent, IonItem, IonAvatar, IonImg, IonList, IonPopover
   ],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
@@ -54,32 +54,32 @@ import { MembershipStore } from './membership.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    @switch(view()) {
-      @case('simple') {
-        <bk-list-filter
-            (searchTermChanged)="onSearchtermChange($event)"
-            (typeChanged)="onTypeSelected($event)" [types]="types()"
-          />
-      }
-      @default {
-          <bk-list-filter
-            (searchTermChanged)="onSearchtermChange($event)"
-            (tagChanged)="onTagSelected($event)" [tags]="tags()"
-            (typeChanged)="onTypeSelected($event)" [types]="types()"
-            (categoryChanged)="onCategorySelected($event)" [categories]="membershipCategory()"
-            (yearChanged)="onYearSelected($event)" [years]="years()"
-          />
-      }
-    }
-
+    @if(view() === 'group') {
+      <bk-list-filter
+        (searchTermChanged)="onSearchtermChange($event)"
+        (typeChanged)="onTypeSelected($event)" [types]="types()"
+      />
+     } @else {
+      <bk-list-filter
+        (searchTermChanged)="onSearchtermChange($event)"
+        (tagChanged)="onTagSelected($event)" [tags]="tags()"
+        (typeChanged)="onTypeSelected($event)" [types]="types()"
+        (categoryChanged)="onCategorySelected($event)" [categories]="membershipCategory()"
+        (yearChanged)="onYearSelected($event)" [years]="years()"
+      />
+     }
 
     <!-- list header -->
-    <ion-toolbar color="primary">
-      <ion-item lines="none" color="primary">
+    <ion-toolbar color="light" class="ion-hide-sm-down">
+      <ion-item lines="none">
         <ion-label><strong>{{'@membership.list.header.name' | translate | async}}</strong></ion-label>
-        @if(view() !== 'simple') {
+        @if(view() === 'mcat') {
           <ion-label><strong>{{'@membership.list.header.category' | translate | async}}</strong></ion-label>
          }
+        @if(view() === 'contact') {
+          <ion-label><strong>{{ '@subject.list.header.phone' | translate | async }}</strong></ion-label>
+          <ion-label class="ion-hide-md-down"><strong>{{ '@subject.list.header.email' | translate | async }}</strong></ion-label>
+        }
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -88,7 +88,6 @@ import { MembershipStore } from './membership.store';
   <ion-content #content>
     @if(isLoading()) {
       <bk-spinner />
-      <ion-backdrop />
     } @else {
       @if(filteredMemberships().length === 0) {
         <bk-empty-list message="@membership.field.empty" />
@@ -99,8 +98,14 @@ import { MembershipStore } from './membership.store';
                 <ion-avatar slot="start">
                   <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
                 </ion-avatar>
-                <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>      
-                <ion-label class="ion-hide-md-down">{{membership.relLog | rellog}}</ion-label>      
+                <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>
+                @if(view() === 'mcat') {
+                  <ion-label class="ion-hide-sm-down">{{membership.relLog | rellog}}</ion-label>
+                }
+                @if(view() === 'contact') {
+                  <ion-label>{{ getPhone(membership) }}</ion-label>
+                  <ion-label class="ion-hide-md-down">{{ getEmail(membership) }}</ion-label>
+                }
               </ion-item>
           }
         </ion-list>
@@ -119,7 +124,7 @@ export class MembershipListComponent {
   public group = input<GroupModel | undefined>(undefined);
   public contextMenuName = input.required<string>();
   public color = input('secondary');
-  public view = input<'simple' | 'default'>('default');
+  public view = input<'contact' | 'mcat' | 'group'>('mcat');
 
   // filters
   protected searchTerm = linkedSignal(() => this.membershipStore.searchTerm());
@@ -136,8 +141,14 @@ export class MembershipListComponent {
   protected orgTypes = computed(() => this.membershipStore.orgTypes());
   protected readonly popupId = crypto.randomUUID();
   protected orgName = computed(() => this.membershipStore.orgName());
-  protected tags = computed(() => this.hasYearFilter() ? '' :this.membershipStore.getTags());
-  protected types = computed(() => this.hasYearFilter() ? undefined : (this.listId() === 'orgs' ? this.orgTypes() : this.genders()));
+  protected tags = computed(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < SIZE_SM) return ''; // only show types on desktop, on mobile there is not enough space
+    return this.hasYearFilter() ? '' : this.membershipStore.getTags();
+  });
+  protected types = computed(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < SIZE_SM) return undefined; // only show types on desktop, on mobile there is not enough space
+    return this.hasYearFilter() ? undefined : (this.listId() === 'orgs' ? this.membershipStore.orgTypes() : this.membershipStore.genders());
+  });
   protected years = computed(() => this.hasYearFilter() ? getYearList() : undefined);
   protected currentUser = computed(() => this.membershipStore.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
@@ -236,6 +247,15 @@ export class MembershipListComponent {
     this.membershipStore.setSelectedYear(year);
   }
 
+  /******************************* getters *************************************** */
+  protected getEmail(membership: MembershipModel): string {
+    return this.membershipStore.getEmail(membership) ?? '';
+  }
+
+  protected getPhone(membership: MembershipModel): string {
+    return this.membershipStore.getPhone(membership) ?? '';
+  }
+
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
@@ -276,24 +296,32 @@ export class MembershipListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): void {
     if (hasRole('registered', this.currentUser())) {
-      if (this.view() !== 'simple') {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
-      }
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      if (this.membershipStore.getEmail(membership)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.imgixBaseUrl, 'copy'));
+        actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.imgixBaseUrl, 'email'));
+      }
+      if (this.membershipStore.getPhone(membership)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.imgixBaseUrl, 'copy'));
+        //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
+        actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.imgixBaseUrl, 'tel'));
+      }
     }
     if (!this.readOnly()) {
-      if (this.view() !== 'simple') {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'create_edit'));
-      }
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'create_edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'create_edit'));
-      if (isOngoing(membership.dateOfExit) && this.view() !== 'simple') {
+      if (isOngoing(membership.dateOfExit)) {
         actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
         actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'member_change'));
       }
     }
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash_delete'));
+    }
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
     }
   }
 
@@ -329,6 +357,24 @@ export class MembershipListComponent {
           break;
         case 'membership.changecat':
           await this.membershipStore.changeMembershipCategory(membership, this.readOnly());
+          break;
+        case 'person.copyemail':
+          const email = this.membershipStore.getEmail(membership);
+          if (email) {
+            await this.membershipStore.copy(email, '@subject.person.operation.copy.email.conf');
+          }
+          break;
+        case 'person.copyphone':
+          const phone = this.membershipStore.getPhone(membership);
+          if (phone) {
+            await this.membershipStore.copy(phone, '@subject.person.operation.copy.phone.conf');
+          }
+          break;
+        case 'person.sendemail':
+          await this.membershipStore.sendEmail(membership);
+          break;
+        case 'person.call':
+          await this.membershipStore.call(membership);
           break;
       }
     }

@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
@@ -22,7 +22,7 @@ import { SIZE_MD } from '@bk2/shared-constants';
     TranslatePipe, FullNamePipe, AsyncPipe, AvatarPipe, SvgIconPipe,
     SpinnerComponent, EmptyListComponent, ListFilterComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover,
+    IonLabel, IonContent, IonItem, IonPopover,
     IonAvatar, IonImg, IonList
   ],
   providers: [PersonListStore],
@@ -60,19 +60,11 @@ import { SIZE_MD } from '@bk2/shared-constants';
 
     <!-- list header -->
     <ion-toolbar color="light" class="ion-hide-sm-down">
-      <ion-grid>
-        <ion-row>
-          <ion-col size="5">
-            <ion-label><strong>{{ '@subject.list.header.name' | translate | async }}</strong></ion-label>
-          </ion-col>
-          <ion-col size="3">
-            <ion-label><strong>{{ '@subject.list.header.phone' | translate | async }}</strong></ion-label>
-          </ion-col>
-          <ion-col size="4">
-            <ion-label><strong>{{ '@subject.list.header.email' | translate | async }}</strong></ion-label>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
+      <ion-item lines="none">
+        <ion-label><strong>{{ '@subject.list.header.name' | translate | async }}</strong></ion-label>
+        <ion-label><strong>{{ '@subject.list.header.phone' | translate | async }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down"><strong>{{ '@subject.list.header.email' | translate | async }}</strong></ion-label>
+      </ion-item>
     </ion-toolbar>
   </ion-header>
 
@@ -91,12 +83,12 @@ import { SIZE_MD } from '@bk2/shared-constants';
                 <ion-img src="{{ personModelName + '.' + person.bkey | avatar:personModelName }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{person.firstName | fullName:person.lastName:nameDisplay()}}</ion-label>      
-              <ion-label>
+              <ion-label class="ion-hide-sm-down">
                 @if(person.favPhone) {
                   <span>{{person.favPhone }}</span>
                 }
               </ion-label>
-              <ion-label class="ion-hide-sm-down">
+              <ion-label class="ion-hide-md-down">
                 @if(person?.favEmail) {
                   <span>{{person.favEmail }}</span>
                 }

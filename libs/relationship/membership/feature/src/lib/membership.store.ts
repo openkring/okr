@@ -21,6 +21,7 @@ import { PersonService } from '@bk2/subject-person-data-access';
 import { MemberNewModal } from './member-new.modal';
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
+import { browseUrl } from '@bk2/subject-address-util';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -347,7 +348,21 @@ export const _MembershipStore = signalStore(
       getTags(): string {
         return store.appStore.getTags('membership');
       },
- 
+
+      getEmail(membership: MembershipModel): string | undefined {
+        const person = store.appStore.getPerson(membership.memberKey);
+        if (person) {
+          return person.favEmail;
+        }
+      },
+
+      getPhone(membership: MembershipModel): string | undefined {
+        const person = store.appStore.getPerson(membership.memberKey);
+        if (person) {
+          return person.favPhone;
+        }
+      },
+
       /******************************** actions ******************************************* */
       /**
        * Show a modal to add a new membership. The current org from the membership store is used as default org.
@@ -638,6 +653,24 @@ export const _MembershipStore = signalStore(
           store.appStore.appNavigationService.pushLink(url);
         }
         await navigateByUrl(store.router, `/person/${membership.memberKey}`, { readOnly });
+      },
+
+      async copy(value: string, label: string): Promise<void> {
+        await copyToClipboardWithConfirmation(store.toastController, value ?? '', label);
+      },
+
+      async sendEmail(membership: MembershipModel): Promise<void> {
+        const email = this.getEmail(membership);
+        if (email) {
+          return await browseUrl(`mailto:${email}`, '');
+        }
+      },
+
+      async call(membership: MembershipModel): Promise<void> {
+        const phone = this.getPhone(membership);
+        if (phone) {
+          return await browseUrl(`tel:${phone}`, '');
+        }
       },
     }
   }),
