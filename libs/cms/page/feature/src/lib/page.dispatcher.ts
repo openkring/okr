@@ -8,6 +8,7 @@ import { BlogPage } from "./blog.page";
 import { LandingPage } from "./landing.page";
 import { ErrorPage } from "./error.page";
 import { SpinnerComponent } from "@bk2/shared-ui";
+import { ChatPage } from "libs/cms/page/feature/src/lib/chat.page";
 /**
  * PageDispatcher is a routable component that dispatches to the correct page component based 
  * on the pageType of the page. It receives the page id as an input, reads the page from the 
@@ -30,7 +31,7 @@ import { SpinnerComponent } from "@bk2/shared-ui";
   standalone: true,
   imports: [
     ContentPage, DashboardPage, BlogPage, LandingPage, ErrorPage,
-    SpinnerComponent
+    SpinnerComponent, ChatPage
 ],
   template: `
     @if(pageStore.isLoading()) {
@@ -40,6 +41,9 @@ import { SpinnerComponent } from "@bk2/shared-ui";
             @switch (page.type) {
                 @case ('landing') {
                     <bk-landing-page  />
+                }
+                @case ('chat') {
+                    <bk-chat-page  />
                 }
                 @case ('content') {
                     <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" />
