@@ -34,6 +34,7 @@
     {"path": "../../../cms/section/data-access/tsconfig.lib.json"},
     {"path": "../../../document/feature/tsconfig.lib.json"},
     {"path": "../../../document/ui/tsconfig.lib.json"},
+    {"path": "../../../document/util/tsconfig.lib.json"},
     {"path": "../../../calevent/data-access/tsconfig.lib.json"},
     {"path": "../../../calevent/util/tsconfig.lib.json"},
     {"path": "../../../relationship/membership/data-access/tsconfig.lib.json"},

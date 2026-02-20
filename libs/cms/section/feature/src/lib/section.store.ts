@@ -4,13 +4,15 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, SectionModel, SectionType } from '@bk2/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, DocumentCollection, DocumentModel, SectionModel, SectionType } from '@bk2/shared-models';
 import { CardSelectModalComponent } from '@bk2/shared-ui';
-import { chipMatches, debugItemLoaded, debugMessage, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugItemLoaded, debugMessage, getFileHash, getTodayStr, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
 import { confirm } from '@bk2/shared-util-angular';
+import { FirestoreService } from '@bk2/shared-data-access';
 
 import { UploadService } from '@bk2/avatar-data-access';
+import { getDocumentIndex } from '@bk2/document-util';
 
 import { SectionService } from '@bk2/cms-section-data-access';
 import { createSection, narrowSection } from '@bk2/cms-section-util';
@@ -45,6 +47,7 @@ export const _SectionStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
+    firestoreService: inject(FirestoreService)
   })),
   withProps((store) => ({
     sectionsResource: rxResource({
@@ -221,12 +224,17 @@ export const _SectionStore = signalStore(
         if (!file) return;
 
         // 2) upload the image file into Firestorage
-        const fullPath = `tenant/${store.tenantId()}/section/${section.bkey}/image/${file.name}`;
-        const downloadUrl = await store.uploadService.uploadFile(file, fullPath, 'Upload Section Image');
+        const storagePath = `tenant/${store.tenantId()}/section/${section.bkey}/image/${file.name}`;
+        const downloadUrl = await store.uploadService.uploadFile(file, storagePath, 'Upload Section Image');
         if (!downloadUrl) return;
 
         // 3) update the section with the new image URL
-        section.properties.image.url = downloadUrl;
+        const imgixBaseUrl = store.appStore.env.services.imgixBaseUrl; // https://bkaiser.imgix.net
+        section.properties.image.url = `${imgixBaseUrl}/${downloadUrl}`;
+
+
+        // TBD: create a document model with all metadata of the image
+
         await store.sectionService.update(section, store.currentUser());
         this.reload();
       },
@@ -238,8 +246,8 @@ export const _SectionStore = signalStore(
         if (!file) return;
 
         // 2) upload the file into Firestorage
-        const fullPath = `tenant/${store.tenantId()}/section/${section.bkey}/file/${file.name}`;
-        const downloadUrl = await store.uploadService.uploadFile(file, fullPath, 'Upload Section File');
+        const storagePath = `tenant/${store.tenantId()}/section/${section.bkey}/file/${file.name}`;
+        const downloadUrl = await store.uploadService.uploadFile(file, storagePath, 'Upload Section File');
         if (!downloadUrl) return;
 
         // 3) update the section with the new file URL
@@ -248,6 +256,25 @@ export const _SectionStore = signalStore(
         section.properties.action.type = ButtonAction.Download;
         await store.sectionService.update(section, store.currentUser());
         this.reload();
+      },
+
+      async createDocument(file: File, storagePath: string, downloadUrl: string) {
+        const document = new DocumentModel(store.tenantId());
+        const hash = await getFileHash(file);
+        document.bkey = hash;
+        document.title = file.name;
+        document.altText = file.name;
+        document.fullPath = storagePath;
+        document.mimeType = file.type;
+        document.size = file.size;
+        document.source = 'storage';
+        document.url = downloadUrl;
+        const now = getTodayStr();
+        document.dateOfDocCreation = now;
+        document.dateOfDocLastUpdate = now;
+        document.hash = hash;
+        document.index = getDocumentIndex(document);
+        return await store.firestoreService.createModel<DocumentModel>(DocumentCollection, document, '@document.operation.create', store.currentUser());
       },
 
       async export(type: string): Promise<void> {
