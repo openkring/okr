@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -18,6 +18,7 @@ import { SIZE_SM } from '@bk2/shared-constants';
 @Component({
   selector: 'bk-membership-list',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, RellogPipe, AvatarPipe, FullNamePipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
@@ -89,26 +90,50 @@ import { SIZE_SM } from '@bk2/shared-constants';
     @if(isLoading()) {
       <bk-spinner />
     } @else {
-      @if(filteredMemberships().length === 0) {
-        <bk-empty-list message="@membership.field.empty" />
+      @if(listId() === 'groups') {
+        @if(filteredMemberships().length === 0) {
+          <bk-empty-list message="@membership.field.empty" />
+        } @else {
+          <ion-list lines="inset">
+            @for(membership of filteredMemberships(); track membership.bkey) {
+                <ion-item (click)="showActions(membership)">
+                  <ion-avatar slot="start">
+                    <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
+                  </ion-avatar>
+                  <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>
+                  @if(view() === 'mcat') {
+                    <ion-label class="ion-hide-sm-down">{{membership.relLog | rellog}}</ion-label>
+                  }
+                  @if(view() === 'contact') {
+                    <ion-label>{{ getPhone(membership) }}</ion-label>
+                    <ion-label class="ion-hide-md-down">{{ getEmail(membership) }}</ion-label>
+                  }
+                </ion-item>
+            }
+          </ion-list>
+        }
       } @else {
-        <ion-list lines="inset">
-          @for(membership of filteredMemberships(); track $index) {
-              <ion-item (click)="showActions(membership)">
-                <ion-avatar slot="start">
-                  <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
-                </ion-avatar>
-                <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>
-                @if(view() === 'mcat') {
-                  <ion-label class="ion-hide-sm-down">{{membership.relLog | rellog}}</ion-label>
-                }
-                @if(view() === 'contact') {
-                  <ion-label>{{ getPhone(membership) }}</ion-label>
-                  <ion-label class="ion-hide-md-down">{{ getEmail(membership) }}</ion-label>
-                }
-              </ion-item>
-          }
-        </ion-list>
+        @if(filteredMemberships().length === 0) {
+          <bk-empty-list message="@membership.field.empty" />
+        } @else {
+          <ion-list lines="inset">
+            @for(membership of filteredMemberships(); track membership.bkey) {
+                <ion-item (click)="showActions(membership)">
+                  <ion-avatar slot="start">
+                    <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
+                  </ion-avatar>
+                  <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>
+                  @if(view() === 'mcat') {
+                    <ion-label class="ion-hide-sm-down">{{membership.relLog | rellog}}</ion-label>
+                  }
+                  @if(view() === 'contact') {
+                    <ion-label>{{ getPhone(membership) }}</ion-label>
+                    <ion-label class="ion-hide-md-down">{{ getEmail(membership) }}</ion-label>
+                  }
+                </ion-item>
+            }
+          </ion-list>
+        }
       }
     }
   </ion-content>
@@ -117,6 +142,7 @@ import { SIZE_SM } from '@bk2/shared-constants';
 export class MembershipListComponent {
   protected membershipStore = inject(MembershipStore);
   private actionSheetController = inject(ActionSheetController);
+  private cdr = inject(ChangeDetectorRef);
 
   // inputs
   public listId = input.required<string>();
@@ -157,6 +183,7 @@ export class MembershipListComponent {
     return this.listId() === 'orgs' ? this.membershipStore.selectedOrgType() : this.membershipStore.selectedGender();
   });
 
+  protected groupsOfMember = computed(() => this.membershipStore.groupsOfMember())
   protected filteredMemberships = computed(() => {
     switch (this.listId()) {
       case 'memberships': return this.membershipStore.filteredMembers() ?? [];
@@ -277,6 +304,7 @@ export class MembershipListComponent {
       case 'copyEmailAddresses': await this.membershipStore.copyEmailAddresses(this.listId(), this.readOnly()); break;
       default: error(undefined, `MembershipListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
+    this.cdr.markForCheck();
   }
 
   /**
@@ -377,6 +405,7 @@ export class MembershipListComponent {
           await this.membershipStore.call(membership);
           break;
       }
+      this.cdr.markForCheck();
     }
   }
 
