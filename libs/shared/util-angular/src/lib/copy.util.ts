@@ -20,6 +20,17 @@ export async function copyToClipboardWithConfirmation(toastController: ToastCont
 
 /**
  * Copies the specified content to the clipboard.
+ * It uses some fallbacks to support a wide range of platforms and browsers, including iOS and older browsers.
+ * Capacitor Clipboard should work reliably on iOS, but if it is failing (e.g. due to plugin issues or permissions), it falls back to web APIs.
+ * navigator.clipboard is the modern web API for clipboard operations, but it may not be supported in all browsers or may require HTTPS. 
+ * If it's not available, it falls back to using document.execCommand('copy'), which is an older method that works in many browsers, including on iOS.
+ * On iOS, navigator.clipboard is stricter compared to Android/web and may throw NotAllowedError outside user gestures or in non-secure contexts.
+ * Tips:
+ * - always call copyToClipboard() directly from a user event (e.g. button click) to comply with iOS policies.
+ * - test on real devices, as clipboard behavior can differ between desktop browsers and mobile platforms.
+ * - ensure your app is in a secure context (HTTPS) to maximize compatibility with navigator.clipboard, especially on iOS 14+.
+ * - update to the latest capacitor and plugin versions, as clipboard support and stability have improved over time.
+ * 
  * @param content The content to copy to the clipboard, as a string or number.
  * @returns A promise that resolves when the content has been copied.
  */
@@ -30,27 +41,45 @@ export async function copyToClipboard(content: string | string[] | number | bool
   } else if (typeof content === 'boolean') {
     _content = content ? 'true' : 'false';
   } else if (Array.isArray(content)) {
-    _content = content.toString()
+    _content = content.toString();
   } else {
     _content = content ?? '';
-  }  
+  }
+  
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   
   try {
-    await Clipboard.write({ string: _content});
+    // Primary: Use Capacitor for hybrid apps
+    await Clipboard.write({ string: _content });
   } catch (err) {
-    // Fallback for mobile web browsers that lose user gesture context
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      await navigator.clipboard.writeText(_content);
-    } else if (typeof document !== 'undefined') {
-      // Legacy fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = _content;
-      textArea.style.position = 'fixed';
-      textArea.style.opacity = '0';
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
+    if (typeof document !== 'undefined') {
+      // For iOS, prefer execCommand as it's more reliable
+      if (isIOS) {
+        const textArea = document.createElement('textarea');
+        textArea.value = _content;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        if (!success) {
+          throw new Error('execCommand copy failed on iOS');
+        }
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        // Fallback for other platforms: Use modern clipboard API
+        await navigator.clipboard.writeText(_content);
+      } else {
+        // Ultimate fallback for very old browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = _content;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
     } else {
       throw err;
     }
