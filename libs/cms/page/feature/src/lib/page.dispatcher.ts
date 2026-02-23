@@ -1,14 +1,19 @@
 import { Component, computed, effect, inject, input } from "@angular/core";
+import { Router } from "@angular/router";
+
+import { debugMessage, replaceSubstring } from "@bk2/shared-util-core";
+import { SpinnerComponent } from "@bk2/shared-ui";
+
 import { ContentPage } from "./content.page";
 import { PageStore } from "./page.store";
-import { debugMessage, replaceSubstring } from "@bk2/shared-util-core";
-import { Router } from "@angular/router";
 import { DashboardPage } from "./dashboard.page";
 import { BlogPage } from "./blog.page";
 import { LandingPage } from "./landing.page";
 import { ErrorPage } from "./error.page";
-import { SpinnerComponent } from "@bk2/shared-ui";
-import { ChatPage } from "libs/cms/page/feature/src/lib/chat.page";
+import { ChatPage } from "./chat.page";
+import { FilesPage } from "./files.page";
+import { AlbumPage } from "./album.page";
+
 /**
  * PageDispatcher is a routable component that dispatches to the correct page component based 
  * on the pageType of the page. It receives the page id as an input, reads the page from the 
@@ -30,7 +35,7 @@ import { ChatPage } from "libs/cms/page/feature/src/lib/chat.page";
   selector: 'bk-page-dispatcher',
   standalone: true,
   imports: [
-    ContentPage, DashboardPage, BlogPage, LandingPage, ErrorPage,
+    ContentPage, DashboardPage, BlogPage, LandingPage, ErrorPage, FilesPage, AlbumPage,
     SpinnerComponent, ChatPage
 ],
   template: `
@@ -53,6 +58,12 @@ import { ChatPage } from "libs/cms/page/feature/src/lib/chat.page";
                 }
                 @case ('blog') {
                     <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" />
+                }
+                @case ('files') {
+                    <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" />
+                }
+                @case ('album') {
+                    <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" />
                 }
                 @case ('error') {
                     <bk-error-page [errorName]="page.bkey" />

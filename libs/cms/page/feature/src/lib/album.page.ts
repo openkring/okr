@@ -38,10 +38,14 @@ import { PageStore } from './page.store';
     }
   `
 })
-export class AlbumPageComponent {
+export class AlbumPage {
   private readonly pageStore = inject(PageStore);
 
-  public id = input.required<string>();     // typically the year of the album, it is passed to the album-section as well as used as the title
+  // inputs
+  public contextMenuName = input<string>();
+  public color = input('secondary');
+  public id = input.required<string>();     // typically the year of the album
+  // id is passed to the album-section as well where it is used as the title
   // the id can be followed by @tenantId to specify the tenantId of the owner of the album
   // e.g. 2021@p13
 
