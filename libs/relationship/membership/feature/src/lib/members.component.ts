@@ -48,6 +48,7 @@ export class MembersComponent {
   private actionSheetController = inject(ActionSheetController);
 
   public orgKey = input.required<string>();
+  public orgType = input<'org' | 'group'>('org');
   public readonly readOnly = input(true);
 
   protected members = computed(() => this.membershipStore.members());
@@ -59,7 +60,7 @@ export class MembersComponent {
   private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.membershipStore.setOrgId(this.orgKey()));
+    effect(() => this.membershipStore.setOrgId(this.orgKey(), this.orgType()));
     effect(() => this.membershipStore.setShowMode(!this.maySeeOldMemberships()));
   }
 

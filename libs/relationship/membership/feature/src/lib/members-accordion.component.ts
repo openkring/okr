@@ -60,6 +60,7 @@ export class MembersAccordionComponent {
   private actionSheetController = inject(ActionSheetController);
 
   public orgKey = input.required<string>();
+  public orgType = input<'org' | 'group'>('org');
   public readonly color = input('light');
   public readonly title = input('@members.plural');
   public readonly readOnly = input<boolean>(true);
@@ -73,7 +74,7 @@ export class MembersAccordionComponent {
   private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
 
   constructor() {
-    effect(() => this.membershipStore.setOrgId(this.orgKey()));
+    effect(() => this.membershipStore.setOrgId(this.orgKey(), this.orgType()));
     effect(() => this.membershipStore.setShowMode(!this.maySeeOldMemberships()));
   }
 

@@ -1,4 +1,4 @@
-import { AccountModel, AvatarInfo, GroupModel, NameDisplay, NamedModel, OrgModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
+import { AccountModel, AvatarInfo, GroupModel, MembershipModel, NameDisplay, NamedModel, OrgModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
 import { warn } from './log.util';
 import { isOwnership, isPerson, isPersonalRel, isUser } from 'libs/shared/util-core/src/lib/type.util';
 
@@ -277,7 +277,7 @@ export function newAvatarInfo(key: string, name1: string, name2: string, modelTy
   };
 }
 
-export function getAvatarInfo(model?: PersonModel | OrgModel | ResourceModel | UserModel | GroupModel | AccountModel, modelType?: 'person' | 'org' | 'resource' | 'user' | 'user-person' | 'group' | 'account'): AvatarInfo | undefined {
+export function getAvatarInfo(model?: PersonModel | OrgModel | ResourceModel | UserModel | GroupModel | AccountModel | MembershipModel, modelType?: 'person' | 'org' | 'resource' | 'user' | 'user-person' | 'group' | 'account' | 'membership'): AvatarInfo | undefined {
   if (!model || !modelType) return undefined;
   switch (modelType) {
     case 'person':
@@ -292,6 +292,9 @@ export function getAvatarInfo(model?: PersonModel | OrgModel | ResourceModel | U
     case 'resource':
       const resource = model as ResourceModel;
       return newAvatarInfo(resource.bkey, '', resource.name, 'resource', resource.type, resource.subType, resource.name);
+    case 'membership':
+      const member = model as MembershipModel;
+      return newAvatarInfo(member.memberKey, member.memberName1, member.memberName2, member.memberModelType, member.memberType, '', '');
     case 'user':
       const user = model as UserModel;
       return newAvatarInfo(user.bkey, user.firstName, user.lastName, 'user', '', '', user.firstName + ' ' + user.lastName);

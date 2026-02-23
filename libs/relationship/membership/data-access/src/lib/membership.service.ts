@@ -4,9 +4,9 @@ import { map, Observable, of } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { CategoryListModel, MembershipCollection, MembershipModel, UserModel } from '@bk2/shared-models';
+import { AvatarInfo, CategoryListModel, MembershipCollection, MembershipModel, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
-import { addDuration, findByKey, getCategoryAttribute, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
+import { addDuration, findByKey, getAvatarInfo, getCategoryAttribute, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
 import { createComment } from '@bk2/comment-util';
 
@@ -138,21 +138,44 @@ export class MembershipService {
   /**
    * List the memberships of a given subject (person or organization).
    * @param memberKey the given subject to list its memberships for.
+   * @param modelType The member model type ('person' or 'org'), optional
+   * @param orgModelType the model type of the org ('org' org 'group'), optional
    * @returns a list of the subject's memberships as an Observable
    */
-  public listMembershipsOfMember(memberKey?: string, modelType?: string): Observable<MembershipModel[]> {
-    if (!memberKey || memberKey.length === 0) return of([]);
-    if (!modelType || (modelType !== 'person' && modelType !== 'org')) return of([]);
+  public listMembershipsOfMember(memberKey?: string, modelType?: string, orgModelType?: string): Observable<MembershipModel[]> {
+    if (!memberKey || memberKey.length === 0) return of([] as MembershipModel[]);
+    if (modelType && (modelType !== 'person' && modelType !== 'org')) return of([] as MembershipModel[]);
+    if (orgModelType && (orgModelType !== 'org' && orgModelType !== 'group')) return of([] as MembershipModel[]);
     return this.list().pipe(
       map((memberships: MembershipModel[]) => {
-        return memberships.filter((membership: MembershipModel) => membership.memberKey === memberKey && membership.memberModelType === modelType);
-      }));
+        if (modelType && orgModelType) {
+          return memberships.filter((membership: MembershipModel) => 
+            membership.memberKey === memberKey && 
+            membership.memberModelType === modelType &&
+            membership.orgModelType === orgModelType
+          );
+        } else {
+          if (modelType) {
+            return memberships.filter((membership: MembershipModel) => 
+              membership.memberKey === memberKey && 
+              membership.memberModelType === modelType
+            );
+          }
+          if (orgModelType) {
+            return memberships.filter((membership: MembershipModel) => 
+              membership.memberKey === memberKey && 
+              membership.orgModelType === orgModelType
+            );
+          }
+        }
+        return [] as MembershipModel[];
+      }))
   }
 
   /**
    * Returns a list of unique org|group keys for the given member.
    * @param memberKey The member's key (person or org).
-   * @param modelType The model type ('person' or 'org').
+   * @param modelType The member model type ('person' or 'org').
    * @returns Observable<string[]> of unique org|group keys.
    */
   public listOrgsOfMember(memberKey: string, modelType: string): Observable<string[]> {
@@ -183,6 +206,22 @@ export class MembershipService {
       map((memberships: MembershipModel[]) => {
         return memberships.filter((membership: MembershipModel) => membership.orgKey === orgKey);
       }));
+  }
+
+  public getMemberAvatar(membership: MembershipModel): AvatarInfo | undefined {
+    return getAvatarInfo(membership, 'membership');
+  }
+
+  // tbd: we probably need to check for duplicates here
+  public getMemberAvatars(memberships: MembershipModel[]): AvatarInfo[] {
+    const avatars: AvatarInfo[] = [];
+    for (const m of memberships) {
+      const avatar = this.getMemberAvatar(m);
+      if (avatar) {
+      avatars.push(avatar);
+      }
+    }
+    return avatars;
   }
 
   /*-------------------------- exports --------------------------------*/
