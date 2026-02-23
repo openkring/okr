@@ -38,16 +38,16 @@ import { TextInputComponent } from './text-input.component';
                 <bk-cat name="type" [value]="type()" (valueChange)="onFieldChange('type', $event)" [readOnly]="readOnly()" [categories]="imageTypes" />
             </ion-col>  
             <ion-col size="12"> 
-              <bk-text-input name="url" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true />
+              <bk-text-input name="url" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
             </ion-col>  
             <ion-col size="12">  
-              <bk-text-input name="actionUrl" [value]="actionUrl()" (valueChange)="onFieldChange('actionUrl', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true />
+              <bk-text-input name="actionUrl" [value]="actionUrl()" (valueChange)="onFieldChange('actionUrl', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input name="altText" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true />
+              <bk-text-input name="altText" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
             </ion-col>  
             <ion-col size="12">
-              <bk-text-input name="overlay" [value]="overlay()" (valueChange)="onFieldChange('overlay', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true />
+              <bk-text-input name="overlay" [value]="overlay()" (valueChange)="onFieldChange('overlay', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="100" />
             </ion-col>  
           </ion-row>
         </ion-grid>
