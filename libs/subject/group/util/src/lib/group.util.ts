@@ -1,8 +1,5 @@
 import { GroupModel } from '@bk2/shared-models';
-
 import { addIndexElement } from '@bk2/shared-util-core';
-
-
 
 /*-------------------------- search index --------------------------------*/
 /**

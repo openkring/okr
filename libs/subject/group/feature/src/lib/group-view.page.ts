@@ -10,7 +10,7 @@ import { error } from '@bk2/shared-util-angular';
 import { coerceBoolean, debugData, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 
-import { ContentPage } from '@bk2/cms-page-feature';
+import { PageDispatcher } from '@bk2/cms-page-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { MembershipListComponent } from '@bk2/relationship-membership-feature';
 import { SimpleTaskListComponent } from '@bk2/task-feature';
@@ -23,7 +23,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    ChangeConfirmationComponent, ContentPage, SimpleTaskListComponent,
+    ChangeConfirmationComponent, PageDispatcher, SimpleTaskListComponent,
     CalEventListComponent, MembershipListComponent,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
     IonHeader, IonButtons, IonTitle, IonMenuButton
@@ -82,17 +82,18 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
     }
     <ion-content class="ion-no-padding">
       @if(id(); as id) {
+        @if(id.length > 0) {
         @switch (selectedSegment()) {
           @case ('content') {
             @defer (on immediate) {
-              <bk-content-page id="{{id + '_content'}}" contextMenuName="c-contentpage" color="light" />
+              <bk-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" color="light" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('chat') {
             @defer (on immediate) {
-              <bk-content-page id="{{id + '_chat'}}" contextMenuName="c-contentpage" color="light" />
+              <bk-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" color="light" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
@@ -137,6 +138,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
           }
         }
       }
+    }
     </ion-content>
   `
 })

@@ -7,7 +7,7 @@ import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, ImageType, MembershipModel, PageCollection, PageModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
+import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, ImageType, MembershipModel, PageCollection, PageModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
 import { confirm, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_KEY, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
@@ -18,6 +18,7 @@ import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { getMembershipIndex } from '@bk2/relationship-membership-util';
 
 import { GroupEditModalComponent } from './group-edit.modal';
+import { Observable } from 'rxjs';
 
 export type GroupState = {
   searchTerm: string;
@@ -67,7 +68,7 @@ export const GroupStore = signalStore(
         personKey: store.appStore.currentUser()?.personKey
       }),
       stream: ({params}) => {
-        return store.membershipService.listMembershipsOfMember(params.personKey, 'person').pipe(
+        return store.membershipService.listMembershipsOfMember(params.personKey, 'person', 'group').pipe(
           debugListLoaded('GroupStore.currentUserMemberships', store.appStore.currentUser())
         );
       }
@@ -92,12 +93,24 @@ export const GroupStore = signalStore(
     segment: computed(() => state.selectedSegment()),
 
     // memberships
-    currentUserMemberships: computed(() => state.currentUserMembershipsResource.value()),
+    myGroupMemberships: computed(() => state.currentUserMembershipsResource.value()),
 
     // other
     currentUser: computed(() => state.appStore.currentUser()),
     isLoading: computed(() => state.groupsResource.isLoading() || state.groupResource.isLoading()),
     tenantId: computed(() => state.appStore.tenantId()),
+  })),
+  withComputed((state) => ({
+    myGroupIds: computed(() => state.myGroupMemberships()?.map(m => m.orgKey) ?? []),
+    myGroups: computed(() => {
+      const myGroupIds = state.myGroupMemberships()?.map(m => m.orgKey) ?? [];
+      const groups: GroupModel[] = [];
+      for (const gid of myGroupIds) {
+        const group = state.appStore.getGroup(gid);
+        if (group) groups.push(group);
+      }
+      return groups;
+    }),
   })),
   withMethods((store) => ({
     reset() {
@@ -142,7 +155,7 @@ export const GroupStore = signalStore(
       return store.appStore.getTags('group');
     },
 
-    /******************************* actions *************************************** */
+    /******************************* actions on the group *************************************** */
     /**
      * Adds a new group.
      */
@@ -159,6 +172,7 @@ export const GroupStore = signalStore(
           group,
           currentUser: store.currentUser(),
           tags: this.getTags(),
+          tenantId: store.tenantId(),
           isNew,
           readOnly
         }
@@ -199,15 +213,55 @@ export const GroupStore = signalStore(
       }
     },
 
-    async createGroupCalendar(group: GroupModel): Promise<void> {
-      const cal = new CalendarModel(store.tenantId());
-      cal.bkey = group.bkey;
-      cal.name = group.name;
-      cal.description = `Calendar for group ${group.bkey}`;
-      cal.owner = `${GroupModelName}.${group.bkey}`;
-      await store.firestoreService.createModel<CalendarModel>(CalendarCollection, cal, '@calendar.operation.create', store.currentUser());
+    async view(group?: GroupModel, readOnly = true): Promise<void> {
+      if (!group?.bkey || group.bkey.length === 0) return;
+      store.appNavigationService.pushLink('/group/all/c-test-groups');
+      await navigateByUrl(store.router, `/group-view/${group.bkey}`, { readOnly });
     },
 
+    async delete(group?: GroupModel, readOnly = true): Promise<void> {
+      if (!group || readOnly) return;
+      const result = await confirm(store.alertController, '@subject.group.operation.delete.confirm', true);
+      if (result === true) {
+        await store.groupService.delete(group, store.currentUser());
+        this.reload();
+      }
+    },
+
+    getMembers(group: GroupModel): Observable<MembershipModel[]> {
+      return store.membershipService.listMembersOfOrg(group.bkey);
+    },
+
+    getMemberAvatars(memberships: MembershipModel[]): AvatarInfo[] {
+      return store.membershipService.getMemberAvatars(memberships);
+    },
+
+    /******************************* export and save *************************************** */
+    async export(type: string): Promise<void> {
+      console.log(`GroupStore.export(${type}) is not yet implemented.`);
+    },
+
+    async save(group?: GroupModel): Promise<void> {
+      if (!group) return;
+      await (!group.bkey ? 
+        store.groupService.create(group, store.currentUser()) : 
+        store.groupService.update(group, store.currentUser()));
+    },
+
+    async saveAvatar(photo: Photo): Promise<void> {
+      const group = store.group();
+      if (!group) return;
+      await store.avatarService.saveAvatarPhoto(photo, group.bkey, store.tenantId(), GroupModelName);
+    },
+
+    /******************************* cms: page & sections *************************************** */
+    /**
+     * Creates a new content page that belongs to the group and optionally adds a default article section to it.
+     * The id of the page is generated as groupKey_postfix, typically this is groupId_content
+     * @param postfix default is _content
+     * @param name 
+     * @param sectionId 
+     */
     async createGroupPage(group: GroupModel, postfix: string, name: string, sectionId?: string): Promise<void> {
       const page = new PageModel(store.tenantId());
       page.bkey = `${group.bkey}_${postfix}`;
@@ -217,7 +271,20 @@ export const GroupStore = signalStore(
       if (sectionId) {
         page.sections = [sectionId];
       }
-      await store.firestoreService.createModel<PageModel>(PageCollection, page, '@page.operation.create', store.currentUser());
+      await store.firestoreService.createModel<PageModel>(PageCollection, page, '@content.page.operation.create', store.currentUser());
+    },
+
+    addSection(): void {
+      console.log('GroupStore.addSection: Not implemented yet');
+    },
+    selectSection(): void {
+      console.log('GroupStore.selectSection: Not implemented yet');
+    },
+    sortSections(): void {
+      console.log('GroupStore.sortSections: Not implemented yet');
+    },
+    editSection(): void {
+      console.log('GroupStore.editSection: Not implemented yet');
     },
 
     async createChatSection(group: GroupModel): Promise<string | undefined> {
@@ -249,7 +316,7 @@ export const GroupStore = signalStore(
         tags: '',
         tenants: [store.tenantId()],
       } as ChatSection;
-      return await store.firestoreService.createModel<ChatSection>(SectionCollection, section, '@section.operation.create', store.currentUser())
+      return await store.firestoreService.createModel<ChatSection>(SectionCollection, section, '@content.section.operation.create', store.currentUser())
     },
 
     async createArticleSection(group: GroupModel): Promise<string | undefined> {
@@ -297,60 +364,29 @@ export const GroupStore = signalStore(
         tags: '',
         tenants: [store.tenantId()],
       } as ArticleSection;
-      return await store.firestoreService.createModel<ArticleSection>(SectionCollection, section, '@section.operation.create', store.currentUser())
+      return await store.firestoreService.createModel<ArticleSection>(SectionCollection, section, '@content.section.operation.create', store.currentUser())
     },
 
-    async view(group?: GroupModel, readOnly = true): Promise<void> {
-      if (!group?.bkey || group.bkey.length === 0) return;
-      store.appNavigationService.pushLink('/group/all/c-test-groups');
-      await navigateByUrl(store.router, `/group-view/${group.bkey}`, { readOnly });
+    /******************************* events / calendar *************************************** */
+    async createGroupCalendar(group: GroupModel): Promise<void> {
+      const cal = new CalendarModel(store.tenantId());
+      cal.bkey = group.bkey;
+      cal.name = group.name;
+      cal.description = `Calendar for group ${group.bkey}`;
+      cal.owner = `${GroupModelName}.${group.bkey}`;
+      await store.firestoreService.createModel<CalendarModel>(CalendarCollection, cal, '@calendar.operation.create', store.currentUser());
     },
 
-    async delete(group?: GroupModel, readOnly = true): Promise<void> {
-      if (!group || readOnly) return;
-      const result = await confirm(store.alertController, '@subject.group.operation.delete.confirm', true);
-      if (result === true) {
-        await store.groupService.delete(group, store.currentUser());
-        this.reload();
-      }
-    },
-
-    async export(type: string): Promise<void> {
-      console.log(`GroupStore.export(${type}) is not yet implemented.`);
-    },
-
-    async save(group?: GroupModel): Promise<void> {
-      if (!group) return;
-      await (!group.bkey ? 
-        store.groupService.create(group, store.currentUser()) : 
-        store.groupService.update(group, store.currentUser()));
-    },
-
-    async saveAvatar(photo: Photo): Promise<void> {
-      const group = store.group();
-      if (!group) return;
-      await store.avatarService.saveAvatarPhoto(photo, group.bkey, store.tenantId(), GroupModelName);
-    },
-
-    addSection(): void {
-      console.log('GroupStore.addSection: Not implemented yet');
-    },
-    selectSection(): void {
-      console.log('GroupStore.selectSection: Not implemented yet');
-    },
-    sortSections(): void {
-      console.log('GroupStore.sortSections: Not implemented yet');
-    },
-    editSection(): void {
-      console.log('GroupStore.editSection: Not implemented yet');
-    },
     addEvent(): void {
       console.log('GroupStore.addEvent: Not implemented yet');
     },
+
+    /******************************* tasks *************************************** */
     addTask(): void {
       console.log('GroupStore.addTask: Not implemented yet');
     },
 
+    /******************************* members *************************************** */
     async addMember(): Promise<void> {
       console.log('GroupStore.addMember: Not implemented yet');
       const modal = await store.modalController.create({

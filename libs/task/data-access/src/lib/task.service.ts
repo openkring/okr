@@ -3,8 +3,8 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { TaskCollection, TaskModel, UserModel } from '@bk2/shared-models';
-import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { GroupModel, MembershipModel, TaskCollection, TaskModel, UserModel } from '@bk2/shared-models';
+import { findByKey, getAvatarInfo, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getTaskIndex } from '@bk2/task-util';
 
@@ -75,5 +75,32 @@ export class TaskService {
    */
   public export(): void {
     console.log('TaskService.export: not yet implemented.');
+  }
+
+  /*-------------------------- other --------------------------------*/
+    /**
+   * Adds a new task to a group membership. 
+   * The task is assigned to the group and the author is the current user. 
+   * The task is initially assigned to the mainContact of the group.
+   * If the mainContact does not exist, the author is assigned, but can be changed in the task edit modal.
+   * This is currently only implemented for memberships in Seeclub Stäfa (orgKey = 'scs').
+   * @param membership the membership for which to create the task. We need the membership to get the group (org) for which the task is created and to check if it is a SCS membership.
+   * @param group the group to which the task is assigned.
+   * @param name the name of the task to create. It should contain all relevant information about the reason for creating the task, so that the responsible person can directly act on it without having to look up additional information.
+   * @returns 
+   */
+  public async addTaskFromGroupMembership(membership: MembershipModel, group?: GroupModel, name?: string, currentUser?: UserModel): Promise<void> {
+    console.log('TaskService.addTaskFromGroupMembership: ', { membership, group, name });
+    if (!membership || !group || !name || !currentUser) return;
+    if (membership.orgKey !== 'scs') return;  
+    const author = getAvatarInfo(currentUser, 'user-person');
+    if (!author) return;
+    const task = new TaskModel(this.env.tenantId);
+    task.name = name;
+    task.author = author;
+    task.assignee = group.mainContact ?? author;
+    task.scope = getAvatarInfo(group, 'group');
+    task.calendars = [group.bkey];  // task is assigned to the group calendar
+    await this.create(task, currentUser);
   }
 }

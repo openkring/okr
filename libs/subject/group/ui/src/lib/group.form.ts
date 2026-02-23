@@ -1,6 +1,7 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { Router } from '@angular/router';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { LowercaseWordMask } from '@bk2/shared-config';
@@ -8,7 +9,9 @@ import { WORD_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ButtonCopyComponent, CheckboxComponent, ChipsComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, debugFormModel, getFullName, hasRole } from '@bk2/shared-util-core';
+
+import { AvatarPipe } from '@bk2/avatar-ui';
 import { groupValidations } from '@bk2/subject-group-util';
 
 @Component({
@@ -16,12 +19,14 @@ import { groupValidations } from '@bk2/subject-group-util';
   standalone: true,
   imports: [
     vestForms,
-    TranslatePipe, AsyncPipe,
+    TranslatePipe, AsyncPipe, AvatarPipe,
     TextInputComponent, ChipsComponent, NotesInputComponent, CheckboxComponent, ButtonCopyComponent,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonLabel, IonItem
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonLabel, IonItem,
+    IonAvatar, IonImg, IonButton, IonNote
   ],
    styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
+    .input-wrapper { min-height: 24px; }
   `],
   template: `
   @if (showForm()) {
@@ -65,6 +70,65 @@ import { groupValidations } from '@bk2/subject-group-util';
           </ion-grid>
         </ion-card-content>
       </ion-card>
+
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Personen</ion-card-title>
+        </ion-card-header>
+        <ion-card-content class="ion-no-padding">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12">
+                <ion-item lines="none">
+                  <ion-label><h2>Gruppen-Administrator</h2></ion-label>
+                </ion-item>
+                <ion-item lines="none">
+                  <ion-note>Diese Person kann die Gruppe verwalten, z.B. Mitglieder hinzufügen oder entfernen.</ion-note>
+                </ion-item>
+              </ion-col>
+              <ion-col size="9">
+                <ion-item lines="none" (click)="showPerson(adminKey())">
+                  <ion-avatar slot="start">
+                    <ion-img [src]="adminAvatarKey() | avatar" alt="Avatar of admin" />
+                  </ion-avatar>
+                  <ion-label>{{ adminName() }}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="3">
+                <ion-item lines="none">
+                  <ion-button slot="start" fill="clear" (click)="selectPerson.emit('admin')">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                </ion-item>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12">
+                <ion-item lines="none">
+                  <ion-label><h2>Hauptkontakt</h2></ion-label>
+                </ion-item>
+                <ion-item lines="none">
+                  <ion-note>Gruppen-Todos werden standardmässig dem Hauptkontakt zugeteilt.</ion-note>
+                </ion-item>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="9">
+                <ion-item lines="none" (click)="showPerson(mainContactKey())">
+                  <ion-avatar slot="start">
+                    <ion-img [src]="mainContactAvatarKey() | avatar" alt="Avatar of main contact" />
+                  </ion-avatar>
+                  <ion-label>{{ mainContactName() }}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="3">
+                <ion-item lines="none">
+                  <ion-button slot="start" fill="clear" (click)="selectPerson.emit('mainContact')">{{ '@general.operation.select.label' | translate | async }}</ion-button>
+                </ion-item>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@subject.group.field.display' | translate | async }}</ion-card-title>
@@ -114,6 +178,9 @@ import { groupValidations } from '@bk2/subject-group-util';
   `
 })
 export class GroupFormComponent {
+  private readonly modalController = inject(ModalController);
+  private readonly router = inject(Router);
+
   // inputs
   public formData = model.required<GroupModel>();
   public currentUser = input<UserModel | undefined>();
@@ -127,7 +194,8 @@ export class GroupFormComponent {
  // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
-  
+  public selectPerson = output<'mainContact' | 'admin'>();
+
   // validation and errors
   protected readonly suite = groupValidations;
   private readonly validationResult = computed(() => groupValidations(this.formData(), this.tenantId(), this.allTags()));
@@ -137,6 +205,19 @@ export class GroupFormComponent {
   // fields
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected bkey = linkedSignal(() => this.formData().bkey ?? '');
+
+  // main contact 
+  protected mainContact = linkedSignal(() => this.formData().mainContact);
+  protected mainContactKey = computed(() => this.mainContact().key);
+  protected mainContactAvatarKey = computed(() => `person.${this.mainContact().key}`);
+  protected mainContactName = computed(() => getFullName(this.mainContact().name1, this.mainContact().name2));
+
+  // admin
+  protected admin = linkedSignal(() => this.formData().admin);
+  protected adminKey = computed(() => this.admin().key);
+  protected adminAvatarKey = computed(() => `person.${this.admin().key}`);
+  protected adminName = computed(() => getFullName(this.admin().name1, this.admin().name2));
+
   protected tags = linkedSignal(() => this.formData().tags ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
   protected hasContent = linkedSignal(() => this.formData().hasContent ?? true);
@@ -168,5 +249,10 @@ export class GroupFormComponent {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  protected async showPerson(personKey: string): Promise<void> {
+    if (this.modalController) this.modalController.dismiss(null, 'cancel');
+    await this.router.navigateByUrl(`/person/${personKey}`);
   }
 }

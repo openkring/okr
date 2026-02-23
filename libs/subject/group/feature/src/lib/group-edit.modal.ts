@@ -1,12 +1,13 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { GroupModel, UserModel } from '@bk2/shared-models';
+import { AVATAR_INFO_SHAPE, GroupModel, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
+import { coerceBoolean, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
 
 import { GroupFormComponent } from '@bk2/subject-group-ui';
 import { getTitleLabel } from '@bk2/shared-util-angular';
+import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 
 @Component({
   selector: 'bk-group-new-modal',
@@ -32,6 +33,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
               [tenantId]="tenantId()"
               [isNew]="isNew()"
               [readOnly]="isReadOnly()"
+              (selectPerson)="selectPerson($event)"
               (dirty)="formDirty.set($event)"
               (valid)="formValid.set($event)"
           />
@@ -42,6 +44,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 })
 export class GroupEditModalComponent {
   private readonly modalController = inject(ModalController);
+  private readonly appStore = inject(AppStore);
 
   // inputs
   public group = input.required<GroupModel>();
@@ -75,8 +78,47 @@ export class GroupEditModalComponent {
     setTimeout(() => this.showForm.set(true), 0);
   }
 
-
   protected onFormDataChange(formData: GroupModel): void {
     this.formData.set(formData);
+  }
+
+  protected async selectPerson(field: 'mainContact' | 'admin'): Promise<void> {
+    const person = await this.selectPersonModal();
+    if (!person) return;
+    
+    const personAvatar = AVATAR_INFO_SHAPE;
+    personAvatar.name1 = person.firstName ?? '';
+    personAvatar.name2 = person.lastName ?? '';
+    personAvatar.type = person.gender ?? '';
+    personAvatar.key = person.bkey ?? '';
+    personAvatar.modelType = PersonModelName;
+
+    this.formData.update((vm) => {
+      if (!vm) return vm;
+      return {
+        ...vm,
+        [field]: personAvatar
+      };
+    });
+    this.formDirty.set(true);
+  }
+
+  async selectPersonModal(): Promise<PersonModel | undefined> {
+    const modal = await this.modalController.create({
+      component: PersonSelectModalComponent,
+      cssClass: 'list-modal',
+      componentProps: {
+        selectedTag: '',
+        currentUser: this.currentUser()
+      }
+    });
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm' && data) {
+      if (isPerson(data, this.appStore.env.tenantId)) {
+        return data;
+      }
+    }
+    return undefined;
   }
 }
