@@ -61,11 +61,6 @@ export class DateSelectModalComponent {
    */
   protected async onDateChange(event: any): Promise<void> {
     const selectedDate = event.detail.value || this.datetimePicker().value || this.isoDate();
-    console.log('event.detail.value:', event.detail.value);
-    console.log('datetimePicker.value:', this.datetimePicker().value);
-    console.log('isoDate():', this.isoDate());
-    console.log('final selectedDate:', selectedDate);
-    console.log('DateSelectModalComponent: selected date: ' + selectedDate); // for debugging
     await this.modalController.dismiss(selectedDate, 'confirm');
   }
 
