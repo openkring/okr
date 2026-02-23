@@ -1,5 +1,6 @@
 import { DEFAULT_COUNT, DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_OCAT, DEFAULT_OSTATE, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
+import { MoneyModel } from 'libs/shared/models/src/lib/money.model';
 
 /**
  * A person or org owns a resource, e.g. a rowing boat or an account.
@@ -40,15 +41,14 @@ export class OwnershipModel implements BkModel, SearchableModel, TaggedModel {
   // ownership
   public validFrom = DEFAULT_DATE; // membership: entryDate
   public validTo = DEFAULT_DATE; // membership: exitDate
-  public ownershipCategory = DEFAULT_OCAT;
-  public ownershipState = DEFAULT_OSTATE;
+  public type = DEFAULT_OCAT;
+  public state = DEFAULT_OSTATE;
 
   public count = DEFAULT_COUNT; // e.g. how many of the same resources are owned
   public order = 1; // e.g. relevant for waiting list (state applied)
 
-  public price = DEFAULT_PRICE; // overwrites the default ownership price from OwnershipCategories[ownershipCategory].price
-  public currency = DEFAULT_CURRENCY;
-  public periodicity = 'yearly';
+  // overwrites the default ownership price from OwnershipCategories[ownershipCategory].price
+  public price: MoneyModel | undefined;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

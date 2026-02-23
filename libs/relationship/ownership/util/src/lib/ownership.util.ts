@@ -20,26 +20,30 @@ export function newOwnership(owner: PersonModel | OrgModel, resource: ResourceMo
 
   ownership.ownerKey = owner.bkey;
   if (isPerson(owner, tenantId)) {
+    const person = owner as PersonModel;
     ownership.ownerModelType = 'person';
-    ownership.ownerName1 = owner.firstName;
-    ownership.ownerName2 = owner.lastName;
-    ownership.ownerType = owner.gender;
+    ownership.ownerName1 = person.firstName;
+    ownership.ownerName2 = person.lastName;
+    ownership.ownerType = person.gender;
   } else {
+    const org = owner as OrgModel;
     ownership.ownerModelType = 'org';
     ownership.ownerName1 = '';
-    ownership.ownerName2 = owner.name;
-    ownership.ownerType = owner.type;
+    ownership.ownerName2 = org.name;
+    ownership.ownerType = org.type;
   }
 
   ownership.resourceKey = resource.bkey;
   ownership.resourceName = resource.name;
   if (isResource(resource, tenantId)) {
+    const res = resource as ResourceModel;
     ownership.resourceModelType = 'resource';
-    ownership.resourceType = resource.type;
-    ownership.resourceSubType = resource.subType;
+    ownership.resourceType = res.type;
+    ownership.resourceSubType = res.subType;
   } else {
+    const acc = resource as AccountModel;
     ownership.resourceModelType = 'account';
-    ownership.resourceType = resource.type;
+    ownership.resourceType = acc.type;
     ownership.resourceSubType = '';
   }
   return ownership;
