@@ -3,6 +3,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { vestForms } from 'ngx-vest-forms';
 
 import { OwnershipModel, RoleName, UserModel } from '@bk2/shared-models';
+import { DEFAULT_CURRENCY } from '@bk2/shared-constants';
 import { ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
@@ -68,7 +69,11 @@ import { ownershipValidations } from '@bk2/relationship-ownership-util';
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <bk-number-input name="price" [value]="price()" (valueChange)="onFieldChange('price', $event)" [maxLength]=10 [readOnly]="isReadOnly()" />                                        
+                  <bk-number-input name="price" [value]="amount()" (valueChange)="onFieldChange('amount', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />                                        
+                </ion-col>
+
+                <ion-col size="12" size-md="6">
+                  <bk-text-input name="currency" [value]="currency()" (valueChange)="onFieldChange('currency', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />                                        
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -114,7 +119,9 @@ export class OwnershipFormComponent {
   protected ownerModelType = linkedSignal(() => this.formData().ownerModelType ?? 'person');
   protected validFrom = linkedSignal(() => this.formData().validFrom ?? '');
   protected validTo = linkedSignal(() => this.formData().validTo ?? '');
-  protected price = linkedSignal(() => this.formData().price ?? 0);
+  protected price = linkedSignal(() => this.formData().price);
+  protected amount = linkedSignal(() => this.price()?.amount ?? 0);
+  protected currency = linkedSignal(() => this.price()?.currency ?? DEFAULT_CURRENCY);
   protected tags = linkedSignal(() => this.formData().tags ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
   protected bkey = computed(() => this.formData().bkey ?? '');
