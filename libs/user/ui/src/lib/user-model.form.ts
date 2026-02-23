@@ -4,9 +4,9 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
-import { UserModel } from "@bk2/shared-models";
+import { RoleName, UserModel } from "@bk2/shared-models";
 import { EmailInputComponent, NotesInputComponent, TextInputComponent } from "@bk2/shared-ui";
-import { coerceBoolean, debugFormErrors } from "@bk2/shared-util-core";
+import { coerceBoolean, debugFormErrors, hasRole } from "@bk2/shared-util-core";
 
 import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@bk2/user-util";
 
@@ -61,7 +61,9 @@ import { USER_FORM_SHAPE, UserModelFormModel, userModelFormValidations } from "@
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+      @if(hasRole('admin')) {
+        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+      }
     </form>
   `
 })
@@ -108,5 +110,9 @@ export class UserModelFormComponent {
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     debugFormErrors('UserModelForm.onFieldChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected hasRole(role: RoleName): boolean {
+    return hasRole(role, this.currentUser());
   }
 }

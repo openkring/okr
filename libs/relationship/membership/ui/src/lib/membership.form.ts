@@ -10,7 +10,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, getFullName, getItemLabel, hasRole, isOrg, isPerson, isVisibleToUser } from '@bk2/shared-util-core';
+import { areNotesVisible, areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, getFullName, getItemLabel, hasRole, isOrg, isPerson, isVisibleToUser } from '@bk2/shared-util-core';
 
 import { membershipValidations } from '@bk2/relationship-membership-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -165,11 +165,11 @@ import { AvatarPipe } from '@bk2/avatar-ui';
             </ion-card-content>
           </ion-card>
 
-          @if(isTagsVisible()) {
+          @if(areTagsVisible()) {
             <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
           }
           
-          @if(isNotesVisible()) {
+          @if(hasRole('admin')) {
             <bk-notes name="notes" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
           }
         </form>
@@ -313,15 +313,7 @@ export class MembershipFormComponent {
     return hasRole(role, this.currentUser());
   }
   
-  protected isTagsVisible(): boolean {
-    if (!this.isReadOnly()) return true;
-    if (!isVisibleToUser(this.priv().showTags, this.currentUser())) return false;
-    return (this.tags() && this.tags().length > 0) ? true : false;
-  }
-
-  protected isNotesVisible(): boolean {
-    if (!this.isReadOnly()) return true;
-    if (!isVisibleToUser(this.priv().showNotes, this.currentUser())) return false;
-    return (this.notes() && this.notes().length > 0) ? true : false;
+  protected areTagsVisible(): boolean {
+    return areTagsVisible(this.currentUser(), this.priv(), this.tags(), this.isReadOnly())  ;
   }
 }

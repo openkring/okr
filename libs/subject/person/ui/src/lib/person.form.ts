@@ -6,7 +6,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { BexioIdMask, ChSsnMask } from '@bk2/shared-config';
 import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
+import { areNotesVisible, areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, hasRole, isVisibleToUser } from '@bk2/shared-util-core';
 import { personValidations } from '@bk2/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
@@ -90,11 +90,11 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
         </ion-card-content>
       </ion-card>
 
-      @if(isTagsVisible()) {
+      @if(areTagsVisible()) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
       
-      @if(isNotesVisible()) {
+      @if(hasRole('admin')) {
         <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
@@ -133,6 +133,7 @@ export class PersonFormComponent {
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected bkey = computed(() => this.formData().bkey ?? '');
+  protected areNotesVisible = computed(() => areNotesVisible(this.currentUser(), this.priv(), this.notes(), this.isReadOnly()));
 
   // passing constants to template
   protected bexioMask = BexioIdMask;
@@ -160,16 +161,8 @@ export class PersonFormComponent {
     return this.dateOfDeath().length > 0 ? true : false;
   }
 
-  protected isTagsVisible(): boolean {
-    if (!this.isReadOnly()) return true;
-    if (!isVisibleToUser(this.priv().showTags, this.currentUser())) return false;
-    return (this.tags() && this.tags().length > 0) ? true : false;
-  }
-
-  protected isNotesVisible(): boolean {
-    if (!this.isReadOnly()) return true;
-    if (!isVisibleToUser(this.priv().showNotes, this.currentUser())) return false;
-    return (this.notes() && this.notes().length > 0) ? true : false;
+  protected areTagsVisible(): boolean {
+    return areTagsVisible(this.currentUser(), this.priv(), this.tags(), this.isReadOnly());
   }
 
   protected hasRole(role: RoleName): boolean {

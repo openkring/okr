@@ -191,7 +191,9 @@ import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel, personNewFormValidations } f
       </ion-card>
     
       <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
-      <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+      @if(hasRole('admin')) {
+        <bk-notes [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+      }
     </form>
   `
 })
