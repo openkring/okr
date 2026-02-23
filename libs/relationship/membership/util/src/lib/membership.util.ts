@@ -556,3 +556,25 @@ export function convertNewMemberFormToMembership(vm: MemberNewFormModel, personK
   member.index = 'mn:' + member.memberName1 + ' ' + member.memberName2 + ', mk:' + member.memberKey + ', ok:' + member.orgKey;
   return member;
 }
+
+
+/**
+ * From within a set of given memberships, this returns all groups that the given member belongs to. 
+ * A member can belong to multiple groups within the same organization, but this method only returns unique groups.
+ * @param memberships the given memberships to choose from
+ * @param memberKey The member's key (person or org).
+ * @returns Observable<GroupModel[]> of unique groups.
+ */
+export function getGroupsOfMember(memberships: MembershipModel[], memberKey?: string): GroupModel[] {
+  if (!memberKey) return [];
+  const ms = memberships.filter((m: MembershipModel) => m.memberKey === memberKey && m.orgModelType === 'group');
+  const groups: GroupModel[] = [];
+  const seen = new Set<string>();
+  for (const m of ms) {
+    if (!seen.has(m.bkey)) {
+      seen.add(m.bkey);
+      groups.push();
+    }
+  }
+  return groups;
+}
