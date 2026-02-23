@@ -3,30 +3,35 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
+import { of } from 'rxjs';
 
 import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getCatAbbreviation, getDataRow, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches, warn } from '@bk2/shared-util-core';
+import { AddressModel, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName, TaskModel } from '@bk2/shared-models';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches, warn } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
+import { TaskService } from '@bk2/task-data-access';
+import { OwnershipService } from '@bk2/relationship-ownership-data-access';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToMemberDataRow, convertToRawDataRow, convertToSrvDataRow, getMemberEmailAddresses, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
+import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getMemberEmailAddresses, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
 import { AddressService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
+import { browseUrl } from '@bk2/subject-address-util';
 
 import { MemberNewModal } from './member-new.modal';
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
-import { browseUrl } from '@bk2/subject-address-util';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
+  orgType: 'org' | 'group';
   listId: string;  // the current list view (active, exits, etc.) - used to detect view changes and reset filters
   showOnlyCurrent: boolean;  // whether to show only current memberships or all memberships that ever existed
+  version: number; // used to trigger reload of resources when it changes (e.g. after adding/editing a membership) to avoid calling reload() directly from the modal which would cause issues with the modal closing before the reload is finished
 
   // for accordion-like display of memberships of a given member
   member: PersonModel | OrgModel | GroupModel | undefined;
@@ -44,10 +49,14 @@ export type MembershipState = {
 
 const initialState: MembershipState = {
   orgId: '',
+  orgType: 'org',
   listId: '',
   showOnlyCurrent: true,
+  version: 0,
+
   member: undefined,
   modelType: undefined,
+
   searchTerm: '',
   selectedTag: '',
   selectedMembershipCategory: 'all',
@@ -69,20 +78,46 @@ export const _MembershipStore = signalStore(
     router: inject(Router),
     personService: inject(PersonService),
     addressService: inject(AddressService),
+    taskService: inject(TaskService),
+    ownershipService: inject(OwnershipService)
   })),
 
   withProps((store) => ({
     // all memberships of this tenant
     allMembershipsResource: rxResource({  
       params: () => ({
-        currentUser: store.appStore.currentUser()
+        currentUser: store.appStore.currentUser(),
+        version: store.version()
       }),
       stream: ({params}) => {
         return store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.tenantId()), 'memberName2', 'asc').pipe(
           debugListLoaded('MembershipStore.allMemberships', params.currentUser)
         );
       },
-    })
+    }),
+      // Loads all ownerships for a given member (if it is a person)
+    ownershipsOfMemberResource: rxResource({
+      params: () => ({
+        member: store.member(),
+        modelType: store.modelType()
+      }),
+      stream: ({params}) => {
+        if (!params.member || !params.modelType || params.modelType !== 'person') return of([]);
+
+        // Query ownerships where ownerKey == memberKey and ownerModelType == 'person'
+        return store.firestoreService.searchData<OwnershipModel>(
+          OwnershipCollection,
+          [
+            { key: 'ownerKey', operator: '==', value: params.member.bkey },
+            { key: 'ownerModelType', operator: '==', value: 'person' },
+            { key: 'state', operator: '==', value: 'active' },
+            { key: 'tenants', operator: 'array-contains', value: store.appStore.tenantId() }
+          ],
+          'resourceName',
+          'asc'
+        );
+      },
+    }),
   })),
 
   withComputed((state) => {
@@ -91,7 +126,8 @@ export const _MembershipStore = signalStore(
       allMemberships: computed(() => state.showOnlyCurrent() ? 
         state.allMembershipsResource.value()?.filter(m => isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? [] : 
         state.allMembershipsResource.value()?.filter(m => m.relIsLast === true) ?? []),
-      defaultMcat: computed(() => state.appStore.getCategory('mcat_default'))
+      defaultMcat: computed(() => state.appStore.getCategory('mcat_default')),
+      ownershipsOfMember: computed(() => state.ownershipsOfMemberResource.value() ?? []),
     };
   }),
 
@@ -110,7 +146,8 @@ export const _MembershipStore = signalStore(
           membership.memberModelType === state.modelType()) ?? []
       }),
 
-      org: computed(() => state.appStore.getOrg(state.orgId()) ?? undefined),
+      org: computed(() => state.orgType() === 'org' ? state.appStore.getOrg(state.orgId()) : undefined),
+      group: computed(() => state.orgType() === 'group' ? state.appStore.getGroup(state.orgId()) : undefined),
       currentUser: computed(() => state.appStore.currentUser()),
       genders: computed(() => state.appStore.getCategory('gender')),
       privacySettings: computed(() => state.appStore.privacySettings()),
@@ -122,7 +159,13 @@ export const _MembershipStore = signalStore(
   withComputed((state) => {
     return {
       orgName: computed(() => state.org()?.name ?? ''),
-      membershipCategoryKey: computed(() => state.org()?.membershipCategoryKey ?? 'mcat_default'),
+      groupsOfMember: computed(() => getGroupsOfMember(state.memberships(), state.member()?.bkey) ?? []),
+
+      membershipCategoryKey: computed(() => {
+        if (state.orgType() === 'group') return undefined;
+        const org = state.org() as OrgModel | undefined;
+        return org?.membershipCategoryKey ?? 'mcat_default';
+      }),
 
       personMembers: computed(() => state.members().filter((membership: MembershipModel) =>
         membership.memberModelType === 'person') ?? []),
@@ -168,8 +211,10 @@ export const _MembershipStore = signalStore(
   withComputed((state) => {
     return {
       membershipCategory: computed<CategoryListModel>(() => state.appStore.getCategory(state.membershipCategoryKey()) ?? state.defaultMcat()),
+      groupsCount: computed(() => state.groupsOfMember().length),
       defaultOrg: computed(() => state.org()),
       currentPerson : computed(() => state.appStore.currentPerson()),
+      
       isLoading: computed(() => 
         state.allMembershipsResource.isLoading() || 
         state.appStore.orgsResource.isLoading()
@@ -273,17 +318,18 @@ export const _MembershipStore = signalStore(
   withMethods((store) => {
 
     return {
-      reload() {
-        store.allMembershipsResource.reload();
+      refreshData() {
+        patchState(store, { version: store.version() + 1 });
       },
 
       /******************************** setters (filter) ******************************************* */
-      setOrgId(orgId?: string) {
+      setOrgId(orgId?: string, orgType: 'org' | 'group' = 'org') {
         if (!orgId) orgId = store.appStore.defaultOrg()?.bkey;
         // Only reset filters if orgId actually changed
         if (store.orgId() !== orgId) {
           patchState(store, { 
             orgId,
+            orgType,
             searchTerm: '',
             selectedTag: '',
             selectedMembershipCategory: 'all',
@@ -438,7 +484,7 @@ export const _MembershipStore = signalStore(
           if (newMember.orgKey.length > 0 && newMember.category.length > 0) {
             await this.saveMembership(newMember, personKey);
           }
-          this.reload();
+          this.refreshData();
         }
       },
 
@@ -490,12 +536,17 @@ export const _MembershipStore = signalStore(
           if (isMembership(data, store.tenantId())) {
             const mcatAbbreviation = getCatAbbreviation(store.membershipCategory(), data.category);
             data.relLog = getRelLogEntry(data.dateOfEntry, mcatAbbreviation);
-            await (!data.bkey ? 
-              store.membershipService.create(data, store.currentUser()) : 
-              store.membershipService.update(data, store.currentUser()));
+            if (!data.bkey) { // create new membership
+              store.membershipService.create(data, store.currentUser());
+              const memberName = getFullName(membership.memberName1, membership.memberName2);
+              await this.addTask(membership, store.appStore.getGroup('treasurer'),
+                `Neumitglied ${memberName} -> bitte Gebühren prüfen.`);
+            } else { // update existing membership
+              store.membershipService.update(data, store.currentUser());
+            }
           }
         }
-        this.reload();
+        this.refreshData();
       },
 
       /**
@@ -514,8 +565,30 @@ export const _MembershipStore = signalStore(
           return;
         }
         const sDate = convertDateFormatToString(endDate.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate, false);
-        await store.membershipService.endMembershipByDate(membership, sDate, store.currentUser());              
-        this.reload();  
+        await store.membershipService.endMembershipByDate(membership, sDate, store.currentUser());
+        const memberName = getFullName(membership.memberName1, membership.memberName2);
+        const ownerships = store.ownershipsOfMember();
+        if (ownerships.length > 0) {
+          await this.addTask(membership, store.appStore.getGroup('resourceAdmin'), `${memberName} ist ausgetreten -> bitte Schlüssel und/oder Chäschtli prüfen.`);
+        } else {
+          debugMessage('MembershipStore.end: no ownerships found for member, no task needed for resourceAdmin', store.currentUser());
+        }
+        await this.addTask(membership, store.appStore.getGroup('treasurer'), `${memberName} ist ausgetreten -> bitte Gebühren prüfen.`);
+      },
+
+      /**
+       * Adds a new task to a group membership. 
+       * The task is assigned to the group and the author is the current user. 
+       * The task is initially assigned to the mainContact of the group resourceAdmin.
+       * If the mainContact does not exist, the author is assigned, but can be changed in the task edit modal.
+       * This is currently only implemented for memberships in Seeclub Stäfa (bkey = 'scs').
+       * @param membership the membership for which to create the task. We need the membership to get the group (org) for which the task is created and to check if it is a SCS membership.
+       * @param group the group to which the task is assigned.
+       * @param name the name of the task to create. It should contain all relevant information about the reason for creating the task, so that the responsible person can directly act on it without having to look up additional information.
+       * @returns 
+       */
+      async addTask(membership: MembershipModel, group?: GroupModel, name?: string): Promise<void> {
+        await store.taskService.addTaskFromGroupMembership(membership, group, name, store.currentUser());
       },
 
       async changeMembershipCategory(membership?: MembershipModel, readOnly = true): Promise<void> {
@@ -535,8 +608,18 @@ export const _MembershipStore = signalStore(
           const { data, role } = await modal.onDidDismiss();
           if (role === 'confirm' && data !== undefined) {   // result is vm: CategoryChangeFormModel
             await store.membershipService.saveMembershipCategoryChange(membership, data, membershipCategory, store.currentUser());
+            if (data.membershipCategoryNew === 'passive') {
+              const memberName = getFullName(membership.memberName1, membership.memberName2);
+              const ownerships = store.ownershipsOfMember();
+              if (ownerships.length > 0) {
+                await this.addTask(membership, store.appStore.getGroup('resourceAdmin'), `${memberName} wechselt auf Passiv. Bitte Schlüssel und/oder Chäschtli prüfen.`);
+              } else {
+                debugMessage('MembershipStore.changeMembershipCategory: no ownerships found for member, no task needed for resourceAdmin', store.currentUser());
+              }
+              await this.addTask(membership, store.appStore.getGroup('treasurer'), `${memberName} wechselt auf Passiv. Bitte Gebühren prüfen.`);
+            }
           }
-          this.reload();
+          this.refreshData();
         }
       },
 
@@ -620,7 +703,7 @@ export const _MembershipStore = signalStore(
         const result = await confirm(store.alertController, '@membership.operation.delete.confirm', true);
         if (result === true) {
           await store.membershipService.delete(membership);
-          this.reload();  
+          this.refreshData();  
         }
       },
 
