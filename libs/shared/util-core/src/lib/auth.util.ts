@@ -1,5 +1,6 @@
-import { PrivacyAccessor, RoleName, Roles, UserModel } from "@bk2/shared-models";
+import { PrivacyAccessor, PrivacySettings, RoleName, Roles, UserModel } from "@bk2/shared-models";
 import { die } from "./log.util";
+import { debugMessage } from "libs/shared/util-core/src/lib/debug.util";
 
 /**
  * Determines if the user has a matching role.
@@ -70,4 +71,30 @@ export function isVisibleToUser(privacyAccessor: PrivacyAccessor, currentUser?: 
     default:
       die('AuthUtil.isVisibleToUser: unknown privacy accessor: ' + privacyAccessor);
   }
+}
+
+export function areNotesVisible(currentUser?: UserModel, priv?: PrivacySettings, notes?: string, readonly?: boolean): boolean {
+  if (!currentUser || !priv) return false;
+  debugMessage(`auth.util.isNotesVisible(readonly=${readonly}, showNotes=${priv.showNotes}, notes=<${notes}>) -> ${isVisibleToUser(priv.showNotes, currentUser)}`, currentUser);
+  if (isVisibleToUser(priv.showNotes, currentUser)) { // if the user has the permission to see notes, then check if there are notes to show in readonly mode, or show always in edit mode
+    if (readonly) { // in readonly mode, only visible if there are notes.
+      return (notes && notes.length > 0) ? true : false;
+    } else {
+      return true; // always visible in edit mode.
+    };
+  }
+  return false;
+}
+
+export function areTagsVisible(currentUser?: UserModel, priv?: PrivacySettings, tags?: string, readonly?: boolean): boolean {
+  if (!currentUser || !priv) return false;
+  debugMessage(`auth.util.isTagsVisible(readonly=${readonly}, showTags=${priv.showTags}, tags=<${tags}>) -> ${isVisibleToUser(priv.showTags, currentUser)}`, currentUser);
+  if (isVisibleToUser(priv.showTags, currentUser)) {
+    if (readonly) { // in readonly mode, only visible if there are tags.
+      return (tags && tags.length > 0) ? true : false;
+    } else {
+      return true; // always visible in edit mode.
+    };
+  }
+  return false;
 }
