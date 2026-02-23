@@ -4,9 +4,9 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, DocumentCollection, DocumentModel, SectionModel, SectionType } from '@bk2/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, DocumentCollection, DocumentModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, SectionModel, SectionType } from '@bk2/shared-models';
 import { CardSelectModalComponent } from '@bk2/shared-ui';
-import { chipMatches, debugItemLoaded, debugMessage, getFileHash, getTodayStr, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugItemLoaded, debugMessage, getFileHash, getFullName, getTodayStr, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
 import { confirm } from '@bk2/shared-util-angular';
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -230,12 +230,18 @@ export const _SectionStore = signalStore(
 
         // 3) update the section with the new image URL
         const imgixBaseUrl = store.appStore.env.services.imgixBaseUrl; // https://bkaiser.imgix.net
-        section.properties.image.url = `${imgixBaseUrl}/${downloadUrl}`;
-
-
-        // TBD: create a document model with all metadata of the image
-
+        if (!section.properties.image) {
+          section.properties.image = IMAGE_CONFIG_SHAPE;
+        }
+        section.properties.image.url = `${imgixBaseUrl}/${storagePath}`;
+        section.properties.image.actionUrl = downloadUrl;
+        section.properties.image.altText = file.name;
+        if (!section.properties.imageStyle) {
+          section.properties.imageStyle = IMAGE_STYLE_SHAPE;
+        }
+        section.properties.imageStyle.action = ImageActionType.Download;
         await store.sectionService.update(section, store.currentUser());
+        await this.createDocument(file, storagePath, downloadUrl);  // create a document for the uploaded image
         this.reload();
       },
 
@@ -255,6 +261,7 @@ export const _SectionStore = signalStore(
         section.properties.action.altText = file.name;
         section.properties.action.type = ButtonAction.Download;
         await store.sectionService.update(section, store.currentUser());
+        await this.createDocument(file, storagePath, downloadUrl);  // create a document for the uploaded file
         this.reload();
       },
 
@@ -264,6 +271,8 @@ export const _SectionStore = signalStore(
         document.bkey = hash;
         document.title = file.name;
         document.altText = file.name;
+        document.authorKey = store.currentUser()?.personKey ?? '';
+        document.authorName = getFullName(store.currentUser()?.firstName, store.currentUser()?.lastName);
         document.fullPath = storagePath;
         document.mimeType = file.type;
         document.size = file.size;

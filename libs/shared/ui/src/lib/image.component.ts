@@ -235,7 +235,7 @@ export class ImageComponent {
         await Browser.open({ url: this.actionUrl() });
         break;
       case ImageActionType.Download:
-        await downloadToBrowser(this.env.services.imgixBaseUrl + this.url());
+        await downloadToBrowser(this.url());
         break;
       case ImageActionType.OpenDirectory:
       case ImageActionType.OpenSlider:
