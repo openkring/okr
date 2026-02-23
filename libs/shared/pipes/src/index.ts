@@ -18,6 +18,7 @@ export * from './lib/is-sorted.pipe';
 export * from './lib/iso2viewDate.pipe';
 export * from './lib/label.pipe';
 export * from './lib/logo.pipe';
+export * from './lib/multi-avatar.pipe';
 export * from './lib/part.pipe';
 export * from './lib/prefix-name.pipe';
 export * from './lib/pretty-date.pipe';
