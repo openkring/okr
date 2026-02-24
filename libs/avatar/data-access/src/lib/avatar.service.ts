@@ -55,7 +55,7 @@ export class AvatarService {
       }
       
       this.storagePathCache.set(newCache);
-    }, { injector: this.injector, allowSignalWrites: true });
+    });
   }
 
   /**
