@@ -1,5 +1,5 @@
 import { Component, computed, input } from "@angular/core";
-import { IonAvatar, IonChip, IonImg, IonLabel } from "@ionic/angular/standalone";
+import { IonAvatar, IonChip, IonImg, IonLabel, IonNote } from "@ionic/angular/standalone";
 
 import { AvatarInfo } from "@bk2/shared-models";
 import { FullNamePipe } from '@bk2/shared-pipes';
@@ -13,7 +13,7 @@ import { getDefaultIcon } from "@bk2/avatar-util";
   standalone: true,
   imports: [
     AvatarPipe, FullNamePipe,
-    IonAvatar, IonLabel, IonImg, IonChip
+    IonAvatar, IonLabel, IonImg, IonChip, IonNote
   ],
   styles: [`
     .avatar-container { display: flex; align-items: center; }
@@ -28,7 +28,7 @@ import { getDefaultIcon } from "@bk2/avatar-util";
     @if(avatars(); as avatars) {
       @switch(avatars.length) {
         @case(0) {
-          <ion-label>??</ion-label>
+          <ion-label>-</ion-label>
         }
         @case(1) {
           @if(avatars[0].key && avatars[0].key.length > 0) {
@@ -51,12 +51,15 @@ import { getDefaultIcon } from "@bk2/avatar-util";
         @default {
           <div class="avatar-container">
             <div class="avatar-stack">
-              @for(avatar of avatars; track $index) {
+              @for(avatar of avatars.slice(0, maxAvatarsToShow()); track $index) {
                 @if(avatar.key && avatar.key.length > 0) {
                   <ion-avatar [class.stacked-avatar]="true" [style.zIndex]="avatars.length - $index">
                     <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar of person or org" />
                   </ion-avatar>
                 } 
+              }
+              @if(avatars.length > maxAvatarsToShow()) {
+                <ion-note>+{{ avatars.length - maxAvatarsToShow() }}</ion-note>
               }
             </div>
           </div>
@@ -70,6 +73,7 @@ import { getDefaultIcon } from "@bk2/avatar-util";
 export class AvatarDisplayComponent {
   public avatars = input<AvatarInfo[]>([]);
   public showName = input(true);
+  public maxAvatarsToShow = input(5);
   protected shouldShowName = computed(() => coerceBoolean(this.showName()));
 
   protected getDefaultIcon(modelType: string): string {

@@ -228,14 +228,6 @@ export const GroupStore = signalStore(
       }
     },
 
-    getMembers(group: GroupModel): Observable<MembershipModel[]> {
-      return store.membershipService.listMembersOfOrg(group.bkey);
-    },
-
-    getMemberAvatars(memberships: MembershipModel[]): AvatarInfo[] {
-      return store.membershipService.getMemberAvatars(memberships);
-    },
-
     /******************************* export and save *************************************** */
     async export(type: string): Promise<void> {
       console.log(`GroupStore.export(${type}) is not yet implemented.`);

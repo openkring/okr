@@ -6,3 +6,4 @@ export * from './lib/member-new.modal';
 export * from './lib/membership-list.component';
 export * from './lib/membership.store';
 export * from './lib/membership-accordion.component';
+export * from './lib/member-avatars.pipe';

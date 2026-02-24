@@ -3,28 +3,30 @@ import { Component, computed, inject, input, linkedSignal } from '@angular/core'
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupModel, MembershipModel, RoleName } from '@bk2/shared-models';
+import { GroupModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
+import { AvatarPipe, AvatarDisplayComponent } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { GroupStore } from './group.store';
+import { MemberAvatarsPipe } from '@bk2/relationship-membership-feature';
 
 @Component({
   selector: 'bk-group-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, AvatarPipe, MemberAvatarsPipe,
     SpinnerComponent, EmptyListComponent,
     MenuComponent, ListFilterComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonPopover,
-    IonAvatar, IonImg, IonList
-  ],
+    IonAvatar, IonImg, IonList,
+    AvatarDisplayComponent
+],
   providers: [GroupStore],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
@@ -84,7 +86,8 @@ import { GroupStore } from './group.store';
               <ion-avatar slot="start">
                 <ion-img src="{{ 'group.' + group.bkey | avatar:'people' }}" alt="Avatar Logo" />
               </ion-avatar>
-              <ion-label>{{group.name}}</ion-label>      
+              <ion-label>{{group.name}}</ion-label>
+              <bk-avatar-display [avatars]="(group | memberAvatars | async) ?? []" [showName]="false" />
             </ion-item>
           }
         </ion-list>
@@ -107,17 +110,10 @@ export class GroupListComponent {
 
   // derived signals
   protected filteredGroups = computed(() => {
-    const allGroups = this.groupStore.filteredGroups() ?? [];
     switch(this.listId()) {
-      case 'current': {
-        const userGroupKeys = this.groupStore.currentUserMemberships()
-          ?.filter((m: MembershipModel) => m.orgModelType === 'group')
-          .map((m: MembershipModel) => m.orgKey) ?? [];
-          console.log('User group keys:', userGroupKeys);
-        return allGroups.filter(group => userGroupKeys.includes(group.bkey));
-      }
+      case 'my': return this.groupStore.myGroups();
       case 'all': 
-      default: return allGroups;
+      default: return this.groupStore.filteredGroups();
     }
   });
   protected groupsCount = computed(() => this.groupStore.groups()?.length ?? 0);
@@ -173,6 +169,7 @@ export class GroupListComponent {
       actionSheetOptions.buttons.push(createActionSheetButton('group.edit', this.imgixBaseUrl, 'create_edit'));
     }
     if (hasRole('admin', this.groupStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('group.addPage', this.imgixBaseUrl, 'add'));
       actionSheetOptions.buttons.push(createActionSheetButton('group.delete', this.imgixBaseUrl, 'trash_delete'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -194,6 +191,10 @@ export class GroupListComponent {
       switch (data.action) {
         case 'group.delete':
           await this.groupStore.delete(group, this.readOnly());
+          break;
+        case 'group.addPage':
+          // tbd: add default article section explaining how to add content to the group page
+          await this.groupStore.createGroupPage(group, 'intro', 'Gruppe: ' + group.name);
           break;
         case 'group.edit':
           await this.groupStore.edit(group, this.readOnly());
