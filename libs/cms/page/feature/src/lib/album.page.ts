@@ -22,7 +22,7 @@ import { PageStore } from './page.store';
 `],
   template: `
     @if(id(); as id) {
-      <bk-header [title]="headerTitle()" [isRoot]="true" />
+      <bk-header [title]="headerTitle()" [isRoot]="true" [isModal]="showMainMenu()" />
       <ion-content>
         <bk-album-section [section]="section()" />
       </ion-content>
@@ -48,6 +48,7 @@ export class AlbumPage {
   // id is passed to the album-section as well where it is used as the title
   // the id can be followed by @tenantId to specify the tenantId of the owner of the album
   // e.g. 2021@p13
+  public showMainMenu = input(true);
 
   protected headerTitle = computed(() => extractFirstPartOfOptionalTupel(this.id(), '@'));
   private tenantId = computed(() => this.pageStore.tenantId());

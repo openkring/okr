@@ -108,7 +108,9 @@ import { PageStore } from './page.store';
   template: `
     <ion-header>
       <ion-toolbar [color]="color()" id="bkheader">
-        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>      
+        @if(showMainMenu()) {
+          <ion-buttons slot="start"><ion-menu-button /></ion-buttons>      
+        }
         <ion-title>{{ pageStore.page()?.name | translate | async }}</ion-title>
         @if(hasRole('contentAdmin')) {
           <ion-buttons slot="end">
@@ -189,6 +191,7 @@ export class FilesPage {
   // inputs
   public contextMenuName = input<string>();
   public color = input('secondary');
+  public showMainMenu = input(true);
 
   // derived signals
   protected tenantId = computed(() => this.pageStore.tenantId());

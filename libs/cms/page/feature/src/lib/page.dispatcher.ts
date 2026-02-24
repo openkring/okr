@@ -51,19 +51,19 @@ import { AlbumPage } from "./album.page";
                     <bk-chat-page  />
                 }
                 @case ('content') {
-                    <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" />
+                    <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
                 }
                 @case ('dashboard') {
-                    <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" />
+                    <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
                 }
                 @case ('blog') {
-                    <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" />
+                    <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
                 }
                 @case ('files') {
-                    <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" />
+                    <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
                 }
                 @case ('album') {
-                    <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" />
+                    <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
                 }
                 @case ('error') {
                     <bk-error-page [errorName]="page.bkey" />
@@ -86,6 +86,7 @@ export class PageDispatcher {
   public id = input.required<string>();
   public contextMenuName = input<string>();
   public color = input('secondary');
+  public showMainMenu = input(true);
 
   protected page = computed(() => this.pageStore.page());
 

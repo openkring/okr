@@ -32,7 +32,9 @@ import { SIZE_SM } from '@bk2/shared-constants';
     <ion-header>
       <!-- title and context menu -->
       <ion-toolbar [color]="color()">
-        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+        @if(showMainMenu()) {
+          <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+        }
         @if (hasYearFilter()) {
           <ion-title>{{ selectedMembershipsCount()}} {{ title() | translate | async }} {{ '@membership.list.header.titleRel' | translate | async }} {{ orgName() }}</ion-title>
         } @else {
@@ -151,6 +153,7 @@ export class MembershipListComponent {
   public contextMenuName = input.required<string>();
   public color = input('secondary');
   public view = input<'contact' | 'mcat' | 'group'>('mcat');
+  public showMainMenu = input(true);
 
   // filters
   protected searchTerm = linkedSignal(() => this.membershipStore.searchTerm());

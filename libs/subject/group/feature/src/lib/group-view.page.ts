@@ -13,7 +13,7 @@ import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 import { PageDispatcher } from '@bk2/cms-page-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { MembershipListComponent } from '@bk2/relationship-membership-feature';
-import { SimpleTaskListComponent } from '@bk2/task-feature';
+import { TaskListComponent } from '@bk2/task-feature';
 
 import { GroupStore } from './group.store';
 import { CalEventListComponent } from '@bk2/calevent-feature';
@@ -23,11 +23,12 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    ChangeConfirmationComponent, PageDispatcher, SimpleTaskListComponent,
+    ChangeConfirmationComponent, PageDispatcher,
     CalEventListComponent, MembershipListComponent,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
-    IonHeader, IonButtons, IonTitle, IonMenuButton
-  ],
+    IonHeader, IonButtons, IonTitle, IonMenuButton,
+    TaskListComponent
+],
   providers: [GroupStore],
   template: `
     <ion-header>
@@ -86,28 +87,28 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
         @switch (selectedSegment()) {
           @case ('content') {
             @defer (on immediate) {
-              <bk-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" color="light" />
+              <bk-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" color="light" [showMainMenu]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('chat') {
             @defer (on immediate) {
-              <bk-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" color="light" />
+              <bk-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" color="light" [showMainMenu]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('calendar') {
             @defer (on immediate) {
-              <bk-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="calendar" />
+              <bk-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="calendar" [showMainMenu]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('tasks') {
             @defer (on immediate) {
-              <bk-simple-task-list [listId]="id" contextMenuName="c-test-simpletasklist" color="light" />
+               <bk-task-list [listId]="id" contextMenuName="c-tasks" color="light" view="group" [showMainMenu]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
@@ -130,7 +131,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
         -->
           @case ('members') {
             @defer (on immediate) {
-              <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-membership" color="light" view="group" />
+              <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-membership" color="light" view="group" [showMainMenu]="false" />
               <!-- <bk-members [orgKey]="groupKey()" [readOnly]="isReadOnly()" /> -->
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
