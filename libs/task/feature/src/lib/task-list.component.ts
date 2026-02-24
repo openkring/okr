@@ -42,8 +42,10 @@ import { TaskStore } from './task.store';
   template: `
     <ion-header>
       <!-- title and actions -->
-      <ion-toolbar color="secondary">
-        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+      <ion-toolbar [color]="color()">
+        @if(showMainMenu()) {
+          <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+        }
         <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ '@task.plural' | translate | async }}</ion-title>
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
@@ -62,22 +64,24 @@ import { TaskStore } from './task.store';
       </ion-toolbar>
 
       <!-- quick entry -->
-      <ion-item lines="none">
-        <ion-textarea #bkQuickEntry 
-          (keyup.enter)="quickEntry(bkQuickEntry)"
-          label = "{{'@input.taskQuickEntry.label' | translate | async }}"
-          labelPlacement = "floating"
-          placeholder = "{{'@input.taskQuickEntry.placeholder' | translate | async }}"
-          [counter]="true"
-          fill="outline"
-          [maxlength]="1000"
-          [rows]="1"
-          inputmode="text"
-          type="text"
-          [autoGrow]="true">
-        </ion-textarea>
-        <ion-icon slot="end" src="{{'close_cancel' | svgIcon }}" (click)="clear(bkQuickEntry)" />
-      </ion-item>
+      @if(!readOnly()) {
+        <ion-item lines="none">
+          <ion-textarea #bkQuickEntry 
+            (keyup.enter)="quickEntry(bkQuickEntry)"
+            label = "{{'@input.taskQuickEntry.label' | translate | async }}"
+            labelPlacement = "floating"
+            placeholder = "{{'@input.taskQuickEntry.placeholder' | translate | async }}"
+            [counter]="true"
+            fill="outline"
+            [maxlength]="1000"
+            inputmode="text"
+            type="text"
+            [autoGrow]="true"
+          >
+          </ion-textarea>
+          <ion-icon slot="end" src="{{'close_cancel' | svgIcon }}" (click)="clear(bkQuickEntry)" />
+        </ion-item>
+      }
 
       <!-- search and filters -->
       <bk-list-filter
@@ -139,8 +143,10 @@ export class TaskListComponent {
   protected taskStore = inject(TaskStore);
   private actionSheetController = inject(ActionSheetController);
 
-  public listId = input.required<string>();
+  public listId = input.required<string>(); // all, my, calendarId
   public contextMenuName = input.required<string>();
+  public color = input('secondary');
+  public showMainMenu = input(true);
 
   // derived signals
   protected filteredTasks = computed(() => this.taskStore.filteredTasks() ?? []);

@@ -13,9 +13,11 @@ import { ModalController } from '@ionic/angular/standalone';
 import { TaskEditModalComponent } from 'libs/task/feature/src/lib/task-edit.modal';
 import { isTask } from '@bk2/task-util';
 import { AvatarService } from '@bk2/avatar-data-access';
+import { map, of } from 'rxjs';
 
 export type TaskState = {
   calendarName: string;
+  maxItems: number | undefined,
 
   // task
   taskKey: string;
@@ -28,7 +30,8 @@ export type TaskState = {
 };
 
 export const initialState: TaskState = {
-  calendarName: '', 
+  calendarName: '',
+  maxItems: undefined,
 
   // task
   taskKey: '',
@@ -60,6 +63,25 @@ export const TaskStore = signalStore(
         );
       }
     }),
+   tasksForCurrentUserResource: rxResource({
+      params: () => ({
+        personKey: store.appStore.currentUser()?.personKey,
+        maxItems: store.maxItems()
+      }),
+      stream: ({params}) => {
+        const personKey = params.personKey;
+        if (!personKey) return of([]);
+        const query = getSystemQuery(store.appStore.env.tenantId);
+        query.push({ key: 'completionDate', operator: '==', value: '' }); // only get tasks that are not completed (completionDate is empty)  
+        return store.appStore.firestoreService.searchData<TaskModel>(TaskCollection, query, 'dueDate', 'asc').pipe(
+          map(tasks => {
+            const filteredTasks = tasks.filter(task => task.assignee?.key === personKey || task.author?.key === personKey);
+            // Limit results if maxItems is defined
+            return params.maxItems !== undefined ? filteredTasks.slice(0, params.maxItems) : filteredTasks;
+          })
+        );
+      }
+    }),
     taskResource: rxResource({
       params: () => ({
         taskKey: store.taskKey(),
@@ -74,17 +96,21 @@ export const TaskStore = signalStore(
   })),
 
  withComputed((state) => ({
-    // tasks
     tasks: computed(() => {
       if (state.calendarName() === 'all') {
         return state.tasksResource.value() ?? [];
+      } else if (state.calendarName() === 'my') {
+        return state.tasksForCurrentUserResource.value() ?? [];
       } else {
         return state.tasksResource.value()?.filter((task: TaskModel) => task.calendars.includes(state.calendarName())) ?? [];
       }
-    }),
-    tasksCount: computed(() => state.tasksResource.value()?.length ?? 0),
+    })
+ })),
+
+ withComputed((state) => ({
+    tasksCount: computed(() => state.tasks().length),
     filteredTasks: computed(() => 
-      state.tasksResource.value()?.filter((task: TaskModel) => 
+      state.tasks().filter((task: TaskModel) => 
         nameMatches(task.index, state.searchTerm()) &&
         chipMatches(task.tags, state.selectedTag()) &&
         nameMatches(task.state, state.selectedState()) &&
@@ -112,11 +138,16 @@ export const TaskStore = signalStore(
     reload() {
       store.tasksResource.reload();
       store.taskResource.reload();
+      store.tasksForCurrentUserResource.reload();
     },
 
     /******************************** setters (filter) ******************************************* */
     setCalendarName(calendarName: string) {
       patchState(store, { calendarName });
+    },
+
+    setMaxItems(maxItems?: number): void {
+      patchState(store, { maxItems });
     },
 
     setSearchTerm(searchTerm: string) {
