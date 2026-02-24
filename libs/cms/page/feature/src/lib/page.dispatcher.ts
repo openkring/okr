@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input } from "@angular/core";
+import { Component, computed, effect, inject, input, untracked } from "@angular/core";
 import { Router } from "@angular/router";
 
 import { debugMessage, replaceSubstring } from "@bk2/shared-util-core";
@@ -48,7 +48,7 @@ import { AlbumPage } from "./album.page";
                     <bk-landing-page  />
                 }
                 @case ('chat') {
-                    <bk-chat-page  />
+                    <bk-chat-page [color]="color()" [showRoomList]="false" [selectedRoom]="roomId()" />
                 }
                 @case ('content') {
                     <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
@@ -89,13 +89,24 @@ export class PageDispatcher {
   public showMainMenu = input(true);
 
   protected page = computed(() => this.pageStore.page());
+  protected roomId = computed(() => {
+    const pageId = this.id();
+    if (pageId && pageId.endsWith('_chat')) {
+      return pageId.substring(0, pageId.length - 5);
+    } else {
+      return undefined;
+    }
+  });
 
   constructor() {
     effect(() => {
-      if (this.id()) {
-        const id = replaceSubstring(this.id(), '@TID@', this.pageStore.tenantId());
-        debugMessage(`PageDispatcher: pageId=${this.id()} -> ${id}`, this.pageStore.currentUser());
-        this.pageStore.setPageId(id);
+      const id = this.id(); // only reactive dependency — effect re-runs only when route id changes
+      if (id) {
+        untracked(() => {
+          const resolvedId = replaceSubstring(id, '@TID@', this.pageStore.tenantId());
+          debugMessage(`PageDispatcher: pageId=${id} -> ${resolvedId}`, this.pageStore.currentUser());
+          this.pageStore.setPageId(resolvedId);
+        });
       }
     });
     effect(() => {

@@ -1,5 +1,5 @@
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input, untracked } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular/standalone';
 
 import { CalEventModel, EventsConfig, EventsSection } from '@bk2/shared-models';
@@ -143,8 +143,14 @@ export class EventsSectionComponent implements OnInit {
 
    constructor() {
     effect(() => {
-      this.calendarStore.setConfig(this.calendarName(), this.maxEvents(), this.showPastEvents(), this.showUpcomingEvents());
-      debugMessage(`EventsSection(): calendarName=${this.calendarName()}`, this.currentUser());
+      const calendarName = this.calendarName();
+      const maxEvents = this.maxEvents();
+      const showPastEvents = this.showPastEvents();
+      const showUpcomingEvents = this.showUpcomingEvents();
+      untracked(() => {
+        this.calendarStore.setConfig(calendarName, maxEvents, showPastEvents, showUpcomingEvents);
+        debugMessage(`EventsSection(): calendarName=${calendarName}`, this.currentUser());
+      });
     });
   }
 
