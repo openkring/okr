@@ -349,6 +349,9 @@ export class MembershipListComponent {
       }
     }
     if (hasRole('admin', this.currentUser())) {
+      if (membership.orgModelType === 'group') {
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.invite', this.imgixBaseUrl, 'chatbubbles'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash_delete'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -388,6 +391,9 @@ export class MembershipListComponent {
           break;
         case 'membership.changecat':
           await this.membershipStore.changeMembershipCategory(membership, this.readOnly());
+          break;
+        case 'membership.invite':
+          await this.membershipStore.invite(membership, this.readOnly());
           break;
         case 'person.copyemail':
           const email = this.membershipStore.getEmail(membership);

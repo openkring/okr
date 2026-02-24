@@ -21,6 +21,7 @@ import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemb
 import { AddressService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { browseUrl } from '@bk2/subject-address-util';
+import { MatrixChatService } from '@bk2/chat-data-access';
 
 import { MemberNewModal } from './member-new.modal';
 import { MembershipEditModalComponent } from './membership-edit.modal';
@@ -79,7 +80,8 @@ export const _MembershipStore = signalStore(
     personService: inject(PersonService),
     addressService: inject(AddressService),
     taskService: inject(TaskService),
-    ownershipService: inject(OwnershipService)
+    ownershipService: inject(OwnershipService),
+    matrixService: inject(MatrixChatService),
   })),
 
   withProps((store) => ({
@@ -621,6 +623,12 @@ export const _MembershipStore = signalStore(
           }
           this.refreshData();
         }
+      },
+
+      async invite(membership: MembershipModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
+        debugMessage('MembershipStore.invite member ' + membership.memberKey + ' to chatroom ' + membership.orgKey, store.currentUser());
+        await store.matrixService.inviteUser(membership.orgKey, membership.memberKey);
       },
 
       async export(type: string, memberships: MembershipModel[]): Promise<void> {
