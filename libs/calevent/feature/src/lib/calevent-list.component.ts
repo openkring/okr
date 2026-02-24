@@ -58,7 +58,9 @@ import { CalEventStore } from './calevent.store';
     <ion-header>
       @if(contextMenuName() !== 'disable') {
         <ion-toolbar [color]="color()">
-          <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+          @if(showMainMenu()) {
+            <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+          }
           <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calevent.plural' | translate | async }}</ion-title>
           @if(!readOnly()) {
             <ion-buttons slot="end">
@@ -168,6 +170,7 @@ export class CalEventListComponent {
   public contextMenuName = input.required<string>(); // the name of the context menu to use or 'disable' to disable the header toolbar with the context menu
   public color = input('secondary');
   public view = input<'list' | 'calendar'>('calendar'); // initial view mode
+  public showMainMenu = input(true);
   
   // filters
   protected searchTerm = linkedSignal(() => this.calEventStore.searchTerm());
