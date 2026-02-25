@@ -1,6 +1,6 @@
 {
   "name": "bk2monorepo",
-  "version": "6.4.28",
+  "version": "6.4.29",
   "packageManager": "pnpm@10.15.0",
   "license": "MIT",
   "type": "module",
