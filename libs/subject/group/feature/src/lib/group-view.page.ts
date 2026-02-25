@@ -87,14 +87,14 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
         @switch (selectedSegment()) {
           @case ('content') {
             @defer (on immediate) {
-              <bk-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" color="light" [showMainMenu]="false" />
+              <bk-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" color="light" [isGroupView]="true" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('chat') {
             @defer (on immediate) {
-              <bk-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" color="light" [showMainMenu]="false" />
+              <bk-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" color="light" [isGroupView]="true" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }

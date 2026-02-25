@@ -48,22 +48,22 @@ import { AlbumPage } from "./album.page";
                     <bk-landing-page  />
                 }
                 @case ('chat') {
-                    <bk-chat-page [color]="color()" [showRoomList]="false" [selectedRoom]="roomId()" />
+                    <bk-chat-page [color]="color()" [selectedRoom]="roomId()" [isGroupView]="isGroupView()" />
                 }
                 @case ('content') {
-                    <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
+                    <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
                 }
                 @case ('dashboard') {
-                    <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
+                    <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
                 }
                 @case ('blog') {
-                    <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
+                    <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
                 }
                 @case ('files') {
-                    <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
+                    <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
                 }
                 @case ('album') {
-                    <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMainMenu()" />
+                    <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
                 }
                 @case ('error') {
                     <bk-error-page [errorName]="page.bkey" />
@@ -86,8 +86,9 @@ export class PageDispatcher {
   public id = input.required<string>();
   public contextMenuName = input<string>();
   public color = input('secondary');
-  public showMainMenu = input(true);
+  public isGroupView = input(false); 
 
+  // computed
   protected page = computed(() => this.pageStore.page());
   protected roomId = computed(() => {
     const pageId = this.id();

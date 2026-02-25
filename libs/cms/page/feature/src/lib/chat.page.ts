@@ -23,12 +23,14 @@ import { MatrixChat } from '@bk2/chat-feature';
   template: `
     <ion-header>
       <ion-toolbar [color]="color()" id="bkheader">
-        <ion-buttons slot="start"><ion-menu-button /></ion-buttons>      
+        @if(!isGroupView()) {
+          <ion-buttons slot="start"><ion-menu-button /></ion-buttons>      
+        }
         <ion-title>Chat</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content>
-        <bk-matrix-chat-overview [showRoomList]="true" />
+        <bk-matrix-chat-overview [isGroupView]="isGroupView()" [selectedRoom]="selectedRoom()" />
     </ion-content>
   `
 })
@@ -36,6 +38,8 @@ export class ChatPage {
 
   // inputs
   public color = input('secondary');
+  public isGroupView = input(false);
+  public selectedRoom = input<string | undefined>();
 
   // derived signals
 
