@@ -1,58 +1,87 @@
-import { computed, inject } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { computed, inject, Injectable } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { Observable, of, switchMap } from 'rxjs';
+import { of, switchMap } from 'rxjs';
+import { Visibility } from 'matrix-js-sdk';
+import { ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
-import { MatrixAuthToken, MatrixMessage, MatrixUser } from '@bk2/shared-models';
+import { MatrixAuthToken, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@bk2/shared-models';
 import { debugItemLoaded, debugMessage } from '@bk2/shared-util-core';
+import { showToast } from '@bk2/shared-util-angular';
 
 import { AvatarService } from '@bk2/avatar-data-access';
 import { MatrixChatService } from '@bk2/chat-data-access';
 
-export interface MatrixChatState {
+import { RoomEditModal } from './room-edit.modal';
+
+export type MatrixChatState = {
   isMatrixInitialized: boolean;
   currentRoomId: string | undefined;
-  showRoomList: boolean;
   selectedThreadId: string | undefined;
 }
 
 export const initialState: MatrixChatState = {
   isMatrixInitialized: false,
   currentRoomId: undefined,
-  showRoomList: true,
   selectedThreadId: undefined,
 };
 
-export const MatrixChatStore = signalStore(
+export const _MatrixChatStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
     matrixService: inject(MatrixChatService),
     avatarService: inject(AvatarService),
+    modalController: inject(ModalController),
+    toastController: inject(ToastController),
+  })),
+  withProps((store) => ({
+    syncStateResource: rxResource({ stream: () => store.matrixService.syncState }),
+    roomsResource: rxResource({ stream: () => store.matrixService.rooms }),
+    imageUrlResource: rxResource({
+      params: () => ({
+        user: store.appStore.currentUser(),
+        imgixBaseUrl: store.appStore.services.imgixBaseUrl(),
+      }),
+      stream: ({ params }) => {
+        const { user, imgixBaseUrl } = params;
+        if (!user) return of(undefined);
+        return store.avatarService.getRelStorageUrl(`person.${user.personKey}`).pipe(
+          switchMap(relStorageUrl =>
+            of(relStorageUrl ? `${imgixBaseUrl}/${relStorageUrl}` : undefined)
+          )
+        );
+      },
+    }),
+    /**
+     * Get messages for current room - returns an Observable that switches when room changes
+     */
+    messagesResource: rxResource({
+      params: () => ({
+        currentRoomId: store.currentRoomId(),
+      }),
+      stream: ({ params }) => {
+        const { currentRoomId } = params;
+        if (!currentRoomId) return of([]);
+        console.log(`MatrixChatStore: Switching to messages for room ${currentRoomId}`);
+        return store.matrixService.getMessagesForRoom(currentRoomId);
+      },
+    }),
   })),
   withComputed((state) => {
     return {
       currentUser: computed(() => state.appStore.currentUser()),
       imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
-      matrixSyncState: toSignal(state.matrixService.syncState, { initialValue: 'STOPPED' }),
-      matrixRooms: toSignal(state.matrixService.rooms, { initialValue: [] }),
-    };
-  }),
-
-  withComputed((state) => {
-    return {
-      imageUrl: computed(() => {
-        const user = state.currentUser();
-        if (!user) return undefined;
-        return state.avatarService.getAvatarUrl(`person.${user.personKey}`, 'person');
-      }),
+      syncState: computed(() => state.syncStateResource.value() || 'STOPPED'),
+      rooms: computed(() => state.roomsResource.value() || []),
+      imageUrl: computed(() => state.imageUrlResource.value()),
       homeServer: computed(() => {
-        const server = state.appStore.env.services.matrixHomeserver;
-        return server.replace(/^https?:\/\//, ''); // remove protocol if present, we just want the host for Matrix user IDs
+        return state.appStore.env.services.matrixHomeserver.replace(/^https?:\/\//, '');
       }),
+      messages: computed(() => state.messagesResource.value() || []),
     };
   }),
 
@@ -61,32 +90,29 @@ export const MatrixChatStore = signalStore(
       homeServerUrl: computed(() => `https://${state.homeServer()}`), 
       matrixUser: computed((): MatrixUser | undefined => {
         const user = state.currentUser();
-        const url = state.imageUrl();
-        if (!user || !url) return undefined;
-        
-        // Convert Firebase user to Matrix format
-        // Matrix user IDs follow format: @localpart:homeserver
-        const matrixUserId = `@${user.bkey}:${state.homeServer()}`;
-        
+        const imageUrl = state.imageUrl();
+        if (!user || !imageUrl) return undefined;
         return {
-          id: matrixUserId,
+          id: `@${user.bkey}:${state.homeServer()}`,
           name: user.firstName + ' ' + user.lastName,
-          imageUrl: url,
+          imageUrl,
         };
       }),
 
       currentRoom: computed(() => {
         const roomId = state.currentRoomId();
         if (!roomId) return undefined;
-        return state.matrixRooms().find(r => r.roomId === roomId);
+        const rooms = state.rooms();
+        return rooms.find(r => r.roomId === roomId)
+          ?? rooms.find(r => r.name?.toLowerCase() === roomId.toLowerCase());
       }),
 
       unreadRooms: computed(() => {
-        return state.matrixRooms().filter(r => r.unreadCount > 0);
+        return state.rooms().filter(r => r.unreadCount > 0);
       }),
 
       totalUnreadCount: computed(() => {
-        return state.matrixRooms().reduce((sum, r) => sum + r.unreadCount, 0);
+        return state.rooms().reduce((sum, r) => sum + r.unreadCount, 0);
       }),
     };
   }),
@@ -102,10 +128,6 @@ export const MatrixChatStore = signalStore(
 
       setCurrentRoom(roomId: string | undefined): void {
         patchState(store, { currentRoomId: roomId });
-      },
-
-      setShowRoomList(showRoomList: boolean): void {
-        patchState(store, { showRoomList });
       },
 
       setSelectedThread(threadId: string | undefined): void {
@@ -124,28 +146,19 @@ export const MatrixChatStore = signalStore(
         }
 
         try {
-          // Check if we have a cached token in localStorage
-          const storedToken = localStorage.getItem('matrix_access_token');
-          const storedUserId = localStorage.getItem('matrix_user_id');
-          const storedDeviceId = localStorage.getItem('matrix_device_id');
-          const storedHomeserver = localStorage.getItem('matrix_homeserver');
-
-          if (storedToken && storedUserId) {
+          const stored = store.matrixService.getStoredCredentials();
+          if (stored) {
             debugItemLoaded(`MatrixChatStore.getMatrixToken: Using cached Matrix token for ${user.bkey}`, user);
             return {
-              accessToken: storedToken,
-              userId: storedUserId,
-              deviceId: storedDeviceId || `device_${user.bkey}`,
-              homeserverUrl: storedHomeserver || store.appStore.env.services.matrixHomeserver,
-            };
+              ...stored,
+              homeserverUrl: stored.homeserverUrl || store.appStore.env.services.matrixHomeserver,
+              deviceId: stored.deviceId || `device_${user.bkey}`,
+            } as MatrixAuthToken;
           }
 
-          // No cached token - call Cloud Function to get Matrix credentials
-          debugMessage(`MatrixChatStore.getMatrixToken: Requesting Matrix credentials from Cloud Function for ${user.bkey}`);
-          
+          debugMessage(`MatrixChatStore.getMatrixToken: Requesting Matrix credentials from Cloud Function for ${user.bkey}`, user);
           const functions = getFunctions(getApp(), 'europe-west6');
           const getMatrixCredentials = httpsCallable(functions, 'getMatrixCredentials');
-          
           const result = await getMatrixCredentials();
           const credentials = result.data as MatrixAuthToken;
 
@@ -153,24 +166,18 @@ export const MatrixChatStore = signalStore(
             throw new Error('Cloud Function returned invalid credentials');
           }
 
-          // Cache the token for future use
-          localStorage.setItem('matrix_access_token', credentials.accessToken);
-          localStorage.setItem('matrix_user_id', credentials.userId);
-          localStorage.setItem('matrix_device_id', credentials.deviceId);
-          localStorage.setItem('matrix_homeserver', credentials.homeserverUrl);
-
-          debugMessage(`MatrixChatStore.getMatrixToken: Successfully got Matrix credentials for ${credentials.userId}`);
-
+          store.matrixService.storeCredentials(credentials);
+          debugMessage(`MatrixChatStore.getMatrixToken: Successfully got Matrix credentials for ${credentials.userId}`, user);
           return credentials;
         } catch (error) {
           console.error('MatrixChatStore.getMatrixToken: Failed to get token:', error);
-          // Clear any invalid cached tokens
-          localStorage.removeItem('matrix_access_token');
-          localStorage.removeItem('matrix_user_id');
-          localStorage.removeItem('matrix_device_id');
-          localStorage.removeItem('matrix_homeserver');
+          store.matrixService.clearStoredCredentials();
           throw error;
         }
+      },
+
+      clearCredentials(): void {
+        store.matrixService.clearStoredCredentials();
       },
 
       /**
@@ -178,7 +185,7 @@ export const MatrixChatStore = signalStore(
        */
       async initializeMatrix(matrixUser: MatrixUser, token: MatrixAuthToken): Promise<void> {
         if (store.isMatrixInitialized()) {
-          debugMessage(`MatrixChatStore.initializeMatrix: Already initialized for user ${matrixUser.id}`);
+          debugMessage(`MatrixChatStore.initializeMatrix: Already initialized for user ${matrixUser.id}`, store.currentUser());
           return;
         }
 
@@ -191,10 +198,11 @@ export const MatrixChatStore = signalStore(
           });
 
           patchState(store, { isMatrixInitialized: true });
-          debugMessage(`MatrixChatStore.initializeMatrix: Initialized for user ${matrixUser.id}`);
+          debugMessage(`MatrixChatStore.initializeMatrix: Initialized for user ${matrixUser.id}`, store.currentUser());
 
           // Sync avatar from Firebase to Matrix if available
-          if (matrixUser.imageUrl) {
+/*.  let's do this later         
+  if (matrixUser.imageUrl) {
             console.log('MatrixChatStore: Syncing avatar to Matrix:', matrixUser.imageUrl);
             try {
               await store.matrixService.setUserAvatarFromUrl(matrixUser.imageUrl);
@@ -202,7 +210,7 @@ export const MatrixChatStore = signalStore(
             } catch (avatarError) {
               console.warn('MatrixChatStore: Failed to sync avatar (non-critical):', avatarError);
             }
-          }
+          } */
 
           // Skip auto-join for now - rooms need to be created first via Cloud Functions
           // TODO: Re-enable when ensureGroupRoom is called to create rooms
@@ -229,6 +237,41 @@ export const MatrixChatStore = signalStore(
       },
 
       /**
+       * Create a new room.
+       */
+      async createRoom(room?: MatrixRoom) {
+        room = room ? room : ROOM_SHAPE;
+        const modal = await store.modalController.create({
+          component: RoomEditModal,  // Assume a new standalone component for input name/users
+          componentProps: {
+            room,
+            currentUser: store.currentUser()
+          }
+        });
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        const roomInfo = data as MatrixRoom;
+        let roomId = '';
+        if (role === 'confirm' && data) {
+          // const invites = roomInfo.invite ? roomInfo.invite.split(',').map(s => s.trim()) : [];
+          const invites: string[] = []; // for now we skip invites, as we don't have a way to select users in the form yet  
+          try {
+            if (roomInfo.isDirect) {
+              roomId = await this.createDirectRoom(invites[0]);
+            } else {
+              roomId = await this.createGroupRoom(roomInfo.name, invites, roomInfo.topic, Visibility.Private);
+            }
+            showToast(store.toastController, '@chat.operation.create.conf');
+            patchState(store, { currentRoomId: roomId });
+
+          } catch (error) {
+            console.error('MatrixChatStore.createRoom: Failed to create room:', error);
+            showToast(store.toastController, '@chat.operation.create.error');
+          }
+        }
+      },
+
+      /**
        * Create a direct message room with another user
        */
       async createDirectRoom(userId: string): Promise<string> {
@@ -244,12 +287,12 @@ export const MatrixChatStore = signalStore(
       /**
        * Create a group room
        */
-      async createGroupRoom(name: string, userIds: string[], topic?: string): Promise<string> {
+      async createGroupRoom(name: string, userIds: string[], topic?: string, visibility = Visibility.Private): Promise<string> {
         if (!store.isMatrixInitialized()) {
           throw new Error('Matrix not initialized');
         }
 
-        const room = await store.matrixService.createGroupRoom(name, userIds, topic);
+        const room = await store.matrixService.createGroupRoom(name, userIds, topic, visibility);
         patchState(store, { currentRoomId: room.roomId });
         return room.roomId;
       },
@@ -368,22 +411,6 @@ export const MatrixChatStore = signalStore(
       },
 
       /**
-       * Get messages for current room - returns an Observable that switches when room changes
-       */
-      getMessages(): Observable<MatrixMessage[]> {
-        // Convert currentRoomId signal to observable and switch to the messages for that room
-        return toObservable(store.currentRoomId).pipe(
-          switchMap(roomId => {
-            if (!roomId) {
-              return of([]);
-            }
-            console.log(`MatrixChatStore: Switching to messages for room ${roomId}`);
-            return store.matrixService.getMessagesForRoom(roomId);
-          })
-        );
-      },
-
-      /**
        * Search for users
        */
       async searchUsers(searchTerm: string): Promise<any[]> {
@@ -400,6 +427,11 @@ export const MatrixChatStore = signalStore(
        */
       async setUserAvatarFromUrl(avatarUrl: string): Promise<string> {
         try {
+          const currentMxc = store.matrixService.getCurrentUser()?.avatarUrl;  // Check current Matrix avatar MXC
+          if (currentMxc) {
+            console.log('MatrixChatStore: Avatar already set, skipping sync');
+            return currentMxc;
+          }
           const matrixAvatarUrl = await store.matrixService.setUserAvatarFromUrl(avatarUrl);
           console.log('MatrixChatStore: User avatar updated successfully');
           return matrixAvatarUrl;
@@ -455,3 +487,13 @@ export const MatrixChatStore = signalStore(
     };
   })
 );
+
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MatrixChatStore extends _MatrixChatStore {
+  constructor() {
+    super();
+  }
+}

@@ -16,6 +16,7 @@ export interface MatrixMessage {
   timestamp: number;
   type: string;
   content: any;
+  mediaUrl?: string; // resolved HTTP/blob URL for image and file messages
   relatesTo?: {
     eventId: string;
     relationType: string;
@@ -36,6 +37,17 @@ export interface MatrixRoom {
   members: MatrixMember[];
   typingUsers: string[];
 }
+
+export const ROOM_SHAPE: MatrixRoom = {
+  roomId: '',
+  name: '',
+  avatar: '',
+  topic: '',
+  isDirect: false,
+  unreadCount: 0,
+  members: [],
+  typingUsers: []
+};
 
 export interface MatrixMember {
   userId: string;

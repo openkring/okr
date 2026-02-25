@@ -1,6 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, PLATFORM_ID, computed, effect, inject, input, OnDestroy, OnInit } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, PLATFORM_ID, computed, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -84,24 +83,6 @@ import { MatrixChatStore } from './matrix-chat.store';
       background: var(--ion-color-light);
       color: var(--ion-color-medium);
     }
-
-    @media (max-width: 768px) {
-      .room-list-column {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 100%;
-        z-index: 10;
-        background: var(--ion-background-color);
-        transform: translateX(-100%);
-        transition: transform 0.3s;
-      }
-
-      .room-list-column.show {
-        transform: translateX(0);
-      }
-    }
   `],
   template: `
     @if (isMatrixReady()) {
@@ -127,7 +108,23 @@ import { MatrixChatStore } from './matrix-chat.store';
           <div class="chat-container">
             <!-- Room List -->
             @if (showRoomList()) {
-              <div class="room-list-column" [class.show]="mobileRoomListVisible()">
+              <div class="room-list-column">
+                <ion-header class="room-header">
+                  <ion-toolbar>
+                    <ion-buttons slot="start">
+                      <ion-button (click)="toggleMobileRoomList()">
+                        <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
+                      </ion-button>
+                    </ion-buttons> 
+                    <ion-title>Chat-Räume</ion-title>
+                    <ion-buttons slot="end">
+                      <ion-button (click)="onCreateRoom()">
+                        <ion-icon src="{{'add-circle' | svgIcon}}"></ion-icon>
+                      </ion-button>
+                    </ion-buttons>
+                  </ion-toolbar>
+                </ion-header>
+
                 <bk-matrix-room-list
                   [rooms]="rooms()"
                   [selectedRoomId]="currentRoomId()"
@@ -142,7 +139,7 @@ import { MatrixChatStore } from './matrix-chat.store';
                 <!-- Room Header -->
                 <ion-header class="room-header">
                   <ion-toolbar>
-                    @if (showRoomList()) {
+                    @if (!showRoomList() && !isGroupView()) {
                       <ion-buttons slot="start">
                         <ion-button (click)="toggleMobileRoomList()">
                           <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
@@ -207,14 +204,16 @@ import { MatrixChatStore } from './matrix-chat.store';
 export class MatrixChat implements OnInit, OnDestroy {
   private readonly store = inject(MatrixChatStore);
   private readonly platformId = inject(PLATFORM_ID);
+
   private isInitializing = false; // Guard flag to prevent multiple initializations
 
   // inputs
-  public showRoomList = input<boolean>(true);
+  public isGroupView = input<boolean>(false);
+  public selectedRoom = input<string | undefined>();
 
   // Computed values from store
-  protected readonly syncState = this.store.matrixSyncState;
-  protected readonly rooms = this.store.matrixRooms;
+  protected readonly syncState = this.store.syncState;
+  protected readonly rooms = this.store.rooms;
   protected readonly currentRoom = this.store.currentRoom;
   protected readonly currentRoomId = computed(() => this.store.currentRoomId());
   protected readonly totalUnreadCount = this.store.totalUnreadCount;
@@ -222,11 +221,11 @@ export class MatrixChat implements OnInit, OnDestroy {
   protected readonly homeserverUrl = computed(() => this.store.homeServerUrl());
   
   // Local state
-  protected readonly mobileRoomListVisible = computed(() => false); // TODO: make this stateful
-  protected readonly replyToMessage = computed(() => undefined); // TODO: implement reply
+  protected readonly replyToMessage = computed(() => undefined); // tbd: implement reply
+  protected showRoomList = signal(!this.isGroupView());
   
   // Messages signal
-  protected readonly messages = toSignal(this.store.getMessages(), { initialValue: [] });
+  protected readonly messages = computed(() => this.store.messages());
   protected readonly typingUsers = computed(() => this.currentRoom()?.typingUsers || []);
 
   // Ready state
@@ -238,7 +237,25 @@ export class MatrixChat implements OnInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      this.store.setShowRoomList(this.showRoomList());
+      const url = this.store.imageUrl();
+      if (url && this.store.isMatrixInitialized()) {
+        this.store.setUserAvatarFromUrl(url);
+      }
+    });
+    effect(() => {
+      const roomAlias = this.selectedRoom();
+      if (!roomAlias) return;
+      // rooms() is a reactive dep: when rooms load after sync, this re-runs and resolves the alias
+      const rooms = this.store.rooms();
+      const match = rooms.find(r => r.roomId === roomAlias)
+        ?? rooms.find(r => r.name?.toLowerCase() === roomAlias.toLowerCase());
+      this.store.setCurrentRoom(match ? match.roomId : roomAlias);
+    });
+    effect(() => {
+      let isGroupView = this.isGroupView();
+      if (isGroupView === undefined) isGroupView = false;
+      console.log('MatrixChat.isGroupView = <' + isGroupView + '>');
+      this.showRoomList.update(visible => (isGroupView === false));
     });
   }
 
@@ -282,11 +299,7 @@ export class MatrixChat implements OnInit, OnDestroy {
       console.log('MatrixChat: Matrix initialized successfully');
     } catch (error) {
       console.error('MatrixChat: Failed to initialize Matrix:', error);
-      // Clear cached tokens on failure
-      localStorage.removeItem('matrix_access_token');
-      localStorage.removeItem('matrix_user_id');
-      localStorage.removeItem('matrix_device_id');
-      localStorage.removeItem('matrix_homeserver');
+      this.store.clearCredentials();
     } finally {
       this.isInitializing = false;
     }
@@ -343,24 +356,25 @@ export class MatrixChat implements OnInit, OnDestroy {
   onMessageClicked(message: any) {
     // Handle message click (e.g., show options)
     console.log('Message clicked:', message);
+    // TBD: Show action sheet with options (reply, edit, delete, react, etc.)
   }
 
   onMessageContextMenu(message: any) {
     // Handle message long press / right click
     console.log('Message context menu:', message);
-    // TODO: Show action sheet with options (reply, edit, delete, react, etc.)
+    // TBD: Show action sheet with options (reply, edit, delete, react, etc.)
   }
 
   onImageClicked(message: any) {
     // Handle image click (e.g., open fullscreen)
     console.log('Image clicked:', message);
-    // TODO: Open image viewer
+    // TBD: Open image viewer
   }
 
   onFileClicked(message: any) {
     // Handle file click (e.g., download)
     console.log('File clicked:', message);
-    // TODO: Download file
+    // TBD: Download file
   }
 
   async onReactionClicked(event: { messageId: string; emoji: string }) {
@@ -375,7 +389,7 @@ export class MatrixChat implements OnInit, OnDestroy {
     // Handle thread click
     console.log('Thread clicked:', eventId);
     this.store.setSelectedThread(eventId);
-    // TODO: Show thread view
+    // TBD: Show thread view
   }
 
   // show room info (e.g., members, settings)
@@ -383,29 +397,19 @@ export class MatrixChat implements OnInit, OnDestroy {
 
     // Show room information
     console.log('Room info clicked');
-    // TODO: Show room info modal
+    // TBD: Show room info modal
   }
 
   onCancelReply() {
     // Cancel reply
-    // TODO: Clear reply state
+    // TBD: Clear reply state
   }
 
   toggleMobileRoomList() {
-    // TODO: Toggle mobile room list visibility
+    this.showRoomList.update(visible => !visible);
   }
 
-  async onCreateRoom() {
-    try {
-      const roomName = prompt('Enter room name:', 'General Chat');
-      if (!roomName) return;
-
-      console.log('Creating room:', roomName);
-      const roomId = await this.store.createGroupRoom(roomName, [], 'Welcome to ' + roomName);
-      console.log('Room created successfully:', roomId);
-    } catch (error) {
-      console.error('Failed to create room:', error);
-      alert('Failed to create room. Check console for details.');
-    }
+  async onCreateRoom(): Promise<void> {
+    await this.store.createRoom();
   }
 }

@@ -2,11 +2,13 @@ import { Component, computed, inject, input, output, signal, viewChild, ElementR
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController } from '@ionic/angular/standalone';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-matrix-message-input',
   standalone: true,
   imports: [
+    SvgIconPipe,
     CommonModule, FormsModule,
     IonTextarea, IonButton, IonIcon
   ],
@@ -103,7 +105,7 @@ import {  IonTextarea, IonButton, IonIcon, ActionSheetController } from '@ionic/
         class="action-button"
         (click)="presentAttachmentActions()"
       >
-        <ion-icon slot="icon-only" name="add-circle-outline"></ion-icon>
+        <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon}}"></ion-icon>
       </ion-button>
 
       <div class="input-wrapper">
@@ -119,7 +121,7 @@ import {  IonTextarea, IonButton, IonIcon, ActionSheetController } from '@ionic/
               size="small"
               (click)="cancelReply()"
             >
-              <ion-icon slot="icon-only" name="close"></ion-icon>
+              <ion-icon slot="icon-only" src="{{'close-cancel-circle' | svgIcon}}"></ion-icon>
             </ion-button>
           </div>
         }
@@ -142,7 +144,7 @@ import {  IonTextarea, IonButton, IonIcon, ActionSheetController } from '@ionic/
         [disabled]="!canSend()"
         (click)="sendMessage()"
       >
-        <ion-icon slot="icon-only" name="send"></ion-icon>
+        <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>
       </ion-button>
     </div>
 

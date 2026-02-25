@@ -1,8 +1,8 @@
 
 import { Injectable } from '@angular/core';
-import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset } from 'matrix-js-sdk';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
+import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User } from 'matrix-js-sdk';
+import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { MatrixConfig, MatrixMessage, MatrixRoom, TypingNotification } from '@bk2/shared-models';
 
@@ -16,6 +16,9 @@ export class MatrixChatService {
   private messages$ = new Map<string, BehaviorSubject<MatrixMessage[]>>();
   private typing$ = new Subject<TypingNotification>();
   private errors$ = new Subject<MatrixError>();
+  private readonly roomsUpdateTrigger$ = new Subject<void>();
+  private roomsUpdateSub: Subscription | null = null;
+  private readonly _mediaCache = new Map<string, string>(); // mxc:// -> blob URL
 
   get isInitialized(): boolean {
     return this.client !== null;
@@ -26,9 +29,36 @@ export class MatrixChatService {
   }
 
   get rooms(): Observable<MatrixRoom[]> {
-    return this.rooms$.asObservable().pipe(distinctUntilChanged((a, b) => 
-      a.length === b.length && a.every((room, i) => room.roomId === b[i]?.roomId && room.unreadCount === b[i]?.unreadCount)
+    return this.rooms$.asObservable().pipe(distinctUntilChanged((a, b) =>
+      a.length === b.length && a.every((room, i) =>
+        room.roomId === b[i]?.roomId &&
+        room.unreadCount === b[i]?.unreadCount &&
+        room.lastMessage?.timestamp === b[i]?.lastMessage?.timestamp
+      )
     ));
+  }
+
+  // ---- Credential storage helpers ----
+
+  getStoredCredentials(): MatrixConfig | null {
+    const accessToken = localStorage.getItem('matrix_access_token');
+    const userId = localStorage.getItem('matrix_user_id');
+    if (!accessToken || !userId) return null;
+    let homeserverUrl = localStorage.getItem('matrix_homeserver') || '';
+    if (homeserverUrl && !homeserverUrl.startsWith('https://')) homeserverUrl = 'https://' + homeserverUrl;
+    return { accessToken, userId, deviceId: localStorage.getItem('matrix_device_id') || '', homeserverUrl };
+  }
+
+  storeCredentials(credentials: MatrixConfig): void {
+    if (credentials.accessToken) localStorage.setItem('matrix_access_token', credentials.accessToken);
+    if (credentials.userId) localStorage.setItem('matrix_user_id', credentials.userId);
+    if (credentials.deviceId) localStorage.setItem('matrix_device_id', credentials.deviceId);
+    if (credentials.homeserverUrl) localStorage.setItem('matrix_homeserver', credentials.homeserverUrl);
+  }
+
+  clearStoredCredentials(): void {
+    ['matrix_access_token', 'matrix_user_id', 'matrix_device_id', 'matrix_homeserver']
+      .forEach(key => localStorage.removeItem(key));
   }
 
   get typing(): Observable<TypingNotification> {
@@ -49,15 +79,16 @@ export class MatrixChatService {
     }
 
     try {
+      const url = config.homeserverUrl.startsWith('https://') ? config.homeserverUrl : 'https://' + config.homeserverUrl;
       console.log('MatrixChatService: Initializing client with config:', {
-        homeserverUrl: config.homeserverUrl,
+        homeserverUrl: url,
         userId: config.userId,
         deviceId: config.deviceId,
         hasAccessToken: !!config.accessToken
       });
 
       this.client = createClient({
-        baseUrl: config.homeserverUrl,
+        baseUrl: url,
         accessToken: config.accessToken,
         userId: config.userId,
         deviceId: config.deviceId,
@@ -101,9 +132,40 @@ export class MatrixChatService {
   }
 
   /**
+   * Fetch a Matrix media URL with auth and return a blob URL.
+   * Caches results to avoid redundant fetches.
+   */
+  private async resolveMediaUrl(mxcUrl: string | undefined): Promise<string> {
+    if (!this.client || !mxcUrl || !mxcUrl.startsWith('mxc://')) return '';
+    const cached = this._mediaCache.get(mxcUrl);
+    if (cached) return cached;
+    const httpUrl = this.client.mxcUrlToHttp(mxcUrl, undefined, undefined, undefined, false, true, true) ?? '';
+    if (!httpUrl) return '';
+    try {
+      const accessToken = this.client.getAccessToken();
+      const resp = await fetch(httpUrl, {
+        headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}
+      });
+      if (!resp.ok) return '';
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      this._mediaCache.set(mxcUrl, blobUrl);
+      return blobUrl;
+    } catch {
+      return '';
+    }
+  }
+
+  /**
    * Disconnect and cleanup the Matrix client
    */
   async disconnect(): Promise<void> {
+    this.roomsUpdateSub?.unsubscribe();
+    this.roomsUpdateSub = null;
+    for (const url of this._mediaCache.values()) {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+    }
+    this._mediaCache.clear();
     if (this.client) {
       this.client.stopClient();
       await this.client.clearStores();
@@ -118,6 +180,10 @@ export class MatrixChatService {
    */
   private setupEventHandlers(): void {
     if (!this.client) return;
+
+    // Debounce room list rebuilds so rapid-fire Timeline/RoomState events collapse into one update
+    this.roomsUpdateSub?.unsubscribe();
+    this.roomsUpdateSub = this.roomsUpdateTrigger$.pipe(debounceTime(300)).subscribe(() => this.updateRoomsList());
 
     // Sync state changes
     this.client.on(ClientEvent.Sync, (state, prevState, data) => {
@@ -145,12 +211,12 @@ export class MatrixChatService {
 
     // Room events
     this.client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined) => {
-      console.log(`MatrixChatService: Timeline event`, {
+/*       console.log(`MatrixChatService: Timeline event`, {
         roomId: room?.roomId,
         eventType: event.getType(),
         eventId: event.getId(),
         isRoomMessage: event.getType() === EventType.RoomMessage
-      });
+      }); */
       
       if (room && event.getType() === EventType.RoomMessage) {
         this.handleNewMessage(event, room);
@@ -168,8 +234,8 @@ export class MatrixChatService {
     });
 
     // Room state updates (name, topic, avatar changes)
-    this.client.on(RoomStateEvent.Events, (event: MatrixEvent) => {
-      this.updateRoomsList();
+    this.client.on(RoomStateEvent.Events, (_event: MatrixEvent) => {
+      this.roomsUpdateTrigger$.next();
     });
   }
 
@@ -204,10 +270,51 @@ export class MatrixChatService {
     });
   }
 
+  public getCurrentUserId(): string | undefined {
+    if (!this.client) return undefined;
+    if (!this.client.getUserId()) return undefined;
+    return this.client.getUserId() ?? undefined;
+  }
+
+  /**
+   * Returns the current Matrix user, or undefined if not available.
+   * A Matrix user has displayName: string and avatarUrl: string.
+   * @returns the current matrix user
+   */
+  public getCurrentUser(): User | undefined {
+    const uid = this.getCurrentUserId();
+    if (!uid || !this.client) return undefined;
+    return this.client.getUser(uid) ?? undefined;
+  }
+
+  /**
+   * Returns the display name of a given matrix user, or the local part of their user ID as fallback.
+   * you can use it with getCurrentUser() or a specific user from a message sender.
+   * @param user the matrix user to get the display name for (can be obtained from getCurrentUser() or from a message sender)
+   * @returns the display name of the user, or a fallback string if not available
+   */
+  public getCurrentDisplayName(user?: User): string | undefined {
+    if (!user || !user.displayName) return undefined;
+    return user.displayName || user.userId?.split(':')[0].substring(1) || 'You';
+  }
+
+  /**
+   * Returns the avatar url of a given matrix user.
+   * you can use it with getCurrentUser() or a specific user from a message sender.
+   * @param user the user object to get the avatar for
+   * @param size the desired size of the avatar (default: 96) - Matrix can generate different sizes from the original
+   * @returns the avatar url of the user, or undefined if not available
+   */
+  public getAvatarUrl(user?: User, size: number = 96): string | undefined {
+    if (!this.client) return undefined;
+    if (!user || !user.avatarUrl) return undefined;
+    return this.client!.mxcUrlToHttp(user.avatarUrl, size, size, 'crop', true) ?? undefined;
+  }
+
   /**
    * Get messages for a specific room
    */
-  getMessagesForRoom(roomId: string): Observable<MatrixMessage[]> {
+  public getMessagesForRoom(roomId: string): Observable<MatrixMessage[]> {
     if (!this.messages$.has(roomId)) {
       this.messages$.set(roomId, new BehaviorSubject<MatrixMessage[]>([]));
       this.loadMessagesForRoom(roomId);
@@ -235,21 +342,30 @@ export class MatrixChatService {
       
       // If we have few or no events, try to paginate back to load more
       if (events.length < 20) {
-        console.log('MatrixChatService: Timeline has few events, attempting to paginate back');
+  //      console.log('MatrixChatService: Timeline has few events, attempting to paginate back');
         try {
           // Paginate backwards to load more messages
           await this.client.paginateEventTimeline(timeline, { backwards: true, limit: 50 });
-          console.log(`MatrixChatService: After pagination, timeline has ${timeline.getEvents().length} events`);
+   //       console.log(`MatrixChatService: After pagination, timeline has ${timeline.getEvents().length} events`);
         } catch (paginateError) {
           console.warn('MatrixChatService: Failed to paginate timeline:', paginateError);
         }
       }
       
-      // Get all events from timeline and convert to messages
+      // Get all events from timeline and convert to messages, resolving media URLs
       const allEvents = timeline.getEvents();
-      const messages = allEvents
-        .filter(e => e.getType() === EventType.RoomMessage)
-        .map(e => this.eventToMessage(e, room));
+      const messages = await Promise.all(
+        allEvents
+          .filter(e => e.getType() === EventType.RoomMessage)
+          .map(async e => {
+            const msg = this.mapEventToMessage(e, room);
+            const mxcUrl = msg.content.url ?? msg.content.file?.url;
+            if ((msg.type === 'm.image' || msg.type === 'm.file') && mxcUrl) {
+              return { ...msg, mediaUrl: await this.resolveMediaUrl(mxcUrl) };
+            }
+            return msg;
+          })
+      );
 
       console.log(`MatrixChatService: Loaded ${messages.length} messages for room ${roomId}`);
 
@@ -266,31 +382,43 @@ export class MatrixChatService {
    * Handle new incoming messages
    */
   private handleNewMessage(event: MatrixEvent, room: Room): void {
-    console.log(`MatrixChatService: New message in room ${room.roomId}`, {
+/*     console.log(`MatrixChatService: New message in room ${room.roomId}`, {
       eventId: event.getId(),
       sender: event.getSender(),
       type: event.getType(),
       content: event.getContent()
-    });
+    }); */
     
-    const message = this.eventToMessage(event, room);
+    const message = this.mapEventToMessage(event, room);
     const subject = this.messages$.get(room.roomId);
-    
+
     if (subject) {
-      const currentMessages = subject.value;
-      console.log(`MatrixChatService: Adding message to list (current: ${currentMessages.length}, new total: ${currentMessages.length + 1})`);
-      subject.next([...currentMessages, message]);
+      subject.next([...subject.value, message]);
+      // Async-resolve media URL and patch the message once fetched
+      const mxcUrl = message.content.url ?? message.content.file?.url;
+      if ((message.type === 'm.image' || message.type === 'm.file') && mxcUrl) {
+        this.resolveMediaUrl(mxcUrl).then(url => {
+          if (!url) return;
+          const msgs = subject.value;
+          const idx = msgs.findIndex(m => m.eventId === message.eventId);
+          if (idx >= 0) {
+            const updated = [...msgs];
+            updated[idx] = { ...updated[idx], mediaUrl: url };
+            subject.next(updated);
+          }
+        });
+      }
     } else {
       console.warn(`MatrixChatService: No message subject found for room ${room.roomId}, message not added to list`);
     }
 
-    this.updateRoomsList();
+    this.roomsUpdateTrigger$.next();
   }
 
   /**
    * Convert a Matrix event to a MatrixMessage
    */
-  private eventToMessage(event: MatrixEvent, room: Room): MatrixMessage {
+  private mapEventToMessage(event: MatrixEvent, room: Room): MatrixMessage {
     const sender = room.getMember(event.getSender()!);
     const content = event.getContent();
     const relatesTo = content['m.relates_to'];
@@ -300,7 +428,7 @@ export class MatrixChatService {
       roomId: room.roomId,
       sender: event.getSender()!,
       senderName: sender?.name || event.getSender()!,
-      senderAvatar: (sender as any)?.getAvatarUrl?.(this.client!.baseUrl, 48, 48, 'crop') || undefined,
+      senderAvatar: this.getAvatarUrl(sender as any as User, 32),
       body: content.body || '',
       timestamp: event.getTs(),
       type: content.msgtype || 'm.text',
@@ -314,42 +442,117 @@ export class MatrixChatService {
     };
   }
 
-  /**
-   * Update the rooms list
-   */
-  private updateRoomsList(): void {
-    if (!this.client) return;
+/**
+ * Update the rooms list observable with current room data
+ * Called after initial sync (PREPARED) and on relevant room events
+ */
+private updateRoomsList(): void {
+  if (!this.client) return;
 
-    const rooms = this.client.getRooms().map(room => this.roomToMatrixRoom(room));
-    this.rooms$.next(rooms);
-  }
+  const rooms = this.client.getRooms();
+  console.log(`MatrixChatService: Updating rooms list - ${rooms.length} rooms found`);
 
-  /**
-   * Convert a Room to MatrixRoom
-   */
-  private roomToMatrixRoom(room: Room): MatrixRoom {
-    const timeline = room.getLiveTimeline();
-    const events = timeline.getEvents();
-    const messageEvents = events.filter(e => e.getType() === EventType.RoomMessage);
-    const lastEvent = messageEvents[messageEvents.length - 1];
-    
-    return {
-      roomId: room.roomId,
-      name: room.name,
-      avatar: (room as any).getAvatarUrl?.(this.client!.baseUrl, 48, 48, 'crop') || undefined,
-      topic: room.currentState.getStateEvents(EventType.RoomTopic, '')?.getContent().topic,
-      isDirect: this.isDirectRoom(room),
-      unreadCount: (room as any).getUnreadNotificationCount('total') || 0,
-      lastMessage: lastEvent ? this.eventToMessage(lastEvent, room) : undefined,
-      members: room.getMembers().map(m => ({
-        userId: m.userId,
-        displayName: m.name,
-        avatarUrl: (m as any).getAvatarUrl?.(this.client!.baseUrl, 48, 48, 'crop') || undefined,
-        membership: (m.membership || 'leave') as string,
-      })),
-      typingUsers: room.currentState.getMembers().filter((m: any) => m.typing).map((u: any) => u.userId),
-    };
-  }
+  const matrixRooms: MatrixRoom[] = rooms
+    .filter(room => {
+      // Skip rooms the user has left or that are not visible
+      const myMembership = room.getMyMembership();
+      return myMembership === 'join' || myMembership === 'invite';
+    })
+    .map(room => {
+      // Get last message for preview
+      const timeline = room.getLiveTimeline();
+      const events = timeline.getEvents();
+      let lastMessage: MatrixMessage | undefined;
+
+      // Find the most recent m.room.message event
+      for (let i = events.length - 1; i >= 0; i--) {
+        const event = events[i];
+        if (event.getType() === EventType.RoomMessage && !event.isRedacted()) {
+          const content = event.getContent();
+          const senderId = event.getSender();
+          const sender = senderId ? this.client!.getUser(senderId) ?? undefined : undefined;
+          const avatarUrl = this.getAvatarUrl(sender, 32);
+
+          lastMessage = {
+            eventId: event.getId()!,
+            roomId: room.roomId,
+            sender: senderId || '',
+            senderName: sender?.displayName || senderId?.split(':')[0].substring(1) || 'Unknown',
+            senderAvatar: avatarUrl,
+            body: content.body || '',
+            timestamp: event.getTs(),
+            type: content.msgtype || 'm.text',
+            content: content,
+            relatesTo: (content['m.relates_to']?.event_id && content['m.relates_to']?.rel_type) ? {
+              eventId: content['m.relates_to'].event_id,
+              relationType: content['m.relates_to'].rel_type
+            } : undefined,
+            reactions: undefined,
+            isRedacted: event.isRedacted(),
+            isEdited: !!content['m.new_content'],
+          };
+          break;
+        }
+      }
+
+      // Get typing users in this room
+      const typingUserIds: string[] = [];
+      // Optionally, you can fill this from room.currentState.getMembers().filter(m => m.typing)
+
+      // Calculate unread count (highlight + notifications)
+      const unreadCount = (room as any).getUnreadNotificationCount?.('total') || 0;
+      const highlightCount = (room as any).getUnreadNotificationCount?.('highlight') || 0;
+
+      // Room avatar (Element-style: 48×48 cropped)
+      const avatarUrl = room.getAvatarUrl(
+        this.client!.baseUrl,
+        48,
+        48,
+        'crop',
+        true // allow default avatar
+      ) || undefined;
+
+      // Determine room name (fallback to members if no name)
+      let name = room.name;
+      if (!name || name === room.roomId) {
+        const members = room.getJoinedMembers();
+        if (members.length === 2) {
+          // Direct chat: show the other person's name
+          const other = members.find(m => m.userId !== this.client!.getUserId());
+          name = other?.rawDisplayName || 'Unnamed chat';
+        } else {
+          name = `Group (${members.length})`;
+        }
+      }
+
+      return {
+        roomId: room.roomId,
+        name,
+        avatar: avatarUrl,
+        topic: room.getCanonicalAlias() || undefined,
+        isDirect: this.isDirectRoom(room),
+        unreadCount: unreadCount + highlightCount,
+        lastMessage,
+        members: room.getMembers().map(m => ({
+          userId: m.userId,
+          displayName: m.name,
+          avatarUrl: (m as any).getAvatarUrl?.(this.client!.baseUrl, 48, 48, 'crop') || undefined,
+          membership: (m.membership || 'leave') as string,
+        })),
+        typingUsers: [],
+      };
+    })
+    .sort((a, b) => {
+      // Sort by last message timestamp (most recent first), fallback to room name
+      const timeA = a.lastMessage?.timestamp || 0;
+      const timeB = b.lastMessage?.timestamp || 0;
+      if (timeA !== timeB) return timeB - timeA;
+      return a.name.localeCompare(b.name);
+    });
+
+  // Emit the new sorted list
+  this.rooms$.next(matrixRooms);
+}
 
   /**
    * Check if a room is a direct message room
@@ -512,6 +715,7 @@ export class MatrixChatService {
     const opts: ICreateRoomOpts = {
       preset: Preset.TrustedPrivateChat,
       is_direct: true,
+      visibility: Visibility.Private,
       invite: [userId],
     };
 
@@ -529,14 +733,14 @@ export class MatrixChatService {
   /**
    * Create a group room
    */
-  async createGroupRoom(name: string, userIds: string[], topic?: string): Promise<Room> {
+  async createGroupRoom(name: string, userIds: string[], topic?: string, visibility = Visibility.Private): Promise<Room> {
     if (!this.client) throw new Error('Client not initialized');
-
+    const preset = visibility === Visibility.Public ? Preset.PublicChat : Preset.PrivateChat;
     const opts: ICreateRoomOpts = {
       name: name,
       topic: topic,
-      preset: Preset.PublicChat, // Make it a public room
-      visibility: Visibility.Public, // Publish to room directory
+      preset,
+      visibility,
       invite: userIds,
     };
 
@@ -633,7 +837,7 @@ export class MatrixChatService {
     if (!this.client) throw new Error('Client not initialized');
 
     try {
-      console.log('MatrixChatService: Fetching avatar from URL:', avatarUrl);
+ //     console.log('MatrixChatService: Fetching avatar from URL:', avatarUrl);
 
       // Fetch the image from the URL
       const response = await fetch(avatarUrl);
@@ -645,21 +849,21 @@ export class MatrixChatService {
       const blob = await response.blob();
       const file = new File([blob], 'avatar.jpg', { type: blob.type });
 
-      console.log('MatrixChatService: Uploading avatar to Matrix', {
+/*       console.log('MatrixChatService: Uploading avatar to Matrix', {
         size: file.size,
         type: file.type
-      });
+      }); */
 
       // Upload the image file to Matrix content repository
       const upload = await this.client.uploadContent(file);
       const matrixAvatarUrl = upload.content_uri;
 
-      console.log('MatrixChatService: Avatar uploaded, setting as user avatar:', matrixAvatarUrl);
+ //     console.log('MatrixChatService: Avatar uploaded, setting as user avatar:', matrixAvatarUrl);
 
       // Set the uploaded image as the user's avatar
       await this.client.setAvatarUrl(matrixAvatarUrl);
 
-      console.log('MatrixChatService: Avatar set successfully');
+  //    console.log('MatrixChatService: Avatar set successfully');
 
       // Return the Matrix content URI (mxc://)
       return matrixAvatarUrl;

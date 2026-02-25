@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -24,6 +24,7 @@ interface MatrixAuthToken {
 export class MatrixInitializationService {
   private readonly appStore = inject(AppStore);
   private readonly matrixService = inject(MatrixChatService);
+  private readonly injector = inject(Injector);
   private initializationStarted = false;
 
   /**
@@ -38,8 +39,8 @@ export class MatrixInitializationService {
     this.initializationStarted = true;
     console.log('MatrixInitializationService: Starting early initialization watcher');
 
-    // Watch for user authentication
-    toObservable(this.appStore.currentUser)
+    // Watch for user authentication (runInInjectionContext needed when called from APP_BOOTSTRAP_LISTENER)
+    runInInjectionContext(this.injector, () => toObservable(this.appStore.currentUser))
       .pipe(
         filter(user => !!user), // Wait for user to be authenticated
         take(1), // Only initialize once
@@ -95,28 +96,19 @@ export class MatrixInitializationService {
     }
 
     try {
-      // Check if we have a cached token in localStorage
-      const storedToken = localStorage.getItem('matrix_access_token');
-      const storedUserId = localStorage.getItem('matrix_user_id');
-      const storedDeviceId = localStorage.getItem('matrix_device_id');
-      const storedHomeserver = localStorage.getItem('matrix_homeserver');
-
-      if (storedToken && storedUserId) {
+      const stored = this.matrixService.getStoredCredentials();
+      if (stored) {
         console.log('MatrixInitializationService: Using cached Matrix token');
         return {
-          accessToken: storedToken,
-          userId: storedUserId,
-          deviceId: storedDeviceId || `device_${user.bkey}`,
-          homeserverUrl: storedHomeserver || this.appStore.env.services.matrixHomeserver || 'https://matrix.bkchat.etke.host',
-        };
+          ...stored,
+          homeserverUrl: stored.homeserverUrl || 'https://' + this.appStore.env.services.matrixHomeserver,
+          deviceId: stored.deviceId || `device_${user.bkey}`,
+        } as MatrixAuthToken;
       }
 
-      // No cached token - call Cloud Function to get Matrix credentials
       console.log('MatrixInitializationService: Requesting Matrix credentials from Cloud Function');
-      
       const functions = getFunctions(getApp(), 'europe-west6');
       const getMatrixCredentials = httpsCallable(functions, 'getMatrixCredentials');
-      
       const result = await getMatrixCredentials();
       const credentials = result.data as MatrixAuthToken;
 
@@ -124,22 +116,12 @@ export class MatrixInitializationService {
         throw new Error('Cloud Function returned invalid credentials');
       }
 
-      // Cache the token for future use
-      localStorage.setItem('matrix_access_token', credentials.accessToken);
-      localStorage.setItem('matrix_user_id', credentials.userId);
-      localStorage.setItem('matrix_device_id', credentials.deviceId);
-      localStorage.setItem('matrix_homeserver', credentials.homeserverUrl);
-
+      this.matrixService.storeCredentials(credentials);
       console.log('MatrixInitializationService: Successfully got Matrix credentials');
-
       return credentials;
     } catch (error) {
       console.error('MatrixInitializationService: Failed to get credentials', error);
-      // Clear any invalid cached tokens
-      localStorage.removeItem('matrix_access_token');
-      localStorage.removeItem('matrix_user_id');
-      localStorage.removeItem('matrix_device_id');
-      localStorage.removeItem('matrix_homeserver');
+      this.matrixService.clearStoredCredentials();
       throw error;
     }
   }

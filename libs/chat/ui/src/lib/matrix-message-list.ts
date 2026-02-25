@@ -1,6 +1,6 @@
-import { Component, computed, input, output, viewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, computed, effect, input, output, viewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonAvatar, IonIcon, IonChip } from '@ionic/angular/standalone';
+import { IonIcon, IonChip, IonAvatar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { MatrixMessage } from '@bk2/shared-models';
@@ -10,7 +10,7 @@ import { MatrixMessage } from '@bk2/shared-models';
   standalone: true,
   imports: [
     CommonModule, 
-    IonAvatar, IonIcon, IonChip,
+    IonIcon, IonChip, IonAvatar,
     SvgIconPipe,
   ],
   styles: [`
@@ -98,6 +98,25 @@ import { MatrixMessage } from '@bk2/shared-models';
     .message-bubble.redacted {
       opacity: 0.5;
       font-style: italic;
+    }
+
+    .message-bubble::before {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      top: 0;
+      left: -8px;
+      border-width: 0 8px 8px 0;
+      border-color: transparent var(--ion-color-light) transparent transparent;
+    }
+
+    .own-message .message-bubble::before {
+      left: auto;
+      right: -8px;
+      border-width: 0 0 8px 8px;
+      border-color: transparent transparent transparent var(--ion-color-primary);
     }
 
     .message-text {
@@ -233,21 +252,35 @@ import { MatrixMessage } from '@bk2/shared-models';
                         <p class="message-text">{{ message.body }}</p>
                       }
                       @case ('m.image') {
-                        <img 
-                          [src]="getMediaUrl(message.content.url)" 
-                          [alt]="message.body"
-                          class="message-image"
-                          (click)="imageClicked.emit(message); $event.stopPropagation()"
-                        />
+                        @if (message.mediaUrl) {
+                          <img
+                            [src]="message.mediaUrl"
+                            [alt]="message.body"
+                            class="message-image"
+                            (click)="imageClicked.emit(message); $event.stopPropagation()"
+                          />
+                        }
                         @if (message.body) {
                           <p class="message-text">{{ message.body }}</p>
                         }
                       }
                       @case ('m.file') {
-                        <div class="message-file" (click)="fileClicked.emit(message); $event.stopPropagation()">
-                          <ion-icon src="{{'document' | svgIcon}}"></ion-icon>
-                          <span>{{ message.body }}</span>
-                        </div>
+                        @if (isImageFile(message) && message.mediaUrl) {
+                          <img
+                            [src]="message.mediaUrl"
+                            [alt]="message.body"
+                            class="message-image"
+                            (click)="imageClicked.emit(message); $event.stopPropagation()"
+                          />
+                          @if (message.body) {
+                            <p class="message-text">{{ message.body }}</p>
+                          }
+                        } @else {
+                          <div class="message-file" (click)="fileClicked.emit(message); $event.stopPropagation()">
+                            <ion-icon src="{{'document' | svgIcon}}"></ion-icon>
+                            <span>{{ message.body }}</span>
+                          </div>
+                        }
                       }
                       @case ('m.location') {
                         <div class="message-location">
@@ -304,10 +337,10 @@ import { MatrixMessage } from '@bk2/shared-models';
     </div>
   `
 })
-export class MatrixMessageList implements AfterViewInit {
+export class MatrixMessageList {
   messages = input.required<MatrixMessage[]>();
   currentUserId = input<string>();
-  homeserverUrl = input<string>('https://matrix.bkchat.etke.host');
+  homeserverUrl = input<string>('https://bkchat.etke.host');
 
   messageClicked = output<MatrixMessage>();
   messageContextMenu = output<MatrixMessage>();
@@ -346,17 +379,16 @@ export class MatrixMessageList implements AfterViewInit {
     return groups;
   });
 
-  ngAfterViewInit() {
-    this.scrollToBottom();
-  }
-
-  private scrollToBottom() {
-    setTimeout(() => {
-      const container = this.messagesContainer()?.nativeElement;
-      if (container) {
-        container.scrollTop = container.scrollHeight;
+  constructor() {
+    effect(() => {
+      const msgs = this.messages(); // scroll whenever messages change
+      if (msgs.length > 0) {
+        setTimeout(() => {
+          const container = this.messagesContainer()?.nativeElement;
+          if (container) container.scrollTop = container.scrollHeight;
+        }, 50);
       }
-    }, 100);
+    });
   }
 
   isOwnMessage(message: MatrixMessage): boolean {
@@ -406,14 +438,16 @@ export class MatrixMessageList implements AfterViewInit {
     });
   }
 
-  getMediaUrl(mxcUrl: string): string {
+  getMediaUrl(mxcUrl: string | undefined): string {
     if (!mxcUrl || !mxcUrl.startsWith('mxc://')) return '';
-    
     const parts = mxcUrl.substring(6).split('/');
-    const serverName = parts[0];
-    const mediaId = parts[1];
-    
-    return `${this.homeserverUrl()}/_matrix/media/r0/download/${serverName}/${mediaId}`;
+    return `${this.homeserverUrl()}/_matrix/media/v3/download/${parts[0]}/${parts[1]}`;
+  }
+
+  isImageFile(message: MatrixMessage): boolean {
+    const mimetype = message.content?.info?.mimetype || '';
+    if (mimetype.startsWith('image/')) return true;
+    return /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(message.body || '');
   }
 
   getReactions(message: MatrixMessage): { emoji: string; count: number }[] {

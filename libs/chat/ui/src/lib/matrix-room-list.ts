@@ -1,16 +1,17 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonList, IonItem, IonLabel, IonBadge, IonAvatar } from '@ionic/angular/standalone';
+import { IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon } from '@ionic/angular/standalone';
 
 import { MatrixRoom } from '@bk2/shared-models';
+import { MultiAvatarPipe, SvgIconPipe } from '@bk2/shared-pipes';
 
 
 @Component({
   selector: 'bk-matrix-room-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    IonList, IonItem, IonLabel, IonBadge, IonAvatar
+    CommonModule, MultiAvatarPipe, SvgIconPipe,
+    IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon
 ],
   styles: [`
     :host {
@@ -31,46 +32,6 @@ import { MatrixRoom } from '@bk2/shared-models';
 
     .room-item.unread {
       font-weight: 600;
-    }
-
-    .room-avatar {
-      --border-radius: 8px;
-      width: 48px;
-      height: 48px;
-    }
-
-    .room-info {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .room-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .room-name {
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .room-timestamp {
-      font-size: 0.75rem;
-      color: var(--ion-color-medium);
-    }
-
-    .room-preview {
-      font-size: 0.875rem;
-      color: var(--ion-color-medium);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      margin-top: 4px;
     }
 
     .unread-badge {
@@ -99,34 +60,13 @@ import { MatrixRoom } from '@bk2/shared-models';
           class="room-item"
           (click)="roomSelected.emit(room.roomId)"
         >
-          <ion-avatar slot="start" class="room-avatar">
-            @if (room.avatar) {
-              <img [src]="room.avatar" [alt]="room.name" />
-            } @else {
-              <div class="placeholder-avatar">{{ getRoomInitial(room.name) }}</div>
-            }
-          </ion-avatar>
-
-          <div class="room-info">
-            <div class="room-header">
-              <span class="room-name">{{ room.name }}</span>
-              @if (room.lastMessage) {
-                <span class="room-timestamp">
-                  {{ formatTimestamp(room.lastMessage.timestamp) }}
-                </span>
-              }
+          <ion-icon slot="start" src="{{room| multiAvatar | svgIcon}}" />
+          <ion-label>
+            <div style="display: flex; align-items: center;">
+              <span>{{ room.name }}</span>
             </div>
-
-            @if (room.typingUsers.length > 0) {
-              <div class="typing-indicator">{{ getTypingText(room.typingUsers) }}</div>
-            } @else if (room.lastMessage) {
-              <div class="room-preview">
-                <strong>{{ room.lastMessage.senderName }}:</strong>
-                {{ room.lastMessage.body }}
-              </div>
-            }
-          </div>
-
+            <ion-note color="medium">{{ formatTimestamp(room.lastMessage?.timestamp || 0) }}</ion-note>
+          </ion-label>
           @if (room.unreadCount > 0) {
             <ion-badge slot="end" color="primary" class="unread-badge">
               {{ room.unreadCount > 99 ? '99+' : room.unreadCount }}
