@@ -66,7 +66,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                     <ion-col size="9">
                       <ion-item lines="none">
                         <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
-                          <ion-img src="{{ 'org.' + orgKey() | avatar }}" alt="Avatar Logo of Organization" />
+                          <ion-img src="{{ orgAvatar() | avatar:defaultIcon() }}" alt="Avatar Logo of Organization" />
                         </ion-avatar>
                         <ion-label>{{ orgName() }}</ion-label>
                       </ion-item>
@@ -213,6 +213,8 @@ export class MembershipFormComponent {
   protected memberZipCode = computed(() => this.formData().memberZipCode ?? '');
   protected memberBexioId = linkedSignal(() => this.formData().memberBexioId ?? '');
   protected orgKey = computed(() => this.formData().orgKey ?? DEFAULT_KEY);
+  protected defaultIcon = computed(() => this.formData().orgModelType);
+  protected orgAvatar = computed(() => `${this.formData().orgModelType}.${this.orgKey()}`);
   protected orgName = linkedSignal(() => this.formData().orgName ?? '');
   protected memberId = computed(() => this.formData().memberId ?? DEFAULT_ID);
   protected dateOfEntry = linkedSignal(() => this.formData().dateOfEntry ?? DEFAULT_DATE);

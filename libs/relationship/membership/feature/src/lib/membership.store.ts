@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, CategoryListModel, ExportFormat, GroupModel, MembershipCollection, MembershipModel, OrgModel, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName, TaskModel } from '@bk2/shared-models';
+import { AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName, TaskModel } from '@bk2/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches, warn } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
@@ -424,7 +424,7 @@ export const _MembershipStore = signalStore(
         if (!member) { console.log('MembershipStore.add: no member.'); return; }
         if (!org) { console.log('MembershipStore.add: no org.'); return; }
         this.setOrgId(org.bkey);
-        const membership = convertMemberAndOrgToMembership(member, org, store.tenantId(), PersonModelName);
+        const membership = convertMemberAndOrgToMembership(member, PersonModelName, org, OrgModelName, store.tenantId());
         this.edit(membership, readOnly, true);
       },
 
@@ -440,7 +440,7 @@ export const _MembershipStore = signalStore(
         if (readOnly) { console.log('MembershipStore.addMemberToGroup: readOnly mode.'); return; }
         const member = store.member() ?? store.appStore.currentPerson();
         if (!member) { console.log('MembershipStore.addMemberToGroup: no member.'); return; }
-        const membership = convertMemberAndOrgToMembership(member, group, store.tenantId(), PersonModelName);
+        const membership = convertMemberAndOrgToMembership(member, PersonModelName, group, GroupModelName, store.tenantId());
         this.edit(membership, readOnly, true);
       },
 
@@ -538,11 +538,14 @@ export const _MembershipStore = signalStore(
           if (isMembership(data, store.tenantId())) {
             const mcatAbbreviation = getCatAbbreviation(store.membershipCategory(), data.category);
             data.relLog = getRelLogEntry(data.dateOfEntry, mcatAbbreviation);
-            if (!data.bkey) { // create new membership
+            if (!data.bkey) {
+              // create new membership
               store.membershipService.create(data, store.currentUser());
-              const memberName = getFullName(membership.memberName1, membership.memberName2);
-              await this.addTask(membership, store.appStore.getGroup('treasurer'),
-                `Neumitglied ${memberName} -> bitte Gebühren prüfen.`);
+              if (data.orgModelType === OrgModelName) { // do not add a task for a group membership
+                // create a task for the treasurer
+                const memberName = getFullName(data.memberName1, data.memberName2);
+                await this.addTask(data, store.appStore.getGroup('treasurer'), `Neumitglied ${memberName} -> bitte Gebühren prüfen.`);
+              }
             } else { // update existing membership
               store.membershipService.update(data, store.currentUser());
             }

@@ -79,9 +79,15 @@ export function convertMembershipToCategoryChangeForm(membership: MembershipMode
   };
 }
 
-export function convertMemberAndOrgToMembership(member: PersonModel | OrgModel | GroupModel, org: OrgModel | GroupModel, tenantId: string, modelType: 'person' | 'org' | 'group'): MembershipModel {
+export function convertMemberAndOrgToMembership(
+  member: PersonModel | OrgModel | GroupModel,
+  memberModelType: 'person' | 'org' | 'group',
+  org: OrgModel | GroupModel,
+  orgModelType: 'org' | 'group',
+  tenantId: string, 
+): MembershipModel {
   let membership = new MembershipModel(tenantId);
-  switch (modelType) {
+  switch (memberModelType) {
     case PersonModelName:
       membership = addPersonInfoToMembership(membership, member as PersonModel);
       break;
@@ -94,6 +100,7 @@ export function convertMemberAndOrgToMembership(member: PersonModel | OrgModel |
   }
   membership.orgKey = org.bkey;
   membership.orgName = org.name;
+  membership.orgModelType = orgModelType;
   membership.dateOfEntry = getTodayStr();
   membership.dateOfExit = END_FUTURE_DATE_STR;
   membership.category = DEFAULT_MCAT;
