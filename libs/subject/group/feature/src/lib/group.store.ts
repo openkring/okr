@@ -7,7 +7,7 @@ import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, ImageType, MembershipModel, PageCollection, PageModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
+import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, ImageType, MembershipModel, PageCollection, PageModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
 import { confirm, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_KEY, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
@@ -16,9 +16,9 @@ import { GroupService } from '@bk2/subject-group-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { getMembershipIndex } from '@bk2/relationship-membership-util';
+import { MatrixChatService } from '@bk2/chat-data-access';
 
 import { GroupEditModalComponent } from './group-edit.modal';
-import { Observable } from 'rxjs';
 
 export type GroupState = {
   searchTerm: string;
@@ -46,6 +46,7 @@ export const GroupStore = signalStore(
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
+    chatService: inject(MatrixChatService)
   })),
   withProps((store) => ({
     groupsResource: rxResource({
@@ -202,9 +203,10 @@ export const GroupStore = signalStore(
             const articleId = await this.createArticleSection(data);
             await this.createGroupPage(data, 'content', 'Inhalt', articleId);
 
-            // create default chat section and page
+            // create default chat section/page and chat room
             const chatId = await this.createChatSection(data);
             await this.createGroupPage(data, 'chat', 'Chat', chatId);
+            await store.chatService.createGroupRoom(data.bkey, [], 'Gruppen Chat: ' + data.name);
           } else {
             await store.groupService.update(data, store.currentUser());
           }
