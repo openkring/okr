@@ -90,12 +90,11 @@ export const _MatrixChatStore = signalStore(
       homeServerUrl: computed(() => `https://${state.homeServer()}`), 
       matrixUser: computed((): MatrixUser | undefined => {
         const user = state.currentUser();
-        const imageUrl = state.imageUrl();
-        if (!user || !imageUrl) return undefined;
+        if (!user) return undefined;
         return {
           id: `@${user.bkey}:${state.homeServer()}`,
           name: user.firstName + ' ' + user.lastName,
-          imageUrl,
+          imageUrl: state.imageUrl() ?? '',
         };
       }),
 
