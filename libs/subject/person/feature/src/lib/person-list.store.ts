@@ -13,6 +13,7 @@ import { chipMatches, getCountryName, hasRole, nameMatches } from '@bk2/shared-u
 import { Languages } from '@bk2/shared-categories';
 import { MapViewModalComponent } from '@bk2/shared-ui';
 
+import { MatrixChatService } from '@bk2/chat-data-access';
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/subject-person-util';
@@ -46,6 +47,7 @@ export const PersonListStore = signalStore(
     alertController: inject(AlertController),
     toastController: inject(ToastController),
     geocodeService: inject(GeocodingService),
+    matrixService: inject(MatrixChatService),
   })),
 
   withComputed((state) => {
@@ -217,6 +219,21 @@ export const PersonListStore = signalStore(
       
       async call(phone: string): Promise<void> {
         return await browseUrl(`tel:${phone}`, '');
+      },
+
+      /**
+       * Creates a direct message room between the current user and the given person.
+       * Opens the Chat Page and preselects this room.
+       * @param person the person represents the other end of the direct chat.
+       * 
+       */
+      async chat(person: PersonModel): Promise<void> {
+        const room = await store.matrixService.createDirectRoom(person.bkey);
+        await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
+      },
+
+      async isPersonUser(personKey: string): Promise<boolean> {
+        return store.firestoreService.isPersonUser(personKey);
       },
       
       async showOnMap(person?: PersonModel): Promise<void> {

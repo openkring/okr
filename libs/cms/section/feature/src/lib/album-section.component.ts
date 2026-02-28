@@ -7,7 +7,7 @@ import { AlbumSection, AlbumStyle, BackgroundStyle, ImageActionType, ImageConfig
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { browse, CategoryComponent, ImageComponent, LabelComponent, showZoomedImage, SpinnerComponent, VideoComponent } from '@bk2/shared-ui';
 import { downloadToBrowser } from '@bk2/shared-util-angular';
-import { coerceBoolean, debugData, debugMessage } from '@bk2/shared-util-core';
+import { debugData, debugMessage } from '@bk2/shared-util-core';
 
 import { AlbumStyles, convertThumbnailToFullImage, getBackgroundStyle } from '@bk2/cms-section-util';
 

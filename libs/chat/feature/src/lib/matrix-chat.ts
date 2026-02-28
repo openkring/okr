@@ -1,6 +1,6 @@
-import { isPlatformBrowser } from '@angular/common';
-import { Component, PLATFORM_ID, computed, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge } from '@ionic/angular/standalone';
+import { AsyncPipe, isPlatformBrowser } from '@angular/common';
+import { Component, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked } from '@angular/core';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ToastController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { SpinnerComponent } from '@bk2/shared-ui';
@@ -8,15 +8,18 @@ import { SpinnerComponent } from '@bk2/shared-ui';
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
 
 import { MatrixChatStore } from './matrix-chat.store';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { debugMessage, hasRole } from '@bk2/shared-util-core';
+import { downloadToBrowser, showToast } from '@bk2/shared-util-angular';
+import { RoleName } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-matrix-chat-overview',
   standalone: true,
   imports: [
-    SpinnerComponent,
-    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge,
-    MatrixRoomList, MatrixMessageList, MatrixMessageInput,
-    SvgIconPipe,
+    SvgIconPipe, TranslatePipe, AsyncPipe,
+    SpinnerComponent, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
+    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge
   ],
   providers: [MatrixChatStore],
   styles: [`
@@ -92,13 +95,13 @@ import { MatrixChatStore } from './matrix-chat.store';
           <div class="sync-status">
             @switch (syncState()) {
               @case ('RECONNECTING') { 
-                <ion-badge color="warning">Reconnecting...</ion-badge>
+                <ion-badge color="warning">{{ '@chat.fields.reconnecting' | translate | async}}</ion-badge>
               }
               @case ('ERROR') { 
-                <ion-badge color="danger">Connection error</ion-badge>
+                <ion-badge color="danger">{{ '@chat.fields.connectionError' | translate | async}}</ion-badge>
               }
               @default { 
-                <ion-badge color="medium">Connecting...</ion-badge>
+                <ion-badge color="medium">{{ '@chat.fields.connecting' | translate | async}}</ion-badge>
               }
             }
           </div>
@@ -112,16 +115,18 @@ import { MatrixChatStore } from './matrix-chat.store';
                 <ion-header class="room-header">
                   <ion-toolbar>
                     <ion-buttons slot="start">
-                      <ion-button (click)="toggleMobileRoomList()">
+                      <ion-button (click)="toggleRoomList()" [disabled]="!currentRoom()">
                         <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
                       </ion-button>
-                    </ion-buttons> 
-                    <ion-title>Chat-Räume</ion-title>
-                    <ion-buttons slot="end">
-                      <ion-button (click)="onCreateRoom()">
-                        <ion-icon src="{{'add-circle' | svgIcon}}"></ion-icon>
-                      </ion-button>
                     </ion-buttons>
+                    <ion-title>Chat-Räume</ion-title>
+                    @if(hasRole('admin')) {
+                      <ion-buttons slot="end">
+                        <ion-button (click)="onCreateRoom()">
+                          <ion-icon src="{{'add-circle' | svgIcon}}"></ion-icon>
+                        </ion-button>
+                      </ion-buttons>
+                    }
                   </ion-toolbar>
                 </ion-header>
 
@@ -141,19 +146,20 @@ import { MatrixChatStore } from './matrix-chat.store';
                   <ion-toolbar>
                     @if (!showRoomList() && !isGroupView()) {
                       <ion-buttons slot="start">
-                        <ion-button (click)="toggleMobileRoomList()">
+                        <ion-button (click)="toggleRoomList()">
                           <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
                         </ion-button>
                       </ion-buttons>
                     }
                     
                     <ion-title>{{ currentRoom()?.name }}</ion-title>
-                    
-                    <ion-buttons slot="end">
-                      <ion-button (click)="onRoomInfo()">
-                        <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
-                      </ion-button>
-                    </ion-buttons>
+                    @if(hasRole('admin')) {
+                      <ion-buttons slot="end">
+                        <ion-button (click)="onRoomInfo()">
+                          <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
+                        </ion-button>
+                      </ion-buttons>
+                    }
                   </ion-toolbar>
                 </ion-header>
 
@@ -163,7 +169,6 @@ import { MatrixChatStore } from './matrix-chat.store';
                   [currentUserId]="matrixUserId()"
                   [homeserverUrl]="homeserverUrl()"
                   (messageClicked)="onMessageClicked($event)"
-                  (messageContextMenu)="onMessageContextMenu($event)"
                   (imageClicked)="onImageClicked($event)"
                   (fileClicked)="onFileClicked($event)"
                   (reactionClicked)="onReactionClicked($event)"
@@ -184,10 +189,10 @@ import { MatrixChatStore } from './matrix-chat.store';
                 <div class="empty-state">
                   <ion-icon src="{{'chatbubbles' | svgIcon}}" size="large"></ion-icon>
                   <div>
-                    <h3>Select a room to start chatting</h3>
+                    <h3>{{ '@chat.fields.selectRoom' | translate | async}}</h3>
                     @if (rooms().length === 0) {
-                      <p>No rooms available. Create or join a room to get started.</p>
-                      <ion-button (click)="onCreateRoom()">Create Test Room</ion-button>
+                      <p>{{ '@chat.fields.noRoomsError' | translate | async}}</p>
+                      <ion-button (click)="onCreateRoom()">{{ '@chat.fields.createTestRoom' | translate | async}}</ion-button>
                     }
                   </div>
                 </div>
@@ -201,14 +206,21 @@ import { MatrixChatStore } from './matrix-chat.store';
     }
   `
 })
-export class MatrixChat implements OnInit, OnDestroy {
+export class MatrixChat implements OnDestroy {
   private readonly store = inject(MatrixChatStore);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly toastController = inject(ToastController);
 
   private isInitializing = false; // Guard flag to prevent multiple initializations
+  private isRequestingRoomAccess = false;
+  private readonly lastRoomAccessAttempt = new Map<string, number>(); // groupId → timestamp of last CF call
 
   // inputs
   public isGroupView = input<boolean>(false);
+  /**
+   * If the selectedRoom starts with ! -> matrix room
+   * else a personkey was given and a direct chat to this person requested
+   */
   public selectedRoom = input<string | undefined>();
 
   // Computed values from store
@@ -219,27 +231,38 @@ export class MatrixChat implements OnInit, OnDestroy {
   protected readonly totalUnreadCount = this.store.totalUnreadCount;
   protected readonly matrixUserId = computed(() => this.store.matrixUser()?.id);
   protected readonly homeserverUrl = computed(() => this.store.homeServerUrl());
-  
+
   // Local state
   protected readonly replyToMessage = computed(() => undefined); // tbd: implement reply
   protected showRoomList = signal(!this.isGroupView());
-  
+
   // Messages signal
   protected readonly messages = computed(() => this.store.messages());
   protected readonly typingUsers = computed(() => this.currentRoom()?.typingUsers || []);
 
-  // Ready state
-  protected readonly isMatrixReady = computed(() => 
-    this.store.matrixUser() && 
-    this.store.isMatrixInitialized() &&
-    this.syncState() !== 'STOPPED'
+  // Ready state: true once the Matrix client exists; sync status shown via the banner
+  protected readonly isMatrixReady = computed(() =>
+    this.store.matrixUser() &&
+    this.store.isMatrixInitialized()
   );
 
   constructor() {
+    // Reactively initialize Matrix when matrixUser becomes available.
+    // This handles the case where currentUser() is not yet loaded from Firestore
+    // when ngOnInit fires (common on iOS where Firestore subscriptions resolve slower).
+    effect(() => {
+      const matrixUser = this.store.matrixUser();
+      const isInitialized = this.store.isMatrixInitialized();
+      if (matrixUser && !isInitialized && isPlatformBrowser(this.platformId)) {
+        untracked(() => this.initializeMatrixIfNeeded());
+      }
+    });
     effect(() => {
       const url = this.store.imageUrl();
       if (url && this.store.isMatrixInitialized()) {
-        this.store.setUserAvatarFromUrl(url);
+        this.store.setUserAvatarFromUrl(url).catch(err =>
+          console.warn('MatrixChat: Avatar upload failed (non-critical):', err)
+        );
       }
     });
     effect(() => {
@@ -249,54 +272,75 @@ export class MatrixChat implements OnInit, OnDestroy {
       const rooms = this.store.rooms();
       const match = rooms.find(r => r.roomId === roomAlias)
         ?? rooms.find(r => r.name?.toLowerCase() === roomAlias.toLowerCase());
-      this.store.setCurrentRoom(match ? match.roomId : roomAlias);
+      if (match) {
+        this.store.setCurrentRoom(match.roomId);
+        return;
+      }
+      // Room not in joined-rooms list. Request access via Cloud Function.
+      // Group views: fire as soon as Matrix is initialized (isMatrixInitialized is a reactive dep
+      //   so the effect re-runs the moment initialization completes).
+      // Other contexts: wait until sync is PREPARED/SYNCING to avoid premature CF calls.
+      // In both cases a 15-second cooldown prevents spam while waiting for the join event.
+      const isReady = this.isGroupView()
+        ? this.store.isMatrixInitialized()
+        : ['PREPARED', 'SYNCING'].includes(this.store.syncState());
+      const lastAttempt = this.lastRoomAccessAttempt.get(roomAlias) ?? 0;
+      if (isReady && !this.isRequestingRoomAccess && (Date.now() - lastAttempt) > 15_000) {
+        untracked(() => this.requestRoomAccess(roomAlias));
+      }
     });
     effect(() => {
       let isGroupView = this.isGroupView();
       if (isGroupView === undefined) isGroupView = false;
-      console.log('MatrixChat.isGroupView = <' + isGroupView + '>');
-      this.showRoomList.update(visible => (isGroupView === false));
+      debugMessage(`MatrixChat.isGroupView = <${isGroupView}>`, this.store.currentUser());
+      this.showRoomList.set(isGroupView === false);
     });
   }
 
-  async ngOnInit() {
-    if (!isPlatformBrowser(this.platformId)) return;
-    
-    // Wait for Angular to stabilize before initializing Matrix
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Use queueMicrotask to ensure this runs outside of change detection
-    queueMicrotask(() => {
-      this.initializeMatrixIfNeeded();
-    });
+  private async requestRoomAccess(groupId: string): Promise<void> {
+    if (this.isRequestingRoomAccess) return;
+    this.isRequestingRoomAccess = true;
+    this.lastRoomAccessAttempt.set(groupId, Date.now());
+    try {
+      debugMessage(`MatrixChat: Requesting access to group room for ${groupId}`, this.store.currentUser());
+      const result = await this.store.requestGroupRoomAccess(groupId);
+      debugMessage(`MatrixChat: Got room access, roomId=${result.roomId}`, this.store.currentUser());
+      this.store.setCurrentRoom(result.roomId);
+    } catch (error) {
+      console.error('MatrixChat: Failed to request room access:', error);
+      const msg = error instanceof Error ? error.message : 'Room access failed';
+      await showToast(this.toastController, msg);
+    } finally {
+      this.isRequestingRoomAccess = false;
+    }
   }
 
   private async initializeMatrixIfNeeded() {
     if (this.isInitializing) return;
-    
+
     // Capture signal values at the start to avoid reactive dependencies during async operations
     const matrixUser = this.store.matrixUser();
     const isInitialized = this.store.isMatrixInitialized();
-    
+
     if (!matrixUser || isInitialized) return;
 
     this.isInitializing = true;
 
     try {
-      console.log('MatrixChat: Getting Matrix credentials via Cloud Function');
-      
+      debugMessage('MatrixChat: Getting Matrix credentials via Cloud Function', this.store.currentUser());
+
       // Call Cloud Function to get Matrix credentials
       // This works for any Firebase auth method (email, phone, Google, etc.)
       const token = await this.store.getMatrixToken();
-      
+
       if (!token) {
         throw new Error('Failed to get Matrix credentials');
       }
 
       // Initialize Matrix client with the credentials
       await this.store.initializeMatrix(matrixUser, token);
-      
-      console.log('MatrixChat: Matrix initialized successfully');
+
+      debugMessage('MatrixChat: Matrix initialized successfully', this.store.currentUser());
     } catch (error) {
       console.error('MatrixChat: Failed to initialize Matrix:', error);
       this.store.clearCredentials();
@@ -306,7 +350,10 @@ export class MatrixChat implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.store.cleanup();
+    // Don't disconnect the Matrix service here. MatrixChatService is a root singleton
+    // that should stay connected for the app session. Disconnecting on component destroy
+    // forces a full re-initialization (up to 30 s on iOS) every time the component is
+    // recreated (e.g. switching segments in the group view).
   }
 
   // Event handlers
@@ -336,7 +383,7 @@ export class MatrixChat implements OnInit, OnDestroy {
         const { latitude, longitude } = pos.coords;
         try {
           await this.store.sendLocation(
-            `Current location: ${latitude},${longitude}`,
+            `Aktuelle Position: ${latitude},${longitude}`,
             latitude,
             longitude
           );
@@ -359,22 +406,12 @@ export class MatrixChat implements OnInit, OnDestroy {
     // TBD: Show action sheet with options (reply, edit, delete, react, etc.)
   }
 
-  onMessageContextMenu(message: any) {
-    // Handle message long press / right click
-    console.log('Message context menu:', message);
-    // TBD: Show action sheet with options (reply, edit, delete, react, etc.)
+  async onImageClicked(message: any): Promise<void> {
+    await downloadToBrowser(message.content.url);
   }
 
-  onImageClicked(message: any) {
-    // Handle image click (e.g., open fullscreen)
-    console.log('Image clicked:', message);
-    // TBD: Open image viewer
-  }
-
-  onFileClicked(message: any) {
-    // Handle file click (e.g., download)
-    console.log('File clicked:', message);
-    // TBD: Download file
+  async onFileClicked(message: any): Promise<void> {
+    await downloadToBrowser(message.content.url);
   }
 
   async onReactionClicked(event: { messageId: string; emoji: string }) {
@@ -392,12 +429,10 @@ export class MatrixChat implements OnInit, OnDestroy {
     // TBD: Show thread view
   }
 
-  // show room info (e.g., members, settings)
-  onRoomInfo() {
-
-    // Show room information
-    console.log('Room info clicked');
-    // TBD: Show room info modal
+  // show room info / edit (name, topic, avatar)
+  async onRoomInfo() {
+    const room = this.currentRoom();
+    if (room) await this.store.editRoom(room);
   }
 
   onCancelReply() {
@@ -405,11 +440,15 @@ export class MatrixChat implements OnInit, OnDestroy {
     // TBD: Clear reply state
   }
 
-  toggleMobileRoomList() {
+  toggleRoomList() {
     this.showRoomList.update(visible => !visible);
   }
 
   async onCreateRoom(): Promise<void> {
     await this.store.createRoom();
+  }
+
+  protected hasRole(role: RoleName): boolean {
+    return hasRole(role, this.store.currentUser());
   }
 }

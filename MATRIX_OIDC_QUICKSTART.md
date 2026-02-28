@@ -13,23 +13,26 @@ This guide will help you set up Matrix chat with Firebase OIDC authentication.
 
 ### Phase 1: Matrix Server Configuration (15-30 minutes)
 
-1. **Configure Synapse for OIDC**
-   - [x] SSH into your Matrix server
-   - [x] Edit `/etc/matrix-synapse/homeserver.yaml`. -> /matrix/synapse/config/homeserver.yaml
-   - [x] Add Firebase OIDC provider configuration (see MATRIX_OIDC_SETUP.md)
-   - [x] Restart Synapse: `sudo systemctl restart matrix-synapse`
+#### Configure Synapse for OIDC
+
+- [x] SSH into your Matrix server
+- [x] Edit `/etc/matrix-synapse/homeserver.yaml`. -> /matrix/synapse/config/homeserver.yaml
+- [x] Add Firebase OIDC provider configuration (see MATRIX_OIDC_SETUP.md)
+- [x] Restart Synapse: `sudo systemctl restart matrix-synapse`
 
 Systemd is managing the docker container, restart it after config changes with:
 systemctl restart matrix-synapse
 journalctl -u matrix-synapse -f   # Watch it start successfully
 
-2. **Verify OIDC Setup**
+#### Verify OIDC Setup
+
    ```bash
    curl https://bkchat.etke.host/_matrix/client/v3/login
    # Should show "m.login.sso" with Firebase provider
    ```
 
-3. **Generate Admin Token**
+#### Generate Admin Token
+
    ```bash
    # Create admin user if needed
    register_new_matrix_user -c /path/to/homeserver.yaml https://bkchat.etke.host
@@ -42,8 +45,8 @@ journalctl -u matrix-synapse -f   # Watch it start successfully
 
    -> admin token
 
+#### Store Admin Token in Firebase
 
-4. **Store Admin Token in Firebase**
    ```bash
    cd /Users/bruno/proj/bkaiser/bk2
    firebase functions:secrets:set MATRIX_ADMIN_TOKEN
@@ -57,18 +60,20 @@ bruno@Mac bk2 % firebase functions:secrets:access MATRIX_ADMIN_TOKEN
 
 ### Phase 2: Firebase Configuration (10 minutes)
 
-1. **Update Authorized Domains**
-   - [X] Go to Firebase Console → Authentication → Settings
-   - [X] Add authorized domains:
-     - `bkchat.etke.host`
-     - Your app domains (seeclub.org, etc.)
+#### Update Authorized Domains
 
-2. **Set Redirect URIs**
-   - [ ] Add redirect URIs:
-     - `https://bkchat.etke.host/_synapse/client/oidc/callback`
-     - `https://seeclub.org/auth/matrix-callback`
+- [X] Go to Firebase Console → Authentication → Settings
+- [X] Add authorized domains: `bkchat.etke.host`
+- Your app domains (seeclub.org, etc.)
 
-3. **Update Environment Config**
+#### Set Redirect URIs
+
+- [ ] Add redirect URIs:
+- `https://bkchat.etke.host/_synapse/client/oidc/callback`
+- `https://seeclub.org/auth/matrix-callback`
+
+#### Update Environment Config
+
    ```typescript
    // apps/scs-app/src/environments/environment.ts
    services: {
@@ -79,10 +84,10 @@ bruno@Mac bk2 % firebase functions:secrets:access MATRIX_ADMIN_TOKEN
 
 ### Phase 3: Application Setup (5 minutes)
 
-1. **Add Matrix Callback Route**
-   
+#### Add Matrix Callback Route
+
    In your app's routing module (usually `app.routes.ts`):
-   
+
    ```typescript
    import { MatrixOidcCallbackComponent } from '@bk2/auth-feature';
    
@@ -96,20 +101,24 @@ bruno@Mac bk2 % firebase functions:secrets:access MATRIX_ADMIN_TOKEN
    ```
 
 No need to add an OpenID Connect provider to Firebase Auth. The flow works the opposite way:
+
 - Matrix is the OIDC client (consumer)
 - Firebase/Google is the OIDC provider (identity provider)
 Matrix uses Firebase's existing authentication, so we just need to configure authorized domains in Firebase Console:
 - matrix.bkchat.etke.host
 - bkchat.etke.host
 - app domains
-When users authenticate, 
+
+When users authenticate,
+
 1. matrix redirects to Google/Firebase OIDC endpoints
 2. User logs in with Firebase (email/password)
 3. Firebase issues an ID token
 4. Matrix verifies the token and creates/logs in the user
 OIDC endpoints are configured in Matrix's homeserver.yaml.
 
-2. **Deploy Cloud Functions**
+#### Deploy Cloud Functions
+
    ```bash
    cd /Users/bruno/proj/bkaiser/bk2
   [x] nx build functions
@@ -118,24 +127,28 @@ OIDC endpoints are configured in Matrix's homeserver.yaml.
 
 ### Phase 4: Testing (10 minutes)
 
-1. **Test Basic Login**
-   - [x] Start app: `nx serve scs-app`
-   - [x] Login with Firebase credentials
-   - [x] Navigate to a page with chat section
-   - [ ] Should redirect to Matrix SSO
-   - [ ] Should redirect to Firebase for auth
-   - [ ] Should return to your app with Matrix logged in
+#### Test Basic Login
 
-2. **Verify in Browser Console**
+- [x] Start app: `nx serve scs-app`
+- [x] Login with Firebase credentials
+- [x] Navigate to a page with chat section
+- [ ] Should redirect to Matrix SSO
+- [ ] Should redirect to Firebase for auth
+- [ ] Should return to your app with Matrix logged in
+
+#### Verify in Browser Console
+
    ```javascript
    // Check localStorage for Matrix tokens
    console.log(localStorage.getItem('matrix_access_token'));
    console.log(localStorage.getItem('matrix_user_id'));
    ```
 
-3. **Test Room Creation**
-   - [ ] Open browser console
-   - [ ] Call function manually:
+#### Test Room Creation
+
+- [ ] Open browser console
+- [ ] Call function manually:
+
    ```javascript
    // Get Firebase token
    const idToken = await firebase.auth().currentUser.getIdToken();
@@ -155,6 +168,7 @@ OIDC endpoints are configured in Matrix's homeserver.yaml.
 After setup, verify each integration point:
 
 ### 1. Matrix Server
+
 ```bash
 # Check OIDC config
 curl https://bkchat.etke.host/_matrix/client/v3/login | jq
@@ -163,6 +177,7 @@ curl https://bkchat.etke.host/_matrix/client/v3/login | jq
 ```
 
 ### 2. Firebase Functions
+
 ```bash
 # Test OIDC config function
 firebase functions:shell
@@ -172,6 +187,7 @@ firebase functions:shell
 ```
 
 ### 3. Client Application
+
 ```typescript
 // In browser console after login
 console.log('Has Matrix token:', !!localStorage.getItem('matrix_access_token'));
@@ -181,6 +197,7 @@ console.log('Matrix sync state:', document.querySelector('bk-matrix-chat-section
 ## 🚨 Common Issues & Solutions
 
 ### Issue: "No identity providers found"
+
 **Solution:** Matrix server not configured properly
 ```bash
 # Check Synapse logs
@@ -189,7 +206,9 @@ sudo journalctl -u matrix-synapse -n 100
 ```
 
 ### Issue: "CORS error during redirect"
+
 **Solution:** Add domains to Matrix CORS config
+
 ```yaml
 # In homeserver.yaml
 cors_origins:
@@ -198,10 +217,13 @@ cors_origins:
 ```
 
 ### Issue: "Invalid redirect URI"
+
 **Solution:** Ensure URIs match exactly in both Firebase and Matrix
 
 ### Issue: "User not created in Matrix"
+
 **Solution:** Check user mapping in homeserver.yaml
+
 ```yaml
 user_mapping_provider:
   config:
@@ -296,6 +318,7 @@ User Login Flow:
 After basic setup is working:
 
 1. **Auto-create group rooms**
+
    ```typescript
    // In your group creation logic
    const ensureGroupRoom = httpsCallable(functions, 'ensureGroupRoom');
@@ -307,6 +330,7 @@ After basic setup is working:
    ```
 
 2. **Sync user profiles**
+
    ```typescript
    // After user updates their profile
    const syncProfile = httpsCallable(functions, 'syncUserProfileToMatrix');
@@ -343,6 +367,7 @@ Your implementation includes:
 Once all checkboxes are complete, your Matrix + Firebase OIDC integration should be working!
 
 If you encounter issues, check:
+
 1. Matrix server logs
 2. Browser console for errors
 3. Firebase Functions logs (`firebase functions:log`)

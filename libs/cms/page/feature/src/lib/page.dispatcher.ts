@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, input, untracked } from "@angular/core";
 import { Router } from "@angular/router";
+import { ViewWillEnter } from '@ionic/angular';
 
 import { debugMessage, replaceSubstring } from "@bk2/shared-util-core";
 import { SpinnerComponent } from "@bk2/shared-ui";
@@ -48,7 +49,7 @@ import { AlbumPage } from "./album.page";
                     <bk-landing-page  />
                 }
                 @case ('chat') {
-                    <bk-chat-page [color]="color()" [selectedRoom]="roomId()" [isGroupView]="isGroupView()" />
+                    <bk-chat-page [color]="color()" [selectedRoom]="effectiveRoomId()" [isGroupView]="isGroupView()" />
                 }
                 @case ('content') {
                     <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
@@ -78,7 +79,7 @@ import { AlbumPage } from "./album.page";
     }
   `
 })
-export class PageDispatcher {
+export class PageDispatcher implements ViewWillEnter {
   protected pageStore = inject(PageStore);
   private readonly router = inject(Router);
 
@@ -86,17 +87,21 @@ export class PageDispatcher {
   public id = input.required<string>();
   public contextMenuName = input<string>();
   public color = input('secondary');
-  public isGroupView = input(false); 
+  public isGroupView = input(false);
+  public selectedRoom = input<string | undefined>();
 
   // computed
   protected page = computed(() => this.pageStore.page());
-  protected roomId = computed(() => {
+  protected effectiveRoomId = computed(() => {
+    // Query-param selectedRoom (e.g. for direct chat navigation) takes precedence.
+    // Falls back to the page-ID convention: 'groupId_chat' → 'groupId'.
+    const explicit = this.selectedRoom();
+    if (explicit) return explicit;
     const pageId = this.id();
     if (pageId && pageId.endsWith('_chat')) {
       return pageId.substring(0, pageId.length - 5);
-    } else {
-      return undefined;
     }
+    return undefined;
   });
 
   constructor() {
@@ -104,9 +109,7 @@ export class PageDispatcher {
       const id = this.id(); // only reactive dependency — effect re-runs only when route id changes
       if (id) {
         untracked(() => {
-          const resolvedId = replaceSubstring(id, '@TID@', this.pageStore.tenantId());
-          debugMessage(`PageDispatcher: pageId=${id} -> ${resolvedId}`, this.pageStore.currentUser());
-          this.pageStore.setPageId(resolvedId);
+          this.loadPage();
         });
       }
     });
@@ -120,5 +123,19 @@ export class PageDispatcher {
         }
       }
     });
+  }
+
+  // Fires before entering animation for both new and Ionic-cached pages (back navigation)
+  ionViewWillEnter(): void {
+    this.loadPage();
+  }
+
+  private loadPage(): void {
+    const id = this.id();
+    if (id) {
+      const resolvedId = replaceSubstring(id, '@TID@', this.pageStore.tenantId());
+      debugMessage(`PageDispatcher: pageId=${id} -> ${resolvedId}`, this.pageStore.currentUser());
+      this.pageStore.setPageId(resolvedId);
+    }
   }
 }

@@ -13,6 +13,7 @@ export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedM
 
   public notes = DEFAULT_NOTES;
   public tags = DEFAULT_TAGS;
+  public icon = 'group';
 
   public hasContent = true; // page id = id
   public hasChat = true; // chat id = id
@@ -21,6 +22,7 @@ export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedM
   public hasFiles = true; // path of root folder = groups/id
   public hasAlbum = true;
   public hasMembers = true;
+
   public mainContact: AvatarInfo = AVATAR_INFO_SHAPE;
   public admin: AvatarInfo = AVATAR_INFO_SHAPE;
 

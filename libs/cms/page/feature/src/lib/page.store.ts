@@ -173,14 +173,10 @@ export const _PageStore = signalStore(
        */
       setPageId(pageId: string) {
         debugMessage(`PageStore.setPageId(${pageId})`, store.currentUser());
-        const currentPageId = store.pageId();
         patchState(store, { pageId });
-        
-        // If setting the same pageId, force reload since rxResource won't detect the change
-        if (currentPageId === pageId && pageId !== '') {
-          debugMessage('PageStore: Same pageId detected, forcing reload', store.currentUser());
-          store.pageResource.reload();
-        }
+        // No force-reload needed: pageResource uses a live Firestore stream that updates
+        // automatically. Calling reload() when pageId hasn't changed would momentarily set
+        // isLoading=true, show a spinner, and destroy+recreate child components like MatrixChat.
       },
 
       /******************************** getters ******************************************* */

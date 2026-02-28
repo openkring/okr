@@ -317,7 +317,7 @@ export class MembershipListComponent {
    */
   protected async showActions(membership: MembershipModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, membership);
+    await this.addActionSheetButtons(actionSheetOptions, membership);
     await this.executeActions(actionSheetOptions, membership);
   }
 
@@ -325,10 +325,13 @@ export class MembershipListComponent {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param membership 
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): void {
+  private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): Promise<void> {
     if (hasRole('registered', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
+      if (await this.membershipStore.isPersonUser(membership.memberKey)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.chat', this.imgixBaseUrl, 'chatbubbles'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
       if (this.membershipStore.getEmail(membership)) {
         actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.imgixBaseUrl, 'copy'));
@@ -349,9 +352,6 @@ export class MembershipListComponent {
       }
     }
     if (hasRole('admin', this.currentUser())) {
-      if (membership.orgModelType === 'group') {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.invite', this.imgixBaseUrl, 'chatbubbles'));
-      }
       actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash_delete'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -380,6 +380,9 @@ export class MembershipListComponent {
         case 'membership.view':
           await this.membershipStore.edit(membership, true);
           break;
+        case 'membership.chat':
+          await this.membershipStore.chat(membership);
+          break;
         case 'person.edit':
           await this.membershipStore.editPerson(membership, this.membershipListUrl(), this.readOnly());
           break;
@@ -392,9 +395,7 @@ export class MembershipListComponent {
         case 'membership.changecat':
           await this.membershipStore.changeMembershipCategory(membership, this.readOnly());
           break;
-        case 'membership.invite':
-          await this.membershipStore.invite(membership, this.readOnly());
-          break;
+
         case 'person.copyemail':
           const email = this.membershipStore.getEmail(membership);
           if (email) {

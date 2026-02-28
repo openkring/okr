@@ -1,9 +1,10 @@
 import { Component, computed, effect, input, output, viewChild, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, CommonModule } from '@angular/common';
 import { IonIcon, IonChip, IonAvatar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { MatrixMessage } from '@bk2/shared-models';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 @Component({
   selector: 'bk-matrix-message-list',
@@ -11,7 +12,7 @@ import { MatrixMessage } from '@bk2/shared-models';
   imports: [
     CommonModule, 
     IonIcon, IonChip, IonAvatar,
-    SvgIconPipe,
+    SvgIconPipe, TranslatePipe, AsyncPipe
   ],
   styles: [`
     :host {
@@ -210,7 +211,7 @@ import { MatrixMessage } from '@bk2/shared-models';
     <div class="messages-container" #messagesContainer>
       @if (messages().length === 0) {
         <div class="empty-state">
-          <p>No messages yet. Start the conversation!</p>
+          <p>{{'@chat.fields.noMessagesStartConversation' | translate | async }}</p>
         </div>
       } @else {
         @for (dayGroup of groupedMessages(); track dayGroup.date) {
@@ -242,7 +243,6 @@ import { MatrixMessage } from '@bk2/shared-models';
                   [class.edited]="message.isEdited"
                   [class.redacted]="message.isRedacted"
                   (click)="messageClicked.emit(message)"
-                  (contextmenu)="messageContextMenu.emit(message); $event.preventDefault()"
                 >
                   @if (message.isRedacted) {
                     <p class="message-text">Message deleted</p>
@@ -343,7 +343,6 @@ export class MatrixMessageList {
   homeserverUrl = input<string>('https://bkchat.etke.host');
 
   messageClicked = output<MatrixMessage>();
-  messageContextMenu = output<MatrixMessage>();
   imageClicked = output<MatrixMessage>();
   fileClicked = output<MatrixMessage>();
   reactionClicked = output<{messageId: string, emoji: string}>();

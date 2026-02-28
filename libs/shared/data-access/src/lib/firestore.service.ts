@@ -26,12 +26,12 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
 import { collection, deleteDoc, doc, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
-import { Observable, of, shareReplay } from 'rxjs';
+import { firstValueFrom, Observable, of, shareReplay } from 'rxjs';
 
 import { ENV, FIRESTORE, isFirestoreInitializedCheck } from '@bk2/shared-config';
-import { BkModel, CommentCollection, CommentModel, DbQuery, UserModel } from "@bk2/shared-models";
+import { BkModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@bk2/shared-models";
 import { error, showToast } from '@bk2/shared-util-angular';
-import { debugData, debugMessage, generateRandomString, getFullName, getQuery, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
+import { debugData, debugMessage, generateRandomString, getFullName, getQuery, getSystemQuery, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
 
 import { createComment } from '@bk2/comment-util';
 
@@ -447,5 +447,25 @@ export class FirestoreService {
    */
   public getBatch(): WriteBatch {
     return writeBatch(this.firestore);
+  }
+
+  /**
+   * Check that a given person is a current user of the application.
+   * This is important to avoid opening direct chats to non-users.
+   */
+  public async isPersonUser(personKey: string): Promise<boolean> {
+    try {
+      const query = getSystemQuery(this.env.tenantId);
+      query.push({ key: 'personKey', operator: '==', value: personKey});
+      const user = await firstValueFrom(this.searchData<UserModel>(UserCollection, query, 'none'));
+      if (user.length === 1) {
+        return true;
+      }
+      return false;
+    }
+    catch (ex) {
+      console.error(`FirestoreService.isPersonUser(${personKey}) -> ERROR: `, ex);
+      return false;
+    }
   }
 }

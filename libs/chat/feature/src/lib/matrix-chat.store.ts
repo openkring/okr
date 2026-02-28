@@ -23,14 +23,15 @@ export type MatrixChatState = {
   selectedThreadId: string | undefined;
 }
 
-export const initialState: MatrixChatState = {
-  isMatrixInitialized: false,
-  currentRoomId: undefined,
-  selectedThreadId: undefined,
-};
-
 export const _MatrixChatStore = signalStore(
-  withState(initialState),
+  // Use a factory so we can read matrixService.isInitialized at creation time.
+  // If MatrixInitializationService has already started the client (e.g. on segment switch),
+  // the store starts in the ready state and the selectedRoom effect fires immediately.
+  withState(() => ({
+    isMatrixInitialized: inject(MatrixChatService).isInitialized,
+    currentRoomId: undefined as string | undefined,
+    selectedThreadId: undefined as string | undefined,
+  })),
   withProps(() => ({
     appStore: inject(AppStore),
     matrixService: inject(MatrixChatService),
@@ -79,7 +80,11 @@ export const _MatrixChatStore = signalStore(
       rooms: computed(() => state.roomsResource.value() || []),
       imageUrl: computed(() => state.imageUrlResource.value()),
       homeServer: computed(() => {
-        return state.appStore.env.services.matrixHomeserver.replace(/^https?:\/\//, '');
+        // Matrix server_name used in user IDs (e.g. @user:bkchat.etke.host).
+        // The homeserver URL often has a 'matrix.' subdomain that is NOT part of the server_name.
+        return state.appStore.env.services.matrixHomeserver
+          .replace(/^https?:\/\//, '')
+          .replace(/^matrix\./, '');
       }),
       messages: computed(() => state.messagesResource.value() || []),
     };
@@ -87,12 +92,15 @@ export const _MatrixChatStore = signalStore(
 
   withComputed((state) => {
     return {
-      homeServerUrl: computed(() => `https://${state.homeServer()}`), 
+      homeServerUrl: computed(() => {
+        const url = state.appStore.env.services.matrixHomeserver;
+        return url.startsWith('https://') ? url : 'https://' + url;
+      }),
       matrixUser: computed((): MatrixUser | undefined => {
         const user = state.currentUser();
         if (!user) return undefined;
         return {
-          id: `@${user.bkey}:${state.homeServer()}`,
+          id: `@${user.personKey.toLowerCase()}:${state.homeServer()}`,
           name: user.firstName + ' ' + user.lastName,
           imageUrl: state.imageUrl() ?? '',
         };
@@ -102,8 +110,21 @@ export const _MatrixChatStore = signalStore(
         const roomId = state.currentRoomId();
         if (!roomId) return undefined;
         const rooms = state.rooms();
-        return rooms.find(r => r.roomId === roomId)
+        const found = rooms.find(r => r.roomId === roomId)
           ?? rooms.find(r => r.name?.toLowerCase() === roomId.toLowerCase());
+        if (found) return found;
+        // Fallback: room joined via CF but not yet in rooms$ (sync-delay window).
+        // Return a stub so the UI doesn't show "select a room" while waiting.
+        const sdkRoom = state.matrixService.getRoom(roomId);
+        if (!sdkRoom) return undefined;
+        return {
+          roomId,
+          name: sdkRoom.name || roomId,
+          isDirect: false,
+          unreadCount: 0,
+          members: [],
+          typingUsers: [],
+        } as MatrixRoom;
       }),
 
       unreadRooms: computed(() => {
@@ -127,6 +148,11 @@ export const _MatrixChatStore = signalStore(
 
       setCurrentRoom(roomId: string | undefined): void {
         patchState(store, { currentRoomId: roomId });
+        if (roomId) {
+          store.matrixService.markRoomAsRead(roomId).catch(err =>
+            console.warn('MatrixChatStore.setCurrentRoom: markRoomAsRead failed (non-critical):', err)
+          );
+        }
       },
 
       setSelectedThread(threadId: string | undefined): void {
@@ -147,15 +173,23 @@ export const _MatrixChatStore = signalStore(
         try {
           const stored = store.matrixService.getStoredCredentials();
           if (stored) {
-            debugItemLoaded(`MatrixChatStore.getMatrixToken: Using cached Matrix token for ${user.bkey}`, user);
-            return {
-              ...stored,
-              homeserverUrl: stored.homeserverUrl || store.appStore.env.services.matrixHomeserver,
-              deviceId: stored.deviceId || `device_${user.bkey}`,
-            } as MatrixAuthToken;
+            // Validate stored credentials use the person-key-based Matrix ID.
+            // If they don't (e.g., old firebase-uid-based credentials), discard and re-fetch.
+            const expectedUserId = `@${user.personKey.toLowerCase()}:${store.homeServer()}`;
+            if (stored.userId !== expectedUserId) {
+              console.log(`MatrixChatStore.getMatrixToken: Clearing stale credentials (${stored.userId} → ${expectedUserId})`);
+              store.matrixService.clearStoredCredentials();
+            } else {
+              debugItemLoaded(`MatrixChatStore.getMatrixToken: Using cached Matrix token for ${user.personKey}`, user);
+              return {
+                ...stored,
+                homeserverUrl: stored.homeserverUrl || store.appStore.env.services.matrixHomeserver,
+                deviceId: stored.deviceId || `device_${user.personKey.toLowerCase()}`,
+              } as MatrixAuthToken;
+            }
           }
 
-          debugMessage(`MatrixChatStore.getMatrixToken: Requesting Matrix credentials from Cloud Function for ${user.bkey}`, user);
+          debugMessage(`MatrixChatStore.getMatrixToken: Requesting Matrix credentials from Cloud Function for ${user.personKey}`, user);
           const functions = getFunctions(getApp(), 'europe-west6');
           const getMatrixCredentials = httpsCallable(functions, 'getMatrixCredentials');
           const result = await getMatrixCredentials();
@@ -177,6 +211,25 @@ export const _MatrixChatStore = signalStore(
 
       clearCredentials(): void {
         store.matrixService.clearStoredCredentials();
+      },
+
+      /**
+       * Request access to the Matrix room for a group via Cloud Function.
+       * The CF will find-or-create the room and force-join the current user via
+       * the Synapse admin API (which bypasses the normal Matrix join flow).
+       * We follow up with a client-side joinRoom() call so the local SDK state
+       * updates immediately without waiting for the next sync cycle.
+       */
+      async requestGroupRoomAccess(groupId: string): Promise<{ roomId: string; joined: boolean }> {
+        const functions = getFunctions(getApp(), 'europe-west6');
+        const fn = httpsCallable(functions, 'requestGroupRoomAccess');
+        const result = await fn({ groupId });
+        const { roomId, joined } = result.data as { roomId: string; joined: boolean };
+        // The CF uses the Synapse admin API (private rooms → client join returns 403).
+        // Register as pending so updateRoomsList() injects a stub immediately and the
+        // UI renders the room without waiting for the next sync cycle.
+        store.matrixService.registerPendingRoom(roomId, groupId);
+        return { roomId, joined };
       },
 
       /**
@@ -222,7 +275,7 @@ export const _MatrixChatStore = signalStore(
       /**
        * Ensure a room exists or create it
        */
-      async ensureRoomExists(roomIdOrAlias: string, roomName?: string): Promise<string> {
+      async ensureRoomExists(roomIdOrAlias: string, _roomName?: string): Promise<string> {
         try {
           // Try to join existing room
           const room = await store.matrixService.joinRoom(roomIdOrAlias);
@@ -260,6 +313,9 @@ export const _MatrixChatStore = signalStore(
             } else {
               roomId = await this.createGroupRoom(roomInfo.name, invites, roomInfo.topic, Visibility.Private);
             }
+            if (roomId && roomInfo.avatar?.startsWith('http')) {
+              await store.matrixService.setRoomAvatarFromUrl(roomId, roomInfo.avatar);
+            }
             showToast(store.toastController, '@chat.operation.create.conf');
             patchState(store, { currentRoomId: roomId });
 
@@ -271,16 +327,57 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * Create a direct message room with another user
+       * Edit an existing room (name, topic, avatar).
+       * Opens the RoomEditModal pre-filled with the current room data.
+       */
+      async editRoom(room: MatrixRoom): Promise<void> {
+        const modal = await store.modalController.create({
+          component: RoomEditModal,
+          componentProps: { room, currentUser: store.currentUser() }
+        });
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role !== 'confirm' || !data) return;
+        const updated = data as MatrixRoom;
+        try {
+          await store.matrixService.updateRoom(room.roomId, updated.name, updated.topic);
+          if (updated.avatar?.startsWith('http') && updated.avatar !== room.avatar) {
+            await store.matrixService.setRoomAvatarFromUrl(room.roomId, updated.avatar);
+          }
+          showToast(store.toastController, '@chat.operation.update.conf');
+        } catch (error) {
+          console.error('MatrixChatStore.editRoom: Failed to update room:', error);
+          showToast(store.toastController, '@chat.operation.update.error');
+        }
+      },
+
+      /**
+       * Create a direct message room with another user.
+       * If the target user has no Matrix account yet, provisions one via the
+       * provisionMatrixUser Cloud Function and retries.
        */
       async createDirectRoom(userId: string): Promise<string> {
         if (!store.isMatrixInitialized()) {
           throw new Error('Matrix not initialized');
         }
 
-        const room = await store.matrixService.createDirectRoom(userId);
-        patchState(store, { currentRoomId: room.roomId });
-        return room.roomId;
+        const tryCreate = async () => {
+          const room = await store.matrixService.createDirectRoom(userId);
+          patchState(store, { currentRoomId: room.roomId });
+          return room.roomId;
+        };
+
+        try {
+          return await tryCreate();
+        } catch (error) {
+          if (!(error instanceof Error) || !error.message.includes('no Matrix account')) throw error;
+          // Target user has no Matrix account yet — provision one and retry
+          const personKey = userId.startsWith('@') ? userId.split(':')[0].substring(1) : userId;
+          const functions = getFunctions(getApp(), 'europe-west6');
+          const provision = httpsCallable(functions, 'provisionMatrixUser');
+          await provision({ personKey });
+          return tryCreate();
+        }
       },
 
       /**
@@ -447,19 +544,6 @@ export const _MatrixChatStore = signalStore(
         return store.matrixService.getUserAvatarUrl(width, height);
       },
 
-      /**
-       * Invite user to current room
-       */
-      async inviteUser(userId: string): Promise<void> {
-        const roomId = store.currentRoomId();
-        if (!roomId) return;
-
-        try {
-          await store.matrixService.inviteUser(roomId, userId);
-        } catch (error) {
-          console.error('MatrixChatStore.inviteUser: Failed to invite:', error);
-        }
-      },
 
       /**
        * Leave current room
@@ -481,7 +565,7 @@ export const _MatrixChatStore = signalStore(
        */
       async cleanup(): Promise<void> {
         await store.matrixService.disconnect();
-        patchState(store, initialState);
+        patchState(store, { isMatrixInitialized: false, currentRoomId: undefined, selectedThreadId: undefined });
       },
     };
   })

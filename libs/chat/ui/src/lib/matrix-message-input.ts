@@ -1,14 +1,17 @@
 import { Component, computed, inject, input, output, signal, viewChild, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {  IonTextarea, IonButton, IonIcon, ActionSheetController } from '@ionic/angular/standalone';
+import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { AppStore } from '@bk2/shared-feature';
 
 @Component({
   selector: 'bk-matrix-message-input',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, TranslatePipe, AsyncPipe,
     CommonModule, FormsModule,
     IonTextarea, IonButton, IonIcon
   ],
@@ -103,7 +106,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
       <ion-button
         fill="clear"
         class="action-button"
-        (click)="presentAttachmentActions()"
+        (click)="showActions()"
       >
         <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon}}"></ion-icon>
       </ion-button>
@@ -130,7 +133,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
         <ion-textarea
           #textInput
           [(ngModel)]="messageText"
-          [placeholder]="placeholder()"
+          placeholder="{{ '@chat.fields.typeMessage' | translate | async }}"
           [rows]="1"
           [autoGrow]="true"
           (ionInput)="onTyping()"
@@ -166,8 +169,8 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 })
 export class MatrixMessageInput {
   private actionSheetController = inject(ActionSheetController);
+  private appStore = inject(AppStore);
 
-  placeholder = input<string>('Type a message...');
   disabled = input<boolean>(false);
   typingUsers = input<string[]>([]);
   replyToMessage = input<any>();
@@ -184,6 +187,8 @@ export class MatrixMessageInput {
 
   textInput = viewChild<ElementRef>('textInput');
   fileInputRef = viewChild<ElementRef>('fileInput');
+
+  private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 
   canSend = computed(() => {
     return this.messageText().trim().length > 0 && !this.disabled();
@@ -222,39 +227,53 @@ export class MatrixMessageInput {
     }, 3000);
   }
 
-  async presentAttachmentActions() {
-    const actionSheet = await this.actionSheetController.create({
-      header: 'Add attachment',
-      buttons: [
-        {
-          text: 'Photo or Video',
-          icon: 'image-outline',
-          handler: () => {
-            this.selectFile('image/*,video/*');
-          }
-        },
-        {
-          text: 'File',
-          icon: 'document-outline',
-          handler: () => {
-            this.selectFile('*/*');
-          }
-        },
-        {
-          text: 'Send Location',
-          icon: 'location-outline',
-          handler: () => {
-            this.locationSent.emit();
-          }
-        },
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        }
-      ]
-    });
+  /******************************* actions *************************************** */
+  /**
+   * Displays an ActionSheet with all possible actions on a chat message. Only actions are shown, that the user has permission for.
+   * After user selected an action this action is executed.
+   * @param attendee 
+   */
+  protected async showActions(): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@chat.fields.addAttachment');
+    this.addActionSheetButtons(actionSheetOptions);
+    await this.executeActions(actionSheetOptions);
+  }
 
-    await actionSheet.present();
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.image', this.imgixBaseUrl, 'image'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.file', this.imgixBaseUrl, 'document'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.position', this.imgixBaseUrl, 'location'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
+      switch (data.action) {
+        case 'chat.attachment.image':
+          this.selectFile('image/*,video/*');
+          break;
+        case 'chat.attachment.file':
+            this.selectFile('*/*');
+          break;
+        case 'chat.attachment.position':
+            this.locationSent.emit();
+        break;
+      }
+    }
   }
 
   selectFile(accept: string) {
@@ -283,9 +302,9 @@ export class MatrixMessageInput {
   getTypingText(): string {
     const users = this.typingUsers();
     if (users.length === 0) return '';
-    if (users.length === 1) return `${users[0]} is typing...`;
-    if (users.length === 2) return `${users[0]} and ${users[1]} are typing...`;
-    return `${users[0]} and ${users.length - 1} others are typing...`;
+    if (users.length === 1) return `${users[0]} ${bkTranslate('@chat.fields.isTypeing')}`;
+    if (users.length === 2) return `${users[0]} ${bkTranslate('@chat.fields.and')} ${users[1]} ${bkTranslate('@chat.fields.areTypeing')}`;
+    return `${users[0]} ${bkTranslate('@chat.fields.and')} ${users.length - 1} ${bkTranslate('@chat.fields.othersTypeing')}}`;
   }
 
   focus() {

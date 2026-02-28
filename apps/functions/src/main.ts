@@ -67,6 +67,8 @@ export const syncUserProfileToMatrix = Matrix.syncUserProfileToMatrix;
 // matrix-simple (Simpler Firebase → Matrix token exchange)
 export const getMatrixCredentials = MatrixSimple.getMatrixCredentials;
 export const syncFirebaseProfileToMatrix = MatrixSimple.syncFirebaseProfileToMatrix;
+export const requestGroupRoomAccess = MatrixSimple.requestGroupRoomAccess;
+export const provisionMatrixUser = MatrixSimple.provisionMatrixUser;
 
 // oidc-bridge (Full OIDC Identity Provider for Matrix - Complex but native Matrix SSO)
 export const oidcDiscovery = OidcBridge.oidcDiscovery;

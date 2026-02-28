@@ -157,7 +157,7 @@ export class PersonList {
    */
   protected async showActions(person: PersonModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, person);
+    await this.addActionSheetButtons(actionSheetOptions, person);
     await this.executeActions(actionSheetOptions, person);
   }
 
@@ -165,9 +165,12 @@ export class PersonList {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param person 
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): void {    
+  private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> {    
     if (hasRole('registered', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
+      if (await this.personListStore.isPersonUser(person.bkey)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.imgixBaseUrl, 'chatbubbles'));
+      }
       if (person.favEmail) {
         actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.imgixBaseUrl, 'copy'));
         actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.imgixBaseUrl, 'email'));
@@ -212,6 +215,9 @@ export class PersonList {
       switch (data.action) {
         case 'person.view':
           await this.personListStore.edit(person, true);
+          break;
+        case 'person.chat':
+          await this.personListStore.chat(person);
           break;
         case 'person.copyemail':
           await this.personListStore.copy(person.favEmail, '@subject.person.operation.copy.email.conf');

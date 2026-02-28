@@ -2,6 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ViewWillEnter } from '@ionic/angular';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, GroupModelName, RoleName } from '@bk2/shared-models';
@@ -10,7 +11,7 @@ import { error } from '@bk2/shared-util-angular';
 import { coerceBoolean, debugData, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 
-import { PageDispatcher } from '@bk2/cms-page-feature';
+import { PageDispatcher, PageStore } from '@bk2/cms-page-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { MembershipListComponent } from '@bk2/relationship-membership-feature';
 import { TaskListComponent } from '@bk2/task-feature';
@@ -143,8 +144,9 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
     </ion-content>
   `
 })
-export class GroupViewPageComponent {
+export class GroupViewPageComponent implements ViewWillEnter {
   private readonly groupStore = inject(GroupStore);
+  private readonly pageStore = inject(PageStore);
 
   // inputs
   public groupKey = input.required<string>();
@@ -181,6 +183,17 @@ export class GroupViewPageComponent {
       console.log(`GroupViewPageComponent: loading group ${this.groupKey()}`);
       this.groupStore.setGroupKey(this.groupKey());
     });
+  }
+
+  // Fires when Ionic restores this view from its cache (back navigation).
+  // PageDispatcher is an embedded child — it doesn't receive ionViewWillEnter —
+  // so we must reset pageId here to prevent the cached view from showing stale content.
+  ionViewWillEnter(): void {
+    const groupId = this.id();
+    const segment = this.selectedSegment();
+    if ((segment === 'content' || segment === 'chat') && groupId && groupId !== DEFAULT_ID) {
+      this.pageStore.setPageId(`${groupId}_${segment}`);
+    }
   }
 
   /******************************* actions *************************************** */

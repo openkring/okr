@@ -1,9 +1,10 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon } from '@ionic/angular/standalone';
+import { IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonAvatar } from '@ionic/angular/standalone';
 
 import { MatrixRoom } from '@bk2/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { bkTranslate } from '@bk2/shared-i18n';
 
 
 @Component({
@@ -11,7 +12,7 @@ import { MultiAvatarPipe, SvgIconPipe } from '@bk2/shared-pipes';
   standalone: true,
   imports: [
     CommonModule, MultiAvatarPipe, SvgIconPipe,
-    IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon
+    IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonAvatar
 ],
   styles: [`
     :host {
@@ -60,7 +61,13 @@ import { MultiAvatarPipe, SvgIconPipe } from '@bk2/shared-pipes';
           class="room-item"
           (click)="roomSelected.emit(room.roomId)"
         >
-          <ion-icon slot="start" src="{{room| multiAvatar | svgIcon}}" />
+          @if (room.avatar && isPhotoUrl(room.avatar)) {
+            <ion-avatar slot="start">
+              <img [src]="room.avatar" [alt]="room.name" />
+            </ion-avatar>
+          } @else {
+            <ion-icon slot="start" src="{{room | multiAvatar | svgIcon}}" />
+          }
           <ion-label>
             <div style="display: flex; align-items: center;">
               <span>{{ room.name }}</span>
@@ -91,6 +98,10 @@ export class MatrixRoomList {
 
   roomSelected = output<string>();
 
+  isPhotoUrl(url: string): boolean {
+    return url.startsWith('blob:') || url.startsWith('http');
+  }
+
   getRoomInitial(name: string): string {
     return name ? name.charAt(0).toUpperCase() : '?';
   }
@@ -114,8 +125,8 @@ export class MatrixRoomList {
 
   getTypingText(userIds: string[]): string {
     if (userIds.length === 0) return '';
-    if (userIds.length === 1) return 'typing...';
-    if (userIds.length === 2) return `${userIds.length} people are typing...`;
-    return 'Several people are typing...';
+    if (userIds.length === 1) return bkTranslate('@chat.fields.isTypeing');
+    if (userIds.length === 2) return `${userIds.length} ${bkTranslate('@chat.fields.areTypeing')}`;
+    return bkTranslate('@chat.fields.severalTypeing');
   }
 }

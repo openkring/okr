@@ -1,15 +1,18 @@
 
-import { Injectable } from '@angular/core';
-import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User } from 'matrix-js-sdk';
+import { inject, Injectable } from '@angular/core';
+import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { MatrixConfig, MatrixMessage, MatrixRoom, TypingNotification } from '@bk2/shared-models';
+import { AppStore } from '@bk2/shared-feature';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MatrixChatService {
+  private appStore = inject(AppStore);
+  
   private client: MatrixClient | null = null;
   private syncState$ = new BehaviorSubject<string>('STOPPED');
   private rooms$ = new BehaviorSubject<MatrixRoom[]>([]);
@@ -19,6 +22,9 @@ export class MatrixChatService {
   private readonly roomsUpdateTrigger$ = new Subject<void>();
   private roomsUpdateSub: Subscription | null = null;
   private readonly _mediaCache = new Map<string, string>(); // mxc:// -> blob URL
+  // Rooms joined via CF admin API that haven't appeared in a sync cycle yet.
+  // updateRoomsList() re-injects stubs for these so the UI renders immediately.
+  private readonly pendingRooms = new Map<string, string>(); // roomId → display name
 
   get isInitialized(): boolean {
     return this.client !== null;
@@ -97,36 +103,19 @@ export class MatrixChatService {
       });
 
       this.setupEventHandlers();
-      
+
       console.log('MatrixChatService: Starting client sync with initialSyncLimit=10');
-      
-      // Start the client sync with reduced limit for faster initial sync
+
+      // Start the client — sync happens in background via syncState$ events.
+      // We don't wait for PREPARED here; doing so blocks the UI for up to 30 s on
+      // slow networks (notably iOS). The store sets isMatrixInitialized=true right
+      // after this returns, the spinner disappears, and rooms/messages update
+      // reactively once PREPARED is reached.
       await this.client.startClient({ initialSyncLimit: 10 });
-      console.log('MatrixChatService: Client startClient() completed');
-      
-      // Wait for initial sync to reach PREPARED state (with timeout)
-      const syncReady = await this.waitForSyncState('PREPARED', 30000).catch(() => {
-        console.warn('MatrixChatService: Initial sync timeout after 30s');
-        
-        // After timeout, check if we have rooms - if so, consider it "ready enough"
-        const rooms = this.client?.getRooms() || [];
-        if (rooms.length > 0 || this.syncState$.value === 'SYNCING') {
-          console.log('MatrixChatService: Forcing sync state to PREPARED (have rooms or actively syncing)');
-          this.syncState$.next('PREPARED');
-          this.updateRoomsList();
-          return true;
-        }
-        
-        return false;
-      });
-      
-      if (syncReady) {
-        console.log('MatrixChatService: Initial sync completed successfully');
-      } else {
-        console.warn('MatrixChatService: Proceeding without successful sync');
-      }
+      console.log('MatrixChatService: Client started, sync in progress');
     } catch (error) {
       console.error('MatrixChatService: Failed to initialize client', error);
+      this.client = null; // reset so a retry attempt can create a fresh client
       throw error;
     }
   }
@@ -237,36 +226,10 @@ export class MatrixChatService {
     this.client.on(RoomStateEvent.Events, (_event: MatrixEvent) => {
       this.roomsUpdateTrigger$.next();
     });
-  }
 
-  /**
-   * Wait for sync to reach a specific state
-   */
-  private waitForSyncState(targetState: string, timeoutMs: number): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-      // Check if already in target state
-      if (this.syncState$.value === targetState) {
-        resolve(true);
-        return;
-      }
-
-      const timeout = setTimeout(() => {
-        subscription.unsubscribe();
-        reject(new Error(`Sync state timeout waiting for ${targetState}`));
-      }, timeoutMs);
-
-      const subscription = this.syncState$.subscribe(state => {
-        console.log('MatrixChatService: waitForSyncState observed:', state, 'waiting for:', targetState);
-        if (state === targetState) {
-          clearTimeout(timeout);
-          subscription.unsubscribe();
-          resolve(true);
-        } else if (state === 'ERROR') {
-          clearTimeout(timeout);
-          subscription.unsubscribe();
-          reject(new Error('Sync error'));
-        }
-      });
+    // Read receipts — update room list so unread counts reflect the new read position
+    this.client.on(RoomEvent.Receipt, () => {
+      this.roomsUpdateTrigger$.next();
     });
   }
 
@@ -360,10 +323,13 @@ export class MatrixChatService {
           .map(async e => {
             const msg = this.mapEventToMessage(e, room);
             const mxcUrl = msg.content.url ?? msg.content.file?.url;
+            const senderMember = room.getMember(e.getSender()!);
+            const senderAvatarMxc = (senderMember as any)?.getMxcAvatarUrl?.() as string | undefined;
+            const senderAvatar = senderAvatarMxc ? await this.resolveMediaUrl(senderAvatarMxc) : undefined;
             if ((msg.type === 'm.image' || msg.type === 'm.file') && mxcUrl) {
-              return { ...msg, mediaUrl: await this.resolveMediaUrl(mxcUrl) };
+              return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.resolveMediaUrl(mxcUrl) };
             }
-            return msg;
+            return { ...msg, senderAvatar: senderAvatar || undefined };
           })
       );
 
@@ -408,6 +374,21 @@ export class MatrixChatService {
           }
         });
       }
+      // Async-resolve sender avatar via authenticated fetch
+      const senderMember = room.getMember(event.getSender()!);
+      const senderAvatarMxc = (senderMember as any)?.getMxcAvatarUrl?.() as string | undefined;
+      if (senderAvatarMxc) {
+        this.resolveMediaUrl(senderAvatarMxc).then(url => {
+          if (!url) return;
+          const msgs = subject.value;
+          const idx = msgs.findIndex(m => m.eventId === message.eventId);
+          if (idx >= 0) {
+            const updated = [...msgs];
+            updated[idx] = { ...updated[idx], senderAvatar: url };
+            subject.next(updated);
+          }
+        });
+      }
     } else {
       console.warn(`MatrixChatService: No message subject found for room ${room.roomId}, message not added to list`);
     }
@@ -428,7 +409,7 @@ export class MatrixChatService {
       roomId: room.roomId,
       sender: event.getSender()!,
       senderName: sender?.name || event.getSender()!,
-      senderAvatar: this.getAvatarUrl(sender as any as User, 32),
+      senderAvatar: undefined, // resolved asynchronously by callers via resolveMediaUrl
       body: content.body || '',
       timestamp: event.getTs(),
       type: content.msgtype || 'm.text',
@@ -446,7 +427,7 @@ export class MatrixChatService {
  * Update the rooms list observable with current room data
  * Called after initial sync (PREPARED) and on relevant room events
  */
-private updateRoomsList(): void {
+private async updateRoomsList(): Promise<void> {
   if (!this.client) return;
 
   const rooms = this.client.getRooms();
@@ -499,30 +480,41 @@ private updateRoomsList(): void {
       const typingUserIds: string[] = [];
       // Optionally, you can fill this from room.currentState.getMembers().filter(m => m.typing)
 
-      // Calculate unread count (highlight + notifications)
+      // Calculate unread count. 'total' already includes highlights — do NOT add them again.
       const unreadCount = (room as any).getUnreadNotificationCount?.('total') || 0;
-      const highlightCount = (room as any).getUnreadNotificationCount?.('highlight') || 0;
 
-      // Room avatar (Element-style: 48×48 cropped)
-      const avatarUrl = room.getAvatarUrl(
-        this.client!.baseUrl,
-        48,
-        48,
-        'crop',
-        true // allow default avatar
-      ) || undefined;
+      const isDirect = this.isDirectRoom(room);
 
-      // Determine room name (fallback to members if no name)
-      let name = room.name;
-      if (!name || name === room.roomId) {
-        const members = room.getJoinedMembers();
-        if (members.length === 2) {
-          // Direct chat: show the other person's name
-          const other = members.find(m => m.userId !== this.client!.getUserId());
-          name = other?.rawDisplayName || 'Unnamed chat';
+      // For DM rooms: use the other member's display name and avatar
+      // For group rooms: use room name/avatar with member-count fallback
+      let name: string;
+      let avatarUrl: string | undefined;
+
+      if (isDirect) {
+        const otherMember = room.getMembers().find(m =>
+          m.userId !== this.client!.getUserId() &&
+          (m.membership === 'join' || m.membership === 'invite')
+        );
+        if (otherMember) {
+          // rawDisplayName is null when no display name is set.
+          // otherMember.name falls back to the full "@user:server" string — skip it.
+          name = otherMember.rawDisplayName || otherMember.userId.split(':')[0].substring(1);
+          // Store raw mxc:// URL; resolved to blob URL below via resolveMediaUrl
+          avatarUrl = (otherMember as any)?.getMxcAvatarUrl?.() as string | undefined;
         } else {
+          name = room.name || 'Direct message';
+          avatarUrl = undefined;
+        }
+      } else {
+        name = room.name;
+        if (!name || name === room.roomId) {
+          const members = room.getJoinedMembers();
           name = `Group (${members.length})`;
         }
+        // Store raw mxc:// URL from room state; resolved to blob URL below
+        const roomState = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
+        const avatarStateEvent = roomState?.getStateEvents('m.room.avatar', '');
+        avatarUrl = (avatarStateEvent as MatrixEvent | null)?.getContent()?.url as string | undefined;
       }
 
       return {
@@ -530,8 +522,8 @@ private updateRoomsList(): void {
         name,
         avatar: avatarUrl,
         topic: room.getCanonicalAlias() || undefined,
-        isDirect: this.isDirectRoom(room),
-        unreadCount: unreadCount + highlightCount,
+        isDirect,
+        unreadCount,
         lastMessage,
         members: room.getMembers().map(m => ({
           userId: m.userId,
@@ -549,6 +541,23 @@ private updateRoomsList(): void {
       if (timeA !== timeB) return timeB - timeA;
       return a.name.localeCompare(b.name);
     });
+
+  // Resolve all room avatar mxc:// URLs to authenticated blob URLs in parallel
+  await Promise.all(matrixRooms.map(async r => {
+    if (r.avatar?.startsWith('mxc://')) {
+      r.avatar = await this.resolveMediaUrl(r.avatar) || undefined;
+    }
+  }));
+
+  // Inject stubs for rooms joined via CF that haven't appeared in a sync cycle yet.
+  // Once the real room data is present, remove the stub and let the real entry take over.
+  for (const [roomId, name] of this.pendingRooms) {
+    if (matrixRooms.find(r => r.roomId === roomId)) {
+      this.pendingRooms.delete(roomId); // real data is now in the list
+    } else {
+      matrixRooms.push({ roomId, name, isDirect: false, unreadCount: 0, members: [], typingUsers: [] });
+    }
+  }
 
   // Emit the new sorted list
   this.rooms$.next(matrixRooms);
@@ -692,41 +701,120 @@ private updateRoomsList(): void {
   }
 
   /**
-   * Send read receipt
+   * Send read receipt for a specific event.
    */
   async sendReadReceipt(roomId: string, eventId: string): Promise<void> {
     if (!this.client) return;
-    
     const room = this.client.getRoom(roomId);
     if (!room) return;
-
     const event = room.findEventById(eventId);
     if (!event) return;
-
     await this.client.sendReadReceipt(event);
   }
 
   /**
-   * Create a new direct message room
+   * Mark all messages in a room as read by sending a read receipt for the latest event.
+   * This resets the unread count for the room on the server side.
+   * The rooms$ observable is updated when the server acknowledges via RoomEvent.Receipt.
+   */
+  async markRoomAsRead(roomId: string): Promise<void> {
+    if (!this.client) return;
+    const room = this.client.getRoom(roomId);
+    if (!room) return;
+    const events = room.getLiveTimeline().getEvents();
+    // Walk back to find the latest event that is not a state event
+    for (let i = events.length - 1; i >= 0; i--) {
+      const event = events[i];
+      if (event.getId() && !event.isState()) {
+        await this.client.sendReadReceipt(event);
+        return;
+      }
+    }
+  }
+
+  /**
+   * Register a room that was joined via the CF admin API but hasn't appeared in a
+   * sync cycle yet. updateRoomsList() will inject a stub for it on every rebuild
+   * until the real room data arrives via sync.
+   */
+  registerPendingRoom(roomId: string, name: string): void {
+    if (!this.pendingRooms.has(roomId)) {
+      this.pendingRooms.set(roomId, name);
+      this.roomsUpdateTrigger$.next();
+    }
+  }
+
+  /**
+   * Find an existing direct message room with the given Matrix user ID.
+   * Checks the m.direct account data and returns the first joined/invited room.
+   */
+  findExistingDirectRoom(matrixUserId: string): string | undefined {
+    if (!this.client) return undefined;
+    const dmEvent = this.client.getAccountData('m.direct' as any);
+    if (!dmEvent) return undefined;
+    const directRooms = dmEvent.getContent() as Record<string, string[]>;
+    const roomIds = directRooms[matrixUserId];
+    if (!roomIds || roomIds.length === 0) return undefined;
+    // Walk from most-recent to oldest; skip stale entries
+    for (let i = roomIds.length - 1; i >= 0; i--) {
+      const room = this.client.getRoom(roomIds[i]);
+      if (!room) continue; // not in local cache at all
+      const membership = room.getMyMembership();
+      if (membership !== 'join' && membership !== 'invite') continue; // left or banned
+      // Skip phantom rooms where the other user was never added (e.g. invite rejected by server)
+      const otherPresent = room.getMembers().some(m =>
+        m.userId !== this.client!.getUserId() &&
+        (m.membership === 'join' || m.membership === 'invite')
+      );
+      if (!otherPresent) continue;
+      return roomIds[i];
+    }
+    return undefined;
+  }
+
+  /**
+   * Create a new direct message room, or return an existing one if it already exists.
+   * @param userId full Matrix user ID (@localpart:server) or a Person.bkey (converted automatically)
    */
   async createDirectRoom(userId: string): Promise<Room> {
     if (!this.client) throw new Error('Client not initialized');
+
+    // If userId is a Person.bkey (no leading @), convert to @localpart:server
+    let matrixUserId = userId;
+    if (!userId.startsWith('@')) {
+      const hostname = new URL(this.client.baseUrl).hostname.replace('matrix.', '');
+      matrixUserId = `@${userId.toLowerCase()}:${hostname}`;
+    }
+
+    // Find-or-create: return existing DM room if one already exists
+    const existingRoomId = this.findExistingDirectRoom(matrixUserId);
+    if (existingRoomId) {
+      const existing = this.client.getRoom(existingRoomId);
+      if (existing) return existing;
+    }
+
+    // Verify the target user exists on the homeserver before creating a phantom room
+    try {
+      await this.client.getProfileInfo(matrixUserId);
+    } catch {
+      throw new Error(`User ${matrixUserId} has no Matrix account yet. They need to log in to the app first.`);
+    }
 
     const opts: ICreateRoomOpts = {
       preset: Preset.TrustedPrivateChat,
       is_direct: true,
       visibility: Visibility.Private,
-      invite: [userId],
+      invite: [matrixUserId],
     };
 
     const result = await this.client.createRoom(opts);
-    
+
     // Mark as direct room in account data
-    await this.markRoomAsDirect(result.room_id, userId);
+    await this.markRoomAsDirect(result.room_id, matrixUserId);
 
     const room = this.client.getRoom(result.room_id);
     if (!room) throw new Error('Failed to get created room');
-    
+
     return room;
   }
 
@@ -792,13 +880,6 @@ private updateRoomsList(): void {
     await this.client.leave(roomId);
   }
 
-  /**
-   * Invite a user to a room
-   */
-  async inviteUser(roomId: string, userId: string): Promise<void> {
-    if (!this.client) return;
-    await this.client.invite(roomId, userId);
-  }
 
   /**
    * Get a room by ID
@@ -836,9 +917,14 @@ private updateRoomsList(): void {
   async setUserAvatarFromUrl(avatarUrl: string): Promise<string> {
     if (!this.client) throw new Error('Client not initialized');
 
-    try {
- //     console.log('MatrixChatService: Fetching avatar from URL:', avatarUrl);
+    // Check localStorage cache to avoid re-uploading the same image every session
+    const cachedFirebaseUrl = localStorage.getItem('matrix_avatar_firebase_url');
+    const cachedMxcUrl = localStorage.getItem('matrix_avatar_mxc_url');
+    if (cachedFirebaseUrl === avatarUrl && cachedMxcUrl) {
+      return cachedMxcUrl;
+    }
 
+    try {
       // Fetch the image from the URL
       const response = await fetch(avatarUrl);
       if (!response.ok) {
@@ -849,28 +935,48 @@ private updateRoomsList(): void {
       const blob = await response.blob();
       const file = new File([blob], 'avatar.jpg', { type: blob.type });
 
-/*       console.log('MatrixChatService: Uploading avatar to Matrix', {
-        size: file.size,
-        type: file.type
-      }); */
-
       // Upload the image file to Matrix content repository
       const upload = await this.client.uploadContent(file);
       const matrixAvatarUrl = upload.content_uri;
 
- //     console.log('MatrixChatService: Avatar uploaded, setting as user avatar:', matrixAvatarUrl);
-
       // Set the uploaded image as the user's avatar
       await this.client.setAvatarUrl(matrixAvatarUrl);
 
-  //    console.log('MatrixChatService: Avatar set successfully');
+      // Cache in localStorage to prevent re-uploading in future sessions
+      localStorage.setItem('matrix_avatar_firebase_url', avatarUrl);
+      localStorage.setItem('matrix_avatar_mxc_url', matrixAvatarUrl);
 
-      // Return the Matrix content URI (mxc://)
       return matrixAvatarUrl;
     } catch (error) {
       console.error('MatrixChatService: Failed to set user avatar from URL', error);
       throw error;
     }
+  }
+
+  /**
+   * Set the avatar for a room by uploading an image from an HTTP URL.
+   * Downloads the image, uploads it to the Matrix media repository,
+   * then sends an m.room.avatar state event.
+   */
+  async setRoomAvatarFromUrl(roomId: string, imageUrl: string): Promise<void> {
+    if (!this.client) throw new Error('Client not initialized');
+    if (!imageUrl || !imageUrl.startsWith('http')) return;
+
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error(`Failed to fetch room avatar: ${response.statusText}`);
+    const blob = await response.blob();
+    const file = new File([blob], 'room-avatar.jpg', { type: blob.type });
+    const upload = await this.client.uploadContent(file);
+    await this.client.sendStateEvent(roomId, 'm.room.avatar' as any, { url: upload.content_uri }, '');
+  }
+
+  /**
+   * Update room name and/or topic.
+   */
+  async updateRoom(roomId: string, name?: string, topic?: string): Promise<void> {
+    if (!this.client) throw new Error('Client not initialized');
+    if (name) await this.client.setRoomName(roomId, name);
+    if (topic !== undefined) await this.client.setRoomTopic(roomId, topic);
   }
 
   /**

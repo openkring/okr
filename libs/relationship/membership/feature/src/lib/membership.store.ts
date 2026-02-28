@@ -10,7 +10,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName, TaskModel } from '@bk2/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches, warn } from '@bk2/shared-util-core';
-import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
+import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl, showToast } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
@@ -596,6 +596,26 @@ export const _MembershipStore = signalStore(
         await store.taskService.addTaskFromGroupMembership(membership, group, name, store.currentUser());
       },
 
+      /**
+       * Creates a direct message room between the current user and the given member (membership.memberKey)
+       * Opens the Chat Page and preselects this room.
+       * @param membership the membership represents the other end of the direct chat.
+       * 
+       */
+      async chat(membership: MembershipModel): Promise<void> {
+        try {
+          const room = await store.matrixService.createDirectRoom(membership.memberKey);
+          await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : 'Could not start chat';
+          await showToast(store.toastController, msg);
+        }
+      },
+
+      async isPersonUser(personKey: string): Promise<boolean> {
+        return store.firestoreService.isPersonUser(personKey);
+      },
+
       async changeMembershipCategory(membership?: MembershipModel, readOnly = true): Promise<void> {
         if (readOnly || !membership) return;
         this.setOrgId(membership.orgKey);
@@ -628,11 +648,6 @@ export const _MembershipStore = signalStore(
         }
       },
 
-      async invite(membership: MembershipModel, readOnly = true): Promise<void> {
-        if (readOnly) return;
-        debugMessage('MembershipStore.invite member ' + membership.memberKey + ' to chatroom ' + membership.orgKey, store.currentUser());
-        await store.matrixService.inviteUser(membership.orgKey, membership.memberKey);
-      },
 
       async export(type: string, memberships: MembershipModel[]): Promise<void> {
         let keys: (keyof MembershipModel)[] = [];

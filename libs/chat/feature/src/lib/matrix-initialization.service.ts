@@ -44,7 +44,7 @@ export class MatrixInitializationService {
       .pipe(
         filter(user => !!user), // Wait for user to be authenticated
         take(1), // Only initialize once
-        tap(user => console.log('MatrixInitializationService: User authenticated, initializing Matrix for', user.bkey)),
+        tap(user => console.log('MatrixInitializationService: User authenticated, initializing Matrix for', user.personKey)),
         switchMap(() => this.initializeMatrix())
       )
       .subscribe({
@@ -98,12 +98,24 @@ export class MatrixInitializationService {
     try {
       const stored = this.matrixService.getStoredCredentials();
       if (stored) {
-        console.log('MatrixInitializationService: Using cached Matrix token');
-        return {
-          ...stored,
-          homeserverUrl: stored.homeserverUrl || 'https://' + this.appStore.env.services.matrixHomeserver,
-          deviceId: stored.deviceId || `device_${user.bkey}`,
-        } as MatrixAuthToken;
+        // Validate stored credentials use the person-key-based Matrix ID.
+        // Discard and re-fetch if they still reference the old user.bkey.
+        const homeserver = this.appStore.env.services.matrixHomeserver
+          .replace(/^https?:\/\//, '')
+          .replace(/^matrix\./, '');
+        const expectedUserId = `@${user.personKey.toLowerCase()}:${homeserver}`;
+        if (stored.userId !== expectedUserId) {
+          console.log(`MatrixInitializationService: Clearing stale credentials (${stored.userId} → ${expectedUserId})`);
+          this.matrixService.clearStoredCredentials();
+          // Fall through to CF call below
+        } else {
+          console.log('MatrixInitializationService: Using cached Matrix token');
+          return {
+            ...stored,
+            homeserverUrl: stored.homeserverUrl || 'https://' + homeserver,
+            deviceId: stored.deviceId || `device_${user.personKey.toLowerCase()}`,
+          } as MatrixAuthToken;
+        }
       }
 
       console.log('MatrixInitializationService: Requesting Matrix credentials from Cloud Function');
