@@ -129,7 +129,6 @@ export class TaskFormComponent {
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
-    console.log('TaskForm.onFieldChange', fieldName, fieldValue);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
