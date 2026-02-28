@@ -99,7 +99,6 @@ export class TaskService {
     task.name = name;
     task.author = author;
     task.assignee = group.mainContact ?? author;
-    task.scope = getAvatarInfo(group, 'group');
     task.calendars = [group.bkey];  // task is assigned to the group calendar
     await this.create(task, currentUser);
   }

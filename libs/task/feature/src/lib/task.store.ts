@@ -173,7 +173,10 @@ export const TaskStore = signalStore(
 
     async add(readOnly = true): Promise<void> {
       if (readOnly) return;
-      const author = getAvatarInfo(store.currentUser(), 'user-person');
+      const pKey = store.currentUser()?.personKey;
+      if (!pKey) return;
+      const person = store.appStore.getPerson(pKey);
+      const author = getAvatarInfo(person, 'person');
       if (!author) return;
       const task = new TaskModel(store.tenantId());
       task.author = author;

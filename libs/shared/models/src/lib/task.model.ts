@@ -21,8 +21,7 @@ export class TaskModel implements BkModel, PersistedModel, NamedModel, Searchabl
   public importance = DEFAULT_IMPORTANCE; // Importance: 0: low, 1: medium, 2: high
 
   // a task is visible to the author, the assignee, and privileged Users by default
-  // the visibility can be extended to the group it belongs to
-  public scope: AvatarInfo | undefined;
+  // the visibility can be extended to the group it belongs to, 
 
   // a task can be shown on its due date in calendars
   public calendars: string[] = [];

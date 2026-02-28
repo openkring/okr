@@ -46,7 +46,6 @@ import { AvatarSelectComponent } from '@bk2/avatar-ui';
 
       <bk-avatar-select name="assignee" [avatar]="assignee()" [readOnly]="isReadOnly()" (selectClicked)="selectPerson('assignee')" />
       <bk-avatar-select name="author" [avatar]="author()" [readOnly]="isReadOnly()" (selectClicked)="selectPerson('author')" />
-      <bk-avatar-select name="scope" [avatar]="scope()" [readOnly]="isReadOnly()" (selectClicked)="selectGroup()" />    
 
       <bk-strings
         [strings]="calendars()"
@@ -95,7 +94,6 @@ export class TaskEditModalComponent {
   protected calendars = linkedSignal(() => (this.formData()?.calendars ?? []) as string[]);
   protected author = linkedSignal(() => this.formData()?.author ?? this.defaultAvatar());
   protected assignee = linkedSignal(() => this.formData()?.assignee ?? this.defaultAvatar());
-  protected scope = linkedSignal(() => this.formData()?.scope);
 
   // passing constants to template
   protected calendarMask = LowercaseWordMask;
@@ -149,36 +147,6 @@ export class TaskEditModalComponent {
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm' && data) {
       if (isPerson(data, this.env.tenantId)) {
-        return data;
-      }
-    }
-    return undefined;
-  }
-
-  protected async selectGroup(): Promise<void> {
-    const group = await this.selectGroupModal();
-    if (!group) return;
-    const avatar = newAvatarInfo(group.bkey, '', group.name, 'group', '', '', '');
-    this.formData.update((vm) => {
-      if (!vm) return vm;
-      return ({...vm, scope: avatar });
-    });      
-    this.formDirty.set(true);
-  }
-
-  async selectGroupModal(): Promise<GroupModel | undefined> {
-    const modal = await this.modalController.create({
-      component: GroupSelectModalComponent,
-      cssClass: 'list-modal',
-      componentProps: {
-        selectedTag: '',
-        currentUser: this.currentUser()
-      }
-    });
-    modal.present();
-    const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm' && data) {
-      if (isGroup(data, this.env.tenantId)) {
         return data;
       }
     }

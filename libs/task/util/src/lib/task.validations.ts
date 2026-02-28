@@ -19,7 +19,6 @@ export const taskValidations = staticSuite((model: TaskModel, tenants: string, t
   stringValidations('priority', model.priority, WORD_LENGTH);
   stringValidations('importance', model.importance, WORD_LENGTH);
 
-  avatarValidations('scope', model.scope);
   // calendars are not validated here
 });
 
