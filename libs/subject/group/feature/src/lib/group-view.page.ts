@@ -88,14 +88,14 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
         @switch (selectedSegment()) {
           @case ('content') {
             @defer (on immediate) {
-              <bk-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" color="light" [isGroupView]="true" />
+              <bk-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('chat') {
             @defer (on immediate) {
-              <bk-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" color="light" [isGroupView]="true" />
+              <bk-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
@@ -177,6 +177,7 @@ export class GroupViewPageComponent implements ViewWillEnter {
   protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
   protected path = computed(() => getDocumentStoragePath(this.groupStore.tenantId(), 'group', this.group()?.bkey));
   protected groupTags = computed(() => this.groupStore.getTags());
+  protected color = computed(() => this.id().startsWith('notfall') ? 'danger' : 'light');
 
   constructor() {
     effect(() => {

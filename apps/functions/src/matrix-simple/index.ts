@@ -343,9 +343,27 @@ export const provisionMatrixUser = onCall(
       { headers: { Authorization: `Bearer ${adminToken}` } }
     );
     if (checkResp.ok) {
-      console.log(`provisionMatrixUser: ${matrixUserId} already exists`);
+      const checkData = await checkResp.json() as { deactivated?: boolean };
+      if (checkData.deactivated) {
+        console.log(`provisionMatrixUser: ${matrixUserId} exists but is deactivated — reactivating`);
+        const reactivateResp = await fetch(
+          `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+          {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deactivated: false }),
+          }
+        );
+        if (!reactivateResp.ok) {
+          throw new Error(`Failed to reactivate ${matrixUserId}: ${await reactivateResp.text()}`);
+        }
+        console.log(`provisionMatrixUser: ${matrixUserId} reactivated`);
+      } else {
+        console.log(`provisionMatrixUser: ${matrixUserId} already exists and is active`);
+      }
       return { matrixUserId };
     }
+    console.log(`provisionMatrixUser: ${matrixUserId} not found (status=${checkResp.status}), creating...`);
 
     // Resolve a display name from the persons Firestore doc
     let displayName = personKey;

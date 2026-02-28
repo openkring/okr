@@ -4,6 +4,9 @@ import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, E
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
 import { MatrixConfig, MatrixMessage, MatrixRoom, TypingNotification } from '@bk2/shared-models';
 import { AppStore } from '@bk2/shared-feature';
 
@@ -198,17 +201,33 @@ export class MatrixChatService {
       }
     });
 
-    // Room events
-    this.client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined) => {
-/*       console.log(`MatrixChatService: Timeline event`, {
-        roomId: room?.roomId,
-        eventType: event.getType(),
-        eventId: event.getId(),
-        isRoomMessage: event.getType() === EventType.RoomMessage
-      }); */
-      
+    // Room events — live timeline only (toStartOfTimeline=true means historical/pagination events)
+    this.client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined, toStartOfTimeline: boolean | undefined) => {
+      if (toStartOfTimeline) return; // historical events are handled by loadMessagesForRoom
       if (room && event.getType() === EventType.RoomMessage) {
         this.handleNewMessage(event, room);
+      }
+    });
+
+    // When a sent message is confirmed by the server, replace the local-echo entry
+    // (temp ID like ~!room:id.$local) with the confirmed event (real server ID).
+    this.client.on(RoomEvent.LocalEchoUpdated, (event: MatrixEvent, room: Room, oldEventId?: string) => {
+      if (event.getType() !== EventType.RoomMessage) return;
+      const subject = this.messages$.get(room.roomId);
+      if (!subject) return;
+      const msgs = subject.value;
+      const oldIdx = oldEventId ? msgs.findIndex(m => m.eventId === oldEventId) : -1;
+      const newMsg = this.mapEventToMessage(event, room);
+      if (oldIdx >= 0) {
+        // Replace the temp-ID entry in-place so the message doesn't jump around
+        const updated = [...msgs];
+        updated[oldIdx] = newMsg;
+        subject.next(updated);
+      } else {
+        // No temp entry found — add if not already present
+        if (!msgs.some(m => m.eventId === newMsg.eventId)) {
+          subject.next([...msgs, newMsg]);
+        }
       }
     });
 
@@ -359,7 +378,16 @@ export class MatrixChatService {
     const subject = this.messages$.get(room.roomId);
 
     if (subject) {
-      subject.next([...subject.value, message]);
+      // Deduplicate: the SDK can fire RoomEvent.Timeline more than once for the same event
+      // (e.g. soft-failed → retried, or timeline rebuild). Replace if already present.
+      const existing = subject.value.findIndex(m => m.eventId === message.eventId);
+      if (existing >= 0) {
+        const updated = [...subject.value];
+        updated[existing] = message;
+        subject.next(updated);
+      } else {
+        subject.next([...subject.value, message]);
+      }
       // Async-resolve media URL and patch the message once fetched
       const mxcUrl = message.content.url ?? message.content.file?.url;
       if ((message.type === 'm.image' || message.type === 'm.file') && mxcUrl) {
@@ -793,11 +821,24 @@ private async updateRoomsList(): Promise<void> {
       if (existing) return existing;
     }
 
-    // Verify the target user exists on the homeserver before creating a phantom room
+    // Verify the target user exists; if not, provision them via the Cloud Function.
+    // Note: Synapse's profile endpoint may return 404 briefly after admin-API user creation
+    // (the profile row is only populated on first explicit profile set). So we trust the CF
+    // result and do NOT re-check getProfileInfo after provisioning.
     try {
       await this.client.getProfileInfo(matrixUserId);
     } catch {
-      throw new Error(`User ${matrixUserId} has no Matrix account yet. They need to log in to the app first.`);
+      const localpart = matrixUserId.split(':')[0].substring(1); // strip leading @
+      console.log(`MatrixChatService.createDirectRoom: user not found, provisioning via CF for personKey=${localpart}`);
+      try {
+        const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'provisionMatrixUser');
+        const result = await fn({ personKey: localpart });
+        console.log(`MatrixChatService.createDirectRoom: provisionMatrixUser succeeded:`, result.data);
+        // Trust the CF result — the user now exists on Synapse. Proceed to room creation.
+      } catch (provisionError) {
+        console.error(`MatrixChatService.createDirectRoom: failed to provision ${matrixUserId}:`, provisionError);
+        throw new Error(`Could not provision Matrix account for ${matrixUserId}: ${provisionError}`);
+      }
     }
 
     const opts: ICreateRoomOpts = {

@@ -281,6 +281,14 @@ export class MatrixChat implements OnDestroy {
       //   so the effect re-runs the moment initialization completes).
       // Other contexts: wait until sync is PREPARED/SYNCING to avoid premature CF calls.
       // In both cases a 15-second cooldown prevents spam while waiting for the join event.
+      // A Matrix room ID (starts with '!') means the room was already created (e.g. a fresh DM).
+      // Set it directly — the SDK has it even before the next sync cycle emits it via rooms$.
+      // Never send a Matrix room ID through requestGroupRoomAccess (it would create a spurious room).
+      if (roomAlias.startsWith('!')) {
+        this.store.setCurrentRoom(roomAlias);
+        return;
+      }
+      // Otherwise it's a group alias / person key → request access via CF.
       const isReady = this.isGroupView()
         ? this.store.isMatrixInitialized()
         : ['PREPARED', 'SYNCING'].includes(this.store.syncState());

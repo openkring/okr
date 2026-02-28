@@ -353,31 +353,15 @@ export const _MatrixChatStore = signalStore(
 
       /**
        * Create a direct message room with another user.
-       * If the target user has no Matrix account yet, provisions one via the
-       * provisionMatrixUser Cloud Function and retries.
+       * Provisioning of users without Matrix accounts is handled transparently by the service.
        */
       async createDirectRoom(userId: string): Promise<string> {
         if (!store.isMatrixInitialized()) {
           throw new Error('Matrix not initialized');
         }
-
-        const tryCreate = async () => {
-          const room = await store.matrixService.createDirectRoom(userId);
-          patchState(store, { currentRoomId: room.roomId });
-          return room.roomId;
-        };
-
-        try {
-          return await tryCreate();
-        } catch (error) {
-          if (!(error instanceof Error) || !error.message.includes('no Matrix account')) throw error;
-          // Target user has no Matrix account yet — provision one and retry
-          const personKey = userId.startsWith('@') ? userId.split(':')[0].substring(1) : userId;
-          const functions = getFunctions(getApp(), 'europe-west6');
-          const provision = httpsCallable(functions, 'provisionMatrixUser');
-          await provision({ personKey });
-          return tryCreate();
-        }
+        const room = await store.matrixService.createDirectRoom(userId);
+        patchState(store, { currentRoomId: room.roomId });
+        return room.roomId;
       },
 
       /**

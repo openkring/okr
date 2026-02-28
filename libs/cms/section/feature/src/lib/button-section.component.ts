@@ -146,9 +146,9 @@ export class ButtonSectionComponent {
       const message2 = currentUser.firstName + ' ' + currentUser.lastName + ' braucht Hilfe (Ort unbekannt)';
       try {
         if (position) {
-          await this.chatService.sendLocation('!N96WzV16JPn-3rDkvkJR0uvY2CAx_UHF2YlGKF8gaUI', message1, position.latitude, position.longitude);
+          await this.chatService.sendLocation('!W0Xug8NYemNPEEUrQJGmEdT9VhSfb8JaOxdf4mi7OMo', message1, position.latitude, position.longitude);
         } else {
-          await this.chatService.sendMessage('!N96WzV16JPn-3rDkvkJR0uvY2CAx_UHF2YlGKF8gaUI', message2);
+          await this.chatService.sendMessage('!W0Xug8NYemNPEEUrQJGmEdT9VhSfb8JaOxdf4mi7OMo', message2);
         }
       } catch (error) {
         console.error('button-section.sendEmergencyMessage: Failed to send:', error);
