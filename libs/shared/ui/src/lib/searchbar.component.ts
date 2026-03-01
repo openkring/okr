@@ -1,7 +1,5 @@
 import { Component, OnInit, computed, input, viewChild } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { IonSearchbar } from '@ionic/angular/standalone';
-import { vestFormsViewProviders } from 'ngx-vest-forms';
 
 import { coerceBoolean } from '@bk2/shared-util-core';
 
@@ -10,7 +8,6 @@ import { coerceBoolean } from '@bk2/shared-util-core';
   selector: 'bk-searchbar',
   standalone: true,
   imports: [
-    FormsModule, 
     IonSearchbar
   ],
   styles: [`
@@ -19,7 +16,6 @@ import { coerceBoolean } from '@bk2/shared-util-core';
       padding-bottom: 0 !important;
     }
   `],
-  viewProviders: [vestFormsViewProviders],
   template: `
       <ion-searchbar  #bksearch
         type="search" 
