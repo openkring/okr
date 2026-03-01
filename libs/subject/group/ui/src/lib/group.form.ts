@@ -43,15 +43,13 @@ import { groupValidations } from '@bk2/subject-group-util';
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
-            @if(hasRole('admin')) {
-              <ion-row>
+            <ion-row>
+              @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
                   <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
                 </ion-col>
-              </ion-row>
-            }
-            <ion-row> 
-              <ion-col size="12">
+              }
+              <ion-col size="12" size-md="6">
                 @if(isNew()) {
                   <bk-text-input name="groupId" [value]="bkey()" (valueChange)="onFieldChange('bkey', $event)" [maxLength]="maxWordLength" [mask]="mask" [showHelper]=true [readOnly]="isReadOnly()" />
                 } @else {
@@ -61,11 +59,12 @@ import { groupValidations } from '@bk2/subject-group-util';
                   </ion-item>
                 }                                     
               </ion-col>
-              <ion-col size="12">
+              <ion-col size="12" size-md="6">
                 <bk-text-input name="groupName" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]=50 [readOnly]="isReadOnly()" [showHelper]="true" />
               </ion-col>
-                <ion-col size="12" size-md="">
-                </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-text-input name="icon" [value]="icon()" (valueChange)="onFieldChange('icon', $event)" [maxLength]=20 [readOnly]="isReadOnly()" [showHelper]="true" />
+              </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -205,6 +204,7 @@ export class GroupFormComponent {
   // fields
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected bkey = linkedSignal(() => this.formData().bkey ?? '');
+  protected icon = linkedSignal(() => this.formData().icon ?? '');
 
   // main contact 
   protected mainContact = linkedSignal(() => this.formData().mainContact);
