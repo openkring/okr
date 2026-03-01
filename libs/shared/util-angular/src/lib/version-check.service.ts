@@ -1,10 +1,10 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { AlertController } from '@ionic/angular/standalone';
+import { TranslocoService } from '@jsverse/transloco';
 import { doc, getDoc } from 'firebase/firestore';
 
 import { FIRESTORE } from '@bk2/shared-config';
-import { bkTranslate } from '@bk2/shared-i18n';
 
 import packageJson from '../../../../../package.json';
 
@@ -21,6 +21,7 @@ export class VersionCheckService {
   private readonly alertController = inject(AlertController);
   private readonly platformId = inject(PLATFORM_ID);
   public readonly firestore = inject(FIRESTORE);
+  private readonly transloco = inject(TranslocoService);
 
   private readonly currentVersion = packageJson.version;
   private versionConfig: AppVersionConfig | undefined;
@@ -75,20 +76,21 @@ export class VersionCheckService {
   }
 
   private async showUpdateAlert(latestVersion: string, forceUpdate: boolean): Promise<void> {
+    const t = (key: string, params?: Record<string, unknown>) => this.transloco.translate(key, params);
     const alert = await this.alertController.create({
-      header: bkTranslate('@app.version.update.header'),
-      message: bkTranslate('@app.version.update.message', { 
+      header: t('app.version.update.header'),
+      message: t('app.version.update.message', {
         currentVersion: this.currentVersion,
-        latestVersion: latestVersion 
+        latestVersion: latestVersion
       }),
       backdropDismiss: !forceUpdate,
       buttons: forceUpdate ? [] : [
         {
-          text: bkTranslate('@app.version.update.later'),
+          text: t('app.version.update.later'),
           role: 'cancel'
         },
         {
-          text: bkTranslate('@app.version.update.now'),
+          text: t('app.version.update.now'),
           handler: () => {
             this.redirectToStore();
           }
@@ -98,7 +100,7 @@ export class VersionCheckService {
 
     if (forceUpdate) {
       alert.buttons = [{
-        text: bkTranslate('@app.version.update.now'),
+        text: t('app.version.update.now'),
         handler: () => {
           this.redirectToStore();
         }
