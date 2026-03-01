@@ -1,5 +1,5 @@
-import { CalendarOptions } from '@fullcalendar/core';
-import { EChartsOption } from 'echarts';
+import type { CalendarOptions } from '@fullcalendar/core';
+import type { EChartsOption } from 'echarts';
 
 import { AlbumStyle } from './enums/album-style.enum';
 import { ButtonAction } from './enums/button-action.enum';

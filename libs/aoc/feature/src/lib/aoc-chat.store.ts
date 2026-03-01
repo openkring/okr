@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, of } from 'rxjs';
-import { Room } from 'matrix-js-sdk';
+import type { Room } from 'matrix-js-sdk';
 
 import { AppStore } from '@bk2/shared-feature';
 import { LogInfo, CategoryListModel} from '@bk2/shared-models';
