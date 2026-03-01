@@ -15,6 +15,7 @@ import { HeroSectionComponent } from './hero-section.component';
 import { SwiperSectionComponent } from './swiper-section.component';
 import { ChartSectionComponent } from './chart-section.component';
 import { MissingSectionComponent } from './missing-section.component';
+import { SpinnerComponent } from '@bk2/shared-ui';
 
 /**
  * Renders a section within an accordion item.
@@ -29,7 +30,7 @@ import { MissingSectionComponent } from './missing-section.component';
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleSectionComponent, GallerySectionComponent, TrackerSectionComponent,
     HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent,
-    MissingSectionComponent
+    MissingSectionComponent, SpinnerComponent
   ],
   providers: [SectionStore],
   template: `
@@ -42,13 +43,35 @@ import { MissingSectionComponent } from './missing-section.component';
         @case('map') { <bk-map-section [section]="section" /> }
         @case('album') { <bk-album-section [section]="section" /> }
         @case('button') { <bk-button-section [section]="section" /> }
-        @case('cal') { <bk-calendar-section [section]="section" /> }
+        @case('cal') {
+          @defer (on viewport) {
+            <bk-calendar-section [section]="section" />
+          } @placeholder {
+            <bk-spinner />
+          }
+        }
         @case('people') { <bk-people-section [section]="section" /> }
-        @case('gallery') { <bk-gallery-section [section]="section" /> }
+        @case('gallery') {
+          @defer (on viewport) {
+            <bk-gallery-section [section]="section" />
+          } @placeholder {
+            <bk-spinner />
+          }
+        }
         @case('tracker') { <bk-tracker-section [section]="section" /> }
         @case('hero') { <bk-hero-section [section]="section" /> }
-        @case('slider') { <bk-swiper-section [section]="section" /> }
-        @case('chart') { <bk-chart-section [section]="section" /> }
+        @case('slider') {
+          @defer (on idle) {
+            <bk-swiper-section [section]="section" />
+          }
+        }
+        @case('chart') {
+          @defer (on viewport) {
+            <bk-chart-section [section]="section" />
+          } @placeholder {
+            <bk-spinner />
+          }
+        }
         @default { <bk-missing-section [section]="section" /> }
       }
     }
