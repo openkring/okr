@@ -260,7 +260,7 @@ export const GroupStore = signalStore(
       const page = new PageModel(store.tenantId());
       page.bkey = `${group.bkey}_${postfix}`;
       page.name = name;
-      page.type = 'content';
+      page.type = postfix;
       page.state = 'published';
       if (sectionId) {
         page.sections = [sectionId];
