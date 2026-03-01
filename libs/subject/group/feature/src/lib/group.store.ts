@@ -314,35 +314,36 @@ export const GroupStore = signalStore(
     },
 
     async createArticleSection(group: GroupModel): Promise<string | undefined> {
-      const name = `${group.bkey}_article1`;
       const section = {
-        bkey: name,
+        bkey: `g-${group.bkey}`,
         type: 'article',
-        name: name,
-        title: 'Artikel',
+        state: 'published',
+        name: `group-intro-${group.bkey}`,
+        title: 'Anleitung',
         subTitle: '',
         index: '',
         color: ColorIonic.Light,
-        roleNeeded: 'registered',
+        colSize: '12',
+        roleNeeded: 'groupAdmin',
         isArchived: false,
         content: { 
-          htmlContent: '<p>Diese Website enthält Informationen, die für die Gruppe relevant sind. Der/die Gruppen-Admin kann diesen Inhalt frei bearbeiten. Dazu musst du oben rechts im Menu auf den Editor-Modus klicken. Du siehst dann die vorhandenen Sektionen gelb umrandet. Wenn du nun auf eine solche Sektion klickst, kannst du sie bearbeiten.</p>',
-          colSize: 4,
-          position: ViewPosition.Left
+          htmlContent: '<p>Dies ist deine Gruppen-Homepage. </p><p>Nur Gruppenmitglieder sehen diesen Inhalt.</p><p>Der Gruppen-Administrator kann den Inhalt dieser Seite beliebig ändern. Benutze dazu die Operationen im Kontext-Menü oben rechts.</p><p>Aktuell findest du hier eine Anleitung zu den Gruppen Funktionen.</p><p>Je nach Konfiguration kann eine Gruppe folgende Funktionen enthalten:</p><ul><li><p>Homepage (diese hier): längere Zeit gleichbleibende Informationen, die für die Gruppenmitglieder relevant sind.</p></li><li><p>Kalender</p></li><li><p>Todos</p></li><li><p>Mitglieder: eine Liste der Gruppenmitglieder, der Gruppen-Administrator kann neue Mitglieder hinzufügen oder bestehende löschen.</p></li><li><p>Dateien: eine Fileablage zum Teilen von Dateien innerhalb der Gruppe</p></li></ul><p>Der Gruppen-Administrator kann diese Funktionen ein- und ausschalten.</p>',
+          colSize: 3,
+          position: ViewPosition.None
         },
         properties: {
           image: {
             label: '',
             type: ImageType.Image,
-            url: store.appStore.services.imgixBaseUrl() + '/' + store.appStore.appConfig().welcomeBannerUrl,
+            url: '',
             actionUrl: '',
-            altText: 'default image (same as welcome banner)',
+            altText: '',
             overlay: ''
           },
           imageStyle: {
             imgIxParams: '',
-            width: '571px',
-            height: '420px',
+            width: '100%',
+            height: 'auto',
             sizes: '(max-width: 786px) 50vw, 100vw',
             border: '1px',
             borderRadius: '4px',
