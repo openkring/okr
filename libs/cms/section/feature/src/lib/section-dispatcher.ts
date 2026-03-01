@@ -2,6 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { RoleName, SectionModel, UserModel } from '@bk2/shared-models';
+import { SpinnerComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { AccordionSectionComponent } from './accordion-section';
@@ -41,8 +42,8 @@ import { NewsSectionComponent } from './news-section.component';
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, TrackerSectionComponent, HeroSectionComponent,
     InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent,
-    IonItem, IonLabel,
-    // Deferred — heavy libraries only loaded on idle (@fullcalendar, echarts, swiper)
+    IonItem, IonLabel, SpinnerComponent,
+    // Deferred — heavy libraries only loaded on viewport (@fullcalendar, echarts, swiper)
     CalendarSectionComponent, ChartSectionComponent, GallerySectionComponent, SwiperSectionComponent,
   ],
   template: `
@@ -62,21 +63,27 @@ import { NewsSectionComponent } from './news-section.component';
             <bk-button-section [section]="section" [editMode]="editMode()" />
           }
           @case('cal') {
-            @defer (on idle) {
+            @defer (on viewport) {
               <bk-calendar-section [section]="section" [editMode]="editMode()" />
+            } @placeholder {
+              <bk-spinner />
             }
           }
           @case('chart') {
-            @defer (on idle) {
+            @defer (on viewport) {
               <bk-chart-section [section]="section" />
+            } @placeholder {
+              <bk-spinner />
             }
           }
           @case('events') {
             <bk-events-section [section]="section" [editMode]="editMode()" />
           }
           @case('gallery') {
-            @defer (on idle) {
+            @defer (on viewport) {
               <bk-gallery-section [section]="section" [editMode]="editMode()" />
+            } @placeholder {
+              <bk-spinner />
             }
           }
           @case('hero') {
