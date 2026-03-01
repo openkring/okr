@@ -35,13 +35,15 @@ import { NewsSectionComponent } from './news-section.component';
   selector: 'bk-section-dispatcher',
   standalone: true,
   imports: [
+    // Eagerly loaded — lightweight sections, needed immediately
     AccordionSectionComponent,
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
-    CalendarSectionComponent, PeopleSectionComponent, GallerySectionComponent, TrackerSectionComponent,
-    HeroSectionComponent, SwiperSectionComponent, ChartSectionComponent,
+    PeopleSectionComponent, TrackerSectionComponent, HeroSectionComponent,
     InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent,
-    IonItem, IonLabel
+    IonItem, IonLabel,
+    // Deferred — heavy libraries only loaded on idle (@fullcalendar, echarts, swiper)
+    CalendarSectionComponent, ChartSectionComponent, GallerySectionComponent, SwiperSectionComponent,
   ],
   template: `
     @if (section(); as section) {
@@ -60,16 +62,22 @@ import { NewsSectionComponent } from './news-section.component';
             <bk-button-section [section]="section" [editMode]="editMode()" />
           }
           @case('cal') {
-            <bk-calendar-section [section]="section" [editMode]="editMode()" />
+            @defer (on idle) {
+              <bk-calendar-section [section]="section" [editMode]="editMode()" />
+            }
           }
           @case('chart') {
-            <bk-chart-section [section]="section" />
+            @defer (on idle) {
+              <bk-chart-section [section]="section" />
+            }
           }
           @case('events') {
             <bk-events-section [section]="section" [editMode]="editMode()" />
           }
           @case('gallery') {
-            <bk-gallery-section [section]="section" [editMode]="editMode()" />
+            @defer (on idle) {
+              <bk-gallery-section [section]="section" [editMode]="editMode()" />
+            }
           }
           @case('hero') {
             <bk-hero-section [section]="section" />
@@ -93,7 +101,9 @@ import { NewsSectionComponent } from './news-section.component';
             <bk-people-section [section]="section" [editMode]="editMode()" />
           }
           @case('slider') {
-            <bk-swiper-section [section]="section" />
+            @defer (on idle) {
+              <bk-swiper-section [section]="section" />
+            }
           }
           @case('table') {
             <bk-table-section [section]="section" />
