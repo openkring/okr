@@ -49,22 +49,46 @@ import { AlbumPage } from "./album.page";
                     <bk-landing-page  />
                 }
                 @case ('chat') {
-                    <bk-chat-page [color]="color()" [selectedRoom]="effectiveRoomId()" [isGroupView]="isGroupView()" />
+                    @defer (on idle) {
+                        <bk-chat-page [color]="color()" [selectedRoom]="effectiveRoomId()" [isGroupView]="isGroupView()" />
+                    } @placeholder {
+                        <bk-spinner />
+                    }
                 }
                 @case ('content') {
-                    <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    @defer (on idle) {
+                        <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    } @placeholder {
+                        <bk-spinner />
+                    }
                 }
                 @case ('dashboard') {
-                    <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    @defer (on idle) {
+                        <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    } @placeholder {
+                        <bk-spinner />
+                    }
                 }
                 @case ('blog') {
-                    <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    @defer (on idle) {
+                        <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    } @placeholder {
+                        <bk-spinner />
+                    }
                 }
                 @case ('files') {
-                    <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    @defer (on idle) {
+                        <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    } @placeholder {
+                        <bk-spinner />
+                    }
                 }
                 @case ('album') {
-                    <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    @defer (on idle) {
+                        <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    } @placeholder {
+                        <bk-spinner />
+                    }
                 }
                 @case ('error') {
                     <bk-error-page [errorName]="page.bkey" />
