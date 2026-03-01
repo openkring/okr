@@ -1,4 +1,15 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, input } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, inject, input, PLATFORM_ID } from '@angular/core';
+
+let ixPlayerLoaded = false;
+function loadIxPlayer(): void {
+  if (ixPlayerLoaded) return;
+  ixPlayerLoaded = true;
+  const script = document.createElement('script');
+  script.type = 'module';
+  script.src = 'https://static.imgix.net/ix-player/@latest/dist/ix-player.mjs';
+  document.head.appendChild(script);
+}
 
 /**
  * This video player component is based on imgix's ix-player.
@@ -38,6 +49,14 @@ import { Component, CUSTOM_ELEMENTS_SCHEMA, input } from '@angular/core';
     `
   })
   export class VideoComponent {
+    private readonly platformId = inject(PLATFORM_ID);
+
     // inputs
     public url = input.required<string>();
+
+    constructor() {
+      if (isPlatformBrowser(this.platformId)) {
+        loadIxPlayer();
+      }
+    }
   }
