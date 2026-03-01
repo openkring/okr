@@ -28,8 +28,10 @@ import { CategoryComponent, EditorComponent, NumberInputComponent } from '@bk2/s
         }
         <ion-grid>
           <ion-row>
-            <ion-col size="12">  
-              <bk-editor [content]="htmlContent()" (contentChange)="onFieldChange('htmlContent', $event)" [readOnly]="readOnly()" />
+            <ion-col size="12">
+              @defer (on idle) {
+                <bk-editor [content]="htmlContent()" (contentChange)="onFieldChange('htmlContent', $event)" [readOnly]="readOnly()" />
+              }
             </ion-col>
             <ion-col size="12" size-md="6">
               <bk-cat name="position" [value]="position()" (valueChange)="onFieldChange('position', $event)" [readOnly]="readOnly()" [categories]="positions" />

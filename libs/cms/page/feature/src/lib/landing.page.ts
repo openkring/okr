@@ -79,7 +79,7 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
     <bk-header [title]="title()" [isRoot]="true" />
     <ion-content>
       <div class="landing-container">
-        <img class="background-image" [src]="bannerUrl()" alt="Background" />
+        <img class="background-image" [src]="bannerUrl()" alt="Background" fetchpriority="high" />
         <ion-grid class="landing-form">
           @if(logoUrl(); as logoUrl) {
             <ion-row>

@@ -4,8 +4,6 @@ import { Browser } from '@capacitor/browser';
 import { ToastController } from '@ionic/angular';
 import { saveAs } from 'file-saver';
 import { deleteObject, getDownloadURL, ref } from "firebase/storage";
-import * as JSZip from 'jszip';
-import * as XLSX from 'xlsx';
 
 import { STORAGE } from '@bk2/shared-config';
 import { DateFormat, getTodayStr } from '@bk2/shared-util-core';
@@ -31,14 +29,16 @@ import { error, showToast } from './alert.util';
  * @returns A promise that resolves when the file has been saved.
  */
     export async function exportXlsx(
-        data: string[][], 
-        fileName: string, 
+        data: string[][],
+        fileName: string,
         tableName: string) {
+      const XLSX = await import('xlsx');
+
       // generate worksheet
-      const _ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data);
+      const _ws = XLSX.utils.aoa_to_sheet(data);
 
       // generate workbook and add the worksheet
-      const _wb: XLSX.WorkBook = XLSX.utils.book_new();
+      const _wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(_wb, _ws, tableName);
 
       // write the workbook to a file (does probably not work on mobile devices)
@@ -54,13 +54,8 @@ import { error, showToast } from './alert.util';
  * @returns 
  */
 export async function downloadZipFile(data: string, filename: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const zip: JSZip = new (<any>JSZip).default();
-  // Create blob for data
-  // const blob1 = new Blob([data], { type: 'text/plain' });
-  
-  // Create a zip archive using JSZip library
-  //const zip = new JSZip();
+  const { default: JSZip } = await import('jszip');
+  const zip = new JSZip();
   zip.file(filename, data, { binary: true });
   
   // Generate the ZIP content as a blob
