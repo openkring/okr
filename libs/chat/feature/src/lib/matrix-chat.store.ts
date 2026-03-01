@@ -146,6 +146,11 @@ export const _MatrixChatStore = signalStore(
         patchState(store, { isMatrixInitialized });
       },
 
+      /** Synchronous snapshot of the rooms list — bypasses the rxResource async lag. */
+      getRoomsSync(): MatrixRoom[] {
+        return store.matrixService.roomsCurrentValue;
+      },
+
       setCurrentRoom(roomId: string | undefined): void {
         patchState(store, { currentRoomId: roomId });
         if (roomId) {

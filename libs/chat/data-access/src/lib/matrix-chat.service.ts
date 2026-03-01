@@ -9,6 +9,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { MatrixConfig, MatrixMessage, MatrixRoom, TypingNotification } from '@bk2/shared-models';
 import { AppStore } from '@bk2/shared-feature';
+import { debugData, debugMessage } from '@bk2/shared-util-core';
 
 @Injectable({
   providedIn: 'root'
@@ -45,6 +46,11 @@ export class MatrixChatService {
         room.lastMessage?.timestamp === b[i]?.lastMessage?.timestamp
       )
     ));
+  }
+
+  /** Synchronous snapshot of the current rooms list (BehaviorSubject value). */
+  get roomsCurrentValue(): MatrixRoom[] {
+    return this.rooms$.value;
   }
 
   // ---- Credential storage helpers ----
@@ -89,12 +95,12 @@ export class MatrixChatService {
 
     try {
       const url = config.homeserverUrl.startsWith('https://') ? config.homeserverUrl : 'https://' + config.homeserverUrl;
-      console.log('MatrixChatService: Initializing client with config:', {
+      debugData('MatrixChatService: Initializing client with config:', {
         homeserverUrl: url,
         userId: config.userId,
         deviceId: config.deviceId,
         hasAccessToken: !!config.accessToken
-      });
+      }, this.appStore.currentUser());
 
       this.client = createClient({
         baseUrl: url,
@@ -107,7 +113,7 @@ export class MatrixChatService {
 
       this.setupEventHandlers();
 
-      console.log('MatrixChatService: Starting client sync with initialSyncLimit=10');
+      debugMessage('MatrixChatService: Starting client sync with initialSyncLimit=10', this.appStore.currentUser());
 
       // Start the client — sync happens in background via syncState$ events.
       // We don't wait for PREPARED here; doing so blocks the UI for up to 30 s on
@@ -115,12 +121,23 @@ export class MatrixChatService {
       // after this returns, the spinner disappears, and rooms/messages update
       // reactively once PREPARED is reached.
       await this.client.startClient({ initialSyncLimit: 10 });
-      console.log('MatrixChatService: Client started, sync in progress');
+      debugMessage('MatrixChatService: Client started, sync in progress', this.appStore.currentUser());
     } catch (error) {
       console.error('MatrixChatService: Failed to initialize client', error);
       this.client = null; // reset so a retry attempt can create a fresh client
       throw error;
     }
+  }
+
+  /**
+   * Retrieve a room id by its name.
+   * 
+   */
+  public async getRoomByName(name: string): Promise<string> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'getRoomByName');
+    const result = await fn({ name });
+    const { roomId } = result.data as { roomId: string };
+    return roomId;
   }
 
   /**
@@ -163,7 +180,7 @@ export class MatrixChatService {
       await this.client.clearStores();
       this.client = null;
       this.syncState$.next('STOPPED');
-      console.log('MatrixChatService: Client disconnected');
+      debugMessage('MatrixChatService: Client disconnected', this.appStore.currentUser());
     }
   }
 
@@ -179,17 +196,17 @@ export class MatrixChatService {
 
     // Sync state changes
     this.client.on(ClientEvent.Sync, (state, prevState, data) => {
-      console.log('MatrixChatService: Sync state changed:', {
+      debugData('MatrixChatService: Sync state changed:', {
         state,
         prevState,
         syncedRooms: this.client?.getRooms()?.length || 0,
         data
-      });
+      }, this.appStore.currentUser());
       
       this.syncState$.next(state);
       
       if (state === 'PREPARED') {
-        console.log('MatrixChatService: Initial sync complete, updating rooms list');
+        debugMessage('MatrixChatService: Initial sync complete, updating rooms list', this.appStore.currentUser());
         this.updateRoomsList();
       } else if (state === 'ERROR') {
         console.error('MatrixChatService: Sync error', data);
@@ -320,15 +337,15 @@ export class MatrixChatService {
       const timeline = room.getLiveTimeline();
       const events = timeline.getEvents();
       
-      console.log(`MatrixChatService: Loading messages for room ${roomId}, found ${events.length} events in timeline`);
+      debugMessage(`MatrixChatService: Loading messages for room ${roomId}, found ${events.length} events in timeline`, this.appStore.currentUser());
       
       // If we have few or no events, try to paginate back to load more
       if (events.length < 20) {
-  //      console.log('MatrixChatService: Timeline has few events, attempting to paginate back');
+        debugMessage('MatrixChatService: Timeline has few events, attempting to paginate back', this.appStore.currentUser());
         try {
           // Paginate backwards to load more messages
           await this.client.paginateEventTimeline(timeline, { backwards: true, limit: 50 });
-   //       console.log(`MatrixChatService: After pagination, timeline has ${timeline.getEvents().length} events`);
+          debugMessage(`MatrixChatService: After pagination, timeline has ${timeline.getEvents().length} events`, this.appStore.currentUser());
         } catch (paginateError) {
           console.warn('MatrixChatService: Failed to paginate timeline:', paginateError);
         }
@@ -352,7 +369,7 @@ export class MatrixChatService {
           })
       );
 
-      console.log(`MatrixChatService: Loaded ${messages.length} messages for room ${roomId}`);
+      debugMessage(`MatrixChatService: Loaded ${messages.length} messages for room ${roomId}`, this.appStore.currentUser());
 
       const subject = this.messages$.get(roomId);
       if (subject) {
@@ -367,12 +384,12 @@ export class MatrixChatService {
    * Handle new incoming messages
    */
   private handleNewMessage(event: MatrixEvent, room: Room): void {
-/*     console.log(`MatrixChatService: New message in room ${room.roomId}`, {
+    debugData(`MatrixChatService: New message in room ${room.roomId}`, {
       eventId: event.getId(),
       sender: event.getSender(),
       type: event.getType(),
       content: event.getContent()
-    }); */
+    }, this.appStore.currentUser());
     
     const message = this.mapEventToMessage(event, room);
     const subject = this.messages$.get(room.roomId);
@@ -459,7 +476,7 @@ private async updateRoomsList(): Promise<void> {
   if (!this.client) return;
 
   const rooms = this.client.getRooms();
-  console.log(`MatrixChatService: Updating rooms list - ${rooms.length} rooms found`);
+  debugMessage(`MatrixChatService: Updating rooms list - ${rooms.length} rooms found`, this.appStore.currentUser());
 
   const matrixRooms: MatrixRoom[] = rooms
     .filter(room => {
@@ -829,11 +846,11 @@ private async updateRoomsList(): Promise<void> {
       await this.client.getProfileInfo(matrixUserId);
     } catch {
       const localpart = matrixUserId.split(':')[0].substring(1); // strip leading @
-      console.log(`MatrixChatService.createDirectRoom: user not found, provisioning via CF for personKey=${localpart}`);
+      debugMessage(`MatrixChatService.createDirectRoom: user not found, provisioning via CF for personKey=${localpart}`, this.appStore.currentUser());
       try {
         const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'provisionMatrixUser');
         const result = await fn({ personKey: localpart });
-        console.log(`MatrixChatService.createDirectRoom: provisionMatrixUser succeeded:`, result.data);
+        debugData(`MatrixChatService.createDirectRoom: provisionMatrixUser succeeded:`, result.data, this.appStore.currentUser());
         // Trust the CF result — the user now exists on Synapse. Proceed to room creation.
       } catch (provisionError) {
         console.error(`MatrixChatService.createDirectRoom: failed to provision ${matrixUserId}:`, provisionError);

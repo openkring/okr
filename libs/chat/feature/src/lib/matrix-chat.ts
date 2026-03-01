@@ -268,10 +268,14 @@ export class MatrixChat implements OnDestroy {
     effect(() => {
       const roomAlias = this.selectedRoom();
       if (!roomAlias) return;
-      // rooms() is a reactive dep: when rooms load after sync, this re-runs and resolves the alias
+      // rooms() is a reactive dep: when rooms load after sync, this re-runs and resolves the alias.
+      // Also check the BehaviorSubject's current value synchronously — the rxResource may not have
+      // processed the initial BehaviorSubject emission yet (it's async), which would cause a
+      // transient "choose a chat room" flash for returning users even when rooms are available.
       const rooms = this.store.rooms();
-      const match = rooms.find(r => r.roomId === roomAlias)
-        ?? rooms.find(r => r.name?.toLowerCase() === roomAlias.toLowerCase());
+      const syncRooms = rooms.length > 0 ? rooms : this.store.getRoomsSync();
+      const match = syncRooms.find(r => r.roomId === roomAlias)
+        ?? syncRooms.find(r => r.name?.toLowerCase() === roomAlias.toLowerCase());
       if (match) {
         this.store.setCurrentRoom(match.roomId);
         return;

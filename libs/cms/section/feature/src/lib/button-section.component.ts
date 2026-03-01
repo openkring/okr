@@ -12,6 +12,7 @@ import { MatrixChatService } from '@bk2/chat-data-access';
 import { ButtonWidgetComponent, EmergencyButtonWidget } from '@bk2/cms-section-ui';
 import { AppStore } from '@bk2/shared-feature';
 import { debugMessage } from '@bk2/shared-util-core';
+import { bkTranslate } from '@bk2/shared-i18n';
 
 type Coordinates = {
   latitude: number;
@@ -142,13 +143,15 @@ export class ButtonSectionComponent {
     const currentUser = this.appStore.currentUser();
     const position = await this.getCurrentPosition();
     if (currentUser) {
-      const message1 = currentUser.firstName + ' ' + currentUser.lastName + ' braucht Hilfe an diesem Ort: ';
-      const message2 = currentUser.firstName + ' ' + currentUser.lastName + ' braucht Hilfe (Ort unbekannt)';
+      const name = currentUser.firstName + ' ' + currentUser.lastName;
+      const message1 = bkTranslate('@chat.fields.needsHelp', { name });
+      const message2 = bkTranslate('@chat.fields.needsHelpUnknownLocation', { name });
+      const roomId = await this.chatService.getRoomByName('notfall');
       try {
         if (position) {
-          await this.chatService.sendLocation('!W0Xug8NYemNPEEUrQJGmEdT9VhSfb8JaOxdf4mi7OMo', message1, position.latitude, position.longitude);
+          await this.chatService.sendLocation(roomId, message1, position.latitude, position.longitude);
         } else {
-          await this.chatService.sendMessage('!W0Xug8NYemNPEEUrQJGmEdT9VhSfb8JaOxdf4mi7OMo', message2);
+          await this.chatService.sendMessage(roomId, message2);
         }
       } catch (error) {
         console.error('button-section.sendEmergencyMessage: Failed to send:', error);

@@ -215,6 +215,39 @@ export const getMatrixCredentials = onCall(
  * Call this from the client whenever the user opens a group chat tab and the
  * room is not yet in their joined-rooms list.
  */
+/**
+ * Look up the Matrix room ID for a room with the given name.
+ * Uses the Synapse admin room-search API.
+ * Returns the roomId if exactly one match is found, throws otherwise.
+ */
+export const getRoomByName = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ roomId: string }> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+    const { name } = request.data as { name: string };
+    if (!name) throw new Error('name is required');
+
+    const adminToken = matrixAdminToken.value();
+    const searchResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(name)}&limit=20`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!searchResp.ok) {
+      throw new Error(`Room search failed: ${await searchResp.text()}`);
+    }
+    const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
+    const exact = data.rooms?.find(r => r.name === name);
+    if (!exact) {
+      throw new Error(`No room found with name "${name}"`);
+    }
+    return { roomId: exact.room_id };
+  }
+);
+
 export const requestGroupRoomAccess = onCall(
   {
     cors: true,
