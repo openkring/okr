@@ -1,20 +1,19 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonContent, IonImg, IonItem, IonLabel, IonList, IonThumbnail, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonIcon, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
 import { ResourceModel, UserModel } from '@bk2/shared-models';
 import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { getAvatarKey } from '@bk2/shared-util-core';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
 import { ResourceSelectStore } from './resource-select.store';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 @Component({
   selector: 'bk-resource-select-modal',
   standalone: true,
   imports: [
-    HeaderComponent, SpinnerComponent,
-    AvatarPipe, EmptyListComponent,
-    IonContent, IonItem, IonLabel, IonThumbnail, IonImg, IonList,
+    SvgIconPipe,
+    HeaderComponent, SpinnerComponent, EmptyListComponent,
+    IonContent, IonItem, IonLabel, IonList, IonIcon
   ],
   providers: [ResourceSelectStore],
   styles: [`
@@ -24,7 +23,8 @@ import { ResourceSelectStore } from './resource-select.store';
   `],
   template: `
     <bk-header
-      [(searchTerm)]="searchTerm"
+      [searchTerm]="searchTerm()"
+      (searchTermChange)="resourceSelectStore.setSearchTerm($event)"
       [isSearchable]="true"
       title="@resource.operation.select.label"
       [isModal]="true"
@@ -39,9 +39,7 @@ import { ResourceSelectStore } from './resource-select.store';
           @for(resource of filteredResources(); track $index) {
             <ion-list lines="none">
               <ion-item class="item" (click)="select(resource)">
-                 <ion-thumbnail slot="start">
-                  <ion-img [src]="getAvatarKey(resource) | avatar" alt="Avatar Logo" />
-                </ion-thumbnail>
+                <ion-icon slot="start" src="{{ getIcon(resource) | svgIcon }}" />
                 <ion-label>{{resource.name}}</ion-label>
               </ion-item>
             </ion-list>
@@ -80,8 +78,13 @@ export class ResourceSelectModalComponent {
     return this.modalController.dismiss(selectedResource, 'confirm');
   }
 
-  // 20.0:key for a rowing boat, 20.4:key for a locker
-  protected getAvatarKey(resource: ResourceModel): string {
-    return getAvatarKey('resource', resource.bkey, resource.type, resource.subType);
+  protected getIcon(resource: ResourceModel): string {
+    let iconName: string;
+    if (resource.type === 'rboat')
+      iconName = this.resourceSelectStore.appStore.getCategoryItem('rboat_type', resource.subType)?.icon ?? '';
+    else
+      iconName = this.resourceSelectStore.appStore.getCategoryItem('resource_type', resource.type)?.icon ?? '';
+    console.log(`ResourceSelectModal(${resource.type}, ${resource.subType}) -> ${iconName}`);
+    return iconName ?? '';
   }
 }
