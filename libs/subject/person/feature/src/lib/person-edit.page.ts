@@ -71,8 +71,8 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
             <ion-accordion-group value="addresses" [multiple]="true">
               <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
               <bk-membership-accordion [member]="person" [readOnly]="isReadOnly()"/>
-              <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="isReadOnly()" />
-              <bk-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
+              <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="hideAddButton()" />
+              <bk-reservations-accordion [listId]="listId()" [readOnly]="hideAddButton()" />
               @if(hasRole('privileged') || hasRole('memberAdmin')) {
                 <bk-personal-rel-accordion [person]="person" [readOnly]="isReadOnly()" />
                 <bk-workrel-accordion [personKey]="personKey()" [readOnly]="isReadOnly()" />
@@ -113,6 +113,10 @@ export class PersonEditPage implements ViewWillEnter   {
   protected tenantId = computed(() => this.personEditStore.tenantId());
   protected genders = computed(() => this.personEditStore.appStore.getCategory('gender'));
   protected listId = computed(() => 'p_' + this.personEditStore.person()?.bkey);
+  protected hideAddButton = computed(() => {
+    if (this.hasRole('resourceAdmin')) return false;
+    return this.isReadOnly();
+  });
 
   /**
    * Lifecycle hook that is called when the view is about to enter and become the active page.
