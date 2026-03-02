@@ -1,7 +1,6 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { AlertController } from '@ionic/angular/standalone';
-import { TranslocoService } from '@jsverse/transloco';
 import { doc, getDoc } from 'firebase/firestore';
 
 import { FIRESTORE } from '@bk2/shared-config';
@@ -21,7 +20,6 @@ export class VersionCheckService {
   private readonly alertController = inject(AlertController);
   private readonly platformId = inject(PLATFORM_ID);
   public readonly firestore = inject(FIRESTORE);
-  private readonly transloco = inject(TranslocoService);
 
   private readonly currentVersion = packageJson.version;
   private versionConfig: AppVersionConfig | undefined;
@@ -76,58 +74,31 @@ export class VersionCheckService {
   }
 
   private async showUpdateAlert(latestVersion: string, forceUpdate: boolean): Promise<void> {
-    const t = (key: string, params?: Record<string, unknown>) => this.transloco.translate(key, params);
+    const message = `Eine neue Version (${latestVersion}) der App ist verfügbar. Du verwendest aktuell Version ${this.currentVersion}. Bitte aktualisiere die App, um die neuesten Funktionen und Verbesserungen zu nutzen.`;
     const alert = await this.alertController.create({
-      header: t('app.version.update.header'),
-      message: t('app.version.update.message', {
-        currentVersion: this.currentVersion,
-        latestVersion: latestVersion
-      }),
-      backdropDismiss: !forceUpdate,
-      buttons: forceUpdate ? [] : [
+      header: 'Update verfügbar',
+      message,
+      buttons: forceUpdate ? [
         {
-          text: t('app.version.update.later'),
+          text: 'Jetzt aktualisieren',
+          role: 'confirm'
+        }
+      ] : [
+        {
+          text: 'Später',
           role: 'cancel'
         },
         {
-          text: t('app.version.update.now'),
-          handler: () => {
-            this.redirectToStore();
-          }
+          text: 'Jetzt aktualisieren',
+          role: 'confirm'
         }
       ]
     });
 
-    if (forceUpdate) {
-      alert.buttons = [{
-        text: t('app.version.update.now'),
-        handler: () => {
-          this.redirectToStore();
-        }
-      }];
-    }
-
     await alert.present();
-  }
-
-  /**
-   * Redirect user to the appropriate app store based on their platform.
-   * This is prepared for mobile apps but currently just reloads the web app.
-   */
-  private redirectToStore(): void {
-//    const userAgent = navigator.userAgent || navigator.vendor;
-    
-/*     // iOS
-    if (/iPad|iPhone|iPod/.test(userAgent)) {
-      window.location.href = 'https://apps.apple.com/app/your-app-id'; // TODO: Update with your App Store URL
-    }
-    // Android
-    else if (/android/i.test(userAgent)) {
-      window.location.href = 'https://play.google.com/store/apps/details?id=your.package.name'; // TODO: Update with your Play Store URL
-    }
-    // Web/PWA
-    else { */
+    const { role } = await alert.onWillDismiss();
+    if (role === 'confirm') {
       window.location.reload();
-    // }
+    }
   }
 }
