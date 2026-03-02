@@ -618,9 +618,11 @@ export class SectionFormComponent {
   public async selectPerson(): Promise<void> {
     const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL);
     if (avatar) {
-      // peopleConfig
-      const people = this.peopleConfig()?.persons || [];
-      people.push(avatar);
+      const currentConfig = this.peopleConfig();
+      this.onPeopleConfigChange({ 
+        ...currentConfig,
+        persons: [...(currentConfig?.persons ?? []), avatar] } as PeopleConfig
+      );
     }
   }
 }

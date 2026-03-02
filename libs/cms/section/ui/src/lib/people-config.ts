@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 
 import { ColorsIonic, NameDisplays } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@bk2/shared-models';
+import { AvatarInfo, ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@bk2/shared-models';
 import { CategoryComponent, CheckboxComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
 
@@ -26,7 +26,8 @@ import { AvatarsComponent } from '@bk2/avatar-ui';
   template: `
       @if(currentUser(); as currentUser) {
         <bk-avatars (selectClicked)="selectClicked.emit()"
-          [(avatars)]="persons"
+          [avatars]="persons()"
+          (avatarsChange)="onPersonsChange($event)"
           [readOnly]="readOnly()"
           [currentUser]="currentUser"
           title="@content.type.people.label"
@@ -93,6 +94,10 @@ export class PeopleConfigComponent {
   protected colors = ColorsIonic;
 
   /************************************** actions *********************************************** */
+  protected onPersonsChange(persons: AvatarInfo[]): void {
+    this.formData.update(vm => ({ ...vm, persons }));
+  }
+
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.formData.update((vm) => {
       const avatar = { ...vm.avatar, [fieldName]: fieldValue };
