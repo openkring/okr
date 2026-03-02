@@ -84,7 +84,6 @@ export class ResourceSelectModalComponent {
       iconName = this.resourceSelectStore.appStore.getCategoryItem('rboat_type', resource.subType)?.icon ?? '';
     else
       iconName = this.resourceSelectStore.appStore.getCategoryItem('resource_type', resource.type)?.icon ?? '';
-    console.log(`ResourceSelectModal(${resource.type}, ${resource.subType}) -> ${iconName}`);
     return iconName ?? '';
   }
 }
