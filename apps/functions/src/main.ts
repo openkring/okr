@@ -70,6 +70,7 @@ export const syncFirebaseProfileToMatrix = MatrixSimple.syncFirebaseProfileToMat
 export const requestGroupRoomAccess = MatrixSimple.requestGroupRoomAccess;
 export const provisionMatrixUser = MatrixSimple.provisionMatrixUser;
 export const getRoomByName = MatrixSimple.getRoomByName;
+export const renameMatrixRoom = MatrixSimple.renameMatrixRoom;
 
 // oidc-bridge (Full OIDC Identity Provider for Matrix - Complex but native Matrix SSO)
 export const oidcDiscovery = OidcBridge.oidcDiscovery;

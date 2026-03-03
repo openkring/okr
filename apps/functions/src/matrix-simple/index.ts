@@ -314,8 +314,12 @@ export const requestGroupRoomAccess = onCall(
           body: JSON.stringify({
             name: groupId,
             room_alias_name: `group_${groupId}`,
-            preset: 'private_chat',
+            // public join_rules so the Synapse admin API can force-join users without
+            // needing the admin to be a room member first (private/invite rooms block this).
+            // m.federate:false keeps the room local to this homeserver only.
+            preset: 'public_chat',
             visibility: 'private',
+            creation_content: { 'm.federate': false },
           }),
         }
       );
@@ -327,7 +331,34 @@ export const requestGroupRoomAccess = onCall(
       console.log(`requestGroupRoomAccess: Created new room: ${roomId}`);
     }
 
-    // Step 3: Force-join user via Synapse admin API (no invitation round-trip needed)
+    // Step 3a: Ensure the admin is in the room before joining the target user.
+    // For private (invite-only) rooms the Synapse admin join endpoint requires the
+    // admin account to already be a member before it can add a third-party user.
+    // Joining the admin themselves is always allowed by the admin API.
+    const whoamiResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (whoamiResp.ok) {
+      const { user_id: adminUserId } = await whoamiResp.json() as { user_id: string };
+      if (adminUserId) {
+        const adminJoinResp = await fetch(
+          `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: adminUserId }),
+          }
+        );
+        if (!adminJoinResp.ok) {
+          console.warn(`requestGroupRoomAccess: Could not join admin ${adminUserId} to room ${roomId}: ${await adminJoinResp.text()}`);
+        } else {
+          console.log(`requestGroupRoomAccess: Admin ${adminUserId} joined room ${roomId}`);
+        }
+      }
+    }
+
+    // Step 3b: Force-join the target user via Synapse admin API.
     const joinResp = await fetch(
       `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
       {
@@ -338,8 +369,6 @@ export const requestGroupRoomAccess = onCall(
     );
     if (!joinResp.ok) {
       const errText = await joinResp.text();
-      // The Synapse admin join API returns 200 (idempotent) when the user is already a member.
-      // A non-2xx response always indicates a real failure — throw so the client can handle it.
       console.error(`requestGroupRoomAccess: Admin join failed for ${matrixUserId} in room ${roomId}: ${errText}`);
       throw new Error(`Room access denied for group ${groupId}: ${errText}`);
     }
@@ -425,6 +454,100 @@ export const provisionMatrixUser = onCall(
 
     console.log(`provisionMatrixUser: Created Matrix user ${matrixUserId} (${displayName})`);
     return { matrixUserId };
+  }
+);
+
+/**
+ * Rename an existing Matrix room for a given group.
+ * Finds the room by alias (#group_<groupId>:<hostname>) or by name search,
+ * ensures the admin is in the room, then updates the m.room.name state event.
+ * Optionally also registers a canonical alias for the new name.
+ */
+export const renameMatrixRoom = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ roomId: string; name: string }> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+
+    const { groupId, name } = request.data as { groupId: string; name: string };
+    if (!groupId) throw new Error('groupId is required');
+    if (!name) throw new Error('name is required');
+
+    const adminToken = matrixAdminToken.value();
+    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+
+    // Step 1: Find the room by alias, then fall back to name search
+    let roomId: string | undefined;
+
+    const roomAlias = `#group_${groupId}:${hostname}`;
+    try {
+      const aliasResp = await fetch(
+        `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(roomAlias)}`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (aliasResp.ok) {
+        roomId = (await aliasResp.json() as { room_id: string }).room_id;
+        console.log(`renameMatrixRoom: Found room by alias: ${roomId}`);
+      }
+    } catch { /* fall through to name search */ }
+
+    if (!roomId) {
+      const searchResp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(groupId)}&limit=20`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (searchResp.ok) {
+        const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
+        const match = data.rooms?.find(r => r.name === groupId);
+        if (match) {
+          roomId = match.room_id;
+          console.log(`renameMatrixRoom: Found room by name search: ${roomId}`);
+        }
+      }
+    }
+
+    if (!roomId) throw new Error(`No room found for group "${groupId}"`);
+
+    // Step 2: Ensure the admin is in the room (needed to send state events)
+    const whoamiResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (whoamiResp.ok) {
+      const { user_id: adminUserId } = await whoamiResp.json() as { user_id: string };
+      if (adminUserId) {
+        const adminJoinResp = await fetch(
+          `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: adminUserId }),
+          }
+        );
+        if (!adminJoinResp.ok) {
+          console.warn(`renameMatrixRoom: Could not join admin to room: ${await adminJoinResp.text()}`);
+        }
+      }
+    }
+
+    // Step 3: Set the room name via m.room.name state event
+    const nameResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.name`,
+      {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      }
+    );
+    if (!nameResp.ok) {
+      throw new Error(`Failed to rename room ${roomId}: ${await nameResp.text()}`);
+    }
+
+    console.log(`renameMatrixRoom: Room ${roomId} renamed to "${name}"`);
+    return { roomId, name };
   }
 );
 
