@@ -32,7 +32,7 @@ import { SIZE_SM } from '@bk2/shared-constants';
     <ion-header>
       <!-- title and context menu -->
       <ion-toolbar [color]="color()">
-        @if(showMainMenu()) {
+        @if(view() !== 'group') {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
         @if (hasYearFilter()) {
@@ -153,7 +153,6 @@ export class MembershipListComponent {
   public contextMenuName = input.required<string>();
   public color = input('secondary');
   public view = input<'contact' | 'mcat' | 'group'>('mcat');
-  public showMainMenu = input(true);
 
   // filters
   protected searchTerm = linkedSignal(() => this.membershipStore.searchTerm());

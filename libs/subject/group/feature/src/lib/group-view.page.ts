@@ -132,7 +132,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
         -->
           @case ('members') {
             @defer (on immediate) {
-              <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-membership" color="light" view="group" [showMainMenu]="false" />
+              <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" />
               <!-- <bk-members [orgKey]="groupKey()" [readOnly]="isReadOnly()" /> -->
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
