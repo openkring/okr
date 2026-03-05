@@ -12,7 +12,7 @@ import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventM
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel, 
   AvatarInfo,
   AVATAR_INFO_SHAPE,
-  CategoryListModel} from '@bk2/shared-models';
+  CategoryListModel } from '@bk2/shared-models';
 import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
 
 import { addressValidations, getAddressIndex } from '@bk2/subject-address-util';
@@ -107,7 +107,7 @@ export const AocDataStore = signalStore(
         const maxDocs = 10; // for testing, you can restrict the amount of documents to process. 
         // set it to undefined to process all documents.
         
-        const collectionName = 'comments';
+        const collectionName = 'sections';
 
         // fixing fields (types and undefined)
         // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values
@@ -141,8 +141,12 @@ export const AocDataStore = signalStore(
               const originalDoc = JSON.stringify(doc);
               let changed = false;
 
-              this.fixUndefinedFields<any>(doc, fieldsToCheckForUndefined);
-              this.fixTypes<any>(doc, fieldsToFixTypes);
+              if (fieldsToCheckForUndefined.length > 0) {
+                this.fixUndefinedFields<any>(doc, fieldsToCheckForUndefined);
+              }
+              if (fieldsToFixTypes.length > 0) {
+                this.fixTypes<any>(doc, fieldsToFixTypes);
+              }
               this.fixCustomIssues<any>(doc);
 
               changed = JSON.stringify(doc) !== originalDoc;
@@ -163,17 +167,25 @@ export const AocDataStore = signalStore(
       fixCustomIssues<T>(doc: T): T {
         console.log(`  - custom fixes of document ${(doc as any).bkey} ...`);
         const d = doc as any;
+        const baseImgix = 'https://bkaiser.imgix.net/';
 
-        //d.tenants = ['scs'];
-        switch(d.authorName) {
-          case 'Bruno Kaiser':              d.authorKey = 'kaiser'; break;
-          case 'Barbara Kaiser-Gubelmann':  d.authorKey = 'kaiser_barbara'; break;
-          case 'Nadia Hungerbühler':        d.authorKey = 'qxUjdi6wcbz2uuZseFFe'; break;
-          case 'Rolf Brüggemann':           d.authorKey = 'GP8BkeeouNKyaPPtc72R'; break;
+        if (d.type === 'article') {
+          if (d.properties?.image?.url) {
+            const path = d.properties.image.url;
+            if (path.startsWith('https://firebasestorage')) {
+              const parts = path.split('?');
+              let newPath = baseImgix + parts[0].substring(parts[0].indexOf('/o/') + 3);
+              newPath = newPath.replace('%2F', '/');
+              console.log(`    - updated image path: ${newPath}`);
+              d.properties.image.url = newPath;
+            }
+          }
         }
+        //d.tenants = ['scs'];
+
         // create the index here directly without using the getXXindex function, just with string operations.
         //d.index = 'ak:' + d.authorKey + ' d:' + d.creationDateTime.substring(0, 8) + ' pk:' + d.parentKey;
-        d.index = `ak:${d.authorKey}, d:${d.creationDateTime.substring(0, 8)}, pk:${d.parentKey}`;
+        //d.index = `ak:${d.authorKey}, d:${d.creationDateTime.substring(0, 8)}, pk:${d.parentKey}`;
         
         return d;
       },
