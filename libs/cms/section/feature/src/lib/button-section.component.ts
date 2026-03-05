@@ -146,7 +146,7 @@ export class ButtonSectionComponent {
       const name = currentUser.firstName + ' ' + currentUser.lastName;
       const message1 = bkTranslate('@chat.fields.needsHelp', { name });
       const message2 = bkTranslate('@chat.fields.needsHelpUnknownLocation', { name });
-      const roomId = await this.chatService.getRoomByName('notfall');
+      const roomId = await this.chatService.getRoomByName('Notfall');
       try {
         if (position) {
           await this.chatService.sendLocation(roomId, message1, position.latitude, position.longitude);
