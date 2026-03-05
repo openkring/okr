@@ -10,7 +10,7 @@ import { CommentsAccordionComponent } from '@bk2/comment-feature';
 
 import { TaskFormComponent } from '@bk2/task-ui';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-import { GroupSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { PersonSelectModalComponent } from '@bk2/shared-feature';
 import { AvatarSelectComponent } from '@bk2/avatar-ui';
 
 @Component({
