@@ -20,7 +20,7 @@ export class MatrixChatService {
   private client: MatrixClient | null = null;
   private syncState$ = new BehaviorSubject<string>('STOPPED');
   private rooms$ = new BehaviorSubject<MatrixRoom[]>([]);
-  private messages$ = new Map<string, BehaviorSubject<MatrixMessage[]>>();
+  private messages$ = new Map<string, BehaviorSubject<MatrixMessage[] | null>>();
   private typing$ = new Subject<TypingNotification>();
   private errors$ = new Subject<MatrixError>();
   private readonly roomsUpdateTrigger$ = new Subject<void>();
@@ -148,6 +148,7 @@ export class MatrixChatService {
         this.setupCallListeners(call);
         this.activeCall$.next(call);
         this.callState$.next('ringing');
+        this.addLocalNotice(call.roomId, '📹 Video-Anruf gestartet');
       });
     } catch (error) {
       console.error('MatrixChatService: Failed to initialize client', error);
@@ -259,7 +260,7 @@ export class MatrixChatService {
       if (event.getType() !== EventType.RoomMessage) return;
       const subject = this.messages$.get(room.roomId);
       if (!subject) return;
-      const msgs = subject.value;
+      const msgs = subject.value ?? [];
       const oldIdx = oldEventId ? msgs.findIndex(m => m.eventId === oldEventId) : -1;
       const newMsg = this.mapEventToMessage(event, room);
       if (oldIdx >= 0) {
@@ -342,12 +343,12 @@ export class MatrixChatService {
    * If the subject was previously created before the client was ready (empty subject,
    * no-op load), retry loading now that the client may be initialized.
    */
-  public getMessagesForRoom(roomId: string): Observable<MatrixMessage[]> {
+  public getMessagesForRoom(roomId: string): Observable<MatrixMessage[] | null> {
     if (!this.messages$.has(roomId)) {
-      this.messages$.set(roomId, new BehaviorSubject<MatrixMessage[]>([]));
+      this.messages$.set(roomId, new BehaviorSubject<MatrixMessage[] | null>(null));
       this.loadMessagesForRoom(roomId);
-    } else if (this.client && this.messages$.get(roomId)!.value.length === 0) {
-      // Subject exists but is empty — was likely created before the client was ready.
+    } else if (this.client && !this.messages$.get(roomId)!.value?.length) {
+      // Subject exists but is empty/null — was likely created before the client was ready.
       // Retry loading now that the client is initialized.
       this.loadMessagesForRoom(roomId);
     }
@@ -430,20 +431,21 @@ export class MatrixChatService {
     if (subject) {
       // Deduplicate: the SDK can fire RoomEvent.Timeline more than once for the same event
       // (e.g. soft-failed → retried, or timeline rebuild). Replace if already present.
-      const existing = subject.value.findIndex(m => m.eventId === message.eventId);
+      const currentMsgs = subject.value ?? [];
+      const existing = currentMsgs.findIndex(m => m.eventId === message.eventId);
       if (existing >= 0) {
-        const updated = [...subject.value];
+        const updated = [...currentMsgs];
         updated[existing] = message;
         subject.next(updated);
       } else {
-        subject.next([...subject.value, message]);
+        subject.next([...currentMsgs, message]);
       }
       // Async-resolve media URL and patch the message once fetched
       const mxcUrl = message.content.url ?? message.content.file?.url;
       if ((message.type === 'm.image' || message.type === 'm.file') && mxcUrl) {
         this.resolveMediaUrl(mxcUrl).then(url => {
           if (!url) return;
-          const msgs = subject.value;
+          const msgs = subject.value ?? [];
           const idx = msgs.findIndex(m => m.eventId === message.eventId);
           if (idx >= 0) {
             const updated = [...msgs];
@@ -458,7 +460,7 @@ export class MatrixChatService {
       if (senderAvatarMxc) {
         this.resolveMediaUrl(senderAvatarMxc).then(url => {
           if (!url) return;
-          const msgs = subject.value;
+          const msgs = subject.value ?? [];
           const idx = msgs.findIndex(m => m.eventId === message.eventId);
           if (idx >= 0) {
             const updated = [...msgs];
@@ -1205,7 +1207,7 @@ private async updateRoomsList(): Promise<void> {
   private addLocalNotice(roomId: string, body: string): void {
     const subject = this.messages$.get(roomId);
     if (!subject) return;
-    subject.next([...subject.value, {
+    subject.next([...(subject.value ?? []), {
       eventId: `local-notice-${Date.now()}`,
       roomId,
       sender: this.client?.getUserId() || '',

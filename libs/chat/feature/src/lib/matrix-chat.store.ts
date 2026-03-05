@@ -98,7 +98,13 @@ export const _MatrixChatStore = signalStore(
           .replace(/^https?:\/\//, '')
           .replace(/^matrix\./, '');
       }),
-      messages: computed(() => state.messagesResource.value() || []),
+      messages: computed(() => state.messagesResource.value() ?? []),
+      isMessagesLoading: computed(() => {
+        const roomId = state.currentRoomId();
+        if (!roomId) return false;
+        if (!state.isMatrixInitialized()) return true;
+        return state.messagesResource.value() === null;
+      }),
     };
   }),
 

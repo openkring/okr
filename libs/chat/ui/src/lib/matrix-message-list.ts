@@ -142,6 +142,12 @@ import { TranslatePipe } from '@bk2/shared-i18n';
       cursor: pointer;
     }
 
+    .message-audio {
+      max-width: 100%;
+      min-width: 200px;
+      display: block;
+    }
+
     .message-location {
       display: flex;
       flex-direction: column;
@@ -235,7 +241,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           @for (message of dayGroup.messages; track message.eventId) {
             @if (message.type === 'm.notice') {
               <div class="notice-row">
-                <div class="notice-bubble">{{ message.body }}</div>
+                <div class="notice-bubble">{{ message.body }} · {{ formatTime(message.timestamp) }}</div>
               </div>
             } @else {
             <div
@@ -295,6 +301,13 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                           @if (message.body) {
                             <p class="message-text">{{ message.body }}</p>
                           }
+                        } @else if (isAudioFile(message) && message.mediaUrl) {
+                          <audio
+                            controls
+                            class="message-audio"
+                            [src]="message.mediaUrl"
+                            (click)="$event.stopPropagation()"
+                          ></audio>
                         } @else {
                           <div class="message-file" (click)="fileClicked.emit(message); $event.stopPropagation()">
                             <ion-icon src="{{'document' | svgIcon}}"></ion-icon>
@@ -438,23 +451,24 @@ export class MatrixMessageList {
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Today';
+      return 'Heute';
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
+      return 'Gestern';
     } else {
-      return date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      return date.toLocaleDateString('de-DE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       });
     }
   }
 
   formatTime(timestamp: number): string {
-    return new Date(timestamp).toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(timestamp).toLocaleTimeString('de-DE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
     });
   }
 
@@ -468,6 +482,12 @@ export class MatrixMessageList {
     const mimetype = message.content?.info?.mimetype || '';
     if (mimetype.startsWith('image/')) return true;
     return /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(message.body || '');
+  }
+
+  isAudioFile(message: MatrixMessage): boolean {
+    const mimetype = message.content?.info?.mimetype || '';
+    if (mimetype.startsWith('audio/')) return true;
+    return /\.(mp3|ogg|wav|flac|aac|webm|m4a|opus)$/i.test(message.body || '');
   }
 
   getReactions(message: MatrixMessage): { emoji: string; count: number }[] {

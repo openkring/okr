@@ -138,6 +138,13 @@ import { RoleName } from '@bk2/shared-models';
       width: 56px;
       height: 56px;
     }
+
+    .messages-loading {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   `],
   template: `
     @if (isMatrixReady()) {
@@ -215,17 +222,23 @@ import { RoleName } from '@bk2/shared-models';
                   </ion-toolbar>
                 </ion-header>
 
-                <!-- Message List -->
-                <bk-matrix-message-list
-                  [messages]="messages()"
-                  [currentUserId]="matrixUserId()"
-                  [homeserverUrl]="homeserverUrl()"
-                  (messageClicked)="onMessageClicked($event)"
-                  (imageClicked)="onImageClicked($event)"
-                  (fileClicked)="onFileClicked($event)"
-                  (reactionClicked)="onReactionClicked($event)"
-                  (threadClicked)="onThreadClicked($event)"
-                />
+                <!-- Message List or Loading Spinner -->
+                @if (isMessagesLoading()) {
+                  <div class="messages-loading">
+                    <bk-spinner />
+                  </div>
+                } @else {
+                  <bk-matrix-message-list
+                    [messages]="messages()"
+                    [currentUserId]="matrixUserId()"
+                    [homeserverUrl]="homeserverUrl()"
+                    (messageClicked)="onMessageClicked($event)"
+                    (imageClicked)="onImageClicked($event)"
+                    (fileClicked)="onFileClicked($event)"
+                    (reactionClicked)="onReactionClicked($event)"
+                    (threadClicked)="onThreadClicked($event)"
+                  />
+                }
 
                 <!-- Message Input -->
                 <bk-matrix-message-input
@@ -319,6 +332,7 @@ export class MatrixChat implements OnDestroy {
 
   // Messages signal
   protected readonly messages = computed(() => this.store.messages());
+  protected readonly isMessagesLoading = computed(() => this.store.isMessagesLoading());
   protected readonly typingUsers = computed(() => this.currentRoom()?.typingUsers || []);
 
   // Ready state: true once the Matrix client exists; sync status shown via the banner
