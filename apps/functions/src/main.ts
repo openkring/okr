@@ -71,6 +71,15 @@ export const requestGroupRoomAccess = MatrixSimple.requestGroupRoomAccess;
 export const provisionMatrixUser = MatrixSimple.provisionMatrixUser;
 export const getRoomByName = MatrixSimple.getRoomByName;
 export const renameMatrixRoom = MatrixSimple.renameMatrixRoom;
+export const invitePersonToGroupRoom = MatrixSimple.invitePersonToGroupRoom;
+export const kickPersonFromGroupRoom = MatrixSimple.kickPersonFromGroupRoom;
+export const deleteMatrixRoom = MatrixSimple.deleteMatrixRoom;
+export const deactivateMatrixUser = MatrixSimple.deactivateMatrixUser;
+export const listMatrixRooms = MatrixSimple.listMatrixRooms;
+export const getRoomDetails = MatrixSimple.getRoomDetails;
+export const getAllMembersFromRoom = MatrixSimple.getAllMembersFromRoom;
+export const getMemberDetails = MatrixSimple.getMemberDetails;
+export const addMatrixRoomAlias = MatrixSimple.addMatrixRoomAlias;
 
 // oidc-bridge (Full OIDC Identity Provider for Matrix - Complex but native Matrix SSO)
 export const oidcDiscovery = OidcBridge.oidcDiscovery;

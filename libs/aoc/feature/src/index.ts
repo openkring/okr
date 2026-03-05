@@ -1,4 +1,5 @@
 export * from './lib/aoc-adminops';
+export * from './lib/aoc-chat';
 export * from './lib/aoc-content';
 export * from './lib/aoc-data';
 export * from './lib/aoc-roles';

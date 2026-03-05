@@ -458,6 +458,240 @@ export const provisionMatrixUser = onCall(
 );
 
 /**
+ * Invite a specific person (by personKey) to the Matrix room of a group.
+ * Called server-side when a new group membership is created, so the member
+ * gets access to the group chat immediately without having to open the chat tab first.
+ * Provisions the Matrix user account if it doesn't exist yet.
+ */
+export const invitePersonToGroupRoom = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ roomId: string; joined: boolean }> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+
+    const { groupId, personKey } = request.data as { groupId: string; personKey: string };
+    if (!groupId) throw new Error('groupId is required');
+    if (!personKey) throw new Error('personKey is required');
+
+    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+    const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+    const adminToken = matrixAdminToken.value();
+
+    console.log(`invitePersonToGroupRoom: groupId=${groupId}, personKey=${personKey}, matrixUserId=${matrixUserId}`);
+
+    // Step 1: Provision the Matrix user if needed
+    const checkResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!checkResp.ok) {
+      let displayName = personKey;
+      try {
+        const doc = await getFirestore().collection('persons').doc(personKey).get();
+        const d = doc.data();
+        if (d) {
+          const full = [d['firstName'], d['lastName']].filter(Boolean).join(' ');
+          if (full) displayName = full;
+        }
+      } catch { /* fallback */ }
+      const createResp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ displayname: displayName, admin: false, deactivated: false }),
+        }
+      );
+      if (!createResp.ok) {
+        throw new Error(`Failed to provision Matrix user ${matrixUserId}: ${await createResp.text()}`);
+      }
+      console.log(`invitePersonToGroupRoom: Provisioned Matrix user ${matrixUserId}`);
+    }
+
+    // Step 2: Find the room by alias, then by name search
+    let roomId: string | undefined;
+    const roomAlias = `#group_${groupId}:${hostname}`;
+    try {
+      const aliasResp = await fetch(
+        `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(roomAlias)}`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (aliasResp.ok) {
+        roomId = (await aliasResp.json() as { room_id: string }).room_id;
+      }
+    } catch { /* fall through */ }
+
+    if (!roomId) {
+      const searchResp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(groupId)}&limit=20`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (searchResp.ok) {
+        const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
+        const match = data.rooms?.find(r => r.name === groupId);
+        if (match) roomId = match.room_id;
+      }
+    }
+
+    if (!roomId) {
+      // Room doesn't exist yet — create it
+      const createResp = await fetch(
+        `${MATRIX_HOMESERVER}/_matrix/client/v3/createRoom`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: groupId,
+            room_alias_name: `group_${groupId}`,
+            preset: 'public_chat',
+            visibility: 'private',
+            creation_content: { 'm.federate': false },
+          }),
+        }
+      );
+      if (!createResp.ok) {
+        throw new Error(`Failed to create room for group ${groupId}: ${await createResp.text()}`);
+      }
+      roomId = (await createResp.json() as { room_id: string }).room_id;
+      console.log(`invitePersonToGroupRoom: Created room ${roomId} for group ${groupId}`);
+    }
+
+    // Step 3: Ensure admin is in the room, then force-join the person
+    const whoamiResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (whoamiResp.ok) {
+      const { user_id: adminUserId } = await whoamiResp.json() as { user_id: string };
+      if (adminUserId) {
+        await fetch(
+          `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: adminUserId }),
+          }
+        );
+      }
+    }
+
+    const joinResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: matrixUserId }),
+      }
+    );
+    if (!joinResp.ok) {
+      throw new Error(`Failed to join ${matrixUserId} to room ${roomId}: ${await joinResp.text()}`);
+    }
+
+    console.log(`invitePersonToGroupRoom: ${matrixUserId} joined room ${roomId}`);
+    return { roomId, joined: true };
+  }
+);
+
+/**
+ * Remove a specific person (by personKey) from the Matrix room of a group.
+ * Called when a group membership is ended so the member loses access to the group chat.
+ */
+export const kickPersonFromGroupRoom = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ roomId: string; kicked: boolean }> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+
+    const { groupId, personKey } = request.data as { groupId: string; personKey: string };
+    if (!groupId) throw new Error('groupId is required');
+    if (!personKey) throw new Error('personKey is required');
+
+    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+    const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+    const adminToken = matrixAdminToken.value();
+
+    console.log(`kickPersonFromGroupRoom: groupId=${groupId}, personKey=${personKey}, matrixUserId=${matrixUserId}`);
+
+    // Step 1: Find the room by alias, then by name search
+    let roomId: string | undefined;
+    const roomAlias = `#group_${groupId}:${hostname}`;
+    try {
+      const aliasResp = await fetch(
+        `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(roomAlias)}`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (aliasResp.ok) {
+        roomId = (await aliasResp.json() as { room_id: string }).room_id;
+      }
+    } catch { /* fall through */ }
+
+    if (!roomId) {
+      const searchResp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(groupId)}&limit=20`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (searchResp.ok) {
+        const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
+        const match = data.rooms?.find(r => r.name === groupId);
+        if (match) roomId = match.room_id;
+      }
+    }
+
+    if (!roomId) {
+      console.warn(`kickPersonFromGroupRoom: No room found for group "${groupId}", nothing to kick from`);
+      return { roomId: '', kicked: false };
+    }
+
+    // Step 2: Ensure admin is in the room (needed to send kick event)
+    const whoamiResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (whoamiResp.ok) {
+      const { user_id: adminUserId } = await whoamiResp.json() as { user_id: string };
+      if (adminUserId) {
+        await fetch(
+          `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: adminUserId }),
+          }
+        );
+      }
+    }
+
+    // Step 3: Kick the user from the room
+    const kickResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/kick`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: matrixUserId, reason: 'Membership ended' }),
+      }
+    );
+    if (!kickResp.ok) {
+      const errText = await kickResp.text();
+      // M_NOT_IN_ROOM is not an error — the user might have already left
+      if (errText.includes('M_NOT_IN_ROOM') || errText.includes('not in room')) {
+        console.log(`kickPersonFromGroupRoom: ${matrixUserId} was not in room ${roomId}, nothing to do`);
+        return { roomId, kicked: false };
+      }
+      throw new Error(`Failed to kick ${matrixUserId} from room ${roomId}: ${errText}`);
+    }
+
+    console.log(`kickPersonFromGroupRoom: Kicked ${matrixUserId} from room ${roomId}`);
+    return { roomId, kicked: true };
+  }
+);
+
+/**
  * Rename an existing Matrix room for a given group.
  * Finds the room by alias (#group_<groupId>:<hostname>) or by name search,
  * ensures the admin is in the room, then updates the m.room.name state event.
@@ -548,6 +782,424 @@ export const renameMatrixRoom = onCall(
 
     console.log(`renameMatrixRoom: Room ${roomId} renamed to "${name}"`);
     return { roomId, name };
+  }
+);
+
+export interface AdminRoom {
+  roomId: string;
+  name: string;
+  canonicalAlias?: string;
+  joinedMembers: number;
+  creator?: string;
+  public: boolean;
+}
+
+/**
+ * List Matrix rooms. If personKey is given, returns only rooms where that person
+ * is a member. Otherwise returns all rooms in the installation (up to 1000).
+ */
+export const listMatrixRooms = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ rooms: AdminRoom[]; total: number }> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+
+    const { personKey } = request.data as { personKey?: string };
+    const adminToken = matrixAdminToken.value();
+
+    // Helper: fetch all rooms from the admin API (paginated, max 1000)
+    async function fetchAllRooms(): Promise<AdminRoom[]> {
+      const rooms: AdminRoom[] = [];
+      let from = 0;
+      const limit = 100;
+
+      while (true) {
+        const resp = await fetch(
+          `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?limit=${limit}&from=${from}`,
+          { headers: { Authorization: `Bearer ${adminToken}` } }
+        );
+        if (!resp.ok) throw new Error(`Failed to list rooms: ${await resp.text()}`);
+        const data = await resp.json() as {
+          rooms: Array<{ room_id: string; name: string; canonical_alias?: string; joined_members: number; creator?: string; public: boolean }>;
+          next_batch?: number;
+          total_rooms: number;
+        };
+        for (const r of data.rooms) {
+          rooms.push({ roomId: r.room_id, name: r.name, canonicalAlias: r.canonical_alias, joinedMembers: r.joined_members, creator: r.creator, public: r.public });
+        }
+        if (!data.next_batch || rooms.length >= 1000) break;
+        from = data.next_batch;
+      }
+      return rooms;
+    }
+
+    if (personKey) {
+      const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+      const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+
+      // Get the room IDs the user belongs to
+      const joinedResp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/joined_rooms`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (!joinedResp.ok) {
+        if (joinedResp.status === 404) return { rooms: [], total: 0 }; // user not found
+        throw new Error(`Failed to get joined rooms for ${matrixUserId}: ${await joinedResp.text()}`);
+      }
+      const { joined_rooms: joinedRoomIds } = await joinedResp.json() as { joined_rooms: string[]; total: number };
+      if (joinedRoomIds.length === 0) return { rooms: [], total: 0 };
+
+      // Fetch details for each joined room via the per-room admin endpoint
+      const joinedSet = new Set(joinedRoomIds);
+      const allRooms = await fetchAllRooms();
+      const filtered = allRooms.filter(r => joinedSet.has(r.roomId));
+      return { rooms: filtered, total: filtered.length };
+    }
+
+    const rooms = await fetchAllRooms();
+    return { rooms, total: rooms.length };
+  }
+);
+
+export interface RoomDetails {
+  id: string;
+  name: string;
+  normalizedName: string;
+  isDirect: boolean;        // always false server-side; DM info lives in client account data
+  isPublic: boolean;
+  creator: string;
+  avatarUrl?: string;
+  aliases: string[];
+  topic?: string;
+  numberOfJoinedMembers: number;
+  numberOfInvitedMembers: number;
+}
+
+export interface RoomMemberInfo {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  membership: string;
+  powerLevel: number;
+}
+
+export interface MemberDetails {
+  userId: string;
+  name: string;
+  rawDisplayName: string;
+  powerLevel: number;       // 0 when no roomId provided
+  membership?: string;      // only available when roomId provided
+  avatarUrl?: string;
+}
+
+/**
+ * Return details for a single Matrix room.
+ * Combines the admin rooms endpoint with the room state to populate all fields.
+ */
+export const getRoomDetails = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<RoomDetails> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+    const { roomId } = request.data as { roomId: string };
+    if (!roomId) throw new Error('roomId is required');
+
+    const adminToken = matrixAdminToken.value();
+
+    // Basic room info
+    const infoResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!infoResp.ok) throw new Error(`Room not found: ${await infoResp.text()}`);
+    const info = await infoResp.json() as {
+      room_id: string; name: string; canonical_alias?: string;
+      joined_members: number; creator: string; public: boolean;
+    };
+
+    // Room state events — avatar, topic, aliases, invited member count
+    const stateResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    let avatarUrl: string | undefined;
+    let topic: string | undefined;
+    const aliases: string[] = [];
+    let numberOfInvitedMembers = 0;
+
+    if (stateResp.ok) {
+      const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
+      for (const event of stateData.state ?? []) {
+        if (event.type === 'm.room.avatar' && event.state_key === '') avatarUrl = event.content['url'] as string | undefined;
+        if (event.type === 'm.room.topic' && event.state_key === '') topic = event.content['topic'] as string | undefined;
+        if (event.type === 'm.room.aliases') aliases.push(...((event.content['aliases'] as string[]) ?? []));
+        if (event.type === 'm.room.member' && event.content['membership'] === 'invite') numberOfInvitedMembers++;
+      }
+      if (info.canonical_alias && !aliases.includes(info.canonical_alias)) aliases.unshift(info.canonical_alias);
+    }
+
+    return {
+      id: info.room_id,
+      name: info.name ?? '',
+      normalizedName: (info.name ?? '').toLowerCase().trim(),
+      isDirect: false,
+      isPublic: info.public ?? false,
+      creator: info.creator ?? '',
+      avatarUrl,
+      aliases,
+      topic,
+      numberOfJoinedMembers: info.joined_members ?? 0,
+      numberOfInvitedMembers,
+    };
+  }
+);
+
+/**
+ * Return all members of a Matrix room with their display name, avatar,
+ * membership status, and power level — all derived from room state in one request.
+ */
+export const getAllMembersFromRoom = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ members: RoomMemberInfo[]; total: number }> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+    const { roomId } = request.data as { roomId: string };
+    if (!roomId) throw new Error('roomId is required');
+
+    const adminToken = matrixAdminToken.value();
+    const stateResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!stateResp.ok) throw new Error(`Failed to get room state: ${await stateResp.text()}`);
+
+    const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
+    const events = stateData.state ?? [];
+
+    // Extract power levels (single event, state_key = '')
+    const powerEvent = events.find(e => e.type === 'm.room.power_levels' && e.state_key === '');
+    const userPowerLevels = (powerEvent?.content?.['users'] ?? {}) as Record<string, number>;
+    const defaultPowerLevel = (powerEvent?.content?.['users_default'] ?? 0) as number;
+
+    // Build member list from m.room.member state events
+    const members: RoomMemberInfo[] = events
+      .filter(e => e.type === 'm.room.member' && ['join', 'invite', 'ban'].includes(e.content['membership'] as string))
+      .map(e => ({
+        userId: e.state_key,
+        displayName: (e.content['displayname'] as string | undefined) ?? e.state_key.split(':')[0].substring(1),
+        avatarUrl: (e.content['avatar_url'] as string | undefined),
+        membership: (e.content['membership'] as string),
+        powerLevel: userPowerLevels[e.state_key] ?? defaultPowerLevel,
+      }));
+
+    return { members, total: members.length };
+  }
+);
+
+/**
+ * Return profile details for a Matrix user.
+ * If roomId is also provided, the power level and membership are resolved from that room's state.
+ */
+export const getMemberDetails = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<MemberDetails> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+    const { userId, roomId } = request.data as { userId: string; roomId?: string };
+    if (!userId) throw new Error('userId is required');
+
+    const adminToken = matrixAdminToken.value();
+
+    // User profile from admin API
+    const userResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(userId)}`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!userResp.ok) throw new Error(`User not found: ${await userResp.text()}`);
+    const user = await userResp.json() as { displayname?: string; avatar_url?: string };
+    const displayName = user.displayname ?? userId.split(':')[0].substring(1);
+
+    // Room-specific data (power level and membership) — only if roomId provided
+    let powerLevel = 0;
+    let membership: string | undefined;
+
+    if (roomId) {
+      const stateResp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (stateResp.ok) {
+        const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
+        const events = stateData.state ?? [];
+        const powerEvent = events.find(e => e.type === 'm.room.power_levels' && e.state_key === '');
+        const userPowerLevels = (powerEvent?.content?.['users'] ?? {}) as Record<string, number>;
+        const defaultPowerLevel = (powerEvent?.content?.['users_default'] ?? 0) as number;
+        powerLevel = userPowerLevels[userId] ?? defaultPowerLevel;
+        const memberEvent = events.find(e => e.type === 'm.room.member' && e.state_key === userId);
+        membership = memberEvent?.content?.['membership'] as string | undefined;
+      }
+    }
+
+    return {
+      userId,
+      name: displayName,
+      rawDisplayName: displayName,
+      powerLevel,
+      membership,
+      avatarUrl: user.avatar_url,
+    };
+  }
+);
+
+/**
+ * Delete (purge) a Matrix room by its room ID.
+ * Kicks all members, removes the room from all local users' room lists,
+ * and purges all events from the Synapse database.
+ * The deletion runs asynchronously on Synapse; this function returns the delete_id.
+ */
+export const deleteMatrixRoom = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ deleteId: string }> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+
+    const { roomId } = request.data as { roomId: string };
+    if (!roomId) throw new Error('roomId is required');
+
+    const adminToken = matrixAdminToken.value();
+
+    console.log(`deleteMatrixRoom: deleting room ${roomId}`);
+
+    const deleteResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/delete`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          block: false,
+          purge: true,
+          message: 'Room deleted by administrator',
+        }),
+      }
+    );
+
+    if (!deleteResp.ok) {
+      throw new Error(`Failed to delete room ${roomId}: ${await deleteResp.text()}`);
+    }
+
+    const data = await deleteResp.json() as { delete_id: string };
+    console.log(`deleteMatrixRoom: room ${roomId} queued for deletion (delete_id=${data.delete_id})`);
+    return { deleteId: data.delete_id };
+  }
+);
+
+/**
+ * Deactivate a Matrix user by their personKey.
+ * Deactivation prevents the user from logging in and optionally erases all their
+ * messages and media from the Synapse database.
+ * Note: Synapse does not hard-delete users; deactivation is the canonical "delete" operation.
+ */
+export const deactivateMatrixUser = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ matrixUserId: string; deactivated: boolean }> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+
+    const { personKey, erase = false } = request.data as { personKey: string; erase?: boolean };
+    if (!personKey) throw new Error('personKey is required');
+
+    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+    const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+    const adminToken = matrixAdminToken.value();
+
+    console.log(`deactivateMatrixUser: deactivating ${matrixUserId} (erase=${erase})`);
+
+    // Check the user exists before attempting deactivation
+    const checkResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!checkResp.ok) {
+      console.warn(`deactivateMatrixUser: user ${matrixUserId} not found, nothing to deactivate`);
+      return { matrixUserId, deactivated: false };
+    }
+
+    const deactivateResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/deactivate/${encodeURIComponent(matrixUserId)}`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ erase }),
+      }
+    );
+
+    if (!deactivateResp.ok) {
+      throw new Error(`Failed to deactivate ${matrixUserId}: ${await deactivateResp.text()}`);
+    }
+
+    console.log(`deactivateMatrixUser: ${matrixUserId} deactivated (erase=${erase})`);
+    return { matrixUserId, deactivated: true };
+  }
+);
+
+/**
+ * Add a local room alias to a Matrix room.
+ * The alias will be in the form #aliasName:homeserver
+ */
+export const addMatrixRoomAlias = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ alias: string }> => {
+    if (!request.auth?.uid) throw new Error('Not authenticated');
+
+    const { roomId, aliasName } = request.data as { roomId: string; aliasName: string };
+    if (!roomId) throw new Error('roomId is required');
+    if (!aliasName) throw new Error('aliasName is required');
+
+    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+    // Sanitise: lowercase, replace spaces with hyphens, strip disallowed chars
+    const sanitised = aliasName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_.\-]/g, '');
+    const fullAlias = `#${sanitised}:${hostname}`;
+    const adminToken = matrixAdminToken.value();
+
+    console.log(`addMatrixRoomAlias: adding alias ${fullAlias} to room ${roomId}`);
+
+    const resp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(fullAlias)}`,
+      {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room_id: roomId }),
+      }
+    );
+
+    if (!resp.ok) {
+      throw new Error(`Failed to add alias ${fullAlias} to room ${roomId}: ${await resp.text()}`);
+    }
+
+    console.log(`addMatrixRoomAlias: alias ${fullAlias} added to room ${roomId}`);
+    return { alias: fullAlias };
   }
 );
 
