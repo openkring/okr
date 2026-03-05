@@ -546,6 +546,14 @@ export const _MembershipStore = signalStore(
                 const memberName = getFullName(data.memberName1, data.memberName2);
                 await this.addTask(data, store.appStore.getGroup('treasurer'), `Neumitglied ${memberName} -> bitte Gebühren prüfen.`);
               }
+              if (data.orgModelType === GroupModelName && data.memberModelType === PersonModelName) {
+                // invite the new member to the group's Matrix chat room
+                try {
+                  await store.matrixService.inviteToGroupRoom(data.orgKey, data.memberKey);
+                } catch (err) {
+                  console.warn('MembershipStore.edit: Could not invite to group chat:', err);
+                }
+              }
             } else { // update existing membership
               store.membershipService.update(data, store.currentUser());
             }
@@ -571,6 +579,14 @@ export const _MembershipStore = signalStore(
         }
         const sDate = convertDateFormatToString(endDate.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate, false);
         await store.membershipService.endMembershipByDate(membership, sDate, store.currentUser());
+        if (membership.orgModelType === GroupModelName && membership.memberModelType === PersonModelName) {
+          // remove the member from the group's Matrix chat room
+          try {
+            await store.matrixService.kickFromGroupRoom(membership.orgKey, membership.memberKey);
+          } catch (err) {
+            console.warn('MembershipStore.end: Could not kick from group chat:', err);
+          }
+        }
         const memberName = getFullName(membership.memberName1, membership.memberName2);
         const ownerships = store.ownershipsOfMember();
         if (ownerships.length > 0) {
