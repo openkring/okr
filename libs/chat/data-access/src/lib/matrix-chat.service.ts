@@ -338,11 +338,17 @@ export class MatrixChatService {
   }
 
   /**
-   * Get messages for a specific room
+   * Get messages for a specific room.
+   * If the subject was previously created before the client was ready (empty subject,
+   * no-op load), retry loading now that the client may be initialized.
    */
   public getMessagesForRoom(roomId: string): Observable<MatrixMessage[]> {
     if (!this.messages$.has(roomId)) {
       this.messages$.set(roomId, new BehaviorSubject<MatrixMessage[]>([]));
+      this.loadMessagesForRoom(roomId);
+    } else if (this.client && this.messages$.get(roomId)!.value.length === 0) {
+      // Subject exists but is empty — was likely created before the client was ready.
+      // Retry loading now that the client is initialized.
       this.loadMessagesForRoom(roomId);
     }
     return this.messages$.get(roomId)!.asObservable();
@@ -1163,6 +1169,7 @@ private async updateRoomsList(): Promise<void> {
     this.setupCallListeners(call);
     this.activeCall$.next(call);
     await call.placeVideoCall();
+    this.addLocalNotice(roomId, '📹 Video-Anruf gestartet');
   }
 
   hangupCall(): void {
@@ -1187,9 +1194,28 @@ private async updateRoomsList(): Promise<void> {
     });
 
     call.on(CallEvent.Hangup as any, () => {
+      this.addLocalNotice(call.roomId, '📹 Video-Anruf beendet');
       this.activeCall$.next(null);
       this.callState$.next(null);
       this.callFeeds$.next([]);
     });
+  }
+
+  /** Inject a notice message directly into the local messages$ for a room (no network round-trip). */
+  private addLocalNotice(roomId: string, body: string): void {
+    const subject = this.messages$.get(roomId);
+    if (!subject) return;
+    subject.next([...subject.value, {
+      eventId: `local-notice-${Date.now()}`,
+      roomId,
+      sender: this.client?.getUserId() || '',
+      senderName: '',
+      body,
+      timestamp: Date.now(),
+      type: 'm.notice',
+      content: { msgtype: MsgType.Notice, body },
+      isRedacted: false,
+      isEdited: false,
+    }]);
   }
 }

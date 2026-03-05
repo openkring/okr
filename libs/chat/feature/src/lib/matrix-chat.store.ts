@@ -62,15 +62,19 @@ export const _MatrixChatStore = signalStore(
     callFeedsResource: rxResource({ stream: () => store.matrixService.callFeeds }),
 
     /**
-     * Get messages for current room - returns an Observable that switches when room changes
+     * Get messages for current room - returns an Observable that switches when room changes.
+     * isMatrixInitialized is included in params so the resource re-fires when Matrix
+     * becomes ready (fixing the race condition where setCurrentRoom is called before
+     * the client is initialized, leaving an empty cached subject that never retries).
      */
     messagesResource: rxResource({
       params: () => ({
         currentRoomId: store.currentRoomId(),
+        isMatrixInitialized: store.isMatrixInitialized(),
       }),
       stream: ({ params }) => {
-        const { currentRoomId } = params;
-        if (!currentRoomId) return of([]);
+        const { currentRoomId, isMatrixInitialized } = params;
+        if (!currentRoomId || !isMatrixInitialized) return of([]);
         console.log(`MatrixChatStore: Switching to messages for room ${currentRoomId}`);
         return store.matrixService.getMessagesForRoom(currentRoomId);
       },
