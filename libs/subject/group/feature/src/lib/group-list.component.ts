@@ -111,7 +111,7 @@ export class GroupListComponent {
       default: return this.groupStore.filteredGroups();
     }
   });
-  protected groupsCount = computed(() => this.groupStore.groups()?.length ?? 0);
+  protected groupsCount = computed(() => this.filteredGroups()?.length ?? 0);
   protected selectedGroupsCount = computed(() => this.filteredGroups().length);
   protected isLoading = computed(() => this.groupStore.isLoading());
   protected tags = computed(() => this.groupStore.getTags());
