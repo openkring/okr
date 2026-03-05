@@ -296,7 +296,7 @@ export const _MatrixChatStore = signalStore(
       /**
        * Create a new room.
        */
-      async createRoom(room?: MatrixRoom) {
+      async createRoom(room?: MatrixRoom, roomName?: string) {
         room = room ? room : ROOM_SHAPE;
         const modal = await store.modalController.create({
           component: RoomEditModal,  // Assume a new standalone component for input name/users
@@ -316,7 +316,8 @@ export const _MatrixChatStore = signalStore(
             if (roomInfo.isDirect) {
               roomId = await this.createDirectRoom(invites[0]);
             } else {
-              roomId = await this.createGroupRoom(roomInfo.name, invites, roomInfo.topic, Visibility.Private);
+              const name = roomName ? roomName : roomInfo.name;
+              roomId = await this.createGroupRoom(name, invites, roomInfo.topic, Visibility.Private);
             }
             if (roomId && roomInfo.avatar?.startsWith('http')) {
               await store.matrixService.setRoomAvatarFromUrl(roomId, roomInfo.avatar);

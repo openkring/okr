@@ -1,10 +1,10 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonAvatar } from '@ionic/angular/standalone';
+import { IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail } from '@ionic/angular/standalone';
 
 import { MatrixRoom } from '@bk2/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { bkTranslate } from '@bk2/shared-i18n';
+import { formatMatrixTimestamp, getMatrixTypingText, isMatrixPhotoUrl } from '@bk2/chat-util';
 
 
 @Component({
@@ -12,7 +12,7 @@ import { bkTranslate } from '@bk2/shared-i18n';
   standalone: true,
   imports: [
     CommonModule, MultiAvatarPipe, SvgIconPipe,
-    IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonAvatar
+    IonList, IonItem, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail
 ],
   styles: [`
     :host {
@@ -35,6 +35,11 @@ import { bkTranslate } from '@bk2/shared-i18n';
       font-weight: 600;
     }
 
+    ion-thumbnail {
+      width: 30px;
+      height: 30px;
+    }
+
     .unread-badge {
       min-width: 20px;
       height: 20px;
@@ -54,32 +59,34 @@ import { bkTranslate } from '@bk2/shared-i18n';
   template: `
     <ion-list>
       @for (room of rooms(); track room.roomId) {
-        <ion-item
-          button
-          [class.selected]="room.roomId === selectedRoomId()"
-          [class.unread]="room.unreadCount > 0"
-          class="room-item"
-          (click)="roomSelected.emit(room.roomId)"
-        >
-          @if (room.avatar && isPhotoUrl(room.avatar)) {
-            <ion-avatar slot="start">
-              <img [src]="room.avatar" [alt]="room.name" />
-            </ion-avatar>
-          } @else {
-            <ion-icon slot="start" src="{{room | multiAvatar | svgIcon}}" />
-          }
-          <ion-label>
-            <div style="display: flex; align-items: center;">
-              <span>{{ room.name }}</span>
-            </div>
-            <ion-note color="medium">{{ formatTimestamp(room.lastMessage?.timestamp || 0) }}</ion-note>
-          </ion-label>
-          @if (room.unreadCount > 0) {
-            <ion-badge slot="end" color="primary" class="unread-badge">
-              {{ room.unreadCount > 99 ? '99+' : room.unreadCount }}
-            </ion-badge>
-          }
-        </ion-item>
+        @if(!room.name.startsWith('!!') && (!room.name.startsWith('Empty room'))) {
+          <ion-item
+            button
+            [class.selected]="room.roomId === selectedRoomId()"
+            [class.unread]="room.unreadCount > 0"
+            class="room-item"
+            (click)="roomSelected.emit(room.roomId)"
+          >
+            @if (room.avatar && isPhotoUrl(room.avatar)) {
+              <ion-thumbnail slot="start">
+                <img [src]="room.avatar" [alt]="room.name" />
+              </ion-thumbnail>
+            } @else {
+              <ion-icon slot="start" src="{{room | multiAvatar | svgIcon}}" />
+            }
+            <ion-label>
+              <div style="display: flex; align-items: center;">
+                <span>{{ room.name }}</span>
+              </div>
+              <ion-note color="medium">{{ formatTimestamp(room.lastMessage?.timestamp || 0) }}</ion-note>
+            </ion-label>
+            @if (room.unreadCount > 0) {
+              <ion-badge slot="end" color="primary" class="unread-badge">
+                {{ room.unreadCount > 99 ? '99+' : room.unreadCount }}
+              </ion-badge>
+            }
+          </ion-item>
+        }
       }
 
       @if (rooms().length === 0) {
@@ -98,35 +105,11 @@ export class MatrixRoomList {
 
   roomSelected = output<string>();
 
-  isPhotoUrl(url: string): boolean {
-    return url.startsWith('blob:') || url.startsWith('http');
-  }
+  isPhotoUrl = isMatrixPhotoUrl;
+  formatTimestamp = formatMatrixTimestamp;
+  getTypingText = getMatrixTypingText;
 
   getRoomInitial(name: string): string {
     return name ? name.charAt(0).toUpperCase() : '?';
-  }
-
-  formatTimestamp(timestamp: number): string {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) {
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    } else if (days === 1) {
-      return 'Yesterday';
-    } else if (days < 7) {
-      return date.toLocaleDateString('en-US', { weekday: 'short' });
-    } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-  }
-
-  getTypingText(userIds: string[]): string {
-    if (userIds.length === 0) return '';
-    if (userIds.length === 1) return bkTranslate('@chat.fields.isTypeing');
-    if (userIds.length === 2) return `${userIds.length} ${bkTranslate('@chat.fields.areTypeing')}`;
-    return bkTranslate('@chat.fields.severalTypeing');
   }
 }

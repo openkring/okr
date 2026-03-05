@@ -89,6 +89,13 @@ import { AppStore } from '@bk2/shared-feature';
       margin: 0;
     }
 
+    .record-button {
+      --border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      margin: 0;
+    }
+
     .typing-indicator {
       padding: 4px 12px;
       font-size: 0.75rem;
@@ -99,59 +106,157 @@ import { AppStore } from '@bk2/shared-feature';
     .file-input {
       display: none;
     }
+
+    /* Recording bar replaces the normal input row while recording */
+    .recording-container {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      gap: 8px;
+    }
+
+    .recording-indicator {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--ion-color-danger-tint);
+      border-radius: 20px;
+      padding: 8px 16px;
+    }
+
+    .recording-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--ion-color-danger);
+      animation: blink 1s step-start infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    .recording-duration {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--ion-color-danger);
+      min-width: 40px;
+    }
+
+    .recording-label {
+      font-size: 0.875rem;
+      color: var(--ion-color-medium);
+    }
   `],
   template: `
-    <div class="input-container">
-      <!-- Attachment button -->
-      <ion-button
-        fill="clear"
-        class="action-button"
-        (click)="showActions()"
-      >
-        <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon}}"></ion-icon>
-      </ion-button>
+    <!-- Normal input row (hidden while recording) -->
+    @if (!isRecording()) {
+      <div class="input-container">
+        <!-- Attachment button -->
+        <ion-button
+          fill="clear"
+          class="action-button"
+          (click)="showActions()"
+        >
+          <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon}}"></ion-icon>
+        </ion-button>
 
-      <div class="input-wrapper">
-        <!-- Reply preview -->
-        @if (replyToMessage()) {
-          <div class="reply-preview">
-            <div class="reply-content">
-              <div class="reply-label">Replying to {{ replyToMessage()?.senderName }}</div>
-              <div class="reply-text">{{ replyToMessage()?.body }}</div>
+        <div class="input-wrapper">
+          <!-- Reply preview -->
+          @if (replyToMessage()) {
+            <div class="reply-preview">
+              <div class="reply-content">
+                <div class="reply-label">Replying to {{ replyToMessage()?.senderName }}</div>
+                <div class="reply-text">{{ replyToMessage()?.body }}</div>
+              </div>
+              <ion-button
+                fill="clear"
+                size="small"
+                (click)="cancelReply()"
+              >
+                <ion-icon slot="icon-only" src="{{'close-cancel-circle' | svgIcon}}"></ion-icon>
+              </ion-button>
             </div>
-            <ion-button
-              fill="clear"
-              size="small"
-              (click)="cancelReply()"
-            >
-              <ion-icon slot="icon-only" src="{{'close-cancel-circle' | svgIcon}}"></ion-icon>
-            </ion-button>
-          </div>
-        }
+          }
 
-        <!-- Text input -->
-        <ion-textarea
-          #textInput
-          [(ngModel)]="messageText"
-          placeholder="{{ '@chat.fields.typeMessage' | translate | async }}"
-          [rows]="1"
-          [autoGrow]="true"
-          (ionInput)="onTyping()"
-          (keydown.enter)="onEnterKey($event)"
-        ></ion-textarea>
+          <!-- Text input -->
+          <ion-textarea
+            #textInput
+            [(ngModel)]="messageText"
+            placeholder="{{ '@chat.fields.typeMessage' | translate | async }}"
+            [rows]="1"
+            [autoGrow]="true"
+            (ionInput)="onTyping()"
+            (keydown.enter)="onEnterKey($event)"
+          ></ion-textarea>
+        </div>
+
+        <!-- Mic button to start recording -->
+        <ion-button
+          fill="clear"
+          class="record-button"
+          (click)="startRecording()"
+          title="{{ '@chat.fields.recordAudio' | translate | async }}"
+        >
+          <ion-icon slot="icon-only" src="{{'mic' | svgIcon}}"></ion-icon>
+        </ion-button>
+
+        <!-- Video call button -->
+        <ion-button
+          fill="clear"
+          class="record-button"
+          (click)="videoCallStarted.emit()"
+          title="{{ '@chat.fields.videoCall' | translate | async }}"
+        >
+          <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
+        </ion-button>
+
+        <!-- Send button -->
+        <ion-button
+          class="send-button"
+          [disabled]="!canSend()"
+          (click)="sendMessage()"
+        >
+          <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>
+        </ion-button>
       </div>
+    }
 
-      <!-- Send button -->
-      <ion-button
-        class="send-button"
-        [disabled]="!canSend()"
-        (click)="sendMessage()"
-      >
-        <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>
-      </ion-button>
-    </div>
+    <!-- Recording row -->
+    @if (isRecording()) {
+      <div class="recording-container">
+        <!-- Cancel recording -->
+        <ion-button
+          fill="clear"
+          class="action-button"
+          color="medium"
+          (click)="cancelRecording()"
+        >
+          <ion-icon slot="icon-only" src="{{'close_cancel' | svgIcon}}"></ion-icon>
+        </ion-button>
 
-    @if (typingUsers().length > 0) {
+        <!-- Recording indicator -->
+        <div class="recording-indicator">
+          <span class="recording-dot"></span>
+          <span class="recording-duration">{{ formatRecordingDuration(recordingSeconds()) }}</span>
+          <span class="recording-label">{{ '@chat.fields.recording' | translate | async }}</span>
+        </div>
+
+        <!-- Stop & send recording -->
+        <ion-button
+          class="record-button"
+          color="danger"
+          (click)="stopRecording()"
+        >
+          <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>
+        </ion-button>
+      </div>
+    }
+
+    @if (typingUsers().length > 0 && !isRecording()) {
       <div class="typing-indicator">
         {{ getTypingText() }}
       </div>
@@ -179,6 +284,7 @@ export class MatrixMessageInput {
   messageSent = output<string>();
   fileSent = output<File>();
   locationSent = output<void>();
+  videoCallStarted = output<void>();
   typing = output<boolean>();
   cancelReplyClicked = output<void>();
 
@@ -189,6 +295,14 @@ export class MatrixMessageInput {
   fileInputRef = viewChild<ElementRef>('fileInput');
 
   private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
+
+  // ─── recording state ──────────────────────────────────────────────────────
+  isRecording = signal(false);
+  recordingSeconds = signal(0);
+
+  private mediaRecorder: MediaRecorder | null = null;
+  private audioChunks: Blob[] = [];
+  private recordingTimer: ReturnType<typeof setInterval> | null = null;
 
   canSend = computed(() => {
     return this.messageText().trim().length > 0 && !this.disabled();
@@ -227,11 +341,75 @@ export class MatrixMessageInput {
     }, 3000);
   }
 
+  // ─── audio recording ───────────────────────────────────────────────────────
+
+  async startRecording(): Promise<void> {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Prefer opus in webm (best compression), fall back to whatever the browser supports
+      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg', '']
+        .find(t => !t || MediaRecorder.isTypeSupported(t)) ?? '';
+
+      this.audioChunks = [];
+      this.mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+
+      this.mediaRecorder.ondataavailable = (e: BlobEvent) => {
+        if (e.data.size > 0) this.audioChunks.push(e.data);
+      };
+
+      this.mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop()); // release mic
+        const blob = new Blob(this.audioChunks, { type: this.mediaRecorder?.mimeType ?? 'audio/webm' });
+        const ext = (this.mediaRecorder?.mimeType ?? '').includes('ogg') ? 'ogg' : 'webm';
+        const file = new File([blob], `audio-${Date.now()}.${ext}`, { type: blob.type });
+        this.fileSent.emit(file);
+        this.isRecording.set(false);
+        this.recordingSeconds.set(0);
+        if (this.recordingTimer) { clearInterval(this.recordingTimer); this.recordingTimer = null; }
+      };
+
+      this.mediaRecorder.start(250); // collect chunks every 250ms
+      this.isRecording.set(true);
+      this.recordingSeconds.set(0);
+      this.recordingTimer = setInterval(() => this.recordingSeconds.update(s => s + 1), 1000);
+
+    } catch (err) {
+      console.error('MatrixMessageInput: microphone access denied or unavailable', err);
+    }
+  }
+
+  stopRecording(): void {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop(); // triggers onstop → emits file
+    }
+  }
+
+  cancelRecording(): void {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      // Override onstop so we don't emit the file
+      this.mediaRecorder.onstop = () => {
+        this.mediaRecorder?.stream?.getTracks().forEach(t => t.stop());
+      };
+      this.mediaRecorder.stop();
+    }
+    if (this.recordingTimer) { clearInterval(this.recordingTimer); this.recordingTimer = null; }
+    this.isRecording.set(false);
+    this.recordingSeconds.set(0);
+    this.audioChunks = [];
+  }
+
+  formatRecordingDuration(seconds: number): string {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
   /******************************* actions *************************************** */
   /**
    * Displays an ActionSheet with all possible actions on a chat message. Only actions are shown, that the user has permission for.
    * After user selected an action this action is executed.
-   * @param attendee 
+   * @param attendee
    */
   protected async showActions(): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@chat.fields.addAttachment');
@@ -254,7 +432,7 @@ export class MatrixMessageInput {
 
   /**
    * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
+   * @param actionSheetOptions
    */
   private async executeActions(actionSheetOptions: ActionSheetOptions): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
@@ -267,7 +445,7 @@ export class MatrixMessageInput {
           this.selectFile('image/*,video/*');
           break;
         case 'chat.attachment.file':
-            this.selectFile('*/*');
+          this.selectFile('*/*');
           break;
         case 'chat.attachment.position':
             this.locationSent.emit();
@@ -287,7 +465,7 @@ export class MatrixMessageInput {
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    
+
     if (file) {
       this.fileSent.emit(file);
       // Reset file input

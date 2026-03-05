@@ -196,18 +196,18 @@ export class MatrixChatService {
 
     // Sync state changes
     this.client.on(ClientEvent.Sync, (state, prevState, data) => {
-      debugData('MatrixChatService: Sync state changed:', {
+/*       debugData('MatrixChatService: Sync state changed:', {
         state,
         prevState,
         syncedRooms: this.client?.getRooms()?.length || 0,
         data
-      }, this.appStore.currentUser());
+      }, this.appStore.currentUser()); */
       
       this.syncState$.next(state);
       
       if (state === 'PREPARED') {
         debugMessage('MatrixChatService: Initial sync complete, updating rooms list', this.appStore.currentUser());
-        this.updateRoomsList();
+        this.repairDmRoomsAccountData().then(() => this.updateRoomsList());
       } else if (state === 'ERROR') {
         console.error('MatrixChatService: Sync error', data);
         if (data?.error) {
@@ -609,19 +609,75 @@ private async updateRoomsList(): Promise<void> {
 }
 
   /**
-   * Check if a room is a direct message room
+   * Check if a room is a direct message room.
+   * Primary: checks m.direct account data (set by markRoomAsDirect on creation).
+   * Fallback: checks all current member state events for is_direct:true,
+   *   which is present on the invitee's m.room.member event when a room was
+   *   created with is_direct:true and the invitee hasn't joined yet.
    */
   private isDirectRoom(room: Room): boolean {
     const dmEvent = this.client?.getAccountData('m.direct' as any);
-    if (!dmEvent) return false;
+    if (dmEvent) {
+      const directRooms = dmEvent.getContent() as Record<string, string[]>;
+      for (const userId in directRooms) {
+        if (directRooms[userId].includes(room.roomId)) {
+          return true;
+        }
+      }
+    }
 
-    const directRooms = dmEvent.getContent();
-    for (const userId in directRooms) {
-      if (directRooms[userId].includes(room.roomId)) {
+    // Fallback: any current member state event with is_direct:true marks this as a DM
+    for (const member of room.currentState.getMembers()) {
+      const memberEvent = room.currentState.getStateEvents('m.room.member', member.userId) as MatrixEvent | null;
+      if (memberEvent?.getContent()?.['is_direct'] === true) {
         return true;
       }
     }
+
     return false;
+  }
+
+  /**
+   * After initial sync, retroactively mark all 2-member rooms in m.direct account data.
+   * This repairs DM rooms that were created without markRoomAsDirect (e.g. via Synapse
+   * admin API or Element) so that isDirectRoom() correctly identifies them.
+   */
+  private async repairDmRoomsAccountData(): Promise<void> {
+    if (!this.client) return;
+    const myUserId = this.client.getUserId();
+    if (!myUserId) return;
+
+    const dmEvent = this.client.getAccountData('m.direct' as any);
+    const directRooms = (dmEvent?.getContent() ?? {}) as Record<string, string[]>;
+    const knownDmRoomIds = new Set(Object.values(directRooms).flat());
+
+    let updated = false;
+    for (const room of this.client.getRooms()) {
+      if (room.getMyMembership() !== 'join') continue;
+      if (knownDmRoomIds.has(room.roomId)) continue;
+      // Obsolete/deleted rooms
+      if (room.name?.startsWith('!!')) continue;
+      // Group rooms identified by their canonical alias — never DMs regardless of member count
+      const alias = room.getCanonicalAlias();
+      if (alias?.startsWith('#group_')) continue;
+
+      const joinedMembers = room.getJoinedMembers();
+      if (joinedMembers.length !== 2) continue;
+
+      const otherMember = joinedMembers.find(m => m.userId !== myUserId);
+      if (!otherMember) continue;
+
+      if (!directRooms[otherMember.userId]) directRooms[otherMember.userId] = [];
+      if (!directRooms[otherMember.userId].includes(room.roomId)) {
+        directRooms[otherMember.userId].push(room.roomId);
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      await this.client.setAccountData('m.direct' as any, directRooms as any);
+      debugMessage('MatrixChatService: repaired m.direct account data for existing DM rooms', this.appStore.currentUser());
+    }
   }
 
   /**
@@ -1035,6 +1091,25 @@ private async updateRoomsList(): Promise<void> {
     if (!this.client) throw new Error('Client not initialized');
     if (name) await this.client.setRoomName(roomId, name);
     if (topic !== undefined) await this.client.setRoomTopic(roomId, topic);
+  }
+
+  /**
+   * Invite a person (by personKey) to the Matrix chat room of a group.
+   * Called when a new group membership is created.
+   * The Cloud Function provisions the Matrix user if needed and force-joins them.
+   */
+  public async inviteToGroupRoom(groupId: string, personKey: string): Promise<void> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'invitePersonToGroupRoom');
+    await fn({ groupId, personKey });
+  }
+
+  /**
+   * Remove a person (by personKey) from the Matrix chat room of a group.
+   * Called when a group membership is ended.
+   */
+  public async kickFromGroupRoom(groupId: string, personKey: string): Promise<void> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'kickPersonFromGroupRoom');
+    await fn({ groupId, personKey });
   }
 
   /**
