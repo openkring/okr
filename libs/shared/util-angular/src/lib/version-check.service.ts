@@ -1,7 +1,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { AlertController } from '@ionic/angular/standalone';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 import { FIRESTORE } from '@bk2/shared-config';
 
@@ -23,6 +23,7 @@ export class VersionCheckService {
 
   private readonly currentVersion = packageJson.version;
   private versionConfig: AppVersionConfig | undefined;
+  private alertShown = false;
 
   getCurrentVersion(): string {
     return this.currentVersion;
@@ -31,31 +32,34 @@ export class VersionCheckService {
   getLatestVersion(): string | undefined {
     return this.versionConfig?.latestVersion;
   }
-  
-  async checkVersion(): Promise<void> {
-    // Only check on browser platform
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
 
-    try {
-      const configDoc = doc(this.firestore, AppVersionCollection, AppVersionCollection);
-      const snapshot = await getDoc(configDoc);
-      this.versionConfig = snapshot.data() as AppVersionConfig;
+  /**
+   * Start a real-time Firestore listener on the app-version document.
+   * Fires immediately on startup (replacing the old one-shot getDoc) and again
+   * whenever the admin updates the document — so logged-in users are notified
+   * without needing to reload the app.
+   */
+  checkVersion(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
 
-      if (!this.versionConfig) {
-        return;
+    const configDoc = doc(this.firestore, AppVersionCollection, AppVersionCollection);
+    onSnapshot(configDoc, async (snapshot) => {
+      const config = snapshot.data() as AppVersionConfig | undefined;
+      if (!config) return;
+      this.versionConfig = config;
+
+      const needsUpdate = this.compareVersions(this.currentVersion, config.latestVersion) < 0;
+      const forceUpdate = config.forceUpdate === true ||
+        this.compareVersions(this.currentVersion, config.minVersion) < 0;
+
+      if (needsUpdate && !this.alertShown) {
+        this.alertShown = true;
+        await this.showUpdateAlert(config.latestVersion, forceUpdate);
+        this.alertShown = false; // reset so a subsequent version bump shows again
       }
-
-      const needsUpdate = this.compareVersions(this.currentVersion, this.versionConfig.latestVersion) < 0;
-      const forceUpdate = this.versionConfig.forceUpdate || this.compareVersions(this.currentVersion, this.versionConfig.minVersion) < 0;
-
-      if (needsUpdate) {
-        await this.showUpdateAlert(this.versionConfig.latestVersion, forceUpdate);
-      }
-    } catch (error) {
-      console.error('Error checking app version:', error);
-    }
+    }, (error) => {
+      console.error('VersionCheckService: Firestore listener error:', error);
+    });
   }
 
   private compareVersions(v1: string, v2: string): number {
