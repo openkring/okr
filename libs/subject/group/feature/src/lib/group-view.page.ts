@@ -1,14 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { Photo } from '@capacitor/camera';
 import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupModel, GroupModelName, RoleName } from '@bk2/shared-models';
+import { GroupModelName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent } from '@bk2/shared-ui';
-import { error } from '@bk2/shared-util-angular';
-import { coerceBoolean, debugData, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
+import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 
 import { PageDispatcher, PageStore } from '@bk2/cms-page-feature';
@@ -133,7 +131,6 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
           @case ('members') {
             @defer (on immediate) {
               <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" />
-              <!-- <bk-members [orgKey]="groupKey()" [readOnly]="isReadOnly()" /> -->
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
@@ -181,7 +178,6 @@ export class GroupViewPageComponent implements ViewWillEnter {
 
   constructor() {
     effect(() => {
-      console.log(`GroupViewPageComponent: loading group ${this.groupKey()}`);
       this.groupStore.setGroupKey(this.groupKey());
     });
   }
@@ -210,45 +206,9 @@ export class GroupViewPageComponent implements ViewWillEnter {
     setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: GroupModel): void {
-    this.formData.set(formData);
-  }
-
-  /**
-   * Uploads an image to Firebase storage and saves it as an avatar model in the database.
-   * @param photo the avatar photo that is uploaded to and stored in the firebase storage
-   */
-  protected async onImageSelected(photo: Photo): Promise<void> {
-    await this.groupStore.saveAvatar(photo);    
-  }
-
   /******************************* helpers *************************************** */
-  protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.currentUser());
-  }
-
-  protected async onPopoverDismiss($event: CustomEvent): Promise<void> {
-    const selectedMethod = $event.detail.data;
-    debugData(`GroupViewPageComponent.onPopoverDismiss: ${selectedMethod}`, $event, this.groupStore.currentUser());
-     switch(selectedMethod) {
-      case 'addSection': this.groupStore.addSection(); break;
-      case 'selectSection': this.groupStore.selectSection(); break;
-      case 'sortSections': this.groupStore.sortSections(); break;
-      case 'editSection': this.groupStore.editSection(); break;
-      case 'addEvent': this.groupStore.addEvent(); break;
-      case 'addTask': this.groupStore.addTask(); break;
-      case 'addMember': this.groupStore.addMember(); break;
-      default: error(undefined, `GroupViewPage: context menu ${this.selectedSegment()} has unknown action: ${selectedMethod}`); break;
-    } 
-  }
-
   protected onSegmentChanged($event: CustomEvent): void {
     const selectedSegment = $event.detail.value;
     this.groupStore.setSelectedSegment(selectedSegment);
-  }
-
-  protected hasMenu(segmentName?: string): boolean {
-    if (!segmentName) return false;
-    return (segmentName === 'content' || segmentName === 'calendar' || segmentName === 'tasks' || segmentName === 'members');
   }
 }
