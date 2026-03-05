@@ -268,19 +268,6 @@ export const GroupStore = signalStore(
       await store.firestoreService.createModel<PageModel>(PageCollection, page, '@content.page.operation.create', store.currentUser());
     },
 
-    addSection(): void {
-      console.log('GroupStore.addSection: Not implemented yet');
-    },
-    selectSection(): void {
-      console.log('GroupStore.selectSection: Not implemented yet');
-    },
-    sortSections(): void {
-      console.log('GroupStore.sortSections: Not implemented yet');
-    },
-    editSection(): void {
-      console.log('GroupStore.editSection: Not implemented yet');
-    },
-
     async createChatSection(group: GroupModel): Promise<string | undefined> {
       const name = `${group.bkey}_chat`;
       const section = {
