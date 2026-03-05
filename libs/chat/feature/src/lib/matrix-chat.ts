@@ -1,5 +1,5 @@
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
-import { Component, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked } from '@angular/core';
+import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ToastController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -86,10 +86,62 @@ import { RoleName } from '@bk2/shared-models';
       background: var(--ion-color-light);
       color: var(--ion-color-medium);
     }
+
+    .video-call-overlay {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .remote-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .local-video {
+      position: absolute;
+      bottom: 88px;
+      right: 16px;
+      width: 120px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.4);
+    }
+
+    .call-status-label {
+      position: absolute;
+      top: 24px;
+      left: 0; right: 0;
+      text-align: center;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    }
+
+    .call-controls {
+      position: absolute;
+      bottom: 24px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .call-fab {
+      --border-radius: 50%;
+      width: 56px;
+      height: 56px;
+    }
   `],
   template: `
     @if (isMatrixReady()) {
-      <ion-card>        
+      <ion-card style="position:relative">
         <!-- Sync status indicator - only show for non-ready states -->
         @if (syncState() !== 'PREPARED' && syncState() !== 'SYNCING') {
           <div class="sync-status">
@@ -182,6 +234,7 @@ import { RoleName } from '@bk2/shared-models';
                   (messageSent)="onMessageSent($event)"
                   (fileSent)="onFileSent($event)"
                   (locationSent)="onLocationSent()"
+                  (videoCallStarted)="onVideoCallStarted()"
                   (typing)="onTyping($event)"
                   (cancelReplyClicked)="onCancelReply()"
                 />
@@ -200,6 +253,34 @@ import { RoleName } from '@bk2/shared-models';
             </div>
           </div>
         </ion-card-content>
+        <!-- Video call overlay -->
+        @if (isInCall()) {
+          <div class="video-call-overlay">
+            <video #remoteVideo autoplay playsinline class="remote-video"></video>
+            <video #localVideo autoplay playsinline muted class="local-video"></video>
+
+            @if (callState() === 'ringing') {
+              <div class="call-status-label">Eingehender Video-Anruf...</div>
+              <div class="call-controls">
+                <ion-button class="call-fab" color="success" (click)="answerCall()">
+                  <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
+                </ion-button>
+                <ion-button class="call-fab" color="danger" (click)="hangupCall()">
+                  <ion-icon slot="icon-only" src="{{'close_cancel' | svgIcon}}"></ion-icon>
+                </ion-button>
+              </div>
+            } @else {
+              @if (callState() !== 'connected') {
+                <div class="call-status-label">Verbindung wird hergestellt...</div>
+              }
+              <div class="call-controls">
+                <ion-button class="call-fab" color="danger" (click)="hangupCall()">
+                  <ion-icon slot="icon-only" src="{{'close_cancel' | svgIcon}}"></ion-icon>
+                </ion-button>
+              </div>
+            }
+          </div>
+        }
       </ion-card>
     } @else {
       <bk-spinner />
@@ -245,6 +326,14 @@ export class MatrixChat implements OnDestroy {
     this.store.matrixUser() &&
     this.store.isMatrixInitialized()
   );
+
+  // ─── video call ────────────────────────────────────────────────────────────
+  protected readonly isInCall = computed(() => this.store.isInCall());
+  protected readonly callState = computed(() => this.store.callState());
+  private readonly callFeeds = computed(() => this.store.callFeeds());
+
+  private readonly remoteVideoRef = viewChild<ElementRef>('remoteVideo');
+  private readonly localVideoRef = viewChild<ElementRef>('localVideo');
 
   constructor() {
     // Reactively initialize Matrix when matrixUser becomes available.
@@ -306,6 +395,17 @@ export class MatrixChat implements OnDestroy {
       if (isGroupView === undefined) isGroupView = false;
       debugMessage(`MatrixChat.isGroupView = <${isGroupView}>`, this.store.currentUser());
       this.showRoomList.set(isGroupView === false);
+    });
+
+    // Attach MediaStreams to <video> elements whenever feeds change
+    effect(() => {
+      const feeds = this.callFeeds();
+      const remoteEl = this.remoteVideoRef()?.nativeElement as HTMLVideoElement | undefined;
+      const localEl  = this.localVideoRef()?.nativeElement  as HTMLVideoElement | undefined;
+      const localFeed  = feeds.find(f => f.isLocal);
+      const remoteFeed = feeds.find(f => !f.isLocal);
+      if (localEl  && localFeed?.stream)  localEl.srcObject  = localFeed.stream;
+      if (remoteEl && remoteFeed?.stream) remoteEl.srcObject = remoteFeed.stream;
     });
   }
 
@@ -458,6 +558,23 @@ export class MatrixChat implements OnDestroy {
 
   async onCreateRoom(): Promise<void> {
     await this.store.createRoom();
+  }
+
+  async onVideoCallStarted(): Promise<void> {
+    try {
+      await this.store.startVideoCall();
+    } catch (error) {
+      console.error('MatrixChat: Failed to start video call:', error);
+      await showToast(this.toastController, 'Video-Call fehlgeschlagen');
+    }
+  }
+
+  hangupCall(): void {
+    this.store.hangupCall();
+  }
+
+  async answerCall(): Promise<void> {
+    await this.store.answerCall();
   }
 
   protected hasRole(role: RoleName): boolean {

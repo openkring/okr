@@ -1,6 +1,6 @@
 
 import { inject, Injectable } from '@angular/core';
-import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User } from 'matrix-js-sdk';
+import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, createNewMatrixCall, CallEvent, type MatrixCall } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -29,6 +29,12 @@ export class MatrixChatService {
   // Rooms joined via CF admin API that haven't appeared in a sync cycle yet.
   // updateRoomsList() re-injects stubs for these so the UI renders immediately.
   private readonly pendingRooms = new Map<string, string>(); // roomId → display name
+
+  // ─── WebRTC call state ─────────────────────────────────────────────────────
+  private readonly activeCall$ = new BehaviorSubject<MatrixCall | null>(null);
+  private readonly callState$ = new BehaviorSubject<string | null>(null);
+  /** Simplified feed info so consumers don't need a deep matrix-js-sdk import. */
+  private readonly callFeeds$ = new BehaviorSubject<{ stream: MediaStream; isLocal: boolean }[]>([]);
 
   get isInitialized(): boolean {
     return this.client !== null;
@@ -84,6 +90,18 @@ export class MatrixChatService {
     return this.errors$.asObservable();
   }
 
+  get activeCall(): Observable<MatrixCall | null> {
+    return this.activeCall$.asObservable();
+  }
+
+  get callState(): Observable<string | null> {
+    return this.callState$.asObservable();
+  }
+
+  get callFeeds(): Observable<{ stream: MediaStream; isLocal: boolean }[]> {
+    return this.callFeeds$.asObservable();
+  }
+
   /**
    * Initialize the Matrix client with the given configuration
    */
@@ -122,6 +140,15 @@ export class MatrixChatService {
       // reactively once PREPARED is reached.
       await this.client.startClient({ initialSyncLimit: 10 });
       debugMessage('MatrixChatService: Client started, sync in progress', this.appStore.currentUser());
+
+      // Incoming calls are emitted directly on the MatrixClient (not on callEventHandler).
+      // See: matrixClient.on("Call.incoming", function(call){ call.answer(); });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.client as any).on('Call.incoming', (call: MatrixCall) => {
+        this.setupCallListeners(call);
+        this.activeCall$.next(call);
+        this.callState$.next('ringing');
+      });
     } catch (error) {
       console.error('MatrixChatService: Failed to initialize client', error);
       this.client = null; // reset so a retry attempt can create a fresh client
@@ -1125,5 +1152,44 @@ private async updateRoomsList(): Promise<void> {
     if (!user) return undefined;
 
     return (user as any).getAvatarUrl?.(this.client.baseUrl, width, height, 'crop');
+  }
+
+  // ─── WebRTC calls ──────────────────────────────────────────────────────────
+
+  async startVideoCall(roomId: string): Promise<void> {
+    if (!this.client) throw new Error('Matrix not initialized');
+    const call = createNewMatrixCall(this.client, roomId);
+    if (!call) throw new Error('WebRTC not supported or room not found');
+    this.setupCallListeners(call);
+    this.activeCall$.next(call);
+    await call.placeVideoCall();
+  }
+
+  hangupCall(): void {
+    const call = this.activeCall$.value;
+    if (call) call.hangup('user_hangup' as any, false);
+  }
+
+  async answerCall(): Promise<void> {
+    const call = this.activeCall$.value;
+    if (call) await call.answer(true, true);
+  }
+
+  private setupCallListeners(call: MatrixCall): void {
+    call.on(CallEvent.FeedsChanged as any, (feeds: any[]) => {
+      this.callFeeds$.next(
+        feeds.map(f => ({ stream: f.stream as MediaStream, isLocal: f.isLocal() as boolean }))
+      );
+    });
+
+    call.on(CallEvent.State as any, (state: string) => {
+      this.callState$.next(state);
+    });
+
+    call.on(CallEvent.Hangup as any, () => {
+      this.activeCall$.next(null);
+      this.callState$.next(null);
+      this.callFeeds$.next([]);
+    });
   }
 }

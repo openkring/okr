@@ -4,7 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { of, switchMap } from 'rxjs';
-import { Visibility } from 'matrix-js-sdk';
+import { Visibility, type MatrixCall } from 'matrix-js-sdk';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
@@ -57,6 +57,10 @@ export const _MatrixChatStore = signalStore(
         );
       },
     }),
+    activeCallResource: rxResource({ stream: () => store.matrixService.activeCall }),
+    callStateResource: rxResource({ stream: () => store.matrixService.callState }),
+    callFeedsResource: rxResource({ stream: () => store.matrixService.callFeeds }),
+
     /**
      * Get messages for current room - returns an Observable that switches when room changes
      */
@@ -79,6 +83,10 @@ export const _MatrixChatStore = signalStore(
       syncState: computed(() => state.syncStateResource.value() || 'STOPPED'),
       rooms: computed(() => state.roomsResource.value() || []),
       imageUrl: computed(() => state.imageUrlResource.value()),
+      activeCall: computed(() => state.activeCallResource.value() as MatrixCall | null | undefined),
+      callState: computed(() => state.callStateResource.value()),
+      callFeeds: computed(() => state.callFeedsResource.value() ?? []),
+      isInCall: computed(() => !!state.activeCallResource.value()),
       homeServer: computed(() => {
         // Matrix server_name used in user IDs (e.g. @user:bkchat.etke.host).
         // The homeserver URL often has a 'matrix.' subdomain that is NOT part of the server_name.
@@ -548,6 +556,22 @@ export const _MatrixChatStore = signalStore(
         } catch (error) {
           console.error('MatrixChatStore.leaveRoom: Failed to leave:', error);
         }
+      },
+
+      // ─── Video calls ────────────────────────────────────────────────────────
+
+      async startVideoCall(): Promise<void> {
+        const roomId = store.currentRoomId();
+        if (!roomId) return;
+        await store.matrixService.startVideoCall(roomId);
+      },
+
+      hangupCall(): void {
+        store.matrixService.hangupCall();
+      },
+
+      async answerCall(): Promise<void> {
+        await store.matrixService.answerCall();
       },
 
       /**
