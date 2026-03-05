@@ -16,6 +16,7 @@ const servicesConfig = {
   gmapKey: '',
   nxCloudAccessToken: '',
   imgixBaseUrl: '',
+  vcmVapidKey: ''
 };
 
 // load firebase configuration from FIREBASE_WEBAPP_CONFIG if available
@@ -90,6 +91,7 @@ servicesConfig.appcheckRecaptchaEnterpriseKey = process.env.NEXT_PUBLIC_FIREBASE
 servicesConfig.gmapKey = process.env.NEXT_PUBLIC_SVC_GMAP_KEY || '';
 servicesConfig.nxCloudAccessToken = process.env.NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN || '';
 servicesConfig.imgixBaseUrl = process.env.NEXT_PUBLIC_IMGIX_BASE_URL || '';
+servicesConfig.fcmVapidKey = process.env.FCM_VAPID_KEY || '';
 
 const writeFile = fs.writeFile;
 
@@ -109,6 +111,7 @@ function checkRequiredSettings() {
   if (!servicesConfig.gmapKey) errors.push('gmapKey (from NEXT_PUBLIC_SVC_GMAP_KEY)');
   if (!servicesConfig.nxCloudAccessToken) errors.push('nxCloudAccessToken (from NEXT_PUBLIC_NX_CLOUD_ACCESS_TOKEN)');
   if (!servicesConfig.imgixBaseUrl) errors.push('imgixBaseUrl (from NEXT_PUBLIC_IMGIX_BASE_URL)');
+  if (!servicesConfig.fcmVapidKey) errors.push('fcmVapidKey (from FCM_VAPID_KEY)');
   // Add checks for other essential fields from firebaseConfig if their absence is critical
 
   if (errors.length > 0) {
@@ -146,6 +149,7 @@ export const environment: BkEnvironment = {
     gmapKey: '${servicesConfig.gmapKey}',
     nxCloudAccessToken: '${servicesConfig.nxCloudAccessToken}',
     imgixBaseUrl: '${servicesConfig.imgixBaseUrl}',
+    fcmVapidKey: '${servicesConfig.fcmVapidKey}',
   },
 };
 `;

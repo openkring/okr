@@ -22,9 +22,10 @@
  * - Not using Matrix's native SSO capabilities
  */
 
-import { onCall } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getMessaging } from 'firebase-admin/messaging';
 import { defineSecret } from 'firebase-functions/params';
 
 const matrixAdminToken = defineSecret('MATRIX_ADMIN_TOKEN');
@@ -1271,5 +1272,89 @@ export const syncFirebaseProfileToMatrix = onCall(
       console.error('Error syncing profile to Matrix:', error);
       throw error;
     }
+  }
+);
+
+/**
+ * Send an FCM push notification to all room members when a video call is started.
+ * Called by the caller's client right after placing the call.
+ *
+ * Input: { roomId, roomName, callerName, calleeMatrixUserIds: string[] }
+ * Each Matrix user ID has the form @personKey:homeserver.
+ * The CF extracts the personKey, looks up the Firebase UID in Firestore,
+ * then sends a high-priority FCM message to every registered device.
+ */
+export const sendCallNotification = onCall(
+  { cors: true, region: 'europe-west6' },
+  async (request): Promise<{ sent: number }> => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Must be authenticated');
+    }
+
+    const { roomId, roomName, callerName, calleeMatrixUserIds } = request.data as {
+      roomId: string;
+      roomName: string;
+      callerName: string;
+      calleeMatrixUserIds: string[];
+    };
+
+    if (!Array.isArray(calleeMatrixUserIds) || calleeMatrixUserIds.length === 0) {
+      return { sent: 0 };
+    }
+
+    const db = getFirestore();
+
+    // Collect { uid, token } pairs for all callees
+    const tokenEntries: { uid: string; token: string }[] = [];
+
+    for (const matrixUserId of calleeMatrixUserIds) {
+      // @personKey:homeserver → personKey
+      const personKey = matrixUserId.replace(/^@/, '').split(':')[0];
+      const usersSnap = await db.collection('users').where('personKey', '==', personKey).limit(1).get();
+      if (usersSnap.empty) continue;
+
+      const uid = usersSnap.docs[0].id;
+      const tokensSnap = await db.collection('users').doc(uid).collection('fcmTokens').get();
+      for (const tokenDoc of tokensSnap.docs) {
+        const token = tokenDoc.data()['token'] as string | undefined;
+        if (token) tokenEntries.push({ uid, token });
+      }
+    }
+
+    if (tokenEntries.length === 0) return { sent: 0 };
+
+    const tokens = tokenEntries.map(e => e.token);
+    const response = await getMessaging().sendEachForMulticast({
+      tokens,
+      notification: {
+        title: `📹 Video-Anruf von ${callerName}`,
+        body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
+      },
+      data: {
+        type: 'video-call',
+        roomId,
+        roomName: roomName ?? '',
+        callerName: callerName ?? '',
+      },
+      android: { priority: 'high' },
+      apns: { headers: { 'apns-priority': '10' } },
+    });
+
+    // Remove tokens that are no longer registered to avoid future failures
+    const staleTokenDeletions: Promise<unknown>[] = [];
+    response.responses.forEach((r, i) => {
+      if (!r.success && r.error?.code === 'messaging/registration-token-not-registered') {
+        const { uid, token } = tokenEntries[i];
+        const tokenDocId = token.substring(0, 128);
+        staleTokenDeletions.push(
+          db.collection('users').doc(uid).collection('fcmTokens').doc(tokenDocId).delete()
+            .catch(err => console.warn('sendCallNotification: Failed to delete stale token:', err))
+        );
+      }
+    });
+    await Promise.all(staleTokenDeletions);
+
+    console.log(`sendCallNotification: sent=${response.successCount} failed=${response.failureCount} room=${roomId}`);
+    return { sent: response.successCount };
   }
 );

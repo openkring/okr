@@ -1,22 +1,28 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
+import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { Observable, from, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
+
+import { ENV } from '@bk2/shared-config';
 
 /**
  * Service for Firebase Cloud Messaging (FCM) push notifications.
- * Handles device token registration and foreground message reception.
+ * Handles device token registration, persistence to Firestore, and foreground message reception.
  */
 @Injectable({
   providedIn: 'root'
 })
 export class FcmService {
   private messaging: Messaging | null = null;
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly env = inject(ENV);
 
   constructor() {
+    if (!isPlatformBrowser(this.platformId)) return;
     try {
-      // Initialize Firebase Messaging
       this.messaging = getMessaging(getApp());
     } catch (error) {
       console.error('FcmService: Failed to initialize Firebase Messaging', error);
@@ -24,10 +30,51 @@ export class FcmService {
   }
 
   /**
+   * Request push permission, get the FCM token, and persist it to Firestore
+   * at users/{uid}/fcmTokens/{token} so Cloud Functions can send targeted notifications.
+   */
+  async registerAndSave(uid: string): Promise<void> {
+    const vapidKey = this.env.services.fcmVapidKey;
+    if (!vapidKey) {
+      console.warn('FcmService.registerAndSave: fcmVapidKey not configured in environment');
+      return;
+    }
+    if (!this.messaging) {
+      console.warn('FcmService.registerAndSave: Messaging not initialized');
+      return;
+    }
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        console.log('FcmService.registerAndSave: Notification permission denied');
+        return;
+      }
+      const token = await getToken(this.messaging, { vapidKey });
+      if (!token) return;
+      await this.saveToken(uid, token);
+      console.log('FcmService.registerAndSave: Token registered and saved');
+    } catch (error) {
+      console.warn('FcmService.registerAndSave: Failed to register token:', error);
+    }
+  }
+
+  /**
+   * Remove a stale FCM token from Firestore.
+   */
+  async removeToken(uid: string, token: string): Promise<void> {
+    try {
+      const db = getFirestore(getApp());
+      await deleteDoc(doc(db, 'users', uid, 'fcmTokens', token));
+    } catch (error) {
+      console.warn('FcmService.removeToken: Failed to remove token:', error);
+    }
+  }
+
+  /**
    * Request permission and get FCM device token.
-   * This token should be saved to Firestore for sending targeted notifications.
-   * @param vapidKey - Your Firebase Cloud Messaging Web Push certificate key (from Firebase Console > Project Settings > Cloud Messaging)
-   * @returns Observable<string | undefined> - The FCM token or undefined if permission denied
+   * @param vapidKey - Web Push certificate key from Firebase Console → Project Settings → Cloud Messaging
    */
   requestPermission(vapidKey: string): Observable<string | undefined> {
     if (!this.messaging) {
@@ -38,16 +85,12 @@ export class FcmService {
     return from(
       Notification.requestPermission().then(async (permission) => {
         if (permission === 'granted') {
-          console.log('FcmService: Notification permission granted');
-          
-          // Get FCM token
           const token = await getToken(this.messaging!, { vapidKey });
-          console.log('FcmService: FCM token obtained:', token);
+          console.log('FcmService: FCM token obtained');
           return token;
-        } else {
-          console.log('FcmService: Notification permission denied');
-          return undefined;
         }
+        console.log('FcmService: Notification permission denied');
+        return undefined;
       })
     ).pipe(
       catchError((error) => {
@@ -60,20 +103,16 @@ export class FcmService {
   /**
    * Listen for foreground messages (when app is open).
    * Background messages are handled by the service worker (firebase-messaging-sw.js).
-   * @returns Observable that emits received messages
    */
   listenForMessages(): Observable<any> {
     if (!this.messaging) {
-      console.error('FcmService.listenForMessages: Messaging not initialized');
       return of(null);
     }
 
     return new Observable(subscriber => {
       const unsubscribe = onMessage(this.messaging!, (payload) => {
-        console.log('FcmService: Foreground message received:', payload);
         subscriber.next(payload);
       });
-
       return () => unsubscribe();
     });
   }
@@ -82,6 +121,19 @@ export class FcmService {
    * Check if FCM is supported in the current browser.
    */
   isSupported(): boolean {
-    return 'Notification' in window && 'serviceWorker' in navigator;
+    return isPlatformBrowser(this.platformId) &&
+      'Notification' in window &&
+      'serviceWorker' in navigator;
+  }
+
+  private async saveToken(uid: string, token: string): Promise<void> {
+    const db = getFirestore(getApp());
+    // Use first 128 chars of token as doc ID (tokens are URL-safe, well under Firestore's 1500-byte limit)
+    const tokenDocId = token.substring(0, 128);
+    await setDoc(
+      doc(db, 'users', uid, 'fcmTokens', tokenDocId),
+      { token, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
   }
 }

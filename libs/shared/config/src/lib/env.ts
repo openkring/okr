@@ -18,7 +18,8 @@ export interface BkEnvironment {
     appcheckRecaptchaEnterpriseKey: string;
     gmapKey: string;
     nxCloudAccessToken: string;
-    imgixBaseUrl: string; 
+    imgixBaseUrl: string;
+    fcmVapidKey?: string; // Web Push VAPID key (Firebase Console → Project Settings → Cloud Messaging)
   }
 }
 

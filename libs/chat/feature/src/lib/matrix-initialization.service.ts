@@ -1,11 +1,13 @@
 import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { getApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { filter, switchMap, take, tap } from 'rxjs/operators';
 
 import { AppStore } from '@bk2/shared-feature';
 import { MatrixChatService } from '@bk2/chat-data-access';
+import { FcmService } from '@bk2/shared-data-access';
 
 interface MatrixAuthToken {
   accessToken: string;
@@ -24,6 +26,7 @@ interface MatrixAuthToken {
 export class MatrixInitializationService {
   private readonly appStore = inject(AppStore);
   private readonly matrixService = inject(MatrixChatService);
+  private readonly fcmService = inject(FcmService);
   private readonly injector = inject(Injector);
   private initializationStarted = false;
 
@@ -79,6 +82,30 @@ export class MatrixInitializationService {
       });
 
       console.log('MatrixInitializationService: Matrix client initialized successfully');
+
+      // Register for FCM push notifications (for incoming call alerts).
+      // Non-blocking — a denied permission or missing VAPID key must not break anything.
+      const uid = getAuth(getApp()).currentUser?.uid;
+      if (uid && this.fcmService.isSupported()) {
+        this.fcmService.registerAndSave(uid).catch(err =>
+          console.warn('MatrixInitializationService: FCM registration failed (non-critical):', err)
+        );
+      }
+
+      // Handle foreground FCM messages (app is open, service worker won't show a banner).
+      // Show a native Notification so the user still sees the incoming call alert.
+      this.fcmService.listenForMessages().subscribe(payload => {
+        if (payload?.data?.['type'] !== 'video-call') return;
+        if (Notification.permission !== 'granted') return;
+        const callerName = payload.data['callerName'] ?? 'Unbekannt';
+        const roomName   = payload.data['roomName']   ?? '';
+        new Notification(`📹 Video-Anruf von ${callerName}`, {
+          body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
+          icon: '/assets/icons/icon-192x192.png',
+          tag: 'video-call',
+          requireInteraction: true,
+        });
+      });
     } catch (error) {
       console.error('MatrixInitializationService: Failed to initialize Matrix', error);
       // Don't throw - this is a background initialization, shouldn't break the app

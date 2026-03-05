@@ -1172,6 +1172,30 @@ private async updateRoomsList(): Promise<void> {
     this.activeCall$.next(call);
     await call.placeVideoCall();
     this.addLocalNotice(roomId, '📹 Video-Anruf gestartet');
+    // Notify other room members via FCM (non-blocking — failure must not abort the call)
+    this.notifyCallees(roomId).catch(err =>
+      console.warn('MatrixChatService.startVideoCall: FCM notification failed (non-critical):', err)
+    );
+  }
+
+  private async notifyCallees(roomId: string): Promise<void> {
+    const room = this.client?.getRoom(roomId);
+    const myUserId = this.client?.getUserId();
+    if (!room || !myUserId) return;
+
+    const calleeIds = room.getJoinedMembers()
+      .map(m => m.userId)
+      .filter(id => id !== myUserId);
+    if (calleeIds.length === 0) return;
+
+    const user = this.appStore.currentUser();
+    const callerName = user
+      ? `${user.firstName} ${user.lastName}`.trim()
+      : 'Unbekannt';
+
+    const functions = getFunctions(getApp(), 'europe-west6');
+    const fn = httpsCallable(functions, 'sendCallNotification');
+    await fn({ roomId, roomName: room.name || '', callerName, calleeMatrixUserIds: calleeIds });
   }
 
   hangupCall(): void {
