@@ -199,6 +199,21 @@ import { TranslatePipe } from '@bk2/shared-i18n';
       font-weight: 500;
     }
 
+    .notice-row {
+      display: flex;
+      justify-content: center;
+      margin: 4px 0;
+    }
+
+    .notice-bubble {
+      background: var(--ion-color-light-shade);
+      border-radius: 12px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      color: var(--ion-color-medium);
+      font-style: italic;
+    }
+
     .empty-state {
       display: flex;
       align-items: center;
@@ -218,8 +233,13 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           <div class="day-divider">{{ dayGroup.date }}</div>
           
           @for (message of dayGroup.messages; track message.eventId) {
-            <div 
-              class="message-row" 
+            @if (message.type === 'm.notice') {
+              <div class="notice-row">
+                <div class="notice-bubble">{{ message.body }}</div>
+              </div>
+            } @else {
+            <div
+              class="message-row"
               [class.own-message]="isOwnMessage(message)"
             >
               <ion-avatar 
@@ -331,6 +351,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                 }
               </div>
             </div>
+            }
           }
         }
       }
