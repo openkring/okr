@@ -9,8 +9,8 @@ import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressChannel, AddressCollection, AddressModel, DefaultLanguage, EZS_DIR, IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
-import { confirm } from '@bk2/shared-util-angular';
-import { getModelAndKey, getSystemQuery, warn } from '@bk2/shared-util-core';
+import { confirm, navigateByUrl } from '@bk2/shared-util-angular';
+import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@bk2/shared-util-core';
 import { Languages } from '@bk2/shared-categories';
 import { getImageDimensionsFromMetadata, MapViewModalComponent, showZoomedImage, updateImageDimensions } from '@bk2/shared-ui';
 
@@ -24,10 +24,20 @@ import { AddressEditModalComponent } from './address-edit.modal';
 
 export type AddressState = {
   parentKey: string;
+
+  // filters
+  searchTerm: string;
+  selectedTag: string;
+  orderByParam: string;
 };
 
 export const initialState: AddressState = {
-  parentKey: ''
+  parentKey: '',
+
+  // filters
+  searchTerm: '',
+  selectedTag: '',
+  orderByParam: 'channelType'
 };
     
 export const AddressStore = signalStore(
@@ -47,13 +57,16 @@ export const AddressStore = signalStore(
   withProps((store) => ({
     addressesResource: rxResource({
       params: () => ({
-        parentKey: store.parentKey()
+        parentKey: store.parentKey(),
+        orderByParam: store.orderByParam(),
       }),
       stream: ({params}) => {
         if (!params.parentKey?.length) return of([]);
         const dbQuery = getSystemQuery(store.appStore.tenantId());
-        dbQuery.push({ key: 'parentKey', operator: '==', value: params.parentKey });
-        return store.appStore.firestoreService.searchData<AddressModel>(AddressCollection, dbQuery, 'channelType', 'asc');
+        if (params.parentKey !== 'all') { // for all we do not restrict the result set
+          dbQuery.push({ key: 'parentKey', operator: '==', value: params.parentKey });
+        }
+        return store.appStore.firestoreService.searchData<AddressModel>(AddressCollection, dbQuery, params.orderByParam, 'asc');
       }
     }),
   })),
@@ -61,9 +74,16 @@ export const AddressStore = signalStore(
   withComputed((state) => {
     return {
       addresses: computed(() => state.addressesResource.value()),
+      filteredAddresses: computed(() =>
+        state.addressesResource.value()?.filter((address: AddressModel) =>
+          nameMatches(address.index, state.searchTerm()) &&
+          chipMatches(address.tags, state.selectedTag())
+        ) ?? []
+      ),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
       imgixBaseUrl: computed(() => state.appStore.env.services.imgixBaseUrl),
+      isLoading: computed(() => state.addressesResource.isLoading()),
     };
   }),
 
@@ -71,7 +91,6 @@ export const AddressStore = signalStore(
     return {
       reset() {
         patchState(store, initialState);
-        store.addressesResource.reload();
       },
 
       reload() {
@@ -88,6 +107,18 @@ export const AddressStore = signalStore(
       /******************************** setters (filter) ******************************************* */
       setParentKey(parentKey: string) {
         patchState(store, { parentKey });
+      },
+
+      setSearchTerm(searchTerm: string) {
+        patchState(store, { searchTerm });
+      },
+
+      setSelectedTag(selectedTag: string) {
+        patchState(store, { selectedTag });
+      },
+
+      setConfig(parentKey: string, orderByParam: string) {
+        patchState(store, { parentKey, orderByParam });
       },
 
       /******************************* actions *************************************** */
@@ -123,6 +154,18 @@ export const AddressStore = signalStore(
               store.addressService.update(data, store.currentUser()));
             this.reload();
         }
+        }
+      },
+
+      async editSubject(parentKey: string): Promise<void> {
+        const [modelType, key] = getModelAndKey(parentKey);
+        if (modelType === 'org') {
+          const org = store.appStore.getOrg(key);
+          console.log(org);
+        }
+        if (modelType === 'person') {
+          const person = store.appStore.getPerson(key);
+          console.log(person);
         }
       },
 

@@ -192,7 +192,6 @@ export const OrgStore = signalStore(
           this.reload();
         }
       }
-
     },
 
     async delete(org?: OrgModel, readOnly = true): Promise<void> {
