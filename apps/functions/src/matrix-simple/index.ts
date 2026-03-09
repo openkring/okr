@@ -1323,6 +1323,12 @@ export const sendCallNotification = onCall(
 
     if (tokenEntries.length === 0) return { sent: 0 };
 
+    // Build the deep-link URL: navigate to the chat page for this room.
+    // Convention: room name "Notfall" → page id "notfall_chat" → /private/notfall_chat
+    // ?selectedRoom passes the Matrix room ID directly so the right room is pre-selected.
+    const chatPageId = (roomName ?? '').toLowerCase().replace(/\s+/g, '_') + '_chat';
+    const chatUrl = `/private/${chatPageId}?selectedRoom=${encodeURIComponent(roomId)}`;
+
     const tokens = tokenEntries.map(e => e.token);
     const response = await getMessaging().sendEachForMulticast({
       tokens,
@@ -1335,9 +1341,16 @@ export const sendCallNotification = onCall(
         roomId,
         roomName: roomName ?? '',
         callerName: callerName ?? '',
+        url: chatUrl,
       },
-      android: { priority: 'high' },
-      apns: { headers: { 'apns-priority': '10' } },
+      android: {
+        priority: 'high',
+        notification: { notificationCount: 1 },
+      },
+      apns: {
+        headers: { 'apns-priority': '10' },
+        payload: { aps: { badge: 1 } },
+      },
     });
 
     // Remove tokens that are no longer registered to avoid future failures

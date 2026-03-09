@@ -1,5 +1,6 @@
 import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -27,6 +28,7 @@ export class MatrixInitializationService {
   private readonly appStore = inject(AppStore);
   private readonly matrixService = inject(MatrixChatService);
   private readonly fcmService = inject(FcmService);
+  private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private initializationStarted = false;
 
@@ -92,19 +94,39 @@ export class MatrixInitializationService {
         );
       }
 
-      // Handle foreground FCM messages (app is open, service worker won't show a banner).
-      // Show a native Notification so the user still sees the incoming call alert.
+      // Handle foreground FCM messages (app is open; service worker doesn't show a banner).
       this.fcmService.listenForMessages().subscribe(payload => {
         if (payload?.data?.['type'] !== 'video-call') return;
-        if (Notification.permission !== 'granted') return;
         const callerName = payload.data['callerName'] ?? 'Unbekannt';
         const roomName   = payload.data['roomName']   ?? '';
-        new Notification(`📹 Video-Anruf von ${callerName}`, {
-          body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
-          icon: '/assets/icons/icon-192x192.png',
-          tag: 'video-call',
-          requireInteraction: true,
-        });
+        const url        = payload.data['url']        as string | undefined;
+
+        // Set badge so the app icon shows an indicator even while the app is open
+        if ('setAppBadge' in navigator) {
+          (navigator as any).setAppBadge(1).catch(() => {});
+        }
+
+        // Navigate directly to the chat page — the user is already in the app
+        if (url) {
+          this.router.navigateByUrl(url);
+        }
+
+        // Also show a native Notification as a visual alert (in case the user is on a different page)
+        if (Notification.permission === 'granted') {
+          new Notification(`📹 Video-Anruf von ${callerName}`, {
+            body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
+            icon: '/assets/icons/icon-192x192.png',
+            tag: 'video-call',
+            requireInteraction: true,
+          });
+        }
+      });
+
+      // Clear the badge when the user returns to the app
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && 'clearAppBadge' in navigator) {
+          (navigator as any).clearAppBadge().catch(() => {});
+        }
       });
     } catch (error) {
       console.error('MatrixInitializationService: Failed to initialize Matrix', error);
