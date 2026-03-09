@@ -1,13 +1,32 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
-import { IonCol, IonContent, IonGrid, IonLabel, IonProgressBar, IonRow, ModalController } from '@ionic/angular/standalone';
-import { UploadTask, UploadTaskSnapshot, getDownloadURL } from 'firebase/storage';
+import {
+  IonContent, IonIcon, IonItem, IonLabel, IonList, IonProgressBar, ModalController
+} from '@ionic/angular/standalone';
+import { UploadTask, getDownloadURL } from 'firebase/storage';
+import { addIcons } from 'ionicons';
+import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 
 import { uploadToFirebaseStorage } from '@bk2/shared-config';
 import { error } from '@bk2/shared-util-angular';
-import { die } from '@bk2/shared-util-core';
 
 import { HeaderComponent } from './header.component';
+
+export interface UploadEntry {
+  file: File;
+  fullPath: string;
+}
+
+interface UploadState {
+  name: string;
+  size: number;
+  percentage: number;
+  bytesTransferred: number;
+  totalBytes: number;
+  state: 'running' | 'paused' | 'success' | 'error' | 'pending';
+  task?: UploadTask;
+  downloadUrl?: string;
+}
 
 @Component({
   selector: 'bk-upload-task',
@@ -15,31 +34,57 @@ import { HeaderComponent } from './header.component';
   imports: [
     DecimalPipe,
     HeaderComponent,
-    IonContent, IonGrid, IonRow, IonCol, IonLabel, IonProgressBar
+    IonContent, IonList, IonItem, IonLabel, IonProgressBar, IonIcon,
   ],
   styles: [`
-    progress::-webkit-progress-value { transition: width 0.1s ease; }
+    ion-list { padding: 8px 0; }
+    ion-item { --padding-start: 16px; --padding-end: 16px; --inner-padding-end: 0; }
+    .file-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .file-name { font-weight: 500; font-size: 0.95rem; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-size { font-size: 0.8rem; color: var(--ion-color-medium); }
+    .progress-row { display: flex; align-items: center; gap: 8px; }
+    ion-progress-bar { flex: 1; height: 6px; border-radius: 3px; }
+    .pct-label { font-size: 0.8rem; color: var(--ion-color-medium); width: 38px; text-align: right; }
+    .status-icon { font-size: 1.4rem; }
+    .status-success { color: var(--ion-color-success); }
+    .status-error { color: var(--ion-color-danger); }
   `],
   template: `
     <bk-header [title]="title()" [isModal]="true" />
-    <ion-content class="ion-no-padding">
-      <ion-grid>
-        @if(percentage(); as pct) {
-          <ion-row>
-            <ion-col>
-              <ion-progress-bar [value]="pct/100" color="primary"></ion-progress-bar>
-              <ion-label>{{ pct | number }}%</ion-label>
-            </ion-col>
-          </ion-row>
+    <ion-content>
+      <ion-list lines="none">
+        @for(item of uploadStates(); track item.name + $index) {
+          <ion-item>
+            <ion-label>
+              <div class="file-info">
+                <span class="file-name">{{ item.name }}</span>
+                <span class="file-size">{{ formatBytes(item.size) }}</span>
+              </div>
+              @if(item.state === 'pending') {
+                <div class="progress-row">
+                  <ion-progress-bar value="0" color="medium" />
+                  <span class="pct-label">—</span>
+                </div>
+              } @else if(item.state === 'running' || item.state === 'paused') {
+                <div class="progress-row">
+                  <ion-progress-bar [value]="item.percentage / 100" color="primary" />
+                  <span class="pct-label">{{ item.percentage | number:'1.0-0' }}%</span>
+                </div>
+              } @else if(item.state === 'success') {
+                <div class="progress-row">
+                  <ion-progress-bar value="1" color="success" />
+                  <ion-icon class="status-icon status-success" name="checkmark-circle" />
+                </div>
+              } @else {
+                <div class="progress-row">
+                  <ion-progress-bar value="0" color="danger" />
+                  <ion-icon class="status-icon status-error" name="close-circle" />
+                </div>
+              }
+            </ion-label>
+          </ion-item>
         }
-        @if(snapshot(); as snap) {
-          <ion-row>
-            <ion-col>
-              <ion-label>{{ snap.bytesTransferred }} of {{ snap.totalBytes }}, {{ snap.state }}</ion-label>
-            </ion-col>
-          </ion-row>
-        }
-      </ion-grid>
+      </ion-list>
     </ion-content>
   `
 })
@@ -47,31 +92,87 @@ export class UploadTaskComponent implements OnInit {
   private readonly modalController = inject(ModalController);
 
   // inputs
-  public file = input.required<File>();
-  public fullPath = input.required<string>();
+  public uploads = input.required<UploadEntry[]>();
   public title = input('Upload');
 
-  // signals
-  public task: UploadTask | undefined;
-  public percentage = signal(0);
-  public snapshot = signal<UploadTaskSnapshot | undefined>(undefined);
+  // state
+  public uploadStates = signal<UploadState[]>([]);
+
+  constructor() {
+    addIcons({ checkmarkCircle, closeCircle });
+  }
 
   ngOnInit() {
-    this.task = uploadToFirebaseStorage(this.fullPath(), this.file());
+    this.uploadStates.set(
+      this.uploads().map(u => ({
+        name: u.file.name,
+        size: u.file.size,
+        percentage: 0,
+        bytesTransferred: 0,
+        totalBytes: u.file.size,
+        state: 'pending' as const,
+      }))
+    );
 
-    this.task.on('state_changed', (_snapshot) => {
-      this.snapshot.set(_snapshot);
-      // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-      this.percentage.set((_snapshot.bytesTransferred / _snapshot.totalBytes) * 100);
-    }, 
-    (ex) => {           // Handle unsuccessful uploads
-      error(undefined, 'UploadTask.start: ERROR: ' + JSON.stringify(ex));
-      this.modalController.dismiss(undefined, 'cancel');
-    }, 
-    async () => {           // Handle successful uploads on complete; i.e. save the download URL in the avatar collection
-      if (!this.task) die('UploadTask.start: ERROR: upload task is undefined');
-      const _downloadUrl = await getDownloadURL(this.task.snapshot.ref);
-      this.modalController.dismiss(_downloadUrl, 'confirm');
+    const downloadUrls: (string | undefined)[] = new Array(this.uploads().length).fill(undefined);
+    let completedCount = 0;
+
+    this.uploads().forEach((entry, index) => {
+      const task = uploadToFirebaseStorage(entry.fullPath, entry.file);
+
+      this.uploadStates.update(states => {
+        const updated = [...states];
+        updated[index] = { ...updated[index], task, state: 'running' };
+        return updated;
+      });
+
+      task.on(
+        'state_changed',
+        (snapshot) => {
+          this.uploadStates.update(states => {
+            const updated = [...states];
+            updated[index] = {
+              ...updated[index],
+              percentage: (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
+              bytesTransferred: snapshot.bytesTransferred,
+              totalBytes: snapshot.totalBytes,
+              state: snapshot.state as UploadState['state'],
+            };
+            return updated;
+          });
+        },
+        (ex) => {
+          error(undefined, `UploadTask[${index}]: ERROR: ${JSON.stringify(ex)}`);
+          this.uploadStates.update(states => {
+            const updated = [...states];
+            updated[index] = { ...updated[index], state: 'error' };
+            return updated;
+          });
+          completedCount++;
+          if (completedCount === this.uploads().length) {
+            this.modalController.dismiss(downloadUrls, 'confirm');
+          }
+        },
+        async () => {
+          const url = await getDownloadURL(task.snapshot.ref);
+          downloadUrls[index] = url;
+          this.uploadStates.update(states => {
+            const updated = [...states];
+            updated[index] = { ...updated[index], state: 'success', downloadUrl: url };
+            return updated;
+          });
+          completedCount++;
+          if (completedCount === this.uploads().length) {
+            this.modalController.dismiss(downloadUrls, 'confirm');
+          }
+        }
+      );
     });
+  }
+
+  formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 }

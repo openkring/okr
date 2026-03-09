@@ -7,7 +7,7 @@ import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE } from "@bk2/shared
 import { error } from "@bk2/shared-util-angular";
 import { getFileHash, getTodayStr, warn } from "@bk2/shared-util-core";
 import { DEFAULT_MIMETYPES } from "@bk2/shared-constants";
-import { UploadTaskComponent, showZoomedImage } from "@bk2/shared-ui";
+import { UploadEntry, UploadTaskComponent, showZoomedImage } from "@bk2/shared-ui";
 
 @Injectable({
     providedIn: 'root'
@@ -23,24 +23,30 @@ export class UploadService {
    * @returns the download URL of the uploaded image
    */
   public async uploadFile(file: File, fullPath: string, title: string): Promise<string | undefined> {
+    const urls = await this.uploadFiles([{ file, fullPath }], title);
+    return urls?.[0];
+  }
+
+  /**
+   * Upload multiple files into Firebase Storage and return their download URLs.
+   * @param uploads array of { file, fullPath } pairs
+   * @param title the title of the upload modal
+   * @returns array of download URLs (undefined entries for failed uploads)
+   */
+  public async uploadFiles(uploads: UploadEntry[], title: string): Promise<(string | undefined)[] | undefined> {
     const modal = await this.modalController.create({
       component: UploadTaskComponent,
       cssClass: 'upload-modal',
-      componentProps: {
-        file: file,
-        fullPath: fullPath,
-        title: title
-      }
+      componentProps: { uploads, title }
     });
     modal.present();
     try {
-      const { data, role } = await modal.onWillDismiss();    // data contains the Firestorage download URL
+      const { data, role } = await modal.onWillDismiss();
       if (role === 'confirm') {
-        return data as string;    // return the firebase storage download URL
+        return data as (string | undefined)[];
       }
-    }
-    catch (ex) {
-      error(undefined, 'UploadService.uploadFile -> ERROR: ' + JSON.stringify(ex));
+    } catch (ex) {
+      error(undefined, 'UploadService.uploadFiles -> ERROR: ' + JSON.stringify(ex));
     }
     return undefined;
   }
