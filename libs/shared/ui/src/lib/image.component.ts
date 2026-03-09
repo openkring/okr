@@ -144,6 +144,7 @@ export class ImageComponent {
   // inputs
   public image = input.required<ImageConfig>();
   public imageStyle = input.required<ImageStyle>();
+  public editMode = input<boolean>(false);
 
   protected imageContainer = viewChild('.image-container', { read: ElementRef });
 
@@ -227,6 +228,7 @@ export class ImageComponent {
   });
 
   protected async onImageClicked(): Promise<void> {
+    if (this.editMode()) return;
     switch(this.actionType()) {
       case ImageActionType.Zoom:
         await showZoomedImage(this.modalController, this.url(), '@content.type.article.zoomedImage', this.imageStyle(), this.altText(), 'full-modal');

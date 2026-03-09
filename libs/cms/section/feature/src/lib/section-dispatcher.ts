@@ -57,7 +57,7 @@ import { NewsSectionComponent } from './news-section.component';
             <bk-album-section [section]="section" [editMode]="editMode()" />
           }
           @case('article') {
-            <bk-article-section [section]="section" />
+            <bk-article-section [section]="section" [editMode]="editMode()" />
           }
           @case('button') {  
             <bk-button-section [section]="section" [editMode]="editMode()" />

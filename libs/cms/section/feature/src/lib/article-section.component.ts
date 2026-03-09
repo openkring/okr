@@ -31,7 +31,7 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
                 <ion-row>
                   @if(image(); as image) {
                     <ion-col size="12" [sizeMd]="colSizeImage()">
-                      <bk-img [image]="image" [imageStyle]="imageStyle()" />
+                      <bk-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
                     </ion-col>
                   }
                   <ion-col size="12" [sizeMd]="colSizeText()">
@@ -52,7 +52,7 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
                   </ion-col>
                   @if(image(); as image) {
                     <ion-col size="12" [sizeMd]="colSizeImage()">
-                      <bk-img [image]="image" [imageStyle]="imageStyle()"  />
+                      <bk-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()"  />
                     </ion-col>
                   }
                 </ion-row>
@@ -63,7 +63,7 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
                 @if(image(); as image) {
                   <ion-row>
                     <ion-col size="12">
-                      <bk-img [image]="image" [imageStyle]="imageStyle()"  />
+                      <bk-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()"  />
                     </ion-col>
                   </ion-row>
                 }
@@ -96,7 +96,7 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
                 @if(image(); as image) {
                   <ion-row>
                     <ion-col size="12">
-                      <bk-img [image]="image" [imageStyle]="imageStyle()"  />
+                      <bk-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()"  />
                     </ion-col>
                   </ion-row>
                 }
@@ -119,6 +119,7 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
 export class ArticleSectionComponent {
   // inputs
   public section = input<ArticleSection>();
+  public editMode = input<boolean>(false);
 
   // computed
   protected image = computed(() => this.section()?.properties.image);
