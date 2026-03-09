@@ -148,7 +148,7 @@ export class MatrixChatService {
         this.setupCallListeners(call);
         this.activeCall$.next(call);
         this.callState$.next('ringing');
-        this.addLocalNotice(call.roomId, '📹 Video-Anruf gestartet');
+        // No local notice here — the caller already sent a persistent notice visible to all room members.
       });
     } catch (error) {
       console.error('MatrixChatService: Failed to initialize client', error);
@@ -396,7 +396,7 @@ export class MatrixChatService {
             const senderMember = room.getMember(e.getSender()!);
             const senderAvatarMxc = (senderMember as any)?.getMxcAvatarUrl?.() as string | undefined;
             const senderAvatar = senderAvatarMxc ? await this.resolveMediaUrl(senderAvatarMxc) : undefined;
-            if ((msg.type === 'm.image' || msg.type === 'm.file') && mxcUrl) {
+            if ((msg.type === 'm.image' || msg.type === 'm.file' || msg.type === 'm.audio') && mxcUrl) {
               return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.resolveMediaUrl(mxcUrl) };
             }
             return { ...msg, senderAvatar: senderAvatar || undefined };
@@ -442,7 +442,7 @@ export class MatrixChatService {
       }
       // Async-resolve media URL and patch the message once fetched
       const mxcUrl = message.content.url ?? message.content.file?.url;
-      if ((message.type === 'm.image' || message.type === 'm.file') && mxcUrl) {
+      if ((message.type === 'm.image' || message.type === 'm.file' || message.type === 'm.audio') && mxcUrl) {
         this.resolveMediaUrl(mxcUrl).then(url => {
           if (!url) return;
           const msgs = subject.value ?? [];
@@ -1171,7 +1171,7 @@ private async updateRoomsList(): Promise<void> {
     this.setupCallListeners(call);
     this.activeCall$.next(call);
     await call.placeVideoCall();
-    this.addLocalNotice(roomId, '📹 Video-Anruf gestartet');
+    this.sendNotice(roomId, '📹 Video-Anruf gestartet');
     // Notify other room members via FCM (non-blocking — failure must not abort the call)
     this.notifyCallees(roomId).catch(err =>
       console.warn('MatrixChatService.startVideoCall: FCM notification failed (non-critical):', err)
@@ -1200,7 +1200,9 @@ private async updateRoomsList(): Promise<void> {
 
   hangupCall(): void {
     const call = this.activeCall$.value;
-    if (call) call.hangup('user_hangup' as any, false);
+    if (!call) return;
+    this.sendNotice(call.roomId, '📹 Video-Anruf beendet');
+    call.hangup('user_hangup' as any, false);
   }
 
   async answerCall(): Promise<void> {
@@ -1220,28 +1222,17 @@ private async updateRoomsList(): Promise<void> {
     });
 
     call.on(CallEvent.Hangup as any, () => {
-      this.addLocalNotice(call.roomId, '📹 Video-Anruf beendet');
       this.activeCall$.next(null);
       this.callState$.next(null);
       this.callFeeds$.next([]);
     });
   }
 
-  /** Inject a notice message directly into the local messages$ for a room (no network round-trip). */
-  private addLocalNotice(roomId: string, body: string): void {
-    const subject = this.messages$.get(roomId);
-    if (!subject) return;
-    subject.next([...(subject.value ?? []), {
-      eventId: `local-notice-${Date.now()}`,
-      roomId,
-      sender: this.client?.getUserId() || '',
-      senderName: '',
-      body,
-      timestamp: Date.now(),
-      type: 'm.notice',
-      content: { msgtype: MsgType.Notice, body },
-      isRedacted: false,
-      isEdited: false,
-    }]);
+  /** Send a notice message to a room so it persists across reloads. Fire-and-forget. */
+  private sendNotice(roomId: string, body: string): void {
+    if (!this.client) return;
+    this.client.sendMessage(roomId, { msgtype: MsgType.Notice, body } as any).catch(err =>
+      console.warn('MatrixChatService.sendNotice failed:', err)
+    );
   }
 }
