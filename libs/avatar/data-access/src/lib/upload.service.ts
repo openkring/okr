@@ -58,7 +58,8 @@ export class UploadService {
    */
   public async pickFile(mimeTypes: string[]): Promise<File | undefined> {
     const result = await FilePicker.pickFiles({
-      types: mimeTypes
+      types: mimeTypes,
+      limit: 1,
     });
     if (result.files.length !== 1) {
       warn('UploadService.pickFile: expected 1 file, got ' + result.files.length);
@@ -69,10 +70,19 @@ export class UploadService {
       warn('UploadService.pickFile: blob is mandatory.');
       return undefined;
     }
-    const file = new File([blob], result.files[0].name, {
-      type: result.files[0].mimeType
-    });
-    return file;
+    return new File([blob], result.files[0].name, { type: result.files[0].mimeType });
+  }
+
+  /**
+   * Open a file picker allowing multiple file selection and return the selected files.
+   * @param mimeTypes a list of mime types to filter the file dialog
+   * @returns the selected files (empty array if cancelled or no blobs available)
+   */
+  public async pickMultipleFiles(mimeTypes: string[]): Promise<File[]> {
+    const result = await FilePicker.pickFiles({ types: mimeTypes });
+    return result.files
+      .filter(f => !!f.blob)
+      .map(f => new File([f.blob!], f.name, { type: f.mimeType }));
   }
 
   /**
