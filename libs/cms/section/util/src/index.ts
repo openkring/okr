@@ -7,7 +7,6 @@ export * from './lib/button-section.validations';
 export * from './lib/calendar-section.validations';
 export  * from './lib/chart-section.validations';
 export * from './lib/chat-section.validations';
-export * from './lib/gallery-section.validations';
 export * from './lib/hero-section.validations';
 export * from './lib/iframe-section.validations';
 export * from './lib/map-section.validations';

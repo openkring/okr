@@ -5,8 +5,8 @@ import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFA
 import type { 
   AccordionSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection, 
   AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection, 
-  ChartSection, ChatConfig, ChatSection, EditorConfig, EventsConfig, EventsSection, GalleryConfig, 
-  GallerySection, HeroConfig, HeroSection, IconConfig, IframeConfig, 
+  ChartSection, ChatConfig, ChatSection, EditorConfig, EventsConfig, EventsSection, 
+  HeroConfig, HeroSection, IconConfig, IframeConfig, 
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, 
   PeopleSection, SliderConfig, SliderSection, TableConfig, TableSection, 
   TrackerConfig, TrackerSection, VideoConfig, VideoSection 
@@ -123,12 +123,6 @@ export const EVENTS_CONFIG_SHAPE = {
   showEventTime: true,
   showEventLocation: false,
 } as EventsConfig;
-
-// --------------------------------------- GALLERY ----------------------------------------
-export const GALLERY_CONFIG_SHAPE = {
-    images: [] as ImageConfig[],
-    imageStyle: IMAGE_STYLE_SHAPE,
-} as GalleryConfig;
 
 // --------------------------------------- HERO ----------------------------------------
 export const HERO_CONFIG_SHAPE = {
@@ -276,12 +270,6 @@ export const CHAT_SECTION_SHAPE = {
   type: 'chat',
   properties: CHAT_CONFIG_SHAPE
 } as ChatSection;
-
-export const GALLERY_SECTION_SHAPE = {
-  ...BASE_SECTION_SHAPE,
-  type: 'gallery',
-  properties: GALLERY_CONFIG_SHAPE
-} as GallerySection;
 
 export const HERO_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,

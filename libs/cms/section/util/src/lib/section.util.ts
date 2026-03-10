@@ -1,4 +1,4 @@
-import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, EVENTS_SECTION_SHAPE, EventsSection, GALLERY_SECTION_SHAPE, GallerySection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, PEOPLE_SECTION_SHAPE, PeopleSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition } from '@bk2/shared-models';
+import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, PEOPLE_SECTION_SHAPE, PeopleSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition } from '@bk2/shared-models';
 import { die } from '@bk2/shared-util-core';
 
 /**
@@ -24,7 +24,6 @@ export function createSection(type: SectionType, tenantId: string): SectionModel
     case 'cal': section = { ...CAL_SECTION_SHAPE } as CalendarSection; break;
     case 'chart': section = { ...CHART_SECTION_SHAPE } as ChartSection; break;
     case 'chat': section = { ...CHAT_SECTION_SHAPE } as ChatSection; break;
-    case 'gallery': section = { ...GALLERY_SECTION_SHAPE } as GallerySection; break;
     case 'hero': section = { ...HERO_SECTION_SHAPE } as HeroSection; break;
     case 'iframe': section = { ...IFRAME_SECTION_SHAPE } as IframeSection; break;
     case 'map': section = { ...MAP_SECTION_SHAPE } as MapSection; break;
@@ -53,7 +52,6 @@ export function narrowSection(section: any): SectionModel | undefined {
     case 'cal': return section as CalendarSection;
     case 'chart': return section as ChartSection;
     case 'chat': return section as ChatSection;
-    case 'gallery': return section as GallerySection;
     case 'hero': return section as HeroSection;
     case 'iframe': return section as IframeSection;
     case 'map': return section as MapSection;

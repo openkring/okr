@@ -11,7 +11,6 @@ import { debugMessage, die } from '@bk2/shared-util-core';
 import { getImageMetaData, listAllFilesFromDirectory } from '@bk2/cms-section-util';
 
 import { HttpClient } from '@angular/common/http';
-import { GalleryModalComponent } from './gallery.modal';
 
 export interface AlbumState {
   config: AlbumConfig;
@@ -120,7 +119,8 @@ export const AlbumStore = signalStore(
       async openGallery(files: ImageConfig[], title = '', initialSlide = 0): Promise<void> {
         const images = files.filter((file) => file.type === ImageType.Image);
         const effect = store.config().effect ?? die('AlbumStore.openGallery: gallery effect is mandatory.');
-        const modal = await store.modalController.create({
+        console.log('AlbumSection.openGallery: not yet implemented');
+/*         const modal = await store.modalController.create({
           component: GalleryModalComponent,
           cssClass: 'full-modal',
           componentProps: {
@@ -133,7 +133,7 @@ export const AlbumStore = signalStore(
         });
         modal.present();
     
-        await modal.onWillDismiss();
+        await modal.onWillDismiss(); */
       }
     }
   })

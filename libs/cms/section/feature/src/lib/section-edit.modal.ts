@@ -38,6 +38,7 @@ import { SectionFormComponent } from '@bk2/cms-section-ui';
             [roles]="roles()"
             [states]="states()"
             [allTags]="tags()"
+            [tenantId]="tenantId()"
             [readOnly]="isReadOnly()"
           />
         }
@@ -68,6 +69,7 @@ export class SectionEditModalComponent {
 
   // derived signals
   protected headerTitle = computed(() => getTitleLabel('content.section', this.section().bkey, this.isReadOnly()));
+  protected tenantId = computed(() => this.appStore.tenantId());
 
   constructor() {
     effect(() => {

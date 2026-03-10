@@ -15,14 +15,14 @@ export const SectionCollection = 'sections';
 export const SectionModelName = 'section';
 
 export type SectionType = 
-    'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' |'gallery' | 'hero' | 'iframe' | 'map' | 
+    'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' | 
     'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
     'news' | 'activities' | 'messages' | 'files' | 'links' | 'rag';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
-    GallerySection | HeroSection | IframeSection | MapSection | PeopleSection | SliderSection | 
+    HeroSection | IframeSection | MapSection | PeopleSection | SliderSection | 
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
     NewsSection | ActivitiesSection | MessagesSection | FilesSection | LinksSection | RagSection;
 
@@ -40,7 +40,7 @@ export interface BaseSection {
   roleNeeded: RoleName;
   isArchived: boolean;
   content: EditorConfig; // content from rich text editor
-  properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | GalleryConfig | HeroConfig | 
+  properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig | 
   IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig | 
   TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | FilesConfig | LinksConfig | RagConfig;
   notes: string;
@@ -69,10 +69,9 @@ export interface AccordionConfig {
 }
 
 export interface AccordionItem {
-  key: string;
+  key: string;    // reference to section key to render in accordion content
   label: string;
   value: string;        // used for accordion state (which item is open)
-  sectionId?: string;   // reference to section to render in accordion content
 }
 
 // --------------------------------------- ACTIVITIES ----------------------------------------
@@ -249,17 +248,6 @@ export interface FilesConfig {
   maxItems: number; // maximum number of files to show
 }
 
-// --------------------------------------- GALLERY ----------------------------------------
-export interface GallerySection extends BaseSection {
-  type: 'gallery';
-  properties: GalleryConfig;
-}
-
-export interface GalleryConfig {
-  images: ImageConfig[]; // list of images to be shown in the gallery
-  imageStyle: ImageStyle;
-}
-
 // --------------------------------------- HERO ----------------------------------------
 export interface HeroSection extends BaseSection {
   type: 'hero';
@@ -424,7 +412,7 @@ export interface SliderSection extends BaseSection {
 }
 
 export interface SliderConfig {
-  images: ImageConfig[]; // list of images to be shown in the gallery
+  images: ImageConfig[]; // list of images to be shown in the slider
   imageStyle: ImageStyle;
 }
 
