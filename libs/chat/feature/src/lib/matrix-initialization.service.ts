@@ -1,6 +1,8 @@
 import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -94,33 +96,60 @@ export class MatrixInitializationService {
         );
       }
 
-      // Handle foreground FCM messages (app is open; service worker doesn't show a banner).
-      this.fcmService.listenForMessages().subscribe(payload => {
-        if (payload?.data?.['type'] !== 'video-call') return;
-        const callerName = payload.data['callerName'] ?? 'Unbekannt';
-        const roomName   = payload.data['roomName']   ?? '';
-        const url        = payload.data['url']        as string | undefined;
+      if (Capacitor.isNativePlatform()) {
+        // Native iOS/Android: PushNotifications fires when app is open (foreground).
+        // The OS suppresses the notification banner on native foreground — navigate directly.
+        PushNotifications.addListener('pushNotificationReceived', notification => {
+          const data = notification.data as Record<string, string> | undefined;
+          if (data?.['type'] !== 'video-call') return;
+          const url = data['url'];
+          if (url) {
+            this.router.navigateByUrl(url);
+          }
+        });
 
-        // Set badge so the app icon shows an indicator even while the app is open
-        if ('setAppBadge' in navigator) {
-          (navigator as any).setAppBadge(1).catch(() => {});
-        }
+        // Native: tapping a notification when app was backgrounded/closed
+        PushNotifications.addListener('pushNotificationActionPerformed', action => {
+          const data = action.notification.data as Record<string, string> | undefined;
+          const url = data?.['url'];
+          if (url) {
+            this.router.navigateByUrl(url);
+          }
+        });
+      } else {
+        // Web / PWA: foreground FCM messages (service worker doesn't show a banner when app is open).
+        this.fcmService.listenForMessages().subscribe(payload => {
+          if (payload?.data?.['type'] !== 'video-call') return;
+          const callerName = payload.data['callerName'] ?? 'Unbekannt';
+          const roomName   = payload.data['roomName']   ?? '';
+          const url        = payload.data['url']        as string | undefined;
 
-        // Navigate directly to the chat page — the user is already in the app
-        if (url) {
-          this.router.navigateByUrl(url);
-        }
+          // Set badge so the app icon shows an indicator even while the app is open
+          if ('setAppBadge' in navigator) {
+            (navigator as any).setAppBadge(1).catch(() => {});
+          }
 
-        // Also show a native Notification as a visual alert (in case the user is on a different page)
-        if (Notification.permission === 'granted') {
-          new Notification(`📹 Video-Anruf von ${callerName}`, {
-            body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
-            icon: '/assets/icons/icon-192x192.png',
-            tag: 'video-call',
-            requireInteraction: true,
-          });
-        }
-      });
+          // Show a notification via the service worker — works on all platforms including iOS Safari.
+          // new Notification() from the main thread is blocked on iOS and unreliable on Android
+          // when a service worker is active; SW.showNotification() is the correct cross-platform API.
+          if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(sw => {
+              sw.showNotification(`📹 Video-Anruf von ${callerName}`, {
+                body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
+                icon: '/assets/icons/icon-192x192.png',
+                tag: 'video-call',
+                requireInteraction: true,
+                data: { url },
+              } as NotificationOptions);
+            }).catch(() => {});
+          }
+
+          // Navigate directly to the chat page so the user lands on the call
+          if (url) {
+            this.router.navigateByUrl(url);
+          }
+        });
+      }
 
       // Clear the badge when the user returns to the app
       document.addEventListener('visibilitychange', () => {

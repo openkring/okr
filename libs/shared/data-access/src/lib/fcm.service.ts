@@ -1,5 +1,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
@@ -30,33 +32,77 @@ export class FcmService {
   }
 
   /**
-   * Request push permission, get the FCM token, and persist it to Firestore
+   * Request push permission, get the FCM/APNs token, and persist it to Firestore
    * at users/{uid}/fcmTokens/{token} so Cloud Functions can send targeted notifications.
+   * On native Capacitor (iOS/Android) uses PushNotifications plugin for the native token.
+   * On web uses Firebase Messaging (service worker / VAPID).
    */
   async registerAndSave(uid: string): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    if (Capacitor.isNativePlatform()) {
+      await this.registerNativeAndSave(uid);
+    } else {
+      await this.registerWebAndSave(uid);
+    }
+  }
+
+  /** Native Capacitor (iOS / Android / macOS) — uses APNs / FCM native SDK. */
+  private async registerNativeAndSave(uid: string): Promise<void> {
+    try {
+      const { receive } = await PushNotifications.requestPermissions();
+      if (receive !== 'granted') {
+        console.log('FcmService: Native push permission denied');
+        return;
+      }
+
+      // register() triggers the 'registration' event with the native FCM/APNs token
+      await PushNotifications.register();
+
+      await new Promise<void>((resolve, reject) => {
+        PushNotifications.addListener('registration', async tokenData => {
+          try {
+            await this.saveToken(uid, tokenData.value);
+            console.log('FcmService: Native push token registered and saved');
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        });
+        PushNotifications.addListener('registrationError', err => {
+          console.warn('FcmService: Native push registration error', err);
+          reject(err);
+        });
+      });
+    } catch (error) {
+      console.warn('FcmService.registerNativeAndSave: Failed:', error);
+    }
+  }
+
+  /** Web / PWA — uses Firebase Messaging + VAPID key + service worker. */
+  private async registerWebAndSave(uid: string): Promise<void> {
     const vapidKey = this.env.services.fcmVapidKey;
     if (!vapidKey) {
-      console.warn('FcmService.registerAndSave: fcmVapidKey not configured in environment');
+      console.warn('FcmService.registerWebAndSave: fcmVapidKey not configured in environment');
       return;
     }
     if (!this.messaging) {
-      console.warn('FcmService.registerAndSave: Messaging not initialized');
+      console.warn('FcmService.registerWebAndSave: Messaging not initialized');
       return;
     }
-    if (!isPlatformBrowser(this.platformId)) return;
 
     try {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
-        console.log('FcmService.registerAndSave: Notification permission denied');
+        console.log('FcmService.registerWebAndSave: Notification permission denied');
         return;
       }
       const token = await getToken(this.messaging, { vapidKey });
       if (!token) return;
       await this.saveToken(uid, token);
-      console.log('FcmService.registerAndSave: Token registered and saved');
+      console.log('FcmService.registerWebAndSave: Token registered and saved');
     } catch (error) {
-      console.warn('FcmService.registerAndSave: Failed to register token:', error);
+      console.warn('FcmService.registerWebAndSave: Failed to register token:', error);
     }
   }
 
@@ -118,12 +164,13 @@ export class FcmService {
   }
 
   /**
-   * Check if FCM is supported in the current browser.
+   * Check if push notifications are supported.
+   * Native Capacitor always supported; web requires Notification + serviceWorker APIs.
    */
   isSupported(): boolean {
-    return isPlatformBrowser(this.platformId) &&
-      'Notification' in window &&
-      'serviceWorker' in navigator;
+    if (!isPlatformBrowser(this.platformId)) return false;
+    if (Capacitor.isNativePlatform()) return true;
+    return 'Notification' in window && 'serviceWorker' in navigator;
   }
 
   private async saveToken(uid: string, token: string): Promise<void> {

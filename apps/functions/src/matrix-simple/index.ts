@@ -1330,14 +1330,15 @@ export const sendCallNotification = onCall(
     const chatUrl = `/private/${chatPageId}?selectedRoom=${encodeURIComponent(roomId)}`;
 
     const tokens = tokenEntries.map(e => e.token);
+    // Data-only message (no notification field): ensures the service worker's
+    // onBackgroundMessage handler is always called on web. When notification is
+    // present, some browsers auto-display it and skip the SW handler entirely.
     const response = await getMessaging().sendEachForMulticast({
       tokens,
-      notification: {
-        title: `📹 Video-Anruf von ${callerName}`,
-        body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
-      },
       data: {
         type: 'video-call',
+        title: `📹 Video-Anruf von ${callerName}`,
+        body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
         roomId,
         roomName: roomName ?? '',
         callerName: callerName ?? '',
@@ -1345,11 +1346,10 @@ export const sendCallNotification = onCall(
       },
       android: {
         priority: 'high',
-        notification: { notificationCount: 1 },
       },
       apns: {
-        headers: { 'apns-priority': '10' },
-        payload: { aps: { badge: 1 } },
+        headers: { 'apns-priority': '10', 'apns-push-type': 'background' },
+        payload: { aps: { badge: 1, 'content-available': 1 } },
       },
     });
 
