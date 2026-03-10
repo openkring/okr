@@ -233,7 +233,7 @@ export class ContentPage {
       .forEach(section => {
         const accordion = section as AccordionSection;
         accordion.properties.items.forEach(item => {
-          if (item.sectionId) nestedIds.add(item.sectionId);
+          if (item.key) nestedIds.add(item.key);
         });
       });
     return nestedIds;

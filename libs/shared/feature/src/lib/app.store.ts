@@ -267,21 +267,25 @@ export const AppStore = signalStore(
         const tagModels = store.allTags().filter((tag: TagModel) => tag.tagModel === modelType);
         return tagModels.length === 0 ? '' : tagModels[0].tags;
       },
-      getCategory(name?: string): CategoryListModel {
+
+      getCategory(categoryName?: string): CategoryListModel {
         // enforce that this function always returns the category (or it ends with an internal error)
-        if (!name) { die('AppStore.getCategory: category is mandatory.');
+        if (!categoryName) { die('AppStore.getCategory: categoryName is mandatory.');
         } else {
-          return store.allCategories()?.find(p => p.bkey === name) ?? die(`AppStore.getCategory: category ${name} not found.`);
+          return store.allCategories()?.find(cat => cat.name === categoryName) ?? die(`AppStore.getCategory: category ${categoryName} not found.`);
         }
       },
+
       getCategoryItem(categoryName?: string, itemName?: string): CategoryItemModel | undefined {
         if (!categoryName || !itemName) return undefined;
         const cat = this.getCategory(categoryName);
         return cat ? cat.items.find(i => i.name === itemName) : undefined;
       },
+
       getCategoryIcon(categoryName?: string, itemName?: string): string {
         return this.getCategoryItem(categoryName, itemName)?.icon ?? '';
       },
+
       /**
        * This returns the name of the default icon for a given ModelType.
        * For most ModelTypes, this is the icon defined in categories model_type.
