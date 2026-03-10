@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, GallerySection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, RoleName, SectionModel, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
 import { ChipsComponent, ImageConfigComponent, NotesInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
@@ -24,6 +24,7 @@ import { TableStyleComponent } from './table-style';
 import { TableDataComponent } from './table-data';
 import { EventsConfigComponent } from './events-config';
 import { InvitationsConfigComponent } from './invitations-config';
+import { ImagesConfigComponent } from './images-config';
 
 @Component({
   selector: 'bk-section-form',
@@ -33,7 +34,7 @@ import { InvitationsConfigComponent } from './invitations-config';
     SectionConfigComponent, EditorConfigComponent, ImageConfigComponent, ImageStyleComponent, AlbumConfigComponent,
     IframeConfigComponent, PeopleConfigComponent, VideoConfigComponent, ButtonStyleComponent, ButtonActionComponent, IconConfigComponent,
     ChatConfigComponent, MapConfigComponent, TrackerConfigComponent, TableGridComponent, TableStyleComponent, TableDataComponent,
-    EventsConfigComponent, InvitationsConfigComponent
+    EventsConfigComponent, InvitationsConfigComponent, ImagesConfigComponent
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -97,12 +98,6 @@ import { InvitationsConfigComponent } from './invitations-config';
             <bk-invitations-config [formData]="invitationsConfig" (formDataChange)="onInvitationsConfigChange($event)" [readOnly]="isReadOnly()" />
           }
         }
-        @case('gallery') {
-          <!-- tbd: GalleryConfig add images: ImageConfig[] -->
-          @if(imageStyle(); as imageStyle) {
-            <bk-image-style [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)" [readOnly]="isReadOnly()" />
-          }
-        }
         @case('hero') {
           @if(logoConfig(); as logoConfig) {
             <bk-image-config [formData]="logoConfig" (formDataChange)="onImageConfigChange($event)" [readOnly]="isReadOnly()" />
@@ -137,7 +132,9 @@ import { InvitationsConfigComponent } from './invitations-config';
           }
         }
         @case('slider') {
-          <!-- tbd: SliderConfig add images: ImageConfig[] -->
+          @if(images(); as images) {
+            <bk-images-config [images]="images" [storagePath]="storagePath()" [readOnly]="isReadOnly()" />
+          }
           @if(imageStyle(); as imageStyle) {
             <bk-image-style [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)" [readOnly]="isReadOnly()" />
           }
@@ -189,14 +186,18 @@ export class SectionFormComponent {
   public readonly allTags = input.required<string>();
   public readonly roles = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
+  public readonly tenantId = input.required<string>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // derived linked signals
+  protected sectionKey = computed(() => this.formData().bkey);
   protected directory = linkedSignal(() => this.formData().type === 'album' ? (this.formData() as any).directory ?? '' : '' );
   protected content = linkedSignal(() => this.getContent());
   protected albumConfig = linkedSignal(() => this.getAlbumConfig());
   protected imageConfig = linkedSignal(() => this.getImageConfig());
+  protected images = linkedSignal(() => this.getImages());
+  protected storagePath = computed(() => `tenant/${this.tenantId()}/section/${this.sectionKey()}`);
   protected imageStyle = linkedSignal(() => this.getImageStyle());
   protected buttonActionConfig = linkedSignal(() => this.getButtonActionConfig());
   protected buttonStyle = linkedSignal(() => this.getButtonStyle());
@@ -262,11 +263,19 @@ export class SectionFormComponent {
     }
   }
 
+  private getImages(): ImageConfig[] {
+    switch (this.formData().type) {
+      case 'slider': return (this.formData() as SliderSection).properties.images || [];
+     // case 'album': return (this.formData() as SliderSection).properties.images || [];
+      default: return [];
+    }
+
+  }
+
   private getImageStyle(): ImageStyle | undefined {
     switch (this.formData().type) {
       case 'article': return (this.formData() as ArticleSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
       case 'button': return (this.formData() as ButtonSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
-      case 'gallery': return (this.formData() as GallerySection).properties.imageStyle || IMAGE_STYLE_SHAPE;
       case 'hero': return (this.formData() as HeroSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
       case 'slider': return (this.formData() as SliderSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
       default: return undefined;
@@ -429,9 +438,6 @@ export class SectionFormComponent {
         break;
       case 'button':
         this.formData.set({...section, properties: { ...section.properties, imageStyle }} as ButtonSection);
-        break;
-      case 'gallery':
-        this.formData.set({...section, properties: { ...section.properties, imageStyle }} as GallerySection);
         break;
       case 'hero':
         this.formData.set({...section, properties: { ...section.properties, imageStyle }} as HeroSection);
