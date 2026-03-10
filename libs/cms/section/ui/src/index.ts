@@ -1,4 +1,6 @@
 export * from './lib/album-config';
+export * from './lib/image-edit.modal';
+export * from './lib/images-config';
 export * from './lib/editor-config';
 export * from './lib/iframe-config';
 export * from './lib/image-style';
