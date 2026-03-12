@@ -68,13 +68,6 @@ export const AppStore = signalStore(
   })),
   
   withProps((store) => ({
-/*     usersResource: rxResource({
-      // the resource will reload whenever the fbUser changes (login/logout).
-      params: () => store.fbUser(),
-      stream: () => {
-        return store.firestoreService.searchData<UserModel>(UserCollection, getSystemQuery(store.tenantId()), 'loginEmail', 'asc');
-      }
-    }), */
     currentUserResource: rxResource({
       // the resource will reload whenever the fbUser changes (login/logout).
       params: () => store.fbUser(),
@@ -160,7 +153,6 @@ export const AppStore = signalStore(
 
   withComputed((state) => {
     return {
-      //allUsers : computed(() => state.usersResource.value() ?? []),
       currentUser: computed(() => {
         const users = state.currentUserResource.value();
         if (!users) {
@@ -187,7 +179,6 @@ export const AppStore = signalStore(
   }),
 
   withComputed((state) => ({
-    //currentUser: computed(() => state.allUsers().find((user: UserModel) => user.loginEmail === state.fbUser()?.email)),
     defaultOrg: computed(() => state.allOrgs().find((org: OrgModel) => org.bkey === state.tenantId())),
     defaultResource: computed(() => state.allResources().find((resource: ResourceModel) => resource.bkey === state.appConfig().defaultResourceId)),
     privacySettings: computed(() => {
@@ -230,14 +221,6 @@ export const AppStore = signalStore(
 
   withMethods((store) => {
     return {
-/*       resetCurrentUser() {
-        store.usersResource.reload();
-      }, */
-      /************************************ GETTERS ************************************* */
-/*       getUser(key: string) {
-        if (!key) return undefined;
-        return store.allUsers()?.find(p => p.bkey === key);
-      }, */
       getPerson(key: string) {
         if (!key) return undefined;
         return store.allPersons()?.find(p => p.bkey === key);
