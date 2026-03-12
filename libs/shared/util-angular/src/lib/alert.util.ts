@@ -78,10 +78,8 @@ export type PromptInputType = 'text' | 'number' | 'password';
 /**
 * Prompts for a text input.
 * @param alertController the ionic alert controller
-* @param message is a message to be shown in the alert or the i18n key to be translated (starting with @)
-* @param cssClass optional styling attributes
 */
-export async function bkPrompt(alertController: AlertController, header: string, placeholder: string): Promise<string | undefined> {
+export async function bkPrompt(alertController: AlertController, header: string, placeholder: string, value?: string): Promise<string | undefined> {
   const buttons = [{
       text: bkTranslate('@general.operation.change.cancel'),
       role: 'cancel'
@@ -95,7 +93,8 @@ export async function bkPrompt(alertController: AlertController, header: string,
     buttons: buttons,
     inputs: [{
       type: 'textarea',
-      placeholder: bkTranslate(placeholder)
+      placeholder: bkTranslate(placeholder),
+      value
     }]
   });
   await alert.present();
