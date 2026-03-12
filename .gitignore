@@ -82,3 +82,5 @@ firebase-export*
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+**/GoogleService-Info.plist
