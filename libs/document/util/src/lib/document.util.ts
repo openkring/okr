@@ -1,8 +1,8 @@
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
-import { DOCUMENT_DIR, DocumentModel } from '@bk2/shared-models';
-import { addIndexElement, checkUrlType, die, warn } from '@bk2/shared-util-core';
+import { DOCUMENT_DIR, DocumentModel, UserModel } from '@bk2/shared-models';
+import { addIndexElement, checkUrlType, die, getFileHash, getFullName, getTodayStr, warn } from '@bk2/shared-util-core';
 
 import { readAsFile } from '@bk2/avatar-util';
 
@@ -77,6 +77,43 @@ export function getStoragePath(url: string | undefined, modelType: string, tenan
     return getDocumentStoragePath(tenant, modelType, url);
   }
   return undefined;
+}
+
+/*-------------------------- factory --------------------------------*/
+/**
+ * Build a DocumentModel from a file after it has been uploaded to Firebase Storage.
+ * @param file the uploaded file
+ * @param tenantId the tenant the document belongs to
+ * @param storagePath the full storage path where the file was uploaded
+ * @param downloadUrl the public download URL returned by Firebase Storage
+ * @param currentUser optional user to set as author
+ * @returns a populated DocumentModel ready to be saved to Firestore
+ */
+export async function buildDocumentModel(
+  file: File,
+  tenantId: string,
+  storagePath: string,
+  downloadUrl: string,
+  currentUser?: UserModel,
+): Promise<DocumentModel> {
+  const hash = await getFileHash(file);
+  const now = getTodayStr();
+  const doc = new DocumentModel(tenantId);
+  doc.bkey = hash;
+  doc.hash = hash;
+  doc.title = file.name;
+  doc.altText = file.name;
+  doc.fullPath = storagePath;
+  doc.mimeType = file.type;
+  doc.size = file.size;
+  doc.source = 'storage';
+  doc.url = downloadUrl;
+  doc.authorKey = currentUser?.personKey ?? '';
+  doc.authorName = getFullName(currentUser?.firstName, currentUser?.lastName);
+  doc.dateOfDocCreation = now;
+  doc.dateOfDocLastUpdate = now;
+  doc.version = now;
+  return doc;
 }
 
 /*-------------------------- search index --------------------------------*/
