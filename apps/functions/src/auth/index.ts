@@ -244,6 +244,63 @@ export const updateFirebaseUser = functions.onCall(
   }
 );
 
+export type FirebaseAuthUser = {
+  uid: string;
+  email: string | undefined;
+  displayName: string | undefined;
+  disabled: boolean;
+  emailVerified: boolean;
+  creationTime: string | undefined;
+  lastSignInTime: string | undefined;
+};
+
+export const listFirebaseUsers = functions.onCall(
+  {
+    region: 'europe-west6',
+    enforceAppCheck: true,
+  },
+  async (request: functions.CallableRequest): Promise<{ users: FirebaseAuthUser[] }> => {
+    checkAppCheckToken(request, 'listFirebaseUsers');
+    checkAuthentication(request, 'listFirebaseUsers');
+    checkAdminUser(request, 'listFirebaseUsers');
+
+    const users: FirebaseAuthUser[] = [];
+    let pageToken: string | undefined;
+
+    do {
+      const result = await getAuth().listUsers(1000, pageToken);
+      for (const u of result.users) {
+        users.push({
+          uid: u.uid,
+          email: u.email,
+          displayName: u.displayName,
+          disabled: u.disabled,
+          emailVerified: u.emailVerified,
+          creationTime: u.metadata.creationTime,
+          lastSignInTime: u.metadata.lastSignInTime,
+        });
+      }
+      pageToken = result.pageToken;
+    } while (pageToken);
+
+    logger.info(`listFirebaseUsers: returned ${users.length} users`);
+    return { users };
+  }
+);
+
+export const deleteFirebaseAuthUser = functions.onCall(
+  { region: 'europe-west6', enforceAppCheck: true },
+  async (request: functions.CallableRequest<{ uid: string }>): Promise<void> => {
+    checkAppCheckToken(request, 'deleteFirebaseAuthUser');
+    checkAuthentication(request, 'deleteFirebaseAuthUser');
+    checkAdminUser(request, 'deleteFirebaseAuthUser');
+    checkStringField(request, 'deleteFirebaseAuthUser', 'uid');
+    const { uid } = request.data;
+    await getAuth().deleteUser(uid);
+    logger.info(`deleteFirebaseAuthUser: deleted user ${uid}`);
+  }
+);
+
 function checkAppCheckToken(request: functions.CallableRequest, nameOfCallingFunction: string): void {
   if (!request.app) {
     logger.error(`${nameOfCallingFunction}: App Check token missing or invalid`);

@@ -4,6 +4,7 @@ import cors from 'cors';
 import * as functions from 'firebase-functions'; // needed for logger
 
 import * as Test from './test';
+import * as Calendar from './calendar';
 import * as Replication from './replication';
 import * as Auth from './auth';
 import * as Matrix from './matrix';
@@ -51,6 +52,8 @@ export const getUidByEmail = Auth.getUidByEmail;  // email
 export const getFirebaseUser = Auth.getFirebaseUser; // uid
 export const setPassword = Auth.setPassword; // uid, password
 export const updateFirebaseUser = Auth.updateFirebaseUser; // uid, email, displayName, emailVerified, disabled, phone, photoUrl
+export const listFirebaseUsers = Auth.listFirebaseUsers;
+export const deleteFirebaseAuthUser = Auth.deleteFirebaseAuthUser;
 
 // replication
 export const onAddressChange = Replication.onAddressChange;
@@ -89,6 +92,9 @@ export const oidcCallback = OidcBridge.oidcCallback;
 export const oidcExchange = OidcBridge.oidcExchange;
 export const oidcToken = OidcBridge.oidcToken;
 export const oidcUserInfo = OidcBridge.oidcUserInfo;
+
+// calendar
+export const generateCalendarICS = Calendar.generateCalendarICS;
 
 // test
 export const getEcho = Test.getEcho;
