@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { FullMetadata, getDownloadURL, getMetadata, listAll, ref } from "firebase/storage";
-import { Observable, of } from 'rxjs';
+import { Observable, firstValueFrom, of } from 'rxjs';
 
 import { ENV, STORAGE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -30,8 +30,12 @@ export class DocumentService {
    */
   public async create(document: DocumentModel, currentUser?: UserModel): Promise<string | undefined> {
     document.index = getDocumentIndex(document);
+    if (document.bkey) {
+      const existing = await firstValueFrom(this.firestoreService.readModel<DocumentModel>(DocumentCollection, document.bkey));
+      if (existing) return document.bkey;
+    }
     return await this.firestoreService.createModel<DocumentModel>(DocumentCollection, document, '@document.operation.create', currentUser);
-  } 
+  }
 
   /**
    * Read a document from the database by returning an Observable of a DocumentModel by key.

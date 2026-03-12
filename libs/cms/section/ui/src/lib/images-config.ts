@@ -5,16 +5,16 @@ import {
   IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
   IonIcon, IonItem, IonLabel, IonList, ModalController
 } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { addCircle, image as imageIcon } from 'ionicons/icons';
 
+import { ENV } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ImageConfig, ImageType } from '@bk2/shared-models';
+import { ImageConfig, ImageType, UserModel } from '@bk2/shared-models';
 import { UploadEntry } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { UploadService } from '@bk2/avatar-data-access';
 
 import { ImageEditModalComponent } from './image-edit.modal';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 const IMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -22,7 +22,7 @@ const IMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   selector: 'bk-images-config',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonList, IonItem, IonLabel, IonButtons, IonButton, IonIcon,
   ],
@@ -40,7 +40,7 @@ const IMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
           @if(!readOnly()) {
             <ion-buttons>
               <ion-button (click)="addImages()">
-                <ion-icon slot="icon-only" name="add-circle" />
+                <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
               </ion-button>
             </ion-buttons>
           }
@@ -55,7 +55,7 @@ const IMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
           }
           @for(img of images(); track $index) {
             <ion-item (click)="showActions(img, $index)" [button]="!readOnly()">
-              <ion-icon name="image" slot="start" color="medium" />
+              <ion-icon slot="start" src="{{'image' | svgIcon }}" color="medium" />
               <ion-label>
                 <p>{{ img.label || img.url }}</p>
                 <p class="image-meta">{{ typeName(img.type) }}{{ img.altText ? ' · ' + img.altText : '' }}</p>
@@ -68,6 +68,7 @@ const IMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   `
 })
 export class ImagesConfigComponent {
+  private readonly env = inject(ENV);
   private readonly uploadService = inject(UploadService);
   private readonly modalController = inject(ModalController);
   private readonly actionSheetController = inject(ActionSheetController);
@@ -75,12 +76,9 @@ export class ImagesConfigComponent {
   // inputs
   public images = model.required<ImageConfig[]>();
   public storagePath = input.required<string>();
+  public currentUser = input<UserModel | undefined>();
   public readOnly = input(true);
   public title = input('@content.section.images.title');
-
-  constructor() {
-    addIcons({ addCircle, image: imageIcon });
-  }
 
   protected typeName(type: ImageType): string {
     return ImageType[type] ?? 'Image';
@@ -99,13 +97,20 @@ export class ImagesConfigComponent {
     const urls = await this.uploadService.uploadFiles(uploads, '@content.section.images.upload');
     if (!urls) return;
 
-    const newImages: ImageConfig[] = files.map((f, i) => ({
+    const newImages: ImageConfig[] = files.map(f => ({
       label: f.name.replace(/\.[^.]+$/, ''),
       type: ImageType.Image,
       url: `${basePath}/${f.name}`,
       actionUrl: '',
       altText: f.name.replace(/\.[^.]+$/, ''),
       overlay: '',
+    }));
+
+    // Persist each uploaded file as a document in the database
+    await Promise.all(files.map((f, idx) => {
+      const downloadUrl = urls[idx];
+      if (!downloadUrl) return Promise.resolve();
+      return this.uploadService.createAndSaveDocument(f, this.env.tenantId, `${basePath}/${f.name}`, downloadUrl, this.currentUser());
     }));
 
     this.images.update(imgs => [...imgs, ...newImages]);
@@ -136,7 +141,7 @@ export class ImagesConfigComponent {
   private async editImage(img: ImageConfig, index: number): Promise<void> {
     const modal = await this.modalController.create({
       component: ImageEditModalComponent,
-      componentProps: { 
+      componentProps: {
         formData: { ...img },
         readOnly: this.readOnly()
       },

@@ -133,7 +133,7 @@ import { ImagesConfigComponent } from './images-config';
         }
         @case('slider') {
           @if(images(); as images) {
-            <bk-images-config [images]="images" [storagePath]="storagePath()" [readOnly]="isReadOnly()" />
+            <bk-images-config [images]="images" (imagesChange)="onImagesChange($event)" [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="isReadOnly()" />
           }
           @if(imageStyle(); as imageStyle) {
             <bk-image-style [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)" [readOnly]="isReadOnly()" />
@@ -397,6 +397,16 @@ export class SectionFormComponent {
   /************************************** property setters (section type specific) *********************************************** */
   protected onContentChange(content: EditorConfig): void {
     this.formData.set({ ...this.formData(), content: content });
+  }
+
+  protected onImagesChange(images: ImageConfig[]): void {
+    const section = this.formData();
+    if (section.type === 'slider') {
+      this.formData.set({
+        ...section,
+        properties: { ...section.properties, images }
+      } as SliderSection);
+    }
   }
 
   protected onImageConfigChange(image: ImageConfig): void {

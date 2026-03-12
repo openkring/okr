@@ -80,7 +80,10 @@ export class ImageSelectModalComponent {
       const storageLocation = getDocumentStoragePath(this.env.tenantId, this.modelType(), key);
       if (storageLocation) {
         const path = storageLocation + '/' + file.name;
-        await this.uploadService.uploadFile(file, path, '@document.operation.upload.single.title');
+        const downloadUrl = await this.uploadService.uploadFile(file, path, '@document.operation.upload.single.title');
+        if (downloadUrl) {
+          await this.uploadService.createAndSaveDocument(file, this.env.tenantId, path, downloadUrl, this.currentUser());
+        }
         this.formData.update((vm) => ({
           ...vm,
           url: path,

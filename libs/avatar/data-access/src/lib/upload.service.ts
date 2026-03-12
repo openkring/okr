@@ -3,9 +3,11 @@ import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE } from "@bk2/shared-models";
+import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@bk2/shared-models";
 import { error } from "@bk2/shared-util-angular";
-import { getFileHash, getTodayStr, warn } from "@bk2/shared-util-core";
+import { warn } from "@bk2/shared-util-core";
+import { buildDocumentModel } from "@bk2/document-util";
+import { DocumentService } from "@bk2/document-data-access";
 import { DEFAULT_MIMETYPES } from "@bk2/shared-constants";
 import { UploadEntry, UploadTaskComponent, showZoomedImage } from "@bk2/shared-ui";
 
@@ -14,6 +16,7 @@ import { UploadEntry, UploadTaskComponent, showZoomedImage } from "@bk2/shared-u
 })
 export class UploadService {
   private readonly modalController = inject(ModalController);
+  private readonly documentService = inject(DocumentService);
 
   /**
    * Upload a file into Firestorage and return the download URL.
@@ -97,34 +100,29 @@ export class UploadService {
    * @param title 
    */
   public async uploadAndCreateDocument(tenantId: string, mimeTypes = DEFAULT_MIMETYPES, storagePath?: string, modalTitle?: string): Promise<DocumentModel | undefined> {
-    // 1) pick file
     const file = await this.pickFile(mimeTypes);
     if (!file) return undefined;
 
-    // 2) upload the file into storage - only if it not already exists - if it has the same hash, Firebase Storage ignores the duplicate 
-    const hash = await getFileHash(file);
-    const path = storagePath ? storagePath : `tenant/${tenantId}/${DocumentModelName}/${hash}`;
-    const title = modalTitle ? modalTitle : `Uploading ${file.name}`;
-    const downloadUrl = await this.uploadFile(file, path, title);
-    if ( !downloadUrl ) return undefined;
+    const path = storagePath ?? `tenant/${tenantId}/${DocumentModelName}`;
+    const title = modalTitle ?? `Uploading ${file.name}`;
+    const downloadUrl = await this.uploadFile(file, `${path}/${file.name}`, title);
+    if (!downloadUrl) return undefined;
 
-    // 3) create a new document object
-    const document = new DocumentModel(tenantId);
-    document.bkey = hash;
-    document.title = file.name;
-    document.altText = file.name;
-    document.fullPath = path + '/' + file.name;
-    document.mimeType = file.type;
-    document.size = file.size;
-    document.source = 'storage';
-    document.url = downloadUrl;
-    const now = getTodayStr();
-    document.dateOfDocCreation = now;
-    document.dateOfDocLastUpdate = now;
-    document.hash = hash;
-    document.version = now;
-    // 4) return the document object
-    return document;
+    return buildDocumentModel(file, tenantId, `${path}/${file.name}`, downloadUrl);
+  }
+
+  /**
+   * Build a DocumentModel from a just-uploaded file and persist it to Firestore.
+   * @param file the uploaded file
+   * @param tenantId the tenant the document belongs to
+   * @param storagePath the full storage path of the uploaded file
+   * @param downloadUrl the download URL returned by Firebase Storage
+   * @param currentUser optional author
+   * @returns the Firestore document key of the created document
+   */
+  public async createAndSaveDocument(file: File, tenantId: string, storagePath: string, downloadUrl: string, currentUser?: UserModel): Promise<string | undefined> {
+    const document = await buildDocumentModel(file, tenantId, storagePath, downloadUrl, currentUser);
+    return this.documentService.create(document, currentUser);
   }
 
   /**

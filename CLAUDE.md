@@ -145,6 +145,9 @@ Production app name for scs-app is scs-app-54aef.
 - use ngx-vest-forms with Angular template driven forms and create vest validations in util component of the feature
 - do only create form models if needed
 - a feature typically consists of FEATURE-list.component.ts (a list view of FEATURE[]), FEATURE-edit.modal.ts using FEATURE.form.ts (in ui component of the feature) as well as FEATURE.store.ts (feature related store).
+- for icons, do not use addIcons. Use SvgIconPipe instead with an svg image like this:
+    `<ion-icon slot="start" src="{{'menu' | svgIcon }}" />`
+
 
 ### Hard Rules
 

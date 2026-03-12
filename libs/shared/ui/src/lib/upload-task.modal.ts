@@ -4,13 +4,13 @@ import {
   IonContent, IonIcon, IonItem, IonLabel, IonList, IonProgressBar, ModalController
 } from '@ionic/angular/standalone';
 import { UploadTask, getDownloadURL } from 'firebase/storage';
-import { addIcons } from 'ionicons';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 
 import { uploadToFirebaseStorage } from '@bk2/shared-config';
 import { error } from '@bk2/shared-util-angular';
 
 import { HeaderComponent } from './header.component';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 export interface UploadEntry {
   file: File;
@@ -32,7 +32,7 @@ interface UploadState {
   selector: 'bk-upload-task',
   standalone: true,
   imports: [
-    DecimalPipe,
+    DecimalPipe, SvgIconPipe,
     HeaderComponent,
     IonContent, IonList, IonItem, IonLabel, IonProgressBar, IonIcon,
   ],
@@ -73,12 +73,12 @@ interface UploadState {
               } @else if(item.state === 'success') {
                 <div class="progress-row">
                   <ion-progress-bar value="1" color="success" />
-                  <ion-icon class="status-icon status-success" name="checkmark-circle" />
+                  <ion-icon class="status-icon status-success" slot="end" src="{{'checkbox-circle' | svgIcon }}" />
                 </div>
               } @else {
                 <div class="progress-row">
                   <ion-progress-bar value="0" color="danger" />
-                  <ion-icon class="status-icon status-error" name="close-circle" />
+                  <ion-icon class="status-icon status-error" slot="end" src="{{'close_cancel_circle' | svgIcon }}" />
                 </div>
               }
             </ion-label>
@@ -97,10 +97,6 @@ export class UploadTaskComponent implements OnInit {
 
   // state
   public uploadStates = signal<UploadState[]>([]);
-
-  constructor() {
-    addIcons({ checkmarkCircle, closeCircle });
-  }
 
   ngOnInit() {
     this.uploadStates.set(

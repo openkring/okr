@@ -4,15 +4,14 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, DocumentCollection, DocumentModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, SectionModel, SectionType } from '@bk2/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, SectionModel, SectionType } from '@bk2/shared-models';
 import { CardSelectModalComponent } from '@bk2/shared-ui';
-import { chipMatches, debugItemLoaded, debugMessage, getFileHash, getFullName, getTodayStr, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugItemLoaded, debugMessage, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
 import { confirm } from '@bk2/shared-util-angular';
 import { FirestoreService } from '@bk2/shared-data-access';
 
 import { UploadService } from '@bk2/avatar-data-access';
-import { getDocumentIndex } from '@bk2/document-util';
 
 import { SectionService } from '@bk2/cms-section-data-access';
 import { createSection, narrowSection } from '@bk2/cms-section-util';
@@ -266,24 +265,7 @@ export const _SectionStore = signalStore(
       },
 
       async createDocument(file: File, storagePath: string, downloadUrl: string) {
-        const document = new DocumentModel(store.tenantId());
-        const hash = await getFileHash(file);
-        document.bkey = hash;
-        document.title = file.name;
-        document.altText = file.name;
-        document.authorKey = store.currentUser()?.personKey ?? '';
-        document.authorName = getFullName(store.currentUser()?.firstName, store.currentUser()?.lastName);
-        document.fullPath = storagePath;
-        document.mimeType = file.type;
-        document.size = file.size;
-        document.source = 'storage';
-        document.url = downloadUrl;
-        const now = getTodayStr();
-        document.dateOfDocCreation = now;
-        document.dateOfDocLastUpdate = now;
-        document.hash = hash;
-        document.index = getDocumentIndex(document);
-        return await store.firestoreService.createModel<DocumentModel>(DocumentCollection, document, '@document.operation.create', store.currentUser());
+        return store.uploadService.createAndSaveDocument(file, store.tenantId(), storagePath, downloadUrl, store.currentUser());
       },
 
       async export(type: string): Promise<void> {
