@@ -71,7 +71,7 @@ export function checkUrlType(url: string | undefined): UrlType | undefined {
     return 'http';
   } else if (url.startsWith('assets/')) {
     return 'assets';
-  } else if (url.indexOf('/') > 0) {
+  } else if (url.startsWith('tenant')) {
     return 'storage';
   } else {
     return 'key';

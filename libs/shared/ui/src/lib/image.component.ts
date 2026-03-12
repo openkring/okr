@@ -3,9 +3,9 @@ import { Component, computed, ElementRef, inject, input, viewChild } from '@angu
 import { IonThumbnail, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 
-import { BkEnvironment, ENV } from '@bk2/shared-config';
+import { ENV } from '@bk2/shared-config';
 import { ImageActionType, ImageConfig, ImageStyle } from '@bk2/shared-models';
-import { die, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl, warn } from '@bk2/shared-util-core';
+import { getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@bk2/shared-util-core';
 import { downloadToBrowser } from '@bk2/shared-util-angular';
 
 import { showZoomedImage } from './ui.util';
@@ -68,30 +68,13 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
   providers: [
     {
       provide: IMAGE_LOADER,
-      // factory function for the IMAGE_LOADER provider with ENV as a dependency
-      useFactory: (env: BkEnvironment) => {
-        const baseUrl = env.services.imgixBaseUrl;
-
-        if (!baseUrl) {
-          die('Imgix base URL is not defined in environment variables (env.services.imgixBaseUrl). Using fallback or error image.');
-        }
-
-        return (config: ImageLoaderConfig) => {
-          let url = `${baseUrl}/${config.src}`;
-          const params = new URLSearchParams('');
-          if (config.width) {
-            params.set('w', config.width.toString());
-          }
-          // add more imigx parameters here as needed
-          // e.g. params.set('auto', 'format,compress');
-          const paramsString = params.toString();
-          if (paramsString) {
-            url += `?${paramsString}`;
-          }
-          return url;
-        };
+      // ngSrc already contains the full imgix URL with params (e.g. ?ar=...&auto=format).
+      // This loader appends &w=<width> (or ?w=<width> if no params yet) for srcset generation.
+      useValue: (config: ImageLoaderConfig) => {
+        if (!config.width) return config.src;
+        const separator = config.src.includes('?') ? '&' : '?';
+        return `${config.src}${separator}w=${config.width}`;
       },
-      deps: [ENV] // declares ENV as a dependency for the factory function
     }
   ],
   styles: [`
@@ -107,7 +90,7 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
           </ion-thumbnail>
         }
         @else {
-          <div class="image-container">
+          <div class="image-container" [ngStyle]="containerStyles()">
             @if(isExternalImage()) {
               <img
                 [src]="url"
@@ -118,15 +101,25 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
                 (click)="onImageClicked()"
               />
             }
+            @else if(fill()) {
+              <img
+                [ngSrc]="imgixUrl()"
+                [ngSrcset]="srcset()"
+                [sizes]="sizes()"
+                [priority]="hasPriority()"
+                fill
+                [alt]="altText()"
+                (click)="onImageClicked()"
+              />
+            }
             @else {
               <img
                 [ngSrc]="imgixUrl()"
                 [ngSrcset]="srcset()"
-                [width]="width()"
-                [height]="height()"
+                [width]="numericWidth() ?? 800"
+                [height]="numericHeight() ?? 600"
                 [sizes]="sizes()"
                 [priority]="hasPriority()"
-                [fill]="fill()"
                 [alt]="altText()"
                 (click)="onImageClicked()"
               />
@@ -164,15 +157,8 @@ export class ImageComponent {
   protected srcset = computed(() => this.generateSrcset());
 
   protected generateSrcset(): string {
-    const url = this.url();
-    const width = this.width();
-    const height = this.height();
-    
-    // keep your existing srcset logic for internal images
-    const params = getSizedImgixParamsByExtension(url, width, height);
-    const base = getImgixUrl(url, '');
-    const widths = [320, 640, 960, 1280, 1920];
-    return widths.map(w => `${base}?${params}&w=${w} ${w}w`).join(', ');
+    // ngSrcset must be width descriptors only; IMAGE_LOADER appends &w= to imgixUrl() (the ngSrc).
+    return '320w, 640w, 960w, 1280w, 1920w';
   }
 
     // using imgix to generate srcset based on width and height
@@ -217,10 +203,18 @@ export class ImageComponent {
     };
   });
 
-  // we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
+  // fill mode requires the container to have position:relative and an explicit height
+  protected containerStyles = computed(() => {
+    if (!this.fill()) return {};
+    return { 'height': this.height() !== 'auto' ? this.height() : '400px' };
+  });
+
+  // that was the original idea: we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
+  // now we eplicitely add imgixBaseUrl
   protected imgixUrl = computed(() => {
     const params = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
-    return getImgixUrl(this.url(), params);
+    const url = getImgixUrl(this.url(), params);
+    return url.startsWith('tenant') ? this.env.services.imgixBaseUrl + '/' + url : url;
   });
 
   protected thumbnailUrl = computed(() => {
