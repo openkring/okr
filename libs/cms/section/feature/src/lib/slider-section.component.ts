@@ -126,12 +126,12 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
     }
 
     .carousel::scroll-button(left) {
-    content: "←";
+    content: "<";
     left: 1.5rem;
     }
 
     .carousel::scroll-button(right) {
-    content: "→";
+    content: ">";
     right: 1.5rem;
     }
   `],
