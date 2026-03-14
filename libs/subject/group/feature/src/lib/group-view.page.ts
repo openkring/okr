@@ -115,7 +115,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
           }
           @case ('files') {
             @defer (on immediate) {
-              <bk-document-list [listId]="id" contextMenuName="c-documents" color="light" [showMainMenu]="false" />
+              <bk-document-list [listId]="listId()" contextMenuName="c-documents" color="light" [showMainMenu]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
@@ -161,6 +161,7 @@ export class GroupViewPageComponent implements ViewWillEnter {
   // derived signals and fields
   protected readonly avatarTitle = computed(() => this.name() ?? DEFAULT_NAME);
   protected readonly parentKey = computed(() => `${GroupModelName}.${this.groupKey()}`);
+  protected readonly listId = computed(() => `k:${this.parentKey()}`);
   protected currentUser = computed(() => this.groupStore.currentUser());
   protected selectedSegment = computed(() => this.groupStore.segment());
   protected group = computed(() => this.groupStore.group());

@@ -192,7 +192,7 @@ export class ArticleSectionComponent {
     if (!props) return [];
     // backward compat: support legacy single-image field
     if (Array.isArray(props.images) && props.images.length > 0) return props.images;
-    if (props.image) return [props.image];
+    if (props.image) return [props.image];    // backward compatibility
     return [];
   });
 

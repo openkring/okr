@@ -8,7 +8,7 @@ import { CategoryListModel, DocumentModel, RoleName, UserModel } from '@bk2/shar
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, fileName, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
 import { ENV } from '@bk2/shared-config';
 
@@ -20,7 +20,7 @@ import { documentValidations } from '@bk2/document-util';
   imports: [
     vestForms,
     FormsModule,
-    SvgIconPipe,
+    SvgIconPipe, ThumbnailUrlPipe, FileLogoPipe,
     TextInputComponent, DateInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonIcon, IonItem
   ],
@@ -37,13 +37,22 @@ import { documentValidations } from '@bk2/document-util';
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
-            <ion-row> 
+            <ion-row>
+              <ion-col size="12" class="ion-text-center">
+                @if(mimeType().startsWith('image/') || mimeType() === 'application/pdf') {
+                  <img [src]="fullPath() | thumbnailUrl" [alt]="altText()" style="max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 4px;" />
+                } @else {
+                  <ion-icon style="width: 80px; height: 80px;" src="{{ fullPath() | fileLogo }}" />
+                }
+              </ion-col>
+            </ion-row>
+            <ion-row>
               @if(hasRole('admin')) {
                 <ion-col size="12" size-md="6">
                   <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
                 </ion-col>
               }
-              <ion-col size="12">
+              <ion-col size="12" >
                 @if(hasRole('admin')) {
                   <ion-item lines="none">
                     <ion-icon src="{{ 'download' | svgIcon }}" slot="start" (click)="download()" />

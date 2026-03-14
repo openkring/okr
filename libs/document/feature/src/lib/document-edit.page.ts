@@ -75,6 +75,7 @@ export class DocumentEditPageComponent {
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     await this.documentStore.save(this.document());
+    this.documentStore.appNavigationService.back();
   }
 
   public async cancel(): Promise<void> {

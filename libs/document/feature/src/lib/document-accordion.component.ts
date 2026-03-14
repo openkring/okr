@@ -63,13 +63,13 @@ export class DocumentsAccordionComponent {
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   protected readonly currentUser = computed(() => this.documentStore.currentUser());
-  protected readonly documents = computed(() => this.documentStore.documentsOfParent() ?? []);
+  protected readonly documents = computed(() => this.documentStore.filteredDocuments() ?? []);
 
   private imgixBaseUrl = this.documentStore.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
-      this.documentStore.setParentKey(this.parentKey());
+      this.documentStore.setListId(`k:${this.parentKey()}`);
     });
   }
 

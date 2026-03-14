@@ -6,7 +6,7 @@ import { ENV, STORAGE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { DocumentCollection, DocumentModel, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
-import { DateFormat, convertDateFormatToString, fileSizeUnit, findByKey, generateRandomString, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
+import { DateFormat, convertDateFormatToString, fileSizeUnit, generateRandomString, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
 import { getDocumentIndex, getDocumentStoragePath } from '@bk2/document-util';
 import { DEFAULT_DOCUMENT_SOURCE, DEFAULT_DOCUMENT_TYPE, DEFAULT_KEY, DEFAULT_NOTES } from '@bk2/shared-constants';
@@ -39,10 +39,11 @@ export class DocumentService {
 
   /**
    * Read a document from the database by returning an Observable of a DocumentModel by key.
+   * Uses a direct document fetch (docData) instead of a full list scan.
    * @param key the key of the model document
    */
   public read(key: string): Observable<DocumentModel | undefined> {
-    return findByKey<DocumentModel>(this.list(), key);    
+    return this.firestoreService.readModel<DocumentModel>(DocumentCollection, key);
   }
 
   /**

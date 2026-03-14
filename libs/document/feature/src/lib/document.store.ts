@@ -17,7 +17,7 @@ import { UploadService } from '@bk2/avatar-data-access';
 
 export type DocumentState = {
   documentKey: string;
-  parentKey: string;
+  listId: string;
 
   // filters
   searchTerm: string;
@@ -28,7 +28,7 @@ export type DocumentState = {
 
 export const initialState: DocumentState = {
   documentKey: '',
-  parentKey: '',
+  listId: '',
   searchTerm: '',
   selectedTag: '',
   selectedType: 'all',
@@ -76,7 +76,7 @@ export const DocumentStore = signalStore(
 
  withComputed((state) => {
     return {
-      documents: computed(() => state.documentsResource.value()) ?? [],
+      documents: computed(() => state.documentsResource.value() ?? []),
       isLoading: computed(() => state.documentsResource.isLoading()),
     }
   }),
@@ -85,17 +85,40 @@ export const DocumentStore = signalStore(
     return {
       // documents
       documentsCount: computed(() => state.documents()?.length ?? 0),
-      filteredDocuments: computed(() => 
-        state.documents()?.filter((document: DocumentModel) => 
+      filteredDocuments: computed(() => {
+        const allDocs = state.documents() ;
+
+        // apply listId filter first
+        let filtered = allDocs;
+        const listId = state.listId();
+        
+        if (listId && listId !== 'all') {
+          const prefix = listId.substring(0,2);
+          const value = listId.substring(2);
+          
+          switch (prefix) {
+          case 'p:': // path
+            filtered = filtered.filter(d => d.fullPath.startsWith(value)) ?? [];
+            break;
+          case 't:': // tag
+            filtered = filtered.filter(d => d.tags.includes(value)) ?? [];
+            break;
+          case 'k:': // parentKey
+            filtered = filtered.filter(d => d.parents.includes(value)) ?? [];
+            break;
+          default:
+            console.warn(`DocumentStore: unknown listId prefix '${prefix}' in listId '${listId}'`);
+            return allDocs;
+          }
+        }
+        
+        // Apply other filters
+        return filtered.filter((document: DocumentModel) => 
           nameMatches(document.index, state.searchTerm()) &&
           nameMatches(document.type, state.selectedType()) &&
           nameMatches(document.source, state.selectedSource()) &&
           chipMatches(document.tags, state.selectedTag()))
-      ),
-      documentsOfParent: computed(() => 
-        state.documents()?.filter((document: DocumentModel) => 
-          document.parents.includes(state.parentKey()
-      ))),
+      }),
 
       // single document
       document: computed(() => state.documentResource.value()),
@@ -119,12 +142,12 @@ export const DocumentStore = signalStore(
       },
  
       /******************************** setters (filter) ******************************************* */
-      setParentKey(parentKey: string) {
-        patchState(store, { parentKey });
-      },
-
       setDocumentKey(documentKey: string): void {
         patchState(store, { documentKey });
+      },
+
+      setListId(listId: string) {
+        patchState(store, { listId });
       },
 
       setSearchTerm(searchTerm: string) {
@@ -173,7 +196,7 @@ export const DocumentStore = signalStore(
         // 1+2+3) pick a file, upload to storage and create initial document object
         const document = await store.uploadService.uploadAndCreateDocument(store.appStore.tenantId());
         if (!document) return;
-        const parentKey = store.parentKey();
+        const parentKey = store.listId().startsWith('k:') ? store.listId().substring(2) : undefined;
         document.parents = parentKey ? [parentKey] : [];
         document.authorKey = currentUser.personKey;
         document.authorName = currentUser.firstName + ' ' + currentUser.lastName;
@@ -225,7 +248,7 @@ export const DocumentStore = signalStore(
 
       async edit(document?: DocumentModel, readOnly = true): Promise<void> {
         if (!document) return;
-        store.appStore.appNavigationService.pushLink('/document/all' );
+        store.appStore.appNavigationService.pushLink('/document/all/c-documents' );
         await navigateByUrl(store.router, `/document/${document.bkey}`, { readOnly });        
         store.documentsResource.reload();
       },

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, effect } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonThumbnail, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
@@ -83,12 +83,12 @@ import { DocumentStore } from './document.store';
     <bk-spinner />
   } @else {
     @if (filteredDocumentsCount() === 0) {
-      <bk-empty-list message="@content.page.field.empty" />
+      <bk-empty-list message="@document.empty" />
     } @else {
       @if(isListView() === true) {
         <ion-grid>
           <!-- don't use 'document' here as it leads to confusions with HTML document -->
-          @for(doc of filteredDocuments(); track $index) {
+          @for(doc of filteredDocuments(); track doc.bkey) {
             <ion-row (click)="showActions(doc)">
               <ion-col size="12" size-sm="8">
                 <ion-item lines="none">
@@ -119,7 +119,24 @@ import { DocumentStore } from './document.store';
           }
         </ion-grid>
       } @else {
-        grid-view
+        <ion-grid>
+          <ion-row>
+            @for(doc of filteredDocuments(); track doc.bkey) {
+              <ion-col size="6" size-md="4" size-xl="3" (click)="showActions(doc)">
+                <div style="position: relative; width: 100%; padding-bottom: 80%; overflow: hidden; border-radius: 4px;">
+                  <ion-thumbnail style="position: absolute; inset: 0; --size: 100%; width: 100%; height: 100%;">
+                    @if(doc.mimeType.startsWith('image/') || doc.mimeType === 'application/pdf') {
+                      <img src="{{ doc.fullPath | thumbnailUrl}}" [alt]="doc.altText" />
+                    } @else {
+                      <ion-icon style="width: 100%; height: 100%;" src="{{ doc.fullPath | fileLogo }}" />
+                    }
+                  </ion-thumbnail>
+                </div>
+                <p style="font-size: 0.75rem; margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{doc.fullPath | fileName}}</p>
+              </ion-col>
+            }
+          </ion-row>
+        </ion-grid>
       }
     }
   }
@@ -156,6 +173,10 @@ export class DocumentListComponent {
   protected popupId = computed(() => `c_docs_${this.listId}`);
 
   private imgixBaseUrl = this.documentStore.appStore.env.services.imgixBaseUrl;
+
+  constructor() {
+    effect(() => this.documentStore.setListId(this.listId()));
+  }
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {

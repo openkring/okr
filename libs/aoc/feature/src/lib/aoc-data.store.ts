@@ -107,7 +107,7 @@ export const AocDataStore = signalStore(
         const maxDocs = 10; // for testing, you can restrict the amount of documents to process. 
         // set it to undefined to process all documents.
         
-        const collectionName = 'sections';
+        const collectionName = 'docs';
 
         // fixing fields (types and undefined)
         // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values
@@ -169,18 +169,9 @@ export const AocDataStore = signalStore(
         const d = doc as any;
         const baseImgix = 'https://bkaiser.imgix.net/';
 
-        if (d.type === 'article') {
-          if (d.properties?.image?.url) {
-            const path = d.properties.image.url;
-            if (path.startsWith('https://firebasestorage')) {
-              const parts = path.split('?');
-              let newPath = baseImgix + parts[0].substring(parts[0].indexOf('/o/') + 3);
-              newPath = newPath.replace('%2F', '/');
-              console.log(`    - updated image path: ${newPath}`);
-              d.properties.image.url = newPath;
-            }
-          }
-        }
+        const tags = d.tags.split(' ');
+        d.tags = tags.join(',');
+        console.log(`    - updated tags: ${d.tags}`);
         //d.tenants = ['scs'];
 
         // create the index here directly without using the getXXindex function, just with string operations.

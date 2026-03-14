@@ -124,10 +124,10 @@ export function extractParentsFromStoragePath(fullPath: string): string[] {
  * 3. Inline keyword scan (avatar, ezs, tenu) → corresponding tag
  *
  * Examples:
- *   "tenant/scs/logo/..."          →  "@tag.scs @tag.logo @tag.marketing"
- *   "tenant/scs/theme/..."         →  "@tag.scs @tag.app"
- *   "tenant/scs/person/123/avatar" →  "@tag.scs @tag.person @tag.avatar"
- *   "tenant/scs/address/456/ezs"   →  "@tag.scs @tag.address @tag.ezs"
+ *   "tenant/scs/logo/..."          →  "@tag.scs,@tag.logo,@tag.marketing"
+ *   "tenant/scs/theme/..."         →  "@tag.scs,@tag.app"
+ *   "tenant/scs/person/123/avatar" →  "@tag.scs,@tag.person,@tag.avatar"
+ *   "tenant/scs/address/456/ezs"   →  "@tag.scs,@tag.address,@tag.ezs"
  */
 export function extractTagsFromStoragePath(fullPath: string): string {
   const segments = fullPath.split('/');
@@ -152,5 +152,5 @@ export function extractTagsFromStoragePath(fullPath: string): string {
     if (lowerPath.includes(keyword)) tags.add(tag);
   }
 
-  return Array.from(tags).join(' ');
+  return Array.from(tags).join(',');
 }
