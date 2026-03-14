@@ -51,8 +51,8 @@ import { NewsStore } from './news-section.store';
         <div class="news-grid">
           @for (article of news(); track article.bkey) {
             <ion-card (click)="showActions(article)">
-              @if (article.properties.image.url) {
-                <bk-img [image]="article.properties.image" [imageStyle]="imageStyle" />
+              @if (article.properties.images.length > 1) {
+                <bk-img [image]="article.properties.images[0]" [imageStyle]="imageStyle" />
               }
               <ion-card-header>
                 <ion-card-title>{{ article.title }}</ion-card-title>

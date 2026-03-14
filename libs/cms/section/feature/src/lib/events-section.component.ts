@@ -1,6 +1,7 @@
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input, untracked } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular/standalone';
+import { Browser } from '@capacitor/browser';
 
 import { CalEventModel, EventsConfig, EventsSection } from '@bk2/shared-models';
 import { MoreButton, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
@@ -10,6 +11,8 @@ import { PrettyDatePipe, SvgIconPipe, WeekdayPipe } from '@bk2/shared-pipes';
 
 import { CalendarStore } from './calendar-section.store';
 import { TranslatePipe } from '@bk2/shared-i18n';
+
+const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
 
 @Component({
   selector: 'bk-events-section',
@@ -51,6 +54,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
               <ion-item (click)="showActions(event)">
                 <ion-icon src="{{ getIcon(event) | svgIcon }}" color="{{ getIconColor(event) }}" slot="start" />
                 <ion-label>{{ (event.startDate | weekday) | translate | async }} {{ event.startDate | prettyDate:false }} {{event.name}}</ion-label>
+                <ion-icon src="{{ 'calendar-number' | svgIcon }}" slot="end" (click)="download(event.bkey)" />
               </ion-item>
             }
             @if(showMoreButton() && !editMode()) {
@@ -58,52 +62,6 @@ import { TranslatePipe } from '@bk2/shared-i18n';
             }
           </ion-list>
         }
-  <!--         <ion-grid>
-            @for(event of calevents(); track event.bkey) {
-              <ion-row (click)="showActions(event)">
-                <ion-col size="1">
-                  <ion-item>
-                  @if(event.isOpen) { 
-                    <ion-icon slot="start"size="large" src="{{getAttendanceIcon(event.bkey) | svgIcon }}" color="{{getAttendanceColor(event.bkey)}}" />
-                  } @else {
-                    <ion-icon slot="start" size="large" src="{{getInvitationIcon(event.bkey) | svgIcon }}" color="{{getInvitationColor(event.bkey)}}" />
-                  }
-                  </ion-item>
-                </ion-col>
-                @if(showEventTime()) {
-                  <ion-item>
-                  <ion-col size="4">
-                    <ion-label>{{ event | calEventDuration }}</ion-label>
-                  </ion-col>
-                  </ion-item>
-                } @else {
-                  <ion-col size="3">
-                    <ion-item>
-                    <ion-label>{{ event.startDate | prettyDate }}</ion-label>
-                    </ion-item>
-                  </ion-col>
-                }
-                <ion-col>
-                  <ion-label>{{event.name}}</ion-label>
-                </ion-col>
-                @if(showEventLocation() && event.locationKey !== 'unknown@unknown') {
-                  <ion-col class="ion-hide-md-down" size="3">
-                    <ion-label>{{ event.locationKey | part:true }}</ion-label>
-                  </ion-col>
-                }
-
-              </ion-row>
-            }
-            @if(showMoreButton()) {
-              <ion-row>
-                <ion-col size="3">
-                  <ion-button expand="block" fill="clear" (click)="openMoreUrl()">
-                    Mehr...
-                  </ion-button>
-                </ion-col>
-              </ion-row>
-            }
-          </ion-grid> -->
       </ion-card-content>
     </ion-card>
     }
@@ -242,5 +200,10 @@ export class EventsSectionComponent implements OnInit {
           break;
       }
     }
+  }
+
+  protected async download(key: string): Promise<void> {
+    const url = `${ICS_FUNCTION_URL}?calendar=e:${key}`;
+    await Browser.open({ url, windowName: '_blank' });
   }
 }

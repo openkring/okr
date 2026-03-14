@@ -186,8 +186,9 @@ function buildICS(calendarName: string, events: CalEventDoc[]): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Public HTTP function that returns an ICS file for a given calendar.
- * URL: GET /generateCalendarICS?calendar=<calendarBkey>
+ * Public HTTP function that returns an ICS file for one or more calendars.
+ * URL: GET /generateCalendarICS?calendar=<key>           (single calendar)
+ *      GET /generateCalendarICS?calendar=<k1>,<k2>,<kn>  (merged, deduplicated)
  *
  * No authentication required — calendar data is considered public.
  * CORS is handled by the Express middleware in main.ts.
@@ -195,49 +196,100 @@ function buildICS(calendarName: string, events: CalEventDoc[]): string {
 export const generateCalendarICS = onRequest(
   { region: 'europe-west6' },
   async (req, res) => {
-    const calendarKey = (req.query['calendar'] as string)?.trim();
+    const raw = (req.query['calendar'] as string)?.trim();
 
-    if (!calendarKey) {
+    if (!raw) {
       res.status(400).send('Missing required query parameter: calendar');
       return;
     }
 
-    logger.info('generateCalendarICS: request', { calendarKey });
+    const calendarKeys = [...new Set(raw.split(',').map(k => k.trim()).filter(Boolean))];
+
+    logger.info('generateCalendarICS: request', { calendarKeys });
 
     const db = getFirestore();
 
-    // Fetch calendar name (best-effort — fall back to key if not found)
-    let calendarName = calendarKey;
-    try {
-      const calDoc = await db.collection('calendars').doc(calendarKey).get();
-      if (calDoc.exists) {
-        const cal = calDoc.data() as CalendarDoc;
-        calendarName = cal.title || cal.name || calendarKey;
-      }
-    } catch (err) {
-      logger.warn('generateCalendarICS: could not fetch calendar doc', { calendarKey, err });
-    }
+    // Separate single-event keys (e:<bkey>) from calendar keys
+    const eventBkeys = calendarKeys.filter(k => k.startsWith('e:')).map(k => k.slice(2));
+    const calKeys    = calendarKeys.filter(k => !k.startsWith('e:'));
 
-    // Fetch events belonging to this calendar
+    // Fetch calendar names for all calendar keys in parallel (best-effort — fall back to key)
+    const nameMap = new Map<string, string>();
+    await Promise.all(calKeys.map(async key => {
+      try {
+        const calDoc = await db.collection('calendars').doc(key).get();
+        if (calDoc.exists) {
+          const cal = calDoc.data() as CalendarDoc;
+          nameMap.set(key, cal.title || cal.name || key);
+        } else {
+          nameMap.set(key, key);
+        }
+      } catch (err) {
+        logger.warn('generateCalendarICS: could not fetch calendar doc', { key, err });
+        nameMap.set(key, key);
+      }
+    }));
+
+    const calendarName = calKeys.map(k => nameMap.get(k) ?? k).join(', ') || 'Events';
+
+    // Fetch events — collect from calendar queries and direct event lookups
     let events: CalEventDoc[] = [];
+    const seen = new Set<string>();
+
     try {
-      const snap = await db.collection('calevents')
-        .where('calendars', 'array-contains', calendarKey)
-        .where('isArchived', '==', false)
-        .get();
-      events = snap.docs.map(doc => ({ bkey: doc.id, ...doc.data() } as CalEventDoc));
+      // Calendar-based queries
+      if (calKeys.length === 1) {
+        const snap = await db.collection('calevents')
+          .where('calendars', 'array-contains', calKeys[0])
+          .where('isArchived', '==', false)
+          .get();
+        for (const doc of snap.docs) {
+          if (!seen.has(doc.id)) { seen.add(doc.id); events.push({ bkey: doc.id, ...doc.data() } as CalEventDoc); }
+        }
+      } else if (calKeys.length > 1) {
+        // array-contains-any supports up to 30 values; chunk if needed
+        const chunks: string[][] = [];
+        for (let i = 0; i < calKeys.length; i += 30) chunks.push(calKeys.slice(i, i + 30));
+        const snapshots = await Promise.all(
+          chunks.map(chunk =>
+            db.collection('calevents')
+              .where('calendars', 'array-contains-any', chunk)
+              .where('isArchived', '==', false)
+              .get()
+          )
+        );
+        for (const snap of snapshots) {
+          for (const doc of snap.docs) {
+            if (!seen.has(doc.id)) { seen.add(doc.id); events.push({ bkey: doc.id, ...doc.data() } as CalEventDoc); }
+          }
+        }
+      }
+
+      // Direct single-event lookups (e:<bkey>)
+      if (eventBkeys.length > 0) {
+        const eventDocs = await Promise.all(
+          eventBkeys.map(bkey => db.collection('calevents').doc(bkey).get())
+        );
+        for (const doc of eventDocs) {
+          if (doc.exists && !seen.has(doc.id)) {
+            seen.add(doc.id);
+            events.push({ bkey: doc.id, ...doc.data() } as CalEventDoc);
+          }
+        }
+      }
     } catch (err) {
       logger.error('generateCalendarICS: Firestore query failed', { err });
       res.status(500).send('Failed to query calendar events.');
       return;
     }
 
-    logger.info('generateCalendarICS: found events', { calendarKey, count: events.length });
+    logger.info('generateCalendarICS: found events', { calendarKeys, count: events.length });
 
     const ics = buildICS(calendarName, events);
+    const filename = calendarKeys.join('_').replace(/[^a-zA-Z0-9_-]/g, '_') + '.ics';
 
     res.set('Content-Type', 'text/calendar; charset=utf-8');
-    res.set('Content-Disposition', `attachment; filename="${calendarKey}.ics"`);
+    res.set('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(ics);
   }
 );
