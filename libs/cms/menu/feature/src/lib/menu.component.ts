@@ -101,7 +101,7 @@ export class MenuComponent {
   protected icon = computed(() => this.menuItem()?.icon ?? 'help-circle');
   protected label = computed(() => {
     const menuLabel = this.menuItem()?.label;
-    if (!menuLabel) return 'LABEL_UNDEFINED';
+    if (!menuLabel) return '';
     // Check for version placeholder and replace it
     if (menuLabel.includes('@VERSION@')) {
       const appVersion = this.versionService.getCurrentVersion();
