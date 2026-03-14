@@ -20,6 +20,7 @@ import { AvatarDisplayComponent } from '@bk2/avatar-ui';
 
 import { CalEventDurationPipe } from '@bk2/calevent-util';
 import { CalEventStore } from './calevent.store';
+import { Browser } from '@capacitor/browser';
 
 @Component({
     selector: 'bk-calevent-list',
@@ -58,7 +59,7 @@ import { CalEventStore } from './calevent.store';
     <ion-header>
       @if(contextMenuName() !== 'disable') {
         <ion-toolbar [color]="color()">
-          @if(showMainMenu()) {
+          @if(showMainMenu() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
           <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calevent.plural' | translate | async }}</ion-title>
@@ -170,7 +171,7 @@ export class CalEventListComponent {
   public contextMenuName = input.required<string>(); // the name of the context menu to use or 'disable' to disable the header toolbar with the context menu
   public color = input('secondary');
   public view = input<'list' | 'calendar'>('calendar'); // initial view mode
-  public showMainMenu = input(true);
+  public showMainMenu = input<boolean>(true);
   
   // filters
   protected searchTerm = linkedSignal(() => this.calEventStore.searchTerm());
@@ -287,6 +288,16 @@ export class CalEventListComponent {
     switch(selectedMethod) {
       case 'add':  await this.calEventStore.add(this.readOnly()); break;
       case 'exportRaw': await this.calEventStore.export("raw"); break;
+      case 'exportIcs': 
+        const cal =  this.calEventStore.calendar();
+        console.log('exportIcs: ', cal);
+        if (!cal) {
+          error(undefined, 'all or my calendars can not be exported');
+        } else {
+          const url = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS?calendar=' + cal.bkey;
+          Browser.open({ url: url, windowName: '_blank' });
+        }
+        break;
       default: error(undefined, `CalEventListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
