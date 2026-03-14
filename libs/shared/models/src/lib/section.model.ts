@@ -118,7 +118,7 @@ export interface ArticleSection extends BaseSection {
 }
 
 export interface ArticleConfig {
-    image: ImageConfig;
+    images: ImageConfig[];
     imageStyle: ImageStyle;
 }
 

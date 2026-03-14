@@ -70,7 +70,7 @@ export const ALBUM_CONFIG_SHAPE = {
 
 // --------------------------------------- ARTICLE ----------------------------------------
 export const ARTICLE_CONFIG_SHAPE = {
-    image: IMAGE_CONFIG_SHAPE,
+    images: [],
     imageStyle: IMAGE_STYLE_SHAPE,
 } as ArticleConfig;
 

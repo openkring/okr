@@ -52,9 +52,7 @@ import { ImagesConfigComponent } from './images-config';
           @if(content(); as content) {
             <bk-editor-config [formData]="content" (formDataChange)="onContentChange($event)" [readOnly]="isReadOnly()" />
           }
-          @if(imageConfig(); as imageConfig) {
-            <bk-image-config [formData]="imageConfig" (formDataChange)="onImageConfigChange($event)" [readOnly]="isReadOnly()" />
-          }
+          <bk-images-config [images]="images()" (imagesChange)="onImagesChange($event)" [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="isReadOnly()" />
           @if(imageStyle(); as imageStyle) {
             <bk-image-style [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)" [readOnly]="isReadOnly()" />
           }
@@ -195,7 +193,6 @@ export class SectionFormComponent {
   protected directory = linkedSignal(() => this.formData().type === 'album' ? (this.formData() as any).directory ?? '' : '' );
   protected content = linkedSignal(() => this.getContent());
   protected albumConfig = linkedSignal(() => this.getAlbumConfig());
-  protected imageConfig = linkedSignal(() => this.getImageConfig());
   protected images = linkedSignal(() => this.getImages());
   protected storagePath = computed(() => `tenant/${this.tenantId()}/section/${this.sectionKey()}`);
   protected imageStyle = linkedSignal(() => this.getImageStyle());
@@ -256,20 +253,12 @@ export class SectionFormComponent {
     }
   }
 
-  private getImageConfig(): ImageConfig | undefined {
-    switch (this.formData().type) {
-      case 'article': return (this.formData() as ArticleSection).properties.image || IMAGE_CONFIG_SHAPE;
-      default: return undefined;
-    }
-  }
-
   private getImages(): ImageConfig[] {
     switch (this.formData().type) {
+      case 'article': return (this.formData() as ArticleSection).properties.images || [];
       case 'slider': return (this.formData() as SliderSection).properties.images || [];
-     // case 'album': return (this.formData() as SliderSection).properties.images || [];
       default: return [];
     }
-
   }
 
   private getImageStyle(): ImageStyle | undefined {
@@ -401,11 +390,10 @@ export class SectionFormComponent {
 
   protected onImagesChange(images: ImageConfig[]): void {
     const section = this.formData();
-    if (section.type === 'slider') {
-      this.formData.set({
-        ...section,
-        properties: { ...section.properties, images }
-      } as SliderSection);
+    if (section.type === 'article') {
+      this.formData.set({ ...section, properties: { ...section.properties, images } } as ArticleSection);
+    } else if (section.type === 'slider') {
+      this.formData.set({ ...section, properties: { ...section.properties, images } } as SliderSection);
     }
   }
 

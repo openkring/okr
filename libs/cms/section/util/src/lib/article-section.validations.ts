@@ -1,23 +1,25 @@
-import { omitWhen, only, staticSuite } from 'vest';
+import { each, omitWhen, only, staticSuite } from 'vest';
 
-import { ArticleSection, ImageActionType } from '@bk2/shared-models';
+import { ArticleSection, ImageActionType, ImageType } from '@bk2/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
-import { booleanValidations, categoryValidations, numberValidations, stringValidations } from '@bk2/shared-util-core';
+import { booleanValidations, categoryValidations, numberValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
 
 export const articleSectionValidations = staticSuite((model: ArticleSection, field?: string) => {
   if (field) only(field);
 
   baseSectionValidations(model, field);
 
-  // image: ImageConfig
-  omitWhen(!model.properties?.image, () => {
-    stringValidations('label', model.properties?.image.label);
-    stringValidations('url', model.properties?.image.url);
-    stringValidations('actionUrl', model.properties?.image.actionUrl);
-    stringValidations('altText', model.properties?.image.altText);
-    stringValidations('overlay', model.properties?.image.overlay);
+  // images: ImageConfig[]
+  omitWhen(!model.properties?.images?.length, () => {
+    each(model.properties.images, (image, index) => {
+      stringValidations(`images[${index}].label`, image.label);
+      categoryValidations(`images[${index}].type`, image.type, ImageType);
+      urlValidations(`images[${index}].url`, image.url);
+      stringValidations(`images[${index}].altText`, image.altText);
+    });
   });
+
   // imageStyle: ImageStyle
   omitWhen(!model.properties?.imageStyle, () => {
     stringValidations('imgIxParams', model.properties?.imageStyle.imgIxParams);

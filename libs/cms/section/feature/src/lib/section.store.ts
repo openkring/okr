@@ -229,12 +229,17 @@ export const _SectionStore = signalStore(
 
         // 3) update the section with the new image URL
         const imgixBaseUrl = store.appStore.env.services.imgixBaseUrl; // https://bkaiser.imgix.net
-        if (!section.properties.image) {
-          section.properties.image = IMAGE_CONFIG_SHAPE;
+        const newImage = {
+          ...IMAGE_CONFIG_SHAPE,
+          url: `${imgixBaseUrl}/${storagePath}`,
+          actionUrl: downloadUrl,
+          altText: file.name,
+          label: file.name.replace(/\.[^.]+$/, ''),
+        };
+        if (!section.properties.images) {
+          section.properties.images = [];
         }
-        section.properties.image.url = `${imgixBaseUrl}/${storagePath}`;
-        section.properties.image.actionUrl = downloadUrl;
-        section.properties.image.altText = file.name;
+        section.properties.images = [...section.properties.images, newImage];
         if (!section.properties.imageStyle) {
           section.properties.imageStyle = IMAGE_STYLE_SHAPE;
         }

@@ -7,7 +7,7 @@ import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, ImageType, MembershipModel, PageCollection, PageModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
+import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
 import { confirm, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_KEY, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
@@ -319,14 +319,7 @@ export const GroupStore = signalStore(
           position: ViewPosition.None
         },
         properties: {
-          image: {
-            label: '',
-            type: ImageType.Image,
-            url: '',
-            actionUrl: '',
-            altText: '',
-            overlay: ''
-          },
+          images: [],
           imageStyle: {
             imgIxParams: '',
             width: '100%',
