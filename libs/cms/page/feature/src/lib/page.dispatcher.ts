@@ -14,6 +14,7 @@ import { ErrorPage } from "./error.page";
 import { ChatPage } from "./chat.page";
 import { FilesPage } from "./files.page";
 import { AlbumPage } from "./album.page";
+import { GraphPage } from "./graph.page";
 
 /**
  * PageDispatcher is a routable component that dispatches to the correct page component based 
@@ -36,7 +37,7 @@ import { AlbumPage } from "./album.page";
   selector: 'bk-page-dispatcher',
   standalone: true,
   imports: [
-    ContentPage, DashboardPage, BlogPage, LandingPage, ErrorPage, FilesPage, AlbumPage,
+    ContentPage, DashboardPage, BlogPage, LandingPage, ErrorPage, FilesPage, AlbumPage, GraphPage,
     SpinnerComponent, ChatPage
 ],
   template: `
@@ -86,6 +87,13 @@ import { AlbumPage } from "./album.page";
                 @case ('album') {
                     @defer (on idle) {
                         <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                    } @placeholder {
+                        <bk-spinner />
+                    }
+                }
+                @case ('graph') {
+                    @defer (on idle) {
+                        <bk-graph-page [color]="color()" [showMainMenu]="!isGroupView()" />
                     } @placeholder {
                         <bk-spinner />
                     }
