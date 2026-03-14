@@ -1,10 +1,10 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonThumbnail, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { DocumentModel, DocumentModelName, RoleName } from '@bk2/shared-models';
-import { FileExtensionPipe, FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { FileExtensionPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe, FileLogoPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { getItemLabel, hasRole } from '@bk2/shared-util-core';
@@ -17,59 +17,65 @@ import { DocumentStore } from './document.store';
   selector: 'bk-document-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, FileNamePipe, FileLogoPipe, FileSizePipe, PrettyDatePipe,
+    TranslatePipe, AsyncPipe, SvgIconPipe, FileNamePipe, FileLogoPipe, FileSizePipe, PrettyDatePipe, ThumbnailUrlPipe,
     SpinnerComponent, ListFilterComponent,
     EmptyListComponent, MenuComponent,
     IonToolbar, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
-    IonTitle, IonMenuButton, IonContent, IonItem, IonPopover
+    IonTitle, IonMenuButton, IonContent, IonItem, IonPopover, IonThumbnail
   ],
   providers: [DocumentStore],
   template: `
   <ion-header>
-    <!-- title and actions -->
-  <ion-toolbar color="secondary">
-    <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-    <ion-title>{{ filteredDocumentsCount()}}/{{documentsCount()}} {{ '@document.plural' | translate | async }}</ion-title>
-    @if(hasRole('privileged') || hasRole('contentAdmin')) {
-      <ion-buttons slot="end">
-        <ion-button id="c-docs">
-          <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
-        </ion-button>
-        <ion-popover trigger="c-docs" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-          <ng-template>
-            <ion-content>
-              <bk-menu [menuName]="contextMenuName()"/>
-            </ion-content>
-          </ng-template>
-        </ion-popover>
-      </ion-buttons>
+    @if(contextMenuName() !== 'disable') {
+      <ion-toolbar [color]="color()">
+        @if(showMainMenu() === true) {
+          <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+        }
+        <ion-title>{{ filteredDocumentsCount()}}/{{documentsCount()}} {{ '@document.plural' | translate | async }}</ion-title>
+        @if(!readOnly()) {
+          <ion-buttons slot="end">
+            <ion-button id="{{ popupId() }}">
+              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+              <ng-template>
+                <ion-content>
+                  <bk-menu [menuName]="contextMenuName()"/>
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          </ion-buttons>
+        }
+      </ion-toolbar>
     }
-  </ion-toolbar>
 
-  <!-- search and filters -->
-  <bk-list-filter
-    (searchTermChanged)="onSearchtermChange($event)"
-    (tagChanged)="onTagSelected($event)" [tags]="tags()"
-    (typeChanged)="onTypeSelected($event)" [types]="types()"
-  />
+    <!-- search and filters -->
+    <bk-list-filter
+      (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+      [initialView]="view()" (viewToggleChanged)="onViewChange($event)" 
+    />
 
-  <!-- list header -->
-  <ion-toolbar color="light" class="ion-hide-sm-down">
-    <ion-grid>
-      <ion-row>
-        <ion-col size="8">
-          <ion-label><strong>{{ '@document.list.header.name' | translate | async }}</strong></ion-label>
-        </ion-col>
-        <ion-col size="2">
-          <ion-label><strong>{{ '@document.list.header.size' | translate | async }}</strong></ion-label>
-        </ion-col>
-        <ion-col size="2">
-          <ion-label><strong>{{ '@document.list.header.lastUpdate' | translate | async }}</strong></ion-label>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
-  </ion-toolbar>
-</ion-header>
+    <!-- list header -->
+    @if(isListView()) {
+      <ion-toolbar color="light" class="ion-hide-sm-down">
+        <ion-grid>
+          <ion-row>
+            <ion-col size="8">
+              <ion-label><strong>{{ '@document.list.header.name' | translate | async }}</strong></ion-label>
+            </ion-col>
+            <ion-col size="2">
+              <ion-label><strong>{{ '@document.list.header.size' | translate | async }}</strong></ion-label>
+            </ion-col>
+            <ion-col size="2">
+              <ion-label><strong>{{ '@document.list.header.lastUpdate' | translate | async }}</strong></ion-label>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-toolbar>
+    }
+  </ion-header>
 
 <!-- list data -->
 <ion-content #content>
@@ -79,29 +85,42 @@ import { DocumentStore } from './document.store';
     @if (filteredDocumentsCount() === 0) {
       <bk-empty-list message="@content.page.field.empty" />
     } @else {
-      <ion-grid>
-        <!-- don't use 'document' here as it leads to confusions with HTML document -->
-        @for(doc of filteredDocuments(); track $index) {
-          <ion-row (click)="showActions(doc)">
-            <ion-col size="12" size-sm="8">
-              <ion-item lines="none">
-                <ion-icon src="{{ doc.fullPath | fileLogo }}" />&nbsp;
-                <ion-label>{{ doc.fullPath | fileName}}</ion-label>
-              </ion-item>
-            </ion-col>
-            <ion-col size="2" class="ion-hide-sm-down">
-              <ion-item lines="none">
-                <ion-label>{{ doc.size | fileSize}}</ion-label>
-              </ion-item>
-            </ion-col>
-            <ion-col size="2" class="ion-hide-sm-down">
-              <ion-item lines="none">
-                <ion-label>{{ doc.dateOfDocLastUpdate | prettyDate }}</ion-label>
-              </ion-item>
-            </ion-col>
-          </ion-row>
-        }
-      </ion-grid>
+      @if(isListView() === true) {
+        <ion-grid>
+          <!-- don't use 'document' here as it leads to confusions with HTML document -->
+          @for(doc of filteredDocuments(); track $index) {
+            <ion-row (click)="showActions(doc)">
+              <ion-col size="12" size-sm="8">
+                <ion-item lines="none">
+                  <ion-thumbnail slot="start">
+                    @if(doc.mimeType.startsWith('image/') || doc.mimeType === 'application/pdf') {
+                      <img src="{{ doc.fullPath | thumbnailUrl}}" [alt]="doc.altText" />
+                    } @else {
+                      <ion-icon style="width: 100%; height: 100%;" src="{{ doc.fullPath | fileLogo }}" />
+                    }
+                  </ion-thumbnail>                
+                  <ion-label>
+                    <h3>{{ doc.title }}</h3>
+                    <p>{{ doc.fullPath | fileName}}</p>
+                  </ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="2" class="ion-hide-sm-down">
+                <ion-item lines="none">
+                  <ion-label>{{ doc.size | fileSize}}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="2" class="ion-hide-sm-down">
+                <ion-item lines="none">
+                  <ion-label>{{ doc.dateOfDocLastUpdate | prettyDate }}</ion-label>
+                </ion-item>
+              </ion-col>
+            </ion-row>
+          }
+        </ion-grid>
+      } @else {
+        grid-view
+      }
     }
   }
 </ion-content>
@@ -112,8 +131,11 @@ export class DocumentListComponent {
   private readonly actionSheetController = inject(ActionSheetController);
 
   // inputs
-  public readonly listId = input.required<string>();
+  public readonly listId = input.required<string>();  // preset filter, e.g. p:path (with wildcard), t:tag, k:parentKey
   public readonly contextMenuName = input.required<string>();
+  public color = input('secondary');
+  public view = input<'list' | 'grid'>('list'); // initial view mode
+  public showMainMenu = input<boolean>(true);
 
   // filters
   protected readonly searchTerm = linkedSignal(() => this.documentStore.searchTerm());
@@ -129,7 +151,9 @@ export class DocumentListComponent {
   protected types = computed(() => this.documentStore.appStore.getCategory('document_type'));
   protected sources = computed(() => this.documentStore.appStore.getCategory('document_source'));
   protected readonly currentUser = computed(() => this.documentStore.appStore.currentUser());
-  private readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
+  protected isListView = linkedSignal(() => this.view() === 'list');
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
+  protected popupId = computed(() => `c_docs_${this.listId}`);
 
   private imgixBaseUrl = this.documentStore.appStore.env.services.imgixBaseUrl;
 
@@ -226,6 +250,10 @@ export class DocumentListComponent {
           break;
       }
     }
+  }
+
+  protected onViewChange(showList: boolean): void {
+    this.isListView.set(showList);
   }
 
   /******************************* helpers *************************************** */

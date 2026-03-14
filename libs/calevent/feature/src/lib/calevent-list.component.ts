@@ -106,11 +106,11 @@ import { Browser } from '@capacitor/browser';
         (tagChanged)="onTagSelected($event)" [tags]="tags()"
         (typeChanged)="onTypeSelected($event)" [types]="types()"
         (yearChanged)="onYearSelected($event)" [years]="years()"
-        viewType="calendar" (viewToggleChanged)="onViewChange($event)" 
+        [initialView]="view()" (viewToggleChanged)="onViewChange($event)" gridIcon="calendar"
       />
 
       <!-- list header -->
-    @if(!showCalendar()) {
+    @if(isListView()) {
       <ion-toolbar>
         <ion-grid>
           <ion-row>
@@ -141,10 +141,9 @@ import { Browser } from '@capacitor/browser';
       @if(filteredCalEventsCount() === 0) {
         <bk-empty-list message="@calevent.field.empty" />
       } @else {
-        <div [style.display]="showCalendar() ? 'block' : 'none'">
+        @if(isListView() === false) {
           <full-calendar #fullCalendar [options]="calendarOptions" [events]="calendarEvents()" />
-        </div>
-        <div [style.display]="!showCalendar() ? 'block' : 'none'">
+        } @else {
           <ion-list lines="inset">
             @for(event of filteredCalEvents(); track event.bkey) {
               <ion-item (click)="showActions(event)">
@@ -155,7 +154,7 @@ import { Browser } from '@capacitor/browser';
               </ion-item>
             }
           </ion-list>
-        </div>
+        }
       }
     }
   </ion-content>
@@ -170,7 +169,7 @@ export class CalEventListComponent {
   public listId = input.required<string>();     // calendar name
   public contextMenuName = input.required<string>(); // the name of the context menu to use or 'disable' to disable the header toolbar with the context menu
   public color = input('secondary');
-  public view = input<'list' | 'calendar'>('calendar'); // initial view mode
+  public view = input<'list' | 'grid'>('grid'); // initial view mode
   public showMainMenu = input<boolean>(true);
   
   // filters
@@ -189,7 +188,7 @@ export class CalEventListComponent {
   private currentUser = computed(() => this.calEventStore.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
-  protected showCalendar = linkedSignal(() => this.view() === 'calendar');
+  protected isListView = linkedSignal(() => this.view() === 'list');
 
   protected calendarEvents = computed<EventInput[]>(() => {    
     return this.filteredCalEvents().map(event => ({
@@ -363,9 +362,9 @@ export class CalEventListComponent {
     }
   }
 
-  protected onViewChange(showCalendar: boolean): void {
-    this.showCalendar.set(showCalendar);
-    if (showCalendar) {
+  protected onViewChange(showList: boolean): void {
+    this.isListView.set(showList);
+    if (showList === false) {
       // Need to update calendar size after it becomes visible
       setTimeout(() => {
         const calendarApi = this.fullCalendar()?.getApi();

@@ -13,6 +13,7 @@ import { PageDispatcher, PageStore } from '@bk2/cms-page-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { MembershipListComponent } from '@bk2/relationship-membership-feature';
 import { TaskListComponent } from '@bk2/task-feature';
+import { DocumentListComponent } from '@bk2/document-feature';
 
 import { GroupStore } from './group.store';
 import { CalEventListComponent } from '@bk2/calevent-feature';
@@ -23,7 +24,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
   imports: [
     TranslatePipe, AsyncPipe,
     ChangeConfirmationComponent, PageDispatcher,
-    CalEventListComponent, MembershipListComponent,
+    CalEventListComponent, MembershipListComponent, DocumentListComponent,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
     IonHeader, IonButtons, IonTitle, IonMenuButton,
     TaskListComponent
@@ -57,12 +58,12 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
             <ion-label>{{ '@subject.group.segment.tasks' | translate | async}}</ion-label>
           </ion-segment-button>
         }
-        <!--
         @if(hasFiles()) {
           <ion-segment-button value="files">
             <ion-label>{{ '@subject.group.segment.files' | translate | async}}</ion-label>
           </ion-segment-button>
         }
+        <!--
         @if(hasAlbum()) {
           <ion-segment-button value="album">
             <ion-label>{{ '@subject.group.segment.album' | translate | async}}</ion-label>
@@ -100,7 +101,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
           }
           @case ('calendar') {
             @defer (on immediate) {
-              <bk-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="calendar" [showMainMenu]="false" />
+              <bk-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="grid" [showMainMenu]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
@@ -112,14 +113,14 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
-          <!--
           @case ('files') {
             @defer (on immediate) {
-              <bk-content-page id="{{id + '_files'}}" contextMenuName="c-contentpage" color="light" />
+              <bk-document-list [listId]="id" contextMenuName="c-documents" color="light" [showMainMenu]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
+          <!--
           @case ('album') {
             @defer (on immediate) {
               <bk-content-page id="{{id + '_album'}}" contextMenuName="c-contentpage" color="light" />
@@ -169,7 +170,7 @@ export class GroupViewPageComponent implements ViewWillEnter {
   protected hasChat = computed(() => this.formData()?.hasChat ?? true);
   protected hasCalendar = computed(() => this.formData()?.hasCalendar ?? true);
   protected hasTasks = computed(() => this.formData()?.hasTasks ?? true);
-  //protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
+  protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
   //protected hasAlbum = computed(() => this.formData()?.hasAlbum ?? true);
   protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
   protected path = computed(() => getDocumentStoragePath(this.groupStore.tenantId(), 'group', this.group()?.bkey));

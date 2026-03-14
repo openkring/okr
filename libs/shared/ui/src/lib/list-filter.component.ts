@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, linkedSignal } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonGrid, IonIcon, IonRow, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -68,7 +68,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
           }
         </ion-row>
       </ion-grid>
-      @if(viewType()) {
+      @if(initialView()) {
         <ion-buttons slot="end">
           <ion-button (click)="toggleView()">
             <ion-icon slot="icon-only" src="{{getViewIcon() | svgIcon }}" />
@@ -87,7 +87,8 @@ export class ListFilterComponent {
   public categories = input<CategoryListModel>();
   public years = input<number[]>();
   public states = input<CategoryListModel>();
-  public viewType = input<'calendar' | 'grid' | undefined>();
+  public gridIcon = input<'calendar' | 'grid'>('grid'); // the icon to show in grid view
+  public initialView = input<'list' | 'grid' | undefined>();
 
   public selectedTag = input<string>('');
   public selectedType = input<string>('');
@@ -99,7 +100,7 @@ export class ListFilterComponent {
   public showSearch = input(true);
   public yearLabel = input<string>();
 
-  public viewToggle = false;
+  public isListView = linkedSignal(() => this.initialView() === 'list');
 
   // coerced boolean inputs
   protected shouldShowIcons = computed(() => coerceBoolean(this.showIcons()));
@@ -141,18 +142,11 @@ export class ListFilterComponent {
    * The view representation is up to the parent component. Typically, if toggleViewChanged is signalled true, an alternative view is shown.
    */
   protected toggleView(): void {
-    this.viewToggle = !this.viewToggle;
-    this.viewToggleChanged.emit(this.viewToggle);
+    this.isListView.set(!this.isListView());
+    this.viewToggleChanged.emit(this.isListView());
   }
 
   protected getViewIcon(): string {
-    switch (this.viewType()) {
-      case 'calendar':
-        return this.viewToggle ? 'list' : 'calendar';
-      case 'grid':
-        return this.viewToggle ? 'list' : 'grid';
-      default:
-        return '';
-    }
+    return this.isListView() ? this.gridIcon() : 'list';
   }
 }
