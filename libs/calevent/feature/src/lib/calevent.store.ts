@@ -24,7 +24,7 @@ import { CalEventEditModalComponent } from './calevent-edit.modal';
 import { firstValueFrom, map, of } from 'rxjs';
 
 export type CalEventState = {
-  calendarName: string; // all, my, or specific calendar name
+  calendarName: string; // all, my, or specific calendar name, tbd: my_pkey (for another user)
   seriesId: string;
   maxEvents: number | undefined; // max events to show, undefined means all
   showPastEvents: boolean; // whether to show past events
@@ -172,7 +172,7 @@ export const CalEventStore = signalStore(
 
       calendar: computed(() => {
         const calName = state.calendarName();
-        if (calName.length === 0 || calName === 'all') return undefined;
+        if (calName.length === 0 || calName === 'all' || calName === 'my') return undefined;
         return state.calendarsResource.value()?.find((cal: CalendarModel) => cal.bkey === calName);
       }),
       isLoading: computed(() => state.caleventsResource.isLoading() || state.calendarsResource.isLoading()),
@@ -184,7 +184,7 @@ export const CalEventStore = signalStore(
       calEventsCount: computed(() => state.calEvents().length),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
-      isGroupCalendar: computed(() => state.calendar()?.owner?.startsWith('group.')),
+      isGroupCalendar: computed(() => state.calendar()?.owner?.startsWith('group.') ?? false),
       groupCalendarId: computed(() => {
         const owner = state.calendar()?.owner;
         if (owner && owner.startsWith('group.')) {
