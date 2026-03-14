@@ -54,7 +54,6 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
               <ion-item (click)="showActions(event)">
                 <ion-icon src="{{ getIcon(event) | svgIcon }}" color="{{ getIconColor(event) }}" slot="start" />
                 <ion-label>{{ (event.startDate | weekday) | translate | async }} {{ event.startDate | prettyDate:false }} {{event.name}}</ion-label>
-                <ion-icon src="{{ 'calendar-number' | svgIcon }}" slot="end" (click)="download(event.bkey)" />
               </ion-item>
             }
             @if(showMoreButton() && !editMode()) {
@@ -173,6 +172,7 @@ export class EventsSectionComponent implements OnInit {
           }
         }
       }
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.imgixBaseUrl, 'calendar-number'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
       if (actionSheetOptions.buttons.length === 1) { // only cancel button
         actionSheetOptions.buttons = [];
@@ -198,6 +198,9 @@ export class EventsSectionComponent implements OnInit {
         case 'calevent.unsubscribe':
           await this.calendarStore.unsubscribe(calEvent);
           break;
+        case 'calevent.downloadIcs':
+          await this.download(calEvent.bkey);
+        break;
       }
     }
   }
