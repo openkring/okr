@@ -1,5 +1,8 @@
-import { DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_SECTIONS, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE } from '@bk2/shared-constants';
+import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_SECTIONS, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE } from '@bk2/shared-constants';
 import { BkModel, MetaTag, NamedModel, SearchableModel, TaggedModel } from './base.model';
+
+export type BlogLayoutType = 'minimal' | 'grid' | 'classic' | 'magazine' | 'bento' | 'stream';
+export const DEFAULT_BLOG_LAYOUT_TYPE: BlogLayoutType = DEFAULT_BLOG_TYPE;
 
 export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedModel {
   public bkey = DEFAULT_KEY;
@@ -21,6 +24,7 @@ export class PageModel implements BkModel, NamedModel, SearchableModel, TaggedMo
   public notes = DEFAULT_NOTES; // a detailed description of the trip
   public sections = DEFAULT_SECTIONS; // section.bkey, section.name
   public isPrivate = true; // if true, page requires authentication and should not be accessible via /public/ routes
+  public blogType: BlogLayoutType = DEFAULT_BLOG_LAYOUT_TYPE; // layout type for blog pages
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

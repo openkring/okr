@@ -20,3 +20,5 @@ export * from './lib/video-section.component';
 
 export * from './lib/section.store';
 export * from './lib/section-edit.modal';
+export * from './lib/news-section.component';
+export * from './lib/news-section.store';

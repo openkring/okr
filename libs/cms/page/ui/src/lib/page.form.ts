@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
@@ -7,11 +7,11 @@ import { vestForms } from 'ngx-vest-forms';
 import { CaseInsensitiveWordMask } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, PageModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ButtonCopyComponent, CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent } from '@bk2/shared-ui';
+import { ButtonCopyComponent, CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@bk2/shared-constants';
 
 import { pageValidations } from '@bk2/cms-page-util';
-import { DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE } from '@bk2/shared-constants';
 
 
 @Component({
@@ -21,7 +21,7 @@ import { DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAUL
     TranslatePipe, AsyncPipe,
     vestForms, FormsModule,
     ChipsComponent, NotesInputComponent, TextInputComponent, StringsComponent, ButtonCopyComponent, 
-    ErrorNoteComponent, CategorySelectComponent,
+    ErrorNoteComponent, CategorySelectComponent, StringSelectComponent,
     IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -66,6 +66,11 @@ import { DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAUL
               <ion-col size="12" size-md="6">
                 <bk-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
               </ion-col>
+              @if(type() === 'blog') {
+                <ion-col size="12" size-md="6">
+                  <bk-string-select name="blogType"  [selectedString]="blogType()" (selectedStringChange)="onFieldChange('blogType', $event)" [readOnly]="false" [stringList] = "['minimal', 'grid', 'classic', 'magazine', 'bento', 'stream']" />
+                </ion-col>
+              }
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -120,6 +125,7 @@ export class PageFormComponent {
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected title = linkedSignal(() => this.formData().title ?? DEFAULT_TITLE);
   protected type = linkedSignal(() => this.formData().type ?? DEFAULT_PAGE_TYPE);
+  protected blogType = linkedSignal(() => this.formData().blogType ?? DEFAULT_BLOG_TYPE);
   protected state = linkedSignal(() => this.formData().state ?? DEFAULT_CONTENT_STATE);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);

@@ -75,6 +75,7 @@ export const DEFAULT_OCAT = 'use';
 export const DEFAULT_ORG_TYPE = 'association';
 export const DEFAULT_OSTATE = 'active';
 export const DEFAULT_PAGE_TYPE = 'content';
+export const DEFAULT_BLOG_TYPE = 'minimal';
 export const DEFAULT_PERIODICITY = 'once';
 export const DEFAULT_PERSONAL_REL = 'parentChild';
 export const DEFAULT_PET_TYPE = 'cat';
