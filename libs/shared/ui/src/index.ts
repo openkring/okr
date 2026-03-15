@@ -27,6 +27,7 @@ export * from './lib/error-toolbar.component';
 export * from './lib/footer.component';
 export * from './lib/header.component';
 export * from './lib/iban-input.component';
+export * from './lib/icon-input';
 export * from './lib/icon-toolbar.component';
 export * from './lib/image-config';
 export * from './lib/image-url-input.component';

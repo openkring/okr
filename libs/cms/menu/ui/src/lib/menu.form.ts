@@ -5,7 +5,7 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, NAME_LENGTH } from '@bk2/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, PropertyListComponent, StringsComponent, TextInputComponent, UrlInputComponent } from '@bk2/shared-ui';
+import { CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, PropertyListComponent, StringsComponent, TextInputComponent, UrlInputComponent, IconInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
 import { menuItemValidations } from '@bk2/cms-menu-util';
@@ -15,10 +15,11 @@ import { menuItemValidations } from '@bk2/cms-menu-util';
   standalone: true,
   imports: [
     vestForms, FormsModule,
-    TextInputComponent, UrlInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent, 
+    TextInputComponent, UrlInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
     StringsComponent, PropertyListComponent, ErrorNoteComponent,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent
-  ],
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent,
+    IconInput
+],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
   @if (showForm()) {
@@ -46,9 +47,10 @@ import { menuItemValidations } from '@bk2/cms-menu-util';
             @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call') {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="icon" [value]="icon()" (valueChange)="onFieldChange('icon', $event)" [maxLength]="nameLength" [showHelper]=true [readOnly]="isReadOnly()" />
+                  <bk-icon-input [icon]="icon()" (iconChange)="onFieldChange('icon', $event)" (selectClicked)="iconSelectClicked.emit()" [readOnly]="isReadOnly()" />
+<!--                   <bk-text-input name="icon" [value]="icon()" (valueChange)="onFieldChange('icon', $event)" [maxLength]="nameLength" [showHelper]=true [readOnly]="isReadOnly()" />
                   <bk-error-note [errors]="iconErrors()" />                                        
-                </ion-col>
+ -->                </ion-col>
 
                 <ion-col size="12" size-md="6">
                   <bk-text-input name="label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />
@@ -122,6 +124,7 @@ export class MenuItemFormComponent {
   // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
+  public iconSelectClicked = output();
 
   // validation and errors
   protected readonly suite = menuItemValidations;

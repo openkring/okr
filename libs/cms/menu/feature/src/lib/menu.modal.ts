@@ -8,6 +8,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
 import { ENV } from '@bk2/shared-config';
+import { IconSelectModalComponent } from '@bk2/shared-feature';
 
 @Component({
   selector: 'bk-menu-item-modal',
@@ -34,6 +35,7 @@ import { ENV } from '@bk2/shared-config';
           [tenantId]="env.tenantId"
           [readOnly]="isReadOnly()"
           [allTags]="tags()"
+          (iconSelectClicked)="selectIcon()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -79,6 +81,25 @@ export class MenuItemModalComponent {
 
   protected onFormDataChange(formData: MenuItemModel): void {
     this.formData.set(formData);
+  }
+
+  protected async selectIcon(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: IconSelectModalComponent,
+      componentProps: { 
+        initialDir: 'icons'
+      },
+      cssClass: 'list-modal'
+    });
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm' && data) {
+      if (data && typeof(data) === 'string') {
+        const icon = data as string;
+        this.formData.update((vm) => ({ ...vm, icon }) as MenuItemModel);
+        this.formDirty.set(true);
+      }
+    }
   }
 }
 
