@@ -270,7 +270,8 @@ export const CalEventStore = signalStore(
         const newCalevent = new CalEventModel(store.tenantId());
         newCalevent.startDate = getTodayStr();
         newCalevent.startTime = '09:00';
-        newCalevent.calendars = [store.calendarName()];
+        const cal = store.calendarName();
+        newCalevent.calendars = cal === 'all' || cal.startsWith('my') || cal.length === 0 ? [] : [cal];
         newCalevent.isOpen = store.calendar()?.defaultIsOpen ?? true;
         const untilDate = addMonths(new Date(), 3);
         newCalevent.repeatUntilDate = format(untilDate, DateFormat.StoreDate);
