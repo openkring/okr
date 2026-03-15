@@ -67,9 +67,7 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
     }
   `],
   template: `
-    @if (node().subType === 'divider') {
-      <div class="divider-line"></div>
-    } @else {
+
       <div class="node-row">
         <!-- Expand / collapse toggle -->
         @if (node().children.length > 0) {
@@ -106,7 +104,6 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
           }
         </div>
       }
-    }
   `
 })
 export class MenuGraphNode {

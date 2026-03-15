@@ -56,7 +56,7 @@ function menuColor(action: string): string {
   switch (action) {
     case 'navigate': return 'secondary';
     case 'browse':   return 'tertiary';
-    case 'divider':  return 'medium';
+    case 'divider':  return 'primary';
     case 'sub':
     case 'main':
     case 'context':  return 'primary';
@@ -68,7 +68,7 @@ function menuIcon(action: string): string {
   switch (action) {
     case 'navigate': return 'navigate';
     case 'browse':   return 'globe';
-    case 'divider':  return 'minus';
+    case 'divider':  return 'remove';
     case 'sub':      return 'chevron-forward';
     case 'context':  return 'ellipsis-vertical';
     default:         return 'menu';
