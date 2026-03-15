@@ -242,7 +242,8 @@ export class CalEventFormComponent {
   }
 
   protected onFormChange(value: CalEventModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
+    // calendars, responsiblePersons, tags and description are managed via onFieldChange (not vest form controls), so preserve them
+    this.formData.update((vm) => ({...vm, ...value, calendars: vm.calendars, responsiblePersons: vm.responsiblePersons, tags: vm.tags, description: vm.description}));
     debugFormModel('CalEventForm.onFormChange', this.formData(), this.currentUser());
     debugFormErrors('CalEventForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
