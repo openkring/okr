@@ -4,13 +4,13 @@ import { IonButtons, IonContent, IonHeader, IonLabel, IonSpinner, IonMenuButton,
 import { ViewWillEnter } from '@ionic/angular';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupModelName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 
 import { PageDispatcher, PageStore } from '@bk2/cms-page-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
+import { FolderService } from '@bk2/folder-data-access';
 import { MembershipListComponent } from '@bk2/relationship-membership-feature';
 import { TaskListComponent } from '@bk2/task-feature';
 import { DocumentListComponent } from '@bk2/document-feature';
@@ -115,7 +115,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
           }
           @case ('files') {
             @defer (on immediate) {
-              <bk-document-list [listId]="listId()" contextMenuName="c-documents" color="light" [showMainMenu]="false" />
+              <bk-document-list [listId]="listId()" contextMenuName="c-folder" color="light" [showMainMenu]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
@@ -145,6 +145,7 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
 export class GroupViewPageComponent implements ViewWillEnter {
   private readonly groupStore = inject(GroupStore);
   private readonly pageStore = inject(PageStore);
+  private readonly folderService = inject(FolderService);
 
   // inputs
   public groupKey = input.required<string>();
@@ -160,8 +161,7 @@ export class GroupViewPageComponent implements ViewWillEnter {
 
   // derived signals and fields
   protected readonly avatarTitle = computed(() => this.name() ?? DEFAULT_NAME);
-  protected readonly parentKey = computed(() => `${GroupModelName}.${this.groupKey()}`);
-  protected readonly listId = computed(() => `k:${this.parentKey()}`);
+  protected readonly listId = computed(() => `f:${this.groupKey()}`);
   protected currentUser = computed(() => this.groupStore.currentUser());
   protected selectedSegment = computed(() => this.groupStore.segment());
   protected group = computed(() => this.groupStore.group());
@@ -209,8 +209,13 @@ export class GroupViewPageComponent implements ViewWillEnter {
   }
 
   /******************************* helpers *************************************** */
-  protected onSegmentChanged($event: CustomEvent): void {
+  protected async onSegmentChanged($event: CustomEvent): Promise<void> {
     const selectedSegment = $event.detail.value;
     this.groupStore.setSelectedSegment(selectedSegment);
+    if (selectedSegment === 'files') {
+      await this.folderService.ensureGroupFolder(
+        this.groupKey(), this.name(), this.groupStore.tenantId(), this.currentUser()
+      );
+    }
   }
 }

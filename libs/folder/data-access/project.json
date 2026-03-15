@@ -1,0 +1,24 @@
+{
+  "name": "folder-data-access",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/folder/data-access/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:folder", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/folder/data-access",
+        "main": "libs/folder/data-access/src/index.ts",
+        "tsConfig": "libs/folder/data-access/tsconfig.lib.json",
+        "assets": ["libs/folder/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

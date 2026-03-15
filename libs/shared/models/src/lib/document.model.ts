@@ -21,9 +21,9 @@ export class DocumentModel implements BkModel, SearchableModel, TaggedModel {
   public isArchived = false;
   public index = DEFAULT_INDEX;
   public tags = DEFAULT_TAGS;
-  public parents: string[] = []; // a document can belong to more than one parent entity.
-  // for each such parent, an entry modelType.key is entered here
-  // this enables to find all documents for a given parent entity.
+  public folderKeys: string[] = []; // the FolderModel bkeys this document belongs to.
+  // a document can belong to multiple folders (many-to-many).
+  // use listId prefix 'f:' + folderKey to filter by folder.
 
   public fullPath = DEFAULT_PATH; // {/dir}/baseName.extension in firebase storage
   public description = DEFAULT_NOTES; // a human-readable, translatable file name (i18n)

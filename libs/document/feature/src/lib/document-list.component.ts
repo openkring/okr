@@ -10,6 +10,7 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/s
 import { getItemLabel, hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
+import { FolderBreadcrumbComponent } from '@bk2/folder-ui';
 
 import { DocumentStore } from './document.store';
 
@@ -19,8 +20,8 @@ import { DocumentStore } from './document.store';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, FileNamePipe, FileLogoPipe, FileSizePipe, PrettyDatePipe, ThumbnailUrlPipe,
     SpinnerComponent, ListFilterComponent,
-    EmptyListComponent, MenuComponent,
-    IonToolbar, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonLabel, IonHeader, IonButtons, 
+    EmptyListComponent, MenuComponent, FolderBreadcrumbComponent,
+    IonToolbar, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem, IonPopover, IonThumbnail
   ],
   providers: [DocumentStore],
@@ -49,12 +50,17 @@ import { DocumentStore } from './document.store';
       </ion-toolbar>
     }
 
+    <!-- folder breadcrumb (only when filtered by folder) -->
+    @if(folderKey(); as fkey) {
+      <bk-folder-breadcrumb [folderKey]="fkey" (folderSelected)="onFolderSelected($event)" />
+    }
+
     <!-- search and filters -->
     <bk-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
-      [initialView]="view()" (viewToggleChanged)="onViewChange($event)" 
+      [initialView]="view()" (viewToggleChanged)="onViewChange($event)"
     />
 
     <!-- list header -->
@@ -82,11 +88,26 @@ import { DocumentStore } from './document.store';
   @if(isLoading()) {
     <bk-spinner />
   } @else {
-    @if (filteredDocumentsCount() === 0) {
+    @if (isEmpty()) {
       <bk-empty-list message="@document.empty" />
     } @else {
       @if(isListView() === true) {
         <ion-grid>
+          <!-- subfolders -->
+          @for(folder of subFolders(); track folder.bkey) {
+            <ion-row (click)="onSubfolderClick(folder.bkey)">
+              <ion-col size="12">
+                <ion-item lines="none">
+                  <ion-thumbnail slot="start">
+                    <ion-icon style="width: 100%; height: 100%;" src="{{ 'folder' | svgIcon }}" />
+                  </ion-thumbnail>
+                  <ion-label>
+                    <h3>{{ folder.title || folder.name }}</h3>
+                  </ion-label>
+                </ion-item>
+              </ion-col>
+            </ion-row>
+          }
           <!-- don't use 'document' here as it leads to confusions with HTML document -->
           @for(doc of filteredDocuments(); track doc.bkey) {
             <ion-row (click)="showActions(doc)">
@@ -98,7 +119,7 @@ import { DocumentStore } from './document.store';
                     } @else {
                       <ion-icon style="width: 100%; height: 100%;" src="{{ doc.fullPath | fileLogo }}" />
                     }
-                  </ion-thumbnail>                
+                  </ion-thumbnail>
                   <ion-label>
                     <h3>{{ doc.title }}</h3>
                     <p>{{ doc.fullPath | fileName}}</p>
@@ -121,6 +142,18 @@ import { DocumentStore } from './document.store';
       } @else {
         <ion-grid>
           <ion-row>
+            <!-- subfolders -->
+            @for(folder of subFolders(); track folder.bkey) {
+              <ion-col size="6" size-md="4" size-xl="3" (click)="onSubfolderClick(folder.bkey)">
+                <div style="position: relative; width: 100%; padding-bottom: 80%; overflow: hidden; border-radius: 4px; background: var(--ion-color-light);">
+                  <ion-thumbnail style="position: absolute; inset: 0; --size: 100%; width: 100%; height: 100%;">
+                    <ion-icon style="width: 60%; height: 60%; margin: 20%;" src="{{ 'folder' | svgIcon }}" />
+                  </ion-thumbnail>
+                </div>
+                <p style="font-size: 0.75rem; margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ folder.title || folder.name }}</p>
+              </ion-col>
+            }
+            <!-- documents -->
             @for(doc of filteredDocuments(); track doc.bkey) {
               <ion-col size="6" size-md="4" size-xl="3" (click)="showActions(doc)">
                 <div style="position: relative; width: 100%; padding-bottom: 80%; overflow: hidden; border-radius: 4px;">
@@ -163,7 +196,9 @@ export class DocumentListComponent {
   protected documentsCount = computed(() => this.documentStore.documentsCount());
   protected filteredDocuments = computed(() => this.documentStore.filteredDocuments() ?? []);
   protected filteredDocumentsCount = computed(() => this.filteredDocuments().length);
+  protected subFolders = computed(() => this.documentStore.subFolders());
   protected isLoading = computed(() => this.documentStore.isLoading());
+  protected isEmpty = computed(() => this.filteredDocumentsCount() === 0 && this.subFolders().length === 0);
   protected tags = computed(() => this.documentStore.getTags());
   protected types = computed(() => this.documentStore.appStore.getCategory('document_type'));
   protected sources = computed(() => this.documentStore.appStore.getCategory('document_source'));
@@ -171,6 +206,10 @@ export class DocumentListComponent {
   protected isListView = linkedSignal(() => this.view() === 'list');
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
   protected popupId = computed(() => `c_docs_${this.listId}`);
+  protected readonly folderKey = computed(() => {
+    const id = this.documentStore.listId();
+    return id.startsWith('f:') ? id.substring(2) : null;
+  });
 
   private imgixBaseUrl = this.documentStore.appStore.env.services.imgixBaseUrl;
 
@@ -179,6 +218,14 @@ export class DocumentListComponent {
   }
 
   /******************************** setters (filter) ******************************************* */
+  protected onFolderSelected(key: string): void {
+    this.documentStore.setListId(`f:${key}`);
+  }
+
+  protected onSubfolderClick(key: string): void {
+    this.documentStore.setListId(`f:${key}`);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.documentStore.setSearchTerm(searchTerm);
   }
@@ -196,6 +243,8 @@ export class DocumentListComponent {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
       case 'add':  await this.documentStore.add(); break;
+      case 'addFiles': await this.documentStore.addFiles(); break;
+      case 'addFolder': await this.documentStore.addFolder(); break;
       case 'exportRaw': await this.documentStore.export('raw'); break;
       default: error(undefined, `DocumentListComponent.call: unknown method ${selectedMethod}`);
     }

@@ -12,7 +12,7 @@ import { confirm, copyToClipboardWithConfirmation, downloadToBrowser } from '@bk
 import { DateFormat, convertDateFormatToString, getFullName, getTodayStr } from '@bk2/shared-util-core';
 
 import { DocumentService } from '@bk2/document-data-access';
-import { extractDateFromFileName, extractParentsFromStoragePath, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex, storeDateToDisplayDate } from '@bk2/document-util';
+import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex, storeDateToDisplayDate } from '@bk2/document-util';
 
 export type StorageFileInfo = {
   fullPath: string;
@@ -141,10 +141,7 @@ export const AocDocStore = signalStore(
       // 2. Human-readable title from file name
       const title = extractTitleFromFileName(rawFileName) || rawFileName;
 
-      // 3. Parent references from storage path
-      const parents = extractParentsFromStoragePath(file.fullPath);
-
-      // 4. Tags from storage path (includes tenant, model type, and keyword tags)
+      // 3. Tags from storage path (includes tenant, model type, and keyword tags)
       const tags = extractTagsFromStoragePath(file.fullPath);
 
       const document = new DocumentModel(tenantId);
@@ -159,7 +156,7 @@ export const AocDocStore = signalStore(
       document.dateOfDocCreation = creationDate;
       document.dateOfDocLastUpdate = updateDate;
       document.version = creationDate;
-      document.parents = parents;
+      document.folderKeys = [];
       document.tags = tags;
       document.authorKey = currentUser?.personKey ?? '';
       document.authorName = getFullName(currentUser?.firstName, currentUser?.lastName);

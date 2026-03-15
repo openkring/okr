@@ -127,7 +127,7 @@ export function getDocumentIndex(document: DocumentModel): string {
   index = addIndexElement(index, 'n', document.title);
   index = addIndexElement(index, 'h', document.hash);
   index = addIndexElement(index, 'm', document.mimeType);
-  index = addIndexElement(index, 'p', document.parents.join(' '));
+  index = addIndexElement(index, 'f', document.folderKeys.join(' '));
   return index;
 }
 
@@ -136,5 +136,5 @@ export function getDocumentIndex(document: DocumentModel): string {
  * This can be used in info boxes on the GUI.
  */
 export function getDocumentIndexInfo(): string {
-  return 'n:filename h:ash m:imeType p:arents';
+  return 'n:filename h:ash m:imeType f:olderKeys';
 }

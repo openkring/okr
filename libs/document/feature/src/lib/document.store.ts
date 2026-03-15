@@ -3,17 +3,20 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Browser } from '@capacitor/browser';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryListModel, DocumentCollection, DocumentModel, DocumentModelName } from '@bk2/shared-models';
+import { CategoryListModel, DocumentCollection, DocumentModel, DocumentModelName, FolderModel } from '@bk2/shared-models';
 import { chipMatches, debugItemLoaded, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
 import { navigateByUrl, confirm, AppNavigationService } from '@bk2/shared-util-angular';
 
 import { DocumentService } from '@bk2/document-data-access';
+import { FolderService } from '@bk2/folder-data-access';
+import { newFolderModel } from '@bk2/folder-util';
 import { UploadService } from '@bk2/avatar-data-access';
+import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
 
 export type DocumentState = {
   documentKey: string;
@@ -45,6 +48,7 @@ export const DocumentStore = signalStore(
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     documentService: inject(DocumentService),
+    folderService: inject(FolderService),
     uploadService: inject(UploadService),
   })),
   withProps((store) => ({
@@ -72,12 +76,22 @@ export const DocumentStore = signalStore(
         );
       }
     }),
+
+    subfoldersResource: rxResource({
+      params: () => ({ listId: store.listId() }),
+      stream: ({ params }) => {
+        const listId = params.listId;
+        if (!listId.startsWith('f:')) return of<FolderModel[]>([]);
+        return store.folderService.listByParent(listId.substring(2));
+      }
+    }),
   })),
 
  withComputed((state) => {
     return {
       documents: computed(() => state.documentsResource.value() ?? []),
-      isLoading: computed(() => state.documentsResource.isLoading()),
+      subFolders: computed(() => state.subfoldersResource.value() ?? []),
+      isLoading: computed(() => state.documentsResource.isLoading() || state.subfoldersResource.isLoading()),
     }
   }),
 
@@ -103,11 +117,11 @@ export const DocumentStore = signalStore(
           case 't:': // tag
             filtered = filtered.filter(d => d.tags.includes(value)) ?? [];
             break;
-          case 'k:': // parentKey
-            filtered = filtered.filter(d => d.parents.includes(value)) ?? [];
+          case 'f:': // folderKey
+            filtered = filtered.filter(d => d.folderKeys.includes(value)) ?? [];
             break;
           default:
-            console.warn(`DocumentStore: unknown listId prefix '${prefix}' in listId '${listId}'`);
+            console.warn(`DocumentStore: unknown listId prefix '${prefix}' in listId '${listId}'. Supported: p: t: f:`);
             return allDocs;
           }
         }
@@ -139,6 +153,7 @@ export const DocumentStore = signalStore(
       reload() {
         store.documentsResource.reload();
         store.documentResource.reload();
+        store.subfoldersResource.reload();
       },
  
       /******************************** setters (filter) ******************************************* */
@@ -196,8 +211,8 @@ export const DocumentStore = signalStore(
         // 1+2+3) pick a file, upload to storage and create initial document object
         const document = await store.uploadService.uploadAndCreateDocument(store.appStore.tenantId());
         if (!document) return;
-        const parentKey = store.listId().startsWith('k:') ? store.listId().substring(2) : undefined;
-        document.parents = parentKey ? [parentKey] : [];
+        const folderKey = store.listId().startsWith('f:') ? store.listId().substring(2) : undefined;
+        document.folderKeys = folderKey ? [folderKey] : [];
         document.authorKey = currentUser.personKey;
         document.authorName = currentUser.firstName + ' ' + currentUser.lastName;
         if (priorVersionKey) {
@@ -213,6 +228,67 @@ export const DocumentStore = signalStore(
         // 5) navigate to document details page
         await navigateByUrl(store.router, `/document/${document.bkey}`, { readOnly: false });        
         //store.documentsResource.reload();
+      },
+
+      /**
+       * Pick multiple files, upload each to storage and save a DocumentModel for each.
+       * All created documents are automatically assigned to the current folder (if listId = f:<key>).
+       * No per-file navigation — the list reloads after all uploads complete.
+       */
+      async addFiles(): Promise<void> {
+        const currentUser = store.currentUser();
+        if (!currentUser) return;
+        const tenantId = store.tenantId();
+        const folderKey = store.listId().startsWith('f:') ? store.listId().substring(2) : undefined;
+        const basePath = `tenant/${tenantId}/${DocumentModelName}`;
+
+        const files = await store.uploadService.pickMultipleFiles(DEFAULT_MIMETYPES);
+        if (!files || files.length === 0) return;
+
+        for (const file of files) {
+          const fullPath = `${basePath}/${file.name}`;
+          const downloadUrl = await store.uploadService.uploadFile(file, fullPath, file.name);
+          if (!downloadUrl) continue;
+
+          const doc = await store.documentService.getDocumentFromFile(file, fullPath);
+          doc.folderKeys = folderKey ? [folderKey] : [];
+          doc.authorKey = currentUser.personKey;
+          doc.authorName = `${currentUser.firstName} ${currentUser.lastName}`;
+          doc.priorVersionKey = '';
+          doc.version = '1.0';
+          await store.documentService.create(doc, currentUser);
+        }
+        store.documentsResource.reload();
+      },
+
+      /**
+       * Prompt for a name, create a new FolderModel nested under the current folder,
+       * and navigate into it by updating the listId.
+       */
+      async addFolder(): Promise<void> {
+        const currentUser = store.currentUser();
+        if (!currentUser) return;
+        const parentFolderKey = store.listId().startsWith('f:') ? store.listId().substring(2) : '';
+
+        const alert = await store.alertController.create({
+          header: 'New Folder',
+          inputs: [{ name: 'name', type: 'text', placeholder: 'Folder name' }],
+          buttons: [
+            { text: 'Cancel', role: 'cancel' },
+            { text: 'Create', role: 'confirm' }
+          ]
+        });
+        await alert.present();
+        const { data, role } = await alert.onDidDismiss();
+        if (role !== 'confirm') return;
+        const name: string = data?.values?.name?.trim() ?? '';
+        if (!name) return;
+
+        const folder = newFolderModel(store.tenantId(), name, parentFolderKey ? [parentFolderKey] : []);
+        const newKey = await store.folderService.create(folder, currentUser);
+        if (newKey) {
+          patchState(store, { listId: `f:${newKey}` });
+        }
       },
 
       // add a new version of the document
