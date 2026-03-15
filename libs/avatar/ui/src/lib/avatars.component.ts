@@ -7,7 +7,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, UserModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
-import { coerceBoolean, getAvatarName, getFullName } from '@bk2/shared-util-core';
+import { coerceBoolean, getAvatarName } from '@bk2/shared-util-core';
 
 import { AvatarDisplayComponent } from './avatar-display.component';
 import { AvatarInputComponent } from "./avatar-input.component";
