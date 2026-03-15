@@ -1,4 +1,6 @@
 export * from './lib/app.store';
+export * from './lib/calendar-select.modal';
+export * from './lib/calendar-select.store';
 export * from './lib/group-select.modal';
 export * from './lib/icon-select.modal';
 export * from './lib/group-select.store';

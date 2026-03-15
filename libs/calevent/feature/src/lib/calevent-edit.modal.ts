@@ -7,6 +7,7 @@ import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CalEventFormComponent } from '@bk2/calevent-ui';
+import { CalendarSelectModalComponent } from '@bk2/shared-feature';
 import { InviteesAccordionComponent } from '@bk2/relationship-invitation-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
@@ -40,6 +41,7 @@ import { AttendeesAccordionComponent } from './attendees-accordion';
           [tenantId]="tenantId()"
           [locale]="locale()"
           [readOnly]="isReadOnly()"
+          (calendarSelectClicked)="selectCalendar()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -106,5 +108,19 @@ export class CalEventEditModalComponent {
 
   protected onFormDataChange(formData: CalEventModel): void {
     this.formData.set(formData);
+  }
+
+  protected async selectCalendar(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: CalendarSelectModalComponent,
+      componentProps: { currentUser: this.currentUser() },
+    });
+    await modal.present();
+    const { data: calendarKey, role } = await modal.onDidDismiss<string>();
+    if (role !== 'confirm' || !calendarKey) return;
+    const current = this.formData();
+    if (!current || current.calendars.includes(calendarKey)) return;
+    this.formData.set({ ...current, calendars: [...current.calendars, calendarKey] });
+    this.formDirty.set(true);
   }
 }

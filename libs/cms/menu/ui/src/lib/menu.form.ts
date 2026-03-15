@@ -48,9 +48,7 @@ import { menuItemValidations } from '@bk2/cms-menu-util';
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <bk-icon-input [icon]="icon()" (iconChange)="onFieldChange('icon', $event)" (selectClicked)="iconSelectClicked.emit()" [readOnly]="isReadOnly()" />
-<!--                   <bk-text-input name="icon" [value]="icon()" (valueChange)="onFieldChange('icon', $event)" [maxLength]="nameLength" [showHelper]=true [readOnly]="isReadOnly()" />
-                  <bk-error-note [errors]="iconErrors()" />                                        
- -->                </ion-col>
+                </ion-col>
 
                 <ion-col size="12" size-md="6">
                   <bk-text-input name="label" [value]="label()" (valueChange)="onFieldChange('label', $event)" [showHelper]=true [readOnly]="isReadOnly()" />

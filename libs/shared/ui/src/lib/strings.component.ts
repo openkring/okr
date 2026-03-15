@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, model, viewChild } from '@angular/core';
-import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
+import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
+import { AlertController, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
@@ -27,7 +27,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
     IonList, IonItem,
     IonLabel, IonInput, IonIcon, IonNote,
     IonReorderGroup, IonReorder,
-    IonCard, IonCardHeader, IonCardContent, IonCardTitle
+    IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton
   ],
   template: `
     <ion-card>
@@ -54,16 +54,20 @@ import { coerceBoolean } from '@bk2/shared-util-core';
         } @else {
           <ion-item lines="none">
             <!-- we deliberately use ion-input here, because we do not want to interfere with the vest from update of strings() -->
-            <ion-input [value]="''" (ionChange)="save($event)" #stringInput
-                label="{{ addLabel() | translate | async }}"
-                labelPlacement="floating"
-                inputMode="text"
-                type="text"
-                [counter]="true"
-                [maxlength]="maxLength()"
-                placeholder="ssssss"
-                [maskito]="mask()"
-                [maskitoElement]="maskPredicate" />
+            @if(inputStyle() === 'text') {
+              <ion-input [value]="''" (ionChange)="save($event)" #stringInput
+                  label="{{ addLabel() | translate | async }}"
+                  labelPlacement="floating"
+                  inputMode="text"
+                  type="text"
+                  [counter]="true"
+                  [maxlength]="maxLength()"
+                  placeholder="ssssss"
+                  [maskito]="mask()"
+                  [maskitoElement]="maskPredicate" />
+            } @else { <!-- select -->
+              <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ selectLabel() | translate | async }}</ion-button>
+            }
           </ion-item>
 
           @if(strings(); as strings) {
@@ -101,16 +105,19 @@ export class StringsComponent {
   public addLabel = input('@input.strings.addString');
   public copyable = input(false);
   public editable = input(false);
+  public inputStyle = input<'text' | 'select'>('text');
   public readOnly = input.required<boolean>();
   public description = input<string>();
   public mask = input<MaskitoOptions>(LowercaseWordMask);
   public maxLength = input(NAME_LENGTH);
+  public selectLabel = input<string>();
 
   // coerced boolean inputs
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected isEditable = computed(() => coerceBoolean(this.editable()));
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
+  public selectClicked = output<void>();
   // view children
   public stringInput = viewChild<IonInput>('stringInput');
 
