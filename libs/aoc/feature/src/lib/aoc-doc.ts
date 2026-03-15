@@ -1,12 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, ToastController } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, IonThumbnail } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ButtonComponent, HeaderComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { fileSizeUnit } from '@bk2/shared-util-core';
-import { SvgIconPipe } from '@bk2/shared-pipes';
+import { FileLogoPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 
 import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
 
@@ -14,10 +14,10 @@ import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
   selector: 'bk-aoc-doc',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe,
+    TranslatePipe, AsyncPipe, ThumbnailUrlPipe, FileLogoPipe,
     ButtonComponent, HeaderComponent,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-    IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, IonNote, IonIcon,
+    IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, IonNote, IonIcon, IonThumbnail
   ],
   providers: [AocDocStore],
   template: `
@@ -53,14 +53,20 @@ import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
           </ion-grid>
           @if(missingDocs().length > 0) {
             <ion-list lines="inset">
-              @for(file of missingDocs(); track file.fullPath) {
-                <ion-item (click)="showFileActions(file)" button>
-                  <ion-icon slot="start" src="{{ 'document' | svgIcon }}" color="warning" />
+              @for(doc of missingDocs(); track doc.fullPath) {
+                <ion-item (click)="showFileActions(doc)" button>
+                  <ion-thumbnail slot="start">
+                    @if(isImageOrPdf(doc)) {
+                      <img src="{{ doc.fullPath | thumbnailUrl}}" />
+                    } @else {
+                      <ion-icon style="width: 100%; height: 100%;" src="{{ doc.fullPath | fileLogo }}" />
+                    }
+                  </ion-thumbnail>
                   <ion-label>
-                    <h3>{{ fileName(file.fullPath) }}</h3>
-                    <p>{{ file.fullPath }}</p>
+                    <h3>{{ fileName(doc.fullPath) }}</h3>
+                    <p>{{ doc.fullPath }}</p>
                   </ion-label>
-                  <ion-note slot="end">{{ fileSize(file.size) }}</ion-note>
+                  <ion-note slot="end">{{ fileSize(doc.size) }}</ion-note>
                 </ion-item>
               }
             </ion-list>
@@ -73,7 +79,6 @@ import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
 export class AocDocComponent {
   protected readonly aocDocStore = inject(AocDocStore);
   private readonly actionSheetController = inject(ActionSheetController);
-  private readonly toastController = inject(ToastController);
 
   protected readonly missingDocs = computed(() => this.aocDocStore.missingDocs());
   protected readonly isChecking = computed(() => this.aocDocStore.isChecking());
@@ -92,6 +97,10 @@ export class AocDocComponent {
     } else {
       this.aocDocStore.checkFilesInStore();
     }
+  }
+
+  protected isImageOrPdf(doc: StorageFileInfo): boolean {
+    return (doc.contentType.startsWith('image/') || doc.contentType === 'application/pdf');
   }
 
   protected async showFileActions(file: StorageFileInfo): Promise<void> {
