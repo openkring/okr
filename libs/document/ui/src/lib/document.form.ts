@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 
 import { CategoryListModel, DocumentModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, fileName, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
@@ -38,7 +38,7 @@ import { documentValidations } from '@bk2/document-util';
         <ion-card-content class="ion-no-padding">
           <ion-grid>
             <ion-row>
-              <ion-col size="12" class="ion-text-center">
+              <ion-col size="12" class="ion-text-center" (click)="download()">
                 @if(mimeType().startsWith('image/') || mimeType() === 'application/pdf') {
                   <img [src]="fullPath() | thumbnailUrl" [alt]="altText()" style="max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 4px;" />
                 } @else {
@@ -53,15 +53,8 @@ import { documentValidations } from '@bk2/document-util';
                 </ion-col>
               }
               <ion-col size="12" >
-                @if(hasRole('admin')) {
-                  <ion-item lines="none">
-                    <ion-icon src="{{ 'download' | svgIcon }}" slot="start" (click)="download()" />
-                    <ion-icon src="{{ 'copy' | svgIcon }}" slot="start" (click)="copy(fullPath())" />
-                    <bk-text-input name="fullPath" [value]="fullPath()" (valueChange)="onFieldChange('fullPath', $event)" [maxLength]=300 [readOnly]="true" />                                        
-                  </ion-item>
-                } @else {
-                  <bk-text-input name="fileName" [value]="fileName()" (valueChange)="onFieldChange('fileName', $event)" [maxLength]=50 [readOnly]="true" [copyable]="true" />                                        
-                }
+                  <ion-icon src="{{ 'download' | svgIcon }}" slot="start" (click)="download()" />
+                  <bk-text-input name="fullPath" [value]="fullPath()" (valueChange)="onFieldChange('fullPath', $event)" [maxLength]=300 [readOnly]="true" [copyable]="true"/>                                        
               </ion-col>
               <ion-col size="12">
                 <bk-text-input name="title" [value]="title()" (valueChange)="onFieldChange('title', $event)" [autofocus]="true" [maxLength]=50 [readOnly]="isReadOnly()" />                                        
@@ -173,7 +166,6 @@ export class DocumentFormComponent {
 
   // fields
   protected fullPath = linkedSignal(() => this.formData().fullPath ?? '');
-  protected fileName = linkedSignal(() => fileName(this.fullPath()));
   protected title = linkedSignal(() => this.formData().title ?? '');
   protected altText = linkedSignal(() => this.formData().altText ?? '');
   protected type = linkedSignal(() => this.formData().type ?? '');
@@ -195,11 +187,12 @@ export class DocumentFormComponent {
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
   }
 
   protected onFormChange(value: DocumentModel): void {
-    this.formData.update((vm) => ({...vm, ...value}));
+    // tags and description are managed via onFieldChange (not vest form controls), so preserve them
+    this.formData.update((vm) => ({...vm, ...value, tags: vm.tags, description: vm.description}));
     debugFormModel('DocumentForm.onFormChange', this.formData(), this.currentUser());
     debugFormErrors('DocumentForm.onFormChange', this.validationResult().errors, this.currentUser());
   }
