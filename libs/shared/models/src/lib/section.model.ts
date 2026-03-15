@@ -356,6 +356,7 @@ export interface NewsSection extends BaseSection {
 export interface NewsConfig {
   // title is from BaseSection
   moreUrl: string; // url to navigate to when 'more' button is clicked
+  showMoreButton: boolean; 
   maxItems: number; // maximum number of news items to show
   blogPageKey: string; // the key of the blog page where the news articles are stored, used for navigation when clicking on a news item
 }

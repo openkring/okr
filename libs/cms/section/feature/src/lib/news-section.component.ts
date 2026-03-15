@@ -1,9 +1,9 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
-import { EmptyListComponent, ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { EmptyListComponent, MoreButton, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, navigateByUrl } from '@bk2/shared-util-angular';
 import { ArticleSection, IMAGE_STYLE_SHAPE, NewsConfig, SectionModel } from '@bk2/shared-models';
@@ -14,66 +14,45 @@ import { NewsStore } from './news-section.store';
   selector: 'bk-news-section',
   standalone: true,
   styles: [`
-    .news-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 12px;
-      padding: 8px;
-    }
-    ion-card { margin: 0; height: 100%; cursor: pointer; }
-    ion-card-title { font-size: 1rem; font-weight: 600; }
-    ion-card-subtitle { font-size: 0.85rem; }
-    .article-excerpt {
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      font-size: 0.9rem;
-      color: var(--ion-color-medium);
-      margin-top: 4px;
-    }
-    .more-btn { display: flex; justify-content: flex-end; padding: 4px 8px 8px; }
+    .title { font-size: 1rem; font-weight: 600; }
+    .subtitle { font-size: 0.8rem }
+    .excerpt { font-size: 0.9rem }
+    ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important; }
   `],
   providers: [NewsStore],
   imports: [
-    OptionalCardHeaderComponent, SpinnerComponent, EmptyListComponent, ImageComponent,
-    IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle,
-    IonButton,
+    OptionalCardHeaderComponent, SpinnerComponent, EmptyListComponent,
+    IonCard, IonCardContent, MoreButton, IonList, IonItem, IonLabel
   ],
   template: `
     @if (isLoading()) {
       <bk-spinner />
     } @else {
-      <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
-      @if (news().length === 0) {
-        <bk-empty-list message="@cms.news.empty" />
-      } @else {
-        <div class="news-grid">
-          @for (article of news(); track article.bkey) {
-            <ion-card (click)="showActions(article)">
-              @if (article.properties.images.length > 1) {
-                <bk-img [image]="article.properties.images[0]" [imageStyle]="imageStyle" />
+      <ion-card>
+        <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <ion-card-content>
+          @if (news().length === 0) {
+            <bk-empty-list message="@cms.news.empty" />
+          } @else {
+            <ion-list lines="inset">
+              @for (article of news(); track article.bkey) {
+                <ion-item>
+                  <ion-label>
+                    @if (article.subTitle) {
+                      <p class="subtitle">{{ article.subTitle }}</p>
+                    }
+                    <p class="title">{{ article.title }}</p>
+                    <div class="excerpt" [innerHTML]="articleExcerpt(article)"></div>
+                  </ion-label>
+                </ion-item>
               }
-              <ion-card-header>
-                <ion-card-title>{{ article.title }}</ion-card-title>
-                @if (article.subTitle) {
-                  <ion-card-subtitle>{{ article.subTitle }}</ion-card-subtitle>
-                }
-              </ion-card-header>
-              @if (articleExcerpt(article)) {
-                <ion-card-content>
-                  <div class="article-excerpt" [innerHTML]="articleExcerpt(article)"></div>
-                </ion-card-content>
+              @if(showMoreButton() && !editMode()) {
+                <bk-more-button [url]="moreUrl()" />
               }
-            </ion-card>
+            </ion-list>
           }
-        </div>
-        @if (showMoreButton()) {
-          <div class="more-btn">
-            <ion-button fill="clear" (click)="openMoreUrl()">Mehr...</ion-button>
-          </div>
-        }
-      }
+        </ion-card-content>
+      </ion-card>
     }
   `,
 })
@@ -116,10 +95,10 @@ export class NewsSectionComponent implements OnInit {
     }
   }
 
-  /** Strip HTML tags and return plain-text excerpt. */
+  /** Strip HTML tags and return plain-text excerpt of the first 30 words. */
   protected articleExcerpt(article: ArticleSection): string {
-    const html = article.content?.htmlContent ?? '';
-    return html.replace(/<[^>]*>/g, '').trim().substring(0, 200);
+    const text = (article.content?.htmlContent ?? '').replace(/<[^>]*>/g, '').trim();
+    return text.split(/\s+/).slice(0, 30).join(' ') + '...';
   }
 
   protected async showActions(article: ArticleSection): Promise<void> {
