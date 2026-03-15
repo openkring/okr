@@ -3,7 +3,7 @@ import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup
 
 import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
+import { coerceBoolean, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CalEventFormComponent } from '@bk2/calevent-ui';

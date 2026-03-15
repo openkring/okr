@@ -35,7 +35,7 @@ import { calEventValidations } from '@bk2/calevent-util';
     <ion-card>
       <ion-card-content class="ion-no-padding">
         <ion-grid>
-          @if(hasRole('admin')) {
+          @if(expertMode()) {
             <ion-row>
               <ion-col size="12" size-md="6">
                 <bk-text-input name="bkey" [value]="bkey()" label="bkey" [readOnly]="true" [copyable]="true" />
@@ -44,12 +44,12 @@ import { calEventValidations } from '@bk2/calevent-util';
                 <bk-text-input name="seriesId" [value]="seriesId()" label="seriesId" [readOnly]="true" [copyable]="true" />
               </ion-col>
             </ion-row>
-          }
-          <ion-row>
-            <ion-col size="12">
-              <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false"  [readOnly]="isReadOnly()" />
-            </ion-col>
+            <ion-row>
+              <ion-col size="12">
+                <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false"  [readOnly]="isReadOnly()" />
+              </ion-col>
             </ion-row>
+          }
             <ion-row>
               <ion-col size="12">
                 <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" /> 
@@ -93,12 +93,14 @@ import { calEventValidations } from '@bk2/calevent-util';
                 </ion-col>
               }
             </ion-row>
-            <ion-row>
-              <ion-col size="12">
-                <!-- tbd: locationKey is currently only a text field, should be [key]@[name], e.g.  qlöh1341hkqj@Stäfa -->
-                <bk-text-input name="locationKey" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [readOnly]="isReadOnly()" />                                        
-              </ion-col>
-            </ion-row>
+            @if(expertMode()) {
+              <ion-row>
+                <ion-col size="12">
+                  <!-- tbd: locationKey is currently only a text field, should be [key]@[name], e.g.  qlöh1341hkqj@Stäfa -->
+                  <bk-text-input name="locationKey" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [readOnly]="isReadOnly()" />                                        
+                </ion-col>
+              </ion-row>
+            }
           </ion-grid>
       </ion-card-content>
     </ion-card>
@@ -122,16 +124,18 @@ import { calEventValidations } from '@bk2/calevent-util';
       (stringsChange)="onFieldChange('calendars', $event)"
       [mask]="calendarMask" 
       [maxLength]="nameLength"
-      [readOnly]="isReadOnly()" 
+      [readOnly]="isReadOnly()"
+      inputStyle="select" (selectClicked)="calendarSelectClicked.emit()"
       title="@input.calendarName.label"
       description="@input.calendarName.description"
       addLabel="@input.calendarName.addLabel"
+      selectLabel="@input.calendarName.select"
     />           
 
   <!---------------------------------------------------
     TAG, NOTES 
     --------------------------------------------------->
-    @if(hasRole('privileged') || hasRole('eventAdmin')) {
+    @if(expertMode()) {
       <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
     }
 
@@ -160,6 +164,7 @@ export class CalEventFormComponent {
  // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
+  public calendarSelectClicked = output<void>();
 
   // validation and errors
   protected readonly suite = calEventValidations;
@@ -193,6 +198,7 @@ export class CalEventFormComponent {
     name2: p.name2 ?? ''
   } as AvatarInfo));
 });
+  protected expertMode = computed(() => this.hasRole('admin'));
 
   // passing constants to template
   protected chFutureDate = ChFutureDate;
