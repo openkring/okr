@@ -11,6 +11,7 @@ import { SearchbarComponent } from './searchbar.component';
 import { SingleTagComponent } from './single-tag.component';
 import { YearSelectComponent } from './year-select.component';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+import { StringSelectComponent } from 'libs/shared/ui/src/lib/string-select.component';
 
 /**
  * This component shows a list of filters in a toolbar at the top of a list.
@@ -23,13 +24,14 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
  * 4. type 
  * 5. year
  * 6. state tbd: move to db mstate_, ostate_, pstate_, rstate_, 
+ * 7. strings (a string-select)
  */
 @Component({
   selector: 'bk-list-filter',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
-    SearchbarComponent, SingleTagComponent, CategorySelectComponent, YearSelectComponent,
+    SearchbarComponent, SingleTagComponent, CategorySelectComponent, YearSelectComponent, StringSelectComponent,
     IonToolbar, IonGrid, IonRow, IonCol, IonButtons, IonButton, IonIcon
   ],
   template: `
@@ -37,33 +39,38 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
       <ion-grid class="ion-no-padding ion-align-items-center">
         <ion-row class="ion-align-items-center">
           @if(showSearch()) {
-            <ion-col size="6" size-md="3" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
               <bk-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@general.operation.search.placeholder' | translate | async  }}" />
             </ion-col>
           }
           @if(showTags()) {
-            <ion-col size="6" size-md="2" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding">
               <bk-single-tag [selectedTag]="selectedTag()" (selectedTagChange)="tagChanged.emit($event)" [tags]="tags()" />
             </ion-col>
           }
           @if(showCategory()) {
-            <ion-col size="6" size-md="3" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
               <bk-cat-select [selectedItemName]="selectedCategory()" (selectedItemNameChange)="categoryChanged.emit($event)" [category]="categories()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
           @if(showType()) {
-            <ion-col size="6" size-md="3" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
               <bk-cat-select [selectedItemName]="selectedType()" (selectedItemNameChange)="typeChanged.emit($event)" [category]="types()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
-          }                                                  
+          }
           @if(showYear()) {
-            <ion-col size="6" size-md="2" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding">
               <bk-year-select [selectedYear]="selectedYear()" (selectedYearChange)="yearChanged.emit($event)" [years]="yearList()" [label]="yearLabel()!" [readOnly]="false" [showAllYears]="true" />
             </ion-col>
           }
           @if(showState()) {
-            <ion-col size="6" size-md="2" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding">
               <bk-cat-select [selectedItemName]="selectedState()" (selectedItemNameChange)="stateChanged.emit($event)" [category]="states()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
+            </ion-col>
+          }
+          @if(showStrings()) {
+            <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
+              <bk-string-select name="iconSet" [selectedString]="selectedString()" (selectedStringChange)="stringsChanged.emit($event)" [stringList]="strings()" [readOnly]="false" />
             </ion-col>
           }
         </ion-row>
@@ -89,16 +96,19 @@ export class ListFilterComponent {
   public states = input<CategoryListModel>();
   public gridIcon = input<'calendar' | 'grid'>('grid'); // the icon to show in grid view
   public initialView = input<'list' | 'grid' | undefined>();
+  public strings = input<string[]>([]);
 
   public selectedTag = input<string>('');
   public selectedType = input<string>('');
   public selectedCategory = input<string>('');
   public selectedYear = input<number>(getYear());
   public selectedState = input<string>('all');
+  public selectedString = input<string>('');
 
   public showIcons = input(true);
   public showSearch = input(true);
   public yearLabel = input<string>();
+  public compact = input(false);
 
   public isListView = linkedSignal(() => this.initialView() === 'list');
 
@@ -117,6 +127,7 @@ export class ListFilterComponent {
   protected showYear = computed(()     => this.years() !== undefined);
   protected showState = computed(()    => this.states() !== undefined);
   protected yearList = computed(()     => this.years() ?? getYearList());   // default is last 8 years
+  protected showStrings = computed(() => (this.strings() && this.strings()!.length > 0) ?? false);
 
   // outputs
   public searchTermChanged = output<string>();
@@ -126,6 +137,7 @@ export class ListFilterComponent {
   public yearChanged = output<number>();
   public stateChanged = output<string>();
   public viewToggleChanged = output<boolean>();
+  public stringsChanged = output<string>();
 
   protected onSearchTermChange($event: Event): void {
     this.searchTermChanged.emit(($event.target as HTMLInputElement).value);
