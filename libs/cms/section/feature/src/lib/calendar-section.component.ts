@@ -10,7 +10,8 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 
 import { CalendarSection } from '@bk2/shared-models';
 import { SpinnerComponent } from '@bk2/shared-ui';
-import { addTime, debugData, debugMessage, getIsoDateTime } from '@bk2/shared-util-core';
+import { debugData, debugMessage } from '@bk2/shared-util-core';
+import { convertCalEventToFullCalendar } from '@bk2/calevent-util';
 
 import { CalendarStore } from './calendar-section.store';
 
@@ -82,13 +83,11 @@ export class CalendarSectionComponent implements OnInit {
   //protected readonly calendarOptions = computed(() => this.section()?.properties);
   protected isLoading = computed(() => this.calendarStore.isLoading());
   protected filteredEvents = computed(() => this.calendarStore.calevents());
-  protected calendarEvents = computed<EventInput[]>(() => {    
+  protected calendarEvents = computed<EventInput[]>(() => {
     return this.filteredEvents().map(event => ({
-      title: event.name,
-      start: getIsoDateTime(event.startDate, event.startTime),
-      end: getIsoDateTime(event.endDate || event.startDate, addTime(event.startTime, 0, event.durationMinutes)),
+      ...convertCalEventToFullCalendar(event),
       extendedProps: { eventKey: event.bkey },
-      backgroundColor: '#3788d8', // optional
+      backgroundColor: '#3788d8',
       borderColor: '#3788d8'
     }));
   });
