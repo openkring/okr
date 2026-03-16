@@ -81,7 +81,7 @@ import { Browser } from '@capacitor/browser';
       }
 
       <!-- quick entry -->
-      @if(!readOnly()) {
+      @if(!readOnly() && expertMode()) {
         <ion-item lines="none">
           <ion-textarea #bkQuickEntry 
             (keyup.enter)="quickEntry(bkQuickEntry)"
@@ -189,6 +189,7 @@ export class CalEventListComponent {
   protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
   protected isListView = linkedSignal(() => this.view() === 'list');
+  protected expertMode = computed(() => this.hasRole('admin'));
 
   protected calendarEvents = computed<EventInput[]>(() => {
     return this.filteredCalEvents().map(event => {
