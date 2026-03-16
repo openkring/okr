@@ -1,4 +1,4 @@
-import { DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 import { AVATAR_INFO_SHAPE, AvatarInfo } from './avatar-info';
 
@@ -20,7 +20,9 @@ export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedM
   public hasCalendar = true; // calendar id = id
   public hasTasks = true; // task id = id
   public hasFiles = true; // path of root folder = groups/id
+  public filesFolder = '';
   public hasAlbum = true;
+  public albumFolder = '';
   public hasMembers = true;
 
   public mainContact: AvatarInfo = AVATAR_INFO_SHAPE;

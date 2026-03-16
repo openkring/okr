@@ -194,6 +194,8 @@ export const GroupStore = signalStore(
               await alert.present();
               return;
             }
+            data.filesFolder = data.hasFiles ? data.bkey : '';
+            data.albumFolder = data.hasAlbum ? 'a_' + data.bkey : '';
             await store.groupService.create(data, store.currentUser());
 
             // create default calendar segment

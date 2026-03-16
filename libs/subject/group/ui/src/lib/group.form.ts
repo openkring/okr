@@ -147,14 +147,12 @@ import { groupValidations } from '@bk2/subject-group-util';
               <ion-col size="12" size-md="6">
                 <bk-checkbox name="hasTasks" [checked]="hasTasks()" (checkedChange)="onFieldChange('hasTasks', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
-              <!--
               <ion-col size="12" size-md="6">
                 <bk-checkbox name="hasFiles" [checked]="hasFiles()" (checkedChange)="onFieldChange('hasFiles', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-checkbox name="hasAlbum" [checked]="hasAlbum()" (checkedChange)="onFieldChange('hasAlbum', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
-              -->
               <ion-col size="12" size-md="6">
                 <bk-checkbox name="hasMembers" [checked]="hasMembers()" (checkedChange)="onFieldChange('hasMembers', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
@@ -224,8 +222,8 @@ export class GroupFormComponent {
   protected hasChat = linkedSignal(() => this.formData().hasChat ?? true);
   protected hasCalendar = linkedSignal(() => this.formData().hasCalendar ?? true);
   protected hasTasks = linkedSignal(() => this.formData().hasTasks ?? true);
-  //protected hasFiles = linkedSignal(() => this.formData().hasFiles ?? true);
-  //protected hasAlbum = linkedSignal(() => this.formData().hasAlbum ?? true);
+  protected hasFiles = linkedSignal(() => this.formData().hasFiles ?? true);
+  protected hasAlbum = linkedSignal(() => this.formData().hasAlbum ?? true);
   protected hasMembers = linkedSignal(() => this.formData().hasMembers ?? true);
 
   // passing constants to template

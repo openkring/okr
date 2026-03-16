@@ -63,13 +63,11 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
             <ion-label>{{ '@subject.group.segment.files' | translate | async}}</ion-label>
           </ion-segment-button>
         }
-        <!--
         @if(hasAlbum()) {
           <ion-segment-button value="album">
             <ion-label>{{ '@subject.group.segment.album' | translate | async}}</ion-label>
           </ion-segment-button>
         }
-        -->
         @if(hasMembers()) {
           <ion-segment-button value="members">
             <ion-label>{{ '@subject.group.segment.members' | translate | async}}</ion-label>
@@ -120,15 +118,13 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
-          <!--
           @case ('album') {
             @defer (on immediate) {
-              <bk-content-page id="{{id + '_album'}}" contextMenuName="c-contentpage" color="light" />
+              <bk-document-list [listId]="albumId()" contextMenuName="c-folder" color="light" [showMainMenu]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
-        -->
           @case ('members') {
             @defer (on immediate) {
               <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" />
@@ -162,6 +158,7 @@ export class GroupViewPageComponent implements ViewWillEnter {
   // derived signals and fields
   protected readonly avatarTitle = computed(() => this.name() ?? DEFAULT_NAME);
   protected readonly listId = computed(() => `f:${this.groupKey()}`);
+  protected readonly albumId = computed(() => `f:a_${this.groupKey()}`);
   protected currentUser = computed(() => this.groupStore.currentUser());
   protected selectedSegment = computed(() => this.groupStore.segment());
   protected group = computed(() => this.groupStore.group());
@@ -172,7 +169,7 @@ export class GroupViewPageComponent implements ViewWillEnter {
   protected hasCalendar = computed(() => this.formData()?.hasCalendar ?? true);
   protected hasTasks = computed(() => this.formData()?.hasTasks ?? true);
   protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
-  //protected hasAlbum = computed(() => this.formData()?.hasAlbum ?? true);
+  protected hasAlbum = computed(() => this.formData()?.hasAlbum ?? true);
   protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
   protected path = computed(() => getDocumentStoragePath(this.groupStore.tenantId(), 'group', this.group()?.bkey));
   protected groupTags = computed(() => this.groupStore.getTags());
