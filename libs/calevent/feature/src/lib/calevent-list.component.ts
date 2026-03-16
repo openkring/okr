@@ -190,15 +190,35 @@ export class CalEventListComponent {
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
   protected isListView = linkedSignal(() => this.view() === 'list');
 
-  protected calendarEvents = computed<EventInput[]>(() => {    
-    return this.filteredCalEvents().map(event => ({
-      title: event.name,
-      start: getIsoDateTime(event.startDate, event.startTime),
-      end: getIsoDateTime(event.endDate || event.startDate, addTime(event.startTime, 0, event.durationMinutes)),
-      extendedProps: { eventKey: event.bkey },
-      backgroundColor: '#3788d8', // optional
-      borderColor: '#3788d8'
-    }));
+  protected calendarEvents = computed<EventInput[]>(() => {
+    return this.filteredCalEvents().map(event => {
+      const isFullDay = event.fullDay === true;
+      if (isFullDay) {
+        const toIsoDate = (d: string) => `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;
+        const startIso = toIsoDate(event.startDate);
+        const endDate = event.endDate || event.startDate;
+        // FullCalendar end is exclusive — add 1 calendar day using local-time constructor (timezone-safe)
+        const ed = new Date(+endDate.slice(0,4), +endDate.slice(4,6) - 1, +endDate.slice(6,8) + 1);
+        const endIso = `${ed.getFullYear()}-${String(ed.getMonth()+1).padStart(2,'0')}-${String(ed.getDate()).padStart(2,'0')}`;
+        return {
+          title: event.name,
+          start: startIso,
+          end: endIso,
+          allDay: true,
+          extendedProps: { eventKey: event.bkey },
+          backgroundColor: '#3788d8',
+          borderColor: '#3788d8'
+        };
+      }
+      return {
+        title: event.name,
+        start: getIsoDateTime(event.startDate, event.startTime),
+        end: getIsoDateTime(event.endDate || event.startDate, addTime(event.startTime, 0, event.durationMinutes)),
+        extendedProps: { eventKey: event.bkey },
+        backgroundColor: '#3788d8',
+        borderColor: '#3788d8'
+      };
+    });
   });
 
   protected calendarOptions = {
@@ -267,8 +287,9 @@ export class CalEventListComponent {
       calevent.startTime = parts.startTime.substring(0, 2) + ':' + parts.startTime.substring(2, 4);
       calevent.endDate = calevent.startDate;
     } else {  // daily event, once, one day
-      calevent.endDate = calevent.startDate;  
+      calevent.endDate = calevent.startDate;
       calevent.startTime = '';
+      calevent.fullDay = true;
       calevent.durationMinutes = 1440;  // full day event
     }
     calevent.name = parts.name || '';
