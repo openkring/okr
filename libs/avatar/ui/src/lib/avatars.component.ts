@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
-import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
+import { AlertController, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
 import { NAME_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -10,7 +10,6 @@ import { bkPrompt, copyToClipboardWithConfirmation } from '@bk2/shared-util-angu
 import { coerceBoolean, getAvatarName } from '@bk2/shared-util-core';
 
 import { AvatarDisplayComponent } from './avatar-display.component';
-import { AvatarInputComponent } from "./avatar-input.component";
 
 /**
  * Vest updates work by binding to ngModel.
@@ -24,11 +23,7 @@ import { AvatarInputComponent } from "./avatar-input.component";
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     AvatarDisplayComponent,
-    IonList, IonItem,
-    IonLabel, IonIcon, IonNote,
-    IonReorderGroup, IonReorder,
-    IonCard, IonCardHeader, IonCardContent, IonCardTitle,
-    AvatarInputComponent
+    IonList, IonItem, IonLabel, IonIcon, IonNote, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -47,7 +42,9 @@ import { AvatarInputComponent } from "./avatar-input.component";
             <bk-avatar-display [avatars]="avatars()" [showName]="false" />
           </ion-item>
         } @else {
-          <bk-avatar-input (avatarAdded)="add($event)" (selectClicked)="selectClicked.emit()" />
+          <ion-item lines="none">
+            <ion-button slot="end" fill="clear" (click)="selectClicked.emit()">{{ '@general.operation.select.subject' | translate | async }}</ion-button>
+          </ion-item>
           @if(avatars(); as avatars) {
             <ion-list>
               <!-- Casting $event to $any is a temporary fix for this bug https://github.com/ionic-team/ionic-framework/issues/24245 -->
