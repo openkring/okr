@@ -12,7 +12,7 @@ import { checkAppCheckToken, checkAuthentication, checkStringField } from '@bk2/
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
-const RAG_MODEL = 'gemini-2.0-flash';
+const RAG_MODEL = 'gemini-3-flash-preview';
 
 /** Storage path prefix watched for RAG documents. */
 const RAG_PATH_PREFIX = 'tenant/';
