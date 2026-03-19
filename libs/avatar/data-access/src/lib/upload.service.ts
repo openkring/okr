@@ -1,5 +1,6 @@
 import { inject, Injectable } from "@angular/core";
 import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera";
+import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { ModalController } from "@ionic/angular/standalone";
 
@@ -132,7 +133,7 @@ export class UploadService {
    public async takePhoto(): Promise<Photo> {
     return await Camera.getPhoto({
       resultType: CameraResultType.Uri,
-      source: CameraSource.Camera,
+      source: Capacitor.isNativePlatform() ? CameraSource.Prompt : CameraSource.Photos,
       quality: 100
     });
   }
