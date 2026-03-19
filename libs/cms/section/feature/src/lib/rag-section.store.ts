@@ -1,4 +1,5 @@
 import { computed, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -6,8 +7,11 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { AppStore } from '@bk2/shared-feature';
 import { UploadService } from '@bk2/avatar-data-access';
 import { DocumentService } from '@bk2/document-data-access';
+import { buildDocumentModel } from '@bk2/document-util';
 import { FolderService } from '@bk2/folder-data-access';
 import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
+import { DocumentModel } from '@bk2/shared-models';
+import { map } from 'rxjs/operators';
 
 const RAG_FOLDER_KEY = 'rag';
 
@@ -19,6 +23,8 @@ export interface RagMessage {
 export interface RagSource {
     title: string;
     uri: string;
+    /** Firebase Storage download URL of the matching RAG document, if found. */
+    url?: string;
 }
 
 export interface RagChatEntry {
@@ -51,9 +57,21 @@ export const RagStore = signalStore(
         documentService: inject(DocumentService),
         folderService: inject(FolderService),
     })),
+    withProps((store) => ({
+        // Real-time list of documents in the 'rag' folder.
+        // Firestore only allows one array-contains per query and getSystemQuery already
+        // uses one on 'tenants', so we filter by folderKey client-side.
+        ragDocumentsResource: rxResource({
+            params: () => ({}),
+            stream: () => store.documentService.list('title', 'asc').pipe(
+                map(docs => docs.filter(d => d.folderKeys.includes(RAG_FOLDER_KEY))),
+            ),
+        }),
+    })),
     withComputed((state) => ({
         currentUser: computed(() => state.appStore.currentUser()),
         hasHistory: computed(() => state.chatEntries().length > 0),
+        ragDocuments: computed(() => state.ragDocumentsResource.value() ?? []),
     })),
     withMethods((store) => ({
         setStoreName(storeName: string): void {
@@ -65,10 +83,10 @@ export const RagStore = signalStore(
         },
 
         /**
-         * Opens the file picker, uploads the selected file to
-         * tenant/{tenantId}/rag/{fileName}, creates a DocumentModel in the
-         * 'rag' folder, and persists it. The Storage trigger automatically
-         * indexes the file into the Google File Search store.
+         * Opens the file picker (multi-select), uploads all selected files to
+         * tenant/{tenantId}/rag/, creates a DocumentModel per file in the 'rag'
+         * folder, and persists them. The Storage trigger automatically indexes
+         * each file into the Google File Search store.
          */
         async addDocument(): Promise<void> {
             const tenantId = store.appStore.env.tenantId;
@@ -78,18 +96,34 @@ export const RagStore = signalStore(
             // Ensure the 'rag' folder exists (idempotent)
             await store.folderService.ensureGroupFolder(RAG_FOLDER_KEY, 'RAG', tenantId, currentUser ?? undefined);
 
-            // Pick file + upload to Storage + build DocumentModel
-            const document = await store.uploadService.uploadAndCreateDocument(
-                tenantId,
-                DEFAULT_MIMETYPES,
-                storagePath,
-                '@cms.rag.upload',
-            );
-            if (!document) return; // user cancelled
+            // Pick multiple files
+            const files = await store.uploadService.pickMultipleFiles(DEFAULT_MIMETYPES);
+            if (files.length === 0) return; // user cancelled
 
-            // Link to the 'rag' folder and save
-            document.folderKeys = [RAG_FOLDER_KEY];
-            await store.documentService.create(document, currentUser ?? undefined);
+            // Upload all files in one modal
+            const uploads = files.map(file => ({ file, fullPath: `${storagePath}/${file.name}` }));
+            const downloadUrls = await store.uploadService.uploadFiles(uploads, '@cms.rag.upload');
+            if (!downloadUrls) return; // upload cancelled
+
+            // Create and persist a DocumentModel for each successfully uploaded file
+            await Promise.all(files.map(async (file, i) => {
+                const downloadUrl = downloadUrls[i];
+                if (!downloadUrl) return;
+                const document = await buildDocumentModel(file, tenantId, `${storagePath}/${file.name}`, downloadUrl, currentUser ?? undefined);
+                document.folderKeys = [RAG_FOLDER_KEY];
+                await store.documentService.create(document, currentUser ?? undefined);
+            }));
+        },
+
+        /**
+         * Permanently delete a RAG document.
+         * RAG documents are isolated (not shared across folders — see APPARCH.md), so:
+         * 1. The file is deleted from Firebase Storage, which triggers the onObjectDeleted
+         *    Cloud Function to de-index it from the Vertex AI RAG store automatically.
+         * 2. The DocumentModel is hard-deleted from Firestore (not archived).
+         */
+        async deleteDocument(document: DocumentModel): Promise<void> {
+            await store.documentService.hardDelete(document);
         },
 
         async query(question: string): Promise<void> {
@@ -110,7 +144,25 @@ export const RagStore = signalStore(
                     history: store.messages(),
                 });
 
-                const { answer, sources } = result.data;
+                const { answer } = result.data;
+
+                // Match each source to a RAG document by filename and attach its
+                // Firebase Storage download URL. Deduplicate by URL so the same
+                // document cited multiple times only appears once.
+                const docs = store.ragDocuments();
+                const seen = new Set<string>();
+                const sources: RagSource[] = result.data.sources
+                    .map(source => {
+                        const fileName = source.title;
+                        const match = docs.find(doc => doc.fullPath.split('/').pop() === fileName);
+                        return match?.url ? { ...source, url: match.url } : source;
+                    })
+                    .filter(source => {
+                        if (!source.url) return false;
+                        if (seen.has(source.url)) return false;
+                        seen.add(source.url);
+                        return true;
+                    });
 
                 patchState(store, {
                     messages: [

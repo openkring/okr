@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { FullMetadata, getDownloadURL, getMetadata, listAll, ref } from "firebase/storage";
+import { FullMetadata, deleteObject, getDownloadURL, getMetadata, listAll, ref } from "firebase/storage";
 import { Observable, firstValueFrom, of } from 'rxjs';
 
 import { ENV, STORAGE } from '@bk2/shared-config';
@@ -61,6 +61,18 @@ export class DocumentService {
    */
   public async delete(document: DocumentModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<DocumentModel>(DocumentCollection, document, '@document.operation.delete', currentUser);
+  }
+
+  /**
+   * Permanently delete a document: removes the file from Firebase Storage and
+   * hard-deletes the DocumentModel from Firestore (no archiving).
+   * Use this only for isolated documents that are not shared across folders
+   * (e.g. RAG documents — see APPARCH.md).
+   * @param document the DocumentModel to be permanently deleted.
+   */
+  public async hardDelete(document: DocumentModel): Promise<void> {
+    await deleteObject(ref(this.storage, document.fullPath));
+    await this.firestoreService.deleteObject(DocumentCollection, document.bkey, '@document.operation.delete');
   }
 
  /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
