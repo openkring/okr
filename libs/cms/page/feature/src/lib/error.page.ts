@@ -73,7 +73,6 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
     }
   `],
   template: `
-  @if(page(); as page) {
     <bk-header [title]="title()" [showCloseButton]="false" />
     <ion-content>
       <div class="error-container">
@@ -105,7 +104,6 @@ import { DEFAULT_BANNER_URL } from '@bk2/shared-constants';
         </ion-grid>
       </div>
     </ion-content>
-  }
   `
 })
 export class ErrorPage {
@@ -114,10 +112,10 @@ export class ErrorPage {
   public readonly errorName = input('notfound');
 
   protected page = computed(() => this.pageStore.page());
-  protected title = computed (() => this.page()?.title ?? 'Title missing');
-  protected subTitle = computed (() => this.page()?.subTitle ?? 'Subtitle missing');
-  protected abstract = computed (() => this.page()?.abstract);
-  protected logoUrl = computed (() => this.pageStore.getImgixUrl(this.page()?.logoUrl));
+  protected title = computed(() => this.page()?.title ?? 'Seite nicht gefunden');
+  protected subTitle = computed(() => this.page()?.subTitle ?? 'Die aufgerufene Seite existiert nicht.');
+  protected abstract = computed(() => this.page()?.abstract ?? 'Bitte überprüfen Sie die URL oder navigieren Sie über das Menü.');
+  protected logoUrl = computed(() => this.pageStore.getImgixUrl(this.page()?.logoUrl) ?? '');
   protected logoAltText = computed(() => this.page()?.logoAltText || `${this.pageStore.tenantId()} Logo`);
   protected bannerUrl = computed(() => this.pageStore.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
   protected bannerAltText = computed(() => this.page()?.bannerAltText || `${this.pageStore.tenantId()} Banner`);

@@ -1,4 +1,5 @@
 export * from './lib/page.dispatcher';
+export * from './lib/error.page';
 export * from './lib/page-edit.modal';
 export * from './lib/page-list.component';
 export * from './lib/page-sort.modal';
