@@ -1,6 +1,8 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { marked } from 'marked';
 import {
     IonButton, IonCard, IonCardContent, IonIcon, IonInput,
     IonItem, IonLabel, IonList, IonNote, IonSpinner, IonText,
@@ -39,12 +41,23 @@ import { RagStore } from './rag-section.store';
             padding: 8px 14px;
             max-width: 90%;
             font-size: 0.95rem;
-            white-space: pre-wrap;
         }
-        .sources { padding: 4px 14px 0; }
-        .sources a { font-size: 0.78rem; color: var(--ion-color-medium); display: flex; align-items: center; gap: 4px; text-decoration: none; }
-        .sources a:hover { text-decoration: underline; }
-        .sources ion-icon { font-size: 0.9rem; flex-shrink: 0; }
+        .answer-bubble ::ng-deep p { margin: 0 0 0.5em; }
+        .answer-bubble ::ng-deep p:last-child { margin-bottom: 0; }
+        .answer-bubble ::ng-deep ul, .answer-bubble ::ng-deep ol { margin: 0.25em 0 0.5em 1.2em; padding: 0; }
+        .answer-bubble ::ng-deep li { margin-bottom: 0.15em; }
+        .answer-bubble ::ng-deep h1, .answer-bubble ::ng-deep h2, .answer-bubble ::ng-deep h3 { margin: 0.5em 0 0.25em; font-size: 1em; font-weight: 600; }
+        .answer-bubble ::ng-deep code { background: rgba(0,0,0,0.08); border-radius: 3px; padding: 0 3px; font-family: monospace; font-size: 0.9em; }
+        .answer-bubble ::ng-deep pre { background: rgba(0,0,0,0.08); border-radius: 6px; padding: 8px; overflow-x: auto; }
+        .answer-bubble ::ng-deep pre code { background: none; padding: 0; }
+        .answer-bubble ::ng-deep strong { font-weight: 600; }
+        .answer-bubble ::ng-deep a { color: var(--ion-color-primary); }
+        .sources { padding: 4px 14px 0; display: flex; flex-direction: column; gap: 2px; }
+        .source-row { display: flex; align-items: center; gap: 4px; }
+        .source-row a { font-size: 0.78rem; color: var(--ion-color-medium); display: flex; align-items: center; gap: 4px; text-decoration: none; flex: 1; }
+        .source-row a:hover { text-decoration: underline; }
+        .source-row ion-icon { font-size: 0.9rem; flex-shrink: 0; }
+        .source-row ion-button { --padding-start: 4px; --padding-end: 4px; margin: 0; }
         .toolbar {
             display: flex;
             align-items: center;
@@ -138,14 +151,19 @@ import { RagStore } from './rag-section.store';
                             @for (entry of reversedChatEntries(); track $index) {
                                 <div class="chat-entry">
                                     <div class="question-bubble">{{ entry.question }}</div>
-                                    <div class="answer-bubble">{{ entry.answer }}</div>
+                                    <div class="answer-bubble" [innerHTML]="toHtml(entry.answer)"></div>
                                     @if (entry.sources.length > 0) {
                                         <div class="sources">
                                             @for (source of entry.sources; track source.uri) {
-                                                <a [href]="source.url" target="_blank" rel="noopener">
-                                                    <ion-icon src="{{ 'document' | svgIcon }}" />
-                                                    {{ source.title }}
-                                                </a>
+                                                <div class="source-row">
+                                                    <a [href]="source.url" target="_blank" rel="noopener">
+                                                        <ion-icon src="{{ 'document' | svgIcon }}" />
+                                                        {{ source.title }}
+                                                    </a>
+                                                    <ion-button fill="clear" size="small" (click)="downloadFile(source)">
+                                                        <ion-icon slot="icon-only" src="{{ 'download' | svgIcon }}" />
+                                                    </ion-button>
+                                                </div>
                                             }
                                         </div>
                                     }
@@ -162,6 +180,23 @@ import { RagStore } from './rag-section.store';
 })
 export class RagSectionComponent {
     protected readonly ragStore = inject(RagStore);
+    private readonly sanitizer = inject(DomSanitizer);
+
+    protected toHtml(markdown: string): SafeHtml {
+        return this.sanitizer.bypassSecurityTrustHtml(marked.parse(markdown) as string);
+    }
+
+    protected async downloadFile(source: { title: string; url?: string }): Promise<void> {
+        if (!source.url) return;
+        const response = await fetch(source.url);
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = objectUrl;
+        anchor.download = source.title;
+        anchor.click();
+        URL.revokeObjectURL(objectUrl);
+    }
 
     public section = input<SectionModel>();
     public editMode = input<boolean>(false);

@@ -197,6 +197,9 @@ importers:
       libphonenumber-js:
         specifier: ^1.12.36
         version: 1.12.36
+      marked:
+        specifier: 17.0.4
+        version: 17.0.4
       matrix-js-sdk:
         specifier: 40.3.0-rc.0
         version: 40.3.0-rc.0
@@ -8423,6 +8426,11 @@ packages:
   marked@13.0.3:
     resolution: {integrity: sha512-rqRix3/TWzE9rIoFGIn8JmsVfhiuC8VIQ8IdX5TfzmeBucdY05/0UlzKaw0eVtpcN/OdVFpBk7CjKGo9iHJ/zA==}
     engines: {node: '>= 18'}
+    hasBin: true
+
+  marked@17.0.4:
+    resolution: {integrity: sha512-NOmVMM+KAokHMvjWmC5N/ZOvgmSWuqJB8FoYI019j4ogb/PeRMKoKIjReZ2w3376kkA8dSJIP8uD993Kxc0iRQ==}
+    engines: {node: '>= 20'}
     hasBin: true
 
   math-intrinsics@1.1.0:
@@ -21446,6 +21454,8 @@ snapshots:
       supports-hyperlinks: 3.2.0
 
   marked@13.0.3: {}
+
+  marked@17.0.4: {}
 
   math-intrinsics@1.1.0: {}
 
