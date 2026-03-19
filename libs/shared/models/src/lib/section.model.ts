@@ -401,9 +401,8 @@ export interface RagSection extends BaseSection {
 }
 
 export interface RagConfig {
-  // title is from BaseSection
-  moreUrl: string; // url to the external RAG system, shown when clicking on "more" button
-  maxItems: number; // maximum number of links to show
+  model: 'gemini-3-flash-preview';
+  storeName: 'scs-rag'
 }
 
 // --------------------------------------- SLIDER ----------------------------------------

@@ -2,6 +2,7 @@
 import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
+import { checkAdminClaim, checkAdminUser, checkAppCheckToken, checkAuthentication, checkStringField } from '@bk2/shared-util-functions';
 
 // onCall methods are automatically POST requests, so we don't need to check the method.
 
@@ -17,25 +18,26 @@ export const createCustomToken = functions.onCall(
     enforceAppCheck: true,
   },
   async (request: functions.CallableRequest<{ uid: string }>) => {
-    logger.info('createCustomToken: Processing request', {
+    const CF_NAME = 'createCustomToken';
+    logger.info(`${CF_NAME}: Processing request`, {
       uid: request.data.uid,
       authUid: request.auth?.uid,
       appCheck: !!request.app,
       serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
     });
 
-    checkAppCheckToken(request, 'createCustomToken');
-    checkAuthentication(request, 'createCustomToken');
-    checkAdminUser(request, 'createCustomToken');
-    checkStringField(request, 'createCustomToken', 'uid');
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+    checkAdminUser(request as any, CF_NAME);
+    checkStringField(request as any, CF_NAME, 'uid');
 
     try {
-      logger.info(`createCustomToken: user ${request.auth?.uid} wants custom token of user ${request.data.uid}`);
+      logger.info(`${CF_NAME}: user ${request.auth?.uid} wants custom token of user ${request.data.uid}`);
       const _customToken = await getAuth().createCustomToken(request.data.uid);
-      logger.info(`createCustomToken: custom token created successfully: ${_customToken}`);
+      logger.info(`${CF_NAME}: custom token created successfully: ${_customToken}`);
       return { success: true, token: _customToken };
     } catch (error: any) {
-      console.error('createCustomToken: ERROR: ', error);
+      console.error(`${CF_NAME}: ERROR: `, error);
       throw new functions.HttpsError('internal', `Could not create custom token: ${error.message}`);
     }
   }
@@ -53,7 +55,8 @@ export const createFirebaseUser = functions.onCall(
     enforceAppCheck: true,
   },
   async (request: functions.CallableRequest<{ email: string; password: string; displayName: string }>) => {
-    logger.info('createFirebaseUser: Processing request', {
+    const CF_NAME = 'createFirebaseUser';
+    logger.info(`${CF_NAME}: Processing request`, {
       email: request.data.email,
       password: request.data.password,
       displayName: request.data.displayName,
@@ -62,10 +65,10 @@ export const createFirebaseUser = functions.onCall(
       serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
     });
 
-    checkAppCheckToken(request, 'createFirebaseUser');
-    checkAuthentication(request, 'createFirebaseUser');
-    checkAdminUser(request, 'createFirebaseUser');
-    await checkAdminClaim(request, 'createFirebaseUser');
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+    checkAdminUser(request as any, CF_NAME);
+    await checkAdminClaim(request as any, CF_NAME);
 
     try {
       const userRecord = await getAuth().createUser({
@@ -73,10 +76,10 @@ export const createFirebaseUser = functions.onCall(
         password: request.data.password,
         displayName: request.data.displayName,
       });
-      console.log('createFirebaseUser: OK');
+      console.log(`${CF_NAME}: OK`);
       return { uid: userRecord.uid };
     } catch (error: any) {
-      console.error('createFirebaseUser: ERROR: ', error);
+      console.error(`${CF_NAME}: ERROR: `, error);
       throw new functions.HttpsError('internal', `Failed to create user: ${error.message}`);
     }
   }
@@ -93,17 +96,18 @@ export const getUidByEmail = functions.onCall(
     enforceAppCheck: true,
   },
   async (request: functions.CallableRequest<{ email: string }>) => {
-    logger.info('getUidByEmail: Processing request', {
+    const CF_NAME = 'getUidByEmail';
+    logger.info(`${CF_NAME}: Processing request`, {
       email: request.data.email,
       authUid: request.auth?.uid,
       appCheck: !!request.app,
       serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
     });
-    checkAppCheckToken(request, 'getUidByEmail');
-    checkAuthentication(request, 'getUidByEmail');
-    checkAdminUser(request, 'getUidByEmail');
-    await checkAdminClaim(request, 'getUidByEmail');
-    checkStringField(request, 'getUidByEmail', 'email');
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+    checkAdminUser(request as any, CF_NAME);
+    await checkAdminClaim(request as any, CF_NAME);
+    checkStringField(request as any, CF_NAME, 'email');
 
     try {
       const user = await getAuth().getUserByEmail(request.data.email);
@@ -127,21 +131,22 @@ export const getFirebaseUser = functions.onCall(
     enforceAppCheck: true,
   },
   async (request: functions.CallableRequest<{ uid: string }>) => {
-    logger.info('getFirebaseUser: Processing request', {
+    const CF_NAME = 'getFirebaseUser';
+    logger.info(`${CF_NAME}: Processing request`, {
       uid: request.data.uid,
       authUid: request.auth?.uid,
       appCheck: !!request.app,
       serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
     });
-    checkAppCheckToken(request, 'getFirebaseUser');
-    checkAuthentication(request, 'getFirebaseUser');
-    checkAdminUser(request, 'getFirebaseUser');
-    await checkAdminClaim(request, 'getFirebaseUser');
-    checkStringField(request, 'getFirebaseUser', 'uid');
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+    checkAdminUser(request as any, CF_NAME);
+    await checkAdminClaim(request as any, CF_NAME);
+    checkStringField(request as any, CF_NAME, 'uid');
 
     try {
       const user = await getAuth().getUser(request.data.uid);
-      console.log('getFirebaseUser: OK');
+      console.log(`${CF_NAME}: OK`);
       return {
         uid: user.uid,
         email: user.email,
@@ -153,7 +158,7 @@ export const getFirebaseUser = functions.onCall(
       };
       // tbd: customClaims, multiFactor
     } catch (error: any) {
-      console.error('getFirebaseUser: ERROR: ', error);
+      console.error(`${CF_NAME}: ERROR: `, error);
       throw new functions.HttpsError('internal', `Failed to get the firebase user: ${error.message}`);
     }
   }
@@ -170,24 +175,25 @@ export const setPassword = functions.onCall(
     enforceAppCheck: true,
   },
   async (request: functions.CallableRequest<{ uid: string; password: string }>) => {
-    logger.info('setPassword: Processing request', {
+    const CF_NAME = 'setPassword';
+    logger.info(`${CF_NAME}: Processing request`, {
       uid: request.data.uid,
       password: request.data.password,
       authUid: request.auth?.uid,
       appCheck: !!request.app,
       serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
     });
-    checkAppCheckToken(request, 'setPassword');
-    checkAuthentication(request, 'setPassword');
-    checkAdminUser(request, 'setPassword');
-    await checkAdminClaim(request, 'setPassword');
-    checkStringField(request, 'setPassword', 'uid');
-    checkStringField(request, 'setPassword', 'password');
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+    checkAdminUser(request as any, CF_NAME);
+    await checkAdminClaim(request as any, CF_NAME);
+    checkStringField(request as any, CF_NAME, 'uid');
+    checkStringField(request as any, CF_NAME, 'password');
     try {
       await getAuth().updateUser(request.data.uid, { password: request.data.password });
-      console.log('setPassword: OK');
+      console.log(`${CF_NAME}: OK`);
     } catch (error: any) {
-      console.error('setPassword: ERROR: ', error);
+      console.error(`${CF_NAME}: ERROR: `, error);
       throw new functions.HttpsError('internal', `Failed to set the password: ${error.message}`);
     }
   }
@@ -209,7 +215,8 @@ export const updateFirebaseUser = functions.onCall(
     enforceAppCheck: true,
   },
   async (request: functions.CallableRequest<{ uid: string; email: string; displayName: string; emailVerified: boolean; disabled: boolean; phone: string; photoUrl: string }>) => {
-    logger.info('setLoginEmail: Processing request', {
+    const CF_NAME = 'updateFirebaseUser';
+    logger.info(CF_NAME + ': Processing request', {
       uid: request.data.uid,
       email: request.data.email,
       displayName: request.data.displayName,
@@ -221,12 +228,12 @@ export const updateFirebaseUser = functions.onCall(
       appCheck: !!request.app,
       serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
     });
-    checkAppCheckToken(request, 'updateFirebaseUser');
-    checkAuthentication(request, 'updateFirebaseUser');
-    checkAdminUser(request, 'updateFirebaseUser');
-    await checkAdminClaim(request, 'updateFirebaseUser');
-    checkStringField(request, 'updateFirebaseUser', 'uid');
-    checkStringField(request, 'updateFirebaseUser', 'email');
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+    checkAdminUser(request as any, CF_NAME);
+    await checkAdminClaim(request as any, CF_NAME);
+    checkStringField(request as any, CF_NAME, 'uid');
+    checkStringField(request as any, CF_NAME, 'email');
     try {
       await getAuth().updateUser(request.data.uid, {
         email: request.data.email,
@@ -236,9 +243,9 @@ export const updateFirebaseUser = functions.onCall(
         phoneNumber: request.data.phone,
         photoURL: request.data.photoUrl,
       });
-      console.log('updateFirebaseUser: OK');
+      console.log(CF_NAME + ': OK');
     } catch (error: any) {
-      console.error('updateFirebaseUser: ERROR: ', error);
+      console.error(CF_NAME + ': ERROR: ', error);
       throw new functions.HttpsError('internal', `Failed to update the firebase user: ${error.message}`);
     }
   }
@@ -260,9 +267,10 @@ export const listFirebaseUsers = functions.onCall(
     enforceAppCheck: true,
   },
   async (request: functions.CallableRequest): Promise<{ users: FirebaseAuthUser[] }> => {
-    checkAppCheckToken(request, 'listFirebaseUsers');
-    checkAuthentication(request, 'listFirebaseUsers');
-    checkAdminUser(request, 'listFirebaseUsers');
+    const CF_NAME = 'listFirebaseUsers';
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+    checkAdminUser(request as any, CF_NAME);
 
     const users: FirebaseAuthUser[] = [];
     let pageToken: string | undefined;
@@ -283,7 +291,7 @@ export const listFirebaseUsers = functions.onCall(
       pageToken = result.pageToken;
     } while (pageToken);
 
-    logger.info(`listFirebaseUsers: returned ${users.length} users`);
+    logger.info(`${CF_NAME}: returned ${users.length} users`);
     return { users };
   }
 );
@@ -291,54 +299,14 @@ export const listFirebaseUsers = functions.onCall(
 export const deleteFirebaseAuthUser = functions.onCall(
   { region: 'europe-west6', enforceAppCheck: true },
   async (request: functions.CallableRequest<{ uid: string }>): Promise<void> => {
-    checkAppCheckToken(request, 'deleteFirebaseAuthUser');
-    checkAuthentication(request, 'deleteFirebaseAuthUser');
-    checkAdminUser(request, 'deleteFirebaseAuthUser');
-    checkStringField(request, 'deleteFirebaseAuthUser', 'uid');
+    const CF_NAME = 'deleteFirebaseAuthUser';
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+    checkAdminUser(request as any, CF_NAME);
+    checkStringField(request as any, CF_NAME, 'uid');
     const { uid } = request.data;
     await getAuth().deleteUser(uid);
-    logger.info(`deleteFirebaseAuthUser: deleted user ${uid}`);
+    logger.info(`${CF_NAME}: deleted user ${uid}`);
   }
 );
 
-function checkAppCheckToken(request: functions.CallableRequest, nameOfCallingFunction: string): void {
-  if (!request.app) {
-    logger.error(`${nameOfCallingFunction}: App Check token missing or invalid`);
-    throw new functions.HttpsError('failed-precondition', 'App Check verification failed.');
-  }
-}
-
-function checkAuthentication(request: functions.CallableRequest, nameOfCallingFunction: string): void {
-  // Check if the user is authenticated
-  if (!request.auth) {
-    logger.error(`${nameOfCallingFunction}: user is not authenticated`);
-    throw new functions.HttpsError('unauthenticated', 'user must be authenticated.');
-  }
-}
-
-function checkAdminUser(request: functions.CallableRequest, nameOfCallingFunction: string): void {
-  if (!request.auth?.token.admin) {
-    logger.error(`${nameOfCallingFunction}: user ${request.auth?.uid} must be an admin`);
-    throw new functions.HttpsError('permission-denied', 'impersonateUser can only be used by admin users.');
-  }
-}
-
-async function checkAdminClaim(request: functions.CallableRequest, nameOfCallingFunction: string): Promise<void> {
-  if (!request.auth?.uid) {
-    logger.error(`${nameOfCallingFunction}: uid is mandatory`);
-  } else {
-    const caller = await getAuth().getUser(request.auth.uid);
-
-    if (!caller.customClaims?.admin) {
-      logger.error(`${nameOfCallingFunction}: user ${request.auth?.uid} must be an admin`);
-      throw new functions.HttpsError('permission-denied', 'Only admins can create users');
-    }
-  }
-}
-
-function checkStringField(request: functions.CallableRequest, nameOfCallingFunction: string, fieldName: string): void {
-  if (!request.data[fieldName] || typeof request.data[fieldName] !== 'string') {
-    logger.error(`${nameOfCallingFunction}: invalid ${fieldName} <${request.data[fieldName]}> provided`);
-    throw new functions.HttpsError('invalid-argument', `${nameOfCallingFunction} must be called with a valid ${fieldName}.`);
-  }
-}

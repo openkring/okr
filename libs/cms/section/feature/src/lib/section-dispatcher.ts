@@ -25,6 +25,7 @@ import { InvitationsSectionComponent } from './invitations-section.component';
 import { TasksSectionComponent } from './tasks-section.component';
 import { MessagesSectionComponent } from './messages-section.component';
 import { NewsSectionComponent } from './news-section.component';
+import { RagSectionComponent } from './rag-section.component';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -40,7 +41,7 @@ import { NewsSectionComponent } from './news-section.component';
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, TrackerSectionComponent, HeroSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent, RagSectionComponent,
     IonItem, IonLabel, SpinnerComponent,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
   ],
@@ -97,6 +98,9 @@ import { NewsSectionComponent } from './news-section.component';
           }
           @case('people') {
             <bk-people-section [section]="section" [editMode]="editMode()" />
+          }
+          @case('rag') {
+            <bk-rag-section [section]="section" [editMode]="editMode()" />
           }
           @case('slider') {
             @defer (on idle) {

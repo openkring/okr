@@ -56,6 +56,7 @@
     "@fullcalendar/interaction": "^6.1.20",
     "@fullcalendar/timegrid": "^6.1.20",
     "@google-cloud/functions-framework": "4.0.0",
+    "@google/genai": "1.46.0",
     "@ionic/angular": "^8.7.17",
     "@ionic/angular-server": "^8.7.17",
     "@iplab/ngx-color-picker": "^19.0.3",

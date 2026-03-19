@@ -10,6 +10,7 @@ import * as Auth from './auth';
 import * as Matrix from './matrix';
 import * as OidcBridge from './oidc-bridge';
 import * as MatrixSimple from './matrix-simple';
+import * as Rag from './rag';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -96,8 +97,14 @@ export const oidcUserInfo = OidcBridge.oidcUserInfo;
 // calendar
 export const generateCalendarICS = Calendar.generateCalendarICS;
 
+// google file search rag
+export const getOrCreateStore = Rag.getOrCreateStore;
+export const queryRag = Rag.queryRag;
+// storage triggers: auto-index/remove files at tenant/{tenantId}/rag/{fileName}
+export const onRagFileCreated = Rag.onRagFileCreated;
+export const onRagFileDeleted = Rag.onRagFileDeleted;
+
 // test
 export const getEcho = Test.getEcho;
 export const getIpInfo = Test.getIpInfo;
-
 
