@@ -485,6 +485,9 @@ export class MatrixChat implements OnDestroy {
   // Event handlers
   onRoomSelected(roomId: string) {
     this.store.setCurrentRoom(roomId);
+    if (isPlatformBrowser(this.platformId) && window.innerWidth < 768) {
+      this.showRoomList.set(false);
+    }
   }
 
   async onMessageSent(text: string) {
