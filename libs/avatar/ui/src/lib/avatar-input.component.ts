@@ -20,13 +20,13 @@ import { generateRandomString, newAvatarInfo } from '@bk2/shared-util-core';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    IonItem, IonInput, IonButton
+    IonItem, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <ion-item lines="none">
         <!-- we deliberately use ion-input here, because we do not want to interfere with the vest from update of avatars() -->
-        <ion-input [value]="''" (ionChange)="add($event)" #stringInput
+<!--         <ion-input [value]="''" (ionChange)="add($event)" #stringInput
             label="{{ addLabel() | translate | async }}"
             labelPlacement="floating"
             inputMode="text"
@@ -34,7 +34,7 @@ import { generateRandomString, newAvatarInfo } from '@bk2/shared-util-core';
             [counter]="true"
             [maxlength]="maxLength()"
             placeholder="ssssss"
-            />
+            /> -->
         <ion-button slot="end" fill="clear" (click)="selectClicked.emit()">{{ '@general.operation.select.subject' | translate | async }}</ion-button>
     </ion-item>
   `
