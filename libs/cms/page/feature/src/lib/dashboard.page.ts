@@ -31,10 +31,7 @@ import { PageStore } from './page.store';
       width: 100%;
     }
 
-    ion-content {
-      --background: var(--ion-color-light);
-    }
-
+    ion-content { --background: var(--ion-color-light); }
     bk-section { 
       width: 100%; 
       display: block; 
@@ -103,14 +100,27 @@ import { PageStore } from './page.store';
     }
 
     .section-wrapper.editable {
-      border: 3px solid var(--ion-color-warning);
+      border: 3px solid;
       cursor: pointer;
     }
 
-    .section-wrapper.editable:hover {
-      border-color: var(--ion-color-warning-shade);
-      box-shadow: 0 4px 20px rgba(255, 196, 9, 0.3);
-    }
+    .section-wrapper.state-draft {
+    border-color: #3880ff; /* blue */
+  }
+
+  .section-wrapper.state-inReview {
+    border-color: #ffc409; /* yellow */
+  }
+
+  .section-wrapper.state-published {
+    border-color: #2dd36f; /* green */
+  }
+
+  .section-wrapper.state-cancelled,
+  .section-wrapper.state-decommitted,
+  .section-wrapper.state-archived {
+    border-color: #eb445a; /* red */
+  }
 
     ion-item.edit-mode {
       --padding-start: 0;
@@ -262,7 +272,7 @@ import { PageStore } from './page.store';
                     [class.edit-mode]="editMode()"
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
-                    <div class="section-wrapper" [class.editable]="editMode()">
+                    <div class="section-wrapper state-{{ section.state }}" [class.editable]="editMode()">
                       <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
                     </div>
                   </ion-col>
