@@ -1,4 +1,5 @@
 export * from './lib/address.util';
+export * from './lib/general.util';
 export * from './lib/search.util';
 export * from './lib/membership.util';
 export * from './lib/ownership.util';
