@@ -69,7 +69,7 @@ export class DocumentsAccordionComponent {
 
   constructor() {
     effect(() => {
-      this.documentStore.setListId(`k:${this.parentKey()}`);
+      this.documentStore.setListId(`f:${this.parentKey()}`);
     });
   }
 

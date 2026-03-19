@@ -121,7 +121,7 @@ export const DocumentStore = signalStore(
             filtered = filtered.filter(d => d.folderKeys.includes(value)) ?? [];
             break;
           default:
-            console.warn(`DocumentStore: unknown listId prefix '${prefix}' in listId '${listId}'. Supported: p: t: f:`);
+            console.warn(`DocumentStore: unknown listId prefix '${prefix}' in listId '${listId}'. Supported: p:ath t:ag f:older`);
             return allDocs;
           }
         }
