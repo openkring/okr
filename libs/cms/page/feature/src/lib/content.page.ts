@@ -1,6 +1,8 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -192,8 +194,10 @@ import { PageStore } from './page.store';
         } @else {
           <div class="print-content" #printContent>
             @for(section of visibleSections(); track section.bkey) {
-              <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
-            } 
+              <div [id]="section.bkey">
+                <bk-section-dispatcher [section]="section" [currentUser]="pageStore.currentUser()" [editMode]="editMode()" />
+              </div>
+            }
           </div>
         }
       }
@@ -206,6 +210,9 @@ export class ContentPage {
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
   private actionSheetController = inject(ActionSheetController);
+  private route = inject(ActivatedRoute);
+  private ionContent = viewChild(IonContent);
+  private routeFragment = toSignal(this.route.fragment);
 
   // inputs
   public contextMenuName = input<string>();
@@ -274,6 +281,19 @@ export class ContentPage {
       if (title && title.length > 0) {
         this.title.setTitle(title);
       }
+    });
+    effect(() => {
+      const fragment = this.routeFragment();
+      const sections = this.visibleSections();
+      if (!fragment || sections.length === 0) return;
+      setTimeout(async () => {
+        const el = document.getElementById(fragment);
+        const content = this.ionContent();
+        if (!el || !content) return;
+        const scrollEl = await content.getScrollElement();
+        const top = el.getBoundingClientRect().top + scrollEl.scrollTop;
+        content.scrollToPoint(0, top, 400);
+      }, 100);
     });
   }
 

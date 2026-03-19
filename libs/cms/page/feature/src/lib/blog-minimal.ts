@@ -27,7 +27,7 @@ import { SectionDispatcher } from '@bk2/cms-section-feature';
       <ion-grid>
         @for (section of sections(); track section.bkey) {
           <ion-row>
-            <ion-col size="12" (click)="sectionClick.emit(section.bkey)">
+            <ion-col size="12" [id]="section.bkey" (click)="sectionClick.emit(section.bkey)">
               @if (editMode()) {
                 <div class="section-wrapper editable">
                   <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />

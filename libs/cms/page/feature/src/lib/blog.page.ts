@@ -1,6 +1,8 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -124,6 +126,9 @@ export class BlogPage {
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
   private actionSheetController = inject(ActionSheetController);
+  private route = inject(ActivatedRoute);
+  private ionContent = viewChild(IonContent);
+  private routeFragment = toSignal(this.route.fragment);
 
   public contextMenuName = input<string>();
   public color = input('secondary');
@@ -144,6 +149,21 @@ export class BlogPage {
     effect(() => {
       const title = this.pageStore.page()?.title;
       if (title && title.length > 0) this.title.setTitle(title);
+    });
+    effect(() => {
+      const fragment = this.routeFragment();
+      const sections = this.sections();
+      if (!fragment || sections.length === 0) return;
+      setTimeout(async () => {
+        const el = document.getElementById(fragment);
+        const content = this.ionContent();
+        if (!el || !content) return;
+        const scrollEl = await content.getScrollElement();
+        const filterBar = document.querySelector<HTMLElement>('.filter-bar');
+        const stickyOffset = filterBar ? filterBar.offsetHeight + 70 : 0;
+        const top = el.getBoundingClientRect().top + scrollEl.scrollTop - stickyOffset;
+        content.scrollToPoint(0, top, 400);
+      }, 100);
     });
   }
 

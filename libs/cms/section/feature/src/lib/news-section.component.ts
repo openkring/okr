@@ -36,7 +36,7 @@ import { NewsStore } from './news-section.store';
           } @else {
             <ion-list lines="inset">
               @for (article of news(); track article.bkey) {
-                <ion-item>
+                <ion-item (click)="navigateToArticle(article)">
                   <ion-label>
                     @if (article.subTitle) {
                       <p class="subtitle">{{ article.subTitle }}</p>
@@ -135,5 +135,12 @@ export class NewsSectionComponent implements OnInit {
   protected openMoreUrl(): void {
     if (this.editMode()) return;
     navigateByUrl(this.router, this.moreUrl());
+  }
+
+  protected navigateToArticle(article: ArticleSection): void {
+    if (this.editMode()) return;
+    const url = this.moreUrl();
+    if (!url) return;
+    this.router.navigate([url], { fragment: article.bkey });
   }
 }

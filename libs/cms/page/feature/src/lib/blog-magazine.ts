@@ -30,7 +30,7 @@ import { SectionDispatcher } from '@bk2/cms-section-feature';
   `],
   template: `
     @if (hero(); as hero) {
-      <div class="hero" (click)="sectionClick.emit(hero.bkey)">
+      <div class="hero" [id]="hero.bkey" (click)="sectionClick.emit(hero.bkey)">
         @if (editMode()) {
           <div class="section-wrapper editable">
             <bk-section-dispatcher [section]="hero" [currentUser]="currentUser()" [editMode]="editMode()" />
@@ -42,7 +42,7 @@ import { SectionDispatcher } from '@bk2/cms-section-feature';
     }
     <div class="article-grid">
       @for (section of restSections(); track section.bkey) {
-        <div class="article-item" (click)="sectionClick.emit(section.bkey)">
+        <div class="article-item" [id]="section.bkey" (click)="sectionClick.emit(section.bkey)">
           @if (editMode()) {
             <div class="section-wrapper editable">
               <bk-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
