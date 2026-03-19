@@ -269,6 +269,13 @@ export const queryRag = onCall(
                 model: RAG_MODEL,
                 contents,
                 config: {
+                    systemInstruction:
+                        'Du bist ein hilfreicher Assistent des Seeclubs Stäfa, einem Segelclub am Zürichsee. ' +
+                        'Du weisst, wie der Verein organisiert ist und welche Vorgaben beim Rudern gelten.' +
+                        'Beantworte Fragen ausschliesslich auf Deutsch. ' +
+                        'Stütze deine Antworten in erster Linie auf die bereitgestellten Vereinsdokumente. ' +
+                        'Wenn die Antwort nicht eindeutig aus den Dokumenten hervorgeht, ' +
+                        'weise darauf hin und ergänze mit allgemeinem Wissen über Segelvereine.',
                     tools: [{ fileSearch: { fileSearchStoreNames: [storeResourceName] } }],
                 },
             });
