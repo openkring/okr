@@ -9,13 +9,12 @@ import { error, showToast } from './alert.util';
  * @param confirmMsg The message to display to the user on successful copy.
  */
 export async function copyToClipboardWithConfirmation(toastController: ToastController, content: string | number, confirmMsg = '@general.operation.copy.conf') {
-    copyToClipboard(content)
-    .then(() => {
-        showToast(toastController, confirmMsg);
-    })
-    .catch(ex => {
+    try {
+        await copyToClipboard(content);
+        await showToast(toastController, confirmMsg);
+    } catch (ex) {
         error(toastController, `copy.util/copyToClibboard(${content}, confirmMsg) -> ERROR with navigator.clipboard: ${ex}`);
-    });
+    }
 }
 
 /**
@@ -46,15 +45,16 @@ export async function copyToClipboard(content: string | string[] | number | bool
     _content = content ?? '';
   }
   
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  
   try {
     // Primary: Use Capacitor for hybrid apps
     await Clipboard.write({ string: _content });
   } catch (err) {
     if (typeof document !== 'undefined') {
-      // For iOS, prefer execCommand as it's more reliable
-      if (isIOS) {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        // Works on iOS 13.4+ over HTTPS within a user gesture; more reliable than execCommand
+        await navigator.clipboard.writeText(_content);
+      } else {
+        // Last resort fallback for old browsers
         const textArea = document.createElement('textarea');
         textArea.value = _content;
         textArea.style.position = 'fixed';
@@ -64,21 +64,8 @@ export async function copyToClipboard(content: string | string[] | number | bool
         const success = document.execCommand('copy');
         document.body.removeChild(textArea);
         if (!success) {
-          throw new Error('execCommand copy failed on iOS');
+          throw new Error('execCommand copy failed');
         }
-      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        // Fallback for other platforms: Use modern clipboard API
-        await navigator.clipboard.writeText(_content);
-      } else {
-        // Ultimate fallback for very old browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = _content;
-        textArea.style.position = 'fixed';
-        textArea.style.opacity = '0';
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
       }
     } else {
       throw err;
