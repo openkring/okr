@@ -313,6 +313,66 @@ export const deleteFirebaseAuthUser = functions.onCall(
 );
 
 /**
+ * Send a generic HTML email via Mailgun SMTP.
+ * Intended for admin/privileged users to send article content or other HTML emails.
+ * @param emails  list of recipient email addresses
+ * @param appId   human-readable app identifier for per-app branding (e.g. 'scs', 'test')
+ * @param html    HTML body of the email
+ * @param from    sender address, also used as replyTo
+ * @param subject email subject line
+ */
+export const sendEmailPerSmtp = functions.onCall(
+  {
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: ['MAILGUN_SMTP_PASSWORD'],
+  },
+  async (request: functions.CallableRequest<{ emails: string[]; appId: string; html: string; from: string; subject: string }>) => {
+    const CF_NAME = 'sendEmailPerSmtp';
+    checkAppCheckToken(request as any, CF_NAME);
+    checkAuthentication(request as any, CF_NAME);
+
+    const { emails, appId, html, from, subject } = request.data;
+
+    if (!Array.isArray(emails) || emails.length === 0) {
+      throw new functions.HttpsError('invalid-argument', 'emails must be a non-empty array.');
+    }
+    checkStringField(request as any, CF_NAME, 'appId');
+    checkStringField(request as any, CF_NAME, 'html');
+    checkStringField(request as any, CF_NAME, 'from');
+    checkStringField(request as any, CF_NAME, 'subject');
+
+    logger.info(`${CF_NAME}: sending email to ${emails.join(', ')} (appId=${appId})`);
+
+    try {
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.mailgun.org',
+        port: 587,
+        secure: false,
+        auth: {
+          user: 'postmaster@mail.seeclub.org',
+          pass: process.env['MAILGUN_SMTP_PASSWORD'],
+        },
+      });
+
+      await transporter.sendMail({
+        from,
+        replyTo: from,
+        to: emails.join(', '),
+        subject,
+        html,
+      });
+
+      logger.info(`${CF_NAME}: email sent to ${emails.join(', ')}`);
+      return { success: true };
+    } catch (error: any) {
+      logger.error(`${CF_NAME}: failed to send email`, { error: error.message });
+      throw new functions.HttpsError('internal', 'Failed to send email.');
+    }
+  }
+);
+
+/**
  * Send a branded password reset email via Mailgun SMTP.
  * Called from the client instead of the Firebase SDK sendPasswordResetEmail(),
  * allowing per-app branding based on the appId.

@@ -1,7 +1,9 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, input } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular/standalone';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, input } from '@angular/core';
+import { IonButton, IonButtons, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular/standalone';
 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ViewPosition } from '@bk2/shared-models';
+
+import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 @Component({

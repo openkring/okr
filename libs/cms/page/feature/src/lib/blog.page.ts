@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { ArticleSection, BlogLayoutType, ButtonSection, RoleName } from '@bk2/shared-models';
+import { ArticleSection, BlogLayoutType, ButtonSection, RoleName, SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole, replaceSubstring } from '@bk2/shared-util-core';
@@ -196,7 +196,10 @@ export class BlogPage {
 
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
     this.addActionSheetButtons(actionSheetOptions);
-    await this.executeActions(actionSheetOptions, sectionId);
+    const section = this.sectionStore.section();
+    if (section) {
+      await this.executeActions(actionSheetOptions, section);
+    }
   }
 
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
@@ -204,6 +207,7 @@ export class BlogPage {
       actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'create_edit'));
       if (this.sectionStore.section()?.type === 'article') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
+        actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.pageStore.imgixBaseUrl(), 'send'));
       }
       if (this.sectionStore.section()?.type === 'button') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.pageStore.imgixBaseUrl(), 'upload'));
@@ -213,15 +217,16 @@ export class BlogPage {
     }
   }
 
-  private async executeActions(actionSheetOptions: ActionSheetOptions, sectionId: string): Promise<void> {
+  private async executeActions(actionSheetOptions: ActionSheetOptions, section: SectionModel): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'page.removesection': await this.pageStore.removeSectionById(sectionId); break;
+        case 'page.removesection': await this.pageStore.removeSectionById(section.bkey); break;
         case 'section.edit':       await this.sectionStore.edit(this.sectionStore.section(), false); break;
+        case 'section.send':       await this.sectionStore.send(section); break;
         case 'section.image.upload': await this.sectionStore.uploadImage(this.sectionStore.section() as ArticleSection); break;
         case 'section.file.upload':  await this.sectionStore.uploadFile(this.sectionStore.section() as ButtonSection); break;
       }

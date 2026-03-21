@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from "@angular/core";
-import { IonAvatar, IonImg, IonLabel } from "@ionic/angular/standalone";
+import { IonAvatar, IonImg, IonItem, IonLabel } from "@ionic/angular/standalone";
 
 import { AvatarInfo, CategoryListModel, UserModel } from "@bk2/shared-models";
 import { coerceBoolean, getFullName } from "@bk2/shared-util-core";
@@ -9,24 +9,41 @@ import { AvatarService } from '@bk2/avatar-data-access';
   selector: 'bk-avatar',
   standalone: true,
   imports: [
-    IonAvatar, IonImg, IonLabel
+    IonAvatar, IonImg, IonLabel, IonItem
   ],
   styles: [`
     ion-avatar { margin: auto; height: 60px; width: 60px; padding: 10px; text-align: right; position: relative; }
     ion-avatar img { filter: brightness(0) invert(1);}
     small { text-align: center; display: block; margin-top: 2px; }
+    .horizontal { width: 100%}
   `],
   template: `
-    @if (avatarUrl(); as url) {
-      <ion-avatar>
-        <ion-img [src]="url" alt="Avatar of {{ name() }}" />
-      </ion-avatar>
-    }
+    @if (layout() === 'vertical') {
+      @if (avatarUrl(); as url) {
+          <ion-avatar>
+            <ion-img [src]="url" alt="Avatar of {{ name() }}" />
+          </ion-avatar>
+        }
 
-    @if (shouldShowName()) {
-      <ion-label class="ion-align-items-center ion-justify-content-center">
-        <small>{{ name() }}</small>
-      </ion-label>
+        @if (shouldShowName()) {
+          <ion-label class="ion-align-items-center ion-justify-content-center">
+            <small>{{ name() }}</small>
+          </ion-label>
+        }
+    } @else { <!-- horizontal -->
+      <ion-item lines="none" class="horizontal">
+        @if (avatarUrl(); as url) {
+          <ion-avatar>
+            <ion-img [src]="url" alt="Avatar of {{ name() }}" />
+          </ion-avatar>
+        }
+
+        @if (shouldShowName()) {
+          <ion-label class="horizontal">
+            {{ name() }}
+          </ion-label>
+        }
+      </ion-item>
     }
   `
 })
@@ -39,6 +56,7 @@ export class AvatarComponent {
   public showName = input(true);
   public types = input<CategoryListModel>();
   public defaultIcon = input<string>('other');
+  public layout = input<'vertical' | 'horizontal'>('vertical');
 
   // computed
   protected shouldShowName = computed(() => coerceBoolean(this.showName()));

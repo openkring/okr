@@ -14,13 +14,13 @@ const APP_CONFIGS: Record<string, AppEmailConfig> = {
     replyTo: 'app@seeclub.org',
     continueUrl: 'https://seeclub.org/auth/login',
     primaryColor: '#1a73e8',
-    logoUrl: 'https://bkaiser.imgix.net/tenant/scs/logo/google-touch-icon.png',
+    logoUrl: 'https://bkaiser.imgix.net/tenant/scs/logo/logo.svg',
   },
   test: {
     appName: 'bkaiser test',
     from: '"bkaiser" <app@seeclub.org>',
     replyTo: 'info@seeclub.org',
-    continueUrl: 'https://bkaiser.org/login',
+    continueUrl: 'https://bkaiser.org/auth/login',
     primaryColor: '#1a73e8',
     logoUrl: 'https://bkaiser.imgix.net/tenant/test/logo/logo.svg ',
   },
@@ -28,9 +28,9 @@ const APP_CONFIGS: Record<string, AppEmailConfig> = {
 
 const DEFAULT_CONFIG: AppEmailConfig = {
   appName: 'bkaiser',
-  from: '"bkaiser" <app@seeclub.org>',
-  replyTo: 'info@seeclub.org',
-  continueUrl: 'https://seeclub.org/login',
+  from: '"bkaiser" <app@bkaiser.ch>',
+  replyTo: 'info@bkaiser.ch',
+  continueUrl: 'https://bkaiser.ch/auth/login',
   primaryColor: '#1a73e8',
   logoUrl: '',
 };

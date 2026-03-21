@@ -1,14 +1,14 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, SectionModel, SectionType } from '@bk2/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@bk2/shared-models';
 import { CardSelectModalComponent } from '@bk2/shared-ui';
 import { chipMatches, debugItemLoaded, debugMessage, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@bk2/shared-constants';
-import { confirm } from '@bk2/shared-util-angular';
+import { confirm, showToast } from '@bk2/shared-util-angular';
 import { FirestoreService } from '@bk2/shared-data-access';
 
 import { UploadService } from '@bk2/avatar-data-access';
@@ -17,6 +17,10 @@ import { SectionService } from '@bk2/cms-section-data-access';
 import { createSection, narrowSection } from '@bk2/cms-section-util';
 
 import { SectionEditModalComponent } from './section-edit.modal';
+import { MessageCenterModal } from './message-center.modal';
+import { bkTranslate } from '@bk2/shared-i18n';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getApp } from 'firebase/app';
 
 export type SectionState = {
   sectionId: string;
@@ -46,6 +50,7 @@ export const _SectionStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
+    toastController: inject(ToastController),
     firestoreService: inject(FirestoreService)
   })),
   withProps((store) => ({
@@ -276,6 +281,57 @@ export const _SectionStore = signalStore(
       async export(type: string): Promise<void> {
         console.log(`SectionStore.export(${type}) is not yet implemented.`);
       },
+
+      async send(section: SectionModel): Promise<void> {
+        const modal = await store.modalController.create({
+          component: MessageCenterModal,
+          cssClass: 'list-modal-wide',
+          componentProps: { 
+            initialSubject: section.title,
+            initialFrom: 'kommunikation@seeclub.org'
+          },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss();
+        if (role === 'confirm' && data?.emails?.length > 0) {
+          const message = bkTranslate('@content.section.operation.send.confirm', { amount: data.emails.length });
+          const result = await confirm(store.alertController, message, true);
+          if (result === true) {
+            console.log('SectionStore: sending ' + data.emails.length + ' emails from ' + data.from);
+            await this.sendEmailPerSmtp(data.emails, data.subject, this.buildEmailHtml(section), data.from);
+          }
+        }
+      },
+
+      /**
+       * Send an HTML email to one or more recipients via the sendEmailPerSmtp Cloud Function.
+       * @param emails list of recipient addresses
+       * @param subject email subject
+       * @param html HTML body
+       * @param from sender address (also used as replyTo)
+       */
+      buildEmailHtml(section: SectionModel): string {
+        const props = section.properties as any;
+        const images: ImageConfig[] = Array.isArray(props?.images) && props.images.length > 0
+          ? props.images
+          : props?.image ? [props.image] : [];
+        const imgHtml = images
+          .map(img => `<p><img src="${img.url}" alt="${img.altText ?? ''}" style="max-width:100%;height:auto;" /></p>`)
+          .join('');
+        const content = (section as ArticleSection).content?.htmlContent ?? '';
+        return imgHtml + content;
+      },
+
+      async sendEmailPerSmtp(emails: string[], subject: string, html: string, from: string): Promise<void> {
+        try {
+          const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmailPerSmtp');
+          await fn({ emails, appId: store.appStore.env.appId, html, from, subject });
+          await showToast(store.toastController, '@general.operation.email.conf');
+        } catch (ex) {
+          console.error('SectionStore.sendEmailPerSmtp: error: ', ex);
+          await showToast(store.toastController, '@general.operation.email.error');
+        }
+      }
     }
   }),
 );

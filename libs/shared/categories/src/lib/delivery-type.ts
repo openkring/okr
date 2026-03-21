@@ -15,7 +15,7 @@ export const DeliveryTypes: DeliveryTypeCategory[] = [
     abbreviation: 'EMAIL',
     name: 'emailAttachment',
     i18nBase: 'delivery.type.emailAttachment',
-    icon: 'email'
+    icon: 'document'
   },
   {
     id: DeliveryType.SmsNotification,

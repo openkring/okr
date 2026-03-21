@@ -56,6 +56,7 @@ export const updateFirebaseUser = Auth.updateFirebaseUser; // uid, email, displa
 export const listFirebaseUsers = Auth.listFirebaseUsers;
 export const deleteFirebaseAuthUser = Auth.deleteFirebaseAuthUser;
 export const sendPasswordResetEmail = Auth.sendPasswordResetEmail;
+export const sendEmailPerSmtp = Auth.sendEmailPerSmtp;
 
 // replication
 export const onAddressChange = Replication.onAddressChange;

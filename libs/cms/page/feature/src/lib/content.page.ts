@@ -342,10 +342,10 @@ export class ContentPage {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, sectionType: string): void {
     if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
-
       actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'create_edit'));
       if (sectionType === 'article') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
+        actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.pageStore.imgixBaseUrl(), 'send'));
       }
       if (sectionType === 'button') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.pageStore.imgixBaseUrl(), 'upload'));
@@ -367,19 +367,11 @@ export class ContentPage {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-        case 'page.removesection':
-          await this.pageStore.removeSectionById(section.bkey);
-          break;
-        case 'section.edit':
-          await this.sectionStore.edit(section, false);
-          break;
-        case 'section.image.upload':
-          await this.sectionStore.uploadImage(section as ArticleSection);
-          break;
-        case 'section.file.upload':
-          await this.sectionStore.uploadFile(section as ButtonSection);
-          break;
-
+        case 'page.removesection':    await this.pageStore.removeSectionById(section.bkey);             break;
+        case 'section.edit':          await this.sectionStore.edit(section, false);                     break;
+        case 'section.send':          await this.sectionStore.send(section);                            break;
+        case 'section.image.upload':  await this.sectionStore.uploadImage(section as ArticleSection);   break;
+        case 'section.file.upload':   await this.sectionStore.uploadFile(section as ButtonSection);     break;
       }
     }
   }
