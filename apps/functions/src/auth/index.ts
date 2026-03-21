@@ -3,6 +3,8 @@ import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
 import { checkAdminClaim, checkAdminUser, checkAppCheckToken, checkAuthentication, checkStringField } from '@bk2/shared-util-functions';
+import * as nodemailer from 'nodemailer';
+import { getAppEmailConfig, buildPasswordResetHtml } from './email-templates';
 
 // onCall methods are automatically POST requests, so we don't need to check the method.
 
@@ -307,6 +309,62 @@ export const deleteFirebaseAuthUser = functions.onCall(
     const { uid } = request.data;
     await getAuth().deleteUser(uid);
     logger.info(`${CF_NAME}: deleted user ${uid}`);
+  }
+);
+
+/**
+ * Send a branded password reset email via Mailgun SMTP.
+ * Called from the client instead of the Firebase SDK sendPasswordResetEmail(),
+ * allowing per-app branding based on the appId.
+ * @param email  the user's email address
+ * @param appId  the human-readable app identifier (e.g. 'scs', 'test')
+ */
+export const sendPasswordResetEmail = functions.onCall(
+  {
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: ['MAILGUN_SMTP_PASSWORD'],
+  },
+  async (request: functions.CallableRequest<{ email: string; appId: string }>) => {
+    const CF_NAME = 'sendPasswordResetEmail';
+    checkAppCheckToken(request as any, CF_NAME);
+    checkStringField(request as any, CF_NAME, 'email');
+    checkStringField(request as any, CF_NAME, 'appId');
+
+    const { email, appId } = request.data;
+    const config = getAppEmailConfig(appId);
+
+    logger.info(`${CF_NAME}: generating reset link for ${email} (appId=${appId})`);
+
+    try {
+      const link = await getAuth().generatePasswordResetLink(email, {
+        url: config.continueUrl,
+      });
+
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.mailgun.org',
+        port: 587,
+        secure: false,
+        auth: {
+          user: 'postmaster@mail.seeclub.org',
+          pass: process.env['MAILGUN_SMTP_PASSWORD'],
+        },
+      });
+
+      await transporter.sendMail({
+        from: config.from,
+        replyTo: config.replyTo,
+        to: email,
+        subject: `Passwort zurücksetzen – ${config.appName}`,
+        html: buildPasswordResetHtml(config.appName, config.primaryColor, config.logoUrl, email, link),
+      });
+
+      logger.info(`${CF_NAME}: password reset email sent to ${email}`);
+      return { success: true };
+    } catch (error: any) {
+      logger.error(`${CF_NAME}: failed to send email to ${email}`, { error: error.message });
+      throw new functions.HttpsError('internal', 'Failed to send password reset email.');
+    }
   }
 );
 

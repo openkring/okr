@@ -4,6 +4,7 @@ export interface BkEnvironment {
   production: boolean;
   useEmulators: boolean;
   tenantId: string;
+  appId: string; // human-readable app identifier for per-app branding (e.g. 'scs', 'test')
   firebase: {       
     apiKey: string;
     authDomain: string;

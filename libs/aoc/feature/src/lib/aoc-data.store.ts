@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, Observable, of, take } from 'rxjs';
+import { Observable, of, take } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
@@ -12,8 +12,10 @@ import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventM
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel, 
   AvatarInfo,
   AVATAR_INFO_SHAPE,
-  CategoryListModel } from '@bk2/shared-models';
-import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
+  CategoryListModel, 
+  PersonModelName,
+  GroupModelName} from '@bk2/shared-models';
+import { DateFormat, getCategoryIndex, getSystemQuery, getTodayStr, isAfterDate, removeProperty } from '@bk2/shared-util-core';
 
 import { addressValidations, getAddressIndex } from '@bk2/subject-address-util';
 import { commentValidations, getCommentIndex } from '@bk2/comment-util';
@@ -21,7 +23,7 @@ import { calEventValidations, getCaleventIndex } from '@bk2/calevent-util';
 import { StaticSuite } from 'vest';
 import { documentValidations, getDocumentIndex } from '@bk2/document-util';
 import { getLocationIndex, locationValidations } from '@bk2/location-util';
-import { getMembershipIndex, membershipValidations } from '@bk2/relationship-membership-util';
+import { convertMemberAndOrgToMembership, getMembershipIndex, membershipValidations } from '@bk2/relationship-membership-util';
 import { getMenuIndex, menuItemValidations } from '@bk2/cms-menu-util';
 import { getOrgIndex, orgValidations } from '@bk2/subject-org-util';
 import { getOwnershipIndex, ownershipValidations } from '@bk2/relationship-ownership-util';
@@ -38,6 +40,7 @@ import { categoryListValidations } from '@bk2/category-util';
 import { getGroupIndex, groupValidations } from '@bk2/subject-group-util';
 import { confirm } from '@bk2/shared-util-angular';
 import { AlertController } from '@ionic/angular/standalone';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
 export type AocDataState = {
   modelType: string | undefined;
@@ -107,7 +110,7 @@ export const AocDataStore = signalStore(
         const maxDocs = 10; // for testing, you can restrict the amount of documents to process. 
         // set it to undefined to process all documents.
         
-        const collectionName = 'docs';
+        const collectionName = 'memberships';
 
         // fixing fields (types and undefined)
         // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values
@@ -141,18 +144,18 @@ export const AocDataStore = signalStore(
               const originalDoc = JSON.stringify(doc);
               let changed = false;
 
-              if (fieldsToCheckForUndefined.length > 0) {
+/*               if (fieldsToCheckForUndefined.length > 0) {
                 this.fixUndefinedFields<any>(doc, fieldsToCheckForUndefined);
               }
               if (fieldsToFixTypes.length > 0) {
                 this.fixTypes<any>(doc, fieldsToFixTypes);
-              }
+              } */
               this.fixCustomIssues<any>(doc);
 
-              changed = JSON.stringify(doc) !== originalDoc;
+/*               changed = JSON.stringify(doc) !== originalDoc;
               if (changed) {
                 await this.saveDoc<any>(collectionName, doc, isDryRun);
-              }
+              } */
               processed++;
               if (maxDocs !== undefined && processed >= maxDocs) break;
             }
@@ -164,14 +167,56 @@ export const AocDataStore = signalStore(
        * This is the place where you can implement your custom fixes.
        * This implementation is for BkModels where we know the model.
        */
-      fixCustomIssues<T>(doc: T): T {
+      async fixCustomIssues<T>(doc: T): Promise<T> {
         console.log(`  - custom fixes of document ${(doc as any).bkey} ...`);
         const d = doc as any;
-        const baseImgix = 'https://bkaiser.imgix.net/';
+        //const baseImgix = 'https://bkaiser.imgix.net/';
 
-        const tags = d.tags.split(' ');
-        d.tags = tags.join(',');
-        console.log(`    - updated tags: ${d.tags}`);
+        const bs = store.appStore.getGroup('breitensport');
+        const ls = store.appStore.getGroup('leistungssport');
+        if (!bs || !ls) return d;
+        const m = d as MembershipModel;
+        if (m.memberModelType === 'person' &&
+          m.state === 'active' &&
+          m.orgKey === 'scs' &&
+          isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate)) &&
+          m.relIsLast === true &&
+          m.tenants.includes(store.tenantId()) &&
+          m.isArchived === false
+        ) {
+          let group: GroupModel;
+          switch(m.category) {
+            case 'junior': // -> Leistungssport
+              group = ls;
+              break;
+            case 'passive': // -> ignore
+              return d;
+              break;
+            default: // -> Breitensport
+              group = bs;
+              break;
+          }
+          const p = store.appStore.getPerson(m.memberKey);
+          if (!p) {
+            console.error('aoc-data: person ' + m.memberKey + ' not found.');
+            return d;
+          }
+          const m2 = convertMemberAndOrgToMembership(p, PersonModelName, group, GroupModelName, store.tenantId());
+          m2.category = 'active';
+          m2.state = 'active';
+          m2.dateOfEntry = getTodayStr();
+          m2.dateOfExit = END_FUTURE_DATE_STR;
+          m2.relIsLast = true;
+          m2.order = 1;
+          m2.relLog = m2.dateOfEntry + ':A';
+          m2.index = 'mn:' + m.memberName1 + ' ' + m.memberName2 + ' mk:' + m.memberKey + ' ok:' + m.orgKey;
+          console.log(`    - membership created for: ${d.memberKey}/${d.memberName1} ${d.memberName2} -> ${group.name}`);
+          //console.log(m2);
+          await store.firestoreService.createModel<MembershipModel>(MembershipCollection, m2);
+          return d;
+        }
+
+
         //d.tenants = ['scs'];
 
         // create the index here directly without using the getXXindex function, just with string operations.

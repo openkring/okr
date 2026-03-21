@@ -134,6 +134,7 @@ export const environment: BkEnvironment = {
   production: ${isProduction},
   useEmulators: false,
   tenantId: '${tenantId}',
+  appId: '${tenantId}',
   firebase: {
     apiKey: '${firebaseConfig.apiKey}',
     authDomain: '${firebaseConfig.authDomain}',

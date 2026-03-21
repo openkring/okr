@@ -1,9 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
-import { browserLocalPersistence, sendPasswordResetEmail, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { browserLocalPersistence, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { AUTH } from '@bk2/shared-config';
+import { AUTH, ENV } from '@bk2/shared-config';
 import { bkTranslate } from '@bk2/shared-i18n';
 import { AuthCredentials } from '@bk2/shared-models';
 import { navigateByUrl, showToast } from '@bk2/shared-util-angular';
@@ -28,6 +30,7 @@ import { die, warn } from '@bk2/shared-util-core';
 })
 export class AuthService {
   private readonly auth = inject(AUTH);
+  private readonly env = inject(ENV);
   private readonly toastController = inject(ToastController);
   private readonly router = inject(Router);
 
@@ -79,7 +82,8 @@ export class AuthService {
   public async resetPassword(loginEmail: string, loginUrl: string): Promise<void> {
     try {
       if (!loginEmail || loginEmail.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
-      await sendPasswordResetEmail(this.auth, loginEmail);
+      const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendPasswordResetEmail');
+      await fn({ email: loginEmail, appId: this.env.appId });
       await showToast(this.toastController, bkTranslate('@auth.operation.pwdreset.confirmation') + loginEmail);
       await navigateByUrl(this.router, loginUrl);
     } catch (ex) {
