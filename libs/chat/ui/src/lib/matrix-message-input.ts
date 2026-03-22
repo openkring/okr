@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal, viewChild, ElementRef } from '@angular/core';
+import { Component, computed, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
@@ -6,10 +6,12 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { AppStore } from '@bk2/shared-feature';
+import 'emoji-picker-element';
 
 @Component({
   selector: 'bk-matrix-message-input',
   standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
     CommonModule, FormsModule,
@@ -107,6 +109,17 @@ import { AppStore } from '@bk2/shared-feature';
       display: none;
     }
 
+    .emoji-picker-wrapper {
+      position: relative;
+    }
+
+    .emoji-picker-popover {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0;
+      z-index: 1000;
+    }
+
     /* Recording bar replaces the normal input row while recording */
     .recording-container {
       display: flex;
@@ -163,6 +176,23 @@ import { AppStore } from '@bk2/shared-feature';
         >
           <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon}}"></ion-icon>
         </ion-button>
+
+        <!-- Emoji picker button -->
+        <div class="emoji-picker-wrapper">
+          <ion-button
+            fill="clear"
+            class="action-button"
+            (click)="toggleEmojiPicker($event)"
+            title="Emoji"
+          >
+            <ion-icon slot="icon-only" src="{{'smiley' | svgIcon}}"></ion-icon>
+          </ion-button>
+          @if (showEmojiPicker()) {
+            <div class="emoji-picker-popover">
+              <emoji-picker (emoji-click)="onEmojiClick($event)"></emoji-picker>
+            </div>
+          }
+        </div>
 
         <div class="input-wrapper">
           <!-- Reply preview -->
@@ -289,6 +319,7 @@ export class MatrixMessageInput {
   cancelReplyClicked = output<void>();
 
   messageText = signal<string>('');
+  showEmojiPicker = signal<boolean>(false);
   private typingTimeout: any;
 
   textInput = viewChild<ElementRef>('textInput');
@@ -490,5 +521,41 @@ export class MatrixMessageInput {
     if (textarea) {
       textarea.focus();
     }
+  }
+
+  toggleEmojiPicker(event: Event): void {
+    event.stopPropagation();
+    this.showEmojiPicker.update(v => !v);
+    if (this.showEmojiPicker()) {
+      // Close picker when clicking outside
+      const close = () => {
+        this.showEmojiPicker.set(false);
+        document.removeEventListener('click', close);
+      };
+      setTimeout(() => document.addEventListener('click', close), 0);
+    }
+  }
+
+  onEmojiClick(event: Event): void {
+    const detail = (event as CustomEvent).detail;
+    const emoji: string = detail?.unicode ?? '';
+    if (!emoji) return;
+
+    const textarea = this.textInput()?.nativeElement?.querySelector('textarea') as HTMLTextAreaElement | null;
+    if (textarea) {
+      const start = textarea.selectionStart ?? this.messageText().length;
+      const end = textarea.selectionEnd ?? start;
+      const current = this.messageText();
+      this.messageText.set(current.slice(0, start) + emoji + current.slice(end));
+      // Restore cursor position after Angular updates the DOM
+      setTimeout(() => {
+        const pos = start + emoji.length;
+        textarea.setSelectionRange(pos, pos);
+        textarea.focus();
+      }, 0);
+    } else {
+      this.messageText.update(t => t + emoji);
+    }
+    this.showEmojiPicker.set(false);
   }
 }

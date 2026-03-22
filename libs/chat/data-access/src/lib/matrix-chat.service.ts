@@ -26,6 +26,7 @@ export class MatrixChatService {
   private readonly roomsUpdateTrigger$ = new Subject<void>();
   private roomsUpdateSub: Subscription | null = null;
   private readonly _mediaCache = new Map<string, string>(); // mxc:// -> blob URL
+  private readonly typingByRoom = new Map<string, string[]>(); // roomId -> typing userIds
   // Rooms joined via CF admin API that haven't appeared in a sync cycle yet.
   // updateRoomsList() re-injects stubs for these so the UI renders immediately.
   private readonly pendingRooms = new Map<string, string>(); // roomId → display name
@@ -203,6 +204,7 @@ export class MatrixChatService {
       if (url.startsWith('blob:')) URL.revokeObjectURL(url);
     }
     this._mediaCache.clear();
+    this.typingByRoom.clear();
     if (this.client) {
       this.client.stopClient();
       await this.client.clearStores();
@@ -282,6 +284,7 @@ export class MatrixChatService {
       if (room) {
         const typingMembers = room.currentState.getMembers().filter((m: any) => m.typing);
         const typingUsers = typingMembers.map((u: any) => u.userId);
+        this.typingByRoom.set(room.roomId, typingUsers);
         this.typing$.next({ roomId: room.roomId, users: typingUsers });
       }
     });
@@ -611,7 +614,7 @@ private async updateRoomsList(): Promise<void> {
           avatarUrl: (m as any).getAvatarUrl?.(this.client!.baseUrl, 48, 48, 'crop') || undefined,
           membership: (m.membership || 'leave') as string,
         })),
-        typingUsers: [],
+        typingUsers: this.typingByRoom.get(room.roomId) ?? [],
       };
     })
     .sort((a, b) => {

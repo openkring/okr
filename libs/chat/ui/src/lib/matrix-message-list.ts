@@ -227,10 +227,48 @@ import { TranslatePipe } from '@bk2/shared-i18n';
       height: 100%;
       color: var(--ion-color-medium);
     }
+
+    .typing-bubble {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0 4px 40px;
+    }
+
+    .typing-dots {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--ion-color-light);
+      border-radius: 12px;
+      padding: 8px 14px;
+    }
+
+    .typing-dots span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ion-color-medium);
+      animation: typingBounce 1.2s infinite ease-in-out;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%            { transform: translateY(-5px); }
+    }
+
+    .typing-label {
+      font-size: 0.75rem;
+      color: var(--ion-color-medium);
+      font-style: italic;
+    }
   `],
   template: `
     <div class="messages-container" #messagesContainer>
-      @if (messages().length === 0) {
+      @if (messages().length === 0 && typingUsers().length === 0) {
         <div class="empty-state">
           <p>{{'@chat.fields.noMessagesStartConversation' | translate | async }}</p>
         </div>
@@ -368,6 +406,15 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           }
         }
       }
+
+      @if (typingUsers().length > 0) {
+        <div class="typing-bubble">
+          <div class="typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="typing-label">{{ formatTypingLabel() }}</span>
+        </div>
+      }
     </div>
   `
 })
@@ -375,6 +422,7 @@ export class MatrixMessageList {
   messages = input.required<MatrixMessage[]>();
   currentUserId = input<string>();
   homeserverUrl = input<string>('https://bkchat.etke.host');
+  typingUsers = input<string[]>([]);
 
   messageClicked = output<MatrixMessage>();
   imageClicked = output<MatrixMessage>();
@@ -488,6 +536,13 @@ export class MatrixMessageList {
     const mimetype = message.content?.info?.mimetype || '';
     if (mimetype.startsWith('audio/')) return true;
     return /\.(mp3|ogg|wav|flac|aac|webm|m4a|opus)$/i.test(message.body || '');
+  }
+
+  formatTypingLabel(): string {
+    const users = this.typingUsers();
+    if (users.length === 1) return `${users[0]} tippt…`;
+    if (users.length === 2) return `${users[0]} und ${users[1]} tippen…`;
+    return `${users[0]} und ${users.length - 1} weitere tippen…`;
   }
 
   getReactions(message: MatrixMessage): { emoji: string; count: number }[] {

@@ -60,6 +60,7 @@ export const _MatrixChatStore = signalStore(
     activeCallResource: rxResource({ stream: () => store.matrixService.activeCall }),
     callStateResource: rxResource({ stream: () => store.matrixService.callState }),
     callFeedsResource: rxResource({ stream: () => store.matrixService.callFeeds }),
+    typingResource: rxResource({ stream: () => store.matrixService.typing }),
 
     /**
      * Get messages for current room - returns an Observable that switches when room changes.
@@ -99,6 +100,13 @@ export const _MatrixChatStore = signalStore(
           .replace(/^matrix\./, '');
       }),
       messages: computed(() => state.messagesResource.value() ?? []),
+      typingUsers: computed(() => {
+        const notification = state.typingResource.value();
+        if (!notification || notification.roomId !== state.currentRoomId()) return [];
+        // Exclude the current user from the indicator
+        const currentUserId = state.matrixService.getCurrentUserId();
+        return notification.users.filter(u => u !== currentUserId);
+      }),
       isMessagesLoading: computed(() => {
         const roomId = state.currentRoomId();
         if (!roomId) return false;
