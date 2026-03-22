@@ -43,6 +43,7 @@
     {"path": "../../../subject/person/ui/tsconfig.lib.json"},
     {"path": "../../../task/data-access/tsconfig.lib.json"},
     {"path": "../../../task/feature/tsconfig.lib.json"},
-    {"path": "../../../chat/data-access/tsconfig.lib.json"}
+    {"path": "../../../chat/data-access/tsconfig.lib.json"},
+    {"path": "../../../user/data-access/tsconfig.lib.json"}
   ]
 }

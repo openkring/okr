@@ -5,12 +5,14 @@ import { vestForms } from 'ngx-vest-forms';
 import { BexioIdMask, ChVatMask } from '@bk2/shared-config';
 import { CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, EmailInputComponent, ErrorNoteComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
+import { coerceBoolean, convertDateFormatToString, DateFormat, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
 import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
 
 import { OrgNewFormModel, orgNewFormValidations } from '@bk2/subject-org-util';
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@bk2/shared-constants';
+import { ZefixCompanyDetails } from '@bk2/subject-org-data-access';
+import { ZefixLookupComponent } from './zefix-lookup.component';
 
 @Component({
   selector: 'bk-org-new-form',
@@ -19,6 +21,7 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, D
     vestForms,
     DateInputComponent, TextInputComponent, ChipsComponent, NotesInputComponent, ErrorNoteComponent,
     EmailInputComponent, PhoneInputComponent, SwissCitySearchComponent, CategorySelectComponent,
+    ZefixLookupComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -45,11 +48,16 @@ import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, D
               </ion-row>
             }
 
-            <ion-row> 
-              <ion-col size="12">
+            <ion-row class="ion-align-items-center">
+              <ion-col [size]="isLegalEntity() ? 10 : 12">
                 <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" autocomplete="organization" [maxLength]=50 [readOnly]="isReadOnly()" />
-                <bk-error-note [errors]="nameErrors()" />                                                                                                                     
+                <bk-error-note [errors]="nameErrors()" />
               </ion-col>
+              @if (isLegalEntity()) {
+                <ion-col size="2" class="ion-text-center">
+                  <bk-zefix-lookup [orgName]="name()" (detailsLoaded)="onZefixSelected($event)" />
+                </ion-col>
+              }
             </ion-row>
 
             <ion-row>
@@ -145,8 +153,9 @@ export class OrgNewFormComponent {
   public isOrgTypeVisible = input(true);
   public readonly allTags = input.required<string>();
   public readonly types = input.required<CategoryListModel>();
-  public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));  
+  public readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected isLegalEntity = computed(() => this.type() === 'legalEntity');
 
  // signals
   public dirty = output<boolean>();
@@ -194,6 +203,21 @@ export class OrgNewFormComponent {
     this.formData.update((vm) => ({...vm, ...value}));
     debugFormModel('OrgNewForm.onFormChange', this.formData(), this.currentUser());
     debugFormErrors('OrgNewForm.onFormChange', this.validationResult().errors, this.currentUser());
+  }
+
+  protected onZefixSelected(details: ZefixCompanyDetails): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({
+      ...vm,
+      name: details.name || vm.name,
+      taxId: details.taxId || vm.taxId,
+      streetName: details.streetName || vm.streetName,
+      streetNumber: details.streetNumber || vm.streetNumber,
+      countryCode: details.countryCode || vm.countryCode,
+      zipCode: details.zipCode || vm.zipCode,
+      city: details.city || vm.city,
+      notes: details.notes || vm.notes,
+    }));
   }
 
   protected onCitySelected(city: SwissCity): void {

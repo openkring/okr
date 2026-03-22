@@ -12,6 +12,7 @@ import * as OidcBridge from './oidc-bridge';
 import * as MatrixSimple from './matrix-simple';
 import * as Rag from './rag';
 import * as Email from './email';
+import * as Zefix from './zefix';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -101,6 +102,10 @@ export const generateCalendarICS = Calendar.generateCalendarICS;
 
 // email webhooks
 export const mailtrapWebhook = Email.mailtrapWebhook;
+
+// zefix registry lookup
+export const zefixSearch = Zefix.zefixSearch;
+export const zefixGetByUid = Zefix.zefixGetByUid;
 
 // google file search rag
 export const getOrCreateStore = Rag.getOrCreateStore;

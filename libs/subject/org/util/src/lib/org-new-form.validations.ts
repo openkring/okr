@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
+import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
 import { dateValidations, isAfterDate, stringValidations } from '@bk2/shared-util-core';
 
 import { OrgNewFormModel } from './org-new-form.model';
@@ -8,7 +8,7 @@ import { OrgNewFormModel } from './org-new-form.model';
 export const orgNewFormValidations = staticSuite((model: OrgNewFormModel, field?: string) => {
   if (field) only(field);
 
-  stringValidations('name', model.name, SHORT_NAME_LENGTH, 3, true);
+  stringValidations('name', model.name, NAME_LENGTH, 3, true);
   stringValidations('type', model.type, WORD_LENGTH);
   dateValidations('dateOfFoundation', model.dateOfFoundation);
   dateValidations('dateOfLiquidation', model.dateOfLiquidation);
