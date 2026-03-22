@@ -11,6 +11,7 @@ import * as Matrix from './matrix';
 import * as OidcBridge from './oidc-bridge';
 import * as MatrixSimple from './matrix-simple';
 import * as Rag from './rag';
+import * as Email from './email';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -55,8 +56,7 @@ export const setPassword = Auth.setPassword; // uid, password
 export const updateFirebaseUser = Auth.updateFirebaseUser; // uid, email, displayName, emailVerified, disabled, phone, photoUrl
 export const listFirebaseUsers = Auth.listFirebaseUsers;
 export const deleteFirebaseAuthUser = Auth.deleteFirebaseAuthUser;
-export const sendPasswordResetEmail = Auth.sendPasswordResetEmail;
-export const sendEmailPerSmtp = Auth.sendEmailPerSmtp;
+export const sendEmail = Auth.sendEmail;
 
 // replication
 export const onAddressChange = Replication.onAddressChange;
@@ -98,6 +98,9 @@ export const oidcUserInfo = OidcBridge.oidcUserInfo;
 
 // calendar
 export const generateCalendarICS = Calendar.generateCalendarICS;
+
+// email webhooks
+export const mailtrapWebhook = Email.mailtrapWebhook;
 
 // google file search rag
 export const getOrCreateStore = Rag.getOrCreateStore;

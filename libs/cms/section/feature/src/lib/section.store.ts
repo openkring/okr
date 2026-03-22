@@ -286,30 +286,33 @@ export const _SectionStore = signalStore(
         const modal = await store.modalController.create({
           component: MessageCenterModal,
           cssClass: 'list-modal-wide',
-          componentProps: { 
+          componentProps: {
             initialSubject: section.title,
-            initialFrom: 'kommunikation@seeclub.org'
+            initialFrom: 'kommunikation@seeclub.org',
+            isPrivileged: true
           },
         });
         await modal.present();
         const { data, role } = await modal.onWillDismiss();
-        if (role === 'confirm' && data?.emails?.length > 0) {
-          const message = bkTranslate('@content.section.operation.send.confirm', { amount: data.emails.length });
+        if (role === 'confirm' && data?.to?.length > 0) {
+          const tos = data.to as string[];
+          const ccs = data.cc as string[];
+          const bccs = data.bcc as string[];
+          const nrEmails = tos.length + ccs.length + bccs.length;
+
+          const message = bkTranslate('@content.section.operation.send.confirm', { amount: nrEmails });
+          console.log(`MessageCenterModal: sending to:${tos.length}, cc:${ccs.length}, bcc:${bccs.length}`);
+          console.log('     - tos: ', tos);
+          console.log('     - ccs: ', ccs);
+          console.log('     - bccs: ', bccs);
           const result = await confirm(store.alertController, message, true);
           if (result === true) {
-            console.log('SectionStore: sending ' + data.emails.length + ' emails from ' + data.from);
-            await this.sendEmailPerSmtp(data.emails, data.subject, this.buildEmailHtml(section), data.from);
+            console.log('SectionStore: sending ' + data.to.length + ' emails from ' + data.from);
+            await this.sendEmail(data.to, data.subject, this.buildEmailHtml(section), data.from, data.cc, data.bcc, data.provider, data.template);
           }
         }
       },
 
-      /**
-       * Send an HTML email to one or more recipients via the sendEmailPerSmtp Cloud Function.
-       * @param emails list of recipient addresses
-       * @param subject email subject
-       * @param html HTML body
-       * @param from sender address (also used as replyTo)
-       */
       buildEmailHtml(section: SectionModel): string {
         const props = section.properties as any;
         const images: ImageConfig[] = Array.isArray(props?.images) && props.images.length > 0
@@ -322,13 +325,13 @@ export const _SectionStore = signalStore(
         return imgHtml + content;
       },
 
-      async sendEmailPerSmtp(emails: string[], subject: string, html: string, from: string): Promise<void> {
+      async sendEmail(to: string[], subject: string, html: string, from: string, cc: string[] = [], bcc: string[] = [], provider = 'mailgun_smtp', template?: string): Promise<void> {
         try {
-          const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmailPerSmtp');
-          await fn({ emails, appId: store.appStore.env.appId, html, from, subject });
+          const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
+          await fn({ to, cc, bcc, appId: store.appStore.env.appId, html, from, subject, provider, template });
           await showToast(store.toastController, '@general.operation.email.conf');
         } catch (ex) {
-          console.error('SectionStore.sendEmailPerSmtp: error: ', ex);
+          console.error('SectionStore.sendEmail: error: ', ex);
           await showToast(store.toastController, '@general.operation.email.error');
         }
       }

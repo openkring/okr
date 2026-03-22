@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
-import { browserLocalPersistence, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { browserLocalPersistence, confirmPasswordReset, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut, verifyPasswordResetCode } from 'firebase/auth';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -82,14 +82,32 @@ export class AuthService {
   public async resetPassword(loginEmail: string, loginUrl: string): Promise<void> {
     try {
       if (!loginEmail || loginEmail.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
-      const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendPasswordResetEmail');
-      await fn({ email: loginEmail, appId: this.env.appId });
+      const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
+      await fn({ to: [loginEmail], appId: this.env.appId, provider: 'mailtrap_api', template: 'scs_password_reset' });
       await showToast(this.toastController, bkTranslate('@auth.operation.pwdreset.confirmation') + loginEmail);
       await navigateByUrl(this.router, loginUrl);
     } catch (ex) {
       console.error('AuthService.resetPassword: error: ', ex);
       await showToast(this.toastController, '@auth.operation.pwdreset.error');
       await navigateByUrl(this.router, loginUrl);
+    }
+  }
+
+  /**
+   * Verify a password reset code and confirm the new password.
+   * Called from the custom confirm-password-reset page at /auth/confirm.
+   * @param oobCode the out-of-band code from the reset link URL query params
+   * @param newPassword the new password chosen by the user
+   * @returns the email address on success, undefined on failure
+   */
+  public async confirmPasswordReset(oobCode: string, newPassword: string): Promise<string | undefined> {
+    try {
+      const email = await verifyPasswordResetCode(this.auth, oobCode);
+      await confirmPasswordReset(this.auth, oobCode, newPassword);
+      return email;
+    } catch (ex) {
+      console.error('AuthService.confirmPasswordReset: error: ', ex);
+      return undefined;
     }
   }
 

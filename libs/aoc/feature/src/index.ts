@@ -7,4 +7,5 @@ export * from './lib/aoc-roles';
 export * from './lib/aoc-statistics';
 export * from './lib/aoc-storage';
 export * from './lib/aoc-tag';
+export * from './lib/aoc-email';
 export * from './lib/aoc-user-account';

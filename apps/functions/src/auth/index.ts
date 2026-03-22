@@ -3,8 +3,8 @@ import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
 import { checkAdminClaim, checkAdminUser, checkAppCheckToken, checkAuthentication, checkStringField } from '@bk2/shared-util-functions';
-import * as nodemailer from 'nodemailer';
-import { getAppEmailConfig, buildPasswordResetHtml } from './email-templates';
+import { getAppEmailConfig } from './email-templates';
+import { isValidProvider, sendEmailViaProvider } from './email-transport';
 
 // onCall methods are automatically POST requests, so we don't need to check the method.
 
@@ -313,117 +313,70 @@ export const deleteFirebaseAuthUser = functions.onCall(
 );
 
 /**
- * Send a generic HTML email via Mailgun SMTP.
- * Intended for admin/privileged users to send article content or other HTML emails.
- * @param emails  list of recipient email addresses
- * @param appId   human-readable app identifier for per-app branding (e.g. 'scs', 'test')
- * @param html    HTML body of the email
- * @param from    sender address, also used as replyTo
- * @param subject email subject line
+ * Send an email via a configurable provider.
+ * Also handles password reset emails when template === 'scs_password_reset':
+ * generates a Firebase password reset link and injects { url, email, app_name }
+ * into templateVariables automatically. No authentication required for this case.
+ * For all other templates/html sends, the caller must be authenticated.
+ * @param to                list of recipient email addresses
+ * @param cc                optional CC addresses
+ * @param bcc               optional BCC addresses
+ * @param appId             human-readable app identifier (e.g. 'scs', 'test')
+ * @param html              HTML body (may be empty when using a template)
+ * @param from              sender address (derived from app config for password reset)
+ * @param subject           email subject line (derived from app config for password reset)
+ * @param provider          email provider: 'mailgun_smtp' | 'mailtrap_api' | 'netzone_smtp' | 'mailtrap_test'
+ * @param template          optional template name (e.g. 'scs_password_reset')
+ * @param templateVariables optional variables passed to the template
  */
-export const sendEmailPerSmtp = functions.onCall(
+export const sendEmail = functions.onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
-    secrets: ['MAILGUN_SMTP_PASSWORD'],
+    secrets: ['MAILGUN_SMTP_PASSWORD', 'MAILTRAP_APIKEY', 'NETZONE_SMTP_PASSWORD', 'MAILTRAP_TEST_USER', 'MAILTRAP_TEST_PASS'],
   },
-  async (request: functions.CallableRequest<{ emails: string[]; appId: string; html: string; from: string; subject: string }>) => {
-    const CF_NAME = 'sendEmailPerSmtp';
+  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider: string; template?: string; templateVariables?: Record<string, string> }>) => {
+    const CF_NAME = 'sendEmail';
     checkAppCheckToken(request as any, CF_NAME);
-    checkAuthentication(request as any, CF_NAME);
 
-    const { emails, appId, html, from, subject } = request.data;
+    const { to, cc, bcc, appId, provider, template } = request.data;
+    let { html, from, subject, templateVariables } = request.data;
 
-    if (!Array.isArray(emails) || emails.length === 0) {
-      throw new functions.HttpsError('invalid-argument', 'emails must be a non-empty array.');
+    const isPasswordReset = template === 'scs_password_reset';
+    if (!isPasswordReset) {
+      checkAuthentication(request as any, CF_NAME);
+    }
+
+    if (!Array.isArray(to) || to.length === 0) {
+      throw new functions.HttpsError('invalid-argument', 'to must be a non-empty array.');
     }
     checkStringField(request as any, CF_NAME, 'appId');
-    checkStringField(request as any, CF_NAME, 'html');
-    checkStringField(request as any, CF_NAME, 'from');
-    checkStringField(request as any, CF_NAME, 'subject');
+    if (!isValidProvider(provider)) {
+      throw new functions.HttpsError('invalid-argument', `Unknown provider: ${provider}`);
+    }
 
-    logger.info(`${CF_NAME}: sending email to ${emails.join(', ')} (appId=${appId})`);
+    if (isPasswordReset) {
+      const config = getAppEmailConfig(appId);
+      const link = await getAuth().generatePasswordResetLink(to[0], { url: config.continueUrl });
+      from = config.from;
+      subject = `Passwort zurücksetzen – ${config.appName}`;
+      html = `<p>Passwort zurücksetzen: <a href="${link}">${link}</a></p>`;
+      templateVariables = { ...templateVariables, url: link, email: to[0], app_name: config.appName };
+      logger.info(`${CF_NAME}: generated reset link for ${to[0]} (appId=${appId}, provider=${provider})`);
+    }
+
+    if (!from) throw new functions.HttpsError('invalid-argument', 'from is required.');
+    if (!subject) throw new functions.HttpsError('invalid-argument', 'subject is required.');
+
+    logger.info(`${CF_NAME}: sending via ${provider} to=${to.join(', ')} (appId=${appId}, template=${template ?? 'none'})`);
 
     try {
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.mailgun.org',
-        port: 587,
-        secure: false,
-        auth: {
-          user: 'postmaster@mail.seeclub.org',
-          pass: process.env['MAILGUN_SMTP_PASSWORD'],
-        },
-      });
-
-      await transporter.sendMail({
-        from,
-        replyTo: from,
-        to: emails.join(', '),
-        subject,
-        html,
-      });
-
-      logger.info(`${CF_NAME}: email sent to ${emails.join(', ')}`);
+      await sendEmailViaProvider(provider, { from, to, cc, bcc, subject, html: html ?? '', template, templateVariables });
+      logger.info(`${CF_NAME}: email sent to ${to.join(', ')}`);
       return { success: true };
     } catch (error: any) {
       logger.error(`${CF_NAME}: failed to send email`, { error: error.message });
       throw new functions.HttpsError('internal', 'Failed to send email.');
-    }
-  }
-);
-
-/**
- * Send a branded password reset email via Mailgun SMTP.
- * Called from the client instead of the Firebase SDK sendPasswordResetEmail(),
- * allowing per-app branding based on the appId.
- * @param email  the user's email address
- * @param appId  the human-readable app identifier (e.g. 'scs', 'test')
- */
-export const sendPasswordResetEmail = functions.onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-    secrets: ['MAILGUN_SMTP_PASSWORD'],
-  },
-  async (request: functions.CallableRequest<{ email: string; appId: string }>) => {
-    const CF_NAME = 'sendPasswordResetEmail';
-    checkAppCheckToken(request as any, CF_NAME);
-    checkStringField(request as any, CF_NAME, 'email');
-    checkStringField(request as any, CF_NAME, 'appId');
-
-    const { email, appId } = request.data;
-    const config = getAppEmailConfig(appId);
-
-    logger.info(`${CF_NAME}: generating reset link for ${email} (appId=${appId})`);
-
-    try {
-      const link = await getAuth().generatePasswordResetLink(email, {
-        url: config.continueUrl,
-      });
-
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.mailgun.org',
-        port: 587,
-        secure: false,
-        auth: {
-          user: 'postmaster@mail.seeclub.org',
-          pass: process.env['MAILGUN_SMTP_PASSWORD'],
-        },
-      });
-
-      await transporter.sendMail({
-        from: config.from,
-        replyTo: config.replyTo,
-        to: email,
-        subject: `Passwort zurücksetzen – ${config.appName}`,
-        html: buildPasswordResetHtml(config.appName, config.primaryColor, config.logoUrl, email, link),
-      });
-
-      logger.info(`${CF_NAME}: password reset email sent to ${email}`);
-      return { success: true };
-    } catch (error: any) {
-      logger.error(`${CF_NAME}: failed to send email to ${email}`, { error: error.message });
-      throw new functions.HttpsError('internal', 'Failed to send password reset email.');
     }
   }
 );

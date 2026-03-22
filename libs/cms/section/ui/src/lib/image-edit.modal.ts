@@ -32,7 +32,7 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
               <bk-text-input name="imageLabel" [value]="label()" (valueChange)="onFieldChange('label', $event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
-              <bk-text-input name="imageUrl" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="readOnly()" />
+              <bk-text-input name="imageUrl" [value]="url()" (valueChange)="onFieldChange('url', $event)" [maxLength]="500" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
               <bk-text-input name="imageActionUrl" [value]="actionUrl()" (valueChange)="onFieldChange('actionUrl', $event)" [readOnly]="readOnly()" />

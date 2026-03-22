@@ -192,24 +192,23 @@ export class BlogPage {
   protected async showActions(sectionId: string): Promise<void> {
     if (!this.editMode()) return;
     const id = replaceSubstring(sectionId, '@TID@', this.tenantId());
+    const section = this.sectionStore.sections()?.find(s => s.bkey === id);
+    if (!section) return;
     this.sectionStore.setSectionId(id);
 
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions);
-    const section = this.sectionStore.section();
-    if (section) {
-      await this.executeActions(actionSheetOptions, section);
-    }
+    this.addActionSheetButtons(actionSheetOptions, section);
+    await this.executeActions(actionSheetOptions, section);
   }
 
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
     if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'create_edit'));
-      if (this.sectionStore.section()?.type === 'article') {
+      if (section.type === 'article') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
         actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.pageStore.imgixBaseUrl(), 'send'));
       }
-      if (this.sectionStore.section()?.type === 'button') {
+      if (section.type === 'button') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.pageStore.imgixBaseUrl(), 'upload'));
       }
       actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.pageStore.imgixBaseUrl(), 'trash_delete'));

@@ -33,51 +33,68 @@ Firebase refresh tokens have no expiration by default. There is no configured id
 
 ### Architecture
 
-Firebase Auth email templates are per-project only — all apps in the same Firebase project share one template. To support per-app branding, password reset emails are sent via a Cloud Function instead of the Firebase client SDK.
+Firebase Auth email templates are per-project only — all apps in the same Firebase project share one template. To support per-app branding, password reset emails are sent via a Cloud Function instead of the Firebase client SDK. The reset link points to a custom in-app page (not Firebase's default UI) to avoid spam flags and provide a consistent UX.
 
 **Flow:**
 
-1. User submits email on the password reset page
-2. Frontend calls the `sendPasswordResetEmail` Cloud Function with `{ email, appId }`
-3. Cloud Function calls `admin.auth().generatePasswordResetLink(email, actionCodeSettings)` to generate a secure reset link
-4. Cloud Function selects the branded HTML template for the given `appId`
-5. Cloud Function sends the email via the configured email service
-6. The reset link's `continueUrl` points back to the correct app domain
+1. User enters their email on `/auth/pwdreset`
+2. Frontend calls the `sendEmail` Cloud Function with `{ to, appId, provider: 'mailtrap_api', template: 'scs_password_reset' }`
+3. Cloud Function calls `admin.auth().generatePasswordResetLink(email, { url: continueUrl })` to generate a secure one-time code
+4. Cloud Function sends a branded email via Mailtrap API using the `scs_password_reset` template, with `{{ url }}` and `{{ email }}` as template variables
+5. User clicks the link in the email → lands on `/auth/confirm?oobCode=XXX&continueUrl=/auth/login`
+6. User enters a new password; frontend calls `confirmPasswordReset(auth, oobCode, newPassword)` directly
+7. On success → redirect to `/auth/login`
 
 ### Cloud Function
 
 - Location: `apps/functions/src/auth/index.ts`
-- Name: `sendPasswordResetEmail`
+- Name: `sendEmail`
 - AppCheck: enforced
-- Auth: public (user is logged out when requesting a reset)
-- Input: `{ email: string, appId: string }`
+- Auth: not required for `template === 'scs_password_reset'` (user is logged out when requesting a reset)
+- Input: `{ to: string[], appId: string, provider: string, template: string }`
+- Per-app config (from, continueUrl, appName): `apps/functions/src/auth/email-templates.ts`
 
-### Email templates
+### Email sending
 
-- Location: `apps/functions/src/auth/email-templates/`
-- One HTML file per app (e.g. `seeclub.html`, `bkaiser.html`)
-- Fallback to a generic template for unknown `appId` values
-- Known `appId` values: `seeclub`, `bkaiser`, `p13`, `kwa`, `silcrest7`
+- Provider: Mailtrap API (`mailtrap_api`)
+- Template name: `scs_password_reset` — UUID configured in `apps/functions/src/auth/email-transport.ts` → `MAILTRAP_TEMPLATE_UUIDS`
+- Template variables: `{{ url }}` (reset link), `{{ email }}` (recipient), `{{ app_name }}`
+- Fallback html (for SMTP providers): plain text link
 
-### Configuration
+### Custom action URL (anti-spam)
 
-- Email service API key / SMTP credentials stored in GCP Secret Manager
-- `appId` is defined in each app's `environment.ts` and typed in `BkEnvironment`
-- `actionCodeSettings.url` is the app's login URL (e.g. `https://seeclub.org/login`)
+The Firebase action URL uses the app's custom domain instead of `firebaseapp.com` to avoid spam filters:
+
+- Set in: Firebase Console → Authentication → Templates → Password reset → Customize action URL
+- Value: `https://seeclub.org/__/auth/action` (routes through Firebase Hosting on custom domain)
+
+### Custom confirm page
+
+A custom Angular page handles the `oobCode` from the reset link, replacing Firebase's default hosted UI:
+
+- Route: `/auth/confirm?oobCode=XXX&continueUrl=/auth/login`
+- Component: `libs/auth/feature/src/lib/confirm-password-reset.page.ts`
+- Shows a new-password form; calls `confirmPasswordReset(auth, oobCode, newPassword)` on submit
+- On success: shows confirmation toast and redirects to `continueUrl`
+- On invalid/expired code: shows error message
+
+To make email links go directly to this page instead of `/__/auth/action`, update the Firebase Console action URL to `https://seeclub.org/auth/confirm`.
 
 ### Frontend
 
-- `AuthService.resetPassword()` in `libs/auth/data-access/src/lib/auth.service.ts`
-- Calls `httpsCallable('sendPasswordResetEmail')` instead of Firebase SDK `sendPasswordResetEmail()`
-- Passes `{ email, appId }` where `appId` comes from `environment.appId`
+- `AuthService.resetPassword()` — calls `sendEmail` CF; in `libs/auth/data-access/src/lib/auth.service.ts`
+- `AuthService.confirmPasswordReset()` — calls Firebase `confirmPasswordReset()`; same file
 
 ### Deployment
 
-Before deploying, add the Mailgun SMTP password via the Firebase CLI (stores it in GCP Secret Manager):
+Before deploying, set all required secrets:
 
 ```sh
 firebase functions:secrets:set MAILGUN_SMTP_PASSWORD
-# prompts for the value interactively — nothing is echoed to the terminal
+firebase functions:secrets:set MAILTRAP_APIKEY
+firebase functions:secrets:set NETZONE_SMTP_PASSWORD
+firebase functions:secrets:set MAILTRAP_TEST_USER
+firebase functions:secrets:set MAILTRAP_TEST_PASS
 ```
 
 Then deploy:
@@ -89,7 +106,5 @@ pnpm nx build scs-app --configuration production && firebase deploy --only hosti
 
 ### Custom sender domain
 
-- From address: `noreply@seeclub.org` (validated custom domain in Firebase Console)
-- SPF: `include:_spf.firebasemail.com` ✓
-- DKIM: `firebase1._domainkey.seeclub.org`, `firebase2._domainkey.seeclub.org` ✓
-- DMARC: `p=REJECT` ✓
+- From address: `app@seeclub.org` (Mailgun custom domain)
+- SPF/DKIM/DMARC configured on `seeclub.org` for `mail.seeclub.org` via Mailgun ✓
