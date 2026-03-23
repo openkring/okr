@@ -110,7 +110,7 @@ export const AocDataStore = signalStore(
         const maxDocs = 10; // for testing, you can restrict the amount of documents to process. 
         // set it to undefined to process all documents.
         
-        const collectionName = 'memberships';
+        const collectionName = 'addresses';
 
         // fixing fields (types and undefined)
         // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values
@@ -144,18 +144,18 @@ export const AocDataStore = signalStore(
               const originalDoc = JSON.stringify(doc);
               let changed = false;
 
-/*               if (fieldsToCheckForUndefined.length > 0) {
+              if (fieldsToCheckForUndefined.length > 0) {
                 this.fixUndefinedFields<any>(doc, fieldsToCheckForUndefined);
               }
               if (fieldsToFixTypes.length > 0) {
                 this.fixTypes<any>(doc, fieldsToFixTypes);
-              } */
+              }
               this.fixCustomIssues<any>(doc);
 
-/*               changed = JSON.stringify(doc) !== originalDoc;
+              changed = JSON.stringify(doc) !== originalDoc;
               if (changed) {
                 await this.saveDoc<any>(collectionName, doc, isDryRun);
-              } */
+              }
               processed++;
               if (maxDocs !== undefined && processed >= maxDocs) break;
             }
@@ -171,59 +171,53 @@ export const AocDataStore = signalStore(
         console.log(`  - custom fixes of document ${(doc as any).bkey} ...`);
         const d = doc as any;
         //const baseImgix = 'https://bkaiser.imgix.net/';
-
-        const bs = store.appStore.getGroup('breitensport');
-        const ls = store.appStore.getGroup('leistungssport');
-        if (!bs || !ls) return d;
-        const m = d as MembershipModel;
-        if (m.memberModelType === 'person' &&
-          m.state === 'active' &&
-          m.orgKey === 'scs' &&
-          isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate)) &&
-          m.relIsLast === true &&
-          m.tenants.includes(store.tenantId()) &&
-          m.isArchived === false
-        ) {
-          let group: GroupModel;
-          switch(m.category) {
-            case 'junior': // -> Leistungssport
-              group = ls;
-              break;
-            case 'passive': // -> ignore
-              return d;
-              break;
-            default: // -> Breitensport
-              group = bs;
-              break;
-          }
-          const p = store.appStore.getPerson(m.memberKey);
-          if (!p) {
-            console.error('aoc-data: person ' + m.memberKey + ' not found.');
-            return d;
-          }
-          const m2 = convertMemberAndOrgToMembership(p, PersonModelName, group, GroupModelName, store.tenantId());
-          m2.category = 'active';
-          m2.state = 'active';
-          m2.dateOfEntry = getTodayStr();
-          m2.dateOfExit = END_FUTURE_DATE_STR;
-          m2.relIsLast = true;
-          m2.order = 1;
-          m2.relLog = m2.dateOfEntry + ':A';
-          m2.index = 'mn:' + m.memberName1 + ' ' + m.memberName2 + ' mk:' + m.memberKey + ' ok:' + m.orgKey;
-          console.log(`    - membership created for: ${d.memberKey}/${d.memberName1} ${d.memberName2} -> ${group.name}`);
-          //console.log(m2);
-          await store.firestoreService.createModel<MembershipModel>(MembershipCollection, m2);
-          return d;
-        }
-
-
         //d.tenants = ['scs'];
+
+        // convert channel
+        d.addressChannel = this.convertChannel(d.channelType);
+        d.addressChannelLabel = d.channelLabel ?? '';
+        d.addressUsage = this.convertUsage(d.usageType);
+        d.addressUsageLabel = d.usageLabel ?? '';
 
         // create the index here directly without using the getXXindex function, just with string operations.
         //d.index = 'ak:' + d.authorKey + ' d:' + d.creationDateTime.substring(0, 8) + ' pk:' + d.parentKey;
         //d.index = `ak:${d.authorKey}, d:${d.creationDateTime.substring(0, 8)}, pk:${d.parentKey}`;
         
         return d;
+      },
+
+      convertChannel(channelType: number): string {
+        switch(channelType) {
+          case 0: return 'phone';
+          case 1: return 'email';
+          case 2: return 'web';
+          case 3: return 'twitter';
+          case 4: return 'linkedin';
+          case 5: return 'facebook';
+          case 6: return 'xing';
+          case 7: return 'skype';
+          case 8: return 'custom';
+          case 9: return 'postal';
+          case 10: return 'instagram';
+          case 11: return 'signal';
+          case 12: return 'wire';
+          case 13: return 'github';
+          case 14: return 'threema';
+          case 15: return 'telegram';
+          case 16: return 'whatsapp';
+          case 17: return 'bankaccount';
+        }
+        return '';
+      },
+
+      convertUsage(usageType: number): string {
+        switch(usageType) {
+          case 0: return 'home';
+          case 1: return 'work';
+          case 2: return 'mobile';
+          case 3: return 'custom';
+        }
+        return '';
       },
 
       /**
