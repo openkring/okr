@@ -2,11 +2,10 @@ import { Component, computed, input, linkedSignal, model, output } from '@angula
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
-import { AddressChannels, AddressUsages } from '@bk2/shared-categories';
-import { AddressChannel, AddressModel, AddressUsage, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
-import { CategoryComponent, CheckboxComponent, ChipsComponent, EmailInputComponent, ErrorNoteComponent, IbanComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { AddressModel, CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
+import { CategorySelectComponent, CheckboxComponent, ChipsComponent, EmailInputComponent, ErrorNoteComponent, IbanComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_ADDRESS_USAGE, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
 import { addressValidations } from '@bk2/subject-address-util';
@@ -16,7 +15,7 @@ import { addressValidations } from '@bk2/subject-address-util';
   standalone: true,
   imports: [
     vestForms,
-    CategoryComponent, TextInputComponent, CheckboxComponent, SwissCitySearchComponent, NotesInputComponent,
+    CategorySelectComponent, TextInputComponent, CheckboxComponent, SwissCitySearchComponent, NotesInputComponent,
     EmailInputComponent, PhoneInputComponent, IbanComponent, ErrorNoteComponent, ChipsComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -46,12 +45,12 @@ import { addressValidations } from '@bk2/subject-address-util';
             --------------------------------------------------->
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat name="channelType" [value]="channelType()" (valueChange)="onFieldChange('channelType', $event)" [categories]="addressChannels" [showHelper]="true" [readOnly]="isReadOnly()" />
+              <bk-cat-select [category]="addressChannels()!" [selectedItemName]="addressChannel()" (selectedItemNameChange)="onFieldChange('addressChannel', $event)" [withAll]="false" [showHelper]="true" [readOnly]="isReadOnly()" />
             </ion-col>
 
-            @if(channelType() === addressChannel.Custom) {
+            @if(addressChannel() === 'custom') {
               <ion-col size="12" size-md="6">
-                <bk-text-input name="channelLabel" [value]="channelLabel()" (valueChange)="onFieldChange('channelLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <bk-text-input name="addressChannelLabel" [value]="addressChannelLabel()" (valueChange)="onFieldChange('addressChannelLabel', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
                 <bk-error-note [errors]="channelLabelError()" />                                                                                                                     
               </ion-col>
             }
@@ -59,19 +58,19 @@ import { addressValidations } from '@bk2/subject-address-util';
 
           <ion-row>
             <ion-col size="12" size-md="6">
-              <bk-cat name="usageType" [value]="usageType()" (valueChange)="onFieldChange('usageType', $event)" [categories]="addressUsages" [showHelper]="true" [readOnly]="isReadOnly()" />
+              <bk-cat-select [category]="addressUsages()!" [selectedItemName]="addressUsage()" (selectedItemNameChange)="onFieldChange('addressUsage', $event)" [withAll]="false" [showHelper]="true" [readOnly]="isReadOnly()" />
             </ion-col>
 
-            @if(usageType() === addressUsage.Custom) {
+            @if(addressUsage() === 'custom') {
               <ion-col size="12" size-md="6">
-                <bk-text-input name="usageLabel" [value]="usageLabel()" (valueChange)="onFieldChange('usageLabel', $event)"  [showHelper]="true" [readOnly]="isReadOnly()" />
+                <bk-text-input name="addressUsageLabel" [value]="addressUsageLabel()" (valueChange)="onFieldChange('addressUsageLabel', $event)"  [showHelper]="true" [readOnly]="isReadOnly()" />
                 <bk-error-note [errors]="usageLabelError()" />                                                                                                                     
               </ion-col>
             }
           </ion-row>
 
-          @switch (channelType()) {
-            @case (addressChannel.Email) {
+          @switch (addressChannel()) {
+            @case ('email') {
               <ion-row>
                 <ion-col size="12">
                   <bk-email [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
@@ -79,7 +78,7 @@ import { addressValidations } from '@bk2/subject-address-util';
                 </ion-col>
               </ion-row>
             }
-            @case (addressChannel.Phone) {
+            @case ('phone') {
               <ion-row>
                 <ion-col size="12"> 
                   <bk-phone [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
@@ -87,7 +86,7 @@ import { addressValidations } from '@bk2/subject-address-util';
                 </ion-col>
               </ion-row>
             }
-            @case (addressChannel.Postal) {
+            @case ('postal') {
               <ion-row>
                 <ion-col size="8" size-md="9">
                   <bk-text-input name="streetName" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" [readOnly]="isReadOnly()" autocomplete="street-address" />
@@ -121,7 +120,7 @@ import { addressValidations } from '@bk2/subject-address-util';
                 </ion-col>
               </ion-row>
             }
-            @case (addressChannel.BankAccount) {
+            @case ('bankaccount') {
               <ion-row>
                 <ion-col size="12">
                   <bk-iban [value]="iban()" (valueChange)="onFieldChange('iban', $event)" [readOnly]="isReadOnly()" />
@@ -157,7 +156,7 @@ import { addressValidations } from '@bk2/subject-address-util';
               </ion-col>  
             }
 
-            @if(isFavorite() === false && channelType() === addressChannel.Email) {
+            @if(isFavorite() === false && addressChannel() === 'email') {
               <ion-col size="12" size-md="6">
                 <bk-checkbox name="isCc" [checked]="isCc()" (checkedChange)="onFieldChange('isCc', $event)" [readOnly]="isReadOnly()" />
               </ion-col>  
@@ -184,6 +183,8 @@ export class AddressFormComponent {
   public readonly currentUser = input<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();
+  public readonly addressChannels = input.required<CategoryListModel>();
+  public readonly addressUsages = input.required<CategoryListModel>();
   public readonly tenantId = input.required<string>();
   protected readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -195,8 +196,8 @@ export class AddressFormComponent {
   // validation and errors
   protected readonly suite = addressValidations;
   private readonly validationResult = computed(() => addressValidations(this.formData(), this.tenantId(), this.allTags()));
-  protected channelLabelError = computed(() => this.validationResult().getErrors('channelLabel'));
-  protected usageLabelError = computed(() => this.validationResult().getErrors('usageLabel'));
+  protected channelLabelError = computed(() => this.validationResult().getErrors('addressChannelLabel'));
+  protected usageLabelError = computed(() => this.validationResult().getErrors('addressUsageLabel'));
   protected emailError = computed(() => this.validationResult().getErrors('email'));
   protected phoneError = computed(() => this.validationResult().getErrors('phone'));
   protected streetNameError = computed(() => this.validationResult().getErrors('streetName'));
@@ -205,10 +206,10 @@ export class AddressFormComponent {
   protected urlError = computed(() => this.validationResult().getErrors('url'));
 
   // fields
-  protected channelType = linkedSignal(() => this.formData()?.channelType ?? AddressChannel.Phone);
-  protected channelLabel = linkedSignal(() => this.formData()?.channelLabel ?? '');
-  protected usageType = linkedSignal(() => this.formData()?.usageType ?? AddressUsage.Home);
-  protected usageLabel = linkedSignal(() => this.formData()?.usageLabel ?? '');
+  protected addressChannel = linkedSignal(() => this.formData()?.addressChannel ?? DEFAULT_ADDRESS_CHANNEL);
+  protected addressChannelLabel = linkedSignal(() => this.formData()?.addressChannelLabel ?? '');
+  protected addressUsage = linkedSignal(() => this.formData()?.addressUsage ?? DEFAULT_ADDRESS_USAGE);
+  protected addressUsageLabel = linkedSignal(() => this.formData()?.addressUsageLabel ?? '');
   protected email = linkedSignal(() => this.formData()?.email ?? '');
   protected phone = linkedSignal(() => this.formData()?.phone ?? '');
   protected streetName = linkedSignal(() => this.formData()?.streetName ?? '');
@@ -234,12 +235,6 @@ export class AddressFormComponent {
       stateCode: ''
     };
   });
-
-  // passing constants to template
-  public addressChannel = AddressChannel;
-  public addressUsage = AddressUsage;
-  public addressChannels = AddressChannels;
-  public addressUsages = AddressUsages;
 
   /******************************* actions *************************************** */
   protected onCitySelected(city: SwissCity): void {

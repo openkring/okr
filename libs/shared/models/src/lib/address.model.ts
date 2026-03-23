@@ -1,14 +1,15 @@
-import { DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@bk2/shared-constants';
+import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_ADDRESS_USAGE, DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@bk2/shared-constants';
 import { BkModel, TaggedModel } from './base.model';
-import { AddressChannel } from './enums/address-channel.enum';
-import { AddressUsage } from './enums/address-usage.enum';
 
 export class AddressModel implements BkModel, TaggedModel {
   public bkey = DEFAULT_KEY;
-  public channelType = AddressChannel.Phone;
-  public channelLabel = DEFAULT_LABEL; // optional label for custom channel types
-  public usageType = AddressUsage.Home;
-  public usageLabel = DEFAULT_LABEL; // optional label for custom address types
+
+  // new
+  public addressChannel = DEFAULT_ADDRESS_CHANNEL;
+  public addressChannelLabel = DEFAULT_LABEL; // optional label for custom address channel
+  public addressUsage = DEFAULT_ADDRESS_USAGE;
+  public addressUsageLabel = DEFAULT_LABEL; // optional label for custom address usage
+
   public email = DEFAULT_EMAIL;
   public phone = DEFAULT_PHONE;
   public iban = '';

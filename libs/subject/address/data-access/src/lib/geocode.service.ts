@@ -4,7 +4,7 @@ import { ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
-import { AddressChannel, AddressModel } from '@bk2/shared-models';
+import { AddressModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
 
 import { stringifyAddress } from '@bk2/subject-address-util';
@@ -34,7 +34,7 @@ export class GeocodingService {
     if (typeof address === 'string') {
       addressStr = address; 
     } else {      // address is of type AddressModel
-      if (address.channelType !== AddressChannel.Postal) return undefined;
+      if (address.addressChannel !== 'postal') return undefined;
       addressStr = stringifyAddress(address);
     }
 

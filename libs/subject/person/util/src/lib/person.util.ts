@@ -1,5 +1,5 @@
-import { DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
-import { AddressModel, AddressUsage, MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
+import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { AddressModel, MembershipModel, OrgModel, PersonModel } from '@bk2/shared-models';
 import { addIndexElement, die, getTodayStr } from '@bk2/shared-util-core';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
@@ -42,20 +42,20 @@ export function convertFormToNewPerson(vm: PersonNewFormModel, tenantId: string)
 }
 
 export function convertNewPersonFormToEmailAddress(vm: PersonNewFormModel, tenantId: string): AddressModel {
-  return createFavoriteEmailAddress(AddressUsage.Work, vm.email ?? DEFAULT_EMAIL, tenantId);
+  return createFavoriteEmailAddress(DEFAULT_ADDRESS_USAGE, vm.email ?? DEFAULT_EMAIL, tenantId);
 }
 
 export function convertNewPersonFormToPhoneAddress(vm: PersonNewFormModel, tenantId: string): AddressModel {
-  return createFavoritePhoneAddress(AddressUsage.Work, vm.phone ?? DEFAULT_PHONE, tenantId);
+  return createFavoritePhoneAddress(DEFAULT_ADDRESS_USAGE, vm.phone ?? DEFAULT_PHONE, tenantId);
 }
 
 export function convertNewPersonFormToWebAddress(vm: PersonNewFormModel, tenantId: string): AddressModel {
-  return createFavoriteWebAddress(AddressUsage.Work, vm.web ?? DEFAULT_URL, tenantId);
+  return createFavoriteWebAddress(DEFAULT_ADDRESS_USAGE, vm.web ?? DEFAULT_URL, tenantId);
 }
 
 export function convertNewPersonFormToPostalAddress(vm: PersonNewFormModel, tenantId: string): AddressModel {
   return createFavoritePostalAddress(
-    AddressUsage.Work, 
+    DEFAULT_ADDRESS_USAGE, 
     vm.streetName ?? DEFAULT_STREETNAME,
     vm.streetNumber ?? DEFAULT_STREETNUMBER, 
     vm.zipCode ?? DEFAULT_ZIP, 

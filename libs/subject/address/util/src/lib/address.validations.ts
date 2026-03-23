@@ -1,17 +1,17 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import { CITY_LENGTH, COUNTRY_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@bk2/shared-constants';
-import { AddressChannel, AddressModel, AddressUsage } from '@bk2/shared-models';
-import { baseValidations, booleanValidations, categoryValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
+import { AddressModel } from '@bk2/shared-models';
+import { baseValidations, booleanValidations, stringValidations, urlValidations } from '@bk2/shared-util-core';
 
 export const addressValidations = staticSuite((model: AddressModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
   baseValidations(model, tenants, tags, field);
-  categoryValidations('channelType', model.channelType, AddressChannel);
-  stringValidations('channelLabel', model.channelLabel, SHORT_NAME_LENGTH);
-  categoryValidations('usageType', model.usageType, AddressUsage);
-  stringValidations('usageLabel', model.usageLabel, SHORT_NAME_LENGTH);
+  stringValidations('addressChannel', model.addressChannel);
+  stringValidations('addressChannelLabel', model.addressChannelLabel, SHORT_NAME_LENGTH);
+  stringValidations('addressUsage', model.addressUsage);
+  stringValidations('addressUsageLabel', model.addressUsageLabel, SHORT_NAME_LENGTH);
   stringValidations('phone', model.phone, PHONE_LENGTH);
   stringValidations('email', model.email, EMAIL_LENGTH);
   stringValidations('streetName', model.streetName, NAME_LENGTH);
@@ -31,18 +31,18 @@ export const addressValidations = staticSuite((model: AddressModel, tenants: str
   stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH, 0, true);
 
   // cross validations
-  omitWhen(model.channelType !== AddressChannel.Custom, () => {
+  omitWhen(model.addressChannel !== 'custom', () => {
     test('addressChannelLabel', 'addressCustomChannelLabelMandatory', () => {
-      enforce(model.channelLabel).isNotEmpty();
+      enforce(model.addressChannelLabel).isNotEmpty();
     })
   });
-  omitWhen(model.usageType !== AddressUsage.Custom, () => {
-    test('usageLabel', 'addressCustomUsageLabelMandatory', () => {
-      enforce(model.usageLabel).isNotEmpty();
+  omitWhen(model.addressUsage !== 'custom', () => {
+    test('addressUsageLabel', 'addressCustomUsageLabelMandatory', () => {
+      enforce(model.addressUsageLabel).isNotEmpty();
     })
   });
 
-  omitWhen(model.channelType !== AddressChannel.Postal, () => {
+  omitWhen(model.addressChannel !== 'postal', () => {
     test('zipCode', 'addressZipCodeMandatory', () => {
       enforce(model.zipCode).isNotEmpty();
     });

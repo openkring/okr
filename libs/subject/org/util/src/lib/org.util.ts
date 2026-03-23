@@ -1,5 +1,5 @@
-import { AddressModel, AddressUsage, OrgModel } from '@bk2/shared-models';
-import { addIndexElement, die } from '@bk2/shared-util-core';
+import { AddressModel, OrgModel } from '@bk2/shared-models';
+import { addIndexElement } from '@bk2/shared-util-core';
 import { DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP } from '@bk2/shared-constants';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@bk2/subject-address-util';
@@ -30,19 +30,19 @@ export function convertFormToNewOrg(vm: OrgNewFormModel, tenantId: string): OrgM
 }
 
 export function convertNewOrgFormToEmailAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoriteEmailAddress(AddressUsage.Work, vm.email ?? DEFAULT_EMAIL, tenantId);
+  return createFavoriteEmailAddress('work', vm.email ?? DEFAULT_EMAIL, tenantId);
 }
 
 export function convertNewOrgFormToPhoneAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoritePhoneAddress(AddressUsage.Work, vm.phone ?? DEFAULT_PHONE, tenantId);
+  return createFavoritePhoneAddress('work', vm.phone ?? DEFAULT_PHONE, tenantId);
 }
 
 export function convertNewOrgFormToWebAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoriteWebAddress(AddressUsage.Work, vm.url ?? DEFAULT_URL, tenantId);
+  return createFavoriteWebAddress('work', vm.url ?? DEFAULT_URL, tenantId);
 }
 
 export function convertNewOrgFormToPostalAddress(vm: OrgNewFormModel, tenantId: string): AddressModel {
-  return createFavoritePostalAddress(AddressUsage.Work, vm.streetName ?? DEFAULT_STREETNAME, vm.streetNumber ?? DEFAULT_STREETNUMBER, vm.zipCode ?? DEFAULT_ZIP, vm.city ?? DEFAULT_CITY, vm.countryCode ?? DEFAULT_COUNTRY, tenantId);
+  return createFavoritePostalAddress('work', vm.streetName ?? DEFAULT_STREETNAME, vm.streetNumber ?? DEFAULT_STREETNUMBER, vm.zipCode ?? DEFAULT_ZIP, vm.city ?? DEFAULT_CITY, vm.countryCode ?? DEFAULT_COUNTRY, tenantId);
 }
 
 

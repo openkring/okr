@@ -3,12 +3,11 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AddressChannel, AddressModel, AddressUsage, RoleName } from '@bk2/shared-models';
+import { AddressModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, navigateByUrl } from '@bk2/shared-util-angular';
-import { generateRandomString, hasRole } from '@bk2/shared-util-core';
-import { AddressChannels, AddressUsages, getCategoryIcon } from '@bk2/shared-categories';
+import { generateRandomString, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
 
 import { FavoriteColorPipe, FormatAddressPipe } from '@bk2/subject-address-util';
 
@@ -51,6 +50,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
     <!-- search and filters -->
     <bk-list-filter 
       (searchTermChanged)="onSearchtermChange($event)"
+      (typeChanged)="onChannelSelected($event)" [types]="channels()"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
     />
 
@@ -89,7 +89,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                 @if(address.isValidated) {
                   <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" />
                 }
-                <ion-icon [src]="getChannelIcon(address.channelType) | svgIcon" />
+                <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
                 <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
                 {{ address | formatAddress }}
               </ion-label>
@@ -120,6 +120,7 @@ export class AddressesList {
   protected popupId = computed(() => 'c_addresses_' + generateRandomString(5));
 
   private imgixBaseUrl = this.addressStore.appStore.env.services.imgixBaseUrl;
+  protected channels = computed(() => this.addressStore.getChannels());
 
   constructor() {
     effect(() => {
@@ -133,6 +134,10 @@ export class AddressesList {
 
   protected onTagSelected(tag: string): void {
     this.addressStore.setSelectedTag(tag);
+  }
+
+  protected onChannelSelected(channel: string): void {
+    this.addressStore.setSelectedChannel(channel);
   }
 
   /******************************** actions ******************************************* */
@@ -166,21 +171,21 @@ export class AddressesList {
     actionSheetOptions.buttons.push(createActionSheetButton('address.edit', this.imgixBaseUrl, 'create_edit'));
     actionSheetOptions.buttons.push(createActionSheetButton('subject.edit', this.imgixBaseUrl, 'create_edit'));
     actionSheetOptions.buttons.push(createActionSheetButton('address.copy', this.imgixBaseUrl, 'copy'));
-    switch(address.channelType) {
-      case AddressChannel.BankAccount:
+    switch(address.addressChannel) {
+      case 'bankaccount':
         actionSheetOptions.buttons.push(createActionSheetButton('address.iban.view', this.imgixBaseUrl, 'qrcode'));
         actionSheetOptions.buttons.push(createActionSheetButton('address.iban.upload', this.imgixBaseUrl, 'qrcode'));
         break;
-      case AddressChannel.Email:
+      case 'email':
         actionSheetOptions.buttons.push(createActionSheetButton('address.email.send', this.imgixBaseUrl, 'email'));
         break;
-      case AddressChannel.Phone:
+      case 'phone':
         actionSheetOptions.buttons.push(createActionSheetButton('address.phone.call', this.imgixBaseUrl, 'tel'));
         break;
-      case AddressChannel.Postal:
+      case 'postal':
         actionSheetOptions.buttons.push(createActionSheetButton('address.postal.view', this.imgixBaseUrl, 'location'));
         break;
-      case AddressChannel.Web:
+      case 'web':
         actionSheetOptions.buttons.push(createActionSheetButton('address.web.open', this.imgixBaseUrl, 'link'));
         break;
     }
@@ -242,15 +247,15 @@ export class AddressesList {
     return hasRole(role, this.addressStore.currentUser());
   }
 
-  protected getChannelIcon(channelType: AddressChannel): string {
-    return getCategoryIcon(AddressChannels, channelType);
+  protected getChannelIcon(addressChannel: string): string {
+    return getCategoryIcon(this.addressStore.getChannels(), addressChannel);
   }
 
   protected getAddressUsage(address: AddressModel): string {
-    if (address.usageType === AddressUsage.Custom) {
-      return address.usageLabel;
+    if (address.addressUsage === 'custom') {
+      return address.addressUsageLabel;
     } else {
-      return '@' + AddressUsages[address.usageType].i18nBase + '.label';
+      return `@${this.addressStore.getUsages().i18nBase}.${address.addressUsage}.label`;
     }
   }
 

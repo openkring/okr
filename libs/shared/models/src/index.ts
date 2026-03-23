@@ -53,8 +53,6 @@ export * from './lib/workrel.model';
 export * from './lib/year-config.model';
 
 // enums
-export * from './lib/enums/address-channel.enum';
-export * from './lib/enums/address-usage.enum';
 export * from './lib/enums/album-style.enum';
 export * from './lib/enums/avatar-usage.enum';
 export * from './lib/enums/button-action.enum';

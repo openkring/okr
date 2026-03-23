@@ -273,7 +273,7 @@ export function createUserFromPerson(person: PersonModel, tenantId: string): Use
   const _env = inject(ENV);
   if (isSubject(sig.model)) {
     const _collName = CollectionNames.Subject + '/' + sig.model.bkey + '/' + CollectionNames.Address;
-    const addresses = await firstValueFrom(listModelsBySingleQuery(getFirestore(), _collName, _env.auth.tenantId, 'category', AddressChannel.BankAccount, '==', 'name', 'asc')) as AddressModel[];
+    const addresses = await firstValueFrom(listModelsBySingleQuery(getFirestore(), _collName, _env.auth.tenantId, 'category', 'bankaccount', '==', 'name', 'asc')) as AddressModel[];
     if (addresses?.length > 0) {
       for (const element of addresses) {
         console.log(sig.model.bkey, sig.model.firstName + ' ' + sig.model.name, element.name);

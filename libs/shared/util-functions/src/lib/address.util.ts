@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 
-import { AddressChannel, AddressCollection, AddressModel, OrgCollection, PersonCollection } from '@bk2/shared-models';
+import { AddressCollection, AddressModel, OrgCollection, PersonCollection } from '@bk2/shared-models';
 import { die } from '@bk2/shared-util-core';
 import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_PHONE, DEFAULT_URL } from '@bk2/shared-constants';
 
@@ -74,25 +74,25 @@ async function getFavoriteAddressInfo(firestore: Firestore, parentKey: string): 
     });
     logger.info(`getFavoriteAddressInfo: found ${favoriteAddresses.length} favorite addresses for ${parentKey}`);
     for (const favoriteAddress of favoriteAddresses) {
-      switch (favoriteAddress.channelType) {
-        case AddressChannel.Email:
+      switch (favoriteAddress.addressChannel) {
+        case 'email':
           favoriteAddressInfo.favEmail = favoriteAddress.email;
           break;
-        case AddressChannel.Phone:
+        case 'phone':
           favoriteAddressInfo.favPhone = favoriteAddress.phone;
           break;
-        case AddressChannel.Postal:
+        case 'postal':
           favoriteAddressInfo.favStreetName = favoriteAddress.streetName;
           favoriteAddressInfo.favStreetNumber = favoriteAddress.streetNumber;
           favoriteAddressInfo.favZipCode = favoriteAddress.zipCode;
           favoriteAddressInfo.favCity = favoriteAddress.city;
           favoriteAddressInfo.favCountryCode = favoriteAddress.countryCode;
           break;
-        case AddressChannel.Web:
+        case 'web':
           favoriteAddressInfo.favWeb = favoriteAddress.url;
           break;
         default:
-          die(`AddressUtil.getEmptyFavoriteAddressInfo: unknown channel type ${favoriteAddress.channelType}`);
+          die(`AddressUtil.getEmptyFavoriteAddressInfo: unknown channel type ${favoriteAddress.addressChannel}`);
       }
     }
   }

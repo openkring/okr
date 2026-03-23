@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from "@angular/core";
 import { IonContent, ModalController } from "@ionic/angular/standalone";
 
-import { AddressModel, UserModel } from "@bk2/shared-models";
+import { AddressModel, CategoryListModel, UserModel } from "@bk2/shared-models";
 import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared-ui";
 import { coerceBoolean, safeStructuredClone } from "@bk2/shared-util-core";
 import { getTitleLabel } from "@bk2/shared-util-angular";
@@ -30,6 +30,8 @@ import { AddressFormComponent } from "@bk2/subject-address-ui";
             [readOnly]="isReadOnly()"
             [showForm]="showForm()"
             [allTags]="tags()"
+            [addressChannels]="addressChannels()"
+            [addressUsages]="addressUsages()"
             [tenantId]="tenantId()" 
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
@@ -46,6 +48,8 @@ export class AddressEditModalComponent {
   public address = input.required<AddressModel>();
   public currentUser = input<UserModel | undefined>();
   public tags = input.required<string>();
+  public readonly addressChannels = input.required<CategoryListModel>();
+  public readonly addressUsages = input.required<CategoryListModel>();
   public tenantId = input.required<string>();
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

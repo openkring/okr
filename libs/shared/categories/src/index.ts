@@ -1,5 +1,3 @@
-export * from './lib/address-channel';
-export * from './lib/address-usage';
 export * from './lib/avatar-usage';
 export * from './lib/button-action';
 export * from './lib/category.util';

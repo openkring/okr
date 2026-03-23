@@ -8,8 +8,8 @@ import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressChannel, AddressCollection, AddressModel, DefaultLanguage, EZS_DIR, IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
-import { confirm, navigateByUrl } from '@bk2/shared-util-angular';
+import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, EZS_DIR, IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
+import { confirm } from '@bk2/shared-util-angular';
 import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@bk2/shared-util-core';
 import { Languages } from '@bk2/shared-categories';
 import { getImageDimensionsFromMetadata, MapViewModalComponent, showZoomedImage, updateImageDimensions } from '@bk2/shared-ui';
@@ -28,6 +28,7 @@ export type AddressState = {
   // filters
   searchTerm: string;
   selectedTag: string;
+  selectedChannel: string;
   orderByParam: string;
 };
 
@@ -37,7 +38,8 @@ export const initialState: AddressState = {
   // filters
   searchTerm: '',
   selectedTag: '',
-  orderByParam: 'channelType'
+  selectedChannel: '',
+  orderByParam: 'addressChannel'
 };
     
 export const AddressStore = signalStore(
@@ -77,6 +79,7 @@ export const AddressStore = signalStore(
       filteredAddresses: computed(() =>
         state.addressesResource.value()?.filter((address: AddressModel) =>
           nameMatches(address.index, state.searchTerm()) &&
+          nameMatches(address.addressChannel, state.selectedChannel()) &&
           chipMatches(address.tags, state.selectedTag())
         ) ?? []
       ),
@@ -102,7 +105,13 @@ export const AddressStore = signalStore(
         return store.appStore.getTags(tagName);
       },
 
+      getChannels(): CategoryListModel {
+        return store.appStore.getCategory('address_channel');
+      },
 
+      getUsages(): CategoryListModel {
+        return store.appStore.getCategory('address_usage');
+      },
     
       /******************************** setters (filter) ******************************************* */
       setParentKey(parentKey: string) {
@@ -115,6 +124,10 @@ export const AddressStore = signalStore(
 
       setSelectedTag(selectedTag: string) {
         patchState(store, { selectedTag });
+      },
+
+      setSelectedChannel(selectedChannel: string) {
+        patchState(store, { selectedChannel });
       },
 
       setConfig(parentKey: string, orderByParam: string) {
@@ -141,6 +154,8 @@ export const AddressStore = signalStore(
             address,
             currentUser: store.currentUser(),
             tags: this.getTags(),
+            addressChannels: this.getChannels(),
+            addressUsages: this.getUsages(),
             tenantId: store.tenantId(),
             readOnly
         }
@@ -226,18 +241,18 @@ export const AddressStore = signalStore(
        * @param address 
        */
       async use(address: AddressModel): Promise<void> {
-        switch(address.channelType) {
-          case AddressChannel.Email:  return browseUrl(`mailto:${address.email}`, '');
-          case AddressChannel.Phone:  return browseUrl(`tel:${address.phone}`, '');
-          case AddressChannel.Postal: return await this.show(address);
-          case AddressChannel.Web: return browseUrl(address.url, 'https://');
-          case AddressChannel.Twitter: return browseUrl(address.url, 'https://twitter.com/');
-          case AddressChannel.Xing: return browseUrl(address.url, 'https://www.xing.com/profile/');
-          case AddressChannel.Facebook: return browseUrl(address.url, 'https://www.facebook.com/');
-          case AddressChannel.Linkedin: return browseUrl(address.url, 'https://www.linkedin.com/in/');
-          case AddressChannel.Instagram: return browseUrl(address.url, 'https://www.instagram.com/');
-          case AddressChannel.BankAccount: return await this.showQrPaymentSlip(address.url);
-          default: warn('AddressesAccordionStore.use: unsupported address channel ' + address.channelType + ' for address ' + address.parentKey + '/' + address.bkey);
+        switch(address.addressChannel) {
+          case 'email':  return browseUrl(`mailto:${address.email}`, '');
+          case 'phone':  return browseUrl(`tel:${address.phone}`, '');
+          case 'postal': return await this.show(address);
+          case 'web': return browseUrl(address.url, 'https://');
+          case 'twitter': return browseUrl(address.url, 'https://twitter.com/');
+          case 'xing': return browseUrl(address.url, 'https://www.xing.com/profile/');
+          case 'facebook': return browseUrl(address.url, 'https://www.facebook.com/');
+          case 'linkedin': return browseUrl(address.url, 'https://www.linkedin.com/in/');
+          case 'instagram': return browseUrl(address.url, 'https://www.instagram.com/');
+          case 'bankaccount': return await this.showQrPaymentSlip(address.url);
+          default: warn('AddressesAccordionStore.use: unsupported address channel ' + address.addressChannel + ' for address ' + address.parentKey + '/' + address.bkey);
         }
       },
 

@@ -3,7 +3,7 @@ import { Observable, map, of } from "rxjs";
 
 import { ENV } from "@bk2/shared-config";
 import { FirestoreService } from "@bk2/shared-data-access";
-import { AddressChannel, AddressCollection, AddressModel, UserModel } from "@bk2/shared-models";
+import { AddressCollection, AddressModel, UserModel } from "@bk2/shared-models";
 import { die, getSystemQuery } from "@bk2/shared-util-core";
 
 import { getAddressIndex } from "@bk2/subject-address-util";
@@ -77,9 +77,9 @@ export class AddressService {
    * @param channel the channel type (e.g. phone, email, web) to look for
    * @returns the favorite address fo the given channel or null
    */
-  public getFavoriteAddressByChannel(channel: AddressChannel): Observable<AddressModel | null> {
+  public getFavoriteAddressByChannel(channel: string): Observable<AddressModel | null> {
     const query = getSystemQuery(this.env.tenantId);
-    query.push({ key: 'channelType', operator: '==', value: channel });
+    query.push({ key: 'addressChannel', operator: '==', value: channel });
     query.push({ key: 'isFavorite', operator: '==', value: true });
     return this.firestoreService.searchData<AddressModel>(AddressCollection, query).pipe(map(addresses => {
       if (addresses.length > 1) die(`AddressUtil.getFavoriteAddressByChannel -> ERROR: only one favorite adress can exist per channel type (${AddressCollection})`);

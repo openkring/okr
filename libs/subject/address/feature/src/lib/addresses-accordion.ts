@@ -2,13 +2,12 @@ import { AsyncPipe } from "@angular/common";
 import { Component, computed, effect, inject, input } from "@angular/core";
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
 
-import { AddressChannels, AddressUsages, getCategoryIcon } from "@bk2/shared-categories";
 import { TranslatePipe } from "@bk2/shared-i18n";
-import { AddressChannel, AddressModel, AddressUsage } from "@bk2/shared-models";
+import { AddressModel } from "@bk2/shared-models";
 import { SvgIconPipe } from "@bk2/shared-pipes";
 import { EmptyListComponent } from "@bk2/shared-ui";
 import { createActionSheetButton, createActionSheetOptions } from "@bk2/shared-util-angular";
-import { coerceBoolean, hasRole } from "@bk2/shared-util-core";
+import { coerceBoolean, getCategoryIcon, hasRole } from "@bk2/shared-util-core";
 
 import { FavoriteColorPipe, FormatAddressPipe } from "@bk2/subject-address-util";
 
@@ -59,7 +58,7 @@ import { AddressStore } from "./addresses.store";
                 @if(address.isValidated) {
                   <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" />
                 }
-                <ion-icon [src]="getChannelIcon(address.channelType) | svgIcon" />
+                <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
                 <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
                 {{ address | formatAddress }}
               </ion-label>
@@ -91,7 +90,6 @@ export class AddressesAccordionComponent {
 
   // passing constants
   private imgixBaseUrl = this.addressStore.imgixBaseUrl();
-  protected addressChannel = AddressChannel; 
 
   constructor() {
     effect(() => {
@@ -99,15 +97,15 @@ export class AddressesAccordionComponent {
     });
   }
 
-  protected getChannelIcon(channelType: AddressChannel): string {
-    return getCategoryIcon(AddressChannels, channelType);
+  protected getChannelIcon(addressChannel: string): string {
+    return getCategoryIcon(this.addressStore.getChannels(), addressChannel);
   }
 
   protected getAddressUsage(address: AddressModel): string {
-    if (address.usageType === AddressUsage.Custom) {
-      return address.usageLabel;
+    if (address.addressUsage === 'custom') {
+      return address.addressUsageLabel;
     } else {
-      return '@' + AddressUsages[address.usageType].i18nBase + '.label';
+      return `@${this.addressStore.getUsages().i18nBase}.${address.addressUsage}.label`;
     }
   }
 
@@ -135,23 +133,23 @@ export class AddressesAccordionComponent {
     if (!this.isReadOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('address.edit', this.imgixBaseUrl, 'create_edit'));
     }
-    switch(address.channelType) {
-      case AddressChannel.BankAccount:
+    switch(address.addressChannel) {
+      case 'bankaccount':
         actionSheetOptions.buttons.push(createActionSheetButton('address.iban.view', this.imgixBaseUrl, 'qrcode'));
         if (!this.isReadOnly()) {
           actionSheetOptions.buttons.push(createActionSheetButton('address.iban.upload', this.imgixBaseUrl, 'qrcode'));
         }
         break;
-      case AddressChannel.Email:
+      case 'email':
         actionSheetOptions.buttons.push(createActionSheetButton('address.email.send', this.imgixBaseUrl, 'email'));
         break;
-      case AddressChannel.Phone:
+      case 'phone':
         actionSheetOptions.buttons.push(createActionSheetButton('address.phone.call', this.imgixBaseUrl, 'tel'));
         break;
-      case AddressChannel.Postal:
+      case 'postal':
         actionSheetOptions.buttons.push(createActionSheetButton('address.postal.view', this.imgixBaseUrl, 'location'));
         break;
-      case AddressChannel.Web:
+      case 'web':
         actionSheetOptions.buttons.push(createActionSheetButton('address.web.open', this.imgixBaseUrl, 'link'));
         break;
     }

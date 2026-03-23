@@ -5,7 +5,7 @@ import { Observable, of, take } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressChannel, AddressCollection, AddressModel, BkModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
+import { AddressCollection, AddressModel, BkModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { compareDate, getAge, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@bk2/shared-util-core';
 import { getMembershipCategoryChanges } from '@bk2/relationship-membership-util';
 
@@ -65,7 +65,7 @@ export const AocAdminOpsStore = signalStore(
 
       async listIban(): Promise<void> {
         const query = getSystemQuery(store.appStore.env.tenantId);
-        query.push({ key: 'channelType', operator: '==', value: AddressChannel.BankAccount });
+        query.push({ key: 'addressChannel', operator: '==', value: 'bankaccount' });
         store.firestoreService.searchData<AddressModel>( AddressCollection, query, 'none')
         .pipe(take(1))
         .subscribe((addresses) => {
