@@ -108,7 +108,7 @@ export class ReservationEditModalComponent {
   // derived signals
   protected readonly headerTitle = computed(() => getTitleLabel('reservation', this.reservation()?.bkey, this.readOnly()));
   protected readonly reservationKey = computed(() => this.reservation().bkey ?? '');
-  protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.reservation().reserver);
+  protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.formData()?.reserver);
   protected readonly reserverName = computed(() => this.reserverAvatar() ? getAvatarName(this.reserverAvatar(), this.currentUser()?.nameDisplay) : '');
   protected readonly resourceAvatar = computed<AvatarInfo | undefined>(() => this.reservation().resource);
   protected readonly defaultIcon = computed(() => this.appstore.getDefaultIcon(ResourceModelName, this.resourceAvatar()?.type, this.resourceAvatar()?.subType));
@@ -141,6 +141,7 @@ export class ReservationEditModalComponent {
     const person = await this.selectPersonModal();
     if (!person) return;
 
+    this.formDirty.set(true);
     this.formData.update((vm) => {
       if (!vm) return vm;
       return {
@@ -149,10 +150,20 @@ export class ReservationEditModalComponent {
         reserverName: person.firstName,
         reserverName2: person.lastName,
         reserverModelType: 'person',
-        reserverType: person.gender
+        reserverType: person.gender,
+        reserver: {
+          key: person.bkey ?? '',
+          name1: person.firstName,
+          name2: person.lastName,
+          modelType: 'person',
+          type: person.gender,
+          subType: '',
+          label: `${person.firstName} ${person.lastName}`.trim(),
+        } as AvatarInfo
       };
     });
   }
+  
   async selectPersonModal(): Promise<PersonModel | undefined> {
     const modal = await this.modalController.create({
       component: PersonSelectModalComponent,
