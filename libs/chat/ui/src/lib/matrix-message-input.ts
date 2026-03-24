@@ -19,48 +19,28 @@ import 'emoji-picker-element';
   ],
   styles: [`
     :host {
-      display: block;
+      display: flex;
+      flex-direction: column;
       background: var(--ion-background-color);
       border-top: 1px solid var(--ion-border-color, #dedede);
     }
 
-    .input-container {
-      display: flex;
-      align-items: flex-end;
-      padding: 8px;
-      gap: 8px;
-    }
-
-    .input-wrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: var(--ion-color-light);
-      border-radius: 20px;
-      overflow: hidden;
-    }
-
+    /* ── Reply preview strip (conditional) ───────────────────── */
     .reply-preview {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 12px;
+      padding: 6px 12px;
       background: var(--ion-color-light-shade);
-      border-bottom: 1px solid var(--ion-border-color);
+      border-bottom: 1px solid var(--ion-border-color, #dedede);
       font-size: 0.875rem;
     }
-
-    .reply-content {
-      flex: 1;
-      min-width: 0;
-    }
-
+    .reply-content { flex: 1; min-width: 0; }
     .reply-label {
       font-weight: 600;
       color: var(--ion-color-primary);
       font-size: 0.75rem;
     }
-
     .reply-text {
       color: var(--ion-color-medium);
       overflow: hidden;
@@ -68,51 +48,58 @@ import 'emoji-picker-element';
       white-space: nowrap;
     }
 
+    /* ── Row 1: text input ───────────────────────────────────── */
+    .input-row {
+      padding: 8px 12px 2px;
+      max-height: 160px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
     ion-textarea {
-      --padding-start: 12px;
-      --padding-end: 12px;
-      --padding-top: 10px;
-      --padding-bottom: 10px;
-      min-height: 40px;
-      max-height: 120px;
+      --padding-start: 0;
+      --padding-end: 0;
+      --padding-top: 0;
+      --padding-bottom: 0;
+      --background: transparent;
+      font-size: 1rem;
+      line-height: 1.4;
     }
 
+    /* ── Row 2: action buttons ───────────────────────────────── */
+    .buttons-row {
+      display: flex;
+      align-items: center;
+      padding: 2px 4px 4px;
+      flex-shrink: 0;
+    }
+    .spacer { flex: 1; }
     .action-button {
-      --padding-start: 12px;
-      --padding-end: 12px;
+      --padding-start: 8px;
+      --padding-end: 8px;
       margin: 0;
+      flex-shrink: 0;
+      height: 40px;
     }
-
     .send-button {
       --background: var(--ion-color-primary);
       --border-radius: 50%;
       width: 40px;
       height: 40px;
       margin: 0;
+      flex-shrink: 0;
     }
 
-    .record-button {
-      --border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      margin: 0;
-    }
-
+    /* ── Typing indicator ────────────────────────────────────── */
     .typing-indicator {
-      padding: 4px 12px;
+      padding: 0 12px 4px;
       font-size: 0.75rem;
       color: var(--ion-color-medium);
       font-style: italic;
     }
 
-    .file-input {
-      display: none;
-    }
+    .file-input { display: none; }
 
-    .emoji-picker-wrapper {
-      position: relative;
-    }
-
+    .emoji-picker-wrapper { position: relative; }
     .emoji-picker-popover {
       position: absolute;
       bottom: calc(100% + 8px);
@@ -120,14 +107,13 @@ import 'emoji-picker-element';
       z-index: 1000;
     }
 
-    /* Recording bar replaces the normal input row while recording */
+    /* ── Recording bar ───────────────────────────────────────── */
     .recording-container {
       display: flex;
       align-items: center;
       padding: 8px;
       gap: 8px;
     }
-
     .recording-indicator {
       flex: 1;
       display: flex;
@@ -137,7 +123,6 @@ import 'emoji-picker-element';
       border-radius: 20px;
       padding: 8px 16px;
     }
-
     .recording-dot {
       width: 10px;
       height: 10px;
@@ -146,160 +131,106 @@ import 'emoji-picker-element';
       animation: blink 1s step-start infinite;
       flex-shrink: 0;
     }
-
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50%       { opacity: 0; }
     }
-
     .recording-duration {
       font-size: 0.875rem;
       font-weight: 600;
       color: var(--ion-color-danger);
       min-width: 40px;
     }
-
     .recording-label {
       font-size: 0.875rem;
       color: var(--ion-color-medium);
     }
   `],
   template: `
-    <!-- Normal input row (hidden while recording) -->
     @if (!isRecording()) {
-      <div class="input-container">
-        <!-- Attachment button -->
-        <ion-button
-          fill="clear"
-          class="action-button"
-          (click)="showActions()"
-        >
+      <!-- Reply preview strip — only shown while composing a reply -->
+      @if (replyToMessage()) {
+        <div class="reply-preview">
+          <div class="reply-content">
+            <div class="reply-label">Antwort an {{ replyToMessage()?.senderName }}</div>
+            <div class="reply-text">{{ replyToMessage()?.body }}</div>
+          </div>
+          <ion-button fill="clear" size="small" (click)="cancelReply()">
+            <ion-icon slot="icon-only" src="{{'close_cancel' | svgIcon}}"></ion-icon>
+          </ion-button>
+        </div>
+      }
+
+      <!-- Row 1: text input, grows line by line as you type -->
+      <div class="input-row">
+        <ion-textarea
+          #textInput
+          [(ngModel)]="messageText"
+          placeholder="{{ '@chat.fields.typeMessage' | translate | async }}"
+          [rows]="1"
+          [autoGrow]="true"
+          (ionInput)="onTyping()"
+          (keydown.enter)="onEnterKey($event)"
+        ></ion-textarea>
+      </div>
+
+      @if (typingUsers().length > 0) {
+        <div class="typing-indicator">{{ getTypingText() }}</div>
+      }
+
+      <!-- Row 2: action buttons, always at the bottom -->
+      <div class="buttons-row">
+        <ion-button fill="clear" class="action-button" (click)="showActions()">
           <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon}}"></ion-icon>
         </ion-button>
 
-        <!-- Emoji picker button -->
         <div class="emoji-picker-wrapper">
-          <ion-button
-            fill="clear"
-            class="action-button"
-            (click)="toggleEmojiPicker($event)"
-            title="Emoji"
-          >
+          <ion-button fill="clear" class="action-button" (click)="toggleEmojiPicker($event)">
             <ion-icon slot="icon-only" src="{{'smiley' | svgIcon}}"></ion-icon>
           </ion-button>
           @if (showEmojiPicker()) {
-            <div class="emoji-picker-popover">
+            <div class="emoji-picker-popover" (click)="$event.stopPropagation()">
               <emoji-picker (emoji-click)="onEmojiClick($event)"></emoji-picker>
             </div>
           }
         </div>
 
-        <div class="input-wrapper">
-          <!-- Reply preview -->
-          @if (replyToMessage()) {
-            <div class="reply-preview">
-              <div class="reply-content">
-                <div class="reply-label">Replying to {{ replyToMessage()?.senderName }}</div>
-                <div class="reply-text">{{ replyToMessage()?.body }}</div>
-              </div>
-              <ion-button
-                fill="clear"
-                size="small"
-                (click)="cancelReply()"
-              >
-                <ion-icon slot="icon-only" src="{{'close-cancel-circle' | svgIcon}}"></ion-icon>
-              </ion-button>
-            </div>
-          }
+        <span class="spacer"></span>
 
-          <!-- Text input -->
-          <ion-textarea
-            #textInput
-            [(ngModel)]="messageText"
-            placeholder="{{ '@chat.fields.typeMessage' | translate | async }}"
-            [rows]="1"
-            [autoGrow]="true"
-            (ionInput)="onTyping()"
-            (keydown.enter)="onEnterKey($event)"
-          ></ion-textarea>
-        </div>
-
-        <!-- Mic button to start recording -->
-        <ion-button
-          fill="clear"
-          class="record-button"
-          (click)="startRecording()"
-          title="{{ '@chat.fields.recordAudio' | translate | async }}"
-        >
+        <ion-button fill="clear" class="action-button" (click)="startRecording()"
+          title="{{ '@chat.fields.recordAudio' | translate | async }}">
           <ion-icon slot="icon-only" src="{{'mic' | svgIcon}}"></ion-icon>
         </ion-button>
 
-        <!-- Video call button -->
-        <ion-button
-          fill="clear"
-          class="record-button"
-          (click)="videoCallStarted.emit()"
-          title="{{ '@chat.fields.videoCall' | translate | async }}"
-        >
+        <ion-button fill="clear" class="action-button" (click)="videoCallStarted.emit()"
+          title="{{ '@chat.fields.videoCall' | translate | async }}">
           <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
         </ion-button>
 
-        <!-- Send button -->
-        <ion-button
-          class="send-button"
-          [disabled]="!canSend()"
-          (click)="sendMessage()"
-        >
+        <ion-button class="send-button" [disabled]="!canSend()" (click)="sendMessage()">
           <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>
         </ion-button>
       </div>
     }
 
-    <!-- Recording row -->
+    <!-- Recording bar — replaces both rows while recording -->
     @if (isRecording()) {
       <div class="recording-container">
-        <!-- Cancel recording -->
-        <ion-button
-          fill="clear"
-          class="action-button"
-          color="medium"
-          (click)="cancelRecording()"
-        >
+        <ion-button fill="clear" class="action-button" color="medium" (click)="cancelRecording()">
           <ion-icon slot="icon-only" src="{{'close_cancel' | svgIcon}}"></ion-icon>
         </ion-button>
-
-        <!-- Recording indicator -->
         <div class="recording-indicator">
           <span class="recording-dot"></span>
           <span class="recording-duration">{{ formatRecordingDuration(recordingSeconds()) }}</span>
           <span class="recording-label">{{ '@chat.fields.recording' | translate | async }}</span>
         </div>
-
-        <!-- Stop & send recording -->
-        <ion-button
-          class="record-button"
-          color="danger"
-          (click)="stopRecording()"
-        >
+        <ion-button class="send-button" color="danger" (click)="stopRecording()">
           <ion-icon slot="icon-only" src="{{'send' | svgIcon}}"></ion-icon>
         </ion-button>
       </div>
     }
 
-    @if (typingUsers().length > 0 && !isRecording()) {
-      <div class="typing-indicator">
-        {{ getTypingText() }}
-      </div>
-    }
-
-    <!-- Hidden file input -->
-    <input
-      #fileInput
-      type="file"
-      class="file-input"
-      (change)="onFileSelected($event)"
-      [accept]="fileAccept()"
-    />
+    <input #fileInput type="file" class="file-input" (change)="onFileSelected($event)" [accept]="fileAccept()" />
   `
 })
 export class MatrixMessageInput {
@@ -538,7 +469,7 @@ export class MatrixMessageInput {
 
   onEmojiClick(event: Event): void {
     const detail = (event as CustomEvent).detail;
-    const emoji: string = detail?.unicode ?? '';
+    const emoji: string = detail?.unicode ?? detail?.emoji?.unicode ?? '';
     if (!emoji) return;
 
     const textarea = this.textInput()?.nativeElement?.querySelector('textarea') as HTMLTextAreaElement | null;

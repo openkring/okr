@@ -5,22 +5,24 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { of, switchMap } from 'rxjs';
 import { Visibility, type MatrixCall } from 'matrix-js-sdk';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
-import { MatrixAuthToken, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@bk2/shared-models';
+import { MatrixAuthToken, MatrixMessage, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@bk2/shared-models';
 import { debugItemLoaded, debugMessage } from '@bk2/shared-util-core';
-import { showToast } from '@bk2/shared-util-angular';
+import { bkPrompt, confirm, copyToClipboardWithConfirmation, showToast } from '@bk2/shared-util-angular';
 
 import { AvatarService } from '@bk2/avatar-data-access';
 import { MatrixChatService } from '@bk2/chat-data-access';
 
 import { RoomEditModal } from './room-edit.modal';
+import { bkTranslate } from '@bk2/shared-i18n';
 
 export type MatrixChatState = {
   isMatrixInitialized: boolean;
   currentRoomId: string | undefined;
   selectedThreadId: string | undefined;
+  replyToMessage: MatrixMessage | undefined;
 }
 
 export const _MatrixChatStore = signalStore(
@@ -31,6 +33,7 @@ export const _MatrixChatStore = signalStore(
     isMatrixInitialized: inject(MatrixChatService).isInitialized,
     currentRoomId: undefined as string | undefined,
     selectedThreadId: undefined as string | undefined,
+    replyToMessage: undefined as MatrixMessage | undefined,
   })),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -38,6 +41,7 @@ export const _MatrixChatStore = signalStore(
     avatarService: inject(AvatarService),
     modalController: inject(ModalController),
     toastController: inject(ToastController),
+    alertController: inject(AlertController),
   })),
   withProps((store) => ({
     syncStateResource: rxResource({ stream: () => store.matrixService.syncState }),
@@ -99,7 +103,11 @@ export const _MatrixChatStore = signalStore(
           .replace(/^https?:\/\//, '')
           .replace(/^matrix\./, '');
       }),
-      messages: computed(() => state.messagesResource.value() ?? []),
+      messages: computed(() =>
+        (state.messagesResource.value() ?? []).filter(
+          m => m.relatesTo?.relationType !== 'm.thread'
+        )
+      ),
       typingUsers: computed(() => {
         const notification = state.typingResource.value();
         if (!notification || notification.roomId !== state.currentRoomId()) return [];
@@ -112,6 +120,31 @@ export const _MatrixChatStore = signalStore(
         if (!roomId) return false;
         if (!state.isMatrixInitialized()) return true;
         return state.messagesResource.value() === null;
+      }),
+
+      threadReplyCounts: computed(() => {
+        const messages = state.messagesResource.value() ?? [];
+        const counts = new Map<string, number>();
+        for (const msg of messages) {
+          if (msg.relatesTo?.relationType === 'm.thread' && msg.relatesTo.eventId) {
+            counts.set(msg.relatesTo.eventId, (counts.get(msg.relatesTo.eventId) ?? 0) + 1);
+          }
+        }
+        return counts;
+      }),
+
+      threadMessages: computed(() => {
+        const threadId = state.selectedThreadId();
+        if (!threadId) return [];
+        return (state.messagesResource.value() ?? []).filter(m =>
+          m.relatesTo?.relationType === 'm.thread' && m.relatesTo.eventId === threadId
+        );
+      }),
+
+      threadRootMessage: computed(() => {
+        const threadId = state.selectedThreadId();
+        if (!threadId) return undefined;
+        return (state.messagesResource.value() ?? []).find(m => m.eventId === threadId);
       }),
     };
   }),
@@ -188,6 +221,10 @@ export const _MatrixChatStore = signalStore(
 
       setSelectedThread(threadId: string | undefined): void {
         patchState(store, { selectedThreadId: threadId });
+      },
+
+      setReplyToMessage(message: MatrixMessage | undefined): void {
+        patchState(store, { replyToMessage: message });
       },
 
       /**
@@ -328,7 +365,8 @@ export const _MatrixChatStore = signalStore(
           component: RoomEditModal,  // Assume a new standalone component for input name/users
           componentProps: {
             room,
-            currentUser: store.currentUser()
+            currentUser: store.currentUser(),
+            header: '@chat.operation.room.create.header'
           }
         });
         await modal.present();
@@ -348,12 +386,12 @@ export const _MatrixChatStore = signalStore(
             if (roomId && roomInfo.avatar?.startsWith('http')) {
               await store.matrixService.setRoomAvatarFromUrl(roomId, roomInfo.avatar);
             }
-            showToast(store.toastController, '@chat.operation.create.conf');
+            showToast(store.toastController, '@chat.operation.room.create.conf');
             patchState(store, { currentRoomId: roomId });
 
           } catch (error) {
             console.error('MatrixChatStore.createRoom: Failed to create room:', error);
-            showToast(store.toastController, '@chat.operation.create.error');
+            showToast(store.toastController, '@chat.operation.room.create.error');
           }
         }
       },
@@ -365,7 +403,11 @@ export const _MatrixChatStore = signalStore(
       async editRoom(room: MatrixRoom): Promise<void> {
         const modal = await store.modalController.create({
           component: RoomEditModal,
-          componentProps: { room, currentUser: store.currentUser() }
+          componentProps: { 
+            room, 
+            currentUser: store.currentUser(),
+            header: '@chat.operation.room.update.header'
+          }
         });
         await modal.present();
         const { data, role } = await modal.onDidDismiss();
@@ -376,10 +418,10 @@ export const _MatrixChatStore = signalStore(
           if (updated.avatar?.startsWith('http') && updated.avatar !== room.avatar) {
             await store.matrixService.setRoomAvatarFromUrl(room.roomId, updated.avatar);
           }
-          showToast(store.toastController, '@chat.operation.update.conf');
+          showToast(store.toastController, '@chat.operation.room.update.conf');
         } catch (error) {
           console.error('MatrixChatStore.editRoom: Failed to update room:', error);
-          showToast(store.toastController, '@chat.operation.update.error');
+          showToast(store.toastController, '@chat.operation.room.update.error');
         }
       },
 
@@ -467,30 +509,171 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * React to a message
+       * Send a reaction emoji to a message (called from the reaction chip in the message list).
        */
-      async reactToMessage(eventId: string, emoji: string): Promise<void> {
+      async sendReaction(eventId: string, emoji: string): Promise<void> {
         const roomId = store.currentRoomId();
         if (!roomId) return;
-
         try {
           await store.matrixService.reactToMessage(roomId, eventId, emoji);
         } catch (error) {
-          console.error('MatrixChatStore.reactToMessage: Failed to react:', error);
+          console.error('MatrixChatStore.sendReaction: Failed to react:', error);
         }
       },
 
       /**
-       * Edit a message
+       * Show emoji picker and react to a message.
        */
-      async editMessage(eventId: string, newText: string): Promise<void> {
+      async reactToMessage(message: MatrixMessage): Promise<void> {
+        const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '👎', '🎉', '🙏'];
         const roomId = store.currentRoomId();
         if (!roomId) return;
+        const alert = await store.alertController.create({
+          header: bkTranslate('@chat.operation.message.react.header'),
+          buttons: [
+            ...QUICK_REACTIONS.map(emoji => ({
+              text: emoji,
+              handler: () => {
+                store.matrixService.reactToMessage(roomId, message.eventId, emoji).catch(err =>
+                  console.error('MatrixChatStore.reactToMessage: Failed to react:', err)
+                );
+              }
+            })),
+            { text: bkTranslate('@chat.operation.message.react.cancel'), role: 'cancel' }
+          ],
+          cssClass: 'emoji-reaction-alert',
+        });
+        await alert.present();
+      },
 
+      /**
+       * Send a reply to a message (called from the chat input when replyToMessage is set).
+       */
+      async sendReply(text: string): Promise<void> {
+        const roomId = store.currentRoomId();
+        const replyTo = store.replyToMessage();
+        if (!roomId) return;
         try {
-          await store.matrixService.editMessage(roomId, eventId, newText);
+          if (replyTo) {
+            await store.matrixService.sendReply(roomId, text, replyTo.eventId, replyTo.body, replyTo.sender);
+            patchState(store, { replyToMessage: undefined });
+          } else {
+            await store.matrixService.sendMessage(roomId, text);
+          }
         } catch (error) {
-          console.error('MatrixChatStore.editMessage: Failed to edit:', error);
+          console.error('MatrixChatStore.sendReply: Failed:', error);
+          throw error;
+        }
+      },
+
+      /**
+       * Open a thread under the given message and prompt for a reply.
+       */
+      async replyInThread(message: MatrixMessage): Promise<void> {
+        const roomId = store.currentRoomId();
+        if (!roomId) return;
+        const text = await bkPrompt(store.alertController as any, '@chat.operation.thread.reply.header', '@chat.operation.thread.reply.placeholder');
+        if (!text?.trim()) return;
+        try {
+          await store.matrixService.sendMessage(roomId, text.trim(), message.eventId);
+          patchState(store, { selectedThreadId: message.eventId });
+        } catch (error) {
+          console.error('MatrixChatStore.replyInThread: Failed:', error);
+          showToast(store.toastController, '@chat.operation.thread.reply.error');
+        }
+      },
+
+      /**
+       * Ask for a comment and send a report to the support channel.
+       */
+      async reportMessage(message: MatrixMessage): Promise<void> {
+        const comment = await bkPrompt(store.alertController as any, '@chat.operation.message.report.header', '@chat.operation.message.report.placeholder');
+        if (!comment?.trim()) return;
+        const rooms = store.matrixService.roomsCurrentValue;
+        const supportRoom = rooms.find(r => r.name?.toLowerCase() === 'support');
+        if (!supportRoom) {
+          showToast(store.toastController, '@chat.operation.message.report.noChannel');
+          return;
+        }
+        const user = store.currentUser();
+        const senderLabel = user ? `${user.firstName} ${user.lastName}` : message.sender;
+        const matrixLink = `https://matrix.to/#/${message.roomId}/${message.eventId}`;
+        const from = bkTranslate('@chat.operation.message.report.messageFrom');
+        const msg = bkTranslate('@chat.operation.message.report.message');
+        const cmt = bkTranslate('@chat.operation.message.report.comment');
+        const showMessage = bkTranslate('@chat.operation.message.report.showMessage');
+        const reportText =
+          `🚨 ${from} ${senderLabel}\n` +
+          `${msg}: "${message.body}"\n` +
+          `${cmt}: ${comment.trim()}\n` +
+          `RoomId: ${message.roomId}\n` +
+          `MsgId: ${message.eventId}`;
+        const reportHtml =
+          `🚨 <b>${from} ${senderLabel}</b><br>` +
+          `${msg}: „${message.body}"<br>` +
+          `${cmt}: ${comment.trim()}<br>` +
+          `<a href="${matrixLink}">${showMessage}</a>`;
+        try {
+          await store.matrixService.sendHtmlMessage(supportRoom.roomId, reportText, reportHtml);
+          showToast(store.toastController, '@chat.operation.message.report.conf');
+        } catch (error) {
+          console.error('MatrixChatStore.reportMessage: Failed:', error);
+          showToast(store.toastController, '@chat.operation.message.report.error');
+        }
+      },
+
+      /**
+       * Copy message body to clipboard.
+       */
+      async copy(message: MatrixMessage): Promise<void> {
+        await copyToClipboardWithConfirmation(store.toastController, message.body);
+      },
+
+      /**
+       * Show a modal/alert with the raw JSON content of the message.
+       */
+      async showRawMessage(message: MatrixMessage): Promise<void> {
+        const raw = JSON.stringify(message.content, null, 2);
+        const alert = await store.alertController.create({
+          header: 'Raw Message',
+          message: `<pre style="font-size:0.7rem;overflow:auto;max-height:60vh;white-space:pre-wrap">${raw}</pre>`,
+          cssClass: 'raw-message-alert',
+          buttons: ['OK'],
+        });
+        await alert.present();
+      },
+
+      /**
+       * Prompt user for new text and edit the message.
+       */
+      async editMessage(message: MatrixMessage): Promise<void> {
+        const roomId = store.currentRoomId();
+        if (!roomId) return;
+        const newText = await bkPrompt(store.alertController as any, '@chat.operation.message.update.header', '@chat.operation.message.update.placeholder', message.body);
+        if (!newText?.trim() || newText.trim() === message.body) return;
+        try {
+          await store.matrixService.editMessage(roomId, message.eventId, newText.trim());
+          showToast(store.toastController, '@chat.operation.message.update.conf');
+        } catch (error) {
+          console.error('MatrixChatStore.editMessage: Failed:', error);
+          showToast(store.toastController, '@chat.operation.message.update.error');
+        }
+      },
+
+      /**
+       * Confirm and delete (redact) a message.
+       */
+      async deleteMessage(message: MatrixMessage): Promise<void> {
+        const roomId = store.currentRoomId();
+        if (!roomId) return;
+        const ok = await confirm(store.alertController as any, '@chat.operation.message.delete.confirm', true);
+        if (!ok) return;
+        try {
+          await store.matrixService.deleteMessage(roomId, message.eventId);
+          showToast(store.toastController, '@chat.operation.message.delete.conf');
+        } catch (error) {
+          console.error('MatrixChatStore.deleteMessage: Failed:', error);
+          showToast(store.toastController, '@chat.operation.message.delete.error');
         }
       },
 

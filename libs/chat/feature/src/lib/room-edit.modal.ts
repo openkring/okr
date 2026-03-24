@@ -16,7 +16,7 @@ import { RoomEditForm } from '@bk2/chat-ui';
     IonContent
 ],
   template: `
-    <bk-header [title]="headerTitle" [isModal]="true" />
+    <bk-header [title]="header()" [isModal]="true" />
     @if(showConfirmation()) {
       <bk-change-confirmation [showCancel]=true (cancelClicked)="cancel()" (okClicked)="save()" />
     }
@@ -43,6 +43,7 @@ export class RoomEditModal {
 // inputs
   public room = model.required<MatrixRoom>();
   public currentUser = input.required<UserModel>();
+  public header = input.required<string>();
 
 // signals
   protected formDirty = signal(true);
@@ -50,10 +51,6 @@ export class RoomEditModal {
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   public formData = linkedSignal(() => safeStructuredClone(this.room()));
   protected showForm = signal(true);
-
-  // derived signals
-  //protected headerTitle = computed(() => getTitleLabel('content.page', this.page()?.bkey, this.isReadOnly()));
-  protected headerTitle = 'Neuen Chat Raum erstellen';
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

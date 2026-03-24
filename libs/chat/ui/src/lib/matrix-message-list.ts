@@ -18,8 +18,10 @@ import { TranslatePipe } from '@bk2/shared-i18n';
     :host {
       display: flex;
       flex-direction: column;
-      height: 100%;
+      flex: 1;
+      min-height: 0;      /* required so flex child can shrink below content size */
       overflow: hidden;
+      background: var(--ion-background-color, #fff);
     }
 
     .messages-container {
@@ -58,6 +60,11 @@ import { TranslatePipe } from '@bk2/shared-i18n';
       visibility: hidden;
     }
 
+    /* Own-message avatars take no space; bubble hugs the right edge */
+    .own-message .message-avatar {
+      display: none;
+    }
+
     .message-content {
       display: flex;
       flex-direction: column;
@@ -67,6 +74,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 
     .own-message .message-content {
       align-items: flex-end;
+      margin-right: 10px;
     }
 
     .message-sender {
@@ -101,25 +109,6 @@ import { TranslatePipe } from '@bk2/shared-i18n';
       font-style: italic;
     }
 
-    .message-bubble::before {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 0;
-      border-style: solid;
-      top: 0;
-      left: -8px;
-      border-width: 0 8px 8px 0;
-      border-color: transparent var(--ion-color-light) transparent transparent;
-    }
-
-    .own-message .message-bubble::before {
-      left: auto;
-      right: -8px;
-      border-width: 0 0 8px 8px;
-      border-color: transparent transparent transparent var(--ion-color-primary);
-    }
-
     .message-text {
       white-space: pre-wrap;
       margin: 0;
@@ -148,16 +137,46 @@ import { TranslatePipe } from '@bk2/shared-i18n';
       display: block;
     }
 
-    .message-location {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+    .message-location-map {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      border-radius: 8px;
+      overflow: hidden;
     }
 
-    .location-link {
-      color: var(--ion-color-primary);
-      text-decoration: none;
-      font-size: 0.875rem;
+    .location-tile-wrapper {
+      position: relative;
+      width: 256px;
+      height: 160px;
+      overflow: hidden;
+    }
+
+    .location-tile-img {
+      position: absolute;
+      width: 256px;
+      height: 256px;
+      display: block;
+    }
+
+    .location-pin {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -100%);
+      font-size: 24px;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
+      pointer-events: none;
+    }
+
+    .location-map-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 8px;
+      font-size: 0.8rem;
+      color: var(--ion-color-medium);
+      background: var(--ion-color-light-shade);
     }
 
     .message-timestamp {
@@ -313,7 +332,11 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                   } @else {
                     @switch (message.type) {
                       @case ('m.text') {
-                        <p class="message-text">{{ message.body }}</p>
+                        @if (message.content.formatted_body) {
+                          <p class="message-text" [innerHTML]="message.content.formatted_body"></p>
+                        } @else {
+                          <p class="message-text">{{ message.body }}</p>
+                        }
                       }
                       @case ('m.image') {
                         @if (message.mediaUrl) {
@@ -354,18 +377,29 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                         }
                       }
                       @case ('m.location') {
-                        <div class="message-location">
-                          <p class="message-text">{{ message.body }}</p>
-                          <a 
-                            [href]="message.content.info?.thumbnail_url" 
-                            target="_blank"
-                            class="location-link"
-                            (click)="$event.stopPropagation()"
-                          >
+                        <a
+                          [href]="message.content.info?.maps_link || getGoogleMapsUrl(message)"
+                          target="_blank"
+                          class="message-location-map"
+                          (click)="$event.stopPropagation()"
+                        >
+                          @if (getOsmTileData(message); as td) {
+                            <div class="location-tile-wrapper">
+                              <img
+                                [src]="td.url"
+                                [style.left.px]="td.offsetX"
+                                [style.top.px]="td.offsetY"
+                                alt="Karte"
+                                class="location-tile-img"
+                              />
+                              <span class="location-pin">📍</span>
+                            </div>
+                          }
+                          <div class="location-map-label">
                             <ion-icon src="{{'location' | svgIcon}}"></ion-icon>
-                            View on map
-                          </a>
-                        </div>
+                            <span>{{ message.body }}</span>
+                          </div>
+                        </a>
                       }
                       @default {
                         <p class="message-text">{{ message.body }}</p>
@@ -391,13 +425,13 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                   </div>
                 }
 
-                @if (message.relatesTo?.relationType === 'm.thread') {
-                  <div 
+                @if (threadReplyCounts().get(message.eventId); as replyCount) {
+                  <div
                     class="thread-indicator"
-                    (click)="message.relatesTo && threadClicked.emit(message.relatesTo.eventId)"
+                    (click)="threadClicked.emit(message.eventId)"
                   >
                     <ion-icon src="{{'chatbox' | svgIcon}}"></ion-icon>
-                    View thread
+                    {{ replyCount }} {{ replyCount === 1 ? 'Antwort' : 'Antworten' }}
                   </div>
                 }
               </div>
@@ -423,6 +457,7 @@ export class MatrixMessageList {
   currentUserId = input<string>();
   homeserverUrl = input<string>('https://bkchat.etke.host');
   typingUsers = input<string[]>([]);
+  threadReplyCounts = input<Map<string, number>>(new Map());
 
   messageClicked = output<MatrixMessage>();
   imageClicked = output<MatrixMessage>();
@@ -536,6 +571,48 @@ export class MatrixMessageList {
     const mimetype = message.content?.info?.mimetype || '';
     if (mimetype.startsWith('audio/')) return true;
     return /\.(mp3|ogg|wav|flac|aac|webm|m4a|opus)$/i.test(message.body || '');
+  }
+
+  getGoogleMapsUrl(message: MatrixMessage): string {
+    const geoUri = message.content?.geo_uri as string | undefined;
+    if (geoUri?.startsWith('geo:')) {
+      const coords = geoUri.substring(4).split(';')[0];
+      return `https://www.google.com/maps/search/?api=1&query=${coords}`;
+    }
+    return '#';
+  }
+
+  private readonly _tileCache = new Map<string, { url: string; offsetX: number; offsetY: number }>();
+
+  getOsmTileData(message: MatrixMessage): { url: string; offsetX: number; offsetY: number } | undefined {
+    if (this._tileCache.has(message.eventId)) return this._tileCache.get(message.eventId);
+    const geoUri = message.content?.geo_uri as string | undefined;
+    if (!geoUri?.startsWith('geo:')) return undefined;
+    const [latStr, lonStr] = geoUri.substring(4).split(';')[0].split(',');
+    const lat = parseFloat(latStr);
+    const lon = parseFloat(lonStr);
+    if (isNaN(lat) || isNaN(lon)) return undefined;
+
+    const z = 16;
+    const n = 1 << z;
+    const xFull = (lon + 180) / 360 * n;
+    const latRad = lat * Math.PI / 180;
+    const yFull = (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n;
+    const x = Math.floor(xFull);
+    const y = Math.floor(yFull);
+
+    // Pixel position of the point within the 256×256 tile
+    const pixelX = (xFull - x) * 256;
+    const pixelY = (yFull - y) * 256;
+
+    // Shift tile so the point lands at the wrapper center (128, 80)
+    const result = {
+      url: `https://tile.openstreetmap.org/${z}/${x}/${y}.png`,
+      offsetX: 128 - pixelX,
+      offsetY: 80 - pixelY,
+    };
+    this._tileCache.set(message.eventId, result);
+    return result;
   }
 
   formatTypingLabel(): string {

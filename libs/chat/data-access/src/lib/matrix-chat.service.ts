@@ -225,7 +225,7 @@ export class MatrixChatService {
     this.roomsUpdateSub = this.roomsUpdateTrigger$.pipe(debounceTime(300)).subscribe(() => this.updateRoomsList());
 
     // Sync state changes
-    this.client.on(ClientEvent.Sync, (state, prevState, data) => {
+    this.client.on(ClientEvent.Sync, (state, _prevState, data) => {
 /*       debugData('MatrixChatService: Sync state changed:', {
         state,
         prevState,
@@ -251,8 +251,17 @@ export class MatrixChatService {
     // Room events — live timeline only (toStartOfTimeline=true means historical/pagination events)
     this.client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined, toStartOfTimeline: boolean | undefined) => {
       if (toStartOfTimeline) return; // historical events are handled by loadMessagesForRoom
-      if (room && event.getType() === EventType.RoomMessage) {
-        this.handleNewMessage(event, room);
+      if (!room) return;
+      if (event.getType() === EventType.RoomMessage) {
+        const relatesTo = event.getContent()?.['m.relates_to'];
+        if (relatesTo?.rel_type === RelationType.Replace && relatesTo?.event_id) {
+          this.applyMessageEdit(relatesTo.event_id as string, event, room);
+        } else {
+          this.handleNewMessage(event, room);
+        }
+      } else if (event.getType() === 'm.reaction') {
+        const targetId = event.getContent()?.['m.relates_to']?.event_id as string | undefined;
+        if (targetId) this.refreshMessageReactions(targetId, room);
       }
     });
 
@@ -279,10 +288,10 @@ export class MatrixChatService {
     });
 
     // Typing notifications
-    this.client.on('RoomMember.typing' as any, (event: MatrixEvent, member: RoomMember) => {
+    this.client.on('RoomMember.typing' as any, (_event: MatrixEvent, member: RoomMember) => {
       const room = this.client?.getRoom(member.roomId);
       if (room) {
-        const typingMembers = room.currentState.getMembers().filter((m: any) => m.typing);
+        const typingMembers = room.getMembers().filter((m: any) => m.typing);
         const typingUsers = typingMembers.map((u: any) => u.userId);
         this.typingByRoom.set(room.roomId, typingUsers);
         this.typing$.next({ roomId: room.roomId, users: typingUsers });
@@ -297,6 +306,39 @@ export class MatrixChatService {
     // Read receipts — update room list so unread counts reflect the new read position
     this.client.on(RoomEvent.Receipt, () => {
       this.roomsUpdateTrigger$.next();
+    });
+
+    // Redactions — either mark a message as deleted, or refresh reactions if a reaction was removed
+    this.client.on(RoomEvent.Redaction, (event: MatrixEvent, room: Room) => {
+      const targetId = event.getAssociatedId();
+      if (!targetId) return;
+      const subject = this.messages$.get(room.roomId);
+      if (!subject) return;
+      const msgs = subject.value ?? [];
+
+      // If the redacted event itself was a message → mark it deleted
+      const msgIdx = msgs.findIndex(m => m.eventId === targetId);
+      if (msgIdx >= 0) {
+        const updated = [...msgs];
+        updated[msgIdx] = { ...msgs[msgIdx], isRedacted: true, body: '' };
+        subject.next(updated);
+        return;
+      }
+
+      // Otherwise the redacted event might be a reaction.
+      // m.relates_to is preserved by the Matrix spec after redaction, so try to find the parent.
+      const redactedEvent = room.findEventById(targetId);
+      const parentId = redactedEvent?.getContent()?.['m.relates_to']?.event_id as string | undefined;
+      if (parentId) {
+        this.refreshMessageReactions(parentId, room);
+      } else {
+        // Fallback: refresh reactions on all messages in the room
+        const updatedMsgs = msgs.map(m => {
+          const ev = room.findEventById(m.eventId);
+          return ev ? { ...m, reactions: this.getReactionsForEvent(ev, room) } : m;
+        });
+        subject.next(updatedMsgs);
+      }
     });
   }
 
@@ -392,7 +434,12 @@ export class MatrixChatService {
       const allEvents = timeline.getEvents();
       const messages = await Promise.all(
         allEvents
-          .filter(e => e.getType() === EventType.RoomMessage)
+          .filter(e => {
+            if (e.getType() !== EventType.RoomMessage) return false;
+            // Exclude edit events — they update existing messages, not new ones
+            const rel = e.getContent()?.['m.relates_to'];
+            return !(rel?.rel_type === RelationType.Replace && rel?.event_id);
+          })
           .map(async e => {
             const msg = this.mapEventToMessage(e, room);
             const mxcUrl = msg.content.url ?? msg.content.file?.url;
@@ -501,9 +548,65 @@ export class MatrixChatService {
         eventId: relatesTo.event_id as string,
         relationType: relatesTo.rel_type as string
       } : undefined,
+      reactions: this.getReactionsForEvent(event, room),
       isRedacted: event.isRedacted(),
       isEdited: !!relatesTo && relatesTo.rel_type === RelationType.Replace,
     };
+  }
+
+  /** Apply an incoming m.replace edit to the existing message in the BehaviorSubject. */
+  private applyMessageEdit(originalEventId: string, editEvent: MatrixEvent, room: Room): void {
+    const subject = this.messages$.get(room.roomId);
+    if (!subject) return;
+    const msgs = subject.value ?? [];
+    const idx = msgs.findIndex(m => m.eventId === originalEventId);
+    if (idx < 0) return;
+    const newContent = editEvent.getContent()?.['m.new_content'];
+    if (!newContent) return;
+    const updated = [...msgs];
+    updated[idx] = {
+      ...msgs[idx],
+      body: newContent.body ?? msgs[idx].body,
+      content: { ...msgs[idx].content, ...newContent },
+      isEdited: true,
+    };
+    subject.next(updated);
+  }
+
+  /** Read all m.reaction annotation events for a message and group them by emoji key. */
+  private getReactionsForEvent(event: MatrixEvent, room: Room): Map<string, Set<string>> | undefined {
+    const eventId = event.getId();
+    if (!eventId) return undefined;
+    const relations = room.relations.getChildEventsForEvent(
+      eventId,
+      RelationType.Annotation,
+      'm.reaction'
+    );
+    if (!relations) return undefined;
+    const reactions = new Map<string, Set<string>>();
+    for (const reactionEvent of relations.getRelations()) {
+      const key = reactionEvent.getContent()?.['m.relates_to']?.key as string | undefined;
+      const sender = reactionEvent.getSender();
+      if (key && sender) {
+        if (!reactions.has(key)) reactions.set(key, new Set());
+        reactions.get(key)!.add(sender);
+      }
+    }
+    return reactions.size > 0 ? reactions : undefined;
+  }
+
+  /** Re-map one message in a room's BehaviorSubject after its reactions changed. */
+  private refreshMessageReactions(targetEventId: string, room: Room): void {
+    const subject = this.messages$.get(room.roomId);
+    if (!subject) return;
+    const msgs = subject.value ?? [];
+    const idx = msgs.findIndex(m => m.eventId === targetEventId);
+    if (idx < 0) return;
+    const targetEvent = room.findEventById(targetEventId);
+    if (!targetEvent) return;
+    const updated = [...msgs];
+    updated[idx] = { ...msgs[idx], reactions: this.getReactionsForEvent(targetEvent, room) };
+    subject.next(updated);
   }
 
 /**
@@ -558,10 +661,6 @@ private async updateRoomsList(): Promise<void> {
           break;
         }
       }
-
-      // Get typing users in this room
-      const typingUserIds: string[] = [];
-      // Optionally, you can fill this from room.currentState.getMembers().filter(m => m.typing)
 
       // Calculate unread count. 'total' already includes highlights — do NOT add them again.
       const unreadCount = (room as any).getUnreadNotificationCount?.('total') || 0;
@@ -665,8 +764,9 @@ private async updateRoomsList(): Promise<void> {
     }
 
     // Fallback: any current member state event with is_direct:true marks this as a DM
-    for (const member of room.currentState.getMembers()) {
-      const memberEvent = room.currentState.getStateEvents('m.room.member', member.userId) as MatrixEvent | null;
+    const liveState = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
+    for (const member of room.getMembers()) {
+      const memberEvent = liveState?.getStateEvents('m.room.member', member.userId) as MatrixEvent | null;
       if (memberEvent?.getContent()?.['is_direct'] === true) {
         return true;
       }
@@ -739,6 +839,16 @@ private async updateRoomsList(): Promise<void> {
     return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
   }
 
+  async sendHtmlMessage(roomId: string, plainText: string, html: string): Promise<ISendEventResponse> {
+    if (!this.client) throw new Error('Client not initialized');
+    return this.client.sendEvent(roomId, EventType.RoomMessage, {
+      msgtype: MsgType.Text,
+      body: plainText,
+      format: 'org.matrix.custom.html',
+      formatted_body: html,
+    } as any);
+  }
+
   /**
    * Send a file/image to a room
    */
@@ -775,12 +885,13 @@ private async updateRoomsList(): Promise<void> {
   async sendLocation(roomId: string, text: string, latitude: number, longitude: number, threadId?: string): Promise<ISendEventResponse> {
     if (!this.client) throw new Error('Client not initialized');
 
+    const mapsLink = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
     const content: IContent = {
       msgtype: MsgType.Location,
       body: text,
       geo_uri: `geo:${latitude},${longitude}`,
       info: {
-        thumbnail_url: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}&zoom=20&basemap=terrain`,
+        maps_link: mapsLink,
       },
     };
 
@@ -817,10 +928,32 @@ private async updateRoomsList(): Promise<void> {
   }
 
   /**
-   * React to a message
+   * React to a message, or remove an existing identical reaction (toggle).
+   * Case 2: not yet reacted → send reaction.
+   * Case 3: already reacted with same emoji → redact the existing reaction event.
+   * Case 4: counter increment for other senders is handled automatically via RoomEvent.Timeline.
    */
-  async reactToMessage(roomId: string, eventId: string, emoji: string): Promise<ISendEventResponse> {
+  async reactToMessage(roomId: string, eventId: string, emoji: string): Promise<ISendEventResponse | void> {
     if (!this.client) throw new Error('Client not initialized');
+
+    const currentUserId = this.client.getUserId();
+    const room = this.client.getRoom(roomId);
+
+    if (room && currentUserId) {
+      const relations = room.relations.getChildEventsForEvent(
+        eventId,
+        RelationType.Annotation,
+        'm.reaction'
+      );
+      const existing = relations?.getRelations().find(
+        e => e.getSender() === currentUserId && e.getContent()?.['m.relates_to']?.key === emoji
+      );
+      if (existing?.getId()) {
+        // Toggle off: redact the existing reaction
+        await this.client.redactEvent(roomId, existing.getId()!);
+        return;
+      }
+    }
 
     return this.client.sendEvent(roomId, EventType.Reaction, {
       'm.relates_to': {
@@ -1229,6 +1362,34 @@ private async updateRoomsList(): Promise<void> {
       this.callState$.next(null);
       this.callFeeds$.next([]);
     });
+  }
+
+  /**
+   * Delete (redact) a message event.
+   */
+  async deleteMessage(roomId: string, eventId: string, reason?: string): Promise<void> {
+    if (!this.client) throw new Error('Client not initialized');
+    await this.client.redactEvent(roomId, eventId, undefined, reason ? { reason } : undefined);
+  }
+
+  /**
+   * Send a reply to a message (Matrix m.in_reply_to format).
+   */
+  async sendReply(roomId: string, text: string, replyToEventId: string, replyToBody: string, replyToSender: string, threadId?: string): Promise<ISendEventResponse> {
+    if (!this.client) throw new Error('Client not initialized');
+
+    const fallback = `> <${replyToSender}> ${replyToBody}\n\n${text}`;
+    const content: IContent = {
+      msgtype: MsgType.Text,
+      body: fallback,
+      format: 'org.matrix.custom.html',
+      formatted_body: `<mx-reply><blockquote><a href="https://matrix.to/#/${roomId}/${replyToEventId}">In reply to</a> <a href="https://matrix.to/#/${replyToSender}">${replyToSender}</a><br>${replyToBody}</blockquote></mx-reply>${text}`,
+      'm.relates_to': {
+        'm.in_reply_to': { event_id: replyToEventId },
+        ...(threadId ? { rel_type: RelationType.Thread, event_id: threadId } : {}),
+      },
+    };
+    return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
   }
 
   /** Send a notice message to a room so it persists across reloads. Fire-and-forget. */

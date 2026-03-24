@@ -90,6 +90,7 @@ export async function bkPrompt(alertController: AlertController, header: string,
     
   const alert = await alertController.create({
     header: bkTranslate(header),
+    cssClass: 'bk-prompt-alert',
     buttons: buttons,
     inputs: [{
       type: 'textarea',

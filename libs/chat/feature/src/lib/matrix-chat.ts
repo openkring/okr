@@ -1,6 +1,6 @@
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ToastController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ToastController, ActionSheetOptions, ActionSheetController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { SpinnerComponent } from '@bk2/shared-ui';
@@ -10,8 +10,8 @@ import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat
 import { MatrixChatStore } from './matrix-chat.store';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
-import { downloadToBrowser, showToast } from '@bk2/shared-util-angular';
-import { RoleName } from '@bk2/shared-models';
+import { createActionSheetButton, createActionSheetOptions, downloadToBrowser, showToast } from '@bk2/shared-util-angular';
+import { MatrixMessage, RoleName } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-matrix-chat-overview',
@@ -26,21 +26,25 @@ import { RoleName } from '@bk2/shared-models';
     :host {
       display: block;
       height: 100%;
+      overflow: hidden;   /* stop browser scroll-into-view from escaping */
     }
 
-    ion-card-content { 
-      padding: 0px; 
-      height: 100%;
+    ion-card-content {
+      padding: 0px;
+      flex: 1;
+      min-height: 0;      /* flex child must shrink below its content height */
+      overflow: hidden;
     }
-    
-    ion-card { 
-      padding: 0px; 
-      margin: 0px; 
-      border: 0px; 
+
+    ion-card {
+      padding: 0px;
+      margin: 0px;
+      border: 0px;
       box-shadow: none !important;
       height: 100%;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     .chat-container {
@@ -50,10 +54,20 @@ import { RoleName } from '@bk2/shared-models';
     }
 
     .room-list-column {
-      border-right: 1px solid var(--ion-border-color, #dedede);
-      overflow: hidden;
+      flex-shrink: 0;
+      width: 280px;
       display: flex;
       flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+      border-right: 1px solid var(--ion-border-color, #dedede);
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-right-color 0.3s ease;
+    }
+
+    .room-list-column.collapsed {
+      width: 0;
+      border-right-color: transparent;
     }
 
     .messages-column {
@@ -61,6 +75,18 @@ import { RoleName } from '@bk2/shared-models';
       flex-direction: column;
       overflow: hidden;
       flex: 1;
+      min-height: 0;
+    }
+
+    /* Message list fills remaining space; input is pushed to bottom */
+    bk-matrix-message-list {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    bk-matrix-message-input {
+      flex-shrink: 0;
     }
 
     .room-header {
@@ -145,6 +171,69 @@ import { RoleName } from '@bk2/shared-models';
       align-items: center;
       justify-content: center;
     }
+
+    .thread-panel {
+      width: 360px;
+      min-width: 0;
+      border-left: 1px solid var(--ion-border-color, #dedede);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--ion-background-color, #fff);
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-left-color 0.3s ease;
+    }
+
+    .thread-panel.collapsed {
+      width: 0;
+      border-left-color: transparent;
+    }
+
+    @media (max-width: 767px) {
+      .thread-panel {
+        position: absolute;
+        inset: 0;
+        z-index: 50;
+        width: 100%;
+        background: var(--ion-background-color, #fff);
+        transition: none;
+      }
+
+      .thread-panel.collapsed {
+        width: 0;
+      }
+    }
+
+    .thread-root-message {
+      padding: 12px 16px;
+      background: var(--ion-color-light);
+      border-bottom: 2px solid var(--ion-border-color, #dedede);
+      font-size: 0.9rem;
+    }
+
+    .thread-root-sender {
+      font-weight: 600;
+      color: var(--ion-color-primary);
+      font-size: 0.75rem;
+      margin-bottom: 4px;
+    }
+
+    .thread-root-body {
+      color: var(--ion-color-dark);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .thread-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ion-color-medium);
+      font-size: 0.875rem;
+      padding: 24px;
+      text-align: center;
+    }
   `],
   template: `
     @if (isMatrixReady()) {
@@ -168,44 +257,42 @@ import { RoleName } from '@bk2/shared-models';
 
         <ion-card-content class="ion-no-padding">
           <div class="chat-container">
-            <!-- Room List -->
-            @if (showRoomList()) {
-              <div class="room-list-column">
-                <ion-header class="room-header">
-                  <ion-toolbar>
-                    <ion-buttons slot="start">
-                      <ion-button (click)="toggleRoomList()" [disabled]="!currentRoom()">
-                        <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
+            <!-- Room List (always in DOM; CSS width animates it in/out) -->
+            <div class="room-list-column" [class.collapsed]="!showRoomList()">
+              <ion-header class="room-header">
+                <ion-toolbar>
+                  <ion-buttons slot="start">
+                    <ion-button (click)="toggleRoomList()" [disabled]="!currentRoom()">
+                      <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
+                    </ion-button>
+                  </ion-buttons>
+                  <ion-title>Chat-Räume</ion-title>
+                  @if(hasRole('admin')) {
+                    <ion-buttons slot="end">
+                      <ion-button (click)="onCreateRoom()">
+                        <ion-icon src="{{'add-circle' | svgIcon}}"></ion-icon>
                       </ion-button>
                     </ion-buttons>
-                    <ion-title>Chat-Räume</ion-title>
-                    @if(hasRole('admin')) {
-                      <ion-buttons slot="end">
-                        <ion-button (click)="onCreateRoom()">
-                          <ion-icon src="{{'add-circle' | svgIcon}}"></ion-icon>
-                        </ion-button>
-                      </ion-buttons>
-                    }
-                  </ion-toolbar>
-                </ion-header>
+                  }
+                </ion-toolbar>
+              </ion-header>
 
-                <bk-matrix-room-list
-                  [rooms]="rooms()"
-                  [selectedRoomId]="currentRoomId()"
-                  (roomSelected)="onRoomSelected($event)"
-                />
-              </div>
-            }
+              <bk-matrix-room-list
+                [rooms]="rooms()"
+                [selectedRoomId]="currentRoomId()"
+                (roomSelected)="onRoomSelected($event)"
+              />
+            </div>
 
             <!-- Messages Area -->
-            <div class="messages-column">
+            <div class="messages-column" (click)="onMessagesColumnClicked()">
               @if (currentRoom()) {
                 <!-- Room Header -->
                 <ion-header class="room-header">
                   <ion-toolbar>
                     @if (!showRoomList() && !isGroupView()) {
                       <ion-buttons slot="start">
-                        <ion-button (click)="toggleRoomList()">
+                        <ion-button (click)="toggleRoomList(); $event.stopPropagation()">
                           <ion-icon src="{{'menu' | svgIcon}}"></ion-icon>
                         </ion-button>
                       </ion-buttons>
@@ -233,6 +320,7 @@ import { RoleName } from '@bk2/shared-models';
                     [currentUserId]="matrixUserId()"
                     [homeserverUrl]="homeserverUrl()"
                     [typingUsers]="typingUsers()"
+                    [threadReplyCounts]="threadReplyCounts()"
                     (messageClicked)="onMessageClicked($event)"
                     (imageClicked)="onImageClicked($event)"
                     (fileClicked)="onFileClicked($event)"
@@ -265,6 +353,50 @@ import { RoleName } from '@bk2/shared-models';
                 </div>
               }
             </div>
+
+            <!-- Thread Panel (always in DOM; CSS width animates it in/out) -->
+            <div class="thread-panel" [class.collapsed]="!selectedThreadId()">
+                <ion-header class="room-header">
+                  <ion-toolbar>
+                    <ion-title>Thread</ion-title>
+                    <ion-buttons slot="end">
+                      <ion-button (click)="onCloseThread()">
+                        <ion-icon src="{{'close_cancel' | svgIcon}}"></ion-icon>
+                      </ion-button>
+                    </ion-buttons>
+                  </ion-toolbar>
+                </ion-header>
+
+                @if (threadRootMessage(); as root) {
+                  <div class="thread-root-message">
+                    <div class="thread-root-sender">{{ root.senderName }}</div>
+                    <div class="thread-root-body">{{ root.body }}</div>
+                  </div>
+                }
+
+                @if (threadMessages().length === 0) {
+                  <div class="thread-empty">{{'@chat.operation.thread.empty' | translate | async}}</div>
+                } @else {
+                  <bk-matrix-message-list
+                    [messages]="threadMessages()"
+                    [currentUserId]="matrixUserId()"
+                    [homeserverUrl]="homeserverUrl()"
+                    [typingUsers]="[]"
+                    (messageClicked)="onMessageClicked($event)"
+                    (imageClicked)="onImageClicked($event)"
+                    (fileClicked)="onFileClicked($event)"
+                    (reactionClicked)="onReactionClicked($event)"
+                    (threadClicked)="onThreadClicked($event)"
+                  />
+                }
+
+                <bk-matrix-message-input
+                  [typingUsers]="[]"
+                  (messageSent)="onThreadMessageSent($event)"
+                  (fileSent)="onThreadFileSent($event)"
+                  (typing)="onTyping($event)"
+                />
+            </div>
           </div>
         </ion-card-content>
         <!-- Video call overlay -->
@@ -274,7 +406,7 @@ import { RoleName } from '@bk2/shared-models';
             <video #localVideo autoplay playsinline muted class="local-video"></video>
 
             @if (callState() === 'ringing') {
-              <div class="call-status-label">Eingehender Video-Anruf...</div>
+              <div class="call-status-label">{{'@chat.operation.video.incoming' | translate | async}}</div>
               <div class="call-controls">
                 <ion-button class="call-fab" color="success" (click)="answerCall()">
                   <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
@@ -285,7 +417,7 @@ import { RoleName } from '@bk2/shared-models';
               </div>
             } @else {
               @if (callState() !== 'connected') {
-                <div class="call-status-label">Verbindung wird hergestellt...</div>
+                <div class="call-status-label">{{ '@chat.operation.video.connecting' | translate | async }}</div>
               }
               <div class="call-controls">
                 <ion-button class="call-fab" color="danger" (click)="hangupCall()">
@@ -305,6 +437,7 @@ export class MatrixChat implements OnDestroy {
   private readonly store = inject(MatrixChatStore);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly toastController = inject(ToastController);
+  private actionSheetController = inject(ActionSheetController);
 
   private isInitializing = false; // Guard flag to prevent multiple initializations
   private isRequestingRoomAccess = false;
@@ -326,15 +459,22 @@ export class MatrixChat implements OnDestroy {
   protected readonly totalUnreadCount = this.store.totalUnreadCount;
   protected readonly matrixUserId = computed(() => this.store.matrixUser()?.id);
   protected readonly homeserverUrl = computed(() => this.store.homeServerUrl());
+  private readonly currentUser = computed(() => this.store.currentUser());
 
   // Local state
-  protected readonly replyToMessage = computed(() => undefined); // tbd: implement reply
+  protected readonly replyToMessage = computed(() => this.store.replyToMessage());
   protected showRoomList = signal(!this.isGroupView());
 
   // Messages signal
   protected readonly messages = computed(() => this.store.messages());
   protected readonly isMessagesLoading = computed(() => this.store.isMessagesLoading());
   protected readonly typingUsers = computed(() => this.store.typingUsers());
+
+  // Thread signals
+  protected readonly selectedThreadId = computed(() => this.store.selectedThreadId());
+  protected readonly threadMessages = computed(() => this.store.threadMessages());
+  protected readonly threadRootMessage = computed(() => this.store.threadRootMessage());
+  protected readonly threadReplyCounts = computed(() => this.store.threadReplyCounts());
 
   // Ready state: true once the Matrix client exists; sync status shown via the banner
   protected readonly isMatrixReady = computed(() =>
@@ -349,6 +489,8 @@ export class MatrixChat implements OnDestroy {
 
   private readonly remoteVideoRef = viewChild<ElementRef>('remoteVideo');
   private readonly localVideoRef = viewChild<ElementRef>('localVideo');
+
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     // Reactively initialize Matrix when matrixUser becomes available.
@@ -493,7 +635,7 @@ export class MatrixChat implements OnDestroy {
 
   async onMessageSent(text: string) {
     try {
-      await this.store.sendMessage(text);
+      await this.store.sendReply(text);
     } catch (error) {
       console.error('Failed to send message:', error);
     }
@@ -511,9 +653,11 @@ export class MatrixChat implements OnDestroy {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
+        const lat = latitude.toFixed(5);
+        const lon = longitude.toFixed(5);
         try {
           await this.store.sendLocation(
-            `Aktuelle Position: ${latitude},${longitude}`,
+            `${lat}° N, ${lon}° E`,
             latitude,
             longitude
           );
@@ -530,33 +674,60 @@ export class MatrixChat implements OnDestroy {
     await this.store.sendTyping(isTyping);
   }
 
-  onMessageClicked(message: any) {
-    // Handle message click (e.g., show options)
-    console.log('Message clicked:', message);
-    // TBD: Show action sheet with options (reply, edit, delete, react, etc.)
+  /**
+   * When a user clicks a message, an actionsheet is shown with appliable operations.
+   * The operations are based on the user's role and whether the message is in a thread.
+   * e.g. reply, edit, delete, react, showRaw etc.
+   * @param message 
+   */
+  protected async onMessageClicked(message: MatrixMessage): Promise<void> {
+    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    this.addActionSheetButtons(actionSheetOptions, message);
+    await this.executeActions(actionSheetOptions, message);
   }
 
-  async onImageClicked(message: any): Promise<void> {
+  async onImageClicked(message: MatrixMessage): Promise<void> {
     await downloadToBrowser(message.content.url);
   }
 
-  async onFileClicked(message: any): Promise<void> {
+  async onFileClicked(message: MatrixMessage): Promise<void> {
     await downloadToBrowser(message.content.url);
   }
 
   async onReactionClicked(event: { messageId: string; emoji: string }) {
     try {
-      await this.store.reactToMessage(event.messageId, event.emoji);
+      await this.store.sendReaction(event.messageId, event.emoji);
     } catch (error) {
       console.error('Failed to react to message:', error);
     }
   }
 
   onThreadClicked(eventId: string) {
-    // Handle thread click
-    console.log('Thread clicked:', eventId);
     this.store.setSelectedThread(eventId);
-    // TBD: Show thread view
+  }
+
+  onCloseThread() {
+    this.store.setSelectedThread(undefined);
+  }
+
+  async onThreadMessageSent(text: string) {
+    const threadId = this.store.selectedThreadId();
+    if (!threadId) return;
+    try {
+      await this.store.sendMessage(text, threadId);
+    } catch (error) {
+      console.error('Failed to send thread message:', error);
+    }
+  }
+
+  async onThreadFileSent(file: File) {
+    const threadId = this.store.selectedThreadId();
+    if (!threadId) return;
+    try {
+      await this.store.sendFile(file, threadId);
+    } catch (error) {
+      console.error('Failed to send thread file:', error);
+    }
   }
 
   // show room info / edit (name, topic, avatar)
@@ -566,12 +737,17 @@ export class MatrixChat implements OnDestroy {
   }
 
   onCancelReply() {
-    // Cancel reply
-    // TBD: Clear reply state
+    this.store.setReplyToMessage(undefined);
   }
 
   toggleRoomList() {
     this.showRoomList.update(visible => !visible);
+  }
+
+  onMessagesColumnClicked() {
+    if (this.showRoomList() && this.currentRoom()) {
+      this.showRoomList.set(false);
+    }
   }
 
   async onCreateRoom(): Promise<void> {
@@ -593,6 +769,73 @@ export class MatrixChat implements OnDestroy {
 
   async answerCall(): Promise<void> {
     await this.store.answerCall();
+  }
+
+  /**
+   * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * @param message the Matrix message data
+   */
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, message: MatrixMessage): void {
+    const currentUserId = this.matrixUserId();
+    const isAuthor = !!currentUserId && message.sender === currentUserId;
+
+    if (isAuthor) { // author of message
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.imgixBaseUrl, 'trash_delete'));
+    } else {  // receiver of message
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.imgixBaseUrl, 'smiley'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.imgixBaseUrl, 'return_reply'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.thread', this.imgixBaseUrl, 'branch'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.imgixBaseUrl, 'alert-circle'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.message.copy', this.imgixBaseUrl, 'copy'));
+    if (hasRole('admin', this.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.raw', this.imgixBaseUrl, 'code'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
+    }
+  }
+
+  /**
+   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * @param actionSheetOptions 
+   * @param address 
+   */
+  private async executeActions(actionSheetOptions: ActionSheetOptions, message: MatrixMessage): Promise<void> {
+    if (actionSheetOptions.buttons.length > 0) {
+      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
+      await actionSheet.present();
+      const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
+      switch (data.action) {
+        case 'chat.message.react':
+          await this.store.reactToMessage(message);
+          break;
+        case 'chat.message.reply':
+          this.store.setReplyToMessage(message);
+          break;
+        case 'chat.message.thread':
+          await this.store.replyInThread(message);
+          break;
+        case 'chat.message.report':
+          await this.store.reportMessage(message);
+          break;
+        case 'chat.message.copy':
+          await this.store.copy(message);
+          break;
+        case 'chat.message.raw':
+          await this.store.showRawMessage(message);
+          break;
+        case 'chat.message.edit':
+          await this.store.editMessage(message);
+          break;
+        case 'chat.message.delete':
+          await this.store.deleteMessage(message);
+          break;
+      }
+    }
   }
 
   protected hasRole(role: RoleName): boolean {
