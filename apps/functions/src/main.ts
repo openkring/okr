@@ -4,6 +4,7 @@ import cors from 'cors';
 import * as functions from 'firebase-functions'; // needed for logger
 
 import * as Test from './test';
+import * as Address from './address';
 import * as Calendar from './calendar';
 import * as Replication from './replication';
 import * as Auth from './auth';
@@ -113,6 +114,9 @@ export const queryRag = Rag.queryRag;
 // storage triggers: auto-index/remove files at tenant/{tenantId}/rag/{fileName}
 export const onRagFileCreated = Rag.onRagFileCreated;
 export const onRagFileDeleted = Rag.onRagFileDeleted;
+
+// address
+export const generateQrBill = Address.generateQrBill;
 
 // test
 export const getEcho = Test.getEcho;

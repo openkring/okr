@@ -6,7 +6,7 @@ import { TranslatePipe } from "@bk2/shared-i18n";
 import { AddressModel } from "@bk2/shared-models";
 import { SvgIconPipe } from "@bk2/shared-pipes";
 import { EmptyListComponent } from "@bk2/shared-ui";
-import { createActionSheetButton, createActionSheetOptions } from "@bk2/shared-util-angular";
+import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } from "@bk2/shared-util-angular";
 import { coerceBoolean, getCategoryIcon, hasRole } from "@bk2/shared-util-core";
 
 import { FavoriteColorPipe, FormatAddressPipe } from "@bk2/subject-address-util";
@@ -62,6 +62,9 @@ import { AddressStore } from "./addresses.store";
                 <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
                 {{ address | formatAddress }}
               </ion-label>
+              @if((address.addressChannel === 'bankaccount' || address.addressChannel === 'twint') && address.url) {
+                <ion-icon slot="end" src="{{ 'qrcode' | svgIcon }}" />
+              }
             </ion-item>
           }
         </ion-list>
@@ -135,9 +138,10 @@ export class AddressesAccordionComponent {
     }
     switch(address.addressChannel) {
       case 'bankaccount':
-        actionSheetOptions.buttons.push(createActionSheetButton('address.iban.view', this.imgixBaseUrl, 'qrcode'));
-        if (!this.isReadOnly()) {
-          actionSheetOptions.buttons.push(createActionSheetButton('address.iban.upload', this.imgixBaseUrl, 'qrcode'));
+        if (address.url) {
+          actionSheetOptions.buttons.push(createActionSheetButton('address.iban.view', this.imgixBaseUrl, 'qrcode'));
+        } else if (!this.isReadOnly()) {
+          actionSheetOptions.buttons.push(createActionSheetButton('address.iban.generateQr', this.imgixBaseUrl, 'qrcode'));
         }
         break;
       case 'email':
@@ -184,10 +188,10 @@ export class AddressesAccordionComponent {
           await this.addressStore.edit(address, this.isReadOnly());
           break;
         case 'address.iban.view':
-          await this.addressStore.showQrEzs(address);
+          await downloadToBrowser(address.url);
           break;
-        case 'address.iban.upload':
-          await this.addressStore.uploadQrEzs(address);
+        case 'address.iban.generateQr':
+          await this.addressStore.generateQrEzs(address);
           break;
         case 'address.email.send':
           await this.addressStore.sendEmail(address.email);

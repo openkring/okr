@@ -5,22 +5,29 @@ import { AlertController, ModalController, Platform, ToastController } from '@io
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getDownloadURL, ref } from 'firebase/storage';
 
 import { FirestoreService } from '@bk2/shared-data-access';
+import { STORAGE } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, EZS_DIR, IMAGE_STYLE_SHAPE } from '@bk2/shared-models';
-import { confirm } from '@bk2/shared-util-angular';
+import { AddressCollection, AddressModel, AddressModelName, CategoryListModel, DefaultLanguage, DocumentModel, EZS_DIR, IMAGE_STYLE_SHAPE, OrgModel, PersonModel } from '@bk2/shared-models';
+import { confirm, downloadToBrowser } from '@bk2/shared-util-angular';
 import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@bk2/shared-util-core';
 import { Languages } from '@bk2/shared-categories';
 import { getImageDimensionsFromMetadata, MapViewModalComponent, showZoomedImage, updateImageDimensions } from '@bk2/shared-ui';
 
 import { readAsFile } from '@bk2/avatar-util';
 import { UploadService } from '@bk2/avatar-data-access';
+import { DocumentService } from '@bk2/document-data-access';
+import { FolderService } from '@bk2/folder-data-access';
 
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
 import { browseUrl, copyAddress, isAddress, stringifyPostalAddress } from '@bk2/subject-address-util';
 
 import { AddressEditModalComponent } from './address-edit.modal';
+import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
 
 export type AddressState = {
   parentKey: string;
@@ -54,7 +61,14 @@ export const AddressStore = signalStore(
     toastController: inject(ToastController),
     geocodeService: inject(GeocodingService),
     platform: inject(Platform),
-    uploadService: inject(UploadService)
+    uploadService: inject(UploadService),
+    documentService: inject(DocumentService),
+    folderService: inject(FolderService),
+    storage: inject(STORAGE),
+    qrBillFn: httpsCallable<{ tenantId: string; addressBkey: string; data: Record<string, unknown> }, { storagePath: string }>(
+      getFunctions(getApp(), 'europe-west6'),
+      'generateQrBill'
+    )
   })),
   withProps((store) => ({
     addressesResource: rxResource({
@@ -84,6 +98,8 @@ export const AddressStore = signalStore(
         ) ?? []
       ),
       currentUser: computed(() => state.appStore.currentUser()),
+      currentPerson: computed(() => state.appStore.currentPerson()),
+      defaultOrg: computed(() => state.appStore.defaultOrg()),
       tenantId: computed(() => state.appStore.tenantId()),
       imgixBaseUrl: computed(() => state.appStore.env.services.imgixBaseUrl),
       isLoading: computed(() => state.addressesResource.isLoading()),
@@ -127,6 +143,7 @@ export const AddressStore = signalStore(
       },
 
       setSelectedChannel(selectedChannel: string) {
+        if (selectedChannel === 'all') selectedChannel = '';
         patchState(store, { selectedChannel });
       },
 
@@ -217,18 +234,109 @@ export const AddressStore = signalStore(
         return await this.show(address);
       },
 
-      async uploadQrEzs(address: AddressModel, readOnly = true): Promise<string | undefined> {
-        if (!address || readOnly) return undefined;
-        const url = await this.uploadEzs(address);
-        if (url) {
-          address.url = url;
-          await store.addressService.update(address, store.currentUser());
-        }
-        return url;
-      },
+      /**
+       * Generates a Swiss QR bill PDF via Cloud Function, uploads it to Storage,
+       * creates a DocumentModel and updates address.url with the download URL.
+       * Creditor = parent org/person of the address.
+       * Debtor = defaultOrg when parent != defaultOrg, else currentPerson.
+       */
+      async generateQrEzs(address: AddressModel): Promise<void> {
+        const tenantId = store.tenantId();
+        const [parentModelType, parentKey] = getModelAndKey(address.parentKey);
 
-      async showQrEzs(address: AddressModel): Promise<void> {
-        return await this.showQrPaymentSlip(address.url);
+        // Resolve creditor from parent
+        let creditorName = '';
+        let creditorStreet = '';
+        let creditorStreetNumber = '';
+        let creditorZip = '';
+        let creditorCity = '';
+        let creditorCountry = 'CH';
+        if (parentModelType === 'org') {
+          const org = store.appStore.getOrg(parentKey) as OrgModel | undefined;
+          creditorName = org?.name ?? '';
+          creditorStreet = org?.favStreetName ?? '';
+          creditorStreetNumber = org?.favStreetNumber ?? '';
+          creditorZip = org?.favZipCode ?? '';
+          creditorCity = org?.favCity ?? '';
+          creditorCountry = org?.favCountryCode || 'CH';
+        } else if (parentModelType === 'person') {
+          const person = store.appStore.getPerson(parentKey) as PersonModel | undefined;
+          creditorName = person ? `${person.firstName} ${person.lastName}` : '';
+          creditorStreet = person?.favStreetName ?? '';
+          creditorStreetNumber = person?.favStreetNumber ?? '';
+          creditorZip = person?.favZipCode ?? '';
+          creditorCity = person?.favCity ?? '';
+          creditorCountry = person?.favCountryCode || 'CH';
+        }
+
+        // Resolve debtor: defaultOrg when parent != defaultOrg, else currentPerson
+        const defaultOrg = store.defaultOrg() as OrgModel | undefined;
+        const isCreditorDefaultOrg = parentModelType === 'org' && parentKey === defaultOrg?.bkey;
+        let debtorName = '';
+        let debtorStreet = '';
+        let debtorStreetNumber = '';
+        let debtorZip = '';
+        let debtorCity = '';
+        let debtorCountry = 'CH';
+        if (isCreditorDefaultOrg) {
+          const person = store.currentPerson() as PersonModel | undefined;
+          debtorName = person ? `${person.firstName} ${person.lastName}` : '';
+          debtorStreet = person?.favStreetName ?? '';
+          debtorStreetNumber = person?.favStreetNumber ?? '';
+          debtorZip = person?.favZipCode ?? '';
+          debtorCity = person?.favCity ?? '';
+          debtorCountry = person?.favCountryCode || 'CH';
+        } else {
+          debtorName = defaultOrg?.name ?? '';
+          debtorStreet = defaultOrg?.favStreetName ?? '';
+          debtorStreetNumber = defaultOrg?.favStreetNumber ?? '';
+          debtorZip = defaultOrg?.favZipCode ?? '';
+          debtorCity = defaultOrg?.favCity ?? '';
+          debtorCountry = defaultOrg?.favCountryCode || 'CH';
+        }
+
+        const data: Record<string, unknown> = {
+          currency: 'CHF',
+          creditor: {
+            account: address.iban,
+            name: creditorName,
+            address: `${creditorStreet} ${creditorStreetNumber}`,
+            city: creditorCity,
+            zip: creditorZip,
+            country: creditorCountry,
+          },
+          debtor: {
+            name: debtorName,
+            address: `${debtorStreet} ${debtorStreetNumber}`,
+            city: debtorCity,
+            zip: debtorZip,
+            country: debtorCountry,
+          },
+        };
+
+        const result = await store.qrBillFn({ tenantId, addressBkey: address.bkey, data });
+        const { storagePath } = result.data;
+
+        // Get download URL via client SDK
+        const url = await getDownloadURL(ref(store.storage, storagePath));
+
+        // Ensure 'ezs' folder exists, then link document to it
+        const ezsKey = 'ezs';
+        await store.folderService.ensureGroupFolder(ezsKey, 'EZS', tenantId, store.currentUser());
+
+        // Create and save DocumentModel
+        const doc = new DocumentModel(tenantId);
+        doc.fullPath = storagePath;
+        doc.mimeType = 'application/pdf';
+        doc.url = url;
+        doc.title = `QR-Rechnung ${creditorName}`;
+        doc.folderKeys = [ezsKey];
+        await store.documentService.create(doc, store.currentUser());
+
+        // Update address with the new URL
+        address.url = url;
+        await store.addressService.update(address, store.currentUser());
+        this.reload();
       },
 
       async openUrl(address: AddressModel): Promise<void> {
@@ -251,7 +359,7 @@ export const AddressStore = signalStore(
           case 'facebook': return browseUrl(address.url, 'https://www.facebook.com/');
           case 'linkedin': return browseUrl(address.url, 'https://www.linkedin.com/in/');
           case 'instagram': return browseUrl(address.url, 'https://www.instagram.com/');
-          case 'bankaccount': return await this.showQrPaymentSlip(address.url);
+          case 'bankaccount': return await downloadToBrowser(address.url);
           default: warn('AddressesAccordionStore.use: unsupported address channel ' + address.addressChannel + ' for address ' + address.parentKey + '/' + address.bkey);
         }
       },
@@ -272,44 +380,17 @@ export const AddressStore = signalStore(
         await modal.onWillDismiss();
       },
 
-      async showQrPaymentSlip(path: string): Promise<void> {
-        const title = 'QR Rechnung';
-        if (path && path.length > 0) {
-          let dimensions = await getImageDimensionsFromMetadata(path);
-
-          // if we can not read the dimensions from the image meta data, calculate them from the image file and upload as metadata to firebase storage
-          if (!dimensions) {
-            dimensions = await updateImageDimensions(path, store.currentUser());
-          }
-          
-          // if we have valid dimensions, show the zoomed image in a modal
-          if (dimensions) {
-            const style = IMAGE_STYLE_SHAPE;
-            style.width = dimensions.width;
-            style.height = dimensions.height;
-            await showZoomedImage(store.modalController, path, title, style, 'zoom-modal');     
-          }
-        }
-      },
-
-       /***************************  bank account / payment slip *************************** */
-      /**
-       * Make a photo or upload the image of a QR payment slip into Firestorage and return the download URL.
-       * @param parentKey  the key of the parent model (an org or person)
-       * @param parentType the type of the parent model (an org or person)
-       */
-      async uploadEzs(address?: AddressModel): Promise<string | undefined> {
+      async uploadFile(address?: AddressModel): Promise<string | undefined> {
         if (!address) return undefined;
-        const [parentModelType, parentKey] = getModelAndKey(address.parentKey);
-        const photo = await Camera.getPhoto({
-          quality: 90,
-          allowEditing: false,
-          resultType: CameraResultType.Uri,
-          source: store.platform.is('mobile') ? CameraSource.Prompt : CameraSource.Photos 
-        });
-        const file = await readAsFile(photo, store.platform);
-        const path = `${store.tenantId}/${parentModelType}/${parentKey}/${EZS_DIR}/${file.name}`;
-        return await store.uploadService.uploadFile(file, path, '@document.operation.upload.ezs');
+        const tid = store.tenantId();
+        const path = 'tenant/' + tid + '/' + AddressModelName;
+        const doc = await store.uploadService.uploadAndCreateDocument(tid, DEFAULT_MIMETYPES, path)
+
+        // Update address with the new URL
+        if (!doc) return undefined;
+        address.url = doc.url;
+        await store.addressService.update(address, store.currentUser());
+        this.reload();
       }
     }
   })

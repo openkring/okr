@@ -41,7 +41,9 @@
         "external": [
           "firebase-admin",
           "firebase-functions",
-          "@google-cloud/*"
+          "@google-cloud/*",
+          "pdfkit",
+          "swissqrbill"
         ],
         "esbuildOptions": {
           "logLevel": "info",

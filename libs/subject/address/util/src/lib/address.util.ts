@@ -160,7 +160,9 @@ export function stringifyAddress(address: AddressModel, lang = 'de'): string {
     case 'postal': 
       return stringifyPostalAddress(address, lang);
     case 'bankaccount':
-      return formatIban(address.iban, IbanFormat.Friendly)
+      return formatIban(address.iban, IbanFormat.Friendly);
+    case 'twint':
+      return '';
     default: 
       return address.url;
   }

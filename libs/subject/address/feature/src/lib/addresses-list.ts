@@ -1,12 +1,12 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAccordionGroup, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AddressModel, RoleName } from '@bk2/shared-models';
+import { AddressModel, OrgModel, PersonModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error, navigateByUrl } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, downloadToBrowser, error, navigateByUrl } from '@bk2/shared-util-angular';
 import { generateRandomString, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
 
 import { FavoriteColorPipe, FormatAddressPipe } from '@bk2/subject-address-util';
@@ -20,12 +20,15 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, FavoriteColorPipe, FormatAddressPipe, AvatarPipe,
     SpinnerComponent, EmptyListComponent, ListFilterComponent,
-    IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton, IonIcon, IonImg,
-    IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonAvatar
+    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonImg,
+    IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonAvatar,
+    IonAccordion, IonAccordionGroup,
 ],
   providers: [AddressStore],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
+    .avatar { padding-left: 10px; }
+    .addresses { padding-left: 60px; }
   `],
   template: `
     <ion-header>
@@ -33,18 +36,6 @@ import { AvatarPipe } from '@bk2/avatar-ui';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredAddressesCount()}}/{{addressesCount()}} {{ '@subject.address.plural' | translate | async }}</ion-title>
-<!--           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
-              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
-            </ion-button>
-             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
-                </ion-content>
-              </ng-template>
-            </ion-popover>
-          </ion-buttons> -->
       </ion-toolbar>
 
     <!-- search and filters -->
@@ -56,6 +47,13 @@ import { AvatarPipe } from '@bk2/avatar-ui';
 
       <!-- list header -->
       <ion-toolbar color="primary">
+        @if(!selectedChannel()) {
+          <ion-buttons slot="start">
+            <ion-button fill="clear" (click)="toggleExpandAll()">
+              <ion-icon slot="icon-only" src="{{ (allExpanded() ? 'chevron-up' : 'chevron-down') | svgIcon }}" />
+            </ion-button>
+          </ion-buttons>
+        }
         <ion-grid>
           <ion-row>
             <ion-col>
@@ -74,28 +72,60 @@ import { AvatarPipe } from '@bk2/avatar-ui';
       @if(filteredAddressesCount() === 0) {
         <bk-empty-list message="@subject.address.field.empty" />
       } @else {
-        <ion-list lines="inset">
-          @for(address of filteredAddresses(); track address.bkey) {
-            <ion-item (click)="showActions(address)">
-              <ion-avatar slot="start">
-                <ion-img src="{{ address.parentKey| avatar }}" alt="Avatar Logo" />
-              </ion-avatar>
-
-              <ion-label>
-                <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
-                @if(address.isCc) {
-                  <ion-icon src="{{ 'cc-circle' | svgIcon }}" />
+        @if(selectedChannel()) {
+          <ion-list lines="inset">
+            @for(address of filteredAddresses(); track address.bkey) {
+              <ion-item (click)="showActions(address)">
+                <ion-avatar slot="start">
+                  <ion-img src="{{ address.parentKey | avatar }}" alt="Avatar Logo" />
+                </ion-avatar>
+                <ion-label>
+                  <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                  @if(address.isCc) { <ion-icon src="{{ 'cc-circle' | svgIcon }}" /> }
+                  @if(address.isValidated) { <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" /> }
+                  <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
+                  <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
+                  {{ address | formatAddress }}
+                </ion-label>
+                @if((address.addressChannel === 'bankaccount' || address.addressChannel === 'twint') && address.url) {
+                  <ion-icon slot="end" src="{{ 'qrcode' | svgIcon }}" />
                 }
-                @if(address.isValidated) {
-                  <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" />
-                }
-                <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
-                <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
-                {{ address | formatAddress }}
-              </ion-label>
-            </ion-item>
-          }
-        </ion-list>
+              </ion-item>
+            }
+          </ion-list>
+        } @else {
+          <ion-accordion-group [multiple]="true" [value]="expandedValues()">
+            @for(parentKey of parentKeys(); track parentKey) {
+              <ion-accordion [value]="parentKey" toggle-icon-slot="start">
+                <ion-item slot="header">
+                  <ion-avatar>
+                    <ion-img src="{{ parentKey | avatar }}" alt="Avatar" />
+                  </ion-avatar>
+                  <ion-label class="avatar">{{ getParentName(parentKey) }}</ion-label>
+                </ion-item>
+                <div slot="content">
+                  <ion-list lines="inset">
+                    @for(address of groupedAddresses().get(parentKey) ?? []; track address.bkey) {
+                      <ion-item (click)="showActions(address)">
+                        <ion-label class="addresses">
+                          <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                          @if(address.isCc) { <ion-icon src="{{ 'cc-circle' | svgIcon }}" /> }
+                          @if(address.isValidated) { <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" /> }
+                          <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
+                          <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
+                          {{ address | formatAddress }}
+                        </ion-label>
+                        @if((address.addressChannel === 'bankaccount' || address.addressChannel === 'twint') && address.url) {
+                          <ion-icon slot="end" src="{{ 'qrcode' | svgIcon }}" />
+                        }
+                      </ion-item>
+                    }
+                  </ion-list>
+                </div>
+              </ion-accordion>
+            }
+          </ion-accordion-group>
+        }
       }
     }
   </ion-content>
@@ -118,15 +148,47 @@ export class AddressesList {
   private currentUser = computed(() => this.addressStore.currentUser());
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   protected popupId = computed(() => 'c_addresses_' + generateRandomString(5));
+  protected selectedChannel = computed(() => this.addressStore.selectedChannel());
 
   private imgixBaseUrl = this.addressStore.appStore.env.services.imgixBaseUrl;
   protected channels = computed(() => this.addressStore.getChannels());
+
+  // grouping
+  protected allExpanded = signal(false);
+  protected parentKeys = computed(() => [...new Set(this.filteredAddresses().map(a => a.parentKey))]);
+  protected groupedAddresses = computed(() => {
+    const map = new Map<string, AddressModel[]>();
+    for (const address of this.filteredAddresses()) {
+      const group = map.get(address.parentKey) ?? [];
+      group.push(address);
+      map.set(address.parentKey, group);
+    }
+    return map;
+  });
+  protected expandedValues = computed(() => this.allExpanded() ? this.parentKeys() : []);
 
   constructor() {
     effect(() => {
         this.addressStore.setConfig('all', 'parentKey');
     })
   }
+  protected toggleExpandAll(): void {
+    this.allExpanded.update(v => !v);
+  }
+
+  protected getParentName(parentKey: string): string {
+    const [modelType, key] = parentKey.split('.');
+    if (modelType === 'person') {
+      const person = this.addressStore.appStore.getPerson(key) as PersonModel | undefined;
+      return person ? `${person.firstName} ${person.lastName}` : parentKey;
+    }
+    if (modelType === 'org') {
+      const org = this.addressStore.appStore.getOrg(key) as OrgModel | undefined;
+      return org?.name ?? parentKey;
+    }
+    return parentKey;
+  }
+
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
     this.addressStore.setSearchTerm(searchTerm);
@@ -173,8 +235,11 @@ export class AddressesList {
     actionSheetOptions.buttons.push(createActionSheetButton('address.copy', this.imgixBaseUrl, 'copy'));
     switch(address.addressChannel) {
       case 'bankaccount':
-        actionSheetOptions.buttons.push(createActionSheetButton('address.iban.view', this.imgixBaseUrl, 'qrcode'));
-        actionSheetOptions.buttons.push(createActionSheetButton('address.iban.upload', this.imgixBaseUrl, 'qrcode'));
+        if (address.url) {
+          actionSheetOptions.buttons.push(createActionSheetButton('address.iban.view', this.imgixBaseUrl, 'qrcode'));
+        } else {
+          actionSheetOptions.buttons.push(createActionSheetButton('address.iban.generateQr', this.imgixBaseUrl, 'qrcode'));
+        }
         break;
       case 'email':
         actionSheetOptions.buttons.push(createActionSheetButton('address.email.send', this.imgixBaseUrl, 'email'));
@@ -184,6 +249,13 @@ export class AddressesList {
         break;
       case 'postal':
         actionSheetOptions.buttons.push(createActionSheetButton('address.postal.view', this.imgixBaseUrl, 'location'));
+        break;
+      case 'twint':
+        if (address.url) {
+          actionSheetOptions.buttons.push(createActionSheetButton('address.file.view', this.imgixBaseUrl, 'qrcode'));
+        } else {
+          actionSheetOptions.buttons.push(createActionSheetButton('address.file.upload', this.imgixBaseUrl, 'qrcode'));
+        }
         break;
       case 'web':
         actionSheetOptions.buttons.push(createActionSheetButton('address.web.open', this.imgixBaseUrl, 'link'));
@@ -220,11 +292,12 @@ export class AddressesList {
         case 'subject.edit':
           await this.addressStore.editSubject(address.parentKey);
           break;
+        case 'address.file.view':
         case 'address.iban.view':
-          await this.addressStore.showQrEzs(address);
+          await downloadToBrowser(address.url);
           break;
-        case 'address.iban.upload':
-          await this.addressStore.uploadQrEzs(address);
+        case 'address.iban.generateQr':
+          await this.addressStore.generateQrEzs(address);
           break;
         case 'address.email.send':
           await this.addressStore.sendEmail(address.email);
@@ -234,6 +307,9 @@ export class AddressesList {
           break;
         case 'address.postal.view':
           await this.addressStore.showPostalAddress(address);
+          break;
+        case 'address.file.upload':
+          await this.addressStore.uploadFile(address);
           break;
         case 'address.web.open':
           await this.addressStore.openUrl(address);
