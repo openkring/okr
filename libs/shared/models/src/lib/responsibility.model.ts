@@ -9,13 +9,15 @@ export class ResponsibilityModel implements BkModel, SearchableModel, NamedModel
   public index = DEFAULT_INDEX;
   public notes = DEFAULT_NOTES;
 
-  public respId = DEFAULT_ID; // one word, a unique identifier for a responsibility
   public name = DEFAULT_NAME; // human readable description of the 
 
   // examples:   infra_rental / Clubareal Vermietung
   //             keys / Schlüsselverwaltung            (Bestellung)         
-  //             president / Präsident 
-  //             treasurer / Kassier
+  //             president / Präsident                   person
+  //             treasurer / Kassier                     person
+  //             board / Vorstand                        group
+  //             boat_comm / Bootskommission             group
+  // 
   //             skiff_depot_rental / Skifflagerplatz
   //             admission_a / Mitgliederbewirtschaftung   (Antrag/Anmeldung)
   //             admission_k / Beitritt als Kandidierende    (Antrag/Anmeldung)
