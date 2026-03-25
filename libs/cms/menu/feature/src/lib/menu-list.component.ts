@@ -23,7 +23,7 @@ import { MenuStore } from './menu.store';
   template: `
     <ion-header>
       <!-- page header -->
-      <ion-toolbar color="secondary" id="bkheader">
+      <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button></ion-menu-button></ion-buttons>
         <ion-title>{{ selectedMenuItemsCount() }}/{{ menuItemsCount() }} {{'@content.menuItem.plural' | translate | async }}</ion-title>
         <ion-buttons slot="end">

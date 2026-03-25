@@ -1,0 +1,24 @@
+{
+  "name": "relationship-responsibility-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/responsibility/data-access/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:responsibility", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/responsibility/data-access",
+        "main": "libs/relationship/responsibility/data-access/src/index.ts",
+        "tsConfig": "libs/relationship/responsibility/data-access/tsconfig.lib.json",
+        "assets": ["libs/relationship/responsibility/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

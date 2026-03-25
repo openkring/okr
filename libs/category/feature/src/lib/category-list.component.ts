@@ -130,7 +130,7 @@ export class CategoryListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.categoryListStore.add('mcat_default'); break;
+      case 'add':  await this.categoryListStore.add(this.readOnly()); break;
       case 'exportRaw': await this.categoryListStore.export("raw"); break;
       default: error(undefined, `CategoryListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }

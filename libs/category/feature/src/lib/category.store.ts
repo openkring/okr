@@ -78,20 +78,10 @@ export const CategoryStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      async add(defaultCategoryName?: string, readOnly = true): Promise<void> {
-        let defaultCategory: CategoryListModel | undefined;
-          if (defaultCategoryName) {
-            defaultCategory = await firstValueFrom(store.categoryService.read(defaultCategoryName));
-          }
-          const newCategory = this.duplicateCategory(defaultCategory);
-          await this.edit(newCategory, readOnly);
-      },
-
-      duplicateCategory(category?: CategoryListModel): CategoryListModel {
-        if (!category) return new CategoryListModel(store.appStore.tenantId());
-        const duplicatedCategory = structuredClone(category);
-        duplicatedCategory.bkey = '';
-        return duplicatedCategory;
+      async add(readOnly = true): Promise<void> {
+        if (readOnly) { console.log('CategoryStore.add: readOnly mode.'); return; }
+        const cat = new CategoryListModel(store.appStore.tenantId());
+          await this.edit(cat, readOnly);
       },
 
       async edit(category: CategoryListModel, readOnly = true): Promise<void> {

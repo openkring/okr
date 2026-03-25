@@ -161,7 +161,7 @@ import { Browser } from '@capacitor/browser';
     `
 })
 export class CalEventListComponent {
-  protected calEventStore = inject(CalEventStore);
+  protected store = inject(CalEventStore);
   private actionSheetController = inject(ActionSheetController);
   private fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
 
@@ -173,19 +173,19 @@ export class CalEventListComponent {
   public showMainMenu = input<boolean>(true);
   
   // filters
-  protected searchTerm = linkedSignal(() => this.calEventStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.calEventStore.selectedTag());
-  protected selectedType = linkedSignal(() => this.calEventStore.selectedCategory());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected selectedType = linkedSignal(() => this.store.selectedCategory());
 
   // data
-  protected calEventsCount = computed(() => this.calEventStore.calEventsCount());
-  protected filteredCalEvents = computed(() => this.calEventStore.filteredCalEvents() ?? []);
+  protected calEventsCount = computed(() => this.store.calEventsCount());
+  protected filteredCalEvents = computed(() => this.store.filteredCalEvents() ?? []);
   protected filteredCalEventsCount = computed(() => this.filteredCalEvents().length);
-  protected isLoading = computed(() => this.calEventStore.isLoading());
-  protected tags = computed(() => this.calEventStore.getTags());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
   protected popupId = computed(() => `c_calevent_${this.listId}`);
-  protected types = computed(() => this.calEventStore.appStore.getCategory('calevent_type'));
-  private currentUser = computed(() => this.calEventStore.appStore.currentUser());
+  protected types = computed(() => this.store.appStore.getCategory('calevent_type'));
+  private currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
   protected isListView = linkedSignal(() => this.view() === 'list');
@@ -242,27 +242,27 @@ export class CalEventListComponent {
   };
 
   // passing constants to the template
-  private imgixBaseUrl = this.calEventStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
-    effect(() => this.calEventStore.setCalendarName(this.listId()));
+    effect(() => this.store.setCalendarName(this.listId()));
   }
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.calEventStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.calEventStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.calEventStore.setSelectedCategory(type);
+    this.store.setSelectedCategory(type);
   }
 
   protected onYearSelected(year: number): void {
-    this.calEventStore.setSelectedYear(year);
+    this.store.setSelectedYear(year);
   }
 
   /******************************* actions *************************************** */
@@ -271,8 +271,8 @@ export class CalEventListComponent {
    * @param eventName 
    */
   protected async quickEntry(bkQuickEntry: IonTextarea): Promise<void> {
-    const calevent = new CalEventModel(this.calEventStore.tenantId());
-    const calname = this.calEventStore.calendarName();
+    const calevent = new CalEventModel(this.store.tenantId());
+    const calname = this.store.calendarName();
     if (!calname || calname === '') {
       error(undefined, 'CalEventListComponent.quickEntry: missing calendar name');
       return;
@@ -296,7 +296,7 @@ export class CalEventListComponent {
     calevent.name = parts.name || '';
     calevent.locationKey = parts.location || '';
     calevent.type = parts.type || '';
-    await this.calEventStore.quickEntry(calevent);
+    await this.store.quickEntry(calevent);
     bkQuickEntry.value = '';
   }
 
@@ -307,10 +307,10 @@ export class CalEventListComponent {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.calEventStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.calEventStore.export("raw"); break;
+      case 'add':  await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       case 'exportIcs': 
-        const cal =  this.calEventStore.calendar();
+        const cal =  this.store.calendar();
         console.log('exportIcs: ', cal);
         if (!cal) {
           error(undefined, 'all or my calendars can not be exported');
@@ -366,19 +366,19 @@ export class CalEventListComponent {
       if (!data) return;
       switch (data.action) {
         case 'calevent.delete':
-          await this.calEventStore.delete(calEvent, this.readOnly());
+          await this.store.delete(calEvent, this.readOnly());
           break;
         case 'calevent.edit':
-          await this.calEventStore.edit(calEvent, false, this.readOnly());
+          await this.store.edit(calEvent, false, this.readOnly());
           break;
         case 'calevent.view':
-          await this.calEventStore.edit(calEvent, false, true);
+          await this.store.edit(calEvent, false, true);
           break;
         case 'calevent.inviteGroup':
-          await this.calEventStore.inviteGroupMembers(calEvent, this.readOnly());
+          await this.store.inviteGroupMembers(calEvent, this.readOnly());
           break;
         case 'calevent.invitePerson':
-          await this.calEventStore.invitePerson(calEvent, this.readOnly());
+          await this.store.invitePerson(calEvent, this.readOnly());
           break;
       }
     }
