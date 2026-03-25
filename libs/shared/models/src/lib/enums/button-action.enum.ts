@@ -4,4 +4,5 @@ export enum ButtonAction {
   Browse, // browse to an external URL
   Zoom, // show a zoomed version of the referenced file in Firebase storage (typically an image)
   None,
+  Notify, // notify parent component (typically the page about the click on the button)
 }

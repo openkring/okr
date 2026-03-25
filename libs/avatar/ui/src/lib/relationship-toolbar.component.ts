@@ -71,6 +71,7 @@ export class RelationshipToolbarComponent {
   public color = input<ColorIonic>(ColorIonic.Primary);
   public subjectDefaultIcon = input<string>();
   public objectDefaultIcon = input<string>();
+  public readOnly = input<boolean>(false);
 
   // passing constants to the template
   protected colorsIonic = ColorsIonic;
@@ -82,8 +83,10 @@ export class RelationshipToolbarComponent {
   protected objectUrl = computed(() => `/${this.objectAvatar().modelType}/${this.objectAvatar().key}`);
 
   protected async goto(url: string): Promise<void> {
-    this.modalController.dismiss(undefined, 'cancel');
-    this.appNavigationService.pushLink(`/${this.relType()}/all`);
-    await navigateByUrl(this.router, url);
+    if (this.readOnly() === false) {
+      this.modalController.dismiss(undefined, 'cancel');
+      this.appNavigationService.pushLink(`/${this.relType()}/all`);
+      await navigateByUrl(this.router, url);
+    }
   }
 }

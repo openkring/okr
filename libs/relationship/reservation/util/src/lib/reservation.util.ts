@@ -1,5 +1,5 @@
-import { ReservationModel } from '@bk2/shared-models';
-import { addIndexElement, isType } from '@bk2/shared-util-core';
+import { ReservationApplyModel, ReservationModel, ResourceModel, UserModel } from '@bk2/shared-models';
+import { addIndexElement, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, isType } from '@bk2/shared-util-core';
 
 export function isReservation(reservation: unknown, tenantId: string): reservation is ReservationModel {
   return isType(reservation, new ReservationModel(tenantId));
@@ -32,4 +32,40 @@ export function getReservationIndex(reservation: ReservationModel): string {
  */
 export function getReservationIndexInfo(): string {
   return 'rn:reserverName rk:reserverKey resn:resourceName resk:resourceKey ';
+}
+
+
+export function getNewReservationApply(currentUser?: UserModel, resource?: ResourceModel): ReservationApplyModel | undefined {
+  if (!currentUser || !resource) {
+    console.error('ReservationUtil.getNewReservationApply: person and resource are mandatory.');
+  } else {
+    const ram = new ReservationApplyModel();
+    ram.reserver = getAvatarInfoForCurrentUser(currentUser);
+    ram.resource = getAvatarInfo(resource, 'resource');
+    return ram;
+  }
+}
+
+export function convertApplyToReservation(apply: ReservationApplyModel | undefined, tenantId: string): ReservationModel | undefined {
+  if (!apply) return undefined;
+  const rm = new ReservationModel(tenantId);
+  rm.name = apply.name;
+  rm.reserver = apply.reserver;
+  rm.resource = apply.resource;
+  rm.startDate = apply.startDate;
+  rm.startTime = apply.startTime;
+  rm.fullDay = apply.fullDay;
+  rm.durationMinutes = apply.durationMinutes;
+  rm.endDate = apply.endDate;
+  rm.participants = apply.participants;
+  rm.area = apply.area;
+  rm.reason = apply.reason;
+  rm.description = [
+    apply.description,
+    `-------------${apply.reserver?.name1} ${apply.reserver?.name1}/${getTodayStr(DateFormat.ViewDateTime)}`,
+    `             Zelt:      ${apply.usesTent}`,
+    `             Firma:     ${apply.company}`,
+    `             Bestätigt: ${apply.isConfirmed}`
+  ].join('\n');
+  return rm;
 }

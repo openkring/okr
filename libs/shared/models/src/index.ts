@@ -38,6 +38,7 @@ export * from './lib/page.model';
 export * from './lib/person.model';
 export * from './lib/personal-rel.model';
 export * from './lib/reservation.model';
+export * from './lib/reservation-apply.model';
 export * from './lib/resource.model';
 export * from './lib/roles';
 export * from './lib/section.model';

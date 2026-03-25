@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import {} from '@capacitor/google-maps';
@@ -8,11 +8,15 @@ import { ButtonSection, ViewPosition } from '@bk2/shared-models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 
 import { MatrixChatService } from '@bk2/chat-data-access';
+import { ReservationApplyModal } from '@bk2/relationship-reservation-feature';
 
 import { ButtonWidgetComponent, EmergencyButtonWidget } from '@bk2/cms-section-ui';
 import { AppStore } from '@bk2/shared-feature';
 import { debugMessage } from '@bk2/shared-util-core';
 import { bkTranslate } from '@bk2/shared-i18n';
+import { isReservation } from '@bk2/relationship-reservation-util';
+import { ReservationService } from '@bk2/relationship-reservation-data-access';
+import { TaskService } from '@bk2/task-data-access';
 
 type Coordinates = {
   latitude: number;
@@ -56,7 +60,7 @@ type Coordinates = {
               <ion-grid>
                 <ion-row>
                   <ion-col [size]="colSizeButton()">
-                    <bk-button-widget [section]="section" [editMode]="editMode()" />
+                    <bk-button-widget [section]="section" [editMode]="editMode()" (clicked)="onClick($event)" />
                   </ion-col>
                   <ion-col [size]="colSizeText()">
                     <div [innerHTML]="content()"></div>
@@ -71,7 +75,7 @@ type Coordinates = {
                     <div [innerHTML]="content()"></div>
                   </ion-col>
                   <ion-col [size]="colSizeButton()">
-                    <bk-button-widget [section]="section" [editMode]="editMode()" />
+                    <bk-button-widget [section]="section" [editMode]="editMode()" (clicked)="onClick($event)" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -80,7 +84,7 @@ type Coordinates = {
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <bk-button-widget [section]="section" [editMode]="editMode()" />
+                    <bk-button-widget [section]="section" [editMode]="editMode()" (clicked)="onClick($event)" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
@@ -99,13 +103,13 @@ type Coordinates = {
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <bk-button-widget [section]="section" [editMode]="editMode()" />
+                    <bk-button-widget [section]="section" [editMode]="editMode()" (clicked)="onClick($event)" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
             }
             @default {  <!-- VP.None -->
-              <bk-button-widget [section]="section" [editMode]="editMode()" />
+              <bk-button-widget [section]="section" [editMode]="editMode()" (clicked)="onClick($event)" />
             }
           }
         }
@@ -119,6 +123,9 @@ type Coordinates = {
 export class ButtonSectionComponent {
   private chatService = inject(MatrixChatService);
   private appStore = inject(AppStore);
+  private modalController = inject(ModalController);
+  private reservationService = inject(ReservationService);
+  private taskService = inject(TaskService);
 
   // inputs
   public section = input<ButtonSection>();
@@ -156,6 +163,23 @@ export class ButtonSectionComponent {
       } catch (error) {
         console.error('button-section.sendEmergencyMessage: Failed to send:', error);
       }
+    }
+  }
+
+  protected async onClick(modalType: string): Promise<void> {
+    if (modalType === 'bhres') {  // boathouse reservation application
+      const modal = await this.modalController.create({
+          component: ReservationApplyModal,
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data) {
+          if (isReservation(data, this.appStore.tenantId())) {
+            const resId = await this.reservationService.create(data, this.appStore.currentUser());
+            // tbd: add a task to responsible
+            // tbd: add the reservation as calevent
+          }
+        }
     }
   }
 

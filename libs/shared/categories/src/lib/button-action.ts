@@ -37,5 +37,12 @@ export const ButtonActions: ButtonActionCategory[] = [
     name: 'none',
     i18nBase: 'categories.buttonAction.none',
     icon: 'close_cancel'
+  },
+    {
+    id: ButtonAction.Notify,
+    abbreviation: 'NTFY',
+    name: 'notify',
+    i18nBase: 'categories.buttonAction.notify',
+    icon: 'info-circle'
   }
 ]

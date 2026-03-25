@@ -1,5 +1,5 @@
 import { NgStyle } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 import { IonButton, IonIcon, ModalController } from '@ionic/angular/standalone';
@@ -51,6 +51,8 @@ export class ButtonWidgetComponent {
   // inputs
   public section = input.required<ButtonSection>();
   public editMode = input<boolean>(false);
+
+  public clicked = output<string>();
 
   private readonly imgixBaseUrl = this.env.services.imgixBaseUrl;
 
@@ -124,6 +126,9 @@ export class ButtonWidgetComponent {
           await showZoomedImage(this.modalController, this.url(), '@content.type.article.zoomedImage', this.imageStyle(), this.label(), 'full-modal'); 
           break;
         case ButtonAction.None:
+          break;
+        case ButtonAction.Notify:
+          this.clicked.emit(this.url())
           break;
       }
     }
