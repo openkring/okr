@@ -22,5 +22,8 @@ export * from './lib/section.store';
 export * from './lib/section-edit.modal';
 export * from './lib/news-section.component';
 export * from './lib/news-section.store';
+export * from './lib/orgchart-node.component';
+export * from './lib/orgchart-section.component';
+export * from './lib/orgchart-section.store';
 export * from './lib/rag-section.component';
 export * from './lib/rag-section.store';

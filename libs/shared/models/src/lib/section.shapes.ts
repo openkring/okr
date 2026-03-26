@@ -2,14 +2,14 @@ import type { CalendarOptions } from "@fullcalendar/core";
 import type { EChartsOption } from "echarts";
 
 import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DEFAULT_URL } from "@bk2/shared-constants";
-import type { 
-  AccordionSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection, 
-  AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection, 
-  ChartSection, ChatConfig, ChatSection, EditorConfig, EventsConfig, EventsSection, 
-  HeroConfig, HeroSection, IconConfig, IframeConfig, 
-  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, 
-  PeopleSection, SliderConfig, SliderSection, TableConfig, TableSection, 
-  TrackerConfig, TrackerSection, VideoConfig, VideoSection 
+import type {
+  AccordionSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection,
+  AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection,
+  ChartSection, ChatConfig, ChatSection, EditorConfig, EventsConfig, EventsSection,
+  HeroConfig, HeroSection, IconConfig, IframeConfig,
+  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, OrgchartConfig, OrgchartSection, PeopleConfig,
+  PeopleSection, SliderConfig, SliderSection, TableConfig, TableSection,
+  TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { AlbumStyle } from './enums/album-style.enum';
 import { ButtonAction } from './enums/button-action.enum';
@@ -330,3 +330,16 @@ export const INVITATIONS_SECTION_SHAPE = {
   type: 'invitations',
   properties: INVITATIONS_CONFIG_SHAPE
 } as InvitationsSection;
+
+// --------------------------------------- ORGCHART ----------------------------------------
+export const ORGCHART_CONFIG_SHAPE = {
+  topGroup: '',
+  showAvatar: true,
+  showName: true,
+} as OrgchartConfig;
+
+export const ORGCHART_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'orgchart',
+  properties: ORGCHART_CONFIG_SHAPE
+} as OrgchartSection;

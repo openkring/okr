@@ -35,7 +35,7 @@ import { GroupSelectStore } from './group-select.store';
         @if(selectedGroupsCount() === 0) {
           <bk-empty-list message="@subject.group.field.empty" />
         } @else {
-          @for(group of groups(); track $index) {
+          @for(group of filteredGroups(); track $index) {
             <ion-list lines="none">
               <ion-item class="item" (click)="select(group)">
                  <ion-avatar slot="start">
@@ -74,6 +74,9 @@ export class GroupSelectModalComponent {
     });
     effect(() => {
       this.groupSelectStore.setCurrentUser(this.currentUser());
+    });
+    effect(() => {
+      this.groupSelectStore.setSearchTerm(this.searchTerm());
     });
   }
 

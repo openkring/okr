@@ -25,6 +25,7 @@ import { InvitationsSectionComponent } from './invitations-section.component';
 import { TasksSectionComponent } from './tasks-section.component';
 import { MessagesSectionComponent } from './messages-section.component';
 import { NewsSectionComponent } from './news-section.component';
+import { OrgchartSectionComponent } from './orgchart-section.component';
 import { RagSectionComponent } from './rag-section.component';
 
 /**
@@ -41,7 +42,7 @@ import { RagSectionComponent } from './rag-section.component';
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, TrackerSectionComponent, HeroSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent, RagSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent,
     IonItem, IonLabel, SpinnerComponent,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
   ],
@@ -95,6 +96,13 @@ import { RagSectionComponent } from './rag-section.component';
           }
           @case('news') {
             <bk-news-section [section]="section" [editMode]="editMode()" />
+          }
+          @case('orgchart') {
+            @defer (on viewport) {
+              <bk-orgchart-section [section]="section" [editMode]="editMode()" />
+            } @placeholder {
+              <bk-spinner />
+            }
           }
           @case('people') {
             <bk-people-section [section]="section" [editMode]="editMode()" />

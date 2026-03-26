@@ -14,17 +14,30 @@ import { ImageStyle, ImageConfig, Slot } from './image.model';
 export const SectionCollection = 'sections';
 export const SectionModelName = 'section';
 
-export type SectionType = 
-    'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' | 
+export type SectionType =
+    'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' |
     'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
-    'news' | 'activities' | 'messages' | 'files' | 'links' | 'rag';
+    'news' | 'activities' | 'messages' | 'files' | 'links' | 'rag' | 'orgchart';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
-    HeroSection | IframeSection | MapSection | PeopleSection | SliderSection | 
+    HeroSection | IframeSection | MapSection | PeopleSection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | FilesSection | LinksSection | RagSection;
+    NewsSection | ActivitiesSection | MessagesSection | FilesSection | LinksSection | RagSection | OrgchartSection;
+
+// --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
+// --------------------------------------- ORGCHART ----------------------------------------
+export interface OrgchartSection extends BaseSection {
+  type: 'orgchart';
+  properties: OrgchartConfig;
+}
+
+export interface OrgchartConfig {
+  topGroup: string;    // bkey of the root group
+  showAvatar: boolean;
+  showName: boolean;
+}
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 export interface BaseSection {
@@ -40,8 +53,8 @@ export interface BaseSection {
   roleNeeded: RoleName;
   isArchived: boolean;
   content: EditorConfig; // content from rich text editor
-  properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig | 
-  IframeConfig | MapConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig | 
+  properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
+  IframeConfig | MapConfig | OrgchartConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
   TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | FilesConfig | LinksConfig | RagConfig;
   notes: string;
   tags: string;
