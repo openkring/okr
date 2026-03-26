@@ -60,14 +60,6 @@ import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
       @if (showName()) {
         <ion-label (click)="onGroupClick($event)">{{ node().name }}</ion-label>
       }
-
-      @if (editMode()) {
-        <ion-icon
-          slot="end"
-          src="{{ 'ellipsis-vertical' | svgIcon }}"
-          (click)="onGroupClick($event)"
-        />
-      }
     </ion-item>
 
     @if (expanded() && children().length > 0) {
