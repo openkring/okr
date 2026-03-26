@@ -35,7 +35,7 @@ import { OrgSelectStore } from './org-select.store';
         @if(selectedOrgsCount() === 0) {
           <bk-empty-list message="@subject.org.field.empty" />
         } @else {
-          @for(org of orgs(); track $index) {
+          @for(org of filteredOrgs(); track $index) {
             <ion-list lines="none">
               <ion-item class="item" (click)="select(org)">
                  <ion-avatar slot="start">
@@ -74,6 +74,9 @@ export class OrgSelectModalComponent {
     });
     effect(() => {
       this.orgSelectStore.setCurrentUser(this.currentUser());
+    });
+    effect(() => {
+      this.orgSelectStore.setSearchTerm(this.searchTerm());
     });
   }
 
