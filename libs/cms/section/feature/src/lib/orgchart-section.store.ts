@@ -8,7 +8,7 @@ import { DEFAULT_KEY } from '@bk2/shared-constants';
 import { GroupModel, GroupModelName } from '@bk2/shared-models';
 import { confirm } from '@bk2/shared-util-angular';
 import { GroupService } from '@bk2/subject-group-data-access';
-import { GroupEditModalComponent } from '@bk2/subject-group-feature';
+import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
 import { OrgEditModalComponent } from '@bk2/subject-org-feature';
 
 export interface OrgchartTreeNode {
@@ -58,6 +58,7 @@ export const OrgchartStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
+    groupEditModal: inject(GROUP_EDIT_MODAL),
   })),
   withProps((store) => ({
     groupsResource: rxResource({
@@ -113,7 +114,7 @@ export const OrgchartStore = signalStore(
       newGroup.hasFiles = false;
       newGroup.hasAlbum = false;
       const modal = await store.modalController.create({
-        component: GroupEditModalComponent,
+        component: store.groupEditModal,
         cssClass: 'wide-modal',
         componentProps: {
           group: newGroup,
@@ -156,7 +157,7 @@ export const OrgchartStore = signalStore(
       const group = store.allGroups().find(g => g.bkey === node.bkey);
       if (!group) return;
       const modal = await store.modalController.create({
-        component: GroupEditModalComponent,
+        component: store.groupEditModal,
         cssClass: 'wide-modal',
         componentProps: {
           group,
@@ -197,7 +198,7 @@ export const OrgchartStore = signalStore(
         const group = store.allGroups().find(g => g.bkey === node.bkey);
         if (!group) return;
         const modal = await store.modalController.create({
-          component: GroupEditModalComponent,
+          component: store.groupEditModal,
           cssClass: 'wide-modal',
           componentProps: {
             group,

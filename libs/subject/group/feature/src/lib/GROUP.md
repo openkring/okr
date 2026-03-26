@@ -89,6 +89,18 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `album` | `DocumentListComponent` (folder: `f:a_<id>`) | when `hasAlbum` |
 | `members` | `MembershipListComponent` | when `hasMembers` |
 
+## Injection Token: `GROUP_EDIT_MODAL`
+
+`GroupEditModalComponent` is also consumed by `cms-section-feature` (OrgchartSection, ContextDiagramSection) to let users edit groups directly from diagrams. To avoid a circular library dependency (`cms-section-feature` → `subject-group-feature` → `cms-page-feature` → `cms-section-feature`), the component is not imported directly there.
+
+Instead, an `InjectionToken<Type<unknown>>` called `GROUP_EDIT_MODAL` is defined in `@bk2/subject-group-ui` (a lower-level lib that both sides can depend on). The consuming stores inject the token and pass it as the `component` to Ionic's `ModalController.create()`. The concrete `GroupEditModalComponent` is provided once in `app.config.ts`:
+
+```typescript
+{ provide: GROUP_EDIT_MODAL, useValue: GroupEditModalComponent }
+```
+
+Any future feature lib that needs to open the group edit modal across a dependency boundary should follow the same pattern.
+
 ## Authorization
 - List / view: any authenticated user
 - Edit / create / delete: requires `'memberAdmin'` or `'admin'` role

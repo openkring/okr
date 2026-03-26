@@ -10,7 +10,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 
 @Component({
-  selector: 'bk-group-new-modal',
+  selector: 'bk-group-edit-modal',
   standalone: true,
   imports: [
     HeaderComponent, ChangeConfirmationComponent, GroupFormComponent,

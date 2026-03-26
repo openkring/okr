@@ -12,7 +12,7 @@ import { AvatarService } from '@bk2/avatar-data-access';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { WorkrelService } from '@bk2/relationship-workrel-data-access';
 import { PersonalRelService } from '@bk2/relationship-personal-rel-data-access';
-import { GroupEditModalComponent } from '@bk2/subject-group-feature';
+import { GROUP_EDIT_MODAL } from '@bk2/subject-group-ui';
 import { OrgEditModalComponent } from '@bk2/subject-org-feature';
 
 // ---------------------------------------------------------------------------
@@ -94,6 +94,7 @@ export const ContextDiagramStore = signalStore(
     avatarService: inject(AvatarService),
     modalController: inject(ModalController),
     actionSheetController: inject(ActionSheetController),
+    groupEditModal: inject(GROUP_EDIT_MODAL),
   })),
   withProps((store) => ({
     relationsResource: rxResource<RelationsData, { center: string; config: ContextDiagramConfig }>({
@@ -236,7 +237,7 @@ export const ContextDiagramStore = signalStore(
         const group = store.appStore.getGroup(key);
         if (!group) return;
         const modal = await store.modalController.create({
-          component: GroupEditModalComponent,
+          component: store.groupEditModal,
           cssClass: 'wide-modal',
           componentProps: {
             group,
