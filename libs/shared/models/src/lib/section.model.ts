@@ -34,9 +34,10 @@ export interface OrgchartSection extends BaseSection {
 }
 
 export interface OrgchartConfig {
-  topGroup: string;    // bkey of the root group
+  topElement: string;  // root element in the form "modelType.bkey" (modelType: 'group' | 'org')
   showAvatar: boolean;
   showName: boolean;
+  display: 'vertical' | 'horizontal';
 }
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------

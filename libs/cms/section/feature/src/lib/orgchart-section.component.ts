@@ -1,9 +1,7 @@
-import { AsyncPipe, isPlatformBrowser } from '@angular/common';
-import { Component, PLATFORM_ID, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { AsyncPipe } from '@angular/common';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActionSheetController, IonCard, IonCardContent, IonLabel, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
-import { EMPTY, fromEvent, map, startWith } from 'rxjs';
 
 import { TreeChart } from 'echarts/charts';
 import * as echarts from 'echarts/core';
@@ -13,9 +11,11 @@ echarts.use([TreeChart, CanvasRenderer]);
 
 import type { EChartsOption } from 'echarts';
 
-import { GroupModel, OrgchartConfig, OrgchartSection } from '@bk2/shared-models';
+import { OrgchartConfig, OrgchartSection } from '@bk2/shared-models';
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { hasRole } from '@bk2/shared-util-core';
+import { AvatarService } from '@bk2/avatar-data-access';
 
 import { OrgchartNodeComponent } from './orgchart-node.component';
 import { OrgchartStore, OrgchartTreeNode } from './orgchart-section.store';
@@ -56,13 +56,14 @@ type ViewMode = 'accordion' | 'chart';
           </ion-segment>
 
           @if (viewMode() === 'accordion') {
-            @if (rootGroup(); as root) {
+            @if (rootNode(); as root) {
               <bk-orgchart-node
-                [group]="root"
+                [node]="root"
                 [depth]="0"
                 [showName]="showName()"
-                [editMode]="editMode()"
-                (groupAction)="showActions($event)"
+                [display]="display()"
+                [editMode]="isMemberAdmin()"
+                (groupAction)="handleNodeClick($event)"
               />
             }
           } @else {
@@ -80,7 +81,6 @@ type ViewMode = 'accordion' | 'chart';
 export class OrgchartSectionComponent {
   private readonly orgchartStore = inject(OrgchartStore);
   private readonly actionSheetController = inject(ActionSheetController);
-  private readonly platformId = inject(PLATFORM_ID);
 
   public section = input<OrgchartSection>();
   public editMode = input(false);
@@ -90,25 +90,22 @@ export class OrgchartSectionComponent {
   private readonly config = computed(() => this.section()?.properties as OrgchartConfig | undefined);
   protected readonly showName = computed(() => this.config()?.showName ?? true);
   protected readonly isLoading = computed(() => this.orgchartStore.isLoading());
-  protected readonly rootGroup = computed(() => this.orgchartStore.rootGroup());
+  protected readonly rootNode = computed(() => this.orgchartStore.rootNode());
+  protected readonly isAuthenticated = computed(() => this.orgchartStore.appStore.isAuthenticated());
+  protected readonly isMemberAdmin = computed(() => hasRole('memberAdmin', this.orgchartStore.appStore.currentUser()));
 
   protected viewMode = signal<ViewMode>('accordion');
 
-  // Responsive tree orientation: LR on medium+ screens, TB on mobile
-  private readonly windowWidth = toSignal(
-    isPlatformBrowser(this.platformId)
-      ? fromEvent(window, 'resize').pipe(startWith(null), map(() => window.innerWidth))
-      : EMPTY,
-    { initialValue: isPlatformBrowser(this.platformId) ? window.innerWidth : 768 },
-  );
-  private readonly orient = computed(() => (this.windowWidth() ?? 768) >= 768 ? 'LR' : 'TB');
+  protected readonly display = computed(() => this.config()?.display ?? 'vertical');
+  private readonly orient = computed(() => this.display() === 'horizontal' ? 'LR' as const : 'TB' as const);
 
   protected readonly echartsOption = computed(() => {
     const treeData = this.orgchartStore.treeData();
     if (!treeData) return undefined;
-    return buildEchartsOption(treeData, this.orient(), this.showName());
+    return buildEchartsOption(treeData, this.orient(), this.showName(), this.avatarService);
   });
 
+  private readonly avatarService = inject(AvatarService);
   private readonly imgixBaseUrl = this.orgchartStore.appStore.env.services.imgixBaseUrl;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,7 +116,7 @@ export class OrgchartSectionComponent {
       const config = this.config();
       if (config) {
         untracked(() => {
-          this.orgchartStore.setConfig(config.topGroup, config.showName);
+          this.orgchartStore.setConfig(config.topElement, config.showName, config.display ?? 'vertical');
         });
       }
     });
@@ -140,21 +137,33 @@ export class OrgchartSectionComponent {
     this.chartInstance = instance;
   }
 
+  protected handleNodeClick(node: OrgchartTreeNode): void {
+    if (this.isMemberAdmin()) {
+      void this.showActions(node);
+    } else if (this.isAuthenticated()) {
+      void this.orgchartStore.viewNode(node);
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected onChartNodeClick(event: any): void {
     const bkey = event?.data?.value as string | undefined;
     if (!bkey) return;
+    const root = this.orgchartStore.rootNode();
+    if (root?.bkey === bkey) { this.handleNodeClick(root); return; }
     const group = this.orgchartStore.allGroups().find(g => g.bkey === bkey);
-    if (group) void this.showActions(group);
+    if (group) this.handleNodeClick({ name: group.name, bkey: group.bkey, modelType: 'group', icon: group.icon, children: [] });
   }
 
-  protected async showActions(group: GroupModel): Promise<void> {
+  protected async showActions(node: OrgchartTreeNode): Promise<void> {
     const options = createActionSheetOptions('@actionsheet.label.choose');
     options.buttons = [
       createActionSheetButton('orgchart.addNewGroup', this.imgixBaseUrl, 'add-circle'),
       createActionSheetButton('orgchart.addExistingGroup', this.imgixBaseUrl, 'search'),
-      createActionSheetButton('orgchart.editGroup', this.imgixBaseUrl, 'create_edit'),
-      createActionSheetButton('orgchart.removeGroup', this.imgixBaseUrl, 'trash_delete'),
+      ...(node.modelType === 'group' ? [
+        createActionSheetButton('orgchart.editGroup', this.imgixBaseUrl, 'create_edit'),
+        createActionSheetButton('orgchart.removeGroup', this.imgixBaseUrl, 'trash_delete'),
+      ] : []),
       createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'),
     ];
     const sheet = await this.actionSheetController.create(options);
@@ -163,16 +172,16 @@ export class OrgchartSectionComponent {
     if (!data?.action) return;
     switch (data.action) {
       case 'orgchart.addNewGroup':
-        await this.orgchartStore.addNewGroup(group.bkey);
+        await this.orgchartStore.addNewGroup(node.bkey);
         break;
       case 'orgchart.addExistingGroup':
-        await this.orgchartStore.addExistingGroup(group.bkey);
+        await this.orgchartStore.addExistingGroup(node.bkey);
         break;
       case 'orgchart.editGroup':
-        await this.orgchartStore.editGroup(group);
+        await this.orgchartStore.editGroup(node);
         break;
       case 'orgchart.removeGroup':
-        await this.orgchartStore.removeGroup(group);
+        await this.orgchartStore.removeGroup(node);
         break;
     }
   }
@@ -185,14 +194,21 @@ export class OrgchartSectionComponent {
 interface EChartsTreeNode {
   name: string;
   value: string;
+  symbol: string;
+  symbolSize: number;
   children: EChartsTreeNode[];
 }
 
-function toEchartsNode(node: OrgchartTreeNode): EChartsTreeNode {
+function toEchartsNode(node: OrgchartTreeNode, avatarService: AvatarService): EChartsTreeNode {
+  const avatarKey = `${node.modelType}.${node.bkey}`;
+  const fallback = node.modelType === 'org' ? 'org' : node.icon;
+  const url = avatarService.getAvatarUrl(avatarKey, fallback);
   return {
     name: node.name,
     value: node.bkey,
-    children: node.children.map(toEchartsNode),
+    symbol: `image://${url}`,
+    symbolSize: 24,
+    children: node.children.map(child => toEchartsNode(child, avatarService)),
   };
 }
 
@@ -200,6 +216,7 @@ function buildEchartsOption(
   treeData: OrgchartTreeNode,
   orient: 'LR' | 'TB',
   showName: boolean,
+  avatarService: AvatarService,
 ): EChartsOption {
   const labelPos = orient === 'LR' ? 'left' : 'top';
   const labelAlign = orient === 'LR' ? 'right' : 'center';
@@ -210,11 +227,9 @@ function buildEchartsOption(
     series: [
       {
         type: 'tree',
-        data: [toEchartsNode(treeData)],
+        data: [toEchartsNode(treeData, avatarService)],
         orient,
         layout: 'orthogonal',
-        symbol: 'emptyCircle',
-        symbolSize: 10,
         roam: true,
         initialTreeDepth: -1,
         expandAndCollapse: true,

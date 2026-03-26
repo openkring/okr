@@ -40,6 +40,8 @@
     {"path": "../../../relationship/membership/data-access/tsconfig.lib.json"},
     {"path": "../../../subject/group/data-access/tsconfig.lib.json"},
     {"path": "../../../subject/group/feature/tsconfig.lib.json"},
+    {"path": "../../../subject/org/data-access/tsconfig.lib.json"},
+    {"path": "../../../subject/org/feature/tsconfig.lib.json"},
     {"path": "../../../subject/person/data-access/tsconfig.lib.json"},
     {"path": "../../../subject/person/util/tsconfig.lib.json"},
     {"path": "../../../subject/person/ui/tsconfig.lib.json"},

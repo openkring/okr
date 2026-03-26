@@ -333,9 +333,10 @@ export const INVITATIONS_SECTION_SHAPE = {
 
 // --------------------------------------- ORGCHART ----------------------------------------
 export const ORGCHART_CONFIG_SHAPE = {
-  topGroup: '',
+  topElement: '',
   showAvatar: true,
   showName: true,
+  display: 'vertical',
 } as OrgchartConfig;
 
 export const ORGCHART_SECTION_SHAPE = {
