@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Overview
+
+This is an Angular/Ionic project using TypeScript, Firebase, and pnpm. Use Angular signals and inputs (not legacy patterns). Check existing patterns in the codebase before implementing new features.
+
 ## Commands
 
 ```sh
@@ -32,6 +36,10 @@ ts-node ./set-env.js              # generate environment.ts from env vars
 ```
 
 Run `pnpm nx show project <project>` to see all available targets for a project.
+
+## Development Workflow
+
+When making changes to TypeScript files, always run `npx tsc --noEmit` or the project's build command after edits to catch type errors immediately. Do not consider a task done until it compiles cleanly.
 
 ## Architecture
 
@@ -151,8 +159,8 @@ Production app name for scs-app is scs-app-54aef.
 
 ### QA
 
-- use vite for unit tests
-- create unit tests for each util function
+- use test runner vite for unit tests
+- create unit tests for each util function (shared-util and feature/util)
 
 ### Patterns
 
@@ -162,7 +170,6 @@ Production app name for scs-app is scs-app-54aef.
 - for icons, do not use addIcons. Use SvgIconPipe instead with an svg image like this:
     `<ion-icon slot="start" src="{{'menu' | svgIcon }}" />`
 
-
 ### Hard Rules
 
 - never install a new dependency without asking first
@@ -170,3 +177,10 @@ Production app name for scs-app is scs-app-54aef.
 - api calls for external integrations should use a firebase cloud function where possible. This Cloud functions stores the access token securely and caches token as well as data for later requests.
 - do not try to find icon assets in the code. The icons reside in the database and are loaded via url.
 
+## Working Style
+
+When exploring the codebase, limit exploration to 3-4 file reads before producing initial output or a plan. Always communicate what you're doing if exploration takes more than a few steps.
+
+## Debugging
+
+When fixing bugs, verify the root cause is in the correct file/service before making changes. Ask for clarification if the error source is ambiguous rather than guessing.
