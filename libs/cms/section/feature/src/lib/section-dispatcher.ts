@@ -27,6 +27,7 @@ import { MessagesSectionComponent } from './messages-section.component';
 import { NewsSectionComponent } from './news-section.component';
 import { OrgchartSectionComponent } from './orgchart-section.component';
 import { RagSectionComponent } from './rag-section.component';
+import { ContextDiagramSectionComponent } from './context-diagram-section.component';
 
 /**
  * This component shows a section view. A section is part of a page. There are many different types of sections.
@@ -42,7 +43,7 @@ import { RagSectionComponent } from './rag-section.component';
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, TrackerSectionComponent, HeroSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent,
     IonItem, IonLabel, SpinnerComponent,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
   ],
@@ -106,6 +107,13 @@ import { RagSectionComponent } from './rag-section.component';
           }
           @case('people') {
             <bk-people-section [section]="section" [editMode]="editMode()" />
+          }
+          @case('context') {
+            @defer (on viewport) {
+              <bk-context-diagram-section [section]="section" [editMode]="editMode()" />
+            } @placeholder {
+              <bk-spinner />
+            }
           }
           @case('rag') {
             <bk-rag-section [section]="section" [editMode]="editMode()" />

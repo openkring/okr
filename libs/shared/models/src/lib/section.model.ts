@@ -17,14 +17,14 @@ export const SectionModelName = 'section';
 export type SectionType =
     'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' |
     'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
-    'news' | 'activities' | 'messages' | 'files' | 'links' | 'rag' | 'orgchart';
+    'news' | 'activities' | 'messages' | 'files' | 'links' | 'rag' | 'orgchart' | 'context';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | FilesSection | LinksSection | RagSection | OrgchartSection;
+    NewsSection | ActivitiesSection | MessagesSection | FilesSection | LinksSection | RagSection | OrgchartSection | ContextDiagramSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -38,6 +38,24 @@ export interface OrgchartConfig {
   showAvatar: boolean;
   showName: boolean;
   display: 'vertical' | 'horizontal';
+}
+
+// --------------------------------------- CONTEXT DIAGRAM ----------------------------------------
+export interface ContextDiagramSection extends BaseSection {
+  type: 'context';
+  properties: ContextDiagramConfig;
+}
+
+export interface ContextDiagramConfig {
+  startElement: string;           // "modelType.bkey" — org | person | group
+  showAvatar: boolean;            // default: true
+  showName: boolean;              // default: true
+  showMembers: boolean;           // default: false
+  showResponsibilities: boolean;  // default: true — workrels where node is the org/object
+  showPersonalRels: boolean;      // default: false
+  showWorkRels: boolean;          // default: false
+  connectionNames: boolean;       // default: true — show relationship label on edge
+  depth: number;                  // default: 1 — levels of connections to show
 }
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
@@ -55,7 +73,7 @@ export interface BaseSection {
   isArchived: boolean;
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
-  IframeConfig | MapConfig | OrgchartConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
+  IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
   TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | FilesConfig | LinksConfig | RagConfig;
   notes: string;
   tags: string;

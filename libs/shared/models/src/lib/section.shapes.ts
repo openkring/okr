@@ -5,7 +5,7 @@ import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFA
 import type {
   AccordionSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection,
   AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection,
-  ChartSection, ChatConfig, ChatSection, EditorConfig, EventsConfig, EventsSection,
+  ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, OrgchartConfig, OrgchartSection, PeopleConfig,
   PeopleSection, SliderConfig, SliderSection, TableConfig, TableSection,
@@ -344,3 +344,22 @@ export const ORGCHART_SECTION_SHAPE = {
   type: 'orgchart',
   properties: ORGCHART_CONFIG_SHAPE
 } as OrgchartSection;
+
+// --------------------------------------- CONTEXT DIAGRAM ----------------------------------------
+export const CONTEXT_DIAGRAM_CONFIG_SHAPE = {
+  startElement: '',
+  showAvatar: true,
+  showName: true,
+  showMembers: false,
+  showResponsibilities: true,
+  showPersonalRels: false,
+  showWorkRels: false,
+  connectionNames: true,
+  depth: 1,
+} as ContextDiagramConfig;
+
+export const CONTEXT_DIAGRAM_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'context',
+  properties: CONTEXT_DIAGRAM_CONFIG_SHAPE,
+} as ContextDiagramSection;
