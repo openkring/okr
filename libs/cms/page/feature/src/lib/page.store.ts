@@ -318,7 +318,7 @@ export const _PageStore = signalStore(
       async addSectionById(sectionId: string): Promise<void> {
         const page = store.page();
         if (!page) return;
-        page.sections.push(sectionId);
+        page.sections.unshift(sectionId);
         store.pageService.update(page, store.currentUser());
         this.reloadCurrentPage();
       },
