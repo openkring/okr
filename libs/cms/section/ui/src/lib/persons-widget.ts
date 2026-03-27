@@ -9,6 +9,7 @@ import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getFullName } from '@bk2/shared-util-core';
 
 import { AvatarLabelComponent } from '@bk2/avatar-ui';
+import { calculateCols } from '@bk2/cms-section-util';
 
 @Component({
   selector: 'bk-persons-widget',
@@ -28,10 +29,10 @@ import { AvatarLabelComponent } from '@bk2/avatar-ui';
             @for(person of persons(); track person.key) {
               <ion-col size="12" [sizeMd]="cols()" (click)="showPerson(person)">
                 <bk-avatar-label 
-                  key="{{ person.modelType + '.' + person.key}}" 
+                  [key]="person.modelType + '.' + person.key" 
                   [label]="getPersonLabel(person)" 
                   [color]="color()"
-                  alt="{{altText()}}"
+                  [alt]="altText()"
                 />
               </ion-col>
             }
@@ -53,18 +54,7 @@ export class PersonsWidgetComponent {
   protected avatar = computed(() => this.section()?.properties.avatar ?? AVATAR_CONFIG_SHAPE);
   protected avatarTitle = computed(() => this.avatar().title);
   protected count = computed(() => this.persons().length);
-  protected cols = computed(() => {
-    const count = this.count();
-    if (this.avatarTitle().length > 0) {  // distribute the avatars to max 9 columns if title is shown
-      if (count === 1) return 12;
-      if (count === 2) return 6;
-      if (count === 3) return 4;
-      return 3; // for 4 or more avatars
-    } else {      // distribute the avatars to max 12 columns if no title is shown
-      if (count > 4) return 2;
-      return 12/count;
-    }
-  });
+  protected cols = computed(() => calculateCols(this.count(), this.avatarTitle()));
   protected showName = computed(() => this.avatar().showName ?? true);
   protected showLabel = computed(() => this.avatar().showLabel ?? true);
   protected nameDisplay = computed(() => this.avatar().nameDisplay ?? NameDisplay.FirstLast);

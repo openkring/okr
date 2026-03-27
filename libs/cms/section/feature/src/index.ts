@@ -30,3 +30,5 @@ export * from './lib/rag-section.store';
 export * from './lib/context-diagram-section.store';
 export * from './lib/context-diagram-section.component';
 export * from './lib/context-diagram-config.modal';
+export * from './lib/responsibility-section.component';
+export * from './lib/responsibility-section.store';

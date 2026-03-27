@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, linkedSignal, model } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CategoryListModel, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@bk2/shared-models';
 import { ChipsComponent, ImageConfigComponent, NotesInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
@@ -12,6 +12,7 @@ import { ImageStyleComponent } from './image-style';
 import { AlbumConfigComponent } from './album-config';
 import { IframeConfigComponent } from './iframe-config';
 import { PeopleConfigComponent } from './people-config';
+import { ResponsibilityConfigComponent } from './responsibility-config';
 import { VideoConfigComponent } from './video-config';
 import { ButtonStyleComponent } from './button-style';
 import { ButtonActionComponent } from './button-action';
@@ -32,7 +33,7 @@ import { ImagesConfigComponent } from './images-config';
   imports: [
     ChipsComponent, NotesInputComponent,
     SectionConfigComponent, EditorConfigComponent, ImageConfigComponent, ImageStyleComponent, AlbumConfigComponent,
-    IframeConfigComponent, PeopleConfigComponent, VideoConfigComponent, ButtonStyleComponent, ButtonActionComponent, IconConfigComponent,
+    IframeConfigComponent, PeopleConfigComponent, ResponsibilityConfigComponent, VideoConfigComponent, ButtonStyleComponent, ButtonActionComponent, IconConfigComponent,
     ChatConfigComponent, MapConfigComponent, TrackerConfigComponent, TableGridComponent, TableStyleComponent, TableDataComponent,
     EventsConfigComponent, InvitationsConfigComponent, ImagesConfigComponent
 ],
@@ -124,9 +125,19 @@ import { ImagesConfigComponent } from './images-config';
                 [formData]="peopleConfig"
                 (formDataChange)="onPeopleConfigChange($event)"
                 (selectClicked)="selectPerson()"
-                [currentUser]="currentUser()" 
+                [currentUser]="currentUser()"
                 [readOnly]="isReadOnly()"
               />
+          }
+        }
+        @case('responsibility') {
+          @if(responsibilityConfig(); as responsibilityConfig) {
+            <bk-responsibility-config
+              [formData]="responsibilityConfig"
+              (formDataChange)="onResponsibilityConfigChange($event)"
+              [currentUser]="currentUser()"
+              [readOnly]="isReadOnly()"
+            />
           }
         }
         @case('slider') {
@@ -207,6 +218,7 @@ export class SectionFormComponent {
   protected iframeConfig = linkedSignal(() => this.getIframeConfig());
   protected mapConfig = linkedSignal(() => this.getMapConfig());
   protected peopleConfig = linkedSignal(() => this.getPeopleConfig());
+  protected responsibilityConfig = linkedSignal(() => this.getResponsibilityConfig());
   protected headerData = linkedSignal(() => this.getHeaderData());
   protected bodyData = linkedSignal(() => this.getBodyData());
   protected tableGrid = linkedSignal(() => this.getTableGrid());
@@ -333,9 +345,15 @@ export class SectionFormComponent {
     }
   }
 
-  private getPeopleConfig(): PeopleConfig | undefined {  
+  private getPeopleConfig(): PeopleConfig | undefined {
     if (this.formData().type === 'people') {
       return ((this.formData() as PeopleSection).properties as PeopleConfig);
+    }
+  }
+
+  private getResponsibilityConfig(): ResponsibilityConfig | undefined {
+    if (this.formData().type === 'responsibility') {
+      return ((this.formData() as ResponsibilitySection).properties as ResponsibilityConfig);
     }
   }
 
@@ -539,10 +557,14 @@ export class SectionFormComponent {
   protected onPeopleConfigChange(config: PeopleConfig): void {
     const section = this.formData();
     if (section.type === 'people') {
-      this.formData.set({
-        ...section,
-        properties: config
-      } as PeopleSection);
+      this.formData.set({ ...section, properties: config } as PeopleSection);
+    }
+  }
+
+  protected onResponsibilityConfigChange(config: ResponsibilityConfig): void {
+    const section = this.formData();
+    if (section.type === 'responsibility') {
+      this.formData.set({ ...section, properties: config } as ResponsibilitySection);
     }
   }
 

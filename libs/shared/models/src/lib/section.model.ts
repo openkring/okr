@@ -16,13 +16,13 @@ export const SectionModelName = 'section';
 
 export type SectionType =
     'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' |
-    'people' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
+    'people' | 'responsibility' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
     'news' | 'activities' | 'messages' | 'files' | 'links' | 'rag' | 'orgchart' | 'context';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
-    HeroSection | IframeSection | MapSection | PeopleSection | SliderSection |
+    HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
     NewsSection | ActivitiesSection | MessagesSection | FilesSection | LinksSection | RagSection | OrgchartSection | ContextDiagramSection;
 
@@ -74,7 +74,7 @@ export interface BaseSection {
   isArchived: boolean;
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
-  IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
+  IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
   TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | FilesConfig | LinksConfig | RagConfig;
   notes: string;
   tags: string;
@@ -418,6 +418,19 @@ export interface AvatarConfig {
   showLabel: boolean; // if true, the label of the avatar is displayed as () after the name, default is true
   showName: boolean; // if true, the name of the avatar is displayed, default is true
   title: string; // to add a short text besides the avatar (e.g. Finanzen:   Bruno Kaiser (bkaiser))
+}
+
+// --------------------------------------- RESPONSIBILITY ----------------------------------------
+export interface ResponsibilitySection extends BaseSection {
+  type: 'responsibility';
+  properties: ResponsibilityConfig;
+}
+
+export interface ResponsibilityConfig {
+  bkey: string;           // bkey of the ResponsibilityModel to display
+  showAvatar: boolean;    // default: true — show avatar of responsible person
+  showName: boolean;      // default: true — show name of responsible person
+  showDescription: boolean; // default: true — clicking opens a modal with responsibility.notes
 }
 
 // --------------------------------------- RAG ----------------------------------------

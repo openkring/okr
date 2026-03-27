@@ -6,6 +6,8 @@ export * from './lib/iframe-config';
 export * from './lib/image-style';
 export * from './lib/map-config';
 export * from './lib/people-config';
+export * from './lib/responsibility-config';
+export * from './lib/responsibility-section.validations';
 export * from './lib/video-config';
 
 export * from './lib/section.form';

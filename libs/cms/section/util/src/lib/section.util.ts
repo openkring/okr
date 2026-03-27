@@ -1,4 +1,4 @@
-import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, PEOPLE_SECTION_SHAPE, PeopleSection, RagSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition } from '@bk2/shared-models';
+import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, PEOPLE_SECTION_SHAPE, PeopleSection, RagSection, RESPONSIBILITY_SECTION_SHAPE, ResponsibilitySection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition } from '@bk2/shared-models';
 import { die } from '@bk2/shared-util-core';
 
 /**
@@ -35,6 +35,7 @@ export function createSection(type: SectionType, tenantId: string): SectionModel
     case 'events': section = { ...EVENTS_SECTION_SHAPE } as EventsSection; break;
     case 'invitations': section = { ...INVITATIONS_SECTION_SHAPE } as InvitationsSection; break;
     case 'context': section = { ...CONTEXT_DIAGRAM_SECTION_SHAPE } as ContextDiagramSection; break;
+    case 'responsibility': section = { ...RESPONSIBILITY_SECTION_SHAPE } as ResponsibilitySection; break;
     default:
       die(`section.util.createSection: unknown section type '${type}'`);
   }
@@ -65,6 +66,7 @@ export function narrowSection(section: any): SectionModel | undefined {
     case 'invitations': return section as InvitationsSection;
     case 'rag': return section as RagSection;
     case 'context': return section as ContextDiagramSection;
+    case 'responsibility': return section as ResponsibilitySection;
     default: return undefined;
   }
 }
@@ -81,4 +83,22 @@ export function getSectionIndex(section: SectionModel): string {
 
 export function getSectionIndexInfo(): string {
   return 'n:name t:type';
+}
+
+/**
+ * For PeopleWidget and ResponsibitySection, calculate the width of a column depending on the number of avatars to show.
+ * @param itemsCount how many avatars
+ * @param title if exists, title gets 3 columns at the start
+ * @returns width of the columns
+ */
+export function calculateCols(itemsCount: number, title: string): number {
+  if (title.length > 0) {  // distribute the avatars to max 9 columns if title is shown
+    if (itemsCount === 1) return 12;
+    if (itemsCount === 2) return 6;
+    if (itemsCount === 3) return 4;
+    return 3; // for 4 or more avatars
+  } else {      // distribute the avatars to max 12 columns if no title is shown
+    if (itemsCount > 4) return 2;
+    return 12/itemsCount;
+  }
 }

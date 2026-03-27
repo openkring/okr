@@ -8,7 +8,7 @@ import type {
   ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { AlbumStyle } from './enums/album-style.enum';
@@ -294,6 +294,20 @@ export const PEOPLE_SECTION_SHAPE = {
   type: 'people',
   properties: PEOPLE_CONFIG_SHAPE
 } as PeopleSection;
+
+// --------------------------------------- RESPONSIBILITY ----------------------------------------
+export const RESPONSIBILITY_CONFIG_SHAPE = {
+  bkey: '',
+  showAvatar: true,
+  showName: true,
+  showDescription: true,
+} as ResponsibilityConfig;
+
+export const RESPONSIBILITY_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'responsibility',
+  properties: RESPONSIBILITY_CONFIG_SHAPE
+} as ResponsibilitySection;
 
 export const SLIDER_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,
