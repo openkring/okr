@@ -28,7 +28,7 @@ import { VersionCheckService } from '@bk2/shared-util-angular';
     `],
   providers: [MenuStore],
   template: `
-    @if(menuStore.isLoading()) {
+    @if(menuStore.isMenuLoading()) {
       <bk-spinner />
     } @else {
       @if (isVisible()) {

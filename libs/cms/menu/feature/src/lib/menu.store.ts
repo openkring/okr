@@ -70,6 +70,7 @@ export const _MenuStore = signalStore(
       )),
       menu: computed(() => state.menuResource.value() ?? undefined),
       currentUser: computed(() => state.appStore.currentUser()),
+      isMenuLoading: computed(() => state.menuResource.isLoading()),
       isLoading: computed(() => state.menuItemsResource.isLoading() || state.menuResource.isLoading()),
     };
   }),
