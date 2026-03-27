@@ -104,7 +104,7 @@ export class CategorySelectComponent {
 
   protected items = computed(() => {
     if (this.withAll()) {
-      const _item = new CategoryItemModel('all', 'all', '');
+      const _item = new CategoryItemModel('all', 'radio-button-on');
       return [_item, ...this.category().items];
     }
     return this.category().items;

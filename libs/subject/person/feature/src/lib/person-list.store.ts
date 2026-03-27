@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, DefaultLanguage, MembershipCollection, MembershipModel, PersonModel, PersonModelName } from '@bk2/shared-models';
+import { AddressModel, DefaultLanguage, Language, MembershipCollection, MembershipModel, PersonModel, PersonModelName } from '@bk2/shared-models';
 import { confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, getCountryName, hasRole, nameMatches } from '@bk2/shared-util-core';
 import { Languages } from '@bk2/shared-categories';
@@ -238,7 +238,7 @@ export const PersonListStore = signalStore(
       
       async showOnMap(person?: PersonModel): Promise<void> {
         if (!person) return;
-        const countryName = getCountryName(person.favCountryCode, Languages[DefaultLanguage].abbreviation);
+        const countryName = getCountryName(person.favCountryCode, Languages[DefaultLanguage].abbreviation ?? 'de');
         const addressStr = !countryName ? 
           `${person.favStreetName} ${person.favStreetNumber}, ${person.favZipCode} ${person.favCity}` : 
           `${person.favStreetName} ${person.favStreetNumber}, ${person.favZipCode} ${person.favCity}, ${countryName}`;

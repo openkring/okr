@@ -30,7 +30,7 @@ export function newMembershipForPerson(person: PersonModel, orgKey: string, orgN
   membership.category = membershipCategory.name;
 
   membership.order = 1;
-  membership.relLog = getRelLogEntry(membership.dateOfEntry, membershipCategory.abbreviation);
+  membership.relLog = getRelLogEntry(membership.dateOfEntry, membershipCategory.abbreviation ?? '');
   membership.relIsLast = true;
 
   // membership.price may be undefined
@@ -60,7 +60,7 @@ export function newMembershipForOrg(org: OrgModel, orgKey: string, orgName: stri
   membership.category = membershipCategory.name;
 
   membership.order = 1;
-  membership.relLog = getRelLogEntry(membership.dateOfEntry, membershipCategory.abbreviation);
+  membership.relLog = getRelLogEntry(membership.dateOfEntry, membershipCategory.abbreviation ?? '');
   membership.relIsLast = true;
 
   // membership.price may be undefined

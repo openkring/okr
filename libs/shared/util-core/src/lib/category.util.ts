@@ -43,7 +43,7 @@ export function isCategoryList(task: unknown, tenantId: string): task is Categor
 }
 
 export function isCategoryItem(cat: unknown): cat is CategoryItemModel {
-  return isType(cat, new CategoryItemModel('', '', ''));
+  return isType(cat, new CategoryItemModel('', ''));
 }
 
 export function getCategoryAttribute(cat: CategoryListModel, catName: string, attributeName: keyof CategoryItemModel): string | number {

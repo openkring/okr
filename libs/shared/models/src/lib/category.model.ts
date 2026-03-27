@@ -1,6 +1,6 @@
 export interface CategoryModel {
   id: number;
-  abbreviation: string;
+  abbreviation?: string;
   name: string;
   i18nBase: string;
   icon: string;

@@ -92,7 +92,7 @@ export class CategoryItemsComponent {
   public wordMask = input(LowercaseWordMask);
   public changed = output<CategoryItemModel[]>();
   
-  protected newItem = new CategoryItemModel('', '', '');
+  protected newItem = new CategoryItemModel('', '');
 
   protected onChange(fieldName: keyof CategoryItemModel, event: CustomEvent): void {
     switch (fieldName) {
@@ -128,7 +128,7 @@ export class CategoryItemsComponent {
 
   protected add(): void {
     this.items().push(this.newItem);
-    this.newItem = new CategoryItemModel('', '', '');
+    this.newItem = new CategoryItemModel('', '');
     this.changed.emit(this.items());
   }
 

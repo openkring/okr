@@ -219,7 +219,7 @@ export const AddressStore = signalStore(
       * @param address 
       */
       async copy(address: AddressModel): Promise<void> {
-        await copyAddress(store.toastController, address, Languages[DefaultLanguage].abbreviation);
+        await copyAddress(store.toastController, address, Languages[DefaultLanguage].abbreviation ?? 'de');
       },
 
       async sendEmail(email: string): Promise<void> {
@@ -365,7 +365,7 @@ export const AddressStore = signalStore(
       },
 
       async show(address: AddressModel): Promise<void> {
-        const addressStr = stringifyPostalAddress(address, Languages[DefaultLanguage].abbreviation);
+        const addressStr = stringifyPostalAddress(address, Languages[DefaultLanguage].abbreviation ?? 'de');
         if (!addressStr) return;
         const coordinates = await store.geocodeService.geocodeAddress(addressStr);
         if (!coordinates) return;

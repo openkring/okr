@@ -44,7 +44,7 @@ export function countCategories(categories: CategoryModel[]): number {
 export function getCategoryField(categories: CategoryModel[], categoryId: number, fieldName: string): string | number {
   const cat = readCategory(categories, categoryId);
   const key = fieldName as keyof CategoryModel;
-  return cat[key];
+  return cat[key] ?? '';
 }
 
 export function getCategoryStringField(categories: CategoryModel[], categoryId: number, fieldName: string): string {
