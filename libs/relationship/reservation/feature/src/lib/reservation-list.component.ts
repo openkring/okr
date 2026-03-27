@@ -176,7 +176,7 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
               </ion-col>
               <ion-col size="3" class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-label>{{reservation.state}}</ion-label>
+                  <ion-icon  src="{{getStateIcon(reservation.state) | svgIcon}}" />
                 </ion-item>
               </ion-col>
             } @else if(isReservationOfResource() || isReservationOfResourceType()) {
@@ -198,7 +198,7 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
                 </ion-col>
                 <ion-col size="3" class="ion-hide-md-down">
                   <ion-item lines="none">
-                    <ion-label>{{reservation.state}}</ion-label>
+                    <ion-icon  src="{{getStateIcon(reservation.state) | svgIcon}}" />
                   </ion-item>
                 </ion-col>
             } @else { <!-- all --> 
@@ -232,7 +232,7 @@ import { THUMBNAIL_SIZE } from '@bk2/shared-constants';
               </ion-col>
               <ion-col class="ion-hide-md-down">
                 <ion-item lines="none">
-                  <ion-label>{{reservation.state}}</ion-label>
+                  <ion-icon  src="{{getStateIcon(reservation.state) | svgIcon}}" />
                 </ion-item>
               </ion-col>
             }
@@ -322,6 +322,11 @@ export class ReservationListComponent {
 
   protected onYearSelected(year: number): void {
     this.reservationStore.setSelectedYear(year);
+  }
+
+  /******************************** getters ******************************************* */
+  protected getStateIcon(state: string): string {
+    return this.reservationStore.getStateIcon(state);
   }
 
   /******************************* actions *************************************** */

@@ -2,6 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { of, take } from 'rxjs';
 
 import { yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -9,13 +10,12 @@ import { AppStore } from '@bk2/shared-feature';
 import { confirm } from '@bk2/shared-util-angular';
 import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, ReservationModel, ResourceCollection, ResourceModel } from '@bk2/shared-models';
 import { selectDate } from '@bk2/shared-ui';
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getSystemQuery, getTodayStr, getYear, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isValidAt, nameMatches } from '@bk2/shared-util-core';
 
 import { ReservationService } from '@bk2/relationship-reservation-data-access';
 import { isReservation } from '@bk2/relationship-reservation-util';
 
 import { ReservationEditModalComponent } from './reservation-edit.modal';
-import { of, take } from 'rxjs';
 
 export type ReservationState = {
   listId: string;       // filter format: t_resourceType, r_resourceKey, p_reserverKey, or 'all'
@@ -261,6 +261,10 @@ export const ReservationStore = signalStore(
 
       getStates(): CategoryListModel {
         return store.appStore.getCategory('reservation_state');
+      },
+
+      getStateIcon(state: string): string {
+        return getCategoryIcon(this.getStates(), state);
       },
 
       getPeriodicities(): CategoryListModel {
