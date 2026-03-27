@@ -80,10 +80,11 @@ export class CalEventEditModalComponent {
   public locale = input.required<string>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  public initialDirty = input<boolean>(false);
 
   // signals
-  protected formDirty = signal(false);
-  protected formValid = signal(false);
+  protected formDirty = linkedSignal(() => this.initialDirty());
+  protected formValid = linkedSignal(() => this.initialDirty());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected formData = linkedSignal(() => safeStructuredClone(this.calevent()));
   protected showForm = signal(true);

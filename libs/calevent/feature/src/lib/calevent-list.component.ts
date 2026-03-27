@@ -7,7 +7,8 @@ import { CalEventModel, RoleName } from '@bk2/shared-models';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { addTime, debugData, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
+import { DateFormat, addTime, debugData, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
+import { format } from 'date-fns';
 
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import { EventInput } from '@fullcalendar/core';
@@ -39,18 +40,12 @@ import { Browser } from '@capacitor/browser';
       ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
       ion-textarea { margin-top: 10px;}
       full-calendar { width: 100%; height: 800px;}
-      .fc-toolbar-title { font-size: 1em;}
-      :host ::ng-deep .fc .fc-button {
-        background-color: #f4f5f8 !important;
-        color: #000 !important;
-        border-color: #d7d8da !important;
-      }
-      :host ::ng-deep .fc .fc-button:hover {
-        background-color: #e0e0e0 !important;
-      }
-      :host ::ng-deep .fc .fc-button-active,
-      :host ::ng-deep .fc .fc-button:active {
-        background-color: --var(--ion-color-light) !important;
+      .fc-toolbar-title { font-size: 0.5em;}
+
+      @media (max-width: 600px) {
+        :host ::ng-deep .fc-toolbar-title {
+          display: none !important;
+        } 
       }
     `,
   ],
@@ -142,7 +137,18 @@ import { Browser } from '@capacitor/browser';
         <bk-empty-list message="@calevent.field.empty" />
       } @else {
         @if(isListView() === false) {
-          <full-calendar #fullCalendar [options]="calendarOptions" [events]="calendarEvents()" />
+          <ion-card>
+            <ion-card-content>
+              <div [style.display]="'block'">
+                {{ calEventsCount() }} {{'@calevent.plural' | translate | async}}
+
+                <full-calendar #fullCalendar
+                  [options]="calendarOptions" 
+                  [events]="calendarEvents()" 
+                />
+              </div>
+            </ion-card-content>
+          </ion-card>
         } @else {
           <ion-list lines="inset">
             @for(event of filteredCalEvents(); track event.bkey) {
@@ -239,7 +245,13 @@ export class CalEventListComponent {
     editable: true,
     dateClick: (arg: any) => { this.onDateClick(arg); },
     eventClick: (arg: any) => { this.onEventClick(arg); },
+    eventDrop: (arg: any) => { this.onEventDrop(arg); },
+    eventResize: (arg: any) => { this.onEventResize(arg); },
   };
+
+  // double-click tracking
+  private lastClickDateStr: string | null = null;
+  private lastClickTime = 0;
 
   // passing constants to the template
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
@@ -398,8 +410,58 @@ export class CalEventListComponent {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onDateClick(arg: any) {
-    debugData<unknown>('CaleventList(): onDateClick: ', arg);
+  protected onDateClick(arg: any): void {
+    const now = Date.now();
+    const dateStr = arg.dateStr as string;
+    const calApi = this.fullCalendar()?.getApi();
+    const currentView = calApi?.view.type;
+
+    if (this.lastClickDateStr === dateStr && now - this.lastClickTime < 300) {
+      this.lastClickDateStr = null;
+      if (currentView === 'dayGridMonth') {
+        calApi?.changeView('timeGridWeek', arg.date);
+      } else if (currentView === 'timeGridWeek') {
+        calApi?.changeView('timeGridDay', arg.date);
+      }
+      return;
+    }
+
+    this.lastClickDateStr = dateStr;
+    this.lastClickTime = now;
+
+    if (!this.readOnly()) {
+      const startDate = format(arg.date as Date, DateFormat.StoreDate);
+      const startTime = format(arg.date as Date, 'HH:mm');
+      this.store.add(false, startDate, startTime);
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected async onEventDrop(arg: any): Promise<void> {
+    if (this.readOnly()) { arg.revert(); return; }
+    const eventKey = arg.event.extendedProps?.eventKey as string;
+    if (!eventKey) { arg.revert(); return; }
+    const calevent = this.filteredCalEvents().find(e => e.bkey === eventKey);
+    if (!calevent) { arg.revert(); return; }
+    const start = arg.event.start as Date;
+    const updated: CalEventModel = { ...calevent, startDate: format(start, DateFormat.StoreDate), startTime: format(start, 'HH:mm') };
+    const saved = await this.store.edit(updated, false, false, true);
+    if (!saved) arg.revert();
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected async onEventResize(arg: any): Promise<void> {
+    if (this.readOnly()) { arg.revert(); return; }
+    const eventKey = arg.event.extendedProps?.eventKey as string;
+    if (!eventKey) { arg.revert(); return; }
+    const calevent = this.filteredCalEvents().find(e => e.bkey === eventKey);
+    if (!calevent) { arg.revert(); return; }
+    const start = arg.event.start as Date;
+    const end = arg.event.end as Date;
+    const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+    const updated: CalEventModel = { ...calevent, startDate: format(start, DateFormat.StoreDate), startTime: format(start, 'HH:mm'), endDate: format(end, DateFormat.StoreDate), durationMinutes };
+    const saved = await this.store.edit(updated, false, false, true);
+    if (!saved) arg.revert();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

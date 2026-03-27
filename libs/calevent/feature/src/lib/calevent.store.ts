@@ -265,11 +265,11 @@ export const CalEventStore = signalStore(
       },
 
       /******************************* CRUD on single event  *************************************** */
-      async add(readOnly = true): Promise<void> {
+      async add(readOnly = true, startDate?: string, startTime?: string): Promise<void> {
         if (readOnly) return;
         const newCalevent = new CalEventModel(store.tenantId());
-        newCalevent.startDate = getTodayStr();
-        newCalevent.startTime = '09:00';
+        newCalevent.startDate = startDate ?? getTodayStr();
+        newCalevent.startTime = startTime ?? '09:00';
         const cal = store.calendarName();
         newCalevent.calendars = cal === 'all' || cal.startsWith('my') || cal.length === 0 ? [] : [cal];
         newCalevent.isOpen = store.calendar()?.defaultIsOpen ?? true;
@@ -278,7 +278,7 @@ export const CalEventStore = signalStore(
         await this.edit(newCalevent, true, readOnly);
       },
 
-      async edit(calevent: CalEventModel, isNew: boolean, readOnly = true): Promise<void> {
+      async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false): Promise<boolean> {
         const modal = await store.modalController.create({
           component: CalEventEditModalComponent,
           componentProps: {
@@ -289,7 +289,8 @@ export const CalEventStore = signalStore(
             tags: this.getTags(),
             tenantId: store.tenantId(),
             locale: this.getLocale(),
-            readOnly
+            readOnly,
+            initialDirty
           }
         });
         modal.present();
@@ -297,15 +298,15 @@ export const CalEventStore = signalStore(
         if (role === 'confirm' && data && !readOnly) {
           if (isCalEvent(data, store.tenantId())) {
             if (data.periodicity === 'once') {
-              await isNew ? 
-                store.calEventService.create(data,  store.currentUser()) : 
+              await isNew ?
+                store.calEventService.create(data,  store.currentUser()) :
                 store.calEventService.update(data,  store.currentUser());
             } else { // recurring event
               if (isNew) {
                 await this.createNewEventSeries(data);
               } else {  // editing existing series
                 const regressionType = await this.askForRegressionType();
-                if (!regressionType) return;
+                if (!regressionType) return false;
                 if (regressionType === 'current') {
                   await this.decoupleEventFromSeries(data);
                 } else { // future or all
@@ -314,8 +315,10 @@ export const CalEventStore = signalStore(
               }
             }
             this.reload();
+            return true;
           }
         }
+        return false;
       },
 
      async delete(calevent: CalEventModel, readOnly = true): Promise<void> {
