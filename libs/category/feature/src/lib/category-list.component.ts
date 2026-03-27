@@ -56,14 +56,14 @@ import { CategoryStore } from './category.store';
     <ion-toolbar color="primary">
       <ion-grid>
         <ion-row>
-          <ion-col size="6" size-lg="3">
+          <ion-col size="6" size-md="4">
             <ion-label><strong>Name</strong></ion-label>
           </ion-col>
-          <ion-col size="6" size-lg="3">
+          <ion-col size="4" class="ion-hide-lg-down">
             <ion-label><strong>I18nBase</strong></ion-label>
           </ion-col>
-          <ion-col size-lg="3" class="ion-hide-lg-down">
-            <ion-label><strong>Notes</strong></ion-label>
+          <ion-col size="6" size-md="4">
+            <ion-label><strong>Items</strong></ion-label>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -82,8 +82,8 @@ import { CategoryStore } from './category.store';
           @for(cat of filteredCategories(); track cat.bkey) {
             <ion-item (click)="showActions(cat)">
               <ion-label>{{cat.name}}</ion-label>      
-              <ion-label>{{cat.i18nBase}}</ion-label>      
-              <ion-label class="ion-hide-lg-down">{{ cat.notes }}</ion-label>
+              <ion-label class="ion-hide-lg-down">{{cat.i18nBase}}</ion-label>      
+              <ion-label>{{ cat.items.length }}</ion-label>
             </ion-item>
           }
         </ion-list>
@@ -152,16 +152,11 @@ export class CategoryListComponent {
    * @param cat 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, cat: CategoryListModel): void {
-    if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('category.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
-    }
-    if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('category.edit', this.imgixBaseUrl, 'create_edit'));
-    }
+    actionSheetOptions.buttons.push(createActionSheetButton('category.edit', this.imgixBaseUrl, 'create_edit'));
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('category.delete', this.imgixBaseUrl, 'trash_delete'));
     }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
   }
 
   /**
@@ -180,9 +175,6 @@ export class CategoryListComponent {
           break;
         case 'category.edit':
           await this.categoryListStore.edit(cat, this.readOnly());
-          break;
-        case 'category.view':
-          await this.categoryListStore.edit(cat, true);
           break;
       }
     }

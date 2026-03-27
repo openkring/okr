@@ -30,6 +30,7 @@ import { ENV } from '@bk2/shared-config';
             [currentUser]="currentUser"
             [allTags]="tags()"
             [tenants]="env.tenantId"
+            [hasAbbreviation]="hasAbbreviation()"
             [readOnly]="isReadOnly()"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
@@ -47,6 +48,7 @@ export class CategoryEditModalComponent {
   public category = input.required<CategoryListModel>();
   public currentUser = input<UserModel | undefined>();
   public tags = input.required<string>();
+  public hasAbbreviation = input<boolean>(false);
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 

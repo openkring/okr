@@ -1,6 +1,6 @@
 
 import { AsyncPipe } from '@angular/common';
-import { Component, input, model, output } from '@angular/core';
+import { Component, computed, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
@@ -40,14 +40,16 @@ import { die } from '@bk2/shared-util-core';
             placeholder="ssssss"
             [maskito]="wordMask()"
             [maskitoElement]="maskPredicate" />
-          <ion-input name="abbreviation" [value]="newItem.abbreviation" (ionInput)="onChange('abbreviation', $event)"
-            label="abbreviation"
-            labelPlacement="floating"
-            inputMode="text"
-            type="text"
-            [counter]="true"
-            [maxlength]="5"
-            placeholder="s"/>
+          @if(hasAbbreviation()) {
+            <ion-input name="abbreviation" [value]="newItem.abbreviation" (ionInput)="onChange('abbreviation', $event)"
+              label="abbreviation"
+              labelPlacement="floating"
+              inputMode="text"
+              type="text"
+              [counter]="true"
+              [maxlength]="5"
+              placeholder="s"/>
+          }
           <ion-input name="icon" [value]="newItem.icon" (ionInput)="onChange('icon', $event)"
             label="icon"
             labelPlacement="floating"
@@ -72,7 +74,9 @@ import { die } from '@bk2/shared-util-core';
                   <ion-item>
                     <ion-reorder slot="start" />
                     <ion-label>{{ item.name }}</ion-label>
-                    <ion-label>{{ item.abbreviation }}</ion-label>
+                    @if(hasAbbreviation()) {
+                      <ion-label>{{ item.abbreviation }}</ion-label>
+                    }
                     <ion-label>{{ item.icon }}</ion-label>
                     <ion-icon src="{{'close_cancel_circle' | svgIcon }}" (click)="remove(item.name)" slot="end" />
                   </ion-item>
@@ -90,6 +94,7 @@ export class CategoryItemsComponent {
   public title = input('@input.categoryItems.title');
   public subTitle = input('@input.categoryItems.subTitle');
   public wordMask = input(LowercaseWordMask);
+  public hasAbbreviation = input<boolean>(false);
   public changed = output<CategoryItemModel[]>();
   
   protected newItem = new CategoryItemModel('', '');

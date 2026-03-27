@@ -24,6 +24,7 @@ export class CategoryListModel implements BkModel, NamedModel, PersistedModel, S
   translateItems = false;
   notes = DEFAULT_NOTES;
   items: CategoryItemModel[] = [];
+  hasAbbreviation = false;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

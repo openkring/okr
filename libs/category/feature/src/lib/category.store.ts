@@ -91,6 +91,7 @@ export const CategoryStore = signalStore(
             category,
             currentUser: store.currentUser(),
             tags: this.getTags(),
+            hasAbbreviation: category.hasAbbreviation,
             readOnly,
           }
         }); 

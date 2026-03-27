@@ -54,7 +54,11 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants
         </ion-card-content>
       </ion-card>
 
-      <bk-category-items [items]="items()" (changed)="onFieldChange('items', $event)" />
+      <bk-category-items
+        [items]="items()"
+        [hasAbbreviation]="hasAbbreviation()"
+        (changed)="onFieldChange('items', $event)"
+      />
 
       @if(hasRole('privileged')) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
@@ -72,6 +76,7 @@ export class CategoryListFormComponent {
   public formData = model.required<CategoryListModel>();
   public currentUser = input<UserModel>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
+  public hasAbbreviation = input<boolean>(false);
   public allTags = input.required<string>();
   public tenants = input.required<string>();
   public readOnly = input(true);
