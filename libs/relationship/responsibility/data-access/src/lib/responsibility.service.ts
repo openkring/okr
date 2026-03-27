@@ -43,6 +43,13 @@ export class ResponsibilityService {
     );
   }
 
+  public listForParent(parentKey: string): Observable<ResponsibilityModel[]> {
+    if (!parentKey) return of([]);
+    return this.list().pipe(
+      map(items => items.filter(r => r.parentKey === parentKey))
+    );
+  }
+
   public listForResponsible(responsibleKey: string): Observable<ResponsibilityModel[]> {
     if (!responsibleKey) return of([]);
     return this.list().pipe(

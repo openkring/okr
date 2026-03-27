@@ -50,7 +50,8 @@ export interface ContextDiagramConfig {
   startElement: string;           // "modelType.bkey" — org | person | group
   showAvatar: boolean;            // default: true
   showName: boolean;              // default: true
-  showMembers: boolean;           // default: false
+  showMembers: boolean;           // default: false — show members of centered org/group
+  showMemberships: boolean;       // default: false — show memberships of centered person
   showResponsibilities: boolean;  // default: true — workrels where node is the org/object
   showPersonalRels: boolean;      // default: false
   showWorkRels: boolean;          // default: false

@@ -46,8 +46,16 @@ import { LowercaseWordMask } from '@bk2/shared-config';
                 }                                     
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [copyable]="true" [readOnly]="false" /> 
-                <bk-error-note [errors]="nameErrors()" />                                                                               
+                <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [copyable]="true" [readOnly]="false" />
+                <bk-error-note [errors]="nameErrors()" />
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12">
+                <ion-item lines="none">
+                  <ion-label>{{ parentName() || 'Kein Elternelement' }}</ion-label>
+                  <ion-button slot="end" fill="clear" (click)="selectParent.emit()">Auswählen</ion-button>
+                </ion-item>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -129,8 +137,11 @@ export class ResponsibilityForm {
   public readonly locale = input.required<string>();
 
   // signals
+  public readonly parentName = input('');
+
   public valid = output<boolean>();
   public dirty = output<boolean>();
+  public selectParent = output<void>();
   public selectResponsible = output<void>();
   public selectDelegate = output<void>();
   public clearDelegate = output<void>();

@@ -6,12 +6,13 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AppStore } from '@bk2/shared-feature';
 import { confirm } from '@bk2/shared-util-angular';
 import { CategoryListModel, ResponsibilityModel } from '@bk2/shared-models';
-import { debugListLoaded, getYear, isValidAt, nameMatches } from '@bk2/shared-util-core';
+import { debugListLoaded, isValidAt, nameMatches } from '@bk2/shared-util-core';
 
 import { ResponsibilityService } from '@bk2/relationship-responsibility-data-access';
 import { isResponsibility } from '@bk2/relationship-responsibility-util';
 
 import { ResponsibilityEditModal } from './responsibility-edit.modal';
+import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
 export type ResponsibilityState = {
   listId: string;          // 'k_key', 'r_responsibleKey', 'all'
@@ -140,6 +141,7 @@ export const ResponsibilityStore = signalStore(
               await alert.present();
               return;
             }
+            data.validTo = END_FUTURE_DATE_STR;
             await store.responsibilityService.create(data, store.currentUser());
           } else {
             await store.responsibilityService.update(data, store.currentUser());

@@ -35,6 +35,11 @@ import { AsyncPipe } from '@angular/common';
         </ion-toggle>
       </ion-item>
       <ion-item>
+        <ion-toggle [(ngModel)]="cfg.showMemberships">
+          <ion-label>{{ '@cms.contextDiagram.config.showMemberships' | translate | async }}</ion-label>
+        </ion-toggle>
+      </ion-item>
+      <ion-item>
         <ion-toggle [(ngModel)]="cfg.showResponsibilities">
           <ion-label>{{ '@cms.contextDiagram.config.showResponsibilities' | translate | async }}</ion-label>
         </ion-toggle>
@@ -60,10 +65,10 @@ import { AsyncPipe } from '@angular/common';
     <ion-footer>
       <ion-toolbar>
         <ion-button slot="start" fill="clear" (click)="cancel()">
-          {{ '@general.operation.cancel' | translate | async }}
+          {{ '@general.operation.change.cancel' | translate | async }}
         </ion-button>
         <ion-button slot="end" (click)="confirm()">
-          {{ '@general.operation.save' | translate | async }}
+          {{ '@general.operation.change.ok' | translate | async }}
         </ion-button>
       </ion-toolbar>
     </ion-footer>
@@ -79,6 +84,7 @@ export class ContextDiagramConfigModal {
     showAvatar: true,
     showName: true,
     showMembers: false,
+    showMemberships: false,
     showResponsibilities: true,
     showPersonalRels: false,
     showWorkRels: false,

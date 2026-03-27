@@ -25,6 +25,8 @@ export class ResponsibilityModel implements BkModel, SearchableModel, NamedModel
   //             course_k    / Einsteigerkurse               (Antrag/Anmeldung)
   //             course_j    / Kurse Jugendliche
 
+  public parentKey = '';   // "modelType.bkey" of the parent org/group/person this responsibility belongs to
+
   public responsibleAvatar: AvatarInfo | undefined;   // Person or Group
 
   public delegateAvatar?: AvatarInfo;     // Person or Group, nullable

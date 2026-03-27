@@ -4,9 +4,8 @@ import { ActionSheetController, IonCard, IonCardContent, ModalController } from 
 import { GraphChart } from 'echarts/charts';
 import * as echarts from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
-import { TooltipComponent } from 'echarts/components';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
-echarts.use([GraphChart, CanvasRenderer, TooltipComponent]);
+echarts.use([GraphChart, CanvasRenderer]);
 
 import type { EChartsOption } from 'echarts';
 
@@ -14,7 +13,6 @@ import { ContextDiagramConfig, ContextDiagramSection, UserModel } from '@bk2/sha
 import { OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
-import { getSvgIconUrl } from '@bk2/shared-pipes';
 import { SectionService } from '@bk2/cms-section-data-access';
 
 import { ContextDiagramStore, ContextDiagramNode, ContextDiagramEdge } from './context-diagram-section.store';
@@ -67,7 +65,6 @@ export class ContextDiagramSectionComponent {
   protected readonly isLoading = computed(() => this.store.isLoading());
 
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
-  private readonly ellipsisUrl = getSvgIconUrl(this.imgixBaseUrl, 'ellipsis-horizontal');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private chartInstance: any = null;
@@ -76,7 +73,7 @@ export class ContextDiagramSectionComponent {
     const { nodes, edges } = this.store.graphData();
     if (!nodes.length) return undefined;
     const config = this.config();
-    return buildGraphOption(nodes, edges, config, this.ellipsisUrl);
+    return buildGraphOption(nodes, edges, config);
   });
 
   constructor() {
@@ -104,7 +101,7 @@ export class ContextDiagramSectionComponent {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected onChartNodeClick(event: any): void {
     const nodeId = event?.data?.id as string | undefined;
-    if (!nodeId || nodeId.startsWith('ellipsis.')) return;
+    if (!nodeId) return;
 
     const currentUser = this.store.appStore.currentUser();
     if (hasRole('contentAdmin', currentUser)) {
@@ -115,10 +112,11 @@ export class ContextDiagramSectionComponent {
   }
 
   protected async showAdminActions(nodeId: string): Promise<void> {
+    const isCurrentCenter = nodeId === this.store.currentCenter();
     const options = createActionSheetOptions('@actionsheet.label.choose');
     options.buttons = [
       createActionSheetButton('contextDiagram.edit', this.imgixBaseUrl, 'create_edit'),
-      createActionSheetButton('contextDiagram.center', this.imgixBaseUrl, 'locate'),
+      ...(!isCurrentCenter ? [createActionSheetButton('contextDiagram.center', this.imgixBaseUrl, 'locate')] : []),
       createActionSheetButton('contextDiagram.displayConfig', this.imgixBaseUrl, 'settings'),
       createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'),
     ];
@@ -179,7 +177,6 @@ function buildGraphOption(
   nodes: ContextDiagramNode[],
   edges: ContextDiagramEdge[],
   config: ContextDiagramConfig | undefined,
-  ellipsisUrl: string,
 ): EChartsOption {
   const showName = config?.showName ?? true;
   const showLabels = config?.connectionNames ?? true;
@@ -188,18 +185,13 @@ function buildGraphOption(
     id: n.id,
     name: n.name,
     value: n.id,
-    symbol: n.category === 'ellipsis'
-      ? `image://${ellipsisUrl}`
-      : `image://${n.symbolUrl}`,
+    symbol: `image://${n.symbolUrl}`,
     symbolSize: n.symbolSize,
-    label: { show: n.category !== 'ellipsis' && showName },
+    label: { show: showName },
     itemStyle: {
       borderWidth: n.isCenter ? 3 : 0,
       borderColor: '#4a90d9',
-      opacity: n.category === 'ellipsis' ? 0.5 : 1,
     },
-    // make ellipsis nodes non-selectable looking
-    emphasis: n.category === 'ellipsis' ? { disabled: true } : {},
   }));
 
   const echartsLinks = edges.map(e => ({
@@ -213,7 +205,7 @@ function buildGraphOption(
   // GraphChart is not part of the core type union when using tree-shakeable imports — cast required
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return {
-    tooltip: { show: true, formatter: (params: any) => params.data?.name ?? '' },
+    tooltip: { show: false },
     series: [
       {
         type: 'graph',

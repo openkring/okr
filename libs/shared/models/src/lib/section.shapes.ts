@@ -351,6 +351,7 @@ export const CONTEXT_DIAGRAM_CONFIG_SHAPE = {
   showAvatar: true,
   showName: true,
   showMembers: false,
+  showMemberships: false,
   showResponsibilities: true,
   showPersonalRels: false,
   showWorkRels: false,

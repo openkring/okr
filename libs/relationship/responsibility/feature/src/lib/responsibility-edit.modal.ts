@@ -5,7 +5,7 @@ import { AvatarInfo, PersonModel, ResponsibilityModel, ResponsibilityModelName, 
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, MultiSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
 
 import { ResponsibilityForm } from '@bk2/relationship-responsibility-ui';
 
@@ -32,8 +32,10 @@ import { ResponsibilityForm } from '@bk2/relationship-responsibility-ui';
           [tenantId]="tenantId()"
           [isNew]="isNew()"
           [locale]="locale()"
+          [parentName]="parentName()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
+          (selectParent)="selectParent()"
           (selectResponsible)="selectResponsibleAvatar()"
           (selectDelegate)="selectDelegateAvatar()"
           (clearDelegate)="onClearDelegate()"
@@ -61,6 +63,17 @@ export class ResponsibilityEditModal {
   // fields
   protected readonly headerTitle = computed(() => getTitleLabel('responsibility', this.responsibility()?.bkey, false));
   protected readonly tenantId = computed(() => this.appstore.tenantId());
+  protected readonly parentName = computed(() => {
+    const parentKey = this.formData()?.parentKey;
+    if (!parentKey) return '';
+    const dot = parentKey.indexOf('.');
+    if (dot === -1) return parentKey;
+    const modelType = parentKey.slice(0, dot);
+    const key = parentKey.slice(dot + 1);
+    if (modelType === 'org') return this.appstore.getOrg(key)?.name ?? parentKey;
+    if (modelType === 'group') return this.appstore.getGroup(key)?.name ?? parentKey;
+    return parentKey;
+  });
 
   public async save(): Promise<void> {
     await this.modalController.dismiss(this.formData(), 'confirm');
@@ -77,6 +90,19 @@ export class ResponsibilityEditModal {
 
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  protected async selectParent(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: MultiSelectModalComponent,
+      cssClass: 'list-modal',
+      componentProps: { contents: 'org,group', selectedTag: '', currentUser: this.currentUser() },
+    });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role !== 'confirm' || !data) return;
+    this.formDirty.set(true);
+    this.formData.update(vm => ({ ...vm, parentKey: data as string }) as ResponsibilityModel);
   }
 
   protected async selectResponsibleAvatar(): Promise<void> {
