@@ -1,4 +1,6 @@
 export * from './lib/aoc-adminops';
+export * from './lib/aoc-bexio';
+export * from './lib/aoc-bexio.store';
 export * from './lib/aoc-chat';
 export * from './lib/aoc-doc';
 export * from './lib/aoc-content';

@@ -13,6 +13,7 @@ import * as OidcBridge from './oidc-bridge';
 import * as MatrixSimple from './matrix-simple';
 import * as Rag from './rag';
 import * as Email from './email';
+import * as Bexio from './bexio';
 import * as Zefix from './zefix';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
@@ -103,6 +104,10 @@ export const generateCalendarICS = Calendar.generateCalendarICS;
 
 // email webhooks
 export const mailtrapWebhook = Email.mailtrapWebhook;
+
+// bexio contact sync
+export const getBexioContacts = Bexio.getBexioContacts;
+export const createBexioContact = Bexio.createBexioContact;
 
 // zefix registry lookup
 export const zefixSearch = Zefix.zefixSearch;
