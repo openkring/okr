@@ -22,6 +22,7 @@ export * from './lib/firebase-user.model';
 export * from './lib/folder.model';
 export * from './lib/geoposition.model';
 export * from './lib/group.model';
+export * from './lib/icon.model';
 export * from './lib/image.model';
 export * from './lib/image.shapes';
 export * from './lib/invitation.model';

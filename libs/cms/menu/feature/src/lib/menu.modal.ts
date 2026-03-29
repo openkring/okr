@@ -8,7 +8,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
 import { ENV } from '@bk2/shared-config';
-import { IconSelectModalComponent } from '@bk2/shared-feature';
+import { IconSelectModalComponent } from '@bk2/icon-feature';
 
 @Component({
   selector: 'bk-menu-item-modal',
