@@ -167,9 +167,9 @@ import { Browser } from '@capacitor/browser';
     `
 })
 export class CalEventListComponent {
-  protected store = inject(CalEventStore);
-  private actionSheetController = inject(ActionSheetController);
-  private fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
+  protected readonly store = inject(CalEventStore);
+  private readonly actionSheetController = inject(ActionSheetController);
+  private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
 
   // inputs
   public listId = input.required<string>();     // calendar name
