@@ -6,8 +6,9 @@ import { AppStore } from '@bk2/shared-feature';
 import { MenuService } from '@bk2/cms-menu-data-access';
 import { PageService } from '@bk2/cms-page-data-access';
 import { SectionService } from '@bk2/cms-section-data-access';
-import { MenuItemModel, PageModel, SectionModel } from '@bk2/shared-models';
+import { CategoryListModel, MenuItemModel, PageModel, SectionModel } from '@bk2/shared-models';
 import { downloadTextFile, exportXlsx, getExportFileName } from '@bk2/shared-util-angular';
+import { getCategoryIcon, getCategoryItemNames } from '@bk2/shared-util-core';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -75,24 +76,13 @@ function menuIcon(action: string): string {
   }
 }
 
-function sectionIcon(type: string): string {
-  const icons: Record<string, string> = {
-    article: 'document_text', news: 'newspaper', hero: 'image', cal: 'calendar',
-    album: 'images', video: 'videocam', map: 'location', people: 'people',
-    chart: 'bar-chart', table: 'grid', accordion: 'list', button: 'radio-button-on',
-    iframe: 'code-slash', slider: 'play-circle', tracker: 'analytics',
-    tasks: 'checkmark-circle', events: 'calendar-number', messages: 'chatbubbles',
-    invitations: 'mail', files: 'folder', links: 'link',
-  };
-  return icons[type] ?? 'layers';
-}
-
 function buildSectionNodes(
   page: PageModel,
   allSections: SectionModel[],
-  visitedPages: Set<string>
+  visitedPages: Set<string>,
+  sectionTypes: CategoryListModel
 ): DependencyNode[] {
-  const pageSections = allSections.filter(s => page.sections.includes(s.bkey) && !s.isArchived);
+  const pageSections = allSections.filter(s => page.sections.includes(s.bkey) && !s.isArchived)
   return page.sections
     .map(key => pageSections.find(s => s.bkey === key))
     .filter((s): s is SectionModel => !!s)
@@ -102,7 +92,7 @@ function buildSectionNodes(
       name: s.name || s.title || s.bkey,
       subType: s.type,
       color: 'warning',
-      icon: sectionIcon(s.type),
+      icon: getCategoryIcon(sectionTypes, s.type),
       state: s.state,
       roleNeeded: s.roleNeeded,
       model: s,
@@ -116,7 +106,8 @@ function buildPageNode(
   contextMenuName: string | undefined,
   allMenuItems: MenuItemModel[],
   allSections: SectionModel[],
-  visitedPages: Set<string>
+  visitedPages: Set<string>,
+  sectionTypes: CategoryListModel
 ): DependencyNode {
   const children: DependencyNode[] = [];
 
@@ -141,7 +132,7 @@ function buildPageNode(
   }
 
   // Sections
-  children.push(...buildSectionNodes(page, allSections, visitedPages));
+  children.push(...buildSectionNodes(page, allSections, visitedPages, sectionTypes));
 
   return {
     id: `page-${page.bkey}`,
@@ -164,7 +155,8 @@ function buildMenuNode(
   allPages: PageModel[],
   allSections: SectionModel[],
   visitedMenus: Set<string>,
-  visitedPages: Set<string>
+  visitedPages: Set<string>,
+  sectionTypes: CategoryListModel
 ): DependencyNode {
   // Guard against circular references
   if (visitedMenus.has(item.bkey)) {
@@ -191,7 +183,7 @@ function buildMenuNode(
     for (const childKey of item.menuItems) {
       const child = findMenuItem(childKey, allMenuItems);
       if (child) {
-        children.push(buildMenuNode(child, allMenuItems, allPages, allSections, new Set(visitedMenus), visitedPages));
+        children.push(buildMenuNode(child, allMenuItems, allPages, allSections, new Set(visitedMenus), visitedPages, sectionTypes));
       }
     }
   }
@@ -204,7 +196,7 @@ function buildMenuNode(
       const page = allPages.find(p => p.bkey === pageId);
       if (page) {
         visitedPages.add(pageId);
-        children.push(buildPageNode(page, ctxName, allMenuItems, allSections, visitedPages));
+        children.push(buildPageNode(page, ctxName, allMenuItems, allSections, visitedPages, sectionTypes));
       }
     }
   }
@@ -314,7 +306,8 @@ export const MenuGraphStore = signalStore(
                        items.find(i => i.name === 'main' && i.action === 'main');
       if (!mainItem) return null;
 
-      return buildMenuNode(mainItem, items, pages, sections, new Set(), new Set());
+      const sectionTypes = state.appStore.getCategory('section_type');
+      return buildMenuNode(mainItem, items, pages, sections, new Set(), new Set(), sectionTypes);
     }),
   })),
 
