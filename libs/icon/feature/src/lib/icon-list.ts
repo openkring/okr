@@ -4,7 +4,7 @@ import {
   IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader,
   IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover,
   IonRow, IonThumbnail, IonTitle, IonToolbar,
-  ToastController
+  PopoverController, ToastController
 } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
@@ -15,8 +15,6 @@ import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
-import { MenuComponent } from '@bk2/cms-menu-feature';
-
 import { ICON_SETS, IconStore } from './icon.store';
 
 @Component({
@@ -24,7 +22,7 @@ import { ICON_SETS, IconStore } from './icon.store';
   standalone: true,
   imports: [
     TranslatePipe, SvgIconPipe, FileSizePipe, PrettyDatePipe, AsyncPipe,
-    SpinnerComponent, EmptyListComponent, ListFilterComponent, MenuComponent,
+    SpinnerComponent, EmptyListComponent, ListFilterComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover, IonThumbnail
   ],
@@ -75,7 +73,19 @@ import { ICON_SETS, IconStore } from './icon.store';
                 (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                 <ng-template>
                   <ion-content>
-                    <bk-menu [menuName]="contextMenuName()" />
+                    <ion-list>
+                      <ion-item button (click)="dismissPopover('add')">
+                        <ion-label>{{ '@icon.operation.create.label' | translate | async }}</ion-label>
+                      </ion-item>
+                      <ion-item button (click)="dismissPopover('exportRaw')">
+                        <ion-label>{{ '@icon.operation.exportRaw.label' | translate | async }}</ion-label>
+                      </ion-item>
+                      @if(hasRole('admin')) {
+                        <ion-item button (click)="dismissPopover('sync')">
+                          <ion-label>{{ '@icon.operation.sync.label' | translate | async }}</ion-label>
+                        </ion-item>
+                      }
+                    </ion-list>
                   </ion-content>
                 </ng-template>
               </ion-popover>
@@ -158,6 +168,7 @@ export class IconListComponent {
   protected readonly store = inject(IconStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly toastController = inject(ToastController);
+  private readonly popoverController = inject(PopoverController);
 
   // inputs
   public listId = input.required<string>(); // always all
@@ -188,6 +199,10 @@ export class IconListComponent {
   }
 
   /******************************* context menu *************************************** */
+  protected async dismissPopover(action: string): Promise<void> {
+    await this.popoverController.dismiss(action);
+  }
+
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {

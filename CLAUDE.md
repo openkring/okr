@@ -173,10 +173,11 @@ Production app name for scs-app is scs-app-54aef.
 ### Hard Rules
 
 - never install a new dependency without asking first
-- never modify the database schema (shared-models) without asking first 
+- never modify the database schema (shared-models) without asking first
 - api calls for external integrations should use a firebase cloud function where possible. This Cloud functions stores the access token securely and caches token as well as data for later requests.
 - do not try to find icon assets in the code. The icons reside in the database and are loaded via url.
 - Always git commit directly to main. Do not create feature branches or worktrees.
+- When creating a new library layer (data-access, feature, ui, util), always create three files: `tsconfig.json`, update `tsconfig.lib.json` with `references`, and create `package.json`. Use an existing sibling lib (e.g. `libs/folder/<layer>/`) as a template. The `tsconfig.json` lists all `@bk2/*` dependencies as references; the `tsconfig.lib.json` lists only intra-domain sibling lib references; the `package.json` must have `"name": "@bk2/<lib-name>"` (with the `@bk2/` scope) and all `@bk2/*` dependencies listed. Missing or mis-named `package.json` (without `@bk2/` scope) causes `TS6059 rootDir` build errors in dependent libs because Nx can't redirect imports to the compiled declaration files.
 
 ## Working Style
 

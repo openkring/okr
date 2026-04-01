@@ -8,7 +8,6 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { MenuItemFormComponent } from '@bk2/cms-menu-ui';
 import { ENV } from '@bk2/shared-config';
-import { IconSelectModalComponent } from '@bk2/icon-feature';
 
 @Component({
   selector: 'bk-menu-item-modal',
@@ -84,9 +83,10 @@ export class MenuItemModalComponent {
   }
 
   protected async selectIcon(): Promise<void> {
+    const { IconSelectModalComponent } = await import('@bk2/icon-feature');
     const modal = await this.modalController.create({
       component: IconSelectModalComponent,
-      componentProps: { 
+      componentProps: {
         initialDir: 'icons'
       },
       cssClass: 'list-modal'

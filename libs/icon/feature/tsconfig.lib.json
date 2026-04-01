@@ -9,5 +9,10 @@
     "types": []
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
+  "references": [
+    {"path": "../data-access/tsconfig.lib.json"},
+    {"path": "../ui/tsconfig.lib.json"},
+    {"path": "../util/tsconfig.lib.json"}
+  ]
 }
