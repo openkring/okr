@@ -176,6 +176,7 @@ Production app name for scs-app is scs-app-54aef.
 - never modify the database schema (shared-models) without asking first 
 - api calls for external integrations should use a firebase cloud function where possible. This Cloud functions stores the access token securely and caches token as well as data for later requests.
 - do not try to find icon assets in the code. The icons reside in the database and are loaded via url.
+- Always git commit directly to main. Do not create feature branches or worktrees.
 
 ## Working Style
 
