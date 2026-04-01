@@ -22,16 +22,20 @@ import { PageStore } from './page.store';
 `],
   template: `
     @if(id(); as id) {
-      <bk-header [title]="headerTitle()" [isRoot]="true" [isModal]="showMainMenu()" />
+      @if(showMainMenu()) {
+        <bk-header [title]="headerTitle()" [isRoot]="true" />
+      }
       <ion-content>
         <bk-album-section [section]="section()" />
       </ion-content>
     } @else {
-      <ion-header>
-        <ion-toolbar color="secondary" id="bkheader">
-          <ion-buttons slot="start"><ion-menu-button /></ion-buttons>      
-        </ion-toolbar>
-      </ion-header>
+      @if(showMainMenu()) {
+        <ion-header>
+          <ion-toolbar color="secondary" id="bkheader">
+            <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+      }
       <ion-content>
         <bk-spinner />
       </ion-content>

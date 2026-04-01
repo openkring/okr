@@ -1,8 +1,9 @@
 import { Component, computed, effect, inject, input, untracked } from "@angular/core";
-import { Router } from "@angular/router";
+import { toSignal } from "@angular/core/rxjs-interop";
+import { ActivatedRoute, Router } from "@angular/router";
 import { ViewWillEnter } from '@ionic/angular';
 
-import { debugMessage, replaceSubstring } from "@bk2/shared-util-core";
+import { coerceBoolean, debugMessage, replaceSubstring } from "@bk2/shared-util-core";
 import { SpinnerComponent } from "@bk2/shared-ui";
 
 import { ContentPage } from "./content.page";
@@ -58,42 +59,42 @@ import { GraphPage } from "./graph.page";
                 }
                 @case ('content') {
                     @defer (on idle) {
-                        <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                        <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
                 }
                 @case ('dashboard') {
                     @defer (on idle) {
-                        <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                        <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
                 }
                 @case ('blog') {
                     @defer (on idle) {
-                        <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                        <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
                 }
                 @case ('files') {
                     @defer (on idle) {
-                        <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                        <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
                 }
                 @case ('album') {
                     @defer (on idle) {
-                        <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="!isGroupView()" />
+                        <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
                 }
                 @case ('graph') {
                     @defer (on idle) {
-                        <bk-graph-page [color]="color()" [showMainMenu]="!isGroupView()" />
+                        <bk-graph-page [color]="color()" [showMainMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
@@ -114,6 +115,7 @@ import { GraphPage } from "./graph.page";
 export class PageDispatcher implements ViewWillEnter {
   protected pageStore = inject(PageStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   // inputs
   public id = input.required<string>();
@@ -121,6 +123,10 @@ export class PageDispatcher implements ViewWillEnter {
   public color = input('secondary');
   public isGroupView = input(false);
   public selectedRoom = input<string | undefined>();
+
+  // ?showMenu=false hides the toolbar and main menu (for embedding in external sites)
+  private readonly queryParamMap = toSignal(this.route.queryParamMap);
+  protected showMenu = computed(() => coerceBoolean(this.queryParamMap()?.get('showMenu') ?? 'true'));
 
   // computed
   protected page = computed(() => this.pageStore.page());

@@ -53,30 +53,30 @@ import { BlogStream } from './blog-stream';
     }
   `],
   template: `
-    <ion-header>
-      <ion-toolbar [color]="color()" id="bkheader">
-        @if (showMainMenu()) {
+    @if(showMainMenu()) {
+      <ion-header>
+        <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        }
-        <ion-title>{{ pageStore.page()?.name | translate | async }}</ion-title>
-        @if (hasRole('contentAdmin')) {
-          <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
-              <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
-            </ion-button>
-            @if (contextMenuName(); as contextMenuName) {
-              <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-                <ng-template>
-                  <ion-content>
-                    <bk-menu [menuName]="contextMenuName" />
-                  </ion-content>
-                </ng-template>
-              </ion-popover>
-            }
-          </ion-buttons>
-        }
-      </ion-toolbar>
-    </ion-header>
+          <ion-title>{{ pageStore.page()?.name | translate | async }}</ion-title>
+          @if (hasRole('contentAdmin')) {
+            <ion-buttons slot="end">
+              <ion-button id="{{ popupId() }}">
+                <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+              </ion-button>
+              @if (contextMenuName(); as contextMenuName) {
+                <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                  <ng-template>
+                    <ion-content>
+                      <bk-menu [menuName]="contextMenuName" />
+                    </ion-content>
+                  </ng-template>
+                </ion-popover>
+              }
+            </ion-buttons>
+          }
+        </ion-toolbar>
+      </ion-header>
+    }
 
     <ion-content class="ion-no-padding">
       @if (isEmptyPage()) {
@@ -203,7 +203,7 @@ export class BlogPage {
 
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
     if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'edit'));
       if (section.type === 'article') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
         actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.pageStore.imgixBaseUrl(), 'send'));
@@ -211,8 +211,8 @@ export class BlogPage {
       if (section.type === 'button') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.pageStore.imgixBaseUrl(), 'upload'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.pageStore.imgixBaseUrl(), 'trash_delete'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.pageStore.imgixBaseUrl(), 'close_cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.pageStore.imgixBaseUrl(), 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.pageStore.imgixBaseUrl(), 'cancel'));
     }
   }
 

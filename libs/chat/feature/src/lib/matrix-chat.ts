@@ -780,8 +780,8 @@ export class MatrixChat implements OnDestroy {
     const isAuthor = !!currentUserId && message.sender === currentUserId;
 
     if (isAuthor) { // author of message
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.imgixBaseUrl, 'trash'));
     } else {  // receiver of message
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.imgixBaseUrl, 'smiley'));
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.imgixBaseUrl, 'return_reply'));
@@ -792,7 +792,7 @@ export class MatrixChat implements OnDestroy {
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.raw', this.imgixBaseUrl, 'code'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }
