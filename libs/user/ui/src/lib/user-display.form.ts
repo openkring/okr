@@ -110,6 +110,7 @@ export class UserDisplayFormComponent {
   }
 
   protected onFieldChange(fieldName: string, fieldValue: boolean | AvatarUsage | Language | NameDisplay): void {
+    this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     debugFormErrors('UserDisplayForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }}

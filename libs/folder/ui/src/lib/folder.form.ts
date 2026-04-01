@@ -89,6 +89,7 @@ export class FolderFormComponent {
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
+    this.dirty.emit(true);
     this.formDataChange.emit({ ...this.formData(), [fieldName]: fieldValue });
   }
 }

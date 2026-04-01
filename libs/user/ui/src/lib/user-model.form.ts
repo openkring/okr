@@ -108,6 +108,7 @@ export class UserModelFormComponent {
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+    this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     debugFormErrors('UserModelForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }

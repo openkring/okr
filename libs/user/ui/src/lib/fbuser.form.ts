@@ -107,6 +107,7 @@ export class FbuserFormComponent {
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | boolean): void {
+    this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     debugFormErrors('FbuserForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }

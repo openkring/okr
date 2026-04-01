@@ -85,6 +85,7 @@ export class UserNotificationFormComponent {
   }
 
   protected onFieldChange(fieldName: string, fieldValue: DeliveryType): void {
+    this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     debugFormErrors('UserNotificationForm.onFieldChange', this.validationResult().errors, this.currentUser());
   }

@@ -107,6 +107,7 @@ export class UserPrivacyFormComponent {
   protected privacyUsages = PrivacyUsages;
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
+    this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 

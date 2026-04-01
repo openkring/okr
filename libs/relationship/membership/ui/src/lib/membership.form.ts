@@ -241,6 +241,7 @@ export class MembershipFormComponent {
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    this.dirty.emit(true);
   }
 
   protected onFormChange(value: MembershipModel): void {
