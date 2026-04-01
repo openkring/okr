@@ -45,7 +45,7 @@ import { AocStorageStore } from './aoc-storage.store';
                       <ion-icon src="{{ 'copy' | svgIcon }}" />
                     </ion-button>
                     <ion-button fill="clear" (click)="clearPath(true)">
-                      <ion-icon src="{{ 'close_cancel' | svgIcon }}" />
+                      <ion-icon src="{{ 'cancel' | svgIcon }}" />
                     </ion-button>
                   </ion-buttons>
                 </ion-item>
@@ -81,7 +81,7 @@ import { AocStorageStore } from './aoc-storage.store';
                       <ion-icon src="{{ 'copy' | svgIcon }}" />
                     </ion-button>
                     <ion-button fill="clear" (click)="clearPath(false)">
-                      <ion-icon src="{{ 'close_cancel' | svgIcon }}" />
+                      <ion-icon src="{{ 'cancel' | svgIcon }}" />
                     </ion-button>
                   </ion-buttons>
                 </ion-item>

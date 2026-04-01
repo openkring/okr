@@ -73,7 +73,7 @@ import { getIndexOfKey } from '@bk2/shared-util-core';
                     <ion-reorder slot="start" />
                     <ion-label>{{ property.key }}</ion-label>
                     <ion-label>{{ property.value }}</ion-label>
-                    <ion-icon src="{{'close_cancel_circle' | svgIcon }}" (click)="remove(property.key)" slot="end" />
+                    <ion-icon src="{{'cancel' | svgIcon }}" (click)="remove(property.key)" slot="end" />
                   </ion-item>
                 }
               </ion-reorder-group>

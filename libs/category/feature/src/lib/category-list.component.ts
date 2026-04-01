@@ -152,11 +152,11 @@ export class CategoryListComponent {
    * @param cat 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, cat: CategoryListModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('category.edit', this.imgixBaseUrl, 'create_edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('category.edit', this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('category.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('category.delete', this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
   }
 
   /**

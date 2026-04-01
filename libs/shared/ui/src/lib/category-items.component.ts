@@ -78,7 +78,7 @@ import { die } from '@bk2/shared-util-core';
                       <ion-label>{{ item.abbreviation }}</ion-label>
                     }
                     <ion-label>{{ item.icon }}</ion-label>
-                    <ion-icon src="{{'close_cancel_circle' | svgIcon }}" (click)="remove(item.name)" slot="end" />
+                    <ion-icon src="{{'cancel' | svgIcon }}" (click)="remove(item.name)" slot="end" />
                   </ion-item>
                 }
               </ion-reorder-group>

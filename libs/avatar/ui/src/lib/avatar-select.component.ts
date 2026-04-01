@@ -26,7 +26,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
     <ion-card-content>
       <ion-item lines="none" [color]="color() | categoryPlainName:colorsIonic">
         @if(clearable() && avatar()) {
-          <ion-icon src="{{'close_cancel_circle' | svgIcon}}" slot="start" (click)="clearClicked.emit()"/>
+          <ion-icon src="{{'cancel' | svgIcon}}" slot="start" (click)="clearClicked.emit()"/>
         }
         @if(avatar()) {
           <ion-avatar slot="start">

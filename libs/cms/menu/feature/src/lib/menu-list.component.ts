@@ -130,14 +130,14 @@ export class MenuListComponent {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, menuItem: MenuItemModel): void {
     if (hasRole('registered', this.menuStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('menu.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     }
     if (hasRole('admin', this.menuStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('menu.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.delete', this.imgixBaseUrl, 'trash'));
     }
   }
 

@@ -318,12 +318,12 @@ export class AocChat {
 
     opts.buttons.push(createActionSheetButton('room.showMembers', base, 'people'));
     opts.buttons.push(createActionSheetButton('room.showDetails', base, 'info-circle'));
-    opts.buttons.push(createActionSheetButton('room.rename', base, 'create_edit'));
+    opts.buttons.push(createActionSheetButton('room.rename', base, 'edit'));
     opts.buttons.push(createActionSheetButton('room.addAlias', base, 'add-circle'));
     opts.buttons.push(createActionSheetButton('room.invite', base, 'person-add'));
     opts.buttons.push(createActionSheetButton('room.provision', base, 'key'));
-    opts.buttons.push(createActionSheetButton('room.delete', base, 'trash_delete'));
-    opts.buttons.push(createActionSheetButton('cancel', base, 'close_cancel'));
+    opts.buttons.push(createActionSheetButton('room.delete', base, 'trash'));
+    opts.buttons.push(createActionSheetButton('cancel', base, 'cancel'));
 
     const sheet = await this.actionSheetController.create(opts as ActionSheetOptions);
     await sheet.present();
@@ -366,8 +366,8 @@ export class AocChat {
     if (roomId) {
       opts.buttons.push(createActionSheetButton('member.kick', base, 'exit'));
     }
-    opts.buttons.push(createActionSheetButton('member.deactivate', base, 'trash_delete'));
-    opts.buttons.push(createActionSheetButton('cancel', base, 'close_cancel'));
+    opts.buttons.push(createActionSheetButton('member.deactivate', base, 'trash'));
+    opts.buttons.push(createActionSheetButton('cancel', base, 'cancel'));
 
     const sheet = await this.actionSheetController.create(opts as ActionSheetOptions);
     await sheet.present();

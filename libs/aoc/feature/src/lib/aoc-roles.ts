@@ -41,7 +41,7 @@ import { AocRolesStore } from './aoc-roles.store';
               @if(avatar(); as avatar) {
               <ion-label>
                 <bk-avatar-display [avatars]="[avatar]" [showName]="true" />
-                <ion-icon src="{{ 'close_cancel' | svgIcon }}" slot="end" (click)="clearPerson()" />
+                <ion-icon src="{{ 'cancel' | svgIcon }}" slot="end" (click)="clearPerson()" />
               </ion-label>
               } @else {
               <ion-button (click)="selectPerson()">
@@ -97,7 +97,7 @@ import { AocRolesStore } from './aoc-roles.store';
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="checkAuthorisation()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" slot="start" />
+                  <ion-icon src="{{ 'shield' | svgIcon }}" slot="start" />
                   {{ '@aoc.roles.check.button' | translate | async }}
                 </ion-button>
               </ion-col>
@@ -138,7 +138,7 @@ import { AocRolesStore } from './aoc-roles.store';
               </ion-col>
               <ion-col size="6">
                 <ion-button (click)="createAccountAndUser()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{ 'create_edit' | svgIcon }}" slot="start" />
+                  <ion-icon src="{{ 'edit' | svgIcon }}" slot="start" />
                   {{ '@aoc.roles.account.button' | translate | async }}
                 </ion-button>
               </ion-col>
@@ -200,7 +200,7 @@ import { AocRolesStore } from './aoc-roles.store';
               </ion-col>
               <ion-col size="6">
                 <ion-button (click)="updateFbuser()" [disabled]="!selectedPerson()">
-                  <ion-icon src="{{ 'create_edit' | svgIcon }}" slot="start" />
+                  <ion-icon src="{{ 'edit' | svgIcon }}" slot="start" />
                   {{ '@aoc.roles.fbuser.button' | translate | async }}
                 </ion-button>
               </ion-col>
@@ -221,7 +221,7 @@ import { AocRolesStore } from './aoc-roles.store';
               <ion-col size="6"></ion-col>
               <ion-col size="6">
                 <ion-button (click)="impersonateUser()" [disabled]="!selectedUser()">
-                  <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" slot="start" />
+                  <ion-icon src="{{ 'shield' | svgIcon }}" slot="start" />
                   {{ '@aoc.roles.impersonate.button' | translate | async }}
                 </ion-button>
               </ion-col>

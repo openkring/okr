@@ -65,13 +65,13 @@ import { ButtonCopyComponent } from './button-copy.component';
         </ion-item>
         <ion-item lines="none">
           @if (isClearable()) {
-            <ion-icon src="{{'close_cancel' | svgIcon }}" (click)="clearValue()" />
+            <ion-icon src="{{'cancel' | svgIcon }}" (click)="clearValue()" />
           }
           @if (isCopyable()) {
             <bk-button-copy [value]="value()" />
           }
           @if (isEncryptable()) {
-            <ion-icon src="{{'resource_key' | svgIcon }}" (click)="dencrypt()" />
+            <ion-icon src="{{ 'key' | svgIcon }}" (click)="dencrypt()" />
           }
         </ion-item>
       } @else {

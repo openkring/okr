@@ -16,9 +16,10 @@ export class IconService {
 
   /*-------------------------- CRUD operations --------------------------------*/
 
-  public async create(icon: IconModel, currentUser?: UserModel): Promise<string | undefined> {
-    icon.index = getIconIndex(icon);
-    return await this.firestoreService.createModel<IconModel>(IconCollection, icon, '@icon.operation.create', currentUser);
+  public async create(icon: IconModel, currentUser?: UserModel, confirmMessage = '@icon.operation.create'): Promise<string | undefined> {
+    // index is editable in icon. That's why we don't generate the index here.
+    // icon.index = getIconIndex(icon);
+    return await this.firestoreService.createModel<IconModel>(IconCollection, icon, confirmMessage, currentUser);
   }
 
   public read(key: string | undefined): Observable<IconModel | undefined> {

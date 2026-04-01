@@ -142,14 +142,14 @@ export class AocUserAccounts {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, account: UserAccount): void {
     if (account.hasFirebaseAccount) {
-      actionSheetOptions.buttons.push(createActionSheetButton('fbuser.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('fbuser.delete', this.imgixBaseUrl, 'trash'));
     }
     if (account.hasBkAccount) {
-      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.imgixBaseUrl, 'trash'));
     }
     if (account.hasMembership) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
     }
     if (account.loginEmail) {
       actionSheetOptions.buttons.push(createActionSheetButton('account.copyemail', this.imgixBaseUrl, 'copy'));
@@ -160,7 +160,7 @@ export class AocUserAccounts {
     if (account.personKey) {
       actionSheetOptions.buttons.push(createActionSheetButton('account.copypkey', this.imgixBaseUrl, 'copy'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

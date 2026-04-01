@@ -161,10 +161,10 @@ export class OrgchartSectionComponent {
       createActionSheetButton('orgchart.addNewGroup', this.imgixBaseUrl, 'add-circle'),
       createActionSheetButton('orgchart.addExistingGroup', this.imgixBaseUrl, 'search'),
       ...(node.modelType === 'group' ? [
-        createActionSheetButton('orgchart.editGroup', this.imgixBaseUrl, 'create_edit'),
-        createActionSheetButton('orgchart.removeGroup', this.imgixBaseUrl, 'trash_delete'),
+        createActionSheetButton('orgchart.editGroup', this.imgixBaseUrl, 'edit'),
+        createActionSheetButton('orgchart.removeGroup', this.imgixBaseUrl, 'trash'),
       ] : []),
-      createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'),
+      createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'),
     ];
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();

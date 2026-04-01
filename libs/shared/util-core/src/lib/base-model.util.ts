@@ -72,7 +72,7 @@ export function addIndexElement(index: string, key: string, value: string | numb
       case 'accepted':
         return 'checkbox-circle';
       case 'declined':
-        return 'close_cancel_circle';
+        return 'cancel';
       default:
         return 'help-circle';
     }

@@ -57,7 +57,7 @@ import { TaskStore } from './task.store';
             type="text"
             [autoGrow]="true">
           </ion-textarea>
-          <ion-icon slot="end" src="{{'close_cancel' | svgIcon }}" (click)="clear(bkTaskName)" />
+          <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(bkTaskName)" />
         </ion-item>
       }
 

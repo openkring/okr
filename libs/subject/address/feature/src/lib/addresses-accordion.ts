@@ -56,7 +56,7 @@ import { AddressStore } from "./addresses.store";
                   <ion-icon src="{{ 'cc-circle' | svgIcon }}" />
                 }
                 @if(address.isValidated) {
-                  <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" />
+                  <ion-icon src="{{ 'shield' | svgIcon }}" />
                 }
                 <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
                 <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
@@ -129,12 +129,12 @@ export class AddressesAccordionComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
     if (hasRole('admin', this.currentUser()) && !this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('address.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('address.delete', this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('address.copy', this.imgixBaseUrl, 'copy'));
     actionSheetOptions.buttons.push(createActionSheetButton('address.view', this.imgixBaseUrl, 'eye-on'));
     if (!this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('address.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('address.edit', this.imgixBaseUrl, 'edit'));
     }
     switch(address.addressChannel) {
       case 'bankaccount':
@@ -157,7 +157,7 @@ export class AddressesAccordionComponent {
         actionSheetOptions.buttons.push(createActionSheetButton('address.web.open', this.imgixBaseUrl, 'link'));
         break;
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

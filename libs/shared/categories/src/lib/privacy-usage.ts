@@ -15,7 +15,7 @@ export const PrivacyUsages: PrivacyUsageCategory[] = [
       abbreviation: 'RESTR',
       name: 'restricted',
       i18nBase: 'auth.privacyUsage.restricted',
-      icon: 'shield-checkmark'
+      icon: 'shield'
   },
   {
       id: PrivacyUsage.Protected,

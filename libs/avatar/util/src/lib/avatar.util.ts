@@ -45,7 +45,7 @@ export function getDefaultIcon(modelType: string): string {
     case 'org':
       return OrgModelName;
     case 'account':
-      return 'bank_account';
+      return 'bank';
     case 'resource': 
       return 'resource';
     default:

@@ -108,7 +108,7 @@ import { RagStore } from './rag-section.store';
                         <!-- Clear chat history -->
                         @if (ragStore.hasHistory()) {
                             <ion-button fill="clear" (click)="ragStore.reset()">
-                                <ion-icon slot="icon-only" src="{{ 'close_cancel' | svgIcon }}" />
+                                <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" />
                             </ion-button>
                         }
 
@@ -131,7 +131,7 @@ import { RagStore } from './rag-section.store';
                                         <ion-note>{{ doc.mimeType }}</ion-note>
                                     </ion-label>
                                     <ion-button slot="end" fill="clear" color="danger" (click)="ragStore.deleteDocument(doc)">
-                                        <ion-icon slot="icon-only" src="{{ 'trash_delete' | svgIcon }}" />
+                                        <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />
                                     </ion-button>
                                 </ion-item>
                             }

@@ -30,7 +30,7 @@ import { SearchbarComponent } from './searchbar.component';
           <ion-buttons slot="end">
             @if(shouldShowCloseButton()) {
               <ion-button (click)="back()">
-                <ion-icon slot="icon-only" src="{{'close_cancel_circle' | svgIcon }}" />
+                <ion-icon slot="icon-only" src="{{'cancel' | svgIcon }}" />
               </ion-button>
             }
             @if(shouldShowOkButton()) {

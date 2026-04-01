@@ -182,16 +182,16 @@ export class WorkrelListComponent {
     private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, workRel: WorkrelModel): void {
       if (hasRole('registered', this.currentUser())) {
         actionSheetOptions.buttons.push(createActionSheetButton('workrel.view', this.imgixBaseUrl, 'eye-on'));
-        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
       }
       if (!(this.readOnly())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('workrel.edit', this.imgixBaseUrl, 'create_edit'));
+        actionSheetOptions.buttons.push(createActionSheetButton('workrel.edit', this.imgixBaseUrl, 'edit'));
         if (isOngoing(workRel.validTo)) {
           actionSheetOptions.buttons.push(createActionSheetButton('workrel.end', this.imgixBaseUrl, 'stop-circle'));
         }
       }
       if (hasRole('admin', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('workrel.delete', this.imgixBaseUrl, 'trash_delete'));
+        actionSheetOptions.buttons.push(createActionSheetButton('workrel.delete', this.imgixBaseUrl, 'trash'));
       }
       if (actionSheetOptions.buttons.length === 1) { // only cancel button
         actionSheetOptions.buttons = [];

@@ -113,9 +113,9 @@ export class NewsSectionComponent implements OnInit {
       actionSheetOptions.buttons.push(createActionSheetButton('news.view', this.imgixBaseUrl, 'eye-on'));
     }
     if (hasRole('eventAdmin', this.currentUser()) || hasRole('privileged', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('news.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('news.edit', this.imgixBaseUrl, 'edit'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) actionSheetOptions.buttons = [];
   }
 

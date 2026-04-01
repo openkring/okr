@@ -117,19 +117,19 @@ export class InviteesAccordionComponent {
         actionSheetOptions.buttons.push(createActionSheetButton('invitation.accept', this.imgixBaseUrl, 'checkmark'));
       }
       if (invitation.state !== 'declined') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.decline', this.imgixBaseUrl, 'close_cancel'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.decline', this.imgixBaseUrl, 'cancel'));
       }
       if (invitation.state !== 'maybe') {
         actionSheetOptions.buttons.push(createActionSheetButton('invitation.maybe', this.imgixBaseUrl, 'help'));
       }
     }
     if (!this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('invitation.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('invitation.edit', this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.currentUser()) && !this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('invitation.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('invitation.delete', this.imgixBaseUrl, 'trash'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
   }
 
   /**

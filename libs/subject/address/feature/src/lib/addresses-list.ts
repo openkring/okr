@@ -82,7 +82,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                 <ion-label>
                   <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
                   @if(address.isCc) { <ion-icon src="{{ 'cc-circle' | svgIcon }}" /> }
-                  @if(address.isValidated) { <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" /> }
+                  @if(address.isValidated) { <ion-icon src="{{ 'shield' | svgIcon }}" /> }
                   <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
                   <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
                   {{ address | formatAddress }}
@@ -110,7 +110,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                         <ion-label class="addresses">
                           <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
                           @if(address.isCc) { <ion-icon src="{{ 'cc-circle' | svgIcon }}" /> }
-                          @if(address.isValidated) { <ion-icon src="{{ 'shield-checkmark' | svgIcon }}" /> }
+                          @if(address.isValidated) { <ion-icon src="{{ 'shield' | svgIcon }}" /> }
                           <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
                           <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
                           {{ address | formatAddress }}
@@ -230,8 +230,8 @@ export class AddressesList {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
     if (!hasRole('admin', this.currentUser())) return;
-    actionSheetOptions.buttons.push(createActionSheetButton('address.edit', this.imgixBaseUrl, 'create_edit'));
-    actionSheetOptions.buttons.push(createActionSheetButton('subject.edit', this.imgixBaseUrl, 'create_edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('address.edit', this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('subject.edit', this.imgixBaseUrl, 'edit'));
     actionSheetOptions.buttons.push(createActionSheetButton('address.copy', this.imgixBaseUrl, 'copy'));
     switch(address.addressChannel) {
       case 'bankaccount':
@@ -261,8 +261,8 @@ export class AddressesList {
         actionSheetOptions.buttons.push(createActionSheetButton('address.web.open', this.imgixBaseUrl, 'link'));
         break;
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('address.delete', this.imgixBaseUrl, 'trash_delete'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('address.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

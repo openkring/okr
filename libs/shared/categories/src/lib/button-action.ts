@@ -29,14 +29,14 @@ export const ButtonActions: ButtonActionCategory[] = [
     abbreviation: 'ZOOM',
     name: 'zoom',
     i18nBase: 'categories.buttonAction.zoom',
-    icon: 'move_zoom'
+    icon: 'zoom'
   },
   {
     id: ButtonAction.None,
     abbreviation: 'NONE',
     name: 'none',
     i18nBase: 'categories.buttonAction.none',
-    icon: 'close_cancel'
+    icon: 'cancel'
   },
     {
     id: ButtonAction.Notify,

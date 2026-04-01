@@ -65,7 +65,7 @@ import { getIndexOfMetaTag } from '@bk2/shared-util-core';
                     <ion-reorder slot="start" />
                     <ion-label>{{ metaTag.name }}</ion-label>
                     <ion-label>{{ metaTag.content }}</ion-label>
-                    <ion-icon src="{{'close_cancel_circle' | svgIcon }}" (click)="remove(metaTag.name)" slot="end" />
+                    <ion-icon src="{{'cancel' | svgIcon }}" (click)="remove(metaTag.name)" slot="end" />
                   </ion-item>
                 }
               </ion-reorder-group>

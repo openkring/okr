@@ -151,13 +151,13 @@ export class RowingBoatListComponent {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, boat: ResourceModel): void {
     if (hasRole('registered', this.resourceListStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('rboat.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     }
     if (hasRole('resourceAdmin', this.resourceListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('rboat.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('rboat.edit', this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.resourceListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('rboat.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('rboat.delete', this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];

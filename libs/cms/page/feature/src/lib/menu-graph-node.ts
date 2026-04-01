@@ -92,7 +92,7 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
 
         <!-- Edit button -->
         <ion-button fill="clear" size="small" class="edit-btn" (click)="nodeEdit.emit(node())">
-          <ion-icon slot="icon-only" src="{{ 'create_edit' | svgIcon }}" />
+          <ion-icon slot="icon-only" src="{{ 'edit' | svgIcon }}" />
         </ion-button>
       </div>
 

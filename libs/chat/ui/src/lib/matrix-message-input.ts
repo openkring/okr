@@ -156,7 +156,7 @@ import 'emoji-picker-element';
             <div class="reply-text">{{ replyToMessage()?.body }}</div>
           </div>
           <ion-button fill="clear" size="small" (click)="cancelReply()">
-            <ion-icon slot="icon-only" src="{{'close_cancel' | svgIcon}}"></ion-icon>
+            <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
           </ion-button>
         </div>
       }
@@ -217,7 +217,7 @@ import 'emoji-picker-element';
     @if (isRecording()) {
       <div class="recording-container">
         <ion-button fill="clear" class="action-button" color="medium" (click)="cancelRecording()">
-          <ion-icon slot="icon-only" src="{{'close_cancel' | svgIcon}}"></ion-icon>
+          <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
         </ion-button>
         <div class="recording-indicator">
           <span class="recording-dot"></span>
@@ -386,7 +386,7 @@ export class MatrixMessageInput {
     actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.image', this.imgixBaseUrl, 'image'));
     actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.file', this.imgixBaseUrl, 'document'));
     actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.position', this.imgixBaseUrl, 'location'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

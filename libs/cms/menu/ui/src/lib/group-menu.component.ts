@@ -40,7 +40,7 @@ content uses normal context menu of content-page
                 <ion-label>Sektionen sortieren</ion-label>
               </ion-item>
               <ion-item button (click)="popoverController.dismiss('editSection')">
-                <ion-icon slot="start" src="{{'create_edit' | svgIcon }}" color="primary" />
+                <ion-icon slot="start" src="{{'edit' | svgIcon }}" color="primary" />
                 <ion-label>Sektion ändern</ion-label>
               </ion-item>
             } -->

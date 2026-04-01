@@ -361,7 +361,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
                     <ion-title>Thread</ion-title>
                     <ion-buttons slot="end">
                       <ion-button (click)="onCloseThread()">
-                        <ion-icon src="{{'close_cancel' | svgIcon}}"></ion-icon>
+                        <ion-icon src="{{'cancel' | svgIcon}}"></ion-icon>
                       </ion-button>
                     </ion-buttons>
                   </ion-toolbar>
@@ -412,7 +412,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
                   <ion-icon slot="icon-only" src="{{'video' | svgIcon}}"></ion-icon>
                 </ion-button>
                 <ion-button class="call-fab" color="danger" (click)="hangupCall()">
-                  <ion-icon slot="icon-only" src="{{'close_cancel' | svgIcon}}"></ion-icon>
+                  <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
                 </ion-button>
               </div>
             } @else {
@@ -421,7 +421,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
               }
               <div class="call-controls">
                 <ion-button class="call-fab" color="danger" (click)="hangupCall()">
-                  <ion-icon slot="icon-only" src="{{'close_cancel' | svgIcon}}"></ion-icon>
+                  <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
                 </ion-button>
               </div>
             }

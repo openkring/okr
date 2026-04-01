@@ -74,7 +74,7 @@ import { DEFAULT_TAGS } from '@bk2/shared-constants';
       <ion-list lines="full">
         @for(key of filteredKeys(); track $index) {
           <ion-item class="ion-text-wrap" (click)="showActions(key)">
-            <ion-icon slot="start" src="{{ 'resource_key' | svgIcon }}" />
+            <ion-icon slot="start" src="{{ 'key' | svgIcon }}" />
             <ion-label>{{ key.name }}</ion-label>
             <ion-label>{{ key.description }}</ion-label>
           </ion-item>
@@ -144,13 +144,13 @@ export class KeyListComponent {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, key: ResourceModel): void {
     if (hasRole('registered', this.resourceListStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('key.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('key.edit', this.imgixBaseUrl, 'create_edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('key.edit', this.imgixBaseUrl, 'edit'));
     }
     if (hasRole('admin', this.resourceListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('key.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('key.delete', this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];

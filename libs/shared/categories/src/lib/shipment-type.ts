@@ -10,7 +10,7 @@ export const ShipmentTypes: ShipmentTypeCategory[] = [
         abbreviation: 'LETTER',
         name: 'letter',
         i18nBase: 'delivery.shipment.type.letter',
-        icon: 'create_edit',
+        icon: 'edit',
         xsltTemplateUrl: ''
     },
     {

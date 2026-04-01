@@ -37,6 +37,6 @@ export const PersonSortCriterias: PersonSortCriteriaCategory[] = [
     abbreviation: 'KEY',
     name: 'bkey',
     i18nBase: 'categories.sortCriteria.key',
-    icon: 'resource_key'
+    icon: 'key'
   }
 ]

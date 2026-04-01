@@ -148,9 +148,9 @@ export class TasksSectionComponent implements OnInit {
         actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.imgixBaseUrl, 'eye-on'));
     }
     if (hasRole('eventAdmin', this.currentUser()) || hasRole('privileged', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.imgixBaseUrl, 'create_edit'));
+        actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.imgixBaseUrl, 'edit'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

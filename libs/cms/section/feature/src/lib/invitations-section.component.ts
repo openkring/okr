@@ -161,9 +161,9 @@ export class InvitationsSectionComponent implements OnInit {
         actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
       }
       if (inv.state !== 'declined') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribe', this.imgixBaseUrl, 'close_cancel_circle'));
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribe', this.imgixBaseUrl, 'cancel'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
       if (actionSheetOptions.buttons.length === 1) { // only cancel button
         actionSheetOptions.buttons = [];
       }

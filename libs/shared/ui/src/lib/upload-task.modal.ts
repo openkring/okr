@@ -4,7 +4,6 @@ import {
   IonContent, IonIcon, IonItem, IonLabel, IonList, IonProgressBar, ModalController
 } from '@ionic/angular/standalone';
 import { UploadTask, getDownloadURL } from 'firebase/storage';
-import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 
 import { uploadToFirebaseStorage } from '@bk2/shared-config';
 import { error } from '@bk2/shared-util-angular';
@@ -78,7 +77,7 @@ interface UploadState {
               } @else {
                 <div class="progress-row">
                   <ion-progress-bar value="0" color="danger" />
-                  <ion-icon class="status-icon status-error" slot="end" src="{{'close_cancel_circle' | svgIcon }}" />
+                  <ion-icon class="status-icon status-error" slot="end" src="{{'cancel' | svgIcon }}" />
                 </div>
               }
             </ion-label>

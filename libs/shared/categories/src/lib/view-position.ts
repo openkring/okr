@@ -8,7 +8,7 @@ export const ViewPositions: ViewPositionCategory[] = [
         abbreviation: 'NONE',
         name: 'none',
         i18nBase: 'categories.view-position.none',
-        icon: 'close_cancel'
+        icon: 'cancel'
     },
     {
         id: ViewPosition.Top,
@@ -48,7 +48,7 @@ export const HorizontalPositions: HorizontalPositionCategory[] = [
       abbreviation: 'NONE',
       name: 'none',
       i18nBase: 'categories.view-position.none',
-      icon: 'close_cancel'
+      icon: 'cancel'
   },
   {
       id: HorizontalPosition.Left,
@@ -74,7 +74,7 @@ export const VerticalPositions: VerticalPositionCategory[] = [
       abbreviation: 'NONE',
       name: 'none',
       i18nBase: 'categories.view-position.none',
-      icon: 'close_cancel'
+      icon: 'cancel'
   },
   {
       id: VerticalPosition.Top,

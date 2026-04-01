@@ -51,7 +51,7 @@ import { ChipSelectModalComponent } from './chip-select.modal';
               @for (chip of selectedChips(); track $index) {
                 <ion-chip color="primary">
                   <ion-button fill="clear" (click)="removeChip(chip)">
-                    <ion-icon src="{{'close_cancel_circle' | svgIcon }}" slot="start" [style.color]="'primary'" />
+                    <ion-icon src="{{'cancel' | svgIcon }}" slot="start" [style.color]="'primary'" />
                     <ion-label>{{ chip | translate | async }}</ion-label>
                   </ion-button>
                 </ion-chip>

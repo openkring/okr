@@ -143,11 +143,11 @@ export class UserListComponent {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, user: UserModel): void {
     if (hasRole('privileged', this.userListStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('user.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'close_cancel'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     }
     if (hasRole('admin', this.userListStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.imgixBaseUrl, 'create_edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.imgixBaseUrl, 'trash_delete'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.imgixBaseUrl, 'trash'));
     }
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];

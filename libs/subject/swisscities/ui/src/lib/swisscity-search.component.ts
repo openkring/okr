@@ -31,7 +31,7 @@ import { SwissCitiesSearchStore } from './swisscity-search.store';
             <ion-title>Ort suchen</ion-title>
             <ion-buttons slot="end">
               <ion-button (click)="isPopoverOpen.set(false)">
-                <ion-icon slot="icon-only" src="{{'close_cancel_circle' | svgIcon }}" />
+                <ion-icon slot="icon-only" src="{{'cancel' | svgIcon }}" />
               </ion-button>
             </ion-buttons>
           </ion-toolbar>

@@ -38,7 +38,7 @@ import { SliderSectionComponent } from './slider-section.component';
         <ion-title>{{ title() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="close()">
-            <ion-icon slot="icon-only" src="{{'close_cancel' | svgIcon }}" />
+            <ion-icon slot="icon-only" src="{{'cancel' | svgIcon }}" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>

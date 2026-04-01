@@ -45,7 +45,7 @@ import { EditorToolbar } from './editor-toolbar.component';
           <ion-item lines="none">
             @if (isClearable()) {
               <ion-button fill="clear" (click)="content.set('<p></p>')">
-                <ion-icon slot="start" src="{{'close_cancel' | svgIcon }}" />
+                <ion-icon slot="start" src="{{'cancel' | svgIcon }}" />
                 {{ '@general.operation.deleteContent' | translate | async }}
               </ion-button>
             }

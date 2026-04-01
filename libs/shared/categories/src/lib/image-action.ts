@@ -15,7 +15,7 @@ export const ImageActions: ImageActionCategory[] = [
     abbreviation: 'ZOOM',
     name: 'zoom',
     i18nBase: 'categories.imageAction.zoom',
-    icon: 'move_zoom'
+    icon: 'zoom'
   },
   {
     id: ImageActionType.OpenSlider,
@@ -43,6 +43,6 @@ export const ImageActions: ImageActionCategory[] = [
     abbreviation: 'NONE',
     name: 'none',
     i18nBase: 'categories.imageAction.none',
-    icon: 'close_cancel'
+    icon: 'cancel'
   }
 ]

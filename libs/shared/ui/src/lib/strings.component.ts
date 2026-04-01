@@ -78,12 +78,12 @@ import { coerceBoolean } from '@bk2/shared-util-core';
                   <ion-item>
                     <ion-reorder slot="start" />
                     <ion-label>{{ text }}</ion-label>
-                    <ion-icon src="{{'close_cancel_circle' | svgIcon }}" (click)="remove($index)" slot="end" />
+                    <ion-icon src="{{'cancel' | svgIcon }}" (click)="remove($index)" slot="end" />
                     @if (isCopyable()) {
                       <ion-icon slot="end" src="{{'copy' | svgIcon }}" (click)="copy(text)" />
                     }
                     @if (isEditable()) {
-                      <ion-icon slot="end" src="{{'create_edit' | svgIcon }}" (click)="edit(text, $index)" />
+                      <ion-icon slot="end" src="{{'edit' | svgIcon }}" (click)="edit(text, $index)" />
                     }
                   </ion-item>
                 }

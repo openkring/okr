@@ -18,7 +18,7 @@ import { ChipSelectModalComponent } from './chip-select.modal';
   template: `
   @if (selectedTag()) {
     <ion-button (click)="remove()" fill="clear">
-      <ion-icon src="{{'close_cancel_circle' | svgIcon }}" />
+      <ion-icon src="{{'cancel' | svgIcon }}" />
       <ion-label>{{ selectedTag() | translate | async }}</ion-label>
     </ion-button>
   } @else {

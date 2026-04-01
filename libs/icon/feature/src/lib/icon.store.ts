@@ -16,7 +16,7 @@ import { buildIconModel, buildIconModelFromStorage, getIconStoragePath } from '@
 
 import { IconEditModalComponent } from './icon-edit.modal';
 
-export const ICON_SETS = ['filetypes', 'general', 'icons', 'ionic', 'models', 'section', 'sport', 'weather'];
+export const ICON_SETS = ['filetypes', 'general', 'icons', 'models', 'section'];
 
 export type IconState = {
   selectedDir: string;
@@ -25,7 +25,7 @@ export type IconState = {
 };
 
 const initialState: IconState = {
-  selectedDir: '',
+  selectedDir: 'icons',
   searchTerm: '',
   selectedTag: ''
 };
@@ -41,7 +41,9 @@ export const IconStore = signalStore(
   })),
   withProps((store) => ({
     iconsResource: rxResource({
-      params: () => ({ currentUser: store.appStore.currentUser() }),
+      params: () => ({ 
+        currentUser: store.appStore.currentUser() 
+      }),
       stream: ({ params }) =>
         store.iconService.list().pipe(
           debugListLoaded<IconModel>('IconStore.iconsResource', params.currentUser)
@@ -61,6 +63,7 @@ export const IconStore = signalStore(
     filteredIcons: computed(() => {
       return state.icons().filter((icon: IconModel) => 
         nameMatches(icon.index, state.searchTerm()) && 
+        nameMatches(icon.type, state.selectedDir()) &&
         chipMatches(icon.tags, state.selectedTag()))      
     }),
     iconsCount: computed(() => state.iconsResource.value()?.length ?? 0),
@@ -181,8 +184,7 @@ export const IconStore = signalStore(
                 metadata.size,
                 updatedDate
               );
-              console.log(icon);
-            //  await store.iconService.create(icon, currentUser);
+              await store.iconService.create(icon, currentUser, '');
               created++;
             })
           );
