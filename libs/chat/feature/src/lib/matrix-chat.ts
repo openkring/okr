@@ -331,6 +331,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
 
                 <!-- Message Input -->
                 <bk-matrix-message-input
+                  [roomId]="currentRoomId()"
                   [typingUsers]="typingUsers()"
                   [replyToMessage]="replyToMessage()"
                   (messageSent)="onMessageSent($event)"

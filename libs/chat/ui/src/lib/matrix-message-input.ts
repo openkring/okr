@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
@@ -7,6 +7,7 @@ import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { AppStore } from '@bk2/shared-feature';
 import 'emoji-picker-element';
+import { ButtonCopyComponent } from '@bk2/shared-ui';
 
 @Component({
   selector: 'bk-matrix-message-input',
@@ -14,7 +15,7 @@ import 'emoji-picker-element';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
-    CommonModule, FormsModule,
+    CommonModule, FormsModule, ButtonCopyComponent,
     IonTextarea, IonButton, IonIcon
   ],
   styles: [`
@@ -184,6 +185,12 @@ import 'emoji-picker-element';
           <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon}}"></ion-icon>
         </ion-button>
 
+        <ion-button fill="clear" (click)="clearValue()">
+          <ion-icon src="{{'cancel' | svgIcon }}" />
+        </ion-button>
+
+        <bk-button-copy [value]="messageText()" />
+
         <div class="emoji-picker-wrapper">
           <ion-button fill="clear" class="action-button" (click)="toggleEmojiPicker($event)">
             <ion-icon slot="icon-only" src="{{'smiley' | svgIcon}}"></ion-icon>
@@ -238,6 +245,7 @@ export class MatrixMessageInput {
   private appStore = inject(AppStore);
 
   disabled = input<boolean>(false);
+  roomId = input<string | undefined>(undefined);
   typingUsers = input<string[]>([]);
   replyToMessage = input<any>();
   fileAccept = input<string>('*/*');
@@ -249,9 +257,39 @@ export class MatrixMessageInput {
   typing = output<boolean>();
   cancelReplyClicked = output<void>();
 
-  messageText = signal<string>('');
+  protected messageText = signal<string>('');
   showEmojiPicker = signal<boolean>(false);
   private typingTimeout: any;
+
+  private draftKey = computed(() => this.roomId() ? `chat-draft:${this.roomId()}` : undefined);
+
+  constructor() {
+    // Restore draft when roomId changes
+    effect(() => {
+      const key = this.draftKey();
+      const draft = key ? (localStorage.getItem(key) ?? '') : '';
+      this.messageText.set(draft);
+    });
+
+    // Attach cursor tracking directly to the native textarea inside ion-textarea's shadow DOM
+    afterNextRender(() => {
+      const getNative = () => this.textInput()?.nativeElement?.querySelector('textarea') as HTMLTextAreaElement | null;
+      const save = () => {
+        const ta = getNative();
+        if (ta) this.savedCursorPos = ta.selectionStart;
+      };
+      // ion-textarea renders async; poll briefly until the native element appears
+      const interval = setInterval(() => {
+        const ta = getNative();
+        if (ta) {
+          clearInterval(interval);
+          ta.addEventListener('keyup', save);
+          ta.addEventListener('mouseup', save);
+          ta.addEventListener('touchend', save);
+        }
+      }, 50);
+    });
+  }
 
   textInput = viewChild<ElementRef>('textInput');
   fileInputRef = viewChild<ElementRef>('fileInput');
@@ -261,6 +299,8 @@ export class MatrixMessageInput {
   // ─── recording state ──────────────────────────────────────────────────────
   isRecording = signal(false);
   recordingSeconds = signal(0);
+
+  private savedCursorPos: number | null = null;
 
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
@@ -276,6 +316,8 @@ export class MatrixMessageInput {
       this.messageSent.emit(text);
       this.messageText.set('');
       this.typing.emit(false);
+      const key = this.draftKey();
+      if (key) localStorage.removeItem(key);
     }
   }
 
@@ -289,6 +331,10 @@ export class MatrixMessageInput {
   }
 
   onTyping() {
+    // Persist draft
+    const key = this.draftKey();
+    if (key) localStorage.setItem(key, this.messageText());
+
     // Emit typing notification
     this.typing.emit(true);
 
@@ -467,6 +513,7 @@ export class MatrixMessageInput {
     }
   }
 
+
   onEmojiClick(event: Event): void {
     const detail = (event as CustomEvent).detail;
     const emoji: string = detail?.unicode ?? detail?.emoji?.unicode ?? '';
@@ -474,8 +521,8 @@ export class MatrixMessageInput {
 
     const textarea = this.textInput()?.nativeElement?.querySelector('textarea') as HTMLTextAreaElement | null;
     if (textarea) {
-      const start = textarea.selectionStart ?? this.messageText().length;
-      const end = textarea.selectionEnd ?? start;
+      const start = this.savedCursorPos ?? this.messageText().length;
+      const end = start;
       const current = this.messageText();
       this.messageText.set(current.slice(0, start) + emoji + current.slice(end));
       // Restore cursor position after Angular updates the DOM
@@ -483,10 +530,15 @@ export class MatrixMessageInput {
         const pos = start + emoji.length;
         textarea.setSelectionRange(pos, pos);
         textarea.focus();
+        this.savedCursorPos = null;
       }, 0);
     } else {
       this.messageText.update(t => t + emoji);
     }
     this.showEmojiPicker.set(false);
+  }
+
+  clearValue(): void {
+    this.messageText.set('');
   }
 }
