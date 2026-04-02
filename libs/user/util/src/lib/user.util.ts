@@ -14,13 +14,9 @@ import { UserPrivacyFormModel } from './user-privacy-form.model';
  */
 export function flattenRoles(roles: Roles): string {
   const flattenedRoles = Object.keys(roles);
-  console.log('role keys (string[])=', flattenedRoles);
   const filteredRoles = flattenedRoles.filter(role => {
-    console.log('role.' + role + ' = ' + roles[role as keyof Roles]);
     return roles[role as keyof Roles] === true;
   });
-  console.log('filtered roles (string[])=', filteredRoles);
-  console.log('joined roles (string)=', filteredRoles.join(','));
   return filteredRoles.join(',');
 }
 
@@ -87,6 +83,21 @@ export function convertUserToPrivacyForm(user: UserModel): UserPrivacyFormModel 
     usageName: user.usageName ?? 1,
     srvEmail: user.srvEmail ?? true,
   };
+}
+
+export function convertFormsToUser(
+  authForm: UserAuthFormModel, 
+  displayForm: UserDisplayFormModel,
+  modelForm: UserModelFormModel,
+  notificationForm: UserNotificationFormModel,
+  privacyForm: UserPrivacyFormModel,
+  user?: UserModel
+): UserModel {
+  user = convertAuthFormToUser(authForm, user);
+  user = convertDisplayFormToUser(displayForm, user);
+  user = convertModelFormToUser(modelForm, user);
+  user = convertNotificationFormToUser(notificationForm, user);
+  return convertPrivacyFormToUser(privacyForm, user);
 }
 
 export function convertAuthFormToUser(vm: UserAuthFormModel, user?: UserModel): UserModel {

@@ -1,16 +1,17 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { ModalController } from '@ionic/angular/standalone';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { ExportFormat, UserCollection, UserModel } from '@bk2/shared-models';
-import { AppNavigationService, exportXlsx, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, generateRandomString, getDataRow, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { exportXlsx } from '@bk2/shared-util-angular';
+import { chipMatches, generateRandomString, getDataRow, getSystemQuery, isUser, nameMatches } from '@bk2/shared-util-core';
 import { ExportFormats } from '@bk2/shared-categories';
 
 import { UserService } from '@bk2/user-data-access';
+import { UserEditModal } from './user-edit.modal';
 
 export type UserListState = {
   searchTerm: string;
@@ -26,8 +27,7 @@ export const UserListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     userService: inject(UserService),
-    appNavigationService: inject(AppNavigationService),
-    router: inject(Router),
+    modalController: inject(ModalController),
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService)
   })),
@@ -57,7 +57,10 @@ export const UserListStore = signalStore(
     return {
       reset() {
         patchState(store, initialState);
-        store.userResource.reload();
+      },
+
+      reload() {
+        store.userResource.reload()
       },
       
       /******************************** setters (filter) ******************************************* */
@@ -82,9 +85,23 @@ export const UserListStore = signalStore(
       },
 
       async edit(user: UserModel, readOnly = true): Promise<void> {
-        store.appNavigationService.pushLink('/user/all' );
-        await navigateByUrl(store.router, `/user/${user.bkey}`, { readOnly } );
-        store.userResource.reload();
+        const modal = await store.modalController.create({
+          component: UserEditModal,
+          componentProps: {
+            user,
+            readOnly
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data) {
+          if (isUser(data, store.appStore.tenantId())) {
+            await store.userService.update(data, store.currentUser(), '');
+          }
+        }
+        //store.appNavigationService.pushLink('/user/all' );
+        //await navigateByUrl(store.router, `/user/${user.bkey}`, { readOnly } );
+        this.reload();
       },
 
       async delete(user: UserModel, readOnly = true): Promise<void> {
