@@ -41,8 +41,9 @@ export const NewsStore = signalStore(
             if (!page?.sections?.length) return of([] as ArticleSection[]);
 
             // 2. Load each section document in parallel
+            const { tenantId } = params;
             const sectionObs = page.sections.map(sectionKey =>
-              store.appStore.firestoreService.readModel<SectionModel>(SectionCollection, sectionKey)
+              store.appStore.firestoreService.readModel<SectionModel>(SectionCollection, sectionKey.replace('@TID@', tenantId))
             );
             return combineLatest(sectionObs);
           }),
