@@ -749,6 +749,7 @@ export const _MembershipStore = signalStore(
         }
       },
 
+      // persons, orgs, active, applied, passive, cancelled, deceased, entries, exits, all, memberships
       async copyEmailAddresses(listId: string, readOnly = true): Promise<void> {
         if (!readOnly) {
           const persons = store.appStore.allPersons();

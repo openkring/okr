@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName } from '@bk2/shared-models';
+import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe, RellogPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -40,7 +40,7 @@ import { SIZE_SM } from '@bk2/shared-constants';
         } @else {
           <ion-title>{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ '@membership.list.header.titleRel' | translate | async }} {{ orgName() }}</ion-title>
         }
-        @if(hasRole('privileged') || hasRole('memberAdmin')) {
+        @if(canChange()) {
           <ion-buttons slot="end">
             <ion-button [id]="popupId">
               <ion-icon slot="icon-only" [src]="'menu' | svgIcon" />
@@ -92,50 +92,26 @@ import { SIZE_SM } from '@bk2/shared-constants';
     @if(isLoading()) {
       <bk-spinner />
     } @else {
-      @if(listId() === 'groups') {
-        @if(filteredMemberships().length === 0) {
-          <bk-empty-list message="@membership.field.empty" />
-        } @else {
-          <ion-list lines="inset">
-            @for(membership of filteredMemberships(); track membership.bkey) {
-                <ion-item (click)="showActions(membership)">
-                  <ion-avatar slot="start">
-                    <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
-                  </ion-avatar>
-                  <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>
-                  @if(view() === 'mcat') {
-                    <ion-label class="ion-hide-sm-down">{{membership.relLog | rellog}}</ion-label>
-                  }
-                  @if(view() === 'contact') {
-                    <ion-label>{{ getPhone(membership) }}</ion-label>
-                    <ion-label class="ion-hide-md-down">{{ getEmail(membership) }}</ion-label>
-                  }
-                </ion-item>
-            }
-          </ion-list>
-        }
+      @if(filteredMemberships().length === 0) {
+        <bk-empty-list message="@membership.field.empty" />
       } @else {
-        @if(filteredMemberships().length === 0) {
-          <bk-empty-list message="@membership.field.empty" />
-        } @else {
-          <ion-list lines="inset">
-            @for(membership of filteredMemberships(); track membership.bkey) {
-                <ion-item (click)="showActions(membership)">
-                  <ion-avatar slot="start">
-                    <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
-                  </ion-avatar>
-                  <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>
-                  @if(view() === 'mcat') {
-                    <ion-label class="ion-hide-sm-down">{{membership.relLog | rellog}}</ion-label>
-                  }
-                  @if(view() === 'contact') {
-                    <ion-label>{{ getPhone(membership) }}</ion-label>
-                    <ion-label class="ion-hide-md-down">{{ getEmail(membership) }}</ion-label>
-                  }
-                </ion-item>
-            }
-          </ion-list>
-        }
+        <ion-list lines="inset">
+          @for(membership of filteredMemberships(); track membership.bkey) {
+            <ion-item (click)="showActions(membership)">
+              <ion-avatar slot="start">
+                <ion-img src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
+              </ion-avatar>
+              <ion-label>{{membership.memberName1 | fullName:membership.memberName2:nameDisplay()}}</ion-label>
+              @if(view() === 'mcat') {
+                <ion-label class="ion-hide-sm-down">{{membership.relLog | rellog}}</ion-label>
+              }
+              @if(view() === 'contact') {
+                <ion-label>{{ getPhone(membership) }}</ion-label>
+                <ion-label class="ion-hide-md-down">{{ getEmail(membership) }}</ion-label>
+              }
+            </ion-item>
+          }
+        </ion-list>
       }
     }
   </ion-content>
@@ -147,7 +123,8 @@ export class MembershipListComponent {
   private cdr = inject(ChangeDetectorRef);
 
   // inputs
-  public listId = input.required<string>();
+  // persons, orgs, active, applied, passive, cancelled, deceased, entries, exits, all, memberships
+  public listId = input.required<string>(); 
   public orgId = input.required<string>();
   public group = input<GroupModel | undefined>(undefined);
   public contextMenuName = input.required<string>();
@@ -169,6 +146,7 @@ export class MembershipListComponent {
   protected orgTypes = computed(() => this.membershipStore.orgTypes());
   protected readonly popupId = crypto.randomUUID();
   protected orgName = computed(() => this.membershipStore.orgName());
+  protected admin = computed(() => this.group()?.admin);
   protected tags = computed(() => {
     if (typeof window !== 'undefined' && window.innerWidth < SIZE_SM) return ''; // only show types on desktop, on mobile there is not enough space
     return this.hasYearFilter() ? '' : this.membershipStore.getTags();
@@ -180,7 +158,7 @@ export class MembershipListComponent {
   protected years = computed(() => this.hasYearFilter() ? getYearList() : undefined);
   protected currentUser = computed(() => this.membershipStore.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
-  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
+  protected readOnly = computed(() => !this.canChange());
   protected selectedType = linkedSignal(() => {
     return this.listId() === 'orgs' ? this.membershipStore.selectedOrgType() : this.membershipStore.selectedGender();
   });
@@ -325,34 +303,33 @@ export class MembershipListComponent {
    * @param membership 
    */
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): Promise<void> {
-    if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
-      if (await this.membershipStore.isPersonUser(membership.memberKey)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.chat', this.imgixBaseUrl, 'chatbubbles'));
-      }
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-      if (this.membershipStore.getEmail(membership)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.imgixBaseUrl, 'copy'));
-        actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.imgixBaseUrl, 'email'));
-      }
-      if (this.membershipStore.getPhone(membership)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.imgixBaseUrl, 'copy'));
-        //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
-        actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.imgixBaseUrl, 'tel'));
-      }
-    }
-    if (!this.readOnly()) {
+    if (this.canChange()) {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
       if (isOngoing(membership.dateOfExit)) {
         actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
         actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'mcatchange'));
       }
+    } else { // registered
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
     }
-    if (hasRole('admin', this.currentUser())) {
+    if (await this.membershipStore.isPersonUser(membership.memberKey)) {
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.chat', this.imgixBaseUrl, 'chatbubbles'));
+    }
+    if (this.membershipStore.getEmail(membership)) {
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.imgixBaseUrl, 'email'));
+    }
+    if (this.membershipStore.getPhone(membership)) {
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.imgixBaseUrl, 'copy'));
+      //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.imgixBaseUrl, 'tel'));
+    }
+    if (this.canDelete()) {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
     }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }
@@ -425,5 +402,33 @@ export class MembershipListComponent {
 
   protected isOngoing(membership: MembershipModel): boolean {
     return isOngoing(membership.dateOfExit);
+  }
+
+  /**
+   * Check whether the current user is allowed to make changes on the data.
+   * @returns true if the current user is allowed to make changes
+   */
+  protected canChange(): boolean {
+    if (this.view() === 'group') {
+      if (hasRole('privileged', this.currentUser())) return true;
+      if (hasRole('memberAdmin', this.currentUser())) return true;
+      if (this.admin()?.key === this.currentUser()?.personKey) return true;
+    } else { // normal membership list
+      if (hasRole('memberAdmin', this.currentUser())) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check whether the current user is allowed to delete data.
+   * @returns true if the current user is allowed to delete
+   */
+  protected canDelete(): boolean {
+    if (hasRole('admin', this.currentUser())) return true;
+    if (hasRole('memberAdmin', this.currentUser())) return true;
+    if (this.view() === 'group') {
+      if (this.admin()?.key === this.currentUser()?.personKey) return true;
+    }
+    return false;
   }
 }
