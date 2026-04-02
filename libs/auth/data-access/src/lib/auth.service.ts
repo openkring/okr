@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { ToastController } from '@ionic/angular';
 import { browserLocalPersistence, confirmPasswordReset, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut, verifyPasswordResetCode } from 'firebase/auth';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -8,8 +7,9 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { AUTH, ENV } from '@bk2/shared-config';
 import { bkTranslate } from '@bk2/shared-i18n';
 import { AuthCredentials } from '@bk2/shared-models';
-import { navigateByUrl, showToast } from '@bk2/shared-util-angular';
+import { confirm, navigateByUrl, showToast } from '@bk2/shared-util-angular';
 import { die, warn } from '@bk2/shared-util-core';
+import { AlertController, ToastController } from '@ionic/angular/standalone';
 
 /**
  * This provider centralizes the authentication functions
@@ -32,6 +32,7 @@ export class AuthService {
   private readonly auth = inject(AUTH);
   private readonly env = inject(ENV);
   private readonly toastController = inject(ToastController);
+  private readonly alertController = inject(AlertController);
   private readonly router = inject(Router);
 
   /*-------------------------- login / logout / password reset --------------------------------*/
@@ -112,15 +113,18 @@ export class AuthService {
   }
 
   public async logout(): Promise<boolean> {
-    try {
-      await signOut(this.auth);
-      await showToast(this.toastController, '@auth.operation.logout.confirmation');
-      return Promise.resolve(true);
-    } catch (ex) {
-      console.error('AuthService.logout: error: ', ex);
-      await showToast(this.toastController, '@auth.operation.logout.error');
-      return Promise.resolve(false);
+    const result = await confirm(this.alertController, '@content.menuItem.action.logout.confirm', true);
+    if (result === true) {
+      try {
+        await signOut(this.auth);
+        await showToast(this.toastController, '@auth.operation.logout.confirmation');
+        return true;
+      } catch (ex) {
+        console.error('AuthService.logout: error: ', ex);
+        await showToast(this.toastController, '@auth.operation.logout.error');
+      }
     }
+    return false;
   }
 
   /*-------------------------- helpers --------------------------------*/
