@@ -7,9 +7,9 @@ import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
+import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
 import { confirm, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getSystemQuery, getTodayStr, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
 import { DEFAULT_KEY, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
 import { GroupService } from '@bk2/subject-group-data-access';
@@ -163,7 +163,19 @@ export const GroupStore = signalStore(
     async add(readOnly = true): Promise<void> {
       if (readOnly) return;
       const newGroup = new GroupModel(store.tenantId());
-      await this.edit(newGroup, readOnly, true);
+      const currentUser = store.currentUser();
+      if (currentUser) {
+        const avatar = getAvatarInfoForCurrentUser(currentUser);
+        if (avatar) {
+          newGroup.admin = avatar;
+          newGroup.mainContact = avatar;
+        }
+        await this.edit(newGroup, readOnly, true);
+        const currentPerson = store.appStore.getPerson(currentUser.personKey);
+        if (currentPerson) {
+          this.addMember(currentPerson);
+        }
+      }
     },
 
     async edit(group?: GroupModel, readOnly = true, isNew = false): Promise<void> {
@@ -183,6 +195,7 @@ export const GroupStore = signalStore(
       if (role === 'confirm' && data && !readOnly) {
         if (isGroup(data, store.tenantId())) {
           if (isNew) {
+            data.bkey = data.name;
           // bkey is user-defined. Therefore, we need to check for duplicates when creating a new group.
             const existingGroup = store.groups()?.find((g: GroupModel) => g.bkey === data.bkey);
             if (existingGroup) {
@@ -194,9 +207,10 @@ export const GroupStore = signalStore(
               await alert.present();
               return;
             }
-            data.filesFolder = data.hasFiles ? data.bkey : '';
-            data.albumFolder = data.hasAlbum ? 'a_' + data.bkey : '';
+            data.filesFolder = data.hasFiles ? `f_${data.bkey}` : '';
+            data.albumFolder = data.hasAlbum ? `a_${data.bkey}` : '';
             await store.groupService.create(data, store.currentUser());
+            this.setGroupKey(data.bkey);
 
             // create default calendar segment
             await this.createGroupCalendar(data);
@@ -364,42 +378,56 @@ export const GroupStore = signalStore(
     },
 
     /******************************* members *************************************** */
-    async addMember(): Promise<void> {
-      console.log('GroupStore.addMember: Not implemented yet');
-      const modal = await store.modalController.create({
-        component: PersonSelectModalComponent,
-        cssClass: 'list-modal',
-        componentProps: {
-          selectedTag: '',
-          currentUser: store.currentUser()
+    async addMember(person?: PersonModel): Promise<void> {
+      let membership: MembershipModel | undefined;
+      const group = store.group();
+      if (group) {
+        if (person) {
+          membership = createMembership(group, person, store.tenantId());
+        } else {
+          const modal = await store.modalController.create({
+            component: PersonSelectModalComponent,
+            cssClass: 'list-modal',
+            componentProps: {
+              selectedTag: '',
+              currentUser: store.currentUser()
+            }
+          });
+          modal.present();
+          const { data, role } = await modal.onWillDismiss();
+          if (role === 'confirm') {
+            if (isPerson(data, store.tenantId())) {
+              membership = createMembership(group, data, store.tenantId());
+            }
+          }
         }
-      });
-      modal.present();
-      const { data, role } = await modal.onWillDismiss();
-      if (role === 'confirm') {
-        if (isPerson(data, store.tenantId())) {
-          const membership = new MembershipModel(store.tenantId());
-          membership.memberKey = data.bkey;
-          membership.memberName1 = data.firstName;
-          membership.memberName2 = data.lastName;
-          membership.memberModelType = 'person';
-          membership.memberType = data.gender;
-          membership.memberDateOfBirth = data.dateOfBirth;
-          membership.memberDateOfDeath = data.dateOfDeath;
-          membership.memberZipCode = data.favZipCode;
-          membership.memberBexioId = data.bexioId;
-          membership.orgKey = store.groupKey() ?? DEFAULT_KEY;
-          membership.orgName = store.group()?.name ?? DEFAULT_NAME;
-          membership.orgModelType = 'group';
-          membership.dateOfEntry = getTodayStr();
-          membership.dateOfExit = END_FUTURE_DATE_STR;
-          membership.index = getMembershipIndex(membership);
-          membership.order = 1; // default priority for the first membership
-          membership.relIsLast = true; // this is the last membership of this person in
-          debugData(`GroupStore.addMember: new membership: `, membership, store.currentUser());
+        debugData(`GroupStore.addMember: new membership: `, membership, store.currentUser());
+        if (membership) {
           store.membershipService.create(membership, store.appStore.currentUser());
         }
       }
     },
   }))
 );
+
+function createMembership(group: GroupModel, person: PersonModel, tenantId: string): MembershipModel {
+  const membership = new MembershipModel(tenantId);
+  membership.memberKey = person.bkey;
+  membership.memberName1 = person.firstName;
+  membership.memberName2 = person.lastName;
+  membership.memberModelType = 'person';
+  membership.memberType = person.gender;
+  membership.memberDateOfBirth = person.dateOfBirth;
+  membership.memberDateOfDeath = person.dateOfDeath;
+  membership.memberZipCode = person.favZipCode;
+  membership.memberBexioId = person.bexioId;
+  membership.orgKey = group.bkey ?? DEFAULT_KEY;
+  membership.orgName = group.name ?? DEFAULT_NAME;
+  membership.orgModelType = 'group';
+  membership.dateOfEntry = getTodayStr();
+  membership.dateOfExit = END_FUTURE_DATE_STR;
+  membership.index = getMembershipIndex(membership);
+  membership.order = 1; // default priority for the first membership
+  membership.relIsLast = true; // this is the last membership of this person in
+  return membership;
+}

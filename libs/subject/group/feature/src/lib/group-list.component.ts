@@ -116,7 +116,7 @@ export class GroupListComponent {
   protected isLoading = computed(() => this.groupStore.isLoading());
   protected tags = computed(() => this.groupStore.getTags());
   private currentUser = computed(() => this.groupStore.currentUser());
-  protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
+  protected readOnly = computed(() => !this.canChange());
   protected popupId = computed(() => 'c_groups_' + generateRandomString(5));
 
   private imgixBaseUrl = this.groupStore.appStore.env.services.imgixBaseUrl;
@@ -208,5 +208,11 @@ export class GroupListComponent {
   /******************************** helpers ******************************************* */
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.groupStore.currentUser());
+  }
+
+  protected canChange(): boolean {
+    if (hasRole('memberAdmin', this.currentUser())) return true;
+    if (hasRole('privileged', this.currentUser())) return true;
+    return false;
   }
 }
