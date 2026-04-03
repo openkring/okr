@@ -56,7 +56,16 @@ export const CalendarStore = signalStore(
           map(invitations => invitations.filter(inv => inv.inviteeKey === personKey))
         );
       }
-    })
+    }),
+
+    calendarsResource: rxResource({
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        return store.appStore.firestoreService.searchData<CalendarModel>(CalendarCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
+      }
+    }),
   })),
   
   // returns all calendars that belong to orgs of the current user
@@ -84,6 +93,13 @@ export const CalendarStore = signalStore(
       }
     })
   })),
+
+  withComputed((state) => {
+    return {
+      calendarsOfCurrentUser: computed(() => state.calendarsForCurrentUserResource.value() ?? []),
+      allCalendars: computed(() => state.calendarsResource.value() ?? []),
+    }
+  }),
 
   withProps((store) => ({
       caleventsResource: rxResource({

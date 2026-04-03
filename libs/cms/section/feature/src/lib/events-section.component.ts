@@ -8,9 +8,9 @@ import { MoreButton, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/
 import { debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe, WeekdayPipe } from '@bk2/shared-pipes';
+import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { CalendarStore } from './calendar-section.store';
-import { TranslatePipe } from '@bk2/shared-i18n';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
 
@@ -90,7 +90,6 @@ export class EventsSectionComponent implements OnInit {
   protected readonly showEventLocation = computed(() => this.config()?.showEventLocation ?? false);
   protected readonly calevents = computed(() => this.calendarStore.calevents());
   private currentUser = computed(() => this.calendarStore.appStore.currentUser());
-  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
 
   protected isLoading = computed(() => false);
   //protected filteredEvents = computed(() => this.eventsStore.filteredEvents());
@@ -151,32 +150,38 @@ export class EventsSectionComponent implements OnInit {
    * @param calevent 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
-    if (hasRole('registered', this.currentUser())) {
-      if (calevent.isOpen) {
-        const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
-        if (state !== 'accepted') {
+/*     if (this.canChange(calevent)) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.imgixBaseUrl, 'add'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.imgixBaseUrl, 'person-add'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash'));
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.imgixBaseUrl, 'eye-on'));
+    } */
+    if (calevent.isOpen) {
+      const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
+      if (state !== 'accepted') {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
+      }
+      if (state !== 'declined') {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.imgixBaseUrl, 'cancel'));
+      }
+    } else {  // invitation
+      // get invitation for current user
+      const inv = this.calendarStore.invitations().find(inv => inv.caleventKey === calevent.bkey);
+      if (inv) {
+        if (inv.state !== 'accepted') {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
         }
-        if (state !== 'declined') {
+        if (inv.state !== 'declined') {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.imgixBaseUrl, 'cancel'));
         }
-      } else {  // invitation
-        // get invitation for current user
-        const inv = this.calendarStore.invitations().find(inv => inv.caleventKey === calevent.bkey);
-        if (inv) {
-          if (inv.state !== 'accepted') {
-            actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
-          }
-          if (inv.state !== 'declined') {
-            actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.imgixBaseUrl, 'cancel'));
-          }
-        }
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.imgixBaseUrl, 'calendar-number'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-      if (actionSheetOptions.buttons.length === 1) { // only cancel button
-        actionSheetOptions.buttons = [];
-      }
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.imgixBaseUrl, 'calendar-number'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
     }
   }
 
@@ -192,6 +197,23 @@ export class EventsSectionComponent implements OnInit {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
+/*         case 'calevent.delete':
+          await this.store.delete(calEvent, this.canChange(calEvent));
+          break;
+        case 'calevent.edit': {
+          const targetDate = calEvent.startDate;
+          await this.store.edit(calEvent, false, this.canChange(calEvent), false, isGrid);
+          break;
+        }
+        case 'calevent.view':
+          await this.store.edit(calEvent, false, true);
+          break;
+        case 'calevent.inviteGroup':
+          await this.store.inviteGroupMembers(calEvent, this.canChange(calEvent));
+          break;
+        case 'calevent.invitePerson':
+          await this.store.invitePerson(calEvent, this.canChange(calEvent));
+          break; */
         case 'calevent.subscribe':
           await this.calendarStore.subscribe(calEvent);
           break;
@@ -208,5 +230,40 @@ export class EventsSectionComponent implements OnInit {
   protected async download(key: string): Promise<void> {
     const url = `${ICS_FUNCTION_URL}?calendar=e:${key}`;
     await Browser.open({ url, windowName: '_blank' });
+  }
+
+  /**
+   * CalendarEvents may be created, changed or deleted by the following users:
+   * - user has role eventAdmin or privileged
+   * - user is responsiblePerson of the calevent
+   * - if calevent is part of a group calendar: user is admin or mainContact of that group
+   * @param calevent 
+   * @returns 
+   */
+  protected canChange(calevent?: CalEventModel): boolean {
+    // 1) general roles
+    if (hasRole('eventAdmin', this.currentUser())) return true;
+    if (hasRole('privileged', this.currentUser())) return true;
+
+    const personKey = this.currentUser()?.personKey;
+    if (!personKey) return false;
+
+    // 2) group calendar: check if currentUser is admin or mainContact of the owning group
+    if (calevent) {
+      const allCalendars = this.calendarStore.allCalendars();
+      for (const calKey of calevent.calendars) {
+        const cal = allCalendars.find(c => c.bkey === calKey);
+        if (cal?.owner?.startsWith('group.')) {
+          const groupKey = cal.owner.substring(6);
+          const group = this.calendarStore.appStore.getGroup(groupKey);
+          if (group?.admin?.key === personKey || group?.mainContact?.key === personKey) return true;
+        }
+      }
+    }
+
+    // 3) responsible person on the calevent
+    if (calevent?.responsiblePersons?.some(p => p.key === personKey)) return true;
+
+    return false;
   }
 }
