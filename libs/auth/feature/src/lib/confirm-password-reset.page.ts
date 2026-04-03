@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonInput, IonItem, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
+import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
 import { HeaderComponent } from '@bk2/shared-ui';
@@ -9,14 +9,18 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 import { ToastController } from '@ionic/angular/standalone';
 
 import { AuthService } from '@bk2/auth-data-access';
+import { LoginForm } from '@bk2/auth-ui';
+import { AuthCredentials } from '@bk2/shared-models';
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'bk-confirm-password-reset-page',
   standalone: true,
   imports: [
-    HeaderComponent,
-    IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol,
-    IonItem, IonInput, IonButton, IonText,
+    TranslatePipe, AsyncPipe,
+    HeaderComponent, LoginForm,
+    IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton, IonText,
   ],
   styles: `
     .background-image { filter: blur(8px); -webkit-filter: blur(8px); position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; z-index: 1; }
@@ -36,21 +40,27 @@ import { AuthService } from '@bk2/auth-data-access';
     <bk-header title="@auth.operation.pwdconfirm.title" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
-        <img class="background-image" [src]="backgroundImageUrl()" alt="Background Image" />
+        <img class="background-image" [src]="backgroundImageUrl()" alt="Ruderer des Seeclub Stäfa" />
         <div class="login-form">
-          <ion-img class="logo" [src]="logoUrl()" alt="logo" />
-          <ion-label class="title"><strong>Neues Passwort festlegen</strong></ion-label>
+          <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
+          <ion-label class="title"><strong>{{'@user.auth.pwdreset.newpwd' | translate | async}}</strong></ion-label>
 
           @if (invalidCode()) {
             <ion-text color="danger">
-              <p>Dieser Link ist ungültig oder bereits abgelaufen. Bitte fordere einen neuen Reset-Link an.</p>
+              <p>{{'@user.auth.pwdreset.invalidLink' | translate | async}}</p>
             </ion-text>
           } @else if (success()) {
             <ion-text color="success">
-              <p>Passwort erfolgreich geändert. Du wirst zur Anmeldeseite weitergeleitet.</p>
+              <p>{{'@user.auth.pwdreset.success' | translate | async}}</p>
             </ion-text>
           } @else {
-            <ion-item>
+            <bk-login-form
+              [(vm)]="currentCredentials"
+              context="password"
+              (validChange)="onValidChange($event)"
+            />
+
+<!--             <ion-item>
               <ion-input
                 type="password"
                 label="Neues Passwort"
@@ -71,13 +81,13 @@ import { AuthService } from '@bk2/auth-data-access';
             </ion-item>
             @if (mismatch()) {
               <ion-text color="danger"><p>Die Passwörter stimmen nicht überein.</p></ion-text>
-            }
+            } -->
             <div class="button-container">
               <ion-grid>
                 <ion-row>
                   <ion-col>
-                    <ion-button expand="block" [disabled]="!canSubmit()" (click)="confirm()">
-                      Passwort speichern
+                    <ion-button expand="block" [disabled]="!formIsValid()" (click)="confirm()">
+                      {{'@user.auth.pwdreset.savepwd' | translate | async}}
                     </ion-button>
                   </ion-col>
                 </ion-row>
@@ -96,35 +106,52 @@ export class ConfirmPasswordResetPage {
   private readonly appStore = inject(AppStore);
   private readonly toastController = inject(ToastController);
 
-  public logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
-  public backgroundImageUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`);
-
+  // inputs
   private readonly oobCode = this.route.snapshot.queryParamMap.get('oobCode') ?? '';
   private readonly continueUrl = this.route.snapshot.queryParamMap.get('continueUrl') ?? '/auth/login';
 
-  protected password = signal('');
-  protected passwordConfirm = signal('');
+  // computed
+  public logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
+  public backgroundImageUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`);
+
+  // signals
+  protected formIsValid = signal(false);
+  public currentCredentials = signal<AuthCredentials>({
+    loginEmail: '',
+    loginPassword: '',
+  });
+//  protected password = signal('');
+//  protected passwordConfirm = signal('');
   protected success = signal(false);
   protected invalidCode = signal(!this.oobCode);
 
-  protected mismatch = computed(() =>
+/*   protected mismatch = computed(() =>
     this.passwordConfirm().length > 0 && this.password() !== this.passwordConfirm()
-  );
+  ); */
 
-  protected canSubmit = computed(() =>
+/*   protected canSubmit = computed(() =>
     this.password().length >= 6 &&
     this.password() === this.passwordConfirm() &&
     !!this.oobCode
-  );
+  ); */
 
+  // methods
   public async confirm(): Promise<void> {
-    const email = await this.authService.confirmPasswordReset(this.oobCode, this.password());
+    const email = await this.authService.confirmPasswordReset(this.oobCode, this.currentCredentials().loginPassword);
     if (email) {
       this.success.set(true);
       await showToast(this.toastController, `Passwort für ${email} wurde geändert.`);
-      setTimeout(() => navigateByUrl(this.router, this.continueUrl), 2000);
+      navigateByUrl(this.router, this.continueUrl);
     } else {
       this.invalidCode.set(true);
     }
+  }
+
+  public async gotoHome(): Promise<void> {
+    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
+  }
+
+  protected onValidChange(isValid: boolean): void {
+    this.formIsValid.set(isValid);
   }
 }

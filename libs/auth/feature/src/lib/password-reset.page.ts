@@ -1,9 +1,8 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { EMAIL_LENGTH } from '@bk2/shared-constants';
 import { AppStore } from '@bk2/shared-feature';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { HeaderComponent } from '@bk2/shared-ui';
@@ -12,14 +11,14 @@ import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 import { AuthCredentials } from '@bk2/shared-models';
 
 import { AuthService } from '@bk2/auth-data-access';
-import { PwdResetForm } from '@bk2/auth-ui';
+import { LoginForm } from '@bk2/auth-ui';
 
 @Component({
   selector: 'bk-password-reset-page',
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, 
-    HeaderComponent, PwdResetForm,
+    HeaderComponent, LoginForm,
     IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton
   ],
   styles: `
@@ -40,11 +39,11 @@ import { PwdResetForm } from '@bk2/auth-ui';
     <bk-header title="@auth.operation.pwdreset.title" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
-        <img class="background-image" [src]="backgroundImageUrl()" alt="Background Image" />
+        <img class="background-image" [src]="backgroundImageUrl()" alt="Ruderer des Seeclub Stäfa" />
         <div class="login-form">
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()"></ion-img>
           <ion-label class="title"><strong>{{ '@auth.operation.pwdreset.title' | translate | async }}</strong></ion-label>
-          <bk-pwdreset-form [(vm)]="currentCredentials" (validChange)="onValidChange($event)" />
+          <bk-login-form [(vm)]="currentCredentials" context="email" (validChange)="onValidChange($event)" />
           <div class="button-container">
             <ion-grid>
               <ion-row>
@@ -64,6 +63,7 @@ import { PwdResetForm } from '@bk2/auth-ui';
 })
 export class PasswordResetPageComponent {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
   private readonly appStore = inject(AppStore);
 
@@ -72,14 +72,9 @@ export class PasswordResetPageComponent {
 
   protected formIsValid = signal(false);
   public currentCredentials = signal<AuthCredentials>({
-    loginEmail: '',
+    loginEmail: this.route.snapshot.queryParamMap.get('email') ?? '',
     loginPassword: '',
   });
-  protected maxLength = EMAIL_LENGTH;
-
-  protected onValidChange(isValid: boolean): void {
-    this.formIsValid.set(isValid);
-  }
 
   /**
    * If the form is valid it will call the AuthData service to reset the user's password displaying a loading
@@ -97,5 +92,9 @@ export class PasswordResetPageComponent {
    */
   public async gotoHome(): Promise<void> {
     await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
+  }
+
+  protected onValidChange(isValid: boolean): void {
+    this.formIsValid.set(isValid);
   }
 }

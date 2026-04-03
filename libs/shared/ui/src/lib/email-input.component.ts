@@ -44,7 +44,7 @@ import { ButtonCopyComponent } from './button-copy.component';
   </ion-item>
   @if(shouldShowHelper()) {
     <ion-item lines="none" class="helper" [button]="false">
-      <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
+      <ion-note>{{helper() | translate | async}}</ion-note>
     </ion-item>
   }
   `
@@ -57,6 +57,7 @@ export class EmailInputComponent {
   public maxLength = input(EMAIL_LENGTH); // max number of characters allowed
   public copyable = input(true); // if true, a button to copy the value of the input field is shown
   public showHelper = input(false); // helper text to be shown below the input field
+  public helperText = input<string>();
   public clearInput = input(true); // show an icon to clear the input field
   public autocomplete = input('email'); // autocomplete value for the input field
   public autofocus = input(false); // if true, the input field is focused on component initialization
@@ -69,6 +70,7 @@ export class EmailInputComponent {
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   protected shouldShowClearInput = computed(() => coerceBoolean(this.clearInput()));
+  protected helper = computed(() => this.helperText() ?? '@input.' + this.name() + '.helper');
 
   /**
    * sets focus into the search input field

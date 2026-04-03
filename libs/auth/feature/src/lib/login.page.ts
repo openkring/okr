@@ -11,12 +11,12 @@ import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 
 import { AuthService } from '@bk2/auth-data-access';
-import { LoginFormComponent } from '@bk2/auth-ui';
+import { LoginForm } from '@bk2/auth-ui';
 
 @Component({
   selector: 'bk-login-page',
   standalone: true,
-  imports: [TranslatePipe, AsyncPipe, HeaderComponent, LoginFormComponent, IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton],
+  imports: [TranslatePipe, AsyncPipe, HeaderComponent, LoginForm, IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton],
   styles: `
   .background-image { filter: blur(8px); -webkit-filter: blur(8px); position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; z-index: 1;}
   .title { text-align: center; font-size: 2rem; padding: 20px; }
@@ -35,11 +35,11 @@ import { LoginFormComponent } from '@bk2/auth-ui';
     <bk-header title="@auth.operation.login.title" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
-        <img class="background-image" [src]="backgroundImageUrl()" alt="Background" />
+        <img class="background-image" [src]="backgroundImageUrl()" alt="Ruderer des Seeclub Stäfa" />
         <div class="login-form">
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
           <ion-label class="title"><strong>{{ '@auth.operation.login.title' | translate | async }}</strong></ion-label>
-          <bk-login-form [(vm)]="currentCredentials" (validChange)="onValidChange($event)" />
+          <bk-login-form [(vm)]="currentCredentials" context="login" (validChange)="onValidChange($event)" />
           <div class="button-container">
             <ion-grid>
               <ion-row>
@@ -64,21 +64,26 @@ export class LoginPageComponent {
   protected readonly appStore = inject(AppStore);
   protected readonly authService = inject(AuthService);
 
+  // inputs
+
+  // computed
   public logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
   public backgroundImageUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().welcomeBannerUrl)}`);
 
+  // signals
   protected formIsValid = signal(false);
   public currentCredentials = signal<AuthCredentials>({
     loginEmail: '',
     loginPassword: '',
   });
 
+  // methods
   public async resetPassword(): Promise<void> {
-    await navigateByUrl(this.router, this.appStore.appConfig().passwordResetUrl);
-  }
-
-  public async gotoHome(): Promise<void> {
-    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
+    const email = this.currentCredentials().loginEmail;
+    const url = email
+      ? `${this.appStore.appConfig().passwordResetUrl}?email=${encodeURIComponent(email)}`
+      : this.appStore.appConfig().passwordResetUrl;
+    await navigateByUrl(this.router, url);
   }
 
   /**
@@ -86,6 +91,10 @@ export class LoginPageComponent {
    */
   public async login(): Promise<void> {
     this.authService.login(this.currentCredentials(), this.appStore.appConfig().rootUrl, this.appStore.appConfig().loginUrl);
+  }
+
+  public async gotoHome(): Promise<void> {
+    await navigateByUrl(this.router, this.appStore.appConfig().rootUrl);
   }
 
   protected onValidChange(isValid: boolean): void {

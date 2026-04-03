@@ -8,14 +8,14 @@ import { AuthCredentials } from '@bk2/shared-models';
 import { HeaderComponent } from '@bk2/shared-ui';
 
 import { AuthService } from '@bk2/auth-data-access';
-import { LoginFormComponent } from '@bk2/auth-ui';
+import { LoginForm } from '@bk2/auth-ui';
 
 @Component({
   selector: 'bk-login-modal',
   standalone: true,
   imports: [
      TranslatePipe, AsyncPipe, 
-    HeaderComponent, LoginFormComponent,
+    HeaderComponent, LoginForm,
     IonContent, IonButton, IonItem
   ],
   template: `

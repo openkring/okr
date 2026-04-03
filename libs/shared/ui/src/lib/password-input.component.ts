@@ -29,10 +29,11 @@ import { ButtonCopyComponent } from './button-copy.component';
   template: `
     <ion-item lines="none" [button]="false">
       @if(mask(); as mask) {
-        <ion-input (ionInput)="onPasswordChange($event)"
+        <ion-input
           type="password"
-          [name]="name()" 
+          [name]="name()"
           [ngModel]="value()"
+          (ngModelChange)="value.set($event)"
           labelPlacement="floating"
           label="{{'@input.' + name() + '.label' | translate | async }}"
           placeholder="{{'@input.' + name() + '.placeholder' | translate | async }}"
@@ -53,7 +54,7 @@ import { ButtonCopyComponent } from './button-copy.component';
     </ion-item>
     @if(shouldShowHelper()) {
       <ion-item lines="none" class="helper" [button]="false">
-        <ion-note>{{'@input.' + name() + '.helper' | translate | async}}</ion-note>
+        <ion-note>{{ helper() | translate | async }}</ion-note>
       </ion-item>
     }
   `
@@ -66,18 +67,17 @@ export class PasswordInputComponent {
   public clearInput = input(true); // show an icon to clear the input field
   public copyable = input(true); // if true, a button to copy the value of the input field is shown
   public showHelper = input(false);
+  public helperText = input<string>();
   public inputMode = input<InputMode>('text'); // A hint to the browser for which keyboard to display.
 
   // coerced boolean inputs
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
+  protected helper = computed(() => this.helperText() ?? '@input.' + this.name() + '.helper');
 
   // usefull masks: lowercaseWordMask, uppercaseWordMask, caseInsensitiveWordMask, passwordMask
   public mask = input<MaskitoOptions>(PasswordMask);
   readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as HTMLIonInputElement).getInputElement();
 
-  protected onPasswordChange(event: CustomEvent): void {
-    this.value.set(event.detail.value);
-  }
 }
