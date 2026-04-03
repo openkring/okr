@@ -76,7 +76,7 @@ import { Browser } from '@capacitor/browser';
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
           <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calevent.plural' | translate | async }}</ion-title>
-          @if(!readOnly()) {
+          @if(canChange()) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
                 <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
@@ -94,7 +94,7 @@ import { Browser } from '@capacitor/browser';
       }
 
       <!-- quick entry -->
-      @if(!readOnly() && expertMode()) {
+      @if(canChange() && expertMode()) {
         <ion-item lines="none">
           <ion-textarea #bkQuickEntry 
             (keyup.enter)="quickEntry(bkQuickEntry)"
@@ -210,7 +210,6 @@ export class CalEventListComponent implements OnInit {
   protected popupId = computed(() => `c_calevent_${this.listId}`);
   protected types = computed(() => this.store.appStore.getCategory('calevent_type'));
   private currentUser = computed(() => this.store.appStore.currentUser());
-  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
   protected isListView = linkedSignal(() => this.view() === 'list');
   protected expertMode = computed(() => this.hasRole('admin'));
@@ -369,7 +368,7 @@ export class CalEventListComponent implements OnInit {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.store.add(this.readOnly()); break;
+      case 'add':  await this.store.add(this.canChange(), undefined, undefined, !this.isListView()); break;
       case 'exportRaw': await this.store.export("raw"); break;
       case 'exportIcs': 
         const cal =  this.store.calendar();
@@ -401,16 +400,13 @@ export class CalEventListComponent implements OnInit {
    * @param calEvent 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): void {
-    if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.imgixBaseUrl, 'eye-on'));
-    }
-    if (!this.readOnly()) {
+    if (this.canChange(calEvent)) {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.imgixBaseUrl, 'add'));
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.imgixBaseUrl, 'person-add'));
-    }
-    if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash'));
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -420,6 +416,8 @@ export class CalEventListComponent implements OnInit {
 
   /**
    * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
+   * Permissions:
+   * - eventAdmin, responsibles, if group-calendar: admin/mainContact: add, edit, delete
    * @param actionSheetOptions 
    * @param calEvent 
    */
@@ -431,22 +429,23 @@ export class CalEventListComponent implements OnInit {
       if (!data) return;
       switch (data.action) {
         case 'calevent.delete':
-          await this.store.delete(calEvent, this.readOnly());
+          await this.store.delete(calEvent, this.canChange(calEvent));
           break;
         case 'calevent.edit': {
+          const isGrid = !this.isListView();
           const targetDate = calEvent.startDate;
-          await this.store.edit(calEvent, false, this.readOnly());
-          this.navigateCalendarTo(targetDate);
+          await this.store.edit(calEvent, false, this.canChange(calEvent), false, isGrid);
+          if (isGrid) this.navigateCalendarTo(targetDate);
           break;
         }
         case 'calevent.view':
           await this.store.edit(calEvent, false, true);
           break;
         case 'calevent.inviteGroup':
-          await this.store.inviteGroupMembers(calEvent, this.readOnly());
+          await this.store.inviteGroupMembers(calEvent, this.canChange(calEvent));
           break;
         case 'calevent.invitePerson':
-          await this.store.invitePerson(calEvent, this.readOnly());
+          await this.store.invitePerson(calEvent, this.canChange(calEvent));
           break;
       }
     }
@@ -485,39 +484,38 @@ export class CalEventListComponent implements OnInit {
     this.lastClickDateStr = dateStr;
     this.lastClickTime = now;
 
-    if (!this.readOnly()) {
+    if (this.canChange()) {
       const startDate = format(arg.date as Date, DateFormat.StoreDate);
       const startTime = format(arg.date as Date, 'HH:mm');
-      await this.store.add(false, startDate, startTime);
+      await this.store.add(false, startDate, startTime, true);
       this.navigateCalendarTo(startDate);
     }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async onEventDrop(arg: any): Promise<void> {
-    if (this.readOnly()) { arg.revert(); return; }
+    if (!this.canChange()) { arg.revert(); return; }
     const eventKey = arg.event.extendedProps?.eventKey as string;
     if (!eventKey) { arg.revert(); return; }
     const calevent = this.filteredCalEvents().find(e => e.bkey === eventKey);
     if (!calevent) { arg.revert(); return; }
     const start = arg.event.start as Date;
     const updated: CalEventModel = { ...calevent, startDate: format(start, DateFormat.StoreDate), startTime: format(start, 'HH:mm') };
-    const saved = await this.store.edit(updated, false, false, true);
+    const saved = await this.store.update(updated, false);
     if (!saved) arg.revert();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async onEventResize(arg: any): Promise<void> {
-    if (this.readOnly()) { arg.revert(); return; }
     const eventKey = arg.event.extendedProps?.eventKey as string;
     if (!eventKey) { arg.revert(); return; }
     const calevent = this.filteredCalEvents().find(e => e.bkey === eventKey);
-    if (!calevent) { arg.revert(); return; }
+    if (!calevent || !this.canChange(calevent)) { arg.revert(); return; }
     const start = arg.event.start as Date;
     const end = arg.event.end as Date;
     const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
     const updated: CalEventModel = { ...calevent, startDate: format(start, DateFormat.StoreDate), startTime: format(start, 'HH:mm'), endDate: format(end, DateFormat.StoreDate), durationMinutes };
-    const saved = await this.store.edit(updated, false, false, true);
+    const saved = await this.store.update(updated, false);
     if (!saved) arg.revert();
   }
 
@@ -546,5 +544,40 @@ export class CalEventListComponent implements OnInit {
 
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  /**
+   * CalendarEvents may be created, changed or deleted by the following users:
+   * - user has role eventAdmin or privileged
+   * - user is responsiblePerson of the calevent
+   * - if calevent is part of a group calendar: user is admin or mainContact of that group
+   * @param calevent 
+   * @returns 
+   */
+  protected canChange(calevent?: CalEventModel): boolean {
+    // 1) general roles
+    if (this.hasRole('eventAdmin')) return true;
+    if (this.hasRole('privileged')) return true;
+
+    const personKey = this.currentUser()?.personKey;
+    if (!personKey) return false;
+
+    // 2) group calendar: check if currentUser is admin or mainContact of the owning group
+    if (calevent) {
+      const allCalendars = this.store.calendarsResource.value() ?? [];
+      for (const calKey of calevent.calendars) {
+        const cal = allCalendars.find(c => c.bkey === calKey);
+        if (cal?.owner?.startsWith('group.')) {
+          const groupKey = cal.owner.substring(6);
+          const group = this.store.appStore.getGroup(groupKey);
+          if (group?.admin?.key === personKey || group?.mainContact?.key === personKey) return true;
+        }
+      }
+    }
+
+    // 3) responsible person on the calevent
+    if (calevent?.responsiblePersons?.some(p => p.key === personKey)) return true;
+
+    return false;
   }
 }

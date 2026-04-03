@@ -127,6 +127,12 @@ export const CalEventStore = signalStore(
     })
   })),
 
+  withComputed((state) => {
+    return {
+      calendarsOfCurrentUser: computed(() => state.calendarsForCurrentUserResource.value() ?? []),
+    }
+  }),
+
   withProps((store) => ({
     caleventsResource: rxResource({
       params: () => ({
@@ -290,20 +296,20 @@ export const CalEventStore = signalStore(
       },
 
       /******************************* CRUD on single event  *************************************** */
-      async add(readOnly = true, startDate?: string, startTime?: string): Promise<void> {
+      async add(readOnly = true, startDate?: string, startTime?: string, skipReload = false): Promise<void> {
         if (readOnly) return;
         const newCalevent = new CalEventModel(store.tenantId());
         newCalevent.startDate = startDate ?? getTodayStr();
         newCalevent.startTime = startTime ?? '09:00';
         const cal = store.calendarName();
-        newCalevent.calendars = cal === 'all' || cal.startsWith('my') || cal.length === 0 ? [] : [cal];
+        newCalevent.calendars = cal === 'all' || cal.startsWith('my') || cal.length === 0 ? [store.tenantId()] : [cal];
         newCalevent.isOpen = store.calendar()?.defaultIsOpen ?? true;
         const untilDate = addMonths(new Date(), 3);
         newCalevent.repeatUntilDate = format(untilDate, DateFormat.StoreDate);
-        await this.edit(newCalevent, true, readOnly);
+        await this.edit(newCalevent, true, readOnly, false, skipReload);
       },
 
-      async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false): Promise<boolean> {
+      async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false, skipReload = false): Promise<boolean> {
         const modal = await store.modalController.create({
           component: CalEventEditModalComponent,
           componentProps: {
@@ -339,11 +345,27 @@ export const CalEventStore = signalStore(
                 }
               }
             }
-            this.reload();
+            if (!skipReload) this.reload();
             return true;
           }
         }
         return false;
+      },
+
+      async update(calevent: CalEventModel, readOnly = true): Promise<boolean> {
+        if (readOnly === true) return false;
+        if (calevent.periodicity === 'once') {
+          await store.calEventService.update(calevent, store.currentUser());
+        } else {  // series
+          const regressionType = await this.askForRegressionType();
+          if (!regressionType) return false;
+          if (regressionType === 'current') {
+            await this.decoupleEventFromSeries(calevent);
+          } else { // future or all
+            await this.updateEventSeries(calevent, regressionType);
+          }
+        }
+        return true;
       },
 
      async delete(calevent: CalEventModel, readOnly = true): Promise<void> {
