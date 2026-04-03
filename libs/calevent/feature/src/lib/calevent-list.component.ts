@@ -41,12 +41,29 @@ import { Browser } from '@capacitor/browser';
       ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
       ion-textarea { margin-top: 10px;}
       full-calendar { width: 100%; height: 800px;}
-      .fc-toolbar-title { font-size: 0.5em;}
+
+      :host ::ng-deep .fc-toolbar-title {
+        font-size: 0.9rem !important;
+        font-weight: 500;
+      }
+      :host ::ng-deep .fc-button-primary {
+        background-color: #5b9bd5 !important;
+        border-color: #5b9bd5 !important;
+        color: #fff !important;
+      }
+      :host ::ng-deep .fc-button-primary:hover {
+        background-color: #3a82c4 !important;
+        border-color: #3a82c4 !important;
+      }
+      :host ::ng-deep .fc-button-primary:not(:disabled).fc-button-active {
+        background-color: #1c65a8 !important;
+        border-color: #1c65a8 !important;
+      }
 
       @media (max-width: 600px) {
         :host ::ng-deep .fc-toolbar-title {
           display: none !important;
-        } 
+        }
       }
     `,
   ],
@@ -238,6 +255,30 @@ export class CalEventListComponent implements OnInit {
       right: 'dayGridMonth,timeGridWeek,timeGridDay'
     },
     locale: 'de',
+    buttonText: {
+      today: 'Heute',
+      month: 'Monat',
+      week: 'Woche',
+      day: 'Tag',
+    },
+    views: {
+      timeGridWeek: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        titleFormat: (args: any) => {
+          const p = (n: number) => String(n).padStart(2, '0');
+          const s = args.start, e = args.end ?? args.start;
+          return `${p(s.day)}.${p(s.month + 1)}–${p(e.day)}.${p(e.month + 1)}`;
+        },
+      },
+      timeGridDay: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        titleFormat: (args: any) => {
+          const p = (n: number) => String(n).padStart(2, '0');
+          const s = args.start;
+          return `${p(s.day)}.${p(s.month + 1)}.${s.year}`;
+        },
+      },
+    },
     firstDay: 1,
     height: 'auto',
     slotMinTime: '05:00:00',
