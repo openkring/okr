@@ -1,5 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, viewChild } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, OnInit, PLATFORM_ID, viewChild } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -166,7 +167,7 @@ import { Browser } from '@capacitor/browser';
   </ion-content>
     `
 })
-export class CalEventListComponent {
+export class CalEventListComponent implements OnInit {
   protected readonly store = inject(CalEventStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
@@ -256,8 +257,16 @@ export class CalEventListComponent {
   // passing constants to the template
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
+  private readonly platformId = inject(PLATFORM_ID);
+
   constructor() {
     effect(() => this.store.setCalendarName(this.listId()));
+  }
+
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+    }
   }
 
   /******************************** setters (filter) ******************************************* */
@@ -353,7 +362,6 @@ export class CalEventListComponent {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): void {
     if (hasRole('registered', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     }
     if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
@@ -362,6 +370,10 @@ export class CalEventListComponent {
     }
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
     }
   }
 
