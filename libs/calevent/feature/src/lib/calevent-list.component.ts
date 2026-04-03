@@ -392,9 +392,11 @@ export class CalEventListComponent implements OnInit {
         case 'calevent.delete':
           await this.store.delete(calEvent, this.readOnly());
           break;
-        case 'calevent.edit':
-          await this.store.edit(calEvent, false, this.readOnly());
+        case 'calevent.edit': {
+          const saved = await this.store.edit(calEvent, false, this.readOnly());
+          if (saved) this.navigateCalendarTo(calEvent.startDate);
           break;
+        }
         case 'calevent.view':
           await this.store.edit(calEvent, false, true);
           break;
@@ -422,7 +424,7 @@ export class CalEventListComponent implements OnInit {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected onDateClick(arg: any): void {
+  protected async onDateClick(arg: any): Promise<void> {
     const now = Date.now();
     const dateStr = arg.dateStr as string;
     const calApi = this.fullCalendar()?.getApi();
@@ -444,7 +446,8 @@ export class CalEventListComponent implements OnInit {
     if (!this.readOnly()) {
       const startDate = format(arg.date as Date, DateFormat.StoreDate);
       const startTime = format(arg.date as Date, 'HH:mm');
-      this.store.add(false, startDate, startTime);
+      await this.store.add(false, startDate, startTime);
+      this.navigateCalendarTo(startDate);
     }
   }
 
@@ -490,6 +493,14 @@ export class CalEventListComponent implements OnInit {
   }
 
   /******************************* helpers *************************************** */
+
+  /** Navigate the FullCalendar to the week containing the given storeDate (YYYYMMDD). */
+  private navigateCalendarTo(storeDate: string): void {
+    if (!storeDate || storeDate.length < 8) return;
+    const iso = `${storeDate.slice(0,4)}-${storeDate.slice(4,6)}-${storeDate.slice(6,8)}`;
+    setTimeout(() => this.fullCalendar()?.getApi()?.gotoDate(iso), 0);
+  }
+
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
   }
