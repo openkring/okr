@@ -309,6 +309,12 @@ export class CalEventListComponent implements OnInit {
     }
   }
 
+  ionViewDidEnter(): void {
+    if (!this.isListView()) {
+      setTimeout(() => this.fullCalendar()?.getApi()?.updateSize(), 50);
+    }
+  }
+
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
