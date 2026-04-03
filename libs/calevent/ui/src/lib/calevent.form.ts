@@ -44,12 +44,12 @@ import { calEventValidations } from '@bk2/calevent-util';
                 <bk-text-input name="seriesId" [value]="seriesId()" label="seriesId" [readOnly]="true" [copyable]="true" />
               </ion-col>
             </ion-row>
+          }
             <ion-row>
               <ion-col size="12">
                 <bk-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false"  [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
-          }
             <ion-row>
               <ion-col size="12">
                 <bk-text-input name="name" [value]="name()" (valueChange)="onFieldChange('name', $event)" [autofocus]="true" [readOnly]="isReadOnly()" /> 
