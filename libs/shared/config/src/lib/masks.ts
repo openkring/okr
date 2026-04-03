@@ -56,7 +56,7 @@ export const ChZipCodeMask: MaskitoOptions = {
 
 // passwordMask is used as default in bk-password-input
 export const PasswordMask: MaskitoOptions = {
-  mask: /^[a-zA-Z0-9-_!@?:;äüö$*+&()=]+$/,
+  mask: /^[a-zA-Z0-9-_!@?:;äüö$*+&()=.]+$/,
 };
 
 export const ChIbanMask: MaskitoOptions = {
