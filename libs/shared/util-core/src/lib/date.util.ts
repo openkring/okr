@@ -335,6 +335,23 @@ export function addDuration(storeDate: string, duration: Duration, dateFormat = 
 }
 
 /**
+ * Subtract number a duration to a given store date.
+ * see https://date-fns.org/v3.3.1/docs/sub
+ * 
+ * @param the date to subtract days from in dateFormat format
+ * @param duration the date-fns duration object, e.g. { days: 1} for one day (years, months, weeks, days, hours, minutes, seconds) 
+ * @param dateFormat the date format of the given date (default is StoreDate = YYYYMMDD), the function accepts a date in this format 
+ * and returns the new date in the same format.
+ * @returns a new storeDate with the subtracted days in dateFormat format
+ * example: to calculate a date that always starts 30 days before today: subDuration(getTodayStr(), { days: 30})
+ */
+export function subDuration(storeDate: string, duration: Duration, dateFormat = DateFormat.StoreDate): string {
+  const date = parseDate(storeDate, dateFormat, false) ?? die('date.util/addDays: invalid date ' + storeDate);
+  const dateAfterDuration = add(date, duration);
+  return format(dateAfterDuration, dateFormat);
+}
+
+/**
  * Same as daily addDuration, but without the weekends.
  * The duration is always 1 business day.
  * @param storeDate

@@ -393,8 +393,9 @@ export class CalEventListComponent implements OnInit {
           await this.store.delete(calEvent, this.readOnly());
           break;
         case 'calevent.edit': {
-          const saved = await this.store.edit(calEvent, false, this.readOnly());
-          if (saved) this.navigateCalendarTo(calEvent.startDate);
+          const targetDate = calEvent.startDate;
+          await this.store.edit(calEvent, false, this.readOnly());
+          this.navigateCalendarTo(targetDate);
           break;
         }
         case 'calevent.view':
@@ -494,11 +495,12 @@ export class CalEventListComponent implements OnInit {
 
   /******************************* helpers *************************************** */
 
-  /** Navigate the FullCalendar to the week containing the given storeDate (YYYYMMDD). */
+  /** Navigate the FullCalendar to the week containing the given storeDate (YYYYMMDD).
+   *  Uses a 300ms delay to let the post-save reload complete before navigating. */
   private navigateCalendarTo(storeDate: string): void {
     if (!storeDate || storeDate.length < 8) return;
     const iso = `${storeDate.slice(0,4)}-${storeDate.slice(4,6)}-${storeDate.slice(6,8)}`;
-    setTimeout(() => this.fullCalendar()?.getApi()?.gotoDate(iso), 0);
+    setTimeout(() => this.fullCalendar()?.getApi()?.gotoDate(iso), 300);
   }
 
   protected hasRole(role: RoleName | undefined): boolean {

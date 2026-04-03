@@ -9,7 +9,7 @@ import { doc } from 'firebase/firestore';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, ModelSelectService } from '@bk2/shared-feature';
 import { CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
-import { calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, tenantValidations, warn } from '@bk2/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, subDuration, tenantValidations, warn } from '@bk2/shared-util-core';
 import { error, navigateByUrl, confirm } from '@bk2/shared-util-angular';
 import { yearMatches } from '@bk2/shared-categories';
 import { MAX_DATES_PER_SERIES } from '@bk2/shared-constants';
@@ -29,6 +29,10 @@ export type CalEventState = {
   maxEvents: number | undefined; // max events to show, undefined means all
   showPastEvents: boolean; // whether to show past events
   showUpcomingEvents: boolean; // whether to show upcoming events
+  // an offset to calculate the start date
+  // example: -30 = always starting one month in the history
+  // example: 0 = today
+  startDaysOffset: number; 
 
   //filters
   searchTerm: string;
@@ -43,6 +47,7 @@ export const initialState: CalEventState = {
   maxEvents: undefined,
   showPastEvents: false,
   showUpcomingEvents: true,
+  startDaysOffset: -30,
 
   // filters
   searchTerm: '',
@@ -78,6 +83,23 @@ export const CalEventStore = signalStore(
       }
     }),
   })),
+
+  withComputed((state) => {
+    return {
+      startDate: computed(() => {
+        if (state.startDaysOffset() < 0) {
+          console.log('startDate (sub): ', subDuration(getTodayStr(), { days: state.startDaysOffset()}));
+          return subDuration(getTodayStr(), { days: state.startDaysOffset()});
+        }
+        if (state.startDaysOffset() > 0) {
+          console.log('startDate (add): ', addDuration(getTodayStr(), { days: state.startDaysOffset()}));
+          return addDuration(getTodayStr(), { days: state.startDaysOffset() })
+        }
+        console.log('startDate (0): ', getTodayStr());
+        return getTodayStr();
+      })
+    }
+  }),
   
   // returns all calendars that belong to orgs of the current user
   withProps((store) => ({
@@ -121,7 +143,6 @@ export const CalEventStore = signalStore(
         return allEvents$.pipe(
           map(events => {
             const seen = new Set<string>();
-            const today = getTodayStr();
             const result: CalEventModel[] = [];
             for (const e of events) {
               // Deduplicate by bkey (always)
@@ -139,10 +160,10 @@ export const CalEventStore = signalStore(
                 }
               }
               // Filter by showPastEvents/showUpcomingEvents for all calendar types
-              if (store.showPastEvents() === false && isAfterDate(today, e.startDate)) {
+              if (store.showPastEvents() === false && isAfterDate(store.startDate(), e.startDate)) {
                 continue;
               }
-              if (store.showUpcomingEvents() === false && isAfterOrEqualDate(e.startDate, today)) {
+              if (store.showUpcomingEvents() === false && isAfterOrEqualDate(e.startDate, store.startDate())) {
                 continue;
               }
               seen.add(e.bkey);
@@ -245,6 +266,10 @@ export const CalEventStore = signalStore(
 
       setSelectedYear(selectedYear: number) {
         patchState(store, { selectedYear });
+      },
+
+      setStartDaysOffset(startDaysOffset: number) {
+        patchState(store, { startDaysOffset });
       },
 
       /******************************** getters ******************************************* */
