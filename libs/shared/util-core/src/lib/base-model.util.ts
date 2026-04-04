@@ -20,6 +20,9 @@ export function addIndexElement(index: string, key: string, value: string | numb
       return index;
     }
   }
+  if (index.length === 0) {
+      return `${key}:${value}`;
+  }
   return `${index} ${key}:${value}`;
 }
 
