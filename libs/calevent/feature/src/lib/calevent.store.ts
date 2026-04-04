@@ -88,14 +88,11 @@ export const CalEventStore = signalStore(
     return {
       startDate: computed(() => {
         if (state.startDaysOffset() < 0) {
-          console.log('startDate (sub): ', subDuration(getTodayStr(), { days: state.startDaysOffset()}));
           return subDuration(getTodayStr(), { days: state.startDaysOffset()});
         }
         if (state.startDaysOffset() > 0) {
-          console.log('startDate (add): ', addDuration(getTodayStr(), { days: state.startDaysOffset()}));
           return addDuration(getTodayStr(), { days: state.startDaysOffset() })
         }
-        console.log('startDate (0): ', getTodayStr());
         return getTodayStr();
       })
     }
