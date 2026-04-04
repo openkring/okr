@@ -340,10 +340,14 @@ export const requestGroupRoomAccess = onCall(
       console.log(`requestGroupRoomAccess: Provisioned Matrix user ${matrixUserId}`);
     }
 
+    // Matrix room alias localpart may only contain [a-zA-Z0-9._~-].
+    // groupId is the group bkey which may contain spaces or other characters.
+    const roomAliasLocalpart = `group_${groupId.toLowerCase().replace(/[^a-z0-9._~-]/g, '_')}`;
+
     // Step 1: Find the room — try canonical alias first, then name search
     let roomId: string | undefined;
 
-    const roomAlias = `#group_${groupId}:${hostname}`;
+    const roomAlias = `#${roomAliasLocalpart}:${hostname}`;
     try {
       const aliasResp = await fetch(
         `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(roomAlias)}`,
@@ -381,7 +385,7 @@ export const requestGroupRoomAccess = onCall(
           headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: groupId,
-            room_alias_name: `group_${groupId}`,
+            room_alias_name: roomAliasLocalpart,
             // public join_rules so the Synapse admin API can force-join users without
             // needing the admin to be a room member first (private/invite rooms block this).
             // m.federate:false keeps the room local to this homeserver only.
