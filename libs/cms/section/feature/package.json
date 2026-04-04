@@ -21,6 +21,7 @@
     "@bk2/cms-section-ui": "*",
     "@bk2/calevent-data-access": "*",
     "@bk2/calevent-util": "*",
+    "@bk2/subject-group-util": "*",
     "@bk2/avatar-data-access": "*",
     "@bk2/document-ui": "*",
     "@bk2/document-feature": "*"

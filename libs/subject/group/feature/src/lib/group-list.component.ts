@@ -106,7 +106,7 @@ export class GroupListComponent {
   // derived signals
   protected filteredGroups = computed(() => {
     switch(this.listId()) {
-      case 'my': return this.groupStore.myGroups();
+      case 'my': return this.groupStore.myAccessibleGroups();
       case 'all': 
       default: return this.groupStore.filteredGroups();
     }

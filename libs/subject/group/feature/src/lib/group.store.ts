@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -17,6 +18,7 @@ import { AvatarService } from '@bk2/avatar-data-access';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { getMembershipIndex } from '@bk2/relationship-membership-util';
 import { MatrixChatService } from '@bk2/chat-data-access';
+import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
 import { GroupEditModalComponent } from './group-edit.modal';
 
@@ -50,8 +52,13 @@ export const GroupStore = signalStore(
   })),
   withProps((store) => ({
     groupsResource: rxResource({
-      stream: () => {
-        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc')
+      params: () => ({
+        currentUser: store.appStore.currentUser(),
+        tenantId: store.appStore.tenantId()
+      }),
+      stream: ({ params }): ReturnType<typeof store.firestoreService.searchData<GroupModel>> => {
+        if (!params.currentUser || !params.tenantId) return of([] as GroupModel[]);
+        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     groupResource: rxResource({
@@ -111,6 +118,20 @@ export const GroupStore = signalStore(
         if (group) groups.push(group);
       }
       return groups;
+    }),
+    /** All groups the current user can access: member-based + visibility-role-based. */
+    myAccessibleGroups: computed(() => {
+      const currentUser = state.appStore.currentUser();
+      const allGroups = state.appStore.allGroups();
+      const memberGroupIds = new Set(state.myGroupMemberships()?.map(m => m.orgKey) ?? []);
+      const visibleKeys = currentUser ? new Set(getVisibleGroupKeys(allGroups, memberGroupIds, currentUser)) : new Set<string>();
+      const result: GroupModel[] = [];
+      for (const g of allGroups) {
+        if (memberGroupIds.has(g.bkey) || visibleKeys.has(g.bkey)) {
+          result.push(g);
+        }
+      }
+      return result;
     }),
   })),
   withMethods((store) => ({

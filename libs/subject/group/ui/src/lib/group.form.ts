@@ -8,7 +8,7 @@ import { LowercaseWordMask } from '@bk2/shared-config';
 import { WORD_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, RoleName, UserModel } from '@bk2/shared-models';
-import { ButtonCopyComponent, CheckboxComponent, ChipsComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
+import { ButtonCopyComponent, CheckboxComponent, ChipsComponent, NotesInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, getFullName, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -20,7 +20,7 @@ import { groupValidations } from '@bk2/subject-group-util';
   imports: [
     vestForms,
     TranslatePipe, AsyncPipe, AvatarPipe,
-    TextInputComponent, ChipsComponent, NotesInputComponent, CheckboxComponent, ButtonCopyComponent,
+    TextInputComponent, ChipsComponent, NotesInputComponent, CheckboxComponent, ButtonCopyComponent, StringSelectComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonLabel, IonItem,
     IonAvatar, IonImg, IonButton, IonNote
   ],
@@ -164,6 +164,26 @@ import { groupValidations } from '@bk2/subject-group-util';
       <!-- tbd: group hierarchy: select an org or group, fill in parentKey, parentName, parentModelType -->
 
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ '@subject.group.field.access' | translate | async }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content class="ion-no-padding">
+            <ion-grid>
+              <ion-row>
+                <ion-col size="12">
+                  <bk-text-input name="visibility" [value]="visibility()" (valueChange)="onFieldChange('visibility', $event)" [maxLength]=100 [readOnly]="isReadOnly()" [showHelper]="true" />
+                </ion-col>
+                <ion-col size="12">
+                  <bk-string-select name="notifyType" [selectedString]="notifyType()" (selectedStringChange)="onFieldChange('notifyType', $event)" [stringList]="notifyTypeOptions" [readOnly]="isReadOnly()" [showHelper]="true" />
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+        </ion-card>
+      }
+
+      @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
@@ -218,6 +238,9 @@ export class GroupFormComponent {
 
   protected tags = linkedSignal(() => this.formData().tags ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? '');
+  protected visibility = linkedSignal(() => this.formData().visibility ?? '');
+  protected notifyType = linkedSignal(() => this.formData().notifyType ?? 'memberOnly');
+  protected readonly notifyTypeOptions = ['memberOnly', 'membersAndMatchingVisibility'];
   protected hasContent = linkedSignal(() => this.formData().hasContent ?? true);
   protected hasChat = linkedSignal(() => this.formData().hasChat ?? true);
   protected hasCalendar = linkedSignal(() => this.formData().hasCalendar ?? true);

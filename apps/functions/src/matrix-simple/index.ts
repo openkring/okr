@@ -258,20 +258,87 @@ export const requestGroupRoomAccess = onCall(
   async (request): Promise<{ roomId: string; joined: boolean }> => {
     const firebaseUid = request.auth?.uid;
     if (!firebaseUid) {
-      throw new Error('Not authenticated with Firebase');
+      throw new HttpsError('unauthenticated', 'Not authenticated with Firebase');
     }
 
     const { groupId } = request.data as { groupId: string };
     if (!groupId) {
-      throw new Error('groupId is required');
+      throw new HttpsError('invalid-argument', 'groupId is required');
+    }
+
+    const db = getFirestore();
+
+    // Load user doc once — gives us personKey and roles for both auth checks and Matrix localpart
+    const userDoc = await db.collection('users').doc(firebaseUid).get();
+    const userData = userDoc.data();
+    const personKey = (userData?.personKey as string | undefined) ?? '';
+    const userRoles = (userData?.roles ?? {}) as Record<string, boolean>;
+
+    // Load group to get the visibility setting
+    const groupDoc = await db.collection('groups').doc(groupId).get();
+    if (!groupDoc.exists) {
+      throw new HttpsError('not-found', `Group ${groupId} not found`);
+    }
+    const groupData = groupDoc.data()!;
+    const visibility = (groupData['visibility'] ?? '') as string;
+
+    // Authorization: member check first, then visibility-role check
+    let isAuthorized = false;
+
+    if (personKey) {
+      const memberSnap = await db.collection('memberships')
+        .where('orgKey', '==', groupId)
+        .where('orgModelType', '==', 'group')
+        .where('memberKey', '==', personKey)
+        .where('relIsLast', '==', true)
+        .limit(1)
+        .get();
+      if (!memberSnap.empty) {
+        isAuthorized = true;
+        console.log(`requestGroupRoomAccess: ${personKey} is a member of group ${groupId}`);
+      }
+    }
+
+    if (!isAuthorized && visibility) {
+      const visibilityRoles = visibility.split(',').map((r: string) => r.trim()).filter((r: string) => r.length > 0);
+      if (visibilityRoles.some((role: string) => userRoles[role] === true)) {
+        isAuthorized = true;
+        console.log(`requestGroupRoomAccess: ${firebaseUid} has visibility-role access to group ${groupId}`);
+      }
+    }
+
+    if (!isAuthorized) {
+      throw new HttpsError('permission-denied', `Access to group ${groupId} chat is not permitted`);
     }
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-    const localpart = await getMatrixLocalpart(firebaseUid);
+    const localpart = personKey ? personKey.toLowerCase() : firebaseUid.toLowerCase();
     const matrixUserId = `@${localpart}:${hostname}`;
     const adminToken = matrixAdminToken.value();
 
     console.log(`requestGroupRoomAccess: uid=${firebaseUid}, matrixUserId=${matrixUserId}, groupId=${groupId}`);
+
+    // Step 0: Ensure the Matrix user account exists — provision if this is their first chat access
+    const checkUserResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!checkUserResp.ok) {
+      const userRecord = await getAuth().getUser(firebaseUid);
+      const displayName = userRecord.displayName || userRecord.email?.split('@')[0] || firebaseUid;
+      const createUserResp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ displayname: displayName, admin: false, deactivated: false }),
+        }
+      );
+      if (!createUserResp.ok) {
+        throw new HttpsError('internal', `Failed to provision Matrix user: ${await createUserResp.text()}`);
+      }
+      console.log(`requestGroupRoomAccess: Provisioned Matrix user ${matrixUserId}`);
+    }
 
     // Step 1: Find the room — try canonical alias first, then name search
     let roomId: string | undefined;

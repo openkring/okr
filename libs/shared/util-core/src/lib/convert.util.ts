@@ -1,6 +1,6 @@
 import { AccountModel, AvatarInfo, GroupModel, MembershipModel, NameDisplay, NamedModel, OrgModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
 import { warn } from './log.util';
-import { isOwnership, isPerson, isPersonalRel, isUser } from 'libs/shared/util-core/src/lib/type.util';
+import { isOwnership, isPerson, isPersonalRel, isUser } from './type.util';
 
 /*-------------------------------------------- STRING ----------------------------------------------------- */
 export function safeConvertString(fieldName: string, value: unknown, defaultValue: string): string {

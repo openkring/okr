@@ -33,6 +33,8 @@ Collection name: `groups`
 | `parentKey` | string | Key of the parent org or group |
 | `parentName` | string | Name of the parent org or group |
 | `parentModelType` | `'org'` \| `'group'` | Type of the parent |
+| `visibility` | string | Comma-separated `RoleName` list (e.g. `'registered,privileged'`). Users who have **any** of these roles can access the group's calendar and chat even without being a member. Empty string (default) means members-only access. |
+| `notifyType` | `'memberOnly'` \| `'membersAndMatchingVisibility'` | Controls who receives chat notifications. `'memberOnly'` (default): only registered group members. `'membersAndMatchingVisibility'`: members plus all users whose roles match `visibility`. |
 
 ## Related Collections Created on Group Creation
 When a new group is created, the store automatically provisions:

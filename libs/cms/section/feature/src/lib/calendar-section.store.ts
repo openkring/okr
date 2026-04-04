@@ -5,8 +5,9 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { map, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
+import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
 import { DateFormat, getAttendanceStates, getAttendee, getAvatarInfo, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@bk2/shared-util-core';
+import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 
@@ -68,22 +69,46 @@ export const CalendarStore = signalStore(
     }),
   })),
   
-  // returns all calendars that belong to orgs of the current user
+  // returns bkeys of groups visible to the current user via the group's visibility roles (not by membership)
+  withProps((store) => ({
+    visibleGroupsResource: rxResource({
+      params: () => ({
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        const currentUser = params.currentUser;
+        if (!currentUser) return of([]);
+        return store.appStore.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc').pipe(
+          map((groups: GroupModel[]) => {
+            const memberKeys = new Set((store.membershipsForCurrentUserResource.value() ?? []).map(k => {
+              // orgKeys are stored as 'group.<bkey>' — strip the prefix
+              const parts = k.split('.');
+              return parts.length > 1 ? parts.slice(1).join('.') : k;
+            }));
+            return getVisibleGroupKeys(groups, memberKeys, currentUser);
+          })
+        );
+      }
+    })
+  })),
+
+  // returns all calendar keys for the current user: member-based + visibility-based
   withProps((store) => ({
     calendarsForCurrentUserResource: rxResource({
       params: () => ({
-        orgKeys: store.membershipsForCurrentUserResource.value() ?? []
+        orgKeys: store.membershipsForCurrentUserResource.value() ?? [],
+        visibleGroupKeys: store.visibleGroupsResource.value() ?? []
       }),
       stream: ({params}) => {
-        const orgKeys: string[] = params.orgKeys;
-        if (!orgKeys || orgKeys.length === 0) return of([]);
-        // Get all calendars and filter by owner
+        const memberOrgKeys: string[] = params.orgKeys;
+        const visibleGroupKeys: string[] = params.visibleGroupKeys;
+        if (memberOrgKeys.length === 0 && visibleGroupKeys.length === 0) return of([]);
+        // Get all calendars and filter by owner matching any accessible org/group key
         return store.appStore.firestoreService.searchData<CalendarModel>(CalendarCollection, getSystemQuery(store.appStore.env.tenantId), 'owner', 'asc').pipe(
           map((calendars: CalendarModel[]) => {
-            // Find calendar keys where owner matches any orgKey
             const calendarKeys: string[] = [];
             for (const cal of calendars) {
-              if (orgKeys.includes(cal.owner)) {
+              if (memberOrgKeys.includes(cal.owner) || visibleGroupKeys.includes(cal.owner)) {
                 calendarKeys.push(cal.bkey);
               }
             }
@@ -158,7 +183,7 @@ export const CalendarStore = signalStore(
       invitations: computed(() => state.invitationsForCurrentUserResource.value() ?? []),
       states: computed(() => getAttendanceStates(state.caleventsResource.value() ?? [], state.appStore.currentUser()?.personKey ?? '')),
       invitationStates: computed(() => getInvitationStates(state.caleventsResource.value() ?? [], state.invitationsForCurrentUserResource.value() ?? [])),
-      isLoading: computed(() => state.caleventsResource.isLoading() || state.calendarsForCurrentUserResource.isLoading() || state.membershipsForCurrentUserResource.isLoading()),
+      isLoading: computed(() => state.caleventsResource.isLoading() || state.calendarsForCurrentUserResource.isLoading() || state.membershipsForCurrentUserResource.isLoading() || state.visibleGroupsResource.isLoading()),
       currentUser: computed(() => state.appStore.currentUser()),
     }
   }),
@@ -177,6 +202,7 @@ export const CalendarStore = signalStore(
         store.caleventsResource.reload();
         store.calendarsForCurrentUserResource.reload();
         store.membershipsForCurrentUserResource.reload();
+        store.visibleGroupsResource.reload();
       },
 
       async subscribe(calEvent: CalEventModel): Promise<void> {

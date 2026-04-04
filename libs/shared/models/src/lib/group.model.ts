@@ -33,6 +33,20 @@ export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedM
   public parentName = DEFAULT_NAME;
   public parentModelType: 'org' | 'group' = 'org';
 
+  /**
+   * Comma-separated list of RoleName values (e.g. 'registered,privileged').
+   * Users who have any of these roles can access this group's calendar and chat
+   * even if they are not members. Empty string means members-only access (default).
+   */
+  public visibility = '';
+
+  /**
+   * Controls who receives notifications for this group's chat.
+   * - 'memberOnly': only registered group members are notified (default).
+   * - 'membersAndMatchingVisibility': members + users whose roles match `visibility` are notified.
+   */
+  public notifyType: 'memberOnly' | 'membersAndMatchingVisibility' = 'memberOnly';
+
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

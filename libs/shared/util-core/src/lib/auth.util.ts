@@ -1,6 +1,6 @@
 import { PrivacyAccessor, PrivacySettings, RoleName, Roles, UserModel } from "@bk2/shared-models";
 import { die } from "./log.util";
-import { debugMessage } from "libs/shared/util-core/src/lib/debug.util";
+import { debugMessage } from "./debug.util";
 
 /**
  * Determines if the user has a matching role.
