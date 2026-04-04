@@ -20,6 +20,10 @@ import { DocumentStore } from './document.store';
     IonItem, IonLabel, IonButton, IonIcon, IonList, IonAccordion
   ],
   providers: [DocumentStore],
+  styles: [`
+    .info { font-size: 0.6rem; }
+    .fileName { font-size: 0.9rem; }
+    `],
   template: `
   <ion-accordion toggle-icon-slot="start" value="documents">
     <ion-item slot="header" [color]="color()">
@@ -39,8 +43,10 @@ import { DocumentStore } from './document.store';
             @for(document of documents; track document.bkey) {
               <ion-item (click)="showActions(document)">
                 <ion-icon src="{{ document.fullPath | fileLogo }}"></ion-icon>&nbsp;
-                <ion-label>{{ document.fullPath | fileName }}</ion-label>
-                <ion-label class="ion-hide-md-down">{{ document.dateOfDocCreation | prettyDate }} / {{ document.size | fileSize }}</ion-label>
+                <ion-label>
+                  <span class="info">{{ document.dateOfDocCreation | prettyDate }} / {{ document.size | fileSize }}</span>
+                  <p class="fileName">{{ document.fullPath | fileName }}</p>
+                </ion-label>
               </ion-item>
             }
           </ion-list>
@@ -83,30 +89,27 @@ export class DocumentsAccordionComponent {
    * @param document 
    */
   protected async showActions(document: DocumentModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, document);
-    await this.executeActions(actionSheetOptions, document);
+    if (this.readOnly()) {
+      await this.documentStore.download(document, false);
+    } else {
+      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      this.addActionSheetButtons(actionSheetOptions, document);
+      await this.executeActions(actionSheetOptions, document);
+    }
   }
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * readOnly is always false
    * @param document 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, document: DocumentModel): void {
-    if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('document.preview', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.imgixBaseUrl, 'download'));
-      actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.imgixBaseUrl, 'timeline'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    }
-    if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.imgixBaseUrl, 'upload'));
-    }
-    if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.imgixBaseUrl, 'trash'));
-    }
+    actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.imgixBaseUrl, 'download'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.imgixBaseUrl, 'upload'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.imgixBaseUrl, 'timeline'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -125,19 +128,13 @@ export class DocumentsAccordionComponent {
           await this.documentStore.delete(document, this.readOnly());
           break;
         case 'document.download':
-          await this.documentStore.download(document, this.readOnly());
+          await this.documentStore.download(document, false);
           break;
         case 'document.update':
           await this.documentStore.update(document, this.readOnly());
           break;
         case 'document.edit':
           await this.documentStore.edit(document, this.readOnly());
-          break;
-        case 'document.view':
-          await this.documentStore.edit(document, true);
-          break;
-        case 'document.preview':
-          await this.documentStore.preview(document, true);
           break;
         case 'document.showRevisions':
           const revisions = await this.documentStore.getRevisions(document);

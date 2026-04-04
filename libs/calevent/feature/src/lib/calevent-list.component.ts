@@ -407,9 +407,13 @@ export class CalEventListComponent implements OnInit {
    * @param calEvent 
    */
   protected async showActions(calEvent: CalEventModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, calEvent);
-    await this.executeActions(actionSheetOptions, calEvent);
+    if (this.canChange(calEvent)) {
+      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      this.addActionSheetButtons(actionSheetOptions, calEvent);
+      await this.executeActions(actionSheetOptions, calEvent);
+    } else {
+      await this.store.view(calEvent);
+    }
   }
 
   /**
@@ -417,22 +421,15 @@ export class CalEventListComponent implements OnInit {
    * @param calEvent 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): void {
-    if (this.canChange(calEvent)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
-      if (!calEvent.isOpen && this.store.isGroupCalevent(calEvent)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.imgixBaseUrl, 'add'));
-      }
-      if (!calEvent.isOpen) {
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.imgixBaseUrl, 'person-add'));
-      }
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash'));
-    } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
+    if (!calEvent.isOpen && this.store.isGroupCalevent(calEvent)) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.imgixBaseUrl, 'add'));
     }
+    if (!calEvent.isOpen) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.imgixBaseUrl, 'person-add'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
-    }
   }
 
   /**
@@ -450,23 +447,19 @@ export class CalEventListComponent implements OnInit {
       if (!data) return;
       switch (data.action) {
         case 'calevent.delete':
-          await this.store.delete(calEvent, this.canChange(calEvent));
+          await this.store.delete(calEvent, false);
           break;
-        case 'calevent.edit': {
+        case 'calevent.edit':
           const isGrid = !this.isListView();
           const targetDate = calEvent.startDate;
-          await this.store.edit(calEvent, false, !this.canChange(calEvent), false, isGrid);
+          await this.store.edit(calEvent, false, false, false, isGrid);
           if (isGrid) this.navigateCalendarTo(targetDate);
           break;
-        }
-        case 'calevent.view':
-          await this.store.edit(calEvent, false, true);
-          break;
         case 'calevent.inviteGroup':
-          await this.store.inviteGroupMembers(calEvent, this.canChange(calEvent));
+          await this.store.inviteGroupMembers(calEvent, false);
           break;
         case 'calevent.invitePerson':
-          await this.store.invitePerson(calEvent, this.canChange(calEvent));
+          await this.store.invitePerson(calEvent, false);
           break;
       }
     }

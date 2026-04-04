@@ -50,7 +50,7 @@ import { InvitationStore } from 'libs/relationship/invitation/feature/src/lib/in
                 <ion-img src="{{ 'person.' + invitee.inviteeKey | avatar:'person' }}" alt="invitation avatar" />
               </ion-avatar>
               <ion-label>{{ invitee.inviteeFirstName | fullName: invitee.inviteeLastName }}</ion-label>
-              <ion-label>{{ invitee.state }}</ion-label>
+              <ion-label>{{ '@invitation.state.' + invitee.state + '.label' | translate | async }}</ion-label>
               <ion-label>{{ invitee.respondedAt | prettyDate }} </ion-label>
             </ion-item>
           }

@@ -8,8 +8,8 @@ import { doc } from 'firebase/firestore';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, ModelSelectService } from '@bk2/shared-feature';
-import { CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, subDuration, tenantValidations, warn } from '@bk2/shared-util-core';
+import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
+import { addDuration, calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromBkModel, subDuration, tenantValidations, warn } from '@bk2/shared-util-core';
 import { error, navigateByUrl, confirm } from '@bk2/shared-util-angular';
 import { yearMatches } from '@bk2/shared-categories';
 import { MAX_DATES_PER_SERIES } from '@bk2/shared-constants';
@@ -22,6 +22,7 @@ import { RegressionSelectionModalComponent } from '@bk2/calevent-ui';
 
 import { CalEventEditModalComponent } from './calevent-edit.modal';
 import { firstValueFrom, map, of } from 'rxjs';
+import { CalEventViewModal } from 'libs/calevent/feature/src/lib/calevent-view.modal';
 
 export type CalEventState = {
   calendarName: string; // all, my, or specific calendar name, tbd: my_pkey (for another user)
@@ -80,6 +81,19 @@ export const CalEventStore = signalStore(
         const personKey = params.personKey;
         if (!personKey) return of([]);
         return store.membershipService.listOrgsOfMember(personKey, 'person');
+      }
+    }),
+
+    invitationsForCurrentUserResource: rxResource({
+      params: () => ({
+        personKey: store.appStore.currentUser()?.personKey
+      }),
+      stream: ({params}) => {
+        const personKey = params.personKey;
+        if (!personKey) return of([]);
+        return store.appStore.firestoreService.searchData<InvitationModel>(InvitationCollection, getSystemQuery(store.appStore.env.tenantId), 'inviteeKey', 'asc').pipe(
+          map(invitations => invitations.filter(inv => inv.inviteeKey === personKey))
+        );
       }
     }),
   })),
@@ -193,6 +207,7 @@ export const CalEventStore = signalStore(
   withComputed((state) => {
     return {
       calEvents: computed(() => state.caleventsResource.value() ?? []),
+      invitations: computed(() => state.invitationsForCurrentUserResource.value() ?? []),
 
       calendar: computed(() => {
         const calName = state.calendarName();
@@ -241,6 +256,7 @@ export const CalEventStore = signalStore(
       reload() {
         store.caleventsResource.reload();
         store.calendarsResource.reload();
+        store.invitationsForCurrentUserResource.reload();
         // Clear the Firestore cache to ensure fresh data
         store.firestoreService.clearCache(CalendarCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
       },
@@ -356,6 +372,18 @@ export const CalEventStore = signalStore(
           }
         }
         return false;
+      },
+
+      async view(calevent: CalEventModel): Promise<void> {
+        const modal = await store.modalController.create({
+          component: CalEventViewModal,
+          componentProps: {
+            calevent,
+            periodicities: this.getPeriodicities(),
+            locale: this.getLocale()
+          }
+        });
+        modal.present();
       },
 
       async update(calevent: CalEventModel, readOnly = true): Promise<boolean> {
@@ -542,6 +570,56 @@ export const CalEventStore = signalStore(
           inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
           return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, '@invitation.operation.create', store.currentUser());
         }
+      },
+
+      /******************************* subscriptions *************************************** */
+      async subscribe(calEvent: CalEventModel): Promise<void> {
+        if (calEvent.isOpen) {
+          await this.changeAttendanceState(calEvent, 'accepted');
+        } else {
+          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.bkey);
+          if (inv) {
+            await this.changeInvitationState(inv, 'accepted');
+          }
+        }
+      },
+
+      async unsubscribe(calEvent: CalEventModel): Promise<void> {
+        if (calEvent.isOpen) {
+          await this.changeAttendanceState(calEvent, 'declined');
+        } else {
+          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.bkey);
+          if (inv) {
+            await this.changeInvitationState(inv, 'declined');
+          }
+        }
+      },
+
+      async changeAttendanceState(calEvent: CalEventModel, newState: 'accepted' | 'declined' | 'invited'): Promise<void> {
+        const currentUser = store.currentUser();
+        if (!currentUser) return;
+        const attendee = getAttendee(calEvent, currentUser.personKey ?? '');
+        if (attendee) {
+          attendee.state = newState;
+        } else {
+          const avatar = getAvatarInfoForCurrentUser(currentUser);
+          if (!avatar) return;
+          const newAttendee: Attendee = {
+            person: avatar,
+            state: newState
+          };
+          calEvent.attendees.push(newAttendee);
+        }
+        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, '@calevent.operation.update', currentUser);
+      },
+
+      async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
+        const currentUser = store.currentUser();
+        if (!currentUser) return;
+        invitation.state = newState;
+        invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
+        await store.appStore.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, '@invitation.operation.update', currentUser);
+        // this.reload();
       },
 
       /******************************* other *************************************** */
