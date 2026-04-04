@@ -399,34 +399,9 @@ export const requestGroupRoomAccess = onCall(
       console.log(`requestGroupRoomAccess: Created new room: ${roomId}`);
     }
 
-    // Step 3a: Ensure the admin is in the room before joining the target user.
-    // For private (invite-only) rooms the Synapse admin join endpoint requires the
-    // admin account to already be a member before it can add a third-party user.
-    // Joining the admin themselves is always allowed by the admin API.
-    const whoamiResp = await fetch(
-      `${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`,
-      { headers: { Authorization: `Bearer ${adminToken}` } }
-    );
-    if (whoamiResp.ok) {
-      const { user_id: adminUserId } = await whoamiResp.json() as { user_id: string };
-      if (adminUserId) {
-        const adminJoinResp = await fetch(
-          `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
-          {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: adminUserId }),
-          }
-        );
-        if (!adminJoinResp.ok) {
-          console.warn(`requestGroupRoomAccess: Could not join admin ${adminUserId} to room ${roomId}: ${await adminJoinResp.text()}`);
-        } else {
-          console.log(`requestGroupRoomAccess: Admin ${adminUserId} joined room ${roomId}`);
-        }
-      }
-    }
-
-    // Step 3b: Force-join the target user via Synapse admin API.
+    // Step 3: Force-join the target user via Synapse admin API.
+    // Rooms created by this function use preset:'public_chat' which allows the admin API
+    // to force-join users without the admin account needing to be a room member first.
     const joinResp = await fetch(
       `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
       {
@@ -438,7 +413,7 @@ export const requestGroupRoomAccess = onCall(
     if (!joinResp.ok) {
       const errText = await joinResp.text();
       console.error(`requestGroupRoomAccess: Admin join failed for ${matrixUserId} in room ${roomId}: ${errText}`);
-      throw new Error(`Room access denied for group ${groupId}: ${errText}`);
+      throw new HttpsError('internal', `Room access denied for group ${groupId}: ${errText}`);
     }
 
     console.log(`requestGroupRoomAccess: User ${matrixUserId} joined room ${roomId} for group ${groupId}`);

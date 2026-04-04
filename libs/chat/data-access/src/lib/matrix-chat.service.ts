@@ -1,5 +1,5 @@
 
-import { inject, Injectable } from '@angular/core';
+import { effect, inject, Injectable } from '@angular/core';
 import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, createNewMatrixCall, CallEvent, type MatrixCall } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -36,6 +36,16 @@ export class MatrixChatService {
   private readonly callState$ = new BehaviorSubject<string | null>(null);
   /** Simplified feed info so consumers don't need a deep matrix-js-sdk import. */
   private readonly callFeeds$ = new BehaviorSubject<{ stream: MediaStream; isLocal: boolean }[]>([]);
+
+  constructor() {
+    // Disconnect and clear rooms when the user logs out (fbUser becomes null).
+    effect(() => {
+      const fbUser = this.appStore.fbUser();
+      if (!fbUser && this.client) {
+        this.disconnect();
+      }
+    });
+  }
 
   get isInitialized(): boolean {
     return this.client !== null;
@@ -209,6 +219,7 @@ export class MatrixChatService {
       this.client.stopClient();
       await this.client.clearStores();
       this.client = null;
+      this.rooms$.next([]);
       this.syncState$.next('STOPPED');
       debugMessage('MatrixChatService: Client disconnected', this.appStore.currentUser());
     }
