@@ -13,9 +13,9 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/s
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 
 /**
- * An accordion component to display a list of invitations related to a specific CalEvent.
- * It shows the invitee information along with the invitation status.
- * Users can accept or deny new invitations or manage existing ones through action sheets.
+ * An accordion component to display a list of attendees related to a specific CalEvent.
+ * It shows the attendee information along with the status.
+ * Users can subscribe or unsubscribe to the CalEvent.
  */
 @Component({
   selector: 'bk-attendees-accordion',

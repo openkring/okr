@@ -1,4 +1,4 @@
-import { Attendee, BkModel, CalEventModel, InvitationModel } from '@bk2/shared-models';
+import { Attendee, BkModel, CalEventModel, CategoryListModel, InvitationModel } from '@bk2/shared-models';
 import { sortAscending, SortCriteria, sortDescending, SortDirection } from './sort.util';
 
 /*-------------------------SORT --------------------------------------------*/
@@ -90,6 +90,17 @@ export function addIndexElement(index: string, key: string, value: string | numb
       default:
         return '';
     }
+  }
+
+  // for invitations, both color and icon can be read from the CategoryListItem in Category invitation_state
+  export function getInvitationIcon(invitationState: CategoryListModel, state: string): string {
+    const item = invitationState.items.find(i => i.name === state);
+    return item ? item.icon : '';
+  }
+
+  export function getInvitationColor(invitationState: CategoryListModel, state: string): string {
+    const item = invitationState.items.find(i => i.name === state);
+    return item ? item.color ?? '' : '';
   }
 
   /**

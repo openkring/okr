@@ -34,6 +34,7 @@ export class CategoryListModel implements BkModel, NamedModel, PersistedModel, S
 export class CategoryItemModel {
   name = DEFAULT_NAME;
   icon = '';
+  color? = '';
   abbreviation? = '';
   state? = DEFAULT_MSTATE;
   price? = DEFAULT_PRICE;
@@ -43,6 +44,7 @@ export class CategoryItemModel {
   constructor(name: string, icon: string, abbreviation?: string, state?: string, price?: number, currency?: string, periodicity?: string) {
     this.name = name;
     this.icon = icon;
+    this.color = undefined;
     this.abbreviation = abbreviation;
     this.state = state;
     this.price = price;
