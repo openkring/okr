@@ -54,9 +54,9 @@ export function convertFullCalendarToCalEvent(event: EventInput, tenantId: strin
 /*-------------------------- SEARCH --------------------------------*/
 export function getCaleventIndex(calevent: CalEventModel): string {
   const persons = calevent.responsiblePersons.map(p => p.name2).join(',');
-  return 'n:' + calevent.name + ' p:' + persons + ' l:' + calevent.locationKey + ' c:' + calevent.calendars.join(',');
+  return 'd:' + calevent.startDate + ' n:' + calevent.name + ' p:' + persons + ' l:' + calevent.locationKey + ' c:' + calevent.calendars.join(',');
 }
 
 export function getCaleventIndexInfo(): string {
-  return 'n:ame p:ersons l:ocationKey c:alendars';
+  return 'd:ate n:ame p:ersons l:ocationKey c:alendars';
 }

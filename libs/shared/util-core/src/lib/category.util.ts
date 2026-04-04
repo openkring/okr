@@ -63,9 +63,7 @@ export function getCatAbbreviation(cat: CategoryListModel | undefined, catName: 
  * @returns the index string
  */
 export function getCategoryIndex(category: CategoryListModel): string {
-  let _index = '';
-  _index = addIndexElement(_index, 'n', category.name);
-  return _index;
+  return `n:${category.name}`;
 }
 
   /**

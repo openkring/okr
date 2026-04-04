@@ -12,10 +12,11 @@ import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventM
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel, 
   AvatarInfo,
   AVATAR_INFO_SHAPE,
-  CategoryListModel, 
-  PersonModelName,
-  GroupModelName} from '@bk2/shared-models';
-import { DateFormat, getCategoryIndex, getSystemQuery, getTodayStr, isAfterDate, removeProperty } from '@bk2/shared-util-core';
+  CategoryListModel,
+  ResponsibilityModel,
+  ResponsibilityCollection, 
+} from '@bk2/shared-models';
+import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
 
 import { addressValidations, getAddressIndex } from '@bk2/subject-address-util';
 import { commentValidations, getCommentIndex } from '@bk2/comment-util';
@@ -23,7 +24,7 @@ import { calEventValidations, getCaleventIndex } from '@bk2/calevent-util';
 import { StaticSuite } from 'vest';
 import { documentValidations, getDocumentIndex } from '@bk2/document-util';
 import { getLocationIndex, locationValidations } from '@bk2/location-util';
-import { convertMemberAndOrgToMembership, getMembershipIndex, membershipValidations } from '@bk2/relationship-membership-util';
+import { getMembershipIndex, membershipValidations } from '@bk2/relationship-membership-util';
 import { getMenuIndex, menuItemValidations } from '@bk2/cms-menu-util';
 import { getOrgIndex, orgValidations } from '@bk2/subject-org-util';
 import { getOwnershipIndex, ownershipValidations } from '@bk2/relationship-ownership-util';
@@ -40,7 +41,7 @@ import { categoryListValidations } from '@bk2/category-util';
 import { getGroupIndex, groupValidations } from '@bk2/subject-group-util';
 import { confirm } from '@bk2/shared-util-angular';
 import { AlertController } from '@ionic/angular/standalone';
-import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { getResponsibilityIndex } from '@bk2/relationship-responsibility-util';
 
 export type AocDataState = {
   modelType: string | undefined;
@@ -362,13 +363,13 @@ export const AocDataStore = signalStore(
             this.executeValidation<AddressModel>(AddressCollection, addressValidations, tenants, store.appStore.getTags('address'), 'parentKey');
             break;
           case 'comment':
-            this.executeValidation<CommentModel>(CommentCollection, commentValidations, tenants, store.appStore.getTags('comment'), 'createdAt');
+            this.executeValidation<CommentModel>(CommentCollection, commentValidations, tenants, store.appStore.getTags('comment'), 'creationDateTime');
             break;
           case 'document':
             this.executeValidation<DocumentModel>(DocumentCollection, documentValidations, tenants, store.appStore.getTags('document'), 'title');
             break;
           case 'calevent':
-            this.executeValidation<CalEventModel>(CalEventCollection, calEventValidations, tenants, store.appStore.getTags(CalEventModelName), 'title');
+            this.executeValidation<CalEventModel>(CalEventCollection, calEventValidations, tenants, store.appStore.getTags(CalEventModelName), 'startDate');
             break;
           case 'location':
             this.executeValidation<LocationModel>(LocationCollection, locationValidations, tenants, store.appStore.getTags('location'), 'name');
@@ -400,17 +401,17 @@ export const AocDataStore = signalStore(
           case 'resource':
             this.executeValidation<ResourceModel>(ResourceCollection, resourceValidations, tenants, store.appStore.getTags('resource'));
             break;
-          case 'todo':
-            this.executeValidation<TaskModel>(TaskCollection, taskValidations, tenants, store.appStore.getTags('todo'));
+          case 'task':
+            this.executeValidation<TaskModel>(TaskCollection, taskValidations, tenants, store.appStore.getTags('task'), 'bkey');
             break;
           case 'transfer':
-            this.executeValidation<TransferModel>(TransferCollection, transferValidations, tenants, store.appStore.getTags('transfer'));
+            this.executeValidation<TransferModel>(TransferCollection, transferValidations, tenants, store.appStore.getTags('transfer'), 'dateOfTransfer');
             break;
           case 'user':
-            this.executeValidation<UserModel>(UserCollection, userValidations, tenants, store.appStore.getTags('user'));
+            this.executeValidation<UserModel>(UserCollection, userValidations, tenants, store.appStore.getTags('user'), 'loginEmail');
             break;
           case 'workrel':
-            this.executeValidation<WorkrelModel>(WorkrelCollection, workrelValidations, tenants, store.appStore.getTags('workrel'));
+            this.executeValidation<WorkrelModel>(WorkrelCollection, workrelValidations, tenants, store.appStore.getTags('workrel'), 'bkey');
             break;
           case 'category':
             this.executeValidation<CategoryModel>(CategoryCollection, categoryListValidations, tenants, store.appStore.getTags('category'));
@@ -471,19 +472,19 @@ export const AocDataStore = signalStore(
             this.createIndex<AddressModel>(AddressCollection, getAddressIndex, 'parentKey');
             break;
           case 'comment':
-            this.createIndex<CommentModel>(CommentCollection, getCommentIndex, 'createdAt');
+            this.createIndex<CommentModel>(CommentCollection, getCommentIndex);
             break;
           case 'document':
-            this.createIndex<DocumentModel>(DocumentCollection, getDocumentIndex, 'title');
+            this.createIndex<DocumentModel>(DocumentCollection, getDocumentIndex);
             break;
           case 'calevent':
-            this.createIndex<CalEventModel>(CalEventCollection, getCaleventIndex, 'title');
+            this.createIndex<CalEventModel>(CalEventCollection, getCaleventIndex);
             break;
           case 'location':
-            this.createIndex<LocationModel>(LocationCollection, getLocationIndex, 'name');
+            this.createIndex<LocationModel>(LocationCollection, getLocationIndex);
             break;
           case 'membership':
-            this.createIndex<MembershipModel>(MembershipCollection, getMembershipIndex, 'memberName2');
+            this.createIndex<MembershipModel>(MembershipCollection, getMembershipIndex);
             break;
           case 'menuitem':
             this.createIndex<MenuItemModel>(MenuItemCollection, getMenuIndex);
@@ -495,12 +496,12 @@ export const AocDataStore = signalStore(
             this.createIndex<OwnershipModel>(OwnershipCollection, getOwnershipIndex);
             break;
           case 'page':
-            this.createIndex<PageModel>(PageCollection, getPageIndex, 'title');
+            this.createIndex<PageModel>(PageCollection, getPageIndex);
             break;
           case 'person':
             this.createIndex<PersonModel>(PersonCollection, getPersonIndex, 'lastName');
             break;
-          case 'personal_rel':
+          case 'personalRel':
             this.createIndex<PersonalRelModel>(PersonalRelCollection, getPersonalRelIndex);
             break;
           case 'reservation':
@@ -509,14 +510,14 @@ export const AocDataStore = signalStore(
           case 'resource':
             this.createIndex<ResourceModel>(ResourceCollection, getResourceIndex);
             break;
-          case 'todo':
+          case 'task':
             this.createIndex<TaskModel>(TaskCollection, getTaskIndex);
             break;
           case 'transfer':
             this.createIndex<TransferModel>(TransferCollection, getTransferIndex);
             break;
           case 'user':
-            this.createIndex<UserModel>(UserCollection, getUserIndex);
+            this.createIndex<UserModel>(UserCollection, getUserIndex, 'loginEmail');
             break;
           case 'workrel':
             this.createIndex<WorkrelModel>(WorkrelCollection, getWorkrelIndex);
@@ -526,6 +527,9 @@ export const AocDataStore = signalStore(
             break;
           case 'group':
             this.createIndex<GroupModel>(GroupCollection, getGroupIndex);
+            break;
+          case 'responsibility':
+            this.createIndex<ResponsibilityModel>(ResponsibilityCollection, getResponsibilityIndex);
             break;
           case 'account': 
             // this.createIndex<AccountModel>(AccountCollection, getAccountIndex, 'name');
@@ -545,9 +549,10 @@ export const AocDataStore = signalStore(
         }
       },
 
-      createIndex<T>(collection: string, generateIndexFn: (model: T) => string, orderBy = 'name'): void {
+      createIndex<T extends BkModel>(collection: string, generateIndexFn: (model: T) => string, orderBy = 'none'): void {
         const dbQuery = getSystemQuery(store.appStore.tenantId());
         store.appStore.firestoreService.searchData<T>(collection, dbQuery, orderBy, 'asc')
+          .pipe(take(1))
           .subscribe(async (data) => {
             for (const model of data) {
               const oldIndex = (model as any).index;
@@ -555,8 +560,9 @@ export const AocDataStore = signalStore(
               const newIndex = generateIndexFn(model);
               if (oldIndex !== newIndex) {
                 (model as any).index = newIndex;
-                console.log(`  - updating index from ${oldIndex} to ${newIndex} ...`);
-                // await store.appStore.firestoreService.updateModel<T>(collection, model);
+                console.log(`  - from <${oldIndex}>`);
+                console.log(`  - to   <${newIndex}>`);
+                await store.appStore.firestoreService.updateModel(collection, model);
               }
             }
           });

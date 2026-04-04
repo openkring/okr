@@ -190,7 +190,7 @@ export class CalEventListComponent implements OnInit {
   private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
 
   // inputs
-  public listId = input.required<string>();     // calendar name
+  public listId = input.required<string>();     // calendar name or all or my
   public contextMenuName = input.required<string>(); // the name of the context menu to use or 'disable' to disable the header toolbar with the context menu
   public color = input('secondary');
   public view = input<'list' | 'grid'>('grid'); // initial view mode
@@ -440,7 +440,7 @@ export class CalEventListComponent implements OnInit {
         case 'calevent.edit': {
           const isGrid = !this.isListView();
           const targetDate = calEvent.startDate;
-          await this.store.edit(calEvent, false, this.canChange(calEvent), false, isGrid);
+          await this.store.edit(calEvent, false, !this.canChange(calEvent), false, isGrid);
           if (isGrid) this.navigateCalendarTo(targetDate);
           break;
         }
