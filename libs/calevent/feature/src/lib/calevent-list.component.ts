@@ -301,6 +301,17 @@ export class CalEventListComponent implements OnInit {
 
   constructor() {
     effect(() => this.store.setCalendarName(this.listId()));
+
+    // When the filtered results change and we're in calendar view, navigate to
+    // the week of the first result so the user sees it immediately.
+    effect(() => {
+      const first = this.filteredCalEvents()[0];
+      if (!first || this.isListView()) return;
+      const d = first.startDate; // stored as 'YYYYMMDD'
+      if (!d || d.length < 8) return;
+      const date = new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8));
+      this.fullCalendar()?.getApi()?.gotoDate(date);
+    });
   }
 
   ngOnInit(): void {
@@ -408,8 +419,12 @@ export class CalEventListComponent implements OnInit {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): void {
     if (this.canChange(calEvent)) {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.imgixBaseUrl, 'add'));
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.imgixBaseUrl, 'person-add'));
+      if (!calEvent.isOpen && this.store.isGroupCalevent(calEvent)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.imgixBaseUrl, 'add'));
+      }
+      if (!calEvent.isOpen) {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.imgixBaseUrl, 'person-add'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash'));
     } else {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.imgixBaseUrl, 'eye-on'));
