@@ -104,6 +104,33 @@ pnpm run deploy:functions
 pnpm nx build scs-app --configuration production && firebase deploy --only hosting:scs-app-54aef
 ```
 
+---
+
+## Passkey Authentication (Future Consideration)
+
+Firebase Auth supports passkeys natively since late 2024 via `signInWithPasskey()` and `linkWithPasskey()` in the JS SDK (thin WebAuthn wrapper). On web, the implementation effort is moderate. The Capacitor/Ionic mobile setup adds significant complexity.
+
+### Challenges in this stack
+
+- **Capacitor WebView**: WebAuthn is not available out of the box. Native plugins are required (`@capawesome-team/capacitor-android-fido2` for Android, `ASAuthorizationPasskeyRequest` for iOS via a custom Capacitor bridge).
+- **App association files**: `/.well-known/apple-app-site-association` (iOS) and `/.well-known/assetlinks.json` (Android) must be served from the production domain — requires `firebase.json` rewrite entries.
+- **RPID**: The Relying Party ID must match the production domain (`seeclub.org`) exactly.
+- **Fallback**: Email/password must remain as fallback — both auth flows must coexist.
+
+### Effort estimate
+
+| Scope | Effort |
+| --- | --- |
+| Web-only passkey login | ~2–3 days |
+| Web + Android + iOS (Capacitor) | ~2–3 weeks |
+| Full passkey + password fallback + enrollment UX | add ~1 week |
+
+### Recommendation
+
+Feasible for web-only usage. For mobile (Capacitor), defer until the native tooling matures.
+
+---
+
 ### Custom sender domain
 
 - From address: `app@seeclub.org` (Mailgun custom domain)
