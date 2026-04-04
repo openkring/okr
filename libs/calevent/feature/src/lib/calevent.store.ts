@@ -276,6 +276,15 @@ export const CalEventStore = signalStore(
       },
 
       /******************************** getters ******************************************* */
+
+      /** Returns true if any of the calEvent's calendars is owned by a group. */
+      isGroupCalevent(calEvent: CalEventModel): boolean {
+        const calendars = store.calendarsResource.value() ?? [];
+        return (calEvent.calendars ?? []).some(calKey =>
+          calendars.find(c => c.bkey === calKey)?.owner?.startsWith('group.') === true
+        );
+      },
+
       getTags(): string {
         return store.appStore.getTags('calevent');
       },
