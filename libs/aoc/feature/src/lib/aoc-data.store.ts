@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Observable, of, take } from 'rxjs';
+import { firstValueFrom, Observable, of, take } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
@@ -18,7 +18,7 @@ import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventM
 } from '@bk2/shared-models';
 import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
 
-import { addressValidations, getAddressIndex } from '@bk2/subject-address-util';
+import { addressValidations, computeFavoriteAddressInfo, getAddressIndex } from '@bk2/subject-address-util';
 import { commentValidations, getCommentIndex } from '@bk2/comment-util';
 import { calEventValidations, getCaleventIndex } from '@bk2/calevent-util';
 import { StaticSuite } from 'vest';
@@ -43,17 +43,27 @@ import { confirm } from '@bk2/shared-util-angular';
 import { AlertController } from '@ionic/angular/standalone';
 import { getResponsibilityIndex } from '@bk2/relationship-responsibility-util';
 
+export interface FavMismatch {
+  personKey: string;
+  personName: string;
+  field: string;
+  cached: string;
+  fromAddress: string;
+}
+
 export type AocDataState = {
   modelType: string | undefined;
   log: LogInfo[];
   logTitle: string;
+  favMismatches: FavMismatch[];
 };
 
 export const initialState: AocDataState = {
   modelType: undefined,
   log: [],
-    logTitle: '',
-  };
+  logTitle: '',
+  favMismatches: [],
+};
 
 export const AocDataStore = signalStore(
   withState(initialState),
@@ -460,6 +470,78 @@ export const AocDataStore = signalStore(
               }
             }
           });
+      },
+
+      /**
+       * Compare the fav* cache fields on every PersonModel against the actual favorite addresses
+       * in the address sub-collection. Populates favMismatches so the UI can display them and
+       * offer to repair in either direction.
+       */
+      async checkFavAddresses(): Promise<void> {
+        patchState(store, { favMismatches: [] });
+        const tenantId = store.appStore.tenantId();
+        const dbQuery = getSystemQuery(tenantId);
+
+        const [persons, addresses] = await Promise.all([
+          firstValueFrom(store.appStore.firestoreService.searchData<PersonModel>(PersonCollection, dbQuery, 'lastName', 'asc')),
+          firstValueFrom(store.appStore.firestoreService.searchData<AddressModel>(AddressCollection, dbQuery, 'parentKey', 'asc')),
+        ]);
+
+        if (!persons || !addresses) return;
+
+        const mismatches: FavMismatch[] = [];
+        for (const person of persons) {
+          const personAddresses = addresses.filter(a => a.parentKey === `person.${person.bkey}`);
+          const fav = computeFavoriteAddressInfo(personAddresses);
+
+ /*          console.log(person);
+          console.log(personAddresses);
+          console.log(fav);
+          return; */
+
+          const name = `${person.firstName} ${person.lastName}`;
+          const checks: Array<[string, string, string]> = [
+            ['favEmail',        person.favEmail,        fav.favEmail],
+            ['favPhone',        person.favPhone,        fav.favPhone],
+            ['favStreetName',   person.favStreetName,   fav.favStreetName],
+            ['favStreetNumber', person.favStreetNumber, fav.favStreetNumber],
+            ['favZipCode',      person.favZipCode,      fav.favZipCode],
+            ['favCity',         person.favCity,         fav.favCity],
+            ['favCountryCode',  person.favCountryCode,  fav.favCountryCode],
+          ];
+          for (const [field, cached, fromAddress] of checks) {
+            if (cached !== fromAddress) {
+              mismatches.push({ personKey: person.bkey, personName: name, field, cached, fromAddress });
+            }
+          }
+        }
+        patchState(store, { favMismatches: mismatches });
+      },
+
+      clearFavMismatches(): void {
+        patchState(store, { favMismatches: [] });
+      },
+
+      /**
+       * Repair a single fav* mismatch.
+       * direction 'toPerson'  → copy fromAddress value into person.fav* field
+       * direction 'toAddress' → find the favorite address and update its value from the cached person.fav* field
+       */
+      async repairFavMismatch(mismatch: FavMismatch, direction: 'toPerson' | 'toAddress'): Promise<void> {
+        if (direction === 'toAddress') {
+          // updating an address channel value is complex (different fields per channel) — not implemented
+          console.warn('AocDataStore.repairFavMismatch: toAddress direction is not yet implemented.');
+          return;
+        }
+        // direction === 'toPerson': write the address-derived value into the person document
+        const person = store.appStore.getPerson(mismatch.personKey);
+        if (!person) return;
+        (person as any)[mismatch.field] = mismatch.fromAddress;
+        await store.appStore.firestoreService.updateModel(PersonCollection, person);
+        // remove fixed mismatch from state
+        patchState(store, { favMismatches: store.favMismatches().filter(m =>
+          !(m.personKey === mismatch.personKey && m.field === mismatch.field)
+        )});
       },
 
       /**
