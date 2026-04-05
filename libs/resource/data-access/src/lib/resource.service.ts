@@ -7,6 +7,7 @@ import { ResourceCollection, ResourceModel, UserModel } from '@bk2/shared-models
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getResourceIndex } from '@bk2/resource-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
     providedIn: 'root'
@@ -14,6 +15,7 @@ import { getResourceIndex } from '@bk2/resource-util';
 export class ResourceService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly activityService = inject(ActivityService);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -24,7 +26,9 @@ export class ResourceService {
    */
   public async create(resource: ResourceModel, currentUser?: UserModel): Promise<string | undefined> {
     resource.index = getResourceIndex(resource);
-    return await this.firestoreService.createModel<ResourceModel>(ResourceCollection, resource, `@resource.${resource.type}.operation.create`, currentUser);
+    const key = await this.firestoreService.createModel<ResourceModel>(ResourceCollection, resource, `@resource.${resource.type}.operation.create`, currentUser);
+    void this.activityService.log('resource', 'create', currentUser);
+    return key;
   }
 
   /**
@@ -45,7 +49,9 @@ export class ResourceService {
    */
   public async update(resource: ResourceModel, currentUser?: UserModel, confirmMessage = `@resource.${resource.type}.operation.update`): Promise<string | undefined> {
     resource.index = getResourceIndex(resource);
-    return await this.firestoreService.updateModel<ResourceModel>(ResourceCollection, resource, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<ResourceModel>(ResourceCollection, resource, false, confirmMessage, currentUser);
+    void this.activityService.log('resource', 'update', currentUser);
+    return key;
   }
 
   /**
@@ -56,6 +62,7 @@ export class ResourceService {
   public async delete(resource: ResourceModel, currentUser?: UserModel): Promise<void> {
     const message = `@resource.${resource.type}.operation.delete`;
     await this.firestoreService.deleteModel<ResourceModel>(ResourceCollection, resource, message, currentUser);
+    void this.activityService.log('resource', 'delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY --------------------------------*/

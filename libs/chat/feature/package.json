@@ -18,6 +18,7 @@
     "@bk2/shared-util-angular": "*",
     "@bk2/shared-util-core": "*",
     "@bk2/avatar-ui": "*",
+    "@bk2/activity-data-access": "*",
     "@bk2/avatar-data-access": "*",
     "@bk2/comment-feature": "*",
     "@bk2/cms-menu-feature": "*",

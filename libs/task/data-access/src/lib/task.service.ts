@@ -7,6 +7,7 @@ import { GroupModel, MembershipModel, TaskCollection, TaskModel, UserModel } fro
 import { findByKey, getAvatarInfo, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getTaskIndex } from '@bk2/task-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,7 @@ import { getTaskIndex } from '@bk2/task-util';
 export class TaskService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
+  private readonly activityService = inject(ActivityService);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -24,7 +26,9 @@ export class TaskService {
    */
   public async create(task: TaskModel, currentUser: UserModel | undefined): Promise<string | undefined> {
     task.index = getTaskIndex(task);
-    return await this.firestoreService.createModel<TaskModel>(TaskCollection, task, '@task.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<TaskModel>(TaskCollection, task, '@task.operation.create', currentUser);
+    void this.activityService.log('task', 'create', currentUser);
+    return key;
   }
 
   /**
@@ -45,7 +49,9 @@ export class TaskService {
    */
   public async update(task: TaskModel, currentUser?: UserModel, confirmMessage = '@task.operation.update'): Promise<string | undefined> {
     task.index = getTaskIndex(task);
-    return await this.firestoreService.updateModel<TaskModel>(TaskCollection, task, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<TaskModel>(TaskCollection, task, false, confirmMessage, currentUser);
+    void this.activityService.log('task', 'update', currentUser);
+    return key;
   }
 
   /**
@@ -56,6 +62,7 @@ export class TaskService {
    */
   public async delete(task: TaskModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<TaskModel>(TaskCollection, task, '@task.operation.delete', currentUser);
+    void this.activityService.log('task', 'delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

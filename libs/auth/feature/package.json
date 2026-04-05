@@ -15,6 +15,7 @@
     "@bk2/shared-ui": "*",
     "@bk2/shared-feature": "*",
     "@bk2/auth-data-access": "*",
-    "@bk2/auth-ui": "*"
+    "@bk2/auth-ui": "*",
+    "@bk2/activity-data-access": "*"
   }
 }

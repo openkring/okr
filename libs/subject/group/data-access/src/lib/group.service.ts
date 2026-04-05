@@ -7,6 +7,7 @@ import { GroupCollection, GroupModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getGroupIndex } from '@bk2/subject-group-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,7 @@ import { getGroupIndex } from '@bk2/subject-group-util';
 export class GroupService  {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly activityService = inject(ActivityService);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -24,7 +26,9 @@ export class GroupService  {
    */ 
   public async create(group: GroupModel, currentUser?: UserModel): Promise<string | undefined> {
     group.index = getGroupIndex(group);
-    return await this.firestoreService.createModel<GroupModel>(GroupCollection, group, '@subject.group.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<GroupModel>(GroupCollection, group, '@subject.group.operation.create', currentUser);
+    void this.activityService.log('group', 'create', currentUser);
+    return key;
   }
   
   /**
@@ -45,7 +49,9 @@ export class GroupService  {
    */
   public async update(group: GroupModel, currentUser?: UserModel, confirmMessage = '@subject.group.operation.update'): Promise<string | undefined > {
     group.index = getGroupIndex(group);
-    return await this.firestoreService.updateModel<GroupModel>(GroupCollection, group, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<GroupModel>(GroupCollection, group, false, confirmMessage, currentUser);
+    void this.activityService.log('group', 'update', currentUser);
+    return key;
   }
 
   /**
@@ -56,6 +62,7 @@ export class GroupService  {
    */
   public async delete(group: GroupModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<GroupModel>(GroupCollection, group, '@subject.group.operation.delete', currentUser);
+    void this.activityService.log('group', 'delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/

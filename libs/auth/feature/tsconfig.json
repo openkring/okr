@@ -15,6 +15,7 @@
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
   "references": [
+    {"path": "../../activity/data-access/tsconfig.lib.json"},
     {"path": "../../shared/models/tsconfig.lib.json"},
     {"path": "../../shared/constants/tsconfig.lib.json"},
     {"path": "../../shared/util-angular/tsconfig.lib.json"},
@@ -23,6 +24,8 @@
     {"path": "../../shared/ui/tsconfig.lib.json"},
     {"path": "../../shared/feature/tsconfig.lib.json"},
     {"path": "../../auth/data-access/tsconfig.lib.json"},
-    {"path": "../../auth/ui/tsconfig.lib.json"}
+    {"path": "../../auth/ui/tsconfig.lib.json"},
+    {"path": "../../activity/data-access/tsconfig.lib.json"},
+    {"path": "../../activity/util/tsconfig.lib.json"}
   ]
 }

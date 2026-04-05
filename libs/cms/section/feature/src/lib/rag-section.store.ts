@@ -5,6 +5,7 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { AppStore } from '@bk2/shared-feature';
+import { ActivityService } from '@bk2/activity-data-access';
 import { UploadService } from '@bk2/avatar-data-access';
 import { DocumentService } from '@bk2/document-data-access';
 import { buildDocumentModel } from '@bk2/document-util';
@@ -53,6 +54,7 @@ export const RagStore = signalStore(
     withState(initialRagState),
     withProps(() => ({
         appStore: inject(AppStore),
+        activityService: inject(ActivityService),
         uploadService: inject(UploadService),
         documentService: inject(DocumentService),
         folderService: inject(FolderService),
@@ -164,6 +166,7 @@ export const RagStore = signalStore(
                         return true;
                     });
 
+                void store.activityService.log('rag', 'ask', store.currentUser() ?? undefined, question);
                 patchState(store, {
                     messages: [
                         ...store.messages(),

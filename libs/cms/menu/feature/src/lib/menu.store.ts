@@ -12,6 +12,7 @@ import { debugListLoaded, die, nameMatches, safeStructuredClone, warn } from '@b
 import { AppNavigationService, isInSplitPane, navigateByUrl } from '@bk2/shared-util-angular';
 
 import { AuthService } from '@bk2/auth-data-access';
+import { ActivityService } from '@bk2/activity-data-access';
 
 import { MenuService } from '@bk2/cms-menu-data-access';
 import { getTarget, isMenuItem } from '@bk2/cms-menu-util';
@@ -41,7 +42,8 @@ export const _MenuStore = signalStore(
     router: inject(Router),
     menuController: inject(MenuController),
     popoverController: inject(PopoverController),
-    authService: inject(AuthService)
+    authService: inject(AuthService),
+    activityService: inject(ActivityService)
   })),
   withProps((store) => ({
     menuItemsResource: rxResource({
@@ -173,8 +175,10 @@ export const _MenuStore = signalStore(
       },
 
       async logout(): Promise<void> {
-        store.authService.logout();
-        await navigateByUrl(store.router, '/auth/login', store.menu()?.data);
+        const email = store.appStore.loginEmail() ?? '';
+        await store.activityService.logAuth('logout', email); // user still authenticated here; errors are swallowed
+        const loggedOut = await store.authService.logout();
+        if (loggedOut) await navigateByUrl(store.router, '/auth/login', store.menu()?.data);
       },
 
       async selectMenuItem(router: Router, menuItem: MenuItemModel): Promise<void> {

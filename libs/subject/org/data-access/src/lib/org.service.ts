@@ -7,6 +7,7 @@ import { OrgCollection, OrgModel, UserModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getOrgIndex } from '@bk2/subject-org-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,7 @@ import { getOrgIndex } from '@bk2/subject-org-util';
 export class OrgService  {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly activityService = inject(ActivityService);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -24,7 +26,9 @@ export class OrgService  {
    */
   public async create(org: OrgModel, currentUser?: UserModel): Promise<string | undefined> {
     org.index = getOrgIndex(org);
-    return await this.firestoreService.createModel<OrgModel>(OrgCollection, org, '@subject.org.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<OrgModel>(OrgCollection, org, '@subject.org.operation.create', currentUser);
+    void this.activityService.log('org', 'create', currentUser);
+    return key;
   }
   
   /**
@@ -59,7 +63,9 @@ export class OrgService  {
    */
   public async update(org: OrgModel, currentUser?: UserModel, confirmMessage = '@subject.org.operation.update'): Promise<string | undefined> {
     org.index = getOrgIndex(org);
-    return await this.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, confirmMessage, currentUser);
+    void this.activityService.log('org', 'update', currentUser);
+    return key;
   }
 
   /**
@@ -70,6 +76,7 @@ export class OrgService  {
    */
   public async delete(org: OrgModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<OrgModel>(OrgCollection, org, '@subject.org.operation.delete', currentUser);
+    void this.activityService.log('org', 'delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/

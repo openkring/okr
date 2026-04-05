@@ -7,19 +7,23 @@ import { FolderCollection, FolderModel, UserModel } from '@bk2/shared-models';
 import { getSystemQuery } from '@bk2/shared-util-core';
 
 import { getFolderIndex, newFolderModel } from '@bk2/folder-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FolderService {
   private readonly env = inject(ENV);
+  private readonly activityService = inject(ActivityService);
   private readonly firestoreService = inject(FirestoreService);
   private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(folder: FolderModel, currentUser?: UserModel): Promise<string | undefined> {
     folder.index = getFolderIndex(folder);
-    return await this.firestoreService.createModel<FolderModel>(FolderCollection, folder, '@folder.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<FolderModel>(FolderCollection, folder, '@folder.operation.create', currentUser);
+    void this.activityService.log('folder', 'create', currentUser);
+    return key;
   }
 
   public read(key: string): Observable<FolderModel | undefined> {
@@ -28,11 +32,14 @@ export class FolderService {
 
   public async update(folder: FolderModel, currentUser?: UserModel): Promise<string | undefined> {
     folder.index = getFolderIndex(folder);
-    return await this.firestoreService.updateModel<FolderModel>(FolderCollection, folder, false, '@folder.operation.update', currentUser);
+    const key = await this.firestoreService.updateModel<FolderModel>(FolderCollection, folder, false, '@folder.operation.update', currentUser);
+    void this.activityService.log('folder', 'update', currentUser);
+    return key;
   }
 
   public async delete(folder: FolderModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<FolderModel>(FolderCollection, folder, '@folder.operation.delete', currentUser);
+    void this.activityService.log('folder', 'delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY --------------------------------*/

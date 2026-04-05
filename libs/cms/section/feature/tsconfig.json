@@ -50,6 +50,9 @@
     {"path": "../../../task/feature/tsconfig.lib.json"},
     {"path": "../../../chat/data-access/tsconfig.lib.json"},
     {"path": "../../../user/data-access/tsconfig.lib.json"},
-    {"path": "../../../relationship/reservation/feature/tsconfig.lib.json"}
+    {"path": "../../../relationship/reservation/feature/tsconfig.lib.json"},
+    {"path": "../../../activity/data-access/tsconfig.lib.json"},
+    {"path": "../../../activity/feature/tsconfig.lib.json"},
+    {"path": "../../../activity/util/tsconfig.lib.json"}
   ]
 }

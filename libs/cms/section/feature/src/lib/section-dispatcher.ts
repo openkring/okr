@@ -23,6 +23,7 @@ import { VideoSectionComponent } from './video-section.component';
 import { EventsSectionComponent } from './events-section.component';
 import { InvitationsSectionComponent } from './invitations-section.component';
 import { TasksSectionComponent } from './tasks-section.component';
+import { ActivitiesSectionComponent } from './activities-section.component';
 import { MessagesSectionComponent } from './messages-section.component';
 import { NewsSectionComponent } from './news-section.component';
 import { OrgchartSectionComponent } from './orgchart-section.component';
@@ -44,7 +45,7 @@ import { ResponsibilitySectionComponent } from './responsibility-section.compone
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent,
     IonItem, IonLabel, SpinnerComponent,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
   ],
@@ -132,6 +133,9 @@ import { ResponsibilitySectionComponent } from './responsibility-section.compone
           }
           @case('tasks') {
             <bk-tasks-section [section]="section" [editMode]="editMode()" />
+          }
+          @case('activities') {
+            <bk-activities-section [section]="section" [editMode]="editMode()" />
           }
           @case('tracker') {
             <bk-tracker-section [section]="section" [editMode]="editMode()" />

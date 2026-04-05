@@ -7,12 +7,14 @@ import { UserModel, WorkrelCollection, WorkrelModel } from '@bk2/shared-models';
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getWorkrelIndex } from '@bk2/relationship-workrel-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
     providedIn: 'root'
 })
 export class WorkrelService {
   private readonly env = inject(ENV);
+  private readonly activityService = inject(ActivityService);
   private readonly firestoreService = inject(FirestoreService);
 
   /*-------------------------- CRUD operations on workrel --------------------------------*/
@@ -24,7 +26,9 @@ export class WorkrelService {
    */
   public async create(workrel: WorkrelModel, currentUser?: UserModel): Promise<string | undefined> {
     workrel.index = getWorkrelIndex(workrel);
-    return await this.firestoreService.createModel<WorkrelModel>(WorkrelCollection, workrel, '@workrel.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<WorkrelModel>(WorkrelCollection, workrel, '@workrel.operation.create', currentUser);
+    void this.activityService.log('workrel', 'create', currentUser);
+    return key;
   }
 
   /**
@@ -45,7 +49,9 @@ export class WorkrelService {
    */
   public async update(workrel: WorkrelModel, currentUser?: UserModel, confirmMessage = '@workrel.operation.update'): Promise<string | undefined> {
     workrel.index = getWorkrelIndex(workrel);
-    return await this.firestoreService.updateModel<WorkrelModel>(WorkrelCollection, workrel, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<WorkrelModel>(WorkrelCollection, workrel, false, confirmMessage, currentUser);
+    void this.activityService.log('workrel', 'update', currentUser);
+    return key;
   }
 
   /**
@@ -56,6 +62,7 @@ export class WorkrelService {
    */
   public async delete(workrel: WorkrelModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<WorkrelModel>(WorkrelCollection, workrel, '@workrel.operation.delete', currentUser);
+    void this.activityService.log('workrel', 'delete', currentUser);
   }
 
   /**

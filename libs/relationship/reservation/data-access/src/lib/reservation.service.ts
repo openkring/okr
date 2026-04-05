@@ -7,12 +7,14 @@ import { ReservationCollection, ReservationModel, UserModel } from '@bk2/shared-
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getReservationIndex } from '@bk2/relationship-reservation-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReservationService {
   private readonly firestoreService = inject(FirestoreService);
+  private readonly activityService = inject(ActivityService);
   private readonly env = inject(ENV);
 
   /*-------------------------- CRUD operations on reservation --------------------------------*/
@@ -24,7 +26,9 @@ export class ReservationService {
    */
   public async create(reservation: ReservationModel, currentUser?: UserModel): Promise<string | undefined> {
     reservation.index = getReservationIndex(reservation);
-    return await this.firestoreService.createModel<ReservationModel>(ReservationCollection, reservation, '@reservation.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<ReservationModel>(ReservationCollection, reservation, '@reservation.operation.create', currentUser);
+    void this.activityService.log('reservation', 'create', currentUser);
+    return key;
   }
 
   /**
@@ -45,7 +49,9 @@ export class ReservationService {
    */
   public async update(reservation: ReservationModel, currentUser?: UserModel, confirmMessage = '@reservation.operation.update'): Promise<string | undefined> {
     reservation.index = getReservationIndex(reservation);
-    return await this.firestoreService.updateModel<ReservationModel>(ReservationCollection, reservation, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<ReservationModel>(ReservationCollection, reservation, false, confirmMessage, currentUser);
+    void this.activityService.log('reservation', 'update', currentUser);
+    return key;
   }
 
   /**
@@ -56,6 +62,7 @@ export class ReservationService {
    */
   public async delete(reservation: ReservationModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<ReservationModel>(ReservationCollection, reservation, '@reservation.operation.delete', currentUser);
+    void this.activityService.log('reservation', 'delete', currentUser);
   }
 
   /**

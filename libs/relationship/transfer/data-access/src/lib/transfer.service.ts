@@ -7,12 +7,14 @@ import { TransferCollection, TransferModel, UserModel } from '@bk2/shared-models
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getTransferIndex } from '@bk2/relationship-transfer-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TransferService  {
   private readonly firestoreService = inject(FirestoreService);
+  private readonly activityService = inject(ActivityService);
   private readonly env = inject(ENV);
 
   /*-------------------------- CRUD operations --------------------------------*/
@@ -24,7 +26,9 @@ export class TransferService  {
    */
   public async create(transfer: TransferModel, currentUser?: UserModel): Promise<string | undefined> {
     transfer.index = getTransferIndex(transfer);
-    return await this.firestoreService.createModel<TransferModel>(TransferCollection, transfer, '@transfer.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<TransferModel>(TransferCollection, transfer, '@transfer.operation.create', currentUser);
+    void this.activityService.log('transfer', 'create', currentUser);
+    return key;
   }
   
   /**
@@ -45,7 +49,9 @@ export class TransferService  {
    */
   public async update(transfer: TransferModel, currentUser?: UserModel, confirmMessage = '@transfer.operation.update'): Promise<string | undefined> {
     transfer.index = getTransferIndex(transfer);
-    return await this.firestoreService.updateModel<TransferModel>(TransferCollection, transfer, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<TransferModel>(TransferCollection, transfer, false, confirmMessage, currentUser);
+    void this.activityService.log('transfer', 'update', currentUser);
+    return key;
   }
 
   /**
@@ -56,6 +62,7 @@ export class TransferService  {
    */
   public async delete(transfer: TransferModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<TransferModel>(TransferCollection, transfer, '@transfer.operation.delete', currentUser);
+    void this.activityService.log('transfer', 'delete', currentUser);
   }
 
   /*-------------------------- LIST  --------------------------------*/

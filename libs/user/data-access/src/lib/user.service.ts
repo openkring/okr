@@ -7,6 +7,7 @@ import { UserCollection, UserModel } from '@bk2/shared-models';
 import { findAllByField, findByField, findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getUserIndex, getUserIndexInfo } from '@bk2/user-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
     providedIn: 'root'
@@ -14,6 +15,7 @@ import { getUserIndex, getUserIndexInfo } from '@bk2/user-util';
 export class UserService  {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly activityService = inject(ActivityService);
 
   /* ---------------------- Standard CRUD operations -------------------------------*/
   /**
@@ -25,7 +27,9 @@ export class UserService  {
    */
   public async create(user: UserModel, currentUser?: UserModel): Promise<string | undefined> {
     user.index = this.getIndex(user);
-    return await this.firestoreService.createModel<UserModel>(UserCollection, user, '@user.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<UserModel>(UserCollection, user, '@user.operation.create', currentUser);
+    void this.activityService.log('user', 'create', currentUser);
+    return key;
   }
 
   /**
@@ -69,7 +73,9 @@ export class UserService  {
    */
   public async update(user: UserModel, currentUser?: UserModel, confirmMessage = '@user.operation.update'): Promise<string | undefined> {
     user.index = this.getIndex(user);
-    return await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, confirmMessage, currentUser);  
+    const key = await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, confirmMessage, currentUser);
+    void this.activityService.log('user', 'update', currentUser);
+    return key;
   }
 
   /**
@@ -80,6 +86,7 @@ export class UserService  {
    */
   public async delete(user: UserModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<UserModel>(UserCollection, user, '@user.operation.delete', currentUser);
+    void this.activityService.log('user', 'delete', currentUser);
   }
 
   /**

@@ -8,6 +8,7 @@ import { CalEventCollection, CalEventModel, UserModel } from '@bk2/shared-models
 import { addTime, die, findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getCaleventIndex } from '@bk2/calevent-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
   providedIn: 'root',
@@ -15,6 +16,7 @@ import { getCaleventIndex } from '@bk2/calevent-util';
 export class CalEventService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly activityService = inject(ActivityService);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -25,7 +27,9 @@ export class CalEventService {
    */
   public async create(calEvent: CalEventModel, currentUser?: UserModel): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
-    return await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, '@calevent.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, '@calevent.operation.create', currentUser);
+    void this.activityService.log('calevent', 'create', currentUser);
+    return key;
   }
 
   /**
@@ -46,7 +50,9 @@ export class CalEventService {
    */
   public async update(calEvent: CalEventModel, currentUser?: UserModel, confirmMessage = '@calevent.operation.update'): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
-    return await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, confirmMessage, currentUser);
+    void this.activityService.log('calevent', 'update', currentUser);
+    return key;
   }
 
   /**
@@ -57,6 +63,7 @@ export class CalEventService {
    */
   public async delete(calEvent: CalEventModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<CalEventModel>(CalEventCollection, calEvent, '@calevent.operation.delete', currentUser);
+    void this.activityService.log('calevent', 'delete', currentUser);
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

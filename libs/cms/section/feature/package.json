@@ -24,6 +24,8 @@
     "@bk2/subject-group-util": "*",
     "@bk2/avatar-data-access": "*",
     "@bk2/document-ui": "*",
-    "@bk2/document-feature": "*"
+    "@bk2/document-feature": "*",
+    "@bk2/activity-data-access": "*",
+    "@bk2/activity-feature": "*"
   }
 }

@@ -12,6 +12,7 @@ import { MatrixAuthToken, MatrixMessage, MatrixRoom, MatrixUser, ROOM_SHAPE } fr
 import { debugItemLoaded, debugMessage } from '@bk2/shared-util-core';
 import { bkPrompt, confirm, copyToClipboardWithConfirmation, showToast } from '@bk2/shared-util-angular';
 
+import { ActivityService } from '@bk2/activity-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 import { MatrixChatService } from '@bk2/chat-data-access';
 
@@ -37,6 +38,7 @@ export const _MatrixChatStore = signalStore(
   })),
   withProps(() => ({
     appStore: inject(AppStore),
+    activityService: inject(ActivityService),
     matrixService: inject(MatrixChatService),
     avatarService: inject(AvatarService),
     modalController: inject(ModalController),
@@ -297,6 +299,7 @@ export const _MatrixChatStore = signalStore(
         // Register as pending so updateRoomsList() injects a stub immediately and the
         // UI renders the room without waiting for the next sync cycle.
         store.matrixService.registerPendingRoom(roomId, groupId);
+        void store.activityService.log('chat', 'join', store.currentUser() ?? undefined);
         return { roomId, joined };
       },
 
@@ -753,6 +756,7 @@ export const _MatrixChatStore = signalStore(
 
         try {
           await store.matrixService.leaveRoom(roomId);
+          void store.activityService.log('chat', 'leave', store.currentUser() ?? undefined);
           patchState(store, { currentRoomId: undefined });
         } catch (error) {
           console.error('MatrixChatStore.leaveRoom: Failed to leave:', error);

@@ -6,7 +6,8 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
 import { getSystemQuery } from '@bk2/shared-util-core';
 
-import {getPersonIndex} from '@bk2/subject-person-util'
+import {getPersonIndex} from '@bk2/subject-person-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,7 @@ import {getPersonIndex} from '@bk2/subject-person-util'
 export class PersonService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly activityService = inject(ActivityService);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -24,7 +26,9 @@ export class PersonService {
    */
   public async create(person: PersonModel, currentUser?: UserModel): Promise<string | undefined> {
     person.index = getPersonIndex(person);
-    return await this.firestoreService.createModel<PersonModel>(PersonCollection, person, '@subject.person.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<PersonModel>(PersonCollection, person, '@subject.person.operation.create', currentUser);
+    void this.activityService.log('person', 'create', currentUser);
+    return key;
   }
   
   /**
@@ -61,7 +65,9 @@ export class PersonService {
    */
   public async update(person: PersonModel, currentUser?: UserModel, confirmMessage = '@subject.person.operation.update'): Promise<string | undefined> {
     person.index = getPersonIndex(person);
-    return await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, confirmMessage, currentUser);
+    void this.activityService.log('person', 'update', currentUser);
+    return key;
   }
 
   /**
@@ -72,6 +78,7 @@ export class PersonService {
    */
   public async delete(person: PersonModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<PersonModel>(PersonCollection, person, '@subject.person.operation.delete', currentUser);
+    void this.activityService.log('person', 'delete', currentUser);
   }
 
   /**

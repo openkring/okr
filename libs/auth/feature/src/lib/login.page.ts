@@ -11,6 +11,7 @@ import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
 
 import { AuthService } from '@bk2/auth-data-access';
+import { ActivityService } from '@bk2/activity-data-access';
 import { LoginForm } from '@bk2/auth-ui';
 
 @Component({
@@ -63,6 +64,7 @@ export class LoginPageComponent {
   private readonly router = inject(Router);
   protected readonly appStore = inject(AppStore);
   protected readonly authService = inject(AuthService);
+  private readonly activityService = inject(ActivityService);
 
   // inputs
 
@@ -90,7 +92,9 @@ export class LoginPageComponent {
    * Login a returning user with already existing credentials.
    */
   public async login(): Promise<void> {
-    this.authService.login(this.currentCredentials(), this.appStore.appConfig().rootUrl, this.appStore.appConfig().loginUrl);
+    const email = this.currentCredentials().loginEmail;
+    await this.authService.login(this.currentCredentials(), this.appStore.appConfig().rootUrl, this.appStore.appConfig().loginUrl);
+    void this.activityService.logAuth('login', email);
   }
 
   public async gotoHome(): Promise<void> {

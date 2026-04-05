@@ -7,12 +7,14 @@ import { PersonalRelCollection, PersonalRelModel, UserModel } from '@bk2/shared-
 import { findByKey, getSystemQuery, removeDuplicatesFromArray } from '@bk2/shared-util-core';
 
 import { getPersonalRelIndex } from '@bk2/relationship-personal-rel-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
     providedIn: 'root'
 })
 export class PersonalRelService {
   private readonly env = inject(ENV);
+  private readonly activityService = inject(ActivityService);
   private readonly firestoreService = inject(FirestoreService);
 
   private readonly tenantId = this.env.tenantId;
@@ -26,7 +28,9 @@ export class PersonalRelService {
    */
   public async create(personalRel: PersonalRelModel, currentUser?: UserModel): Promise<string | undefined> {
     personalRel.index = getPersonalRelIndex(personalRel);
-    return await this.firestoreService.createModel<PersonalRelModel>(PersonalRelCollection, personalRel, '@personalRel.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<PersonalRelModel>(PersonalRelCollection, personalRel, '@personalRel.operation.create', currentUser);
+    void this.activityService.log('personalrel', 'create', currentUser);
+    return key;
   }
 
   /**
@@ -47,11 +51,14 @@ export class PersonalRelService {
    */
   public async update(personalRel: PersonalRelModel, currentUser?: UserModel, confirmMessage = '@personalRel.operation.update'): Promise<string | undefined> {
     personalRel.index = getPersonalRelIndex(personalRel);
-    return await this.firestoreService.updateModel<PersonalRelModel>(PersonalRelCollection, personalRel, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<PersonalRelModel>(PersonalRelCollection, personalRel, false, confirmMessage, currentUser);
+    void this.activityService.log('personalrel', 'update', currentUser);
+    return key;
   }
 
   public async delete(personalRel: PersonalRelModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<PersonalRelModel>(PersonalRelCollection, personalRel, '@personalRel.operation.delete', currentUser);
+    void this.activityService.log('personalrel', 'delete', currentUser);
   }
 
   /**

@@ -7,6 +7,7 @@ import { OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared-mode
 import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getOwnershipIndex } from '@bk2/relationship-ownership-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +15,7 @@ import { getOwnershipIndex } from '@bk2/relationship-ownership-util';
 export class OwnershipService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
-
+  private readonly activityService = inject(ActivityService);
   private readonly tenantId = this.env.tenantId;
 
   /*-------------------------- CRUD operations Ownership --------------------------------*/
@@ -26,7 +27,9 @@ export class OwnershipService {
    */
   public async create(ownership: OwnershipModel, currentUser?: UserModel): Promise<string | undefined> {
     ownership.index = getOwnershipIndex(ownership);
-    return await this.firestoreService.createModel<OwnershipModel>(OwnershipCollection, ownership, '@ownership.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<OwnershipModel>(OwnershipCollection, ownership, '@ownership.operation.create', currentUser);
+    void this.activityService.log('ownership', 'create', currentUser);
+    return key;
   }
 
   /**
@@ -47,11 +50,14 @@ export class OwnershipService {
    */
   public async update(ownership: OwnershipModel, currentUser?: UserModel, confirmMessage = '@ownership.operation.update'): Promise<string | undefined> {
     ownership.index = getOwnershipIndex(ownership);
-    return await this.firestoreService.updateModel<OwnershipModel>(OwnershipCollection, ownership, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<OwnershipModel>(OwnershipCollection, ownership, false, confirmMessage, currentUser);
+    void this.activityService.log('ownership', 'update', currentUser);
+    return key;
   }
 
   public async delete(ownership: OwnershipModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<OwnershipModel>(OwnershipCollection, ownership, '@ownership.operation.delete', currentUser);
+    void this.activityService.log('ownership', 'delete', currentUser);
   }
 
   /**

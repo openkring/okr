@@ -15,6 +15,7 @@
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
   "references": [
+    {"path": "../../../activity/data-access/tsconfig.lib.json"},
     {"path": "../../../shared/models/tsconfig.lib.json"},
     {"path": "../../../shared/config/tsconfig.lib.json"},
     {"path": "../../../shared/categories/tsconfig.lib.json"},

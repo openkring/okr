@@ -6,7 +6,7 @@ import { map, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
-import { DateFormat, getAttendanceStates, getAttendee, getAvatarInfo, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@bk2/shared-util-core';
+import { DateFormat, getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@bk2/shared-util-core';
 import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';

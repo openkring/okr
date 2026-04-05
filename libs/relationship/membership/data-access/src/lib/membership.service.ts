@@ -11,6 +11,7 @@ import { addDuration, findByKey, getAvatarInfo, getCategoryAttribute, getSystemQ
 import { createComment } from '@bk2/comment-util';
 
 import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembershipIndex, getRelLogEntry } from '@bk2/relationship-membership-util';
+import { ActivityService } from '@bk2/activity-data-access';
 
 
 @Injectable({
@@ -19,6 +20,7 @@ import { CategoryChangeFormModel, getMembershipCategoryChangeComment, getMembers
 export class MembershipService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly activityService = inject(ActivityService);
 
   /*-------------------------- CRUD operations --------------------------------*/
   /**
@@ -29,7 +31,9 @@ export class MembershipService {
  */
   public async create(membership: MembershipModel, currentUser?: UserModel): Promise<string | undefined> {
     membership.index = getMembershipIndex(membership);
-    return await this.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', currentUser);
+    const key = await this.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', currentUser);
+    void this.activityService.log('membership', 'create', currentUser);
+    return key;
   }
 
   /**
@@ -43,11 +47,14 @@ export class MembershipService {
 
   public async update(membership: MembershipModel, currentUser?: UserModel, confirmMessage = '@membership.operation.update'): Promise<string | undefined> {
     membership.index = getMembershipIndex(membership);
-    return await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, confirmMessage, currentUser);
+    const key = await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, confirmMessage, currentUser);
+    void this.activityService.log('membership', 'update', currentUser);
+    return key;
   }
 
   public async delete(membership: MembershipModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.delete', currentUser);
+    void this.activityService.log('membership', 'delete', currentUser);
   }
 
   /**
