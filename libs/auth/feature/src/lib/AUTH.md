@@ -49,23 +49,154 @@ Defined in `@bk2/shared-models`:
 ```
 Validated by the `authCredentials` Vest suite in `@bk2/auth-util`.
 
-## Role Hierarchy
-Roles are checked with the `hasRole(roleName, user)` utility from `@bk2/shared-util-core`. The effective hierarchy (lowest to highest) is:
+---
 
-```
-anonymous < registered < privileged < admin
-```
+## Role System
 
-Admin roles (`contentAdmin`, `resourceAdmin`, `eventAdmin`, `memberAdmin`, `groupAdmin`, `treasurer`) are lateral specializations that do not imply each other.
+Roles are stored on `UserModel.roles` as a `Roles` object (a map of `boolean` flags). A user can hold multiple roles simultaneously. Checked via `hasRole(roleName, user)` from `@bk2/shared-util-core`.
 
-## Guard Usage Examples
+### Role Hierarchy
+
+The primary access levels from least to most privileged:
+
+| Role | Description |
+| --- | --- |
+| `public` | Visible to everyone — authenticated or not. Used for content that requires no login. `hasRole('public')` always returns `true`. |
+| `registered` | Any authenticated user. Granted when an account is created. Includes all higher roles (privileged, admin). |
+| `privileged` | Trusted members with expanded read access to sensitive data. Includes admin. |
+| `admin` | Full access. Includes all other roles by implication. |
+
+> **Important:** `hasRole('registered', user)` returns `true` for privileged and admin users as well — each level inherits all permissions of lower levels.
+
+### Admin Specializations
+
+These roles are **lateral** — they grant specific operational permissions without implying each other or implying `privileged`. Each also implies `admin`.
+
+| Role | Scope |
+| --- | --- |
+| `contentAdmin` | Create and edit CMS pages and sections. |
+| `resourceAdmin` | Manage resources (boats, rooms, equipment). |
+| `eventAdmin` | Create and edit calendar events. |
+| `memberAdmin` | Manage memberships and member data. |
+| `groupAdmin` | Manage groups and group members. |
+| `treasurer` | Access financial data (IBAN, invoices, transfers). |
+
+### Implementation
+
 ```ts
-// Protect a route for any authenticated user
+// libs/shared/util-core/src/lib/auth.util.ts
+export function hasRole(role: RoleName, currentUser?: UserModel): boolean
+
+// libs/shared/models/src/lib/roles.ts
+export type Roles = {
+  registered?: boolean;
+  privileged?: boolean;
+  contentAdmin?: boolean;
+  resourceAdmin?: boolean;
+  eventAdmin?: boolean;
+  memberAdmin?: boolean;
+  groupAdmin?: boolean;
+  treasurer?: boolean;
+  admin?: boolean;
+};
+```
+
+### Guard Usage Examples
+
+```ts
+// Any authenticated user
 { path: 'dashboard', canActivate: [isAuthenticatedGuard] }
 
-// Protect admin-only routes
-{ path: 'admin', canActivate: [isAdminGuard()] }
-
-// Protect privileged routes
+// Privileged or higher
 { path: 'reports', canActivate: [isPrivilegedGuard()] }
+
+// Admin only
+{ path: 'aoc', canActivate: [isAdminGuard()] }
 ```
+
+---
+
+## Privacy Settings
+
+Sensitive personal data (date of birth, contact details, gender, etc.) is controlled by a two-layer privacy system. Both layers must allow access before a field is shown.
+
+### Layer 1 — Tenant Default (`AppConfig`)
+
+The tenant administrator sets default visibility per field in the `AppConfig` document in Firestore. These defaults apply to all persons unless overridden. Each field maps to a `PrivacyAccessor` (the minimum role required to see it):
+
+| AppConfig field | Default | Description |
+| --- | --- | --- |
+| `showName` | `public` | First and last name |
+| `showImages` | `public` | Profile photo / avatar |
+| `showDateOfBirth` | `registered` | Date of birth |
+| `showEmail` | `registered` | Favourite email address |
+| `showPhone` | `registered` | Favourite phone number |
+| `showPostalAddress` | `registered` | Favourite postal address |
+| `showDateOfDeath` | `privileged` | Date of death |
+| `showGender` | `privileged` | Gender |
+| `showTaxId` | `privileged` | AHV / social security number |
+| `showBexioId` | `privileged` | Bexio CRM reference ID |
+| `showIban` | `privileged` | Bank account (IBAN) |
+| `showTags` | `privileged` | Internal classification tags |
+| `showMemberships` | `privileged` | Membership history |
+| `showOwnerships` | `privileged` | Ownership records |
+| `showComments` | `privileged` | Internal comments |
+| `showDocuments` | `privileged` | Attached documents |
+| `showNotes` | `admin` | Free-text notes |
+
+### Layer 2 — Person's Own Preference (`UserModel`)
+
+A person who has a `UserModel` (i.e. a registered user account) can tighten the visibility of their own data via the **Profile → Privacy** form. They can only restrict — never relax — the tenant default. The overridable fields are:
+
+| UserModel field | Choices | Mapped accessor |
+| --- | --- | --- |
+| `usageName` | Public / Restricted / Protected | `public` / `registered` / `privileged` |
+| `usageDateOfBirth` | Public / Restricted / Protected | `public` / `registered` / `privileged` |
+| `usageEmail` | Public / Restricted / Protected | `public` / `registered` / `privileged` |
+| `usagePhone` | Public / Restricted / Protected | `public` / `registered` / `privileged` |
+| `usagePostalAddress` | Public / Restricted / Protected | `public` / `registered` / `privileged` |
+| `usageImages` | Public / Restricted / Protected | `public` / `registered` / `privileged` |
+
+Fields not listed here (gender, tax ID, IBAN, notes, etc.) are always governed by the tenant default only.
+
+### Effective Accessor
+
+The **effective accessor** for a field is the stricter of the two layers:
+
+```
+effectiveAccessor = stricterAccessor(appConfig.showXXX, privacyUsageToAccessor(user.usageXXX))
+```
+
+`stricterAccessor` picks whichever requires the higher role. If a person sets their date of birth to *Protected* (`privileged`) but the app default is `registered`, only `privileged` users and above will see it.
+
+This is computed by `AppStore.getPersonPrivacySettings(personUserModel?)` (`@bk2/shared-feature`), which returns a `PrivacySettings` object with the merged effective accessors.
+
+### Visibility Check
+
+All views call `isVisibleToUser(privacyAccessor, currentUser)` from `@bk2/shared-util-core`:
+
+```ts
+// returns true if currentUser meets the minimum role required by privacyAccessor
+isVisibleToUser(priv().showDateOfBirth, currentUser())
+```
+
+| `PrivacyAccessor` | Who can see it |
+| --- | --- |
+| `public` | Everyone (no login required) |
+| `registered` | Any logged-in user |
+| `privileged` | Privileged users and admins |
+| `admin` | Admins only |
+
+### Data Flow
+
+```text
+AppConfig.showXXX  ──┐
+                      ├─► stricterAccessor ─► PrivacySettings.showXXX ─► isVisibleToUser ─► show/hide field
+UserModel.usageXXX ──┘     (in AppStore)        (from store.priv())        (in template)
+```
+
+1. `AppStore.privacySettings()` — tenant defaults only (used when no specific person is loaded)
+2. `AppStore.getPersonPrivacySettings(personUserModel)` — merged defaults + person's own preferences
+3. Components receive a `priv = input<PrivacySettings>()` and call `isVisibleToUser(priv().showXXX, currentUser())` in the template
+
+> **Note:** The viewed person's `UserModel` must be loaded separately to apply their overrides. Currently `person-edit.store` passes `undefined` (tenant defaults only). Loading the viewed person's user account by their `personKey` is a planned improvement.
