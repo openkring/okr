@@ -14,6 +14,9 @@ import { Subscription } from 'rxjs';
 export async function navigateByUrl(router: Router, url: string | undefined, queryParams?: Params): Promise<void> {
     if (!url || url.length === 0) die('route.util.navigateByUrl() -> ERROR: url is mandatory');
     if (!router) die('route.util.navigateByUrl() -> ERROR: router is mandatory');
+    // Skip navigation if already on the same URL (Ionic outlets throw on re-activation)
+    const currentUrl = router.url.split('?')[0];
+    if (currentUrl === url) return;
     try {
       if (!queryParams) {
         await router.navigateByUrl(url);

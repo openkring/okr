@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, ResourceCollection, ResourceModel, ResourceModelName, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
+import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { die, getSystemQuery } from '@bk2/shared-util-core';
 import { AppNavigationService } from '@bk2/shared-util-angular';
 
@@ -174,7 +174,10 @@ export const AppStore = signalStore(
       allResources: computed(() => state.resourcesResource.value() ?? []),
       allTags: computed(() => state.tagsResource.value() ?? []),
       allCategories: computed(() => state.categoriesResource.value() ?? []),
-      appConfig: computed(() => state.appConfigResource.value() ?? new AppConfig(state.tenantId())),
+      appConfig: computed(() => {
+        const loaded = state.appConfigResource.value();
+        return Object.assign(new AppConfig(state.tenantId()), loaded ?? {});
+      }),
     };
   }),
 
@@ -224,6 +227,27 @@ export const AppStore = signalStore(
       getPerson(key: string) {
         if (!key) return undefined;
         return store.allPersons()?.find(p => p.bkey === key);
+      },
+
+      /**
+       * Return effective PrivacySettings for a specific person, combining the app-level defaults
+       * with the person's own UserModel privacy preferences (if available).
+       * For each overridable field the stricter of the two accessors wins — the person's data is
+       * shown only if both the tenant policy AND the person's own wish allow it.
+       * Fields that the user cannot override (showGender, showTaxId, etc.) always use the app default.
+       * @param personUserModel the UserModel of the person being viewed (not the current user)
+       */
+      getPersonPrivacySettings(personUserModel?: UserModel): PrivacySettings {
+        const defaults = store.privacySettings();
+        if (!personUserModel) return defaults;
+        return {
+          ...defaults,
+          showName:          stricterAccessor(defaults.showName,          privacyUsageToAccessor(personUserModel.usageName)),
+          showDateOfBirth:   stricterAccessor(defaults.showDateOfBirth,   privacyUsageToAccessor(personUserModel.usageDateOfBirth)),
+          showEmail:         stricterAccessor(defaults.showEmail,         privacyUsageToAccessor(personUserModel.usageEmail)),
+          showPhone:         stricterAccessor(defaults.showPhone,         privacyUsageToAccessor(personUserModel.usagePhone)),
+          showPostalAddress: stricterAccessor(defaults.showPostalAddress, privacyUsageToAccessor(personUserModel.usagePostalAddress)),
+        };
       },
       getOrg(key: string) {
         if (!key) return undefined;

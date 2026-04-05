@@ -32,9 +32,3 @@ export const personValidations = staticSuite((model: PersonModel, tenants: strin
   // tbd: match zipcode and city from swisscities dictionary
 
 });
-
-
-
-
-
-

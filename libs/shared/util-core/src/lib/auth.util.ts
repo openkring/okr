@@ -30,6 +30,8 @@ export function hasRole(role: RoleName | undefined, currentUser?: UserModel): bo
   let roles: RoleName[] = [];
   switch(role) {  // add additional roles that also have access
     case 'none': return true;
+    case 'anonymous': return !currentUser; // visible only to unauthenticated users
+    case 'public': return true; // visible to everyone, authenticated or not
     case 'registered': roles = ['registered', 'privileged', 'contentAdmin', 'resourceAdmin', 'eventAdmin', 'memberAdmin', 'treasurer', 'admin']; break;
     case 'privileged': roles = ['privileged', 'admin']; break;
     case 'memberAdmin': roles = ['memberAdmin', 'admin']; break;
@@ -38,7 +40,6 @@ export function hasRole(role: RoleName | undefined, currentUser?: UserModel): bo
     case 'eventAdmin': roles = ['eventAdmin', 'admin']; break;
     case 'treasurer': roles = ['treasurer', 'admin']; break;
     case 'admin':  roles = ['admin']; break;
-    case 'public': roles = ['public']; break; // only non-authenticated users
     case 'groupAdmin': roles = ['groupAdmin', 'admin']; break;
     default: die('AuthUtil.hasRole: unknown role claimed: ' + role);
   }
@@ -58,7 +59,8 @@ export function isPrivilegedOr(roleName: RoleName, currentUser?: UserModel): boo
 }
 
 // privacy access checks
-export function isVisibleToUser(privacyAccessor: PrivacyAccessor, currentUser?: UserModel): boolean {
+export function isVisibleToUser(privacyAccessor?: PrivacyAccessor, currentUser?: UserModel): boolean {
+  if (!privacyAccessor) return false;
   switch (privacyAccessor) {
     case 'public':
       return hasRole('public', currentUser);

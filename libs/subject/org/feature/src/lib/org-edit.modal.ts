@@ -21,6 +21,7 @@ import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-fe
 
 import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
 import { OrgFormComponent } from '@bk2/subject-org-ui';
+import { OrgStore } from 'libs/subject/org/feature/src/lib/org.store';
 
 @Component({
   selector: 'bk-org-edit-modal',
@@ -32,6 +33,7 @@ import { OrgFormComponent } from '@bk2/subject-org-ui';
     ReservationsAccordionComponent, DocumentsAccordionComponent,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
+  providers: [OrgStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} } `],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
@@ -61,7 +63,7 @@ import { OrgFormComponent } from '@bk2/subject-org-ui';
           <ion-card>
             <ion-card-content class="ion-no-padding">
               <ion-accordion-group value="addresses" [multiple]="true">
-                <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+                <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" [priv]="priv()" />
                 <bk-membership-accordion [member]="org" [readOnly]="isReadOnly()" modelType="org" />
 
                 @if(hasRole('privileged') || !isReadOnly()) {
@@ -82,6 +84,7 @@ import { OrgFormComponent } from '@bk2/subject-org-ui';
   `
 })
 export class OrgEditModalComponent {
+  protected readonly store = inject(OrgStore);
   private readonly modalController = inject(ModalController);
   private readonly avatarService = inject(AvatarService);
   private readonly env = inject(ENV);
@@ -111,6 +114,7 @@ export class OrgEditModalComponent {
   protected orgKey = computed(() => this.org()?.bkey ?? '');
   protected isNew = computed(() => !this.org()?.bkey.length);
   protected listId = computed(() => 'o_' + this.orgKey());
+  protected priv = computed(() => this.store.privacySettings());
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

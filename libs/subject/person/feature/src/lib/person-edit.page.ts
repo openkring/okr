@@ -69,7 +69,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="addresses" [multiple]="true">
-              <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+              <bk-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" [priv]="priv()" />
               <bk-membership-accordion [member]="person" [readOnly]="isReadOnly()"/>
               <bk-ownerships-accordion [owner]="person" [defaultResource]="defaultResource()" [readOnly]="hideAddButton()" />
               <bk-reservations-accordion [listId]="listId()" [readOnly]="hideAddButton()" />

@@ -3,11 +3,11 @@ import { Component, computed, effect, inject, input } from "@angular/core";
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
-import { AddressModel } from "@bk2/shared-models";
+import { AddressModel, PrivacyAccessor, PrivacySettings } from "@bk2/shared-models";
 import { SvgIconPipe } from "@bk2/shared-pipes";
 import { EmptyListComponent } from "@bk2/shared-ui";
 import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } from "@bk2/shared-util-angular";
-import { coerceBoolean, getCategoryIcon, hasRole } from "@bk2/shared-util-core";
+import { coerceBoolean, getCategoryIcon, hasRole, isVisibleToUser } from "@bk2/shared-util-core";
 
 import { FavoriteColorPipe, FormatAddressPipe } from "@bk2/subject-address-util";
 
@@ -49,23 +49,25 @@ import { AddressStore } from "./addresses.store";
       } @else {
         <ion-list lines="inset">
           @for(address of addresses(); track $index) {
-            <ion-item (click)="showActions(address)">
-              <ion-label>
-                <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
-                @if(address.isCc) {
-                  <ion-icon src="{{ 'cc-circle' | svgIcon }}" />
+            @if(isVisibleToUser(address)) {
+              <ion-item (click)="showActions(address)">
+                <ion-label>
+                  <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                  @if(address.isCc) {
+                    <ion-icon src="{{ 'cc-circle' | svgIcon }}" />
+                  }
+                  @if(address.isValidated) {
+                    <ion-icon src="{{ 'shield' | svgIcon }}" />
+                  }
+                  <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
+                  <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
+                  {{ address | formatAddress }}
+                </ion-label>
+                @if((address.addressChannel === 'bankaccount' || address.addressChannel === 'twint') && address.url) {
+                  <ion-icon slot="end" src="{{ 'qrcode' | svgIcon }}" />
                 }
-                @if(address.isValidated) {
-                  <ion-icon src="{{ 'shield' | svgIcon }}" />
-                }
-                <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
-                <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
-                {{ address | formatAddress }}
-              </ion-label>
-              @if((address.addressChannel === 'bankaccount' || address.addressChannel === 'twint') && address.url) {
-                <ion-icon slot="end" src="{{ 'qrcode' | svgIcon }}" />
-              }
-            </ion-item>
+              </ion-item>
+            }
           }
         </ion-list>
       }
@@ -83,6 +85,7 @@ export class AddressesAccordionComponent {
   public readOnly = input<boolean>(true);
   public color = input('light'); // color of the accordion
   public label = input('@subject.address.plural'); // label of the accordion
+  public readonly priv = input.required<PrivacySettings>();
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -211,5 +214,19 @@ export class AddressesAccordionComponent {
 
   public async add(): Promise<void> {
     this.addressStore.add(this.isReadOnly());
+  }
+
+  protected isVisibleToUser(address: AddressModel): boolean {
+    switch(address.addressChannel) {
+      case 'phone': 
+        return isVisibleToUser(this.priv().showPhone, this.currentUser());
+      case 'email':
+        return isVisibleToUser(this.priv().showEmail, this.currentUser());
+      case 'postal':
+        return isVisibleToUser(this.priv().showPostalAddress, this.currentUser());
+      case 'bankaccount':
+        return isVisibleToUser(this.priv().showIban, this.currentUser());
+      default: return false;
+    }
   }
 }

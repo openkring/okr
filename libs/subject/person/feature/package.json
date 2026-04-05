@@ -30,6 +30,7 @@
     "@bk2/subject-address-feature": "*",
     "@bk2/subject-address-data-access": "*",
     "@bk2/subject-person-data-access": "*",
+    "@bk2/user-data-access": "*",
     "@bk2/subject-person-ui": "*",
     "@bk2/subject-person-util": "*",
     "@bk2/subject-swisscities-ui": "*",

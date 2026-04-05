@@ -50,11 +50,9 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
               </ion-col>
             </ion-row>
 
-            <!-- tbd: these role checks are currently only checking against the default
-            they need to be extended to consider the settings of this person's user -->
-            @if(isVisibleToUser(priv().showDateOfBirth) || isVisibleToUser(priv().showDateOfDeath)) {
+            @if(isVisibleToUser('dob', priv().showDateOfBirth) || isVisibleToUser('dod', priv().showDateOfDeath)) {
               <ion-row>
-                @if(isVisibleToUser(priv().showDateOfBirth)) {
+                @if(isVisibleToUser('dob', priv().showDateOfBirth)) {
                   <ion-col size="12" size-md="6"> 
                     <bk-date-input name="dateOfBirth" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" autocomplete="bday" [readOnly]="isReadOnly()" />
                   </ion-col>
@@ -69,18 +67,18 @@ import { AhvFormat, formatAhv } from '@bk2/shared-util-angular';
             }
 
             <ion-row>
-              @if(isVisibleToUser(priv().showGender)) {
+              @if(isVisibleToUser('gender', priv().showGender)) {
                 <ion-col size="12" size-md="6">
                   <bk-cat-select [category]="genders()!" [selectedItemName]="gender()" (selectedItemNameChange)="onFieldChange('gender', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                 </ion-col>
               }
       
-              @if(isVisibleToUser(priv().showTaxId)) {
+              @if(isVisibleToUser('taxId', priv().showTaxId)) {
                 <ion-col size="12" size-md="6">
                   <bk-text-input name="ssnId" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="isReadOnly()" />                                        
                 </ion-col>
               }
-              @if(isVisibleToUser(priv().showBexioId)) {
+              @if(isVisibleToUser('bexioId', priv().showBexioId)) {
                 <ion-col size="12" size-md="6">
                   <bk-text-input name="bexioId" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
                 </ion-col>
@@ -151,7 +149,8 @@ export class PersonFormComponent {
     debugFormErrors('PersonForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 
-  protected isVisibleToUser(privacyAccessor: PrivacyAccessor): boolean {
+  protected isVisibleToUser(field: string, privacyAccessor: PrivacyAccessor): boolean {
+    console.log('isVisibleToUser(' + field + ', ' + privacyAccessor + '):');
     return isVisibleToUser(privacyAccessor, this.currentUser());
   }
 

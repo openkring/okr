@@ -168,10 +168,10 @@ describe('auth.util', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false when user exists and checks for public role', () => {
+    it('should return true when user exists and checks for public role', () => {
       const user = createUserWithRoles({ registered: true });
       const result = hasRole('public', user);
-      expect(result).toBe(false);
+      expect(result).toBe(true); // 'public' means visible to everyone, including authenticated users
     });
 
     it('should return false when user does not have required role', () => {
@@ -271,6 +271,18 @@ describe('auth.util', () => {
   describe('isVisibleToUser', () => {
     it('should return true for public privacy when no user', () => {
       const result = isVisibleToUser('public');
+      expect(result).toBe(true);
+    });
+
+    it('should return true for public privacy when user is registered', () => {
+      const user = createUserWithRoles({ registered: true });
+      const result = isVisibleToUser('public', user);
+      expect(result).toBe(true);
+    });
+
+    it('should return true for public privacy when user is admin', () => {
+      const user = createUserWithRoles({ admin: true });
+      const result = isVisibleToUser('public', user);
       expect(result).toBe(true);
     });
 

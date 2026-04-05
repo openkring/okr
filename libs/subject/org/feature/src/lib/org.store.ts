@@ -87,6 +87,7 @@ export const OrgStore = signalStore(
 
     // other
     isLoading: computed(() => state.orgsResource.isLoading() || state.orgResource.isLoading()),
+    privacySettings: computed(() => state.appStore.privacySettings()),
     currentUser: computed(() => state.appStore.currentUser()),
     tenantId: computed(() => state.appStore.tenantId()),
     tags: computed(() => state.appStore.getTags('org')),

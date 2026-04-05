@@ -64,7 +64,7 @@ import { safeStructuredClone } from '@bk2/shared-util-core';
                 />
               }
             }
-            <bk-addresses-accordion [parentKey]="parentKey()" description="@profile.addresses.description" [readOnly]="false" />
+            <bk-addresses-accordion [parentKey]="parentKey()" description="@profile.addresses.description" [priv]="priv()" [readOnly]="false" />
             @if(userFormData(); as userFormData) {
               <bk-profile-settings-accordion
                 [formData]="userFormData"
@@ -127,6 +127,7 @@ export class ProfileEditPageComponent {
     return intro + ' <a href=mailto:"' + this.profileEditStore.appStore.appConfig().opEmail + '">Website Admin</a>.';
   });
   protected tags = computed(() => this.profileEditStore.getTags());
+  protected priv = computed(() => this.profileEditStore.privacySettings());
 
   constructor() {
     effect(() => {

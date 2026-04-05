@@ -8,6 +8,36 @@ import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_TITLE, DEFAULT_URL } from "@bk2/sh
 
 export type PrivacyAccessor = 'admin' | 'privileged' | 'registered' | 'public';
 
+/** Ordered from most permissive (0) to most restrictive (3). */
+const ACCESSOR_RANK: Record<PrivacyAccessor, number> = {
+  public: 0, registered: 1, privileged: 2, admin: 3,
+};
+
+/**
+ * Convert a PrivacyUsage numeric enum value (stored on UserModel) to the
+ * corresponding PrivacyAccessor string used in PrivacySettings.
+ *   Public (0)     → 'public'
+ *   Restricted (1) → 'registered'
+ *   Protected (2)  → 'privileged'
+ */
+export function privacyUsageToAccessor(usage: number): PrivacyAccessor {
+  switch (usage) {
+    case 0:  return 'public';
+    case 1:  return 'registered';
+    case 2:  return 'privileged';
+    default: return 'registered';
+  }
+}
+
+/**
+ * Return the stricter of two PrivacyAccessors (the one that requires a higher role).
+ * Used to combine the app-level default with the person's own user preference:
+ * the person's data is shown only if BOTH the app policy AND the person's wish allow it.
+ */
+export function stricterAccessor(a: PrivacyAccessor, b: PrivacyAccessor): PrivacyAccessor {
+  return ACCESSOR_RANK[a] >= ACCESSOR_RANK[b] ? a : b;
+}
+
 export interface PrivacySettings {
   showName: PrivacyAccessor;
   showDateOfBirth: PrivacyAccessor;
@@ -72,12 +102,17 @@ export class AppConfig {
   // privacy settings
   public dpoEmail = DEFAULT_EMAIL; // email address for DPO contact
   public dpoName = DEFAULT_NAME; // name of the DPO
-  public showName: PrivacyAccessor = 'public';
+
+  // can be overwritten in profile
+  public showImages: PrivacyAccessor = 'public';
   public showDateOfBirth: PrivacyAccessor = 'registered';
-  public showDateOfDeath: PrivacyAccessor = 'privileged';
+  public showPostalAddress: PrivacyAccessor = 'registered';
   public showEmail: PrivacyAccessor = 'registered';
   public showPhone: PrivacyAccessor = 'registered';
-  public showPostalAddress: PrivacyAccessor = 'registered';
+  public showName: PrivacyAccessor = 'public';
+
+  // fix
+  public showDateOfDeath: PrivacyAccessor = 'privileged';
   public showIban: PrivacyAccessor = 'privileged';
   public showGender: PrivacyAccessor = 'privileged';
   public showTaxId: PrivacyAccessor = 'privileged';

@@ -8,6 +8,7 @@ import { PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models'
 import { debugItemLoaded } from '@bk2/shared-util-core';
 
 import { PersonService } from '@bk2/subject-person-data-access';
+import { UserService } from '@bk2/user-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 
 /**
@@ -27,11 +28,16 @@ export const PersonEditStore = signalStore(
   withState(initialState),
   withProps(() => ({
     personService: inject(PersonService),
+    userService: inject(UserService),
     appStore: inject(AppStore),
     avatarService: inject(AvatarService),
   })),
 
   withProps((store) => ({
+    personUserModelResource: rxResource({
+      params: () => ({ personKey: store.personKey() }),
+      stream: ({ params }) => store.userService.readByPersonKey(params.personKey ?? '')
+    }),
     personResource: rxResource({
       params: () => ({
         personKey: store.personKey()
@@ -50,7 +56,10 @@ export const PersonEditStore = signalStore(
       currentUser: computed(() => state.appStore.currentUser()),
       defaultResource : computed(() => state.appStore.defaultResource() ?? new ResourceModel(state.appStore.env.tenantId)),
       tenantId: computed(() => state.appStore.env.tenantId),
-      privacySettings: computed(() => state.appStore.privacySettings()),
+      privacySettings: computed(() => {
+        const users = state.personUserModelResource.value();
+        return state.appStore.getPersonPrivacySettings(users?.[0]);
+      }),
       isLoading: computed(() => state.personResource.isLoading()),
     };
   }),

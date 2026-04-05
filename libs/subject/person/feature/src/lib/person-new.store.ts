@@ -48,7 +48,7 @@ export const PersonNewStore = signalStore(
       membershipCategoryKey: computed(() => state.orgResource.value()?.membershipCategoryKey ?? 'mcat_default'),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
-      privacySettings: computed(() => state.appStore.privacySettings()),
+      privacySettings: computed(() => state.appStore.getPersonPrivacySettings()),
       defaultMcat: computed(() => state.appStore.getCategory('mcat_default'))
     };
   }),
