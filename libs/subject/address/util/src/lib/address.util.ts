@@ -126,14 +126,14 @@ export function getAddressValueByChannel(address: AddressModel): string {
     address.streetName = replaceSubstring(address.streetName ?? '', 'str.', 'strasse');
   }
   if (address.url) {
-    address.url = replaceSubstring(address.url, 'http://', '');
-    address.url = replaceSubstring(address.url, 'https://', '');
+    // strip social media prefixes so only the handle/path is stored (prefix re-added at browse time)
     address.url = replaceSubstring(address.url, 'twitter.com/', '');
     address.url = replaceSubstring(address.url, 'www.xing.com/profile/', '');
     address.url = replaceSubstring(address.url, 'www.facebook.com/', '');
     address.url = replaceSubstring(address.url, 'www.linkedin.com/in/', '');
     address.url = replaceSubstring(address.url, 'www.instagram.com/', '');
     address.url = replaceEndingSlash(address.url);
+    // Note: https:// is NOT stripped — web channel URLs are stored with the full protocol
   }
   if (address.phone) {
     address.phone = replaceSubstring(address.phone, 'tel:', '');

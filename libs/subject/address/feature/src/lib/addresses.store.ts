@@ -353,7 +353,7 @@ export const AddressStore = signalStore(
           case 'email':  return browseUrl(`mailto:${address.email}`, '');
           case 'phone':  return browseUrl(`tel:${address.phone}`, '');
           case 'postal': return await this.show(address);
-          case 'web': return browseUrl(address.url, 'https://');
+          case 'web': return browseUrl(address.url.startsWith('https://') ? address.url : 'https://' + address.url);
           case 'twitter': return browseUrl(address.url, 'https://twitter.com/');
           case 'xing': return browseUrl(address.url, 'https://www.xing.com/profile/');
           case 'facebook': return browseUrl(address.url, 'https://www.facebook.com/');

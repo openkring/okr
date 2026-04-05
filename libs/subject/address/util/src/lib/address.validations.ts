@@ -28,7 +28,7 @@ export const addressValidations = staticSuite((model: AddressModel, tenants: str
 
   //tagValidations('tags', model.tags);
   stringValidations('notes', model.notes, LONG_NAME_LENGTH);
-  stringValidations('parentKey', model.parentKey, SHORT_NAME_LENGTH, 0, true);
+  stringValidations('parentKey', model.parentKey, NAME_LENGTH, 0, true);
 
   // cross validations
   omitWhen(model.addressChannel !== 'custom', () => {
