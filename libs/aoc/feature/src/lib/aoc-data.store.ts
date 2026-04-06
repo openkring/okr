@@ -537,6 +537,7 @@ export const AocDataStore = signalStore(
         const person = store.appStore.getPerson(mismatch.personKey);
         if (!person) return;
         (person as any)[mismatch.field] = mismatch.fromAddress;
+        console.log('AocData.repairavMismatch: ', person);
         await store.appStore.firestoreService.updateModel(PersonCollection, person);
         // remove fixed mismatch from state
         patchState(store, { favMismatches: store.favMismatches().filter(m =>
