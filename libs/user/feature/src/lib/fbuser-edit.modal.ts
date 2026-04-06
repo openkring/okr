@@ -5,7 +5,7 @@ import { FirebaseUserModel, UserModel } from "@bk2/shared-models";
 import { ChangeConfirmationComponent, HeaderComponent } from "@bk2/shared-ui";
 
 import { FbuserFormComponent } from "@bk2/user-ui";
-import { hasRole } from "@bk2/shared-util-core";
+import { hasRole, removeUndefinedFields } from "@bk2/shared-util-core";
 
 @Component({
   selector: 'bk-address-edit-modal',
@@ -22,9 +22,11 @@ import { hasRole } from "@bk2/shared-util-core";
     <ion-content>
       <bk-fbuser-form
         [formData]="formData()"
+        (formDataChange)="onFormDataChange($event)"
         [currentUser]="currentUser()"
         [readOnly]="readOnly()"
-          (formDataChange)="onFormDataChange($event)"
+        (dirty)="formDirty.set($event)"
+        (valid)="formValid.set($event)"
       />
     </ion-content>
   `
@@ -41,7 +43,7 @@ export class FbuserEditModalComponent {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  public formData = linkedSignal(() => this.fbuser()); 
+  public formData = linkedSignal(() => Object.assign(new FirebaseUserModel(), removeUndefinedFields(this.fbuser() as unknown as Record<string, unknown>)));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

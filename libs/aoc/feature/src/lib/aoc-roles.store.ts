@@ -146,6 +146,17 @@ export const AocRolesStore = signalStore(
       },
 
       /******************************* actions *************************************** */
+      reset() {
+        patchState(store, { ...initialState });
+      },
+
+      reload() {
+        store.personsResource.reload();
+        store.usersResource.reload();
+        store.userResource.reload();
+        store.fbUserResource.reload();
+      },
+
       async selectPerson(): Promise<void> {
         const modal = await store.modalController.create({
           component: PersonSelectModalComponent,
@@ -301,6 +312,7 @@ export const AocRolesStore = signalStore(
             const { data, role } = await modal.onWillDismiss();
             if (role === 'confirm') {
               await updateFirebaseUser(data as FirebaseUserModel, store.appStore.env.useEmulators);
+              this.reload();
             }
           } catch (ex) {
             error(store.toastController, 'RolesStore.updateFbuser -> error: ' + JSON.stringify(ex));

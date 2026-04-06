@@ -6,6 +6,6 @@ export class FirebaseUserModel {
   public displayName = DEFAULT_NAME;
   public emailVerified = false;
   public disabled = false;
-  public phone = DEFAULT_PHONE;
-  public photoUrl = DEFAULT_URL;
+  public phone?: string = DEFAULT_PHONE;
+  public photoUrl?: string = DEFAULT_URL;
 }

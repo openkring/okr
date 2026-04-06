@@ -23,11 +23,12 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
   viewProviders: [vestFormsViewProviders],
   template: `
     <form scVestForm
-      [formShape]="shape"
       [formValue]="formData()"
+      (formValueChange)="onFormChange($event)"
       [suite]="suite" 
       (dirtyChange)="dirty.emit($event)"
-      (formValueChange)="onFormChange($event)">
+      (validChange)="valid.emit($event)"
+    >
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@user.auth.title' | translate | async }}</ion-card-title>
@@ -43,11 +44,19 @@ import { FIREBASE_USER_SHAPE, firebaseUserFormValidations } from "@bk2/user-util
                 <bk-text-input name="displayName" label="@input.displayName.label" placeholder="@input.displayName.placeholder"  [readOnly]="isReadOnly()" [value]="displayName()" (valueChange)="onFieldChange('displayName', $event)" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-email [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()"/>
+                <bk-email 
+                  [value]="email()"
+                  (valueChange)="onFieldChange('email', $event)"
+                  [readOnly]="isReadOnly()"
+                />
                 <bk-error-note [errors]="emailError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6"> 
-                <bk-phone [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()"/>
+                <bk-phone 
+                  [value]="phone()"
+                  (valueChange)="onFieldChange('phone', $event)"
+                  [readOnly]="isReadOnly()"
+                />
                 <bk-error-note [errors]="phoneError()" />                                                                                                                     
               </ion-col>
               <ion-col size="12" size-md="6">

@@ -239,11 +239,11 @@ export const updateFirebaseUser = functions.onCall(
     try {
       await getAuth().updateUser(request.data.uid, {
         email: request.data.email,
-        displayName: request.data.displayName,
+        displayName: request.data.displayName || undefined,
         emailVerified: request.data.emailVerified,
         disabled: request.data.disabled,
-        phoneNumber: request.data.phone,
-        photoURL: request.data.photoUrl,
+        phoneNumber: request.data.phone || undefined,
+        photoURL: request.data.photoUrl || undefined,
       });
       console.log(CF_NAME + ': OK');
     } catch (error: any) {

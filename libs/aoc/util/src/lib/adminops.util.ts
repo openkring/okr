@@ -102,6 +102,8 @@ export async function getFirebaseUser(uid: string): Promise<FirebaseUserModel | 
     const getFirebaseUserFunction = httpsCallable(functions, 'getFirebaseUser');
     const result = await getFirebaseUserFunction({ uid });
     const fbUser = result.data as FirebaseUserModel;
+    if (!fbUser.phone) fbUser.phone = '';
+    if (!fbUser.photoUrl) fbUser.photoUrl = '';
     console.log(`adminops.util.getFirebaseUser: received firebase user`, fbUser);
     return fbUser;
   } catch (error) {
@@ -160,6 +162,8 @@ export async function updateFirebaseUser(fbUser: FirebaseUserModel, useEmulator 
       connectFunctionsEmulator(functions, 'localhost', 5001);
     }
     const updateFirebaseUserFunction = httpsCallable(functions, 'updateFirebaseUser');
+    if (fbUser.phone?.length === 0) fbUser.phone = undefined;
+    if (fbUser.photoUrl?.length === 0) fbUser.photoUrl = undefined;
     await updateFirebaseUserFunction(fbUser);
     console.log(`adminops.util.updateFirebaseUser: user ${fbUser.uid} updated.`);
   } catch (error) {
