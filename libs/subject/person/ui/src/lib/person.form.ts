@@ -149,8 +149,7 @@ export class PersonFormComponent {
     debugFormErrors('PersonForm.onFormChange: ', this.validationResult().getErrors(), this.currentUser());
   }
 
-  protected isVisibleToUser(field: string, privacyAccessor: PrivacyAccessor): boolean {
-    console.log('isVisibleToUser(' + field + ', ' + privacyAccessor + '):');
+  protected isVisibleToUser(_field: string, privacyAccessor: PrivacyAccessor): boolean {
     return isVisibleToUser(privacyAccessor, this.currentUser());
   }
 
