@@ -29,7 +29,7 @@ export class AddressService {
   public async create(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
     address.index = getAddressIndex(address);
     const key = await this.firestoreService.createModel<AddressModel>(AddressCollection, address, '@subject.address.operation.create', currentUser);
-    const payload = `${key}: ${address.addressChannel}/${getAddressValueByChannel(address)}}`;
+    const payload = `${key}: ${address.addressChannel}/${getAddressValueByChannel(address)}`;
     void this.activityService.log('address', 'create', currentUser, payload);
     return key;
 }
@@ -53,7 +53,7 @@ export class AddressService {
   public async update(address: AddressModel, currentUser?: UserModel, confirmMessage = '@subject.address.operation.update'): Promise<string | undefined> {
     address.index = getAddressIndex(address);
     const key = await this.firestoreService.updateModel<AddressModel>(AddressCollection, address, false, confirmMessage, currentUser);
-    const payload = `${key}: ${address.addressChannel}/${getAddressValueByChannel(address)}}`;
+    const payload = `${key}: ${address.addressChannel}/${getAddressValueByChannel(address)}`;
     void this.activityService.log('address', 'update', currentUser, payload);
     return key;
   }
@@ -67,7 +67,7 @@ export class AddressService {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(address: AddressModel, currentUser?: UserModel): Promise<void> {
-    const payload = `${address.bkey}: ${address.addressChannel}/${getAddressValueByChannel(address)}}`;
+    const payload = `${address.bkey}: ${address.addressChannel}/${getAddressValueByChannel(address)}`;
     await this.firestoreService.deleteModel<AddressModel>(AddressCollection, address, '@subject.address.operation.delete', currentUser);
     void this.activityService.log('address', 'delete', currentUser, payload);
   }
