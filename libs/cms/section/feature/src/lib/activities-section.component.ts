@@ -82,7 +82,7 @@ export class ActivitiesSectionComponent {
     const map: Record<string, string> = {
       auth: 'lock-closed', person: 'person', org: 'org', group: 'group',
       membership: 'membership', calevent: 'calendar', task: 'checkbox-circle',
-      resource: 'resource', chat: 'chat', rag: 'ai', address: 'location',
+      resource: 'resource', chat: 'chatbubble', rag: 'chatbox', address: 'location',
       folder: 'folder', calendar: 'calendar', user: 'person',
     };
     return map[activity.scope] ?? 'other';
