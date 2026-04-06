@@ -61,7 +61,7 @@ import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
 
       @if(activity().payload) {
         <ion-item lines="none">
-          <ion-icon slot="start" src="{{'notes' | svgIcon}}" />
+          <ion-icon slot="start" src="{{'text' | svgIcon}}" />
           <ion-label class="ion-text-wrap">
             <p class="view-label">{{ '@activity.field.payload' | translate | async }}</p>
             <p class="view-value">{{ activity().payload }}</p>

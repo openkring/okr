@@ -1,7 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import {
-  ActionSheetController, ActionSheetOptions,
   IonContent, IonHeader, IonToolbar, IonButtons,
   IonTitle, IonMenuButton, IonIcon, IonItem, IonLabel, IonList,
 } from '@ionic/angular/standalone';
@@ -10,7 +9,6 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { ActivityModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { convertDateFormatToString, DateFormat, hasRole } from '@bk2/shared-util-core';
 
 import { ActivityStore } from './activity.store';
@@ -65,8 +63,6 @@ import { ActivityStore } from './activity.store';
 })
 export class ActivityListComponent {
   protected readonly store = inject(ActivityStore);
-  private readonly actionSheetController = inject(ActionSheetController);
-  private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   // inputs
   // no contextmenu nor listId needed
@@ -89,24 +85,6 @@ export class ActivityListComponent {
   }
 
   protected async showActions(activity: ActivityModel): Promise<void> {
-    const options = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(options, activity);
-    if (options.buttons.length === 0) return;
-    const sheet = await this.actionSheetController.create(options);
-    await sheet.present();
-    const { data } = await sheet.onDidDismiss();
-    if (!data) return;
-    switch (data.action) {
-      case 'activity.view':   await this.store.view(activity); break;
-      case 'activity.delete': await this.store.delete(activity); break;
-    }
-  }
-
-  private addActionSheetButtons(options: ActionSheetOptions, _activity: ActivityModel): void {
-    options.buttons.push(createActionSheetButton('activity.view', this.imgixBaseUrl, 'eye-on'));
-    if (hasRole('admin', this.currentUser())) {
-      options.buttons.push(createActionSheetButton('activity.delete', this.imgixBaseUrl, 'delete'));
-    }
-    options.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    await this.store.view(activity);
   }
 }
