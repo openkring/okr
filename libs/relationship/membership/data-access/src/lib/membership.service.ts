@@ -6,7 +6,7 @@ import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AvatarInfo, CategoryListModel, MembershipCollection, MembershipModel, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
-import { addDuration, findByKey, getAvatarInfo, getCategoryAttribute, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
+import { addDuration, findByKey, getAvatarInfo, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
 
 import { createComment } from '@bk2/comment-util';
 
@@ -32,7 +32,8 @@ export class MembershipService {
   public async create(membership: MembershipModel, currentUser?: UserModel): Promise<string | undefined> {
     membership.index = getMembershipIndex(membership);
     const key = await this.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', currentUser);
-    void this.activityService.log('membership', 'create', currentUser);
+    const payload = `${key}: ${getFullName(membership.memberName1, membership.memberName2)} in ${membership.orgName}`;
+    void this.activityService.log('membership', 'create', currentUser, payload);
     return key;
   }
 
@@ -48,13 +49,15 @@ export class MembershipService {
   public async update(membership: MembershipModel, currentUser?: UserModel, confirmMessage = '@membership.operation.update'): Promise<string | undefined> {
     membership.index = getMembershipIndex(membership);
     const key = await this.firestoreService.updateModel<MembershipModel>(MembershipCollection, membership, false, confirmMessage, currentUser);
-    void this.activityService.log('membership', 'update', currentUser);
+    const payload = `${key}: ${getFullName(membership.memberName1, membership.memberName2)} in ${membership.orgName}`;
+    void this.activityService.log('membership', 'update', currentUser, payload);
     return key;
   }
 
   public async delete(membership: MembershipModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${membership.bkey}: ${getFullName(membership.memberName1, membership.memberName2)} in ${membership.orgName}`;
     await this.firestoreService.deleteModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.delete', currentUser);
-    void this.activityService.log('membership', 'delete', currentUser);
+    void this.activityService.log('membership', 'delete', currentUser, payload);
   }
 
   /**

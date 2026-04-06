@@ -22,7 +22,7 @@ export class FolderService {
   public async create(folder: FolderModel, currentUser?: UserModel): Promise<string | undefined> {
     folder.index = getFolderIndex(folder);
     const key = await this.firestoreService.createModel<FolderModel>(FolderCollection, folder, '@folder.operation.create', currentUser);
-    void this.activityService.log('folder', 'create', currentUser);
+    void this.activityService.log('folder', 'create', currentUser, `${key}:${folder.name}`);
     return key;
   }
 
@@ -33,13 +33,14 @@ export class FolderService {
   public async update(folder: FolderModel, currentUser?: UserModel): Promise<string | undefined> {
     folder.index = getFolderIndex(folder);
     const key = await this.firestoreService.updateModel<FolderModel>(FolderCollection, folder, false, '@folder.operation.update', currentUser);
-    void this.activityService.log('folder', 'update', currentUser);
+    void this.activityService.log('folder', 'update', currentUser, `${key}:${folder.name}`);
     return key;
   }
 
   public async delete(folder: FolderModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${folder.bkey}:${folder.name}`
     await this.firestoreService.deleteModel<FolderModel>(FolderCollection, folder, '@folder.operation.delete', currentUser);
-    void this.activityService.log('folder', 'delete', currentUser);
+    void this.activityService.log('folder', 'delete', currentUser, payload);
   }
 
   /*-------------------------- LIST / QUERY --------------------------------*/

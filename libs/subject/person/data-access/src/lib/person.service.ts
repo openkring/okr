@@ -4,7 +4,7 @@ import { map, Observable, of, take } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
-import { getSystemQuery } from '@bk2/shared-util-core';
+import { getFullName, getSystemQuery } from '@bk2/shared-util-core';
 
 import {getPersonIndex} from '@bk2/subject-person-util';
 import { ActivityService } from '@bk2/activity-data-access';
@@ -27,7 +27,8 @@ export class PersonService {
   public async create(person: PersonModel, currentUser?: UserModel): Promise<string | undefined> {
     person.index = getPersonIndex(person);
     const key = await this.firestoreService.createModel<PersonModel>(PersonCollection, person, '@subject.person.operation.create', currentUser);
-    void this.activityService.log('person', 'create', currentUser);
+    const payload = `${key}: ${getFullName(person.firstName, person.lastName)}`;
+    void this.activityService.log('person', 'create', currentUser, payload);
     return key;
   }
   
@@ -66,7 +67,8 @@ export class PersonService {
   public async update(person: PersonModel, currentUser?: UserModel, confirmMessage = '@subject.person.operation.update'): Promise<string | undefined> {
     person.index = getPersonIndex(person);
     const key = await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, confirmMessage, currentUser);
-    void this.activityService.log('person', 'update', currentUser);
+    const payload = `${key}: ${getFullName(person.firstName, person.lastName)}`;
+    void this.activityService.log('person', 'update', currentUser, payload);
     return key;
   }
 
@@ -77,8 +79,9 @@ export class PersonService {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(person: PersonModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${person.bkey}: ${getFullName(person.firstName, person.lastName)}`;
     await this.firestoreService.deleteModel<PersonModel>(PersonCollection, person, '@subject.person.operation.delete', currentUser);
-    void this.activityService.log('person', 'delete', currentUser);
+    void this.activityService.log('person', 'delete', currentUser, payload);
   }
 
   /**

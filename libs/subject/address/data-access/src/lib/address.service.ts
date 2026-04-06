@@ -6,7 +6,7 @@ import { FirestoreService } from "@bk2/shared-data-access";
 import { AddressCollection, AddressModel, UserModel } from "@bk2/shared-models";
 import { die, getSystemQuery } from "@bk2/shared-util-core";
 
-import { getAddressIndex } from "@bk2/subject-address-util";
+import { getAddressIndex, getAddressValueByChannel } from "@bk2/subject-address-util";
 import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
@@ -29,7 +29,8 @@ export class AddressService {
   public async create(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
     address.index = getAddressIndex(address);
     const key = await this.firestoreService.createModel<AddressModel>(AddressCollection, address, '@subject.address.operation.create', currentUser);
-    void this.activityService.log('address', 'create', currentUser);
+    const payload = `${key}: ${address.addressChannel}/${getAddressValueByChannel(address)}}`;
+    void this.activityService.log('address', 'create', currentUser, payload);
     return key;
 }
 
@@ -52,7 +53,8 @@ export class AddressService {
   public async update(address: AddressModel, currentUser?: UserModel, confirmMessage = '@subject.address.operation.update'): Promise<string | undefined> {
     address.index = getAddressIndex(address);
     const key = await this.firestoreService.updateModel<AddressModel>(AddressCollection, address, false, confirmMessage, currentUser);
-    void this.activityService.log('address', 'update', currentUser);
+    const payload = `${key}: ${address.addressChannel}/${getAddressValueByChannel(address)}}`;
+    void this.activityService.log('address', 'update', currentUser, payload);
     return key;
   }
 
@@ -65,8 +67,9 @@ export class AddressService {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(address: AddressModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${address.bkey}: ${address.addressChannel}/${getAddressValueByChannel(address)}}`;
     await this.firestoreService.deleteModel<AddressModel>(AddressCollection, address, '@subject.address.operation.delete', currentUser);
-    void this.activityService.log('address', 'delete', currentUser);
+    void this.activityService.log('address', 'delete', currentUser, payload);
   }
 
   /**

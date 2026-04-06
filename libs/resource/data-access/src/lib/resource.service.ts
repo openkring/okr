@@ -27,7 +27,8 @@ export class ResourceService {
   public async create(resource: ResourceModel, currentUser?: UserModel): Promise<string | undefined> {
     resource.index = getResourceIndex(resource);
     const key = await this.firestoreService.createModel<ResourceModel>(ResourceCollection, resource, `@resource.${resource.type}.operation.create`, currentUser);
-    void this.activityService.log('resource', 'create', currentUser);
+    const payload = `${key}: ${resource.name}/${resource.type}/${resource.subType}`;
+    void this.activityService.log('resource', 'create', currentUser, payload);
     return key;
   }
 
@@ -50,7 +51,8 @@ export class ResourceService {
   public async update(resource: ResourceModel, currentUser?: UserModel, confirmMessage = `@resource.${resource.type}.operation.update`): Promise<string | undefined> {
     resource.index = getResourceIndex(resource);
     const key = await this.firestoreService.updateModel<ResourceModel>(ResourceCollection, resource, false, confirmMessage, currentUser);
-    void this.activityService.log('resource', 'update', currentUser);
+    const payload = `${key}: ${resource.name}/${resource.type}/${resource.subType}`;
+    void this.activityService.log('resource', 'update', currentUser, payload);
     return key;
   }
 
@@ -60,9 +62,10 @@ export class ResourceService {
    * @param currentUser the user who is archiving the resource
    */
   public async delete(resource: ResourceModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${resource.bkey}: ${resource.name}/${resource.type}/${resource.subType}`;
     const message = `@resource.${resource.type}.operation.delete`;
     await this.firestoreService.deleteModel<ResourceModel>(ResourceCollection, resource, message, currentUser);
-    void this.activityService.log('resource', 'delete', currentUser);
+    void this.activityService.log('resource', 'delete', currentUser, payload);
   }
 
   /*-------------------------- LIST / QUERY --------------------------------*/

@@ -27,7 +27,8 @@ export class OrgService  {
   public async create(org: OrgModel, currentUser?: UserModel): Promise<string | undefined> {
     org.index = getOrgIndex(org);
     const key = await this.firestoreService.createModel<OrgModel>(OrgCollection, org, '@subject.org.operation.create', currentUser);
-    void this.activityService.log('org', 'create', currentUser);
+    const payload = `${key}: ${org.name}/${org.type}`;
+    void this.activityService.log('org', 'create', currentUser, payload);
     return key;
   }
   
@@ -64,7 +65,8 @@ export class OrgService  {
   public async update(org: OrgModel, currentUser?: UserModel, confirmMessage = '@subject.org.operation.update'): Promise<string | undefined> {
     org.index = getOrgIndex(org);
     const key = await this.firestoreService.updateModel<OrgModel>(OrgCollection, org, false, confirmMessage, currentUser);
-    void this.activityService.log('org', 'update', currentUser);
+    const payload = `${key}: ${org.name}/${org.type}`;
+    void this.activityService.log('org', 'update', currentUser, payload);
     return key;
   }
 
@@ -75,8 +77,9 @@ export class OrgService  {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(org: OrgModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${org.bkey}: ${org.name}/${org.type}`;
     await this.firestoreService.deleteModel<OrgModel>(OrgCollection, org, '@subject.org.operation.delete', currentUser);
-    void this.activityService.log('org', 'delete', currentUser);
+    void this.activityService.log('org', 'delete', currentUser, payload);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/

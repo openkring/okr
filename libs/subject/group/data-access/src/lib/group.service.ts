@@ -27,7 +27,8 @@ export class GroupService  {
   public async create(group: GroupModel, currentUser?: UserModel): Promise<string | undefined> {
     group.index = getGroupIndex(group);
     const key = await this.firestoreService.createModel<GroupModel>(GroupCollection, group, '@subject.group.operation.create', currentUser);
-    void this.activityService.log('group', 'create', currentUser);
+    const payload = `${key}: ${group.name}`;
+    void this.activityService.log('group', 'create', currentUser, payload);
     return key;
   }
   
@@ -50,7 +51,8 @@ export class GroupService  {
   public async update(group: GroupModel, currentUser?: UserModel, confirmMessage = '@subject.group.operation.update'): Promise<string | undefined > {
     group.index = getGroupIndex(group);
     const key = await this.firestoreService.updateModel<GroupModel>(GroupCollection, group, false, confirmMessage, currentUser);
-    void this.activityService.log('group', 'update', currentUser);
+    const payload = `${key}: ${group.name}`;
+    void this.activityService.log('group', 'update', currentUser, payload);
     return key;
   }
 
@@ -61,8 +63,9 @@ export class GroupService  {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(group: GroupModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${group.bkey}: ${group.name}`;
     await this.firestoreService.deleteModel<GroupModel>(GroupCollection, group, '@subject.group.operation.delete', currentUser);
-    void this.activityService.log('group', 'delete', currentUser);
+    void this.activityService.log('group', 'delete', currentUser, payload);
   }
 
   /*-------------------------- LIST / QUERY  --------------------------------*/

@@ -4,7 +4,7 @@ import { map, Observable, of } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { ResponsibilityCollection, ResponsibilityModel, UserModel } from '@bk2/shared-models';
-import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { findByKey, getFullName, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getResponsibilityIndex } from '@bk2/relationship-responsibility-util';
 import { ActivityService } from '@bk2/activity-data-access';
@@ -20,7 +20,8 @@ export class ResponsibilityService {
     const key = await this.firestoreService.createModel<ResponsibilityModel>(
       ResponsibilityCollection, responsibility, '@responsibility.operation.create', currentUser
     );
-    void this.activityService.log('responsibility', 'create', currentUser);
+    const payload = `${key}: ${getFullName(responsibility.responsibleAvatar?.name1, responsibility.responsibleAvatar?.name2)} = ${responsibility.name}`;
+    void this.activityService.log('responsibility', 'create', currentUser, payload);
     return key;
   }
 
@@ -33,15 +34,17 @@ export class ResponsibilityService {
     const key = await this.firestoreService.updateModel<ResponsibilityModel>(
       ResponsibilityCollection, responsibility, false, confirmMessage, currentUser
     );
-    void this.activityService.log('responsibility', 'update', currentUser);
+    const payload = `${key}: ${getFullName(responsibility.responsibleAvatar?.name1, responsibility.responsibleAvatar?.name2)} = ${responsibility.name}`;
+    void this.activityService.log('responsibility', 'update', currentUser, payload);
     return key;
   }
 
   public async delete(responsibility: ResponsibilityModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${responsibility.bkey}: ${getFullName(responsibility.responsibleAvatar?.name1, responsibility.responsibleAvatar?.name2)} = ${responsibility.name}`;
     await this.firestoreService.deleteModel<ResponsibilityModel>(
       ResponsibilityCollection, responsibility, '@responsibility.operation.delete', currentUser
     );
-    void this.activityService.log('responsibility', 'delete', currentUser);
+    void this.activityService.log('responsibility', 'delete', currentUser, payload);
   }
 
   public list(orderBy = 'validFrom', sortOrder = 'asc'): Observable<ResponsibilityModel[]> {

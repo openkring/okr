@@ -4,7 +4,7 @@ import { map, Observable, of } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { UserModel, WorkrelCollection, WorkrelModel } from '@bk2/shared-models';
-import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { findByKey, getFullName, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getWorkrelIndex } from '@bk2/relationship-workrel-util';
 import { ActivityService } from '@bk2/activity-data-access';
@@ -27,7 +27,8 @@ export class WorkrelService {
   public async create(workrel: WorkrelModel, currentUser?: UserModel): Promise<string | undefined> {
     workrel.index = getWorkrelIndex(workrel);
     const key = await this.firestoreService.createModel<WorkrelModel>(WorkrelCollection, workrel, '@workrel.operation.create', currentUser);
-    void this.activityService.log('workrel', 'create', currentUser);
+    const payload = `${key}: ${getFullName(workrel.subjectName1, workrel.subjectName2)}/${workrel.name} in ${workrel.objectName}`;
+    void this.activityService.log('workrel', 'create', currentUser, payload);
     return key;
   }
 
@@ -50,7 +51,8 @@ export class WorkrelService {
   public async update(workrel: WorkrelModel, currentUser?: UserModel, confirmMessage = '@workrel.operation.update'): Promise<string | undefined> {
     workrel.index = getWorkrelIndex(workrel);
     const key = await this.firestoreService.updateModel<WorkrelModel>(WorkrelCollection, workrel, false, confirmMessage, currentUser);
-    void this.activityService.log('workrel', 'update', currentUser);
+    const payload = `${key}: ${getFullName(workrel.subjectName1, workrel.subjectName2)}/${workrel.name} in ${workrel.objectName}`;
+    void this.activityService.log('workrel', 'update', currentUser, payload);
     return key;
   }
 
@@ -61,8 +63,9 @@ export class WorkrelService {
    * @returns a promise that resolves when the deletion is complete
    */
   public async delete(workrel: WorkrelModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${workrel.bkey}: ${getFullName(workrel.subjectName1, workrel.subjectName2)}/${workrel.name} in ${workrel.objectName}`;
     await this.firestoreService.deleteModel<WorkrelModel>(WorkrelCollection, workrel, '@workrel.operation.delete', currentUser);
-    void this.activityService.log('workrel', 'delete', currentUser);
+    void this.activityService.log('workrel', 'delete', currentUser, payload);
   }
 
   /**

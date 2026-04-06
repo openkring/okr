@@ -1,4 +1,4 @@
-import { DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { AvatarInfo } from './avatar-info';
 import { BkModel, NamedModel, SearchableModel } from './base.model';
 

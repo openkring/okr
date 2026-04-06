@@ -299,7 +299,8 @@ export const _MatrixChatStore = signalStore(
         // Register as pending so updateRoomsList() injects a stub immediately and the
         // UI renders the room without waiting for the next sync cycle.
         store.matrixService.registerPendingRoom(roomId, groupId);
-        void store.activityService.log('chat', 'join', store.currentUser() ?? undefined);
+        const payload = 'rid:' + roomId + ', gid:' + groupId;
+        void store.activityService.log('chat', 'join', store.currentUser() ?? undefined, payload);
         return { roomId, joined };
       },
 
@@ -756,7 +757,7 @@ export const _MatrixChatStore = signalStore(
 
         try {
           await store.matrixService.leaveRoom(roomId);
-          void store.activityService.log('chat', 'leave', store.currentUser() ?? undefined);
+          void store.activityService.log('chat', 'leave', store.currentUser() ?? undefined, 'rid:' + roomId);
           patchState(store, { currentRoomId: undefined });
         } catch (error) {
           console.error('MatrixChatStore.leaveRoom: Failed to leave:', error);

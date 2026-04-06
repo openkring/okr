@@ -28,7 +28,8 @@ export class CalEventService {
   public async create(calEvent: CalEventModel, currentUser?: UserModel): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
     const key = await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, '@calevent.operation.create', currentUser);
-    void this.activityService.log('calevent', 'create', currentUser);
+    const payload = `${calEvent.startDate} ${calEvent.startTime}: ${calEvent.name}`;
+    void this.activityService.log('calevent', 'create', currentUser, payload);
     return key;
   }
 
@@ -51,7 +52,8 @@ export class CalEventService {
   public async update(calEvent: CalEventModel, currentUser?: UserModel, confirmMessage = '@calevent.operation.update'): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
     const key = await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, confirmMessage, currentUser);
-    void this.activityService.log('calevent', 'update', currentUser);
+    const payload = `${calEvent.startDate} ${calEvent.startTime}: ${calEvent.name}`;
+    void this.activityService.log('calevent', 'update', currentUser, payload);
     return key;
   }
 
@@ -62,8 +64,9 @@ export class CalEventService {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(calEvent: CalEventModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${calEvent.startDate} ${calEvent.startTime}: ${calEvent.name}`;
     await this.firestoreService.deleteModel<CalEventModel>(CalEventCollection, calEvent, '@calevent.operation.delete', currentUser);
-    void this.activityService.log('calevent', 'delete', currentUser);
+    void this.activityService.log('calevent', 'delete', currentUser, payload);
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

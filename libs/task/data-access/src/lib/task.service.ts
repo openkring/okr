@@ -27,7 +27,8 @@ export class TaskService {
   public async create(task: TaskModel, currentUser: UserModel | undefined): Promise<string | undefined> {
     task.index = getTaskIndex(task);
     const key = await this.firestoreService.createModel<TaskModel>(TaskCollection, task, '@task.operation.create', currentUser);
-    void this.activityService.log('task', 'create', currentUser);
+    const payload = `${key}: ${task.name}/${task.state}`;
+    void this.activityService.log('task', 'create', currentUser, payload);
     return key;
   }
 
@@ -50,7 +51,8 @@ export class TaskService {
   public async update(task: TaskModel, currentUser?: UserModel, confirmMessage = '@task.operation.update'): Promise<string | undefined> {
     task.index = getTaskIndex(task);
     const key = await this.firestoreService.updateModel<TaskModel>(TaskCollection, task, false, confirmMessage, currentUser);
-    void this.activityService.log('task', 'update', currentUser);
+    const payload = `${key}: ${task.name}/${task.state}`;
+    void this.activityService.log('task', 'update', currentUser, payload);
     return key;
   }
 
@@ -61,8 +63,9 @@ export class TaskService {
    * @returns a promise that resolves when the task is deleted
    */
   public async delete(task: TaskModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${task.bkey}: ${task.name}/${task.state}`;
     await this.firestoreService.deleteModel<TaskModel>(TaskCollection, task, '@task.operation.delete', currentUser);
-    void this.activityService.log('task', 'delete', currentUser);
+    void this.activityService.log('task', 'delete', currentUser, payload);
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

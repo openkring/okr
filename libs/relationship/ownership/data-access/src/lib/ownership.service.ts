@@ -4,7 +4,7 @@ import { map, Observable, of } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { OwnershipCollection, OwnershipModel, UserModel } from '@bk2/shared-models';
-import { findByKey, getSystemQuery } from '@bk2/shared-util-core';
+import { findByKey, getFullName, getSystemQuery } from '@bk2/shared-util-core';
 
 import { getOwnershipIndex } from '@bk2/relationship-ownership-util';
 import { ActivityService } from '@bk2/activity-data-access';
@@ -28,7 +28,8 @@ export class OwnershipService {
   public async create(ownership: OwnershipModel, currentUser?: UserModel): Promise<string | undefined> {
     ownership.index = getOwnershipIndex(ownership);
     const key = await this.firestoreService.createModel<OwnershipModel>(OwnershipCollection, ownership, '@ownership.operation.create', currentUser);
-    void this.activityService.log('ownership', 'create', currentUser);
+    const payload = `${key}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
+    void this.activityService.log('ownership', 'create', currentUser, payload);
     return key;
   }
 
@@ -51,13 +52,15 @@ export class OwnershipService {
   public async update(ownership: OwnershipModel, currentUser?: UserModel, confirmMessage = '@ownership.operation.update'): Promise<string | undefined> {
     ownership.index = getOwnershipIndex(ownership);
     const key = await this.firestoreService.updateModel<OwnershipModel>(OwnershipCollection, ownership, false, confirmMessage, currentUser);
-    void this.activityService.log('ownership', 'update', currentUser);
+    const payload = `${key}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
+    void this.activityService.log('ownership', 'update', currentUser, payload);
     return key;
   }
 
   public async delete(ownership: OwnershipModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${ownership.bkey}: ${getFullName(ownership.ownerName1, ownership.ownerName2)} of ${ownership.resourceName}`;
     await this.firestoreService.deleteModel<OwnershipModel>(OwnershipCollection, ownership, '@ownership.operation.delete', currentUser);
-    void this.activityService.log('ownership', 'delete', currentUser);
+    void this.activityService.log('ownership', 'delete', currentUser, payload);
   }
 
   /**

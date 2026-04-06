@@ -4,7 +4,7 @@ import { map, Observable, of } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { PersonalRelCollection, PersonalRelModel, UserModel } from '@bk2/shared-models';
-import { findByKey, getSystemQuery, removeDuplicatesFromArray } from '@bk2/shared-util-core';
+import { findByKey, getFullName, getSystemQuery, removeDuplicatesFromArray } from '@bk2/shared-util-core';
 
 import { getPersonalRelIndex } from '@bk2/relationship-personal-rel-util';
 import { ActivityService } from '@bk2/activity-data-access';
@@ -29,7 +29,8 @@ export class PersonalRelService {
   public async create(personalRel: PersonalRelModel, currentUser?: UserModel): Promise<string | undefined> {
     personalRel.index = getPersonalRelIndex(personalRel);
     const key = await this.firestoreService.createModel<PersonalRelModel>(PersonalRelCollection, personalRel, '@personalRel.operation.create', currentUser);
-    void this.activityService.log('personalrel', 'create', currentUser);
+    const payload = `${key}: ${getFullName(personalRel.subjectFirstName, personalRel.subjectLastName)} ${personalRel.type} ${getFullName(personalRel.objectFirstName, personalRel.objectLastName)}`;
+    void this.activityService.log('personalrel', 'create', currentUser, payload);
     return key;
   }
 
@@ -52,13 +53,15 @@ export class PersonalRelService {
   public async update(personalRel: PersonalRelModel, currentUser?: UserModel, confirmMessage = '@personalRel.operation.update'): Promise<string | undefined> {
     personalRel.index = getPersonalRelIndex(personalRel);
     const key = await this.firestoreService.updateModel<PersonalRelModel>(PersonalRelCollection, personalRel, false, confirmMessage, currentUser);
-    void this.activityService.log('personalrel', 'update', currentUser);
+    const payload = `${key}: ${getFullName(personalRel.subjectFirstName, personalRel.subjectLastName)} ${personalRel.type} ${getFullName(personalRel.objectFirstName, personalRel.objectLastName)}`;
+    void this.activityService.log('personalrel', 'update', currentUser, payload);
     return key;
   }
 
   public async delete(personalRel: PersonalRelModel, currentUser?: UserModel): Promise<void> {
+    const payload = `${personalRel.bkey}: ${getFullName(personalRel.subjectFirstName, personalRel.subjectLastName)} ${personalRel.type} ${getFullName(personalRel.objectFirstName, personalRel.objectLastName)}`;
     await this.firestoreService.deleteModel<PersonalRelModel>(PersonalRelCollection, personalRel, '@personalRel.operation.delete', currentUser);
-    void this.activityService.log('personalrel', 'delete', currentUser);
+    void this.activityService.log('personalrel', 'delete', currentUser, payload);
   }
 
   /**
