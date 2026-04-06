@@ -77,9 +77,9 @@ export class ActivityListComponent {
   protected getScopeIcon(activity: ActivityModel): string {
     const map: Record<string, string> = {
       auth: 'lock-closed', person: 'person', org: 'org', group: 'group',
-      membership: 'membership', calevent: 'calendar', task: 'checkbox-circle',
-      resource: 'resource', chat: 'chatbubble', rag: 'chatbox', address: 'location',
-      folder: 'folder', calendar: 'calendar', user: 'person',
+      membership: 'membership', calevent: 'calendar-number', task: 'checkbox-circle',
+      resource: 'resource', chat: 'chatbubble', rag: 'chatbox', address: 'address',
+      folder: 'folder', calendar: 'calendar', user: 'admin',
     };
     return map[activity.scope] ?? 'other';
   }
