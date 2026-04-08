@@ -173,6 +173,15 @@ export class OrgListComponent {
    * @param org 
    */
   protected async showActions(org: OrgModel): Promise<void> {
+    if (this.hasRole('memberAdmin')) {
+      if (this.hasRole('admin')) {
+
+      } else {
+        await this.orgStore.edit(org, this.readOnly());
+      }
+    } else {
+      await this.orgStore.edit(org, true);
+    }
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
     this.addActionSheetButtons(actionSheetOptions, org);
     await this.executeActions(actionSheetOptions, org);
@@ -180,22 +189,13 @@ export class OrgListComponent {
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * User is always admin here (see guard in showActions)
    * @param org 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, org: OrgModel): void {
-    if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('org.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    }
-    if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('org.edit', this.imgixBaseUrl, 'edit'));
-    }
-    if (hasRole('admin', this.orgStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('org.delete', this.imgixBaseUrl, 'trash'));
-    }
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
-    }
+    actionSheetOptions.buttons.push(createActionSheetButton('org.edit', this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('org.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -215,9 +215,6 @@ export class OrgListComponent {
           break;
         case 'org.edit':
           await this.orgStore.edit(org, this.readOnly());
-          break;
-        case 'org.view':
-          await this.orgStore.edit(org, true);
           break;
       }
     }

@@ -3,10 +3,10 @@ import { Component, computed, effect, inject, input } from "@angular/core";
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
 
 import { TranslatePipe } from "@bk2/shared-i18n";
-import { AddressModel, PrivacyAccessor, PrivacySettings } from "@bk2/shared-models";
+import { AddressModel, PrivacyAccessor, PrivacySettings, RoleName } from "@bk2/shared-models";
 import { SvgIconPipe } from "@bk2/shared-pipes";
 import { EmptyListComponent } from "@bk2/shared-ui";
-import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } from "@bk2/shared-util-angular";
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser } from "@bk2/shared-util-angular";
 import { coerceBoolean, getCategoryIcon, hasRole, isVisibleToUser } from "@bk2/shared-util-core";
 
 import { FavoriteColorPipe, FormatAddressPipe } from "@bk2/subject-address-util";
@@ -29,6 +29,7 @@ import { AddressStore } from "./addresses.store";
   `],
   providers: [AddressStore],
   template: `
+  {{hasRole('memberAdmin')}}
   <ion-accordion toggle-icon-slot="start" value="addresses">
     <ion-item slot="header" [color]="color()">
         <ion-label>{{ label() | translate | async }}</ion-label>
@@ -131,14 +132,18 @@ export class AddressesAccordionComponent {
    * @param address 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
-    if (hasRole('admin', this.currentUser()) && !this.isReadOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('address.delete', this.imgixBaseUrl, 'trash'));
-    }
-    actionSheetOptions.buttons.push(createActionSheetButton('address.copy', this.imgixBaseUrl, 'copy'));
-    actionSheetOptions.buttons.push(createActionSheetButton('address.view', this.imgixBaseUrl, 'eye-on'));
-    if (!this.isReadOnly()) {
+    // on address
+    actionSheetOptions.buttons.push(createActionSheetDivider());
+    if (this.hasRole('memberAdmin') || this.hasRole('admin')) {
       actionSheetOptions.buttons.push(createActionSheetButton('address.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('address.delete', this.imgixBaseUrl, 'trash'));
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('address.view', this.imgixBaseUrl, 'eye-on'));
     }
+    actionSheetOptions.buttons.push(createActionSheetDivider());
+  
+    // with address (usage)
+    actionSheetOptions.buttons.push(createActionSheetButton('address.copy', this.imgixBaseUrl, 'copy'));
     switch(address.addressChannel) {
       case 'bankaccount':
         if (address.url) {
@@ -155,6 +160,13 @@ export class AddressesAccordionComponent {
         break;
       case 'postal':
         actionSheetOptions.buttons.push(createActionSheetButton('address.postal.view', this.imgixBaseUrl, 'location'));
+        break;
+     case 'twint':
+        if (address.url) {
+          actionSheetOptions.buttons.push(createActionSheetButton('address.file.view', this.imgixBaseUrl, 'qrcode'));
+        } else if (!this.isReadOnly()) {
+          actionSheetOptions.buttons.push(createActionSheetButton('address.file.upload', this.imgixBaseUrl, 'qrcode'));
+        }
         break;
       case 'web':
         actionSheetOptions.buttons.push(createActionSheetButton('address.web.open', this.imgixBaseUrl, 'link'));
@@ -190,6 +202,7 @@ export class AddressesAccordionComponent {
         case 'address.edit':
           await this.addressStore.edit(address, this.isReadOnly());
           break;
+        case 'address.file.view':
         case 'address.iban.view':
           await downloadToBrowser(address.url);
           break;
@@ -205,6 +218,9 @@ export class AddressesAccordionComponent {
         case 'address.postal.view':
           await this.addressStore.showPostalAddress(address);
           break;
+        case 'address.file.upload':
+          await this.addressStore.uploadFile(address);
+          break;
         case 'address.web.open':
           await this.addressStore.openUrl(address);
           break;
@@ -214,6 +230,11 @@ export class AddressesAccordionComponent {
 
   public async add(): Promise<void> {
     this.addressStore.add(this.isReadOnly());
+  }
+
+  /******************************** helpers ******************************************* */
+  protected hasRole(role?: RoleName): boolean {
+    return hasRole(role, this.addressStore.currentUser());
   }
 
   protected isVisibleToUser(address: AddressModel): boolean {

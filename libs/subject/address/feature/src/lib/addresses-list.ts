@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { AddressModel, OrgModel, PersonModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, downloadToBrowser, error, navigateByUrl } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser, error, navigateByUrl } from '@bk2/shared-util-angular';
 import { generateRandomString, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
 
 import { FavoriteColorPipe, FormatAddressPipe } from '@bk2/subject-address-util';
@@ -225,13 +225,17 @@ export class AddressesList {
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * We assume that the user is always admin, because this view is only shown in AOC.
+   * We assume that the user is always at least memberAdmin, because this view is only shown in AOC.
    * @param address 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
-    if (!hasRole('admin', this.currentUser())) return;
+    if (!hasRole('memberAdmin', this.currentUser())) return;
+    // on address
     actionSheetOptions.buttons.push(createActionSheetButton('address.edit', this.imgixBaseUrl, 'edit'));
-    actionSheetOptions.buttons.push(createActionSheetButton('subject.edit', this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('address.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetDivider());
+
+    // with address (usage)
     actionSheetOptions.buttons.push(createActionSheetButton('address.copy', this.imgixBaseUrl, 'copy'));
     switch(address.addressChannel) {
       case 'bankaccount':
@@ -261,7 +265,11 @@ export class AddressesList {
         actionSheetOptions.buttons.push(createActionSheetButton('address.web.open', this.imgixBaseUrl, 'link'));
         break;
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('address.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetDivider());
+
+    // on subject
+    actionSheetOptions.buttons.push(createActionSheetButton('subject.edit', this.imgixBaseUrl, 'edit'));
+
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];

@@ -5,7 +5,7 @@ import { ActionSheetButton, ActionSheetOptions } from "@ionic/angular";
 export function createActionSheetOptions(
     header: string,
     subHeader = undefined,
-    cssClass = undefined,
+    cssClass = 'custom-action-sheet',
     backdropDismiss = true,
     translucent = false,
     animated = true,
@@ -44,6 +44,14 @@ export function createActionSheetButton(
             action: name
         }
     };
+}
+
+export function createActionSheetDivider(): ActionSheetButton {
+    return {
+        text: '',
+        cssClass: 'action-sheet-divider',
+        role: 'none',
+    }
 }
 
 function getRole(text: string): string | undefined {
