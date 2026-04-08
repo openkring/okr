@@ -224,9 +224,14 @@ export const AppStore = signalStore(
 
   withMethods((store) => {
     return {
-      getPerson(key: string) {
+      getPerson(key: string): PersonModel | undefined {
         if (!key) return undefined;
         return store.allPersons()?.find(p => p.bkey === key);
+      },
+
+      getPersonByAttribute(attributeName: string, attributeValue: string): PersonModel | undefined {
+        if (!attributeName || !attributeValue) return undefined;
+        return store.allPersons()?.find(p => p[attributeName as keyof PersonModel] === attributeValue);
       },
 
       /**
@@ -253,6 +258,12 @@ export const AppStore = signalStore(
         if (!key) return undefined;
         return store.allOrgs()?.find(p => p.bkey === key);
       },
+
+      getOrgByAttribute(attributeName: string, attributeValue: string): OrgModel | undefined {
+        if (!attributeName || !attributeValue) return undefined;
+        return store.allOrgs()?.find(p => p[attributeName as keyof OrgModel] === attributeValue);
+      },
+
       getGroup(key: string) {
         if (!key) return undefined;
         return store.allGroups()?.find(p => p.bkey === key);
