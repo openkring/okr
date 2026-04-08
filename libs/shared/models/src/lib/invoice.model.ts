@@ -26,11 +26,8 @@ export class InvoiceModel implements BkModel, SearchableModel, TaggedModel {
   public paymentDate = DEFAULT_DATE; // Datum der Zahlung
   // booking-account is on the invoice position
 
-  // invoice sender (Person or Org) Rechnungssteller
-  public invoiceSender: AvatarInfo | undefined;   // read bexioid from person
-
   // invoice receiver (Person or Org) Rechnungsempfänger
-  public invoiceReceiver: AvatarInfo | undefined;
+  public receiver: AvatarInfo | undefined;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

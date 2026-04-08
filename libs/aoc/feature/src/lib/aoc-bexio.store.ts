@@ -1,14 +1,14 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
-import { collection, doc, getCountFromServer, getDoc, getFirestore } from 'firebase/firestore';
+import { collection, doc, getCountFromServer, getDocs, getDoc, getFirestore, query, where, writeBatch } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom } from 'rxjs';
 
 import { isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
+import { AddressCollection, AddressModel, AvatarInfo, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { getFullName, getSystemQuery } from '@bk2/shared-util-core';
 import { ModalController } from '@ionic/angular/standalone';
 import { AocBexioContactEditModal } from 'libs/aoc/feature/src/lib/aoc-bexio-contact-edit.modal';
@@ -62,13 +62,17 @@ export type AocBexioState = {
   isLoading: boolean;
   invoiceCount: number;
   lastSyncedAt: string; // "YYYY-MM-DD HH:mm:ss" or ''
+  receiverLinkCount: number;    // invoices updated in last linkInvoiceReceivers run, -1 = not run
+  receiverPendingCount: number; // invoices still missing a receiver, -1 = not counted yet
 };
 
 const initialState: AocBexioState = {
   index: [],
   isLoading: false,
-  invoiceCount: -1,   // -1 = not yet loaded
+  invoiceCount: -1,
   lastSyncedAt: '',
+  receiverLinkCount: -1,
+  receiverPendingCount: -1,
 };
 
 export const AocBexioStore = signalStore(
@@ -513,6 +517,67 @@ export const AocBexioStore = signalStore(
         invoiceCount: snap.data().count,
         lastSyncedAt: configDoc.data()?.['lastSyncedAt'] ?? '',
       });
+    },
+
+    async linkInvoiceReceivers(): Promise<void> {
+      const tenantId = store.appStore.env.tenantId;
+
+      // build bexioId -> AvatarInfo lookup from persons and orgs
+      const persons = store.appStore.allPersons();
+      const orgs = store.appStore.allOrgs();
+      const lookup = new Map<string, AvatarInfo>();
+      for (const p of persons) {
+        if (p.bexioId) {
+          lookup.set(p.bexioId, { key: p.bkey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
+        }
+      }
+      for (const o of orgs) {
+        if (o.bexioId) {
+          lookup.set(o.bexioId, { key: o.bkey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
+        }
+      }
+
+      // load all invoices that still have a notes value (= bexioContactId not yet resolved)
+      const db = getFirestore(getApp());
+      const invoiceQuery = query(
+        collection(db, InvoiceCollection),
+        where('tenants', 'array-contains', tenantId),
+        where('notes', '!=', '')
+      );
+      const snapshot = await getDocs(invoiceQuery);
+      const pending = snapshot.docs.filter(d => !!d.data()['notes']);
+
+      patchState(store, { receiverPendingCount: pending.length });
+
+      if (pending.length === 0) return;
+
+      // process in batches of 500 (Firestore limit)
+      const BATCH_SIZE = 500;
+      let linked = 0;
+      for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db);
+        const chunk = pending.slice(i, i + BATCH_SIZE);
+        for (const d of chunk) {
+          const data = d.data();
+          const bexioContactId = String(data['notes'] ?? '').trim();
+          const receiver = lookup.get(bexioContactId);
+          if (!receiver) continue;
+
+          const invoiceId: string = data['invoiceId'] ?? '';
+          const totalCents: number = data['totalAmount']?.amount ?? 0;
+          const indexStr = `i: ${invoiceId} a: ${(totalCents / 100).toFixed(2)} n: ${receiver.label} bx: ${bexioContactId}`;
+
+          batch.update(d.ref, {
+            receiver,
+            index: indexStr,
+            notes: '',
+          });
+          linked++;
+        }
+        await batch.commit();
+      }
+
+      patchState(store, { receiverLinkCount: linked, receiverPendingCount: pending.length - linked });
     },
 
     async syncInvoices(fromDate?: string): Promise<{ count: number }> {

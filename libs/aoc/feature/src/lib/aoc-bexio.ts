@@ -147,6 +147,39 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
           </ion-grid>
         </ion-card-content>
       </ion-card>
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Rechnungs-Empfänger</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="9">
+                @if(receiverPendingCount() < 0) {
+                  Noch nicht geprüft.
+                } @else if(receiverPendingCount() === 0) {
+                  Alle Rechnungen haben einen Empfänger.
+                } @else {
+                  {{ receiverPendingCount() }} Rechnungen ohne Empfänger.
+                }
+                @if(receiverLinkCount() >= 0) {
+                  {{ receiverLinkCount() }} Empfänger verknüpft.
+                }
+              </ion-col>
+              <ion-col size="3">
+                <ion-button (click)="linkReceivers()" [disabled]="isLinking() || invoiceCount() <= 0">
+                  @if(isLinking()) {
+                    <ion-spinner name="crescent" slot="start" />
+                  } @else {
+                    <ion-icon src="{{ 'link' | svgIcon }}" slot="start" />
+                  }
+                  Verknüpfen
+                </ion-button>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
     </ion-content>
   `,
 })
@@ -159,6 +192,10 @@ export class AocBexio implements OnInit {
 
   protected readonly invoiceCount = computed(() => this.store.invoiceCount());
   protected readonly lastSyncedAt = computed(() => this.store.lastSyncedAt());
+  protected readonly receiverPendingCount = computed(() => this.store.receiverPendingCount());
+  protected readonly receiverLinkCount = computed(() => this.store.receiverLinkCount());
+
+  protected isLinking = signal(false);
 
   protected isSyncing = signal(false);
   protected invoiceSyncResult = signal('');
@@ -198,6 +235,15 @@ export class AocBexio implements OnInit {
       await this.store.loadInvoiceStats();
     } finally {
       this.isSyncing.set(false);
+    }
+  }
+
+  protected async linkReceivers(): Promise<void> {
+    this.isLinking.set(true);
+    try {
+      await this.store.linkInvoiceReceivers();
+    } finally {
+      this.isLinking.set(false);
     }
   }
 
