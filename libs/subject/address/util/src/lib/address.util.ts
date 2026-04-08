@@ -9,22 +9,56 @@ import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } fro
 /*-------------------------- address creation --------------------------------*/
 
 /**
- * Create a favorite email address.
- * @param addressUsage the usage of the email address (e.g. home, work)
- * @param email the email address
- * @param tenantId the tenant ID
- * @returns the AddressModel of the email address
+ * Generic function to create a favorite address of type email, phone, web, or postal
+ * @param channel 
+ * @param usage 
+ * @param value 
+ * @param tenantId 
+ * @param streetNumber optional, only needed for postal
+ * @param addressValue2  optional, only needed by postal
+ * @param zipCode  optional, only needed for postal
+ * @param city  optional, only needed for postal
+ * @param countryCode  optional, only needed for postal
+ * @returns 
  */
-export function createFavoriteEmailAddress(addressUsage: string, email: string, tenantId: string): AddressModel {
+export function createFavoriteAddress(channel: string, usage: string, value: string, tenantId: string, streetNumber?: string, addressValue2?: string, zipCode?: string, city?: string, countryCode?: string): AddressModel {
   const address = new AddressModel(tenantId);
-  address.addressUsage = addressUsage;
-  address.addressChannel = 'email';
-  address.email = email;
+  address.addressUsage = usage;
+  address.addressChannel = channel;
   address.isFavorite = true;
   address.isCc = false;
   address.isArchived = false;
   address.isValidated = false;
+  return saveAddressValue(address, value, streetNumber, addressValue2, zipCode, city, countryCode)
+}
+
+
+export function saveAddressValue(address: AddressModel, value: string, streetNumber?: string, addressValue2?: string, zipCode?: string, city?: string, countryCode?: string): AddressModel {
+  switch (address.addressChannel) {
+    case 'email': address.email = value; break;
+    case 'phone': address.phone = value; break;
+    case 'web': address.url = value; break;
+    case 'postal': 
+      address.streetName = value;
+      address.streetNumber = streetNumber ?? '';
+      address.addressValue2 = addressValue2 ?? '';
+      address.zipCode = zipCode ?? '';
+      address.city = city ?? '';
+      address.countryCode = countryCode ?? 'CH';
+      break;
+  }
   return address;
+}
+
+/**
+ * Create a favorite email address.
+ * @param usage the usage of the email address (e.g. home, work)
+ * @param email the email address
+ * @param tenantId the tenant ID
+ * @returns the AddressModel of the email address
+ */
+export function createFavoriteEmailAddress(usage: string, email: string, tenantId: string): AddressModel {
+  return createFavoriteAddress('email', usage, email, tenantId);
 }
 
 /**
@@ -34,16 +68,8 @@ export function createFavoriteEmailAddress(addressUsage: string, email: string, 
  * @param tenantId the tenant ID
  * @returns the AddressModel of the phone number
  */
-export function createFavoritePhoneAddress(addressUsage: string, phone: string, tenantId: string): AddressModel {
-  const address = new AddressModel(tenantId);
-  address.addressUsage = addressUsage;
-  address.addressChannel = 'phone';
-  address.phone = phone;
-  address.isFavorite = true;
-  address.isCc = false;
-  address.isArchived = false;
-  address.isValidated = false;
-  return address;
+export function createFavoritePhoneAddress(usage: string, phone: string, tenantId: string): AddressModel {
+  return createFavoriteAddress('phone', usage, phone, tenantId);
 }
 
 /**
@@ -53,16 +79,8 @@ export function createFavoritePhoneAddress(addressUsage: string, phone: string, 
  * @param tenantId the tenant ID
  * @returns the AddressModel of the web address
  */
-export function createFavoriteWebAddress(addressUsage: string, url: string, tenantId: string): AddressModel {
-  const address = new AddressModel(tenantId);
-  address.addressUsage = addressUsage;
-  address.addressChannel = 'web';
-  address.url = url;
-  address.isFavorite = true;
-  address.isCc = false;
-  address.isArchived = false;
-  address.isValidated = false;
-  return address;
+export function createFavoriteWebAddress(usage: string, url: string, tenantId: string): AddressModel {
+  return createFavoriteAddress('web', usage, url, tenantId);
 }
 
 /**
@@ -80,16 +98,8 @@ export function createFavoriteWebAddress(addressUsage: string, url: string, tena
  * @param isArchived
  * @returns the AddressModel of the postal address
  */
-export function createPostalAddress(tenantId: string, addressUsage: string, streetName: string, streetNumber: string, addressValue2: string, zipCode: string, city: string, countryCode: string, isFavorite = false, isValidated = false, isCc = false, isArchived = false): AddressModel {
-  const address = new AddressModel(tenantId);
-  address.addressUsage = addressUsage;
-  address.addressChannel = 'postal';
-  address.streetName = streetName;
-  address.streetNumber = streetNumber;
-  address.addressValue2 = addressValue2;
-  address.zipCode = zipCode;
-  address.city = city;
-  address.countryCode = countryCode;
+export function createPostalAddress(tenantId: string, usage: string, streetName: string, streetNumber: string, addressValue2: string, zipCode: string, city: string, countryCode: string, isFavorite = false, isValidated = false, isCc = false, isArchived = false): AddressModel {
+  const address = createFavoriteAddress('postal', usage, streetName, tenantId, streetNumber, addressValue2, zipCode, city, countryCode);
   address.isFavorite = isFavorite;
   address.isCc = isCc;
   address.isArchived = isArchived;

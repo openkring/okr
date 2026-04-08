@@ -6,7 +6,7 @@ import { AppStore, OrgSelectModalComponent } from '@bk2/shared-feature';
 import { getDefaultCategoryName, isOrg } from '@bk2/shared-util-core';
 import { CategoryListModel, OrgModel, UserModel } from '@bk2/shared-models';
 
-import { convertFormToNewPerson, createNewMemberFormModel, MemberNewFormModel } from '@bk2/relationship-membership-util';
+import { createNewMemberFormModel, MemberNewFormModel } from '@bk2/relationship-membership-util';
 import { MemberNewForm } from '@bk2/relationship-membership-ui';
 
 

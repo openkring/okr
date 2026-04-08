@@ -108,6 +108,7 @@ export const mailtrapWebhook = Email.mailtrapWebhook;
 // bexio contact sync
 export const getBexioContacts = Bexio.getBexioContacts;
 export const createBexioContact = Bexio.createBexioContact;
+export const updateBexioContact = Bexio.updateBexioContact;
 
 // zefix registry lookup
 export const zefixSearch = Zefix.zefixSearch;

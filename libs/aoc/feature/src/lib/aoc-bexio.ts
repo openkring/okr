@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSpinner } from '@ionic/angular/standalone';
+import { Component, computed, inject, signal } from '@angular/core';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSpinner } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { HeaderComponent, ResultLogComponent } from '@bk2/shared-ui';
+import { HeaderComponent } from '@bk2/shared-ui';
 import { AvatarLabelComponent } from '@bk2/avatar-ui';
-import { ColorIonic, LogInfo } from '@bk2/shared-models';
-import { getFullName } from '@bk2/shared-util-core';
+import { ColorIonic } from '@bk2/shared-models';
+import { DateFormat, getFullName, getTodayStr, isAfterDate } from '@bk2/shared-util-core';
 
 import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
@@ -16,9 +16,9 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe,
-    HeaderComponent, AvatarLabelComponent, ResultLogComponent,
+    HeaderComponent, AvatarLabelComponent,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner,
+    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonCheckbox,
   ],
   providers: [AocBexioStore],
   template: `
@@ -43,15 +43,25 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 </ion-button>
               </ion-col>
             </ion-row>
-            @if(index().length > 0) {
+            <ion-row>
+              <ion-col>
+                <ion-checkbox labelPlacement="end" [checked]="showOnlyCurrentMembers()" (ionChange)="showOnlyCurrentMembers.set($event.detail.checked)">Show only current members</ion-checkbox>
+              </ion-col>
+            </ion-row>
+            @if(filteredIndex().length > 0) {
               <ion-row>
-                <ion-col size="6"><strong>Name</strong></ion-col>
+                <ion-item lines="none">
+                  <small>{{ filteredIndex().length }}</small>
+                </ion-item>
+              </ion-row>
+              <ion-row>
+                <ion-col size="5"><strong>Name</strong></ion-col>
                 <ion-col size="3"><strong>BK Bexio ID</strong></ion-col>
                 <ion-col size="3"><strong>Bexio ID</strong></ion-col>
               </ion-row>
-              @for(item of index(); track item.key) {
+              @for(item of filteredIndex(); track item.key + '_' + item.bkey + '_' + item.bx_id) {
                 <ion-row>
-                  <ion-col size="6">
+                  <ion-col size="5">
                     @if(item.bkey) {
                       <bk-avatar-label
                         [key]="avatarKey(item)"
@@ -67,22 +77,29 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                   </ion-col>
                   <ion-col size="3">
                     <ion-item lines="none">
-                      <ion-label>{{ item.bbexioid || '' }}</ion-label>
-                      @if(!item.bbexioid && item.bxid) {
-                        <ion-button slot="end" size="small" fill="clear" (click)="addToBk(item)">
-                          <ion-icon src="{{ 'add' | svgIcon }}" slot="icon-only" />
+                      <ion-label>{{ item.bexioId || '' }}</ion-label>
+                      @if(!item.bexioId && item.bx_id) {
+                        <ion-button slot="end" fill="clear" (click)="addToBk(item)">
+                          <ion-icon src="{{ 'add-circle' | svgIcon }}" slot="icon-only" />
                         </ion-button>
                       }
                     </ion-item>
                   </ion-col>
                   <ion-col size="3">
                     <ion-item lines="none">
-                      <ion-label>{{ item.bxid || '' }}</ion-label>
-                      @if(item.bbexioid && !item.bxid) {
-                        <ion-button slot="end" size="small" fill="clear" (click)="addToBexio(item)">
-                          <ion-icon src="{{ 'add' | svgIcon }}" slot="icon-only" />
+                      <ion-label>{{ item.bx_id || '' }}</ion-label>
+                      @if(item.bexioId && !item.bx_id) {
+                        <ion-button slot="end" fill="clear" (click)="addToBexio(item)">
+                          <ion-icon src="{{ 'add-circle' | svgIcon }}" slot="icon-only" />
                         </ion-button>
                       }
+                    </ion-item>
+                  </ion-col>
+                  <ion-col size="1">
+                    <ion-item lines="none">
+                      <ion-button slot="end" fill="clear" (click)="edit(item)">
+                        <ion-icon src="{{ 'address' | svgIcon }}" slot="icon-only" [color]="addressColor(item)" />
+                      </ion-button>
                     </ion-item>
                   </ion-col>
                 </ion-row>
@@ -91,7 +108,6 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <bk-result-log title="Log" [log]="logItems()" />
     </ion-content>
   `,
 })
@@ -101,15 +117,27 @@ export class AocBexio {
 
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly index = computed(() => this.store.index());
-  protected readonly logItems = computed<LogInfo[]>(() => this.store.log());
+
+  protected showOnlyCurrentMembers = signal(false);
+  protected readonly filteredIndex = computed(() => {
+    const today = getTodayStr(DateFormat.StoreDate);
+    if (this.showOnlyCurrentMembers()) {
+      return this.index().filter(i => {
+        if (!i.dateOfExit || i.dateOfExit.length !== 8) return false;
+        return isAfterDate(i.dateOfExit, today);
+      })
+    } else {
+      return this.index();
+    }
+  });
 
   protected avatarKey(item: BexioIndex): string {
     return `${item.type}.${item.bkey}`;
   }
 
   protected displayName(item: BexioIndex): string {
-    if (item.bkey) return getFullName(item.bname1, item.bname2) || item.bname1;
-    return getFullName(item.bxname1, item.bxname2) || item.bxname1;
+    if (item.bkey) return getFullName(item.name1, item.name2) || item.name1;
+    return getFullName(item.bx_name1, item.bx_name2) || item.bx_name1;
   }
 
   protected async buildIndex(): Promise<void> {
@@ -122,5 +150,14 @@ export class AocBexio {
 
   protected async addToBk(item: BexioIndex): Promise<void> {
     await this.store.addToBk(item);
+  }
+
+  protected addressColor(item: BexioIndex): string {
+    return this.store.compareAddressData(item) ? 'success' : 'danger';
+  }
+
+  protected async edit(item: BexioIndex): Promise<void> {
+    console.log(item);
+    await this.store.edit(item);
   }
 }

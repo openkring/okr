@@ -29,7 +29,6 @@ import { AddressStore } from "./addresses.store";
   `],
   providers: [AddressStore],
   template: `
-  {{hasRole('memberAdmin')}}
   <ion-accordion toggle-icon-slot="start" value="addresses">
     <ion-item slot="header" [color]="color()">
         <ion-label>{{ label() | translate | async }}</ion-label>

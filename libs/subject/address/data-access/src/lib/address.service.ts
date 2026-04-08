@@ -53,7 +53,8 @@ export class AddressService {
   public async update(address: AddressModel, currentUser?: UserModel, confirmMessage = '@subject.address.operation.update'): Promise<string | undefined> {
     address.index = getAddressIndex(address);
     const key = await this.firestoreService.updateModel<AddressModel>(AddressCollection, address, false, confirmMessage, currentUser);
-    const payload = `${key}: ${address.addressChannel}/${getAddressValueByChannel(address)}`;
+    const value = getAddressValueByChannel(address);
+    const payload = `${address.bkey}: ${address.addressChannel} = ${value}`;
     void this.activityService.log('address', 'update', currentUser, payload);
     return key;
   }

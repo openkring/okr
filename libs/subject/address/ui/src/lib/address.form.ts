@@ -208,7 +208,7 @@ export class AddressFormComponent {
   // fields
   protected addressChannel = linkedSignal(() => this.formData()?.addressChannel ?? DEFAULT_ADDRESS_CHANNEL);
   protected addressChannelLabel = linkedSignal(() => this.formData()?.addressChannelLabel ?? '');
-  protected addressUsage = linkedSignal(() => this.formData()?.addressUsage ?? DEFAULT_ADDRESS_USAGE);
+  protected addressUsage = linkedSignal(() => this.formData()?.addressUsage ?? (this.formData().parentKey.startsWith('org') ? 'work' : 'home'));
   protected addressUsageLabel = linkedSignal(() => this.formData()?.addressUsageLabel ?? '');
   protected email = linkedSignal(() => this.formData()?.email ?? '');
   protected phone = linkedSignal(() => this.formData()?.phone ?? '');
