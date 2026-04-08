@@ -110,6 +110,10 @@ export const getBexioContacts = Bexio.getBexioContacts;
 export const createBexioContact = Bexio.createBexioContact;
 export const updateBexioContact = Bexio.updateBexioContact;
 
+// bexio invoice sync
+export const syncBexioInvoices = Bexio.syncBexioInvoices;
+export const scheduledBexioInvoiceSync = Bexio.scheduledBexioInvoiceSync;
+
 // zefix registry lookup
 export const zefixSearch = Zefix.zefixSearch;
 export const zefixGetByUid = Zefix.zefixGetByUid;

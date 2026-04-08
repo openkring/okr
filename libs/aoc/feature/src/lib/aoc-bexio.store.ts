@@ -1,13 +1,14 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
+import { collection, doc, getCountFromServer, getDoc, getFirestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom } from 'rxjs';
 
 import { isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
+import { AddressCollection, AddressModel, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
 import { getFullName, getSystemQuery } from '@bk2/shared-util-core';
 import { ModalController } from '@ionic/angular/standalone';
 import { AocBexioContactEditModal } from 'libs/aoc/feature/src/lib/aoc-bexio-contact-edit.modal';
@@ -59,11 +60,15 @@ interface BexioContact {
 export type AocBexioState = {
   index: BexioIndex[];
   isLoading: boolean;
+  invoiceCount: number;
+  lastSyncedAt: string; // "YYYY-MM-DD HH:mm:ss" or ''
 };
 
 const initialState: AocBexioState = {
   index: [],
   isLoading: false,
+  invoiceCount: -1,   // -1 = not yet loaded
+  lastSyncedAt: '',
 };
 
 export const AocBexioStore = signalStore(
@@ -496,6 +501,28 @@ export const AocBexioStore = signalStore(
         && norm(item.zipCode) === norm(item.bx_zipCode)
         && norm(item.city) === norm(item.bx_city)
         && norm(item.email) === norm(item.bx_email);
+    },
+
+    async loadInvoiceStats(): Promise<void> {
+      const db = getFirestore(getApp());
+      const [snap, configDoc] = await Promise.all([
+        getCountFromServer(collection(db, InvoiceCollection)),
+        getDoc(doc(db, 'config', 'bexioSync')),
+      ]);
+      patchState(store, {
+        invoiceCount: snap.data().count,
+        lastSyncedAt: configDoc.data()?.['lastSyncedAt'] ?? '',
+      });
+    },
+
+    async syncInvoices(fromDate?: string): Promise<{ count: number }> {
+      const functions = getFunctions(getApp(), 'europe-west6');
+      if (store.appStore.env.useEmulators) {
+        connectFunctionsEmulator(functions, 'localhost', 5001);
+      }
+      const syncBexioInvoicesFn = httpsCallable<{ fromDate?: string }, { count: number }>(functions, 'syncBexioInvoices');
+      const result = await syncBexioInvoicesFn(fromDate ? { fromDate } : {});
+      return result.data;
     },
 
     async edit(bexioIndex: BexioIndex): Promise<void> {

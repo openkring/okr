@@ -1,10 +1,13 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineSecret } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
+import * as admin from 'firebase-admin';
 
 const bexioApiKey = defineSecret('BEXIO_APIKEY');
 const bexioUserId = defineSecret('BEXIO_USER_ID'); // integer user ID from GET /2.0/users/me
+const bexioTenantId = defineSecret('BEXIO_TENANT_ID'); // Firestore tenantId for invoice writes
 
 const BEXIO_BASE = 'https://api.bexio.com/2.0';
 
@@ -183,5 +186,163 @@ export const getBexioContacts = onCall(
       logger.error(`${CF_NAME}: error`, error);
       throw new HttpsError('internal', 'Bexio API request failed');
     }
+  }
+);
+
+// --------------------------------- Invoice sync ---------------------------------
+
+interface BexioInvoice {
+  id: number;
+  document_nr: string;
+  title: string | null;
+  contact_id: number | null;
+  contact_sub_id: number | null;
+  user_id: number | null;
+  header: string | null;
+  footer: string | null;
+  total_gross: string;
+  total_net: string;
+  total_taxes: string;
+  total: string;
+  mwst_type: number;
+  mwst_is_net: boolean;
+  is_valid_from: string | null;  // "YYYY-MM-DD"
+  is_valid_to: string | null;    // "YYYY-MM-DD"
+  kb_item_status_id: number;
+  network_link: string | null;
+  updated_at: string;            // "YYYY-MM-DD HH:mm:ss"
+}
+
+/** Convert Bexio date "YYYY-MM-DD" to StoreDate "YYYYMMDD". Returns '' for null/empty. */
+function toStoreDate(bexioDate: string | null | undefined): string {
+  if (!bexioDate) return '';
+  return bexioDate.replace(/-/g, '');
+}
+
+/** Map kb_item_status_id to a human-readable state string. */
+function mapInvoiceStatus(statusId: number): string {
+  switch (statusId) {
+    case 7: return 'draft';
+    case 8: return 'pending';
+    case 9: return 'paid';
+    case 19: return 'cancelled';
+    default: return String(statusId);
+  }
+}
+
+function mapVatType(mwst_type: number): string {
+  switch (mwst_type) {
+    case 0: return 'included';
+    case 1: return 'excluded';
+    case 2: return 'exempt';
+  }
+  return '';
+}
+
+/** Fetch paginated invoices from Bexio, optionally filtered by updatedAfter ("YYYY-MM-DD HH:mm:ss"). */
+async function fetchBexioInvoices(apiKey: string, updatedAfter: string): Promise<BexioInvoice[]> {
+  const PAGE_SIZE = 500;
+  const all: BexioInvoice[] = [];
+  let offset = 0;
+  while (true) {
+    const response = await axios.post<BexioInvoice[]>(
+      `${BEXIO_BASE}/kb_invoice/search`,
+      [{ field: 'updated_at', value: updatedAfter, criteria: '>' }],
+      {
+        params: { limit: PAGE_SIZE, offset, order_by: 'updated_at' },
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    const page = Array.isArray(response.data) ? response.data : [];
+    all.push(...page);
+    if (page.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+  return all;
+}
+
+/** Write invoices to Firestore and update the sync pointer. */
+async function persistInvoices(invoices: BexioInvoice[], tenantId: string, nowStr: string): Promise<void> {
+  const db = admin.firestore();
+  const batch = db.batch();
+
+  for (const inv of invoices) {
+    const bkey = String(inv.id);
+    const totalCents = Math.round(parseFloat(inv.total) * 100);
+    const doc: Record<string, unknown> = {
+      tenants: [tenantId],
+      isArchived: false,
+      index: '',
+      tags: [],
+      notes: inv.contact_id + '',
+      title: inv.title ?? inv.document_nr,
+      invoiceId: inv.document_nr,
+      invoiceDate: toStoreDate(inv.is_valid_from),
+      dueDate: toStoreDate(inv.is_valid_to),
+      totalAmount: { amount: totalCents, currency: 'CHF', periodicity: 'one-time' },
+      taxes: parseFloat(inv.total_taxes) || 0,
+      vatType: mapVatType(inv.mwst_type), 
+      state: mapInvoiceStatus(inv.kb_item_status_id),
+      paymentDate: ''
+    };
+    batch.set(db.collection('invoices').doc(bkey), doc, { merge: true });
+  }
+
+  // update sync pointer
+  batch.set(db.collection('config').doc('bexioSync'), { lastSyncedAt: nowStr }, { merge: true });
+
+  await batch.commit();
+}
+
+/** Core sync logic shared by manual and scheduled triggers. */
+async function runInvoiceSync(fromDate: string, tenantId: string, label: string): Promise<{ count: number }> {
+  logger.info(`${label}: fetching invoices updated after "${fromDate}"`);
+  const invoices = await fetchBexioInvoices(bexioApiKey.value(), fromDate);
+  logger.info(`${label}: fetched ${invoices.length} invoices`);
+
+  const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19); // "YYYY-MM-DD HH:mm:ss"
+  await persistInvoices(invoices, tenantId, nowStr);
+  logger.info(`${label}: persisted ${invoices.length} invoices, pointer updated to ${nowStr}`);
+  return { count: invoices.length };
+}
+
+/**
+ * Manual one-shot invoice sync (onCall).
+ * Pass { fromDate: "YYYY-MM-DD HH:mm:ss" } to start from a specific date,
+ * or omit fromDate to download the full history.
+ */
+export const syncBexioInvoices = onCall(
+  {
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [bexioApiKey, bexioTenantId],
+  },
+  async (request: CallableRequest<{ fromDate?: string }>) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+    const fromDate = request.data?.fromDate ?? '2000-01-01 00:00:00';
+    return runInvoiceSync(fromDate, bexioTenantId.value(), 'syncBexioInvoices');
+  }
+);
+
+/**
+ * Scheduled daily invoice sync at 06:00 Europe/Zurich.
+ * Reads the last sync pointer from config/bexioSync.lastSyncedAt and fetches only new/updated invoices.
+ */
+export const scheduledBexioInvoiceSync = onSchedule(
+  {
+    schedule: '0 6 * * *',
+    timeZone: 'Europe/Zurich',
+    region: 'europe-west6',
+    secrets: [bexioApiKey, bexioTenantId],
+  },
+  async () => {
+    const db = admin.firestore();
+    const configDoc = await db.collection('config').doc('bexioSync').get();
+    const fromDate: string = configDoc.data()?.lastSyncedAt ?? '2000-01-01 00:00:00';
+    await runInvoiceSync(fromDate, bexioTenantId.value(), 'scheduledBexioInvoiceSync');
   }
 );

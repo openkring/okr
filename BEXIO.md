@@ -55,13 +55,56 @@ Automated import from Bexio into the app is intentionally not supported to prese
 
 ## Cloud Functions
 
-| Function | Purpose |
-|---|---|
-| `getBexioContacts` | Fetches all contacts from `GET /2.0/contact` |
-| `createBexioContact` | Creates a new contact via `POST /2.0/contact` |
-| `updateBexioContact` | Updates an existing contact via `POST /2.0/contact/{id}` |
+| Function | Trigger | Purpose |
+|---|---|---|
+| `getBexioContacts` | onCall | Fetches all contacts from `GET /2.0/contact` |
+| `createBexioContact` | onCall | Creates a new contact via `POST /2.0/contact` |
+| `updateBexioContact` | onCall | Updates an existing contact via `POST /2.0/contact/{id}` |
+| `syncBexioInvoices` | onCall | Manual invoice sync; optional `{ fromDate: "YYYY-MM-DD HH:mm:ss" }`, defaults to full history |
+| `scheduledBexioInvoiceSync` | onSchedule (06:00 CET) | Daily incremental invoice sync using pointer from `config/bexioSync.lastSyncedAt` |
 
 All functions are deployed to `europe-west6`, require Firebase App Check, and read the Bexio API key from GCP Secret Manager (`BEXIO_APIKEY`).
+
+### GCP Secrets
+
+| Secret | Used by | Purpose |
+|---|---|---|
+| `BEXIO_APIKEY` | all functions | Bexio REST API bearer token |
+| `BEXIO_USER_ID` | `createBexioContact`, `updateBexioContact` | Integer user ID from `GET /2.0/users/me` |
+| `BEXIO_TENANT_ID` | `syncBexioInvoices`, `scheduledBexioInvoiceSync` | Firestore tenantId for writing invoices (e.g. `scs`) |
+
+Set with: `echo "value" | firebase secrets:set SECRET_NAME`
+
+## Invoice Sync
+
+### Overview
+
+Invoices are downloaded from Bexio into the Firestore `invoices` collection. Each invoice is stored with `bkey = String(bexio_id)` for idempotent upserts.
+
+### Incremental sync pointer
+
+`config/bexioSync.lastSyncedAt` — stores the datetime of the last successful sync in `"YYYY-MM-DD HH:mm:ss"` format. The scheduled function reads this, fetches only invoices with `updated_at >` that value, then updates the pointer.
+
+### Field mapping
+
+| Bexio field | InvoiceModel field | Notes |
+|---|---|---|
+| `id` | `bkey`, `invoiceId` | `String(id)` |
+| `document_nr` | `invoiceId` | also used as `title` fallback |
+| `title` | `title` | falls back to `document_nr` if null |
+| `header` | `header` | |
+| `footer` | `footer` | |
+| `is_valid_from` | `invoiceDate` | `YYYY-MM-DD` → `YYYYMMDD` (StoreDate) |
+| `is_valid_to` | `dueDate` | `YYYY-MM-DD` → `YYYYMMDD` (StoreDate) |
+| `total` | `totalAmount.amount` | multiplied by 100, currency hardcoded to `CHF` |
+| `total_taxes` | `taxes` | `parseFloat` |
+| `kb_item_status_id` | `state` | 1=draft, 3=pending, 7=paid, 8=partial, 9=cancelled |
+| `network_link` | `bexioUrl` | |
+| `contact_id`, `contact_sub_id`, `user_id` | `notes` | stored as `bexioContactId=N bexioSubContactId=N bexioUserId=N` for later resolution into `invoiceReceiver`/`invoiceSender` |
+
+### First-time full history download
+
+Call `syncBexioInvoices` from the app or Firebase console with `{}` (no arguments). This defaults to `fromDate = "2000-01-01 00:00:00"` and downloads all invoices.
 
 ## Store methods (`AocBexioStore`)
 

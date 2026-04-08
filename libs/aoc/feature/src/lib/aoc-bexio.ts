@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSpinner } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -24,6 +24,45 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
   template: `
     <bk-header title="@aoc.bexio.title" />
     <ion-content>
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Invoices</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="9">
+                @if(invoiceCount() < 0) {
+                  Loading...
+                } @else if(invoiceCount() === 0) {
+                  No invoices yet. Download the full history from Bexio.
+                } @else {
+                  {{ invoiceCount() }} invoices in Firestore. Last sync: {{ lastSyncedAt() || 'unknown' }}.
+                }
+              </ion-col>
+              <ion-col size="3">
+                <ion-button (click)="syncInvoices()" [disabled]="isSyncing() || invoiceCount() > 0">
+                  @if(isSyncing()) {
+                    <ion-spinner name="crescent" slot="start" />
+                  } @else {
+                    <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
+                  }
+                  Full history
+                </ion-button>
+              </ion-col>
+            </ion-row>
+            @if(invoiceSyncResult()) {
+              <ion-row>
+                <ion-col>
+                  <ion-item lines="none">
+                    <ion-label color="success">{{ invoiceSyncResult() }}</ion-label>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            }
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@aoc.bexio.index.title' | translate | async }}</ion-card-title>
@@ -111,12 +150,22 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
     </ion-content>
   `,
 })
-export class AocBexio {
+export class AocBexio implements OnInit {
   protected readonly store = inject(AocBexioStore);
   protected readonly color = ColorIonic.Light;
 
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly index = computed(() => this.store.index());
+
+  protected readonly invoiceCount = computed(() => this.store.invoiceCount());
+  protected readonly lastSyncedAt = computed(() => this.store.lastSyncedAt());
+
+  protected isSyncing = signal(false);
+  protected invoiceSyncResult = signal('');
+
+  public ngOnInit(): void {
+    this.store.loadInvoiceStats();
+  }
 
   protected showOnlyCurrentMembers = signal(false);
   protected readonly filteredIndex = computed(() => {
@@ -138,6 +187,18 @@ export class AocBexio {
   protected displayName(item: BexioIndex): string {
     if (item.bkey) return getFullName(item.name1, item.name2) || item.name1;
     return getFullName(item.bx_name1, item.bx_name2) || item.bx_name1;
+  }
+
+  protected async syncInvoices(): Promise<void> {
+    this.isSyncing.set(true);
+    this.invoiceSyncResult.set('');
+    try {
+      const result = await this.store.syncInvoices();
+      this.invoiceSyncResult.set(`Downloaded ${result.count} invoices.`);
+      await this.store.loadInvoiceStats();
+    } finally {
+      this.isSyncing.set(false);
+    }
   }
 
   protected async buildIndex(): Promise<void> {
