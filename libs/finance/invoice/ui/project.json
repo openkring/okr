@@ -1,0 +1,24 @@
+{
+  "name": "finance-invoice-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/invoice/ui/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/invoice/ui",
+        "main": "libs/finance/invoice/ui/src/index.ts",
+        "tsConfig": "libs/finance/invoice/ui/tsconfig.lib.json",
+        "assets": ["libs/finance/invoice/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

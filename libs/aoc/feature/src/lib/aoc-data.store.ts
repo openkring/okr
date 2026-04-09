@@ -121,7 +121,7 @@ export const AocDataStore = signalStore(
         const maxDocs = 10; // for testing, you can restrict the amount of documents to process. 
         // set it to undefined to process all documents.
         
-        const collectionName = 'addresses';
+        const collectionName = 'invoices';
 
         // fixing fields (types and undefined)
         // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values
@@ -184,11 +184,13 @@ export const AocDataStore = signalStore(
         //const baseImgix = 'https://bkaiser.imgix.net/';
         //d.tenants = ['scs'];
 
-        // convert channel
-        d.addressChannel = this.convertChannel(d.channelType);
-        d.addressChannelLabel = d.channelLabel ?? '';
-        d.addressUsage = this.convertUsage(d.usageType);
-        d.addressUsageLabel = d.usageLabel ?? '';
+        if (!d.receiver)
+        d.tags = '';
+        if (d.receiver) {
+          d.index = 'i:' + d.invoiceId + ' a:' + (d.totalAmount.amount/100).toFixed(2) + ' n:' + d.receiver.label;
+        } else {
+           d.index = 'i:' + d.invoiceId + ' a:' + (d.totalAmount.amount/100).toFixed(2) + ' n:undefined';          
+        }
 
         // create the index here directly without using the getXXindex function, just with string operations.
         //d.index = 'ak:' + d.authorKey + ' d:' + d.creationDateTime.substring(0, 8) + ' pk:' + d.parentKey;

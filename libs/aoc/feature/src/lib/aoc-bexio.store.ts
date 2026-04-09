@@ -523,21 +523,25 @@ export const AocBexioStore = signalStore(
       const tenantId = store.appStore.env.tenantId;
 
       // build bexioId -> AvatarInfo lookup from persons and orgs
-      const persons = store.appStore.allPersons();
-      const orgs = store.appStore.allOrgs();
       const lookup = new Map<string, AvatarInfo>();
+
+      // 1) load all persons with bexioId
+      const persons = store.appStore.allPersons();
       for (const p of persons) {
         if (p.bexioId) {
           lookup.set(p.bexioId, { key: p.bkey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
         }
       }
+
+      // 2) load all orgs with bexioId
+      const orgs = store.appStore.allOrgs();
       for (const o of orgs) {
         if (o.bexioId) {
           lookup.set(o.bexioId, { key: o.bkey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
         }
       }
 
-      // load all invoices that still have a notes value (= bexioContactId not yet resolved)
+      // 3) load all invoices that still have a notes value (= bexioContactId not yet resolved)
       const db = getFirestore(getApp());
       const invoiceQuery = query(
         collection(db, InvoiceCollection),
@@ -560,6 +564,7 @@ export const AocBexioStore = signalStore(
         for (const d of chunk) {
           const data = d.data();
           const bexioContactId = String(data['notes'] ?? '').trim();
+          console.log('bexioId=' + bexioContactId);
           const receiver = lookup.get(bexioContactId);
           if (!receiver) continue;
 
