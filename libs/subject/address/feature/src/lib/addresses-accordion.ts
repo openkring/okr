@@ -246,7 +246,7 @@ export class AddressesAccordionComponent {
         return isVisibleToUser(this.priv().showPostalAddress, this.currentUser());
       case 'bankaccount':
         return isVisibleToUser(this.priv().showIban, this.currentUser());
-      default: return false;
+      default: return true;
     }
   }
 }
