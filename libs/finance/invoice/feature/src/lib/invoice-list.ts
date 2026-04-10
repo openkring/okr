@@ -64,16 +64,19 @@ import { InvoiceStore } from './invoice.store';
       @if(isLoading()) {
         <bk-spinner />
       } @else if(filteredInvoices().length === 0) {
-        <bk-empty-list message="@invoice.field.empty" />
+        <bk-empty-list message="@finance.invoice.field.empty" />
       } @else {
         <ion-list lines="inset">
           @for(invoice of filteredInvoices(); track invoice.bkey) {
             <ion-item (click)="showActions(invoice)">
               <ion-label>
-                <strong>{{ invoice.invoiceId }}</strong> {{ invoice.title }}
+                {{ formatDate(invoice.invoiceDate) }}
+              </ion-label>
+              <ion-label>
+                <strong>{{ invoice.invoiceId.substring(4) }}</strong> {{ invoice.title }}
               </ion-label>
               <ion-label slot="end">
-                {{ formatDate(invoice.invoiceDate) }}
+                {{ getAmount(invoice.totalAmount?.amount)}}
               </ion-label>
             </ion-item>
           }
@@ -137,6 +140,11 @@ export class InvoiceList {
     this.selectedPersonName.set('');
   }
 
+  protected getAmount(cents?: number): string {
+    if (cents === undefined) return '';
+    return (cents / 100).toFixed(2);
+  }
+
   protected async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
@@ -156,6 +164,7 @@ export class InvoiceList {
   private async addActionSheetButtons(options: ActionSheetOptions, _invoice: InvoiceModel): Promise<void> {
     const base = this.imgixBaseUrl();
     options.buttons.push(createActionSheetButton('invoice.view', base, 'eye-on'));
+    options.buttons.push(createActionSheetButton('invoice.showpdf', base, 'download'));
     if (this.canChange()) {
       options.buttons.push(createActionSheetButton('invoice.edit', base, 'edit'));
     }
@@ -174,6 +183,7 @@ export class InvoiceList {
     if (!data) return;
     switch (data.action) {
       case 'invoice.view': await this.store.edit(invoice, true); break;
+      case 'invoice.showpdf': await this.store.showPdf(invoice); break;
       case 'invoice.edit': await this.store.edit(invoice, false); break;
       case 'invoice.delete': await this.store.delete(invoice); break;
     }

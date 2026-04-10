@@ -311,6 +311,52 @@ async function runInvoiceSync(fromDate: string, tenantId: string, label: string)
 }
 
 /**
+ * Fetch the PDF for a single invoice from Bexio.
+ * Returns the PDF as a base64-encoded string in the `content` field.
+ * Input: { invoiceId: string } — the Bexio invoice ID (= invoice.bkey in Firestore)
+ */
+export const showInvoicePdf = onCall(
+  {
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [bexioApiKey],
+  },
+  async (request: CallableRequest<{ invoiceId: string }>) => {
+    const CF_NAME = 'showInvoicePdf';
+
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+    const { invoiceId } = request.data;
+    if (!invoiceId) throw new HttpsError('invalid-argument', 'invoiceId is required');
+
+    logger.info(`${CF_NAME}: fetching PDF for invoice ${invoiceId}`);
+
+    try {
+      const response = await axios.get<{ content: string }>(
+        `${BEXIO_BASE}/kb_invoice/${invoiceId}/pdf`,
+        {
+          headers: {
+            'Authorization': `Bearer ${bexioApiKey.value()}`,
+            'Accept': 'application/json',
+          },
+        }
+      );
+      const content = response.data.content;
+      logger.info(`${CF_NAME}: fetched PDF for invoice ${invoiceId}, ${content?.length ?? 0} base64 chars`);
+      return { content };
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const body = JSON.stringify(error.response?.data);
+        logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
+        throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
+      }
+      logger.error(`${CF_NAME}: unexpected error`, error);
+      throw new HttpsError('internal', 'Bexio PDF fetch failed');
+    }
+  }
+);
+
+/**
  * Manual one-shot invoice sync (onCall).
  * Pass { fromDate: "YYYY-MM-DD HH:mm:ss" } to start from a specific date,
  * or omit fromDate to download the full history.

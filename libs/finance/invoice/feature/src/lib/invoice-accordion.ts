@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, OnInit } from '@angular/core';
-import { IonAccordion, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { InvoiceModel } from '@bk2/shared-models';
@@ -15,7 +15,7 @@ import { InvoiceStore } from './invoice.store';
   providers: [InvoiceStore],
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe,
-    IonAccordion, IonItem, IonLabel, IonList, IonIcon,
+    IonAccordion, IonButton, IonItem, IonLabel, IonList, IonIcon,
   ],
   template: `
     <ion-accordion toggle-icon-slot="start" value="invoices">
@@ -33,11 +33,14 @@ import { InvoiceStore } from './invoice.store';
               <ion-label slot="end">
                 {{ formatDate(invoice.invoiceDate) }} · {{ formatAmount(invoice) }}
               </ion-label>
+              <ion-button slot="end" fill="clear" (click)="showPdf(invoice)">
+                <ion-icon src="{{ 'download' | svgIcon }}" slot="icon-only" />
+              </ion-button>
             </ion-item>
           }
           @if(myInvoices().length === 0 && !isLoading()) {
             <ion-item lines="none">
-              <ion-label color="medium">{{ '@invoice.field.empty' | translate | async }}</ion-label>
+              <ion-label color="medium">{{ '@finance.invoice.field.empty' | translate | async }}</ion-label>
             </ion-item>
           }
         </ion-list>
@@ -57,6 +60,10 @@ export class InvoiceAccordion implements OnInit {
 
   protected formatDate(storeDate: string): string {
     return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate) ?? storeDate;
+  }
+
+  protected showPdf(invoice: InvoiceModel): void {
+    this.store.showPdf(invoice);
   }
 
   protected formatAmount(invoice: InvoiceModel): string {

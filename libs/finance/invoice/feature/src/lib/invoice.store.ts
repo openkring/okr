@@ -2,6 +2,8 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { getApp } from 'firebase/app';
+import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
@@ -31,14 +33,22 @@ const initialState: InvoiceState = {
 
 export const InvoiceStore = signalStore(
   withState(initialState),
-  withProps(() => ({
-    invoiceService: inject(InvoiceService),
-    appStore: inject(AppStore),
-    firestoreService: inject(FirestoreService),
-    modalController: inject(ModalController),
-    toastController: inject(ToastController),
-    alertController: inject(AlertController),
-  })),
+  withProps((store) => {
+    const appStore = inject(AppStore);
+    const functions = getFunctions(getApp(), 'europe-west6');
+    if (appStore.env.useEmulators) {
+      connectFunctionsEmulator(functions, 'localhost', 5001);
+    }
+    return {
+      invoiceService: inject(InvoiceService),
+      appStore,
+      firestoreService: inject(FirestoreService),
+      modalController: inject(ModalController),
+      toastController: inject(ToastController),
+      alertController: inject(AlertController),
+      functions,
+    };
+  }),
 
   withProps((store) => ({
     allInvoicesResource: rxResource({
@@ -151,6 +161,21 @@ export const InvoiceStore = signalStore(
       if (type === 'raw') {
         await exportXlsx(getInvoiceExportData(invoices), 'invoices.xlsx', 'Invoices');
       }
+    },
+
+    async showPdf(invoice: InvoiceModel): Promise<void> {
+      const fn = httpsCallable<{ invoiceId: string }, { content: string }>(
+        store.functions, 'showInvoicePdf'
+      );
+      const result = await fn({ invoiceId: invoice.bkey });
+      const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${invoice.invoiceId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
     },
   })),
 );
