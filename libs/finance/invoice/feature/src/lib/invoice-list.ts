@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -14,6 +14,7 @@ import { PersonSelectModalComponent } from '@bk2/shared-feature';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { InvoiceStore } from './invoice.store';
+import { AvatarPipe } from '@bk2/avatar-ui';
 
 @Component({
   selector: 'bk-invoice-list',
@@ -21,11 +22,19 @@ import { InvoiceStore } from './invoice.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [InvoiceStore],
   imports: [
-    AsyncPipe, TranslatePipe, SvgIconPipe,
+    AsyncPipe, TranslatePipe, SvgIconPipe, AvatarPipe,
     SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonContent, IonItem, IonLabel, IonList, IonPopover,
+    IonContent, IonLabel, IonPopover, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
   ],
+  styles: [`
+    .inv-id { font-size: 0.8rem; }
+    .inv-title { font-size: 1rem; }
+    .amount { text-align: right; }
+    .state { text-align: right; }
+    ion-chip { font-size: 0.8rem; padding-top: 0px; padding-bottom: 0px; height: 12px; }
+    ion-avatar { height: 30px; width: 30px; }
+  `],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
@@ -66,21 +75,32 @@ import { InvoiceStore } from './invoice.store';
       } @else if(filteredInvoices().length === 0) {
         <bk-empty-list message="@finance.invoice.field.empty" />
       } @else {
-        <ion-list lines="inset">
+        <ion-grid>
           @for(invoice of filteredInvoices(); track invoice.bkey) {
-            <ion-item (click)="showActions(invoice)">
-              <ion-label>
-                {{ formatDate(invoice.invoiceDate) }}
-              </ion-label>
-              <ion-label>
-                <strong>{{ invoice.invoiceId.substring(4) }}</strong> {{ invoice.title }}
-              </ion-label>
-              <ion-label slot="end">
-                {{ getAmount(invoice.totalAmount?.amount)}}
-              </ion-label>
-            </ion-item>
+            <ion-row (click)="showActions(invoice)">
+              <ion-col size="2" class="ion-align-self-center">{{ formatDate(invoice.invoiceDate) }}</ion-col>
+              <ion-col size="1">
+                @if(invoice.receiver; as r) {
+                  <ion-avatar>
+                    <ion-img src="{{ r.modelType + '.' + r.key | avatar:r.modelType }}" alt="Receiver Logo" />
+                  </ion-avatar>
+                }
+              </ion-col>
+              <ion-col>
+                <ion-label>
+                  <span class="inv-id">{{ invoice.invoiceId }}</span>
+                  <p class="inv-title">{{ invoice.title }}</p>
+                </ion-label>
+              </ion-col>
+              <ion-col size="2"class="ion-align-self-center ion-text-end">{{ getAmount(invoice.totalAmount?.amount)}}</ion-col>
+              <ion-col size="2" class="state">
+                <ion-chip [outline]="true" size="small" [color]="getStateColor(invoice.state)">
+                  {{ invoice.state }}
+                </ion-chip>
+              </ion-col>
+            </ion-row>
           }
-        </ion-list>
+        </ion-grid>
       }
     </ion-content>
   `
@@ -145,6 +165,15 @@ export class InvoiceList {
     return (cents / 100).toFixed(2);
   }
 
+  protected getStateColor(state: string): string {
+    switch(state) {
+      case 'paid': return 'success';
+      case 'overdue': return 'danger';
+      case 'draft': return 'warning';
+    }
+    return '';
+  }
+
   protected async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
@@ -165,12 +194,13 @@ export class InvoiceList {
     const base = this.imgixBaseUrl();
     options.buttons.push(createActionSheetButton('invoice.view', base, 'eye-on'));
     options.buttons.push(createActionSheetButton('invoice.showpdf', base, 'download'));
+/*. invoices are currently read-only; they are processed in Bexio 
     if (this.canChange()) {
       options.buttons.push(createActionSheetButton('invoice.edit', base, 'edit'));
     }
     if (this.canDelete()) {
       options.buttons.push(createActionSheetButton('invoice.delete', base, 'trash'));
-    }
+    } */
     options.buttons.push(createActionSheetButton('cancel', base, 'cancel'));
     if (options.buttons.length === 1) options.buttons = [];
   }
