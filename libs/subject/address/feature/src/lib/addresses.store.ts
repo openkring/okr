@@ -154,6 +154,7 @@ export const AddressStore = signalStore(
         if (readOnly) return;
         const newAddress = new AddressModel(store.tenantId());
         newAddress.parentKey = store.parentKey();
+        newAddress.addressUsage = store.parentKey().startsWith('org') ? 'work' : 'home';
         await this.edit(newAddress, readOnly);
       },
 
