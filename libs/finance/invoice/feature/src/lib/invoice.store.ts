@@ -16,6 +16,7 @@ import { InvoiceService } from '@bk2/finance-invoice-data-access';
 import { getInvoiceExportData, newInvoice } from '@bk2/finance-invoice-util';
 
 import { InvoiceEditModal } from './invoice-edit.modal';
+import { InvoiceViewModal } from 'libs/finance/invoice/feature/src/lib/invoice-view.modal';
 
 export type InvoiceState = {
   listId: string;         // 'all' | 'my' | personKey
@@ -148,6 +149,16 @@ export const InvoiceStore = signalStore(
         await store.invoiceService.update(data, store.appStore.currentUser() ?? undefined);
         patchState(store, { version: store.version() + 1 });
       }
+    },
+
+    async view(invoice: InvoiceModel): Promise<void> {
+      const modal = await store.modalController.create({
+        component: InvoiceViewModal,
+        componentProps: {
+          invoice: { ...invoice }
+        },
+      });
+      await modal.present();
     },
 
     async delete(invoice: InvoiceModel): Promise<void> {

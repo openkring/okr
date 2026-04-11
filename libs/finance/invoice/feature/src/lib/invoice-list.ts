@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -11,7 +11,6 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/s
 import { DateFormat, convertDateFormatToString, hasRole } from '@bk2/shared-util-core';
 
 import { PersonSelectModalComponent } from '@bk2/shared-feature';
-import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { InvoiceStore } from './invoice.store';
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -23,9 +22,9 @@ import { AvatarPipe } from '@bk2/avatar-ui';
   providers: [InvoiceStore],
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe, AvatarPipe,
-    SpinnerComponent, ListFilterComponent, EmptyListComponent, MenuComponent,
+    SpinnerComponent, ListFilterComponent, EmptyListComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonContent, IonLabel, IonPopover, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
+    IonContent, IonLabel, IonGrid, IonRow, IonCol, IonAvatar, IonImg, IonChip
   ],
   styles: [`
     .inv-id { font-size: 0.8rem; }
@@ -41,17 +40,20 @@ import { AvatarPipe } from '@bk2/avatar-ui';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }} {{ '@finance.invoice.list.title' | translate | async }}</ion-title>
         <ion-buttons slot="end">
-          @if(selectedPersonName()) {
-            <ion-button fill="clear" (click)="clearPersonFilter()">
-              {{ selectedPersonName() }}
-              <ion-icon src="{{ 'close' | svgIcon }}" slot="end" />
-            </ion-button>
-          } @else {
-            <ion-button fill="clear" (click)="selectPerson()">
-              <ion-icon src="{{ 'person' | svgIcon }}" slot="icon-only" />
-            </ion-button>
+          @if(listId() === 'all') {
+            @if(selectedPersonName()) {
+              <ion-button fill="clear" (click)="clearPersonFilter()">
+                {{ selectedPersonName() }}
+                <ion-icon src="{{ 'cancel-circle' | svgIcon }}" slot="end" />
+              </ion-button>
+            } @else {
+              <ion-button fill="clear" (click)="selectPerson()">
+                <ion-icon src="{{ 'person' | svgIcon }}" slot="icon-only" />
+              </ion-button>
+            }
           }
-          @if(canChange()) {
+<!-- currently, we don't want to show a context menu
+                     @if(canChange()) {
             <ion-button [id]="popupId">
               <ion-icon src="{{ 'menu' | svgIcon }}" slot="icon-only" />
             </ion-button>
@@ -63,7 +65,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                 </ion-content>
               </ng-template>
             </ion-popover>
-          }
+          } -->
         </ion-buttons>
       </ion-toolbar>
       <bk-list-filter (searchTermChanged)="onSearchTermChange($event)" />
@@ -111,7 +113,7 @@ export class InvoiceList {
   private readonly modalController = inject(ModalController);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  public readonly listId = input.required<string>();
+  public readonly listId = input.required<string>();  // all, my, personKey
   public readonly contextMenuName = input.required<string>();
 
   protected readonly popupId = crypto.randomUUID();
@@ -212,7 +214,7 @@ export class InvoiceList {
     const { data } = await actionSheet.onDidDismiss();
     if (!data) return;
     switch (data.action) {
-      case 'invoice.view': await this.store.edit(invoice, true); break;
+      case 'invoice.view': await this.store.view(invoice); break;
       case 'invoice.showpdf': await this.store.showPdf(invoice); break;
       case 'invoice.edit': await this.store.edit(invoice, false); break;
       case 'invoice.delete': await this.store.delete(invoice); break;

@@ -184,13 +184,7 @@ export const AocDataStore = signalStore(
         //const baseImgix = 'https://bkaiser.imgix.net/';
         //d.tenants = ['scs'];
 
-        if (!d.receiver)
         d.tags = '';
-        if (d.receiver) {
-          d.index = 'i:' + d.invoiceId + ' a:' + (d.totalAmount.amount/100).toFixed(2) + ' n:' + d.receiver.label;
-        } else {
-           d.index = 'i:' + d.invoiceId + ' a:' + (d.totalAmount.amount/100).toFixed(2) + ' n:undefined';          
-        }
 
         // create the index here directly without using the getXXindex function, just with string operations.
         //d.index = 'ak:' + d.authorKey + ' d:' + d.creationDateTime.substring(0, 8) + ' pk:' + d.parentKey;

@@ -278,7 +278,7 @@ async function persistInvoices(invoices: BexioInvoice[], tenantId: string, nowSt
       isArchived: false,
       index: '',
       tags: [],
-      notes: inv.contact_id + '',
+      notes: inv.contact_id != null ? String(inv.contact_id) : '',
       title: inv.title ?? inv.document_nr,
       invoiceId: inv.document_nr,
       invoiceDate: toStoreDate(inv.is_valid_from),

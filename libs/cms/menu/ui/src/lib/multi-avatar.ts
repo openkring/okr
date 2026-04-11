@@ -88,7 +88,7 @@ export class MultiAvatarComponent {
   protected name = computed(() => {
     const icon = this.icon();
     if (icon.startsWith('@@')) return icon.substring(2, 3); // only 1 char
-    if (icon.startsWith('//')) return icon.substring(2);        // modeltype.key
+    if (icon.startsWith('//')) return icon.substring(2);        // modeltype.key -> avatar
     return undefined;
   });
 

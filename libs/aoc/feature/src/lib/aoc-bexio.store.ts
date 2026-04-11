@@ -522,24 +522,33 @@ export const AocBexioStore = signalStore(
     async linkInvoiceReceivers(): Promise<void> {
       const tenantId = store.appStore.env.tenantId;
 
+      const persons = store.appStore.allPersons();
+      const orgs = store.appStore.allOrgs();
+      if (persons.length === 0 && orgs.length === 0) {
+        console.warn('linkInvoiceReceivers: persons/orgs not yet loaded, aborting');
+        return;
+      }
+
       // build bexioId -> AvatarInfo lookup from persons and orgs
       const lookup = new Map<string, AvatarInfo>();
 
-      // 1) load all persons with bexioId
-      const persons = store.appStore.allPersons();
+      // 1) load all persons with bexioId — normalize key to plain numeric string
       for (const p of persons) {
         if (p.bexioId) {
-          lookup.set(p.bexioId, { key: p.bkey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
+          const key = String(Number(String(p.bexioId).trim()));
+          lookup.set(key, { key: p.bkey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
         }
       }
 
-      // 2) load all orgs with bexioId
-      const orgs = store.appStore.allOrgs();
+      // 2) load all orgs with bexioId — normalize key to plain numeric string
       for (const o of orgs) {
         if (o.bexioId) {
-          lookup.set(o.bexioId, { key: o.bkey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
+          const key = String(Number(o.bexioId.trim()));
+          lookup.set(key, { key: o.bkey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
         }
       }
+
+      console.log(`linkInvoiceReceivers: lookup has ${lookup.size} entries (${persons.filter(p => p.bexioId).length} persons, ${orgs.filter(o => o.bexioId).length} orgs)`);
 
       // 3) load all invoices that still have a notes value (= bexioContactId not yet resolved)
       const db = getFirestore(getApp());
@@ -563,10 +572,12 @@ export const AocBexioStore = signalStore(
         const chunk = pending.slice(i, i + BATCH_SIZE);
         for (const d of chunk) {
           const data = d.data();
-          const bexioContactId = String(data['notes'] ?? '').trim();
-          console.log('bexioId=' + bexioContactId);
+          const bexioContactId = String(Number(String(data['notes'] ?? '').trim()));
           const receiver = lookup.get(bexioContactId);
-          if (!receiver) continue;
+          if (!receiver) {
+            console.log(`linkInvoiceReceivers: no match for bexioContactId="${bexioContactId}" (invoice ${data['invoiceId'] ?? d.id})`);
+            continue;
+          }
 
           const invoiceId: string = data['invoiceId'] ?? '';
           const totalCents: number = data['totalAmount']?.amount ?? 0;
