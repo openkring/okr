@@ -15,6 +15,8 @@ import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { getDocumentStoragePath } from '@bk2/document-util';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
 
+import { BillAccordion } from '@bk2/finance-bill-feature';
+
 import { MembersAccordionComponent, MembershipAccordionComponent } from '@bk2/relationship-membership-feature';
 import { OwnershipAccordionComponent } from '@bk2/relationship-ownership-feature';
 import { ReservationsAccordionComponent } from '@bk2/relationship-reservation-feature';
@@ -30,7 +32,7 @@ import { OrgStore } from 'libs/subject/org/feature/src/lib/org.store';
     HeaderComponent, ChangeConfirmationComponent,
     AvatarToolbarComponent, AddressesAccordionComponent, CommentsAccordionComponent,
     OwnershipAccordionComponent, OrgFormComponent, MembershipAccordionComponent, MembersAccordionComponent,
-    ReservationsAccordionComponent, DocumentsAccordionComponent,
+    ReservationsAccordionComponent, DocumentsAccordionComponent, BillAccordion,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   providers: [OrgStore],
@@ -73,6 +75,7 @@ import { OrgStore } from 'libs/subject/org/feature/src/lib/org.store';
                       <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                     }
                     <bk-members-accordion [orgKey]="orgKey()" [readOnly]="isReadOnly()" />
+                    <bk-bill-accordion [listId]="orgKey()" />
                     <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
                 }
               </ion-accordion-group>

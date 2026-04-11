@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSpinner } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -19,7 +19,8 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
     HeaderComponent, AvatarLabelComponent,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonCheckbox,
-  ],
+    IonCardSubtitle
+],
   providers: [AocBexioStore],
   template: `
     <bk-header title="@aoc.bexio.title" />
@@ -27,6 +28,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
       <ion-card>
         <ion-card-header>
           <ion-card-title>Invoices</ion-card-title>
+          <ion-card-subtitle>Diese Funktion ist für den initialen Download von Debitoren aus Bexio gedacht. Nachdem dieser initiale Sync einmal gemacht ist, werden die zukünftigen Rechnungen täglich am frühen Morgen hinzugefügt.</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
@@ -63,6 +65,48 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
           </ion-grid>
         </ion-card-content>
       </ion-card>
+
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Bills</ion-card-title>
+          <ion-card-subtitle>Diese Funktion ist für den initialen Download von Kreditoren aus Bexio gedacht. Nachdem dieser initiale Sync einmal gemacht ist, werden die zukünftigen Rechnungen täglich am frühen Morgen hinzugefügt.</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="9">
+                @if(billCount() < 0) {
+                  Loading...
+                } @else if(billCount() === 0) {
+                  No bills yet. Download the full history from Bexio.
+                } @else {
+                  {{ billCount() }} bills in Firestore. Last sync: {{ lastBillSyncedAt() || 'unknown' }}.
+                }
+              </ion-col>
+              <ion-col size="3">
+                <ion-button (click)="syncBills()" [disabled]="isSyncingBills() || billCount() > 0">
+                  @if(isSyncingBills()) {
+                    <ion-spinner name="crescent" slot="start" />
+                  } @else {
+                    <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
+                  }
+                  Full history
+                </ion-button>
+              </ion-col>
+            </ion-row>
+            @if(billSyncResult()) {
+              <ion-row>
+                <ion-col>
+                  <ion-item lines="none">
+                    <ion-label color="success">{{ billSyncResult() }}</ion-label>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            }
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ '@aoc.bexio.index.title' | translate | async }}</ion-card-title>
@@ -149,6 +193,55 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
       </ion-card>
       <ion-card>
         <ion-card-header>
+          <ion-card-title>Vendor Sync</ion-card-title>
+          <ion-card-subtitle>Verknüpft die Lieferanten der Bills mit Personen oder Orgs anhand des Namens.</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="9">
+                @if(vendorPendingCount() < 0) {
+                  Noch nicht geprüft.
+                } @else if(vendorPendingCount() === 0) {
+                  Alle Bills haben einen Vendor.
+                } @else {
+                  {{ vendorPendingCount() }} Bills ohne Vendor.
+                }
+                @if(vendorLinkedCount() >= 0) {
+                  {{ vendorLinkedCount() }} Vendors verknüpft.
+                }
+              </ion-col>
+              <ion-col size="3">
+                <ion-button (click)="linkVendors()" [disabled]="isLinkingVendors() || billCount() <= 0">
+                  @if(isLinkingVendors()) {
+                    <ion-spinner name="crescent" slot="start" />
+                  } @else {
+                    <ion-icon src="{{ 'link' | svgIcon }}" slot="start" />
+                  }
+                  Verknüpfen
+                </ion-button>
+              </ion-col>
+            </ion-row>
+            @if(vendorUnmatched().length > 0) {
+              <ion-row>
+                <ion-col>
+                  <ion-item lines="none">
+                    <ion-label color="warning">Keine Übereinstimmung gefunden für:</ion-label>
+                  </ion-item>
+                  @for(name of vendorUnmatched(); track name) {
+                    <ion-item lines="none">
+                      <ion-label color="medium">{{ name }}</ion-label>
+                    </ion-item>
+                  }
+                </ion-col>
+              </ion-row>
+            }
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card>
+        <ion-card-header>
           <ion-card-title>Rechnungs-Empfänger</ion-card-title>
         </ion-card-header>
         <ion-card-content>
@@ -194,14 +287,23 @@ export class AocBexio implements OnInit {
   protected readonly lastSyncedAt = computed(() => this.store.lastSyncedAt());
   protected readonly receiverPendingCount = computed(() => this.store.receiverPendingCount());
   protected readonly receiverLinkCount = computed(() => this.store.receiverLinkCount());
+  protected readonly billCount = computed(() => this.store.billCount());
+  protected readonly lastBillSyncedAt = computed(() => this.store.lastBillSyncedAt());
+  protected readonly vendorPendingCount = computed(() => this.store.vendorPendingCount());
+  protected readonly vendorLinkedCount = computed(() => this.store.vendorLinkedCount());
+  protected readonly vendorUnmatched = computed(() => this.store.vendorUnmatched());
 
   protected isLinking = signal(false);
+  protected isLinkingVendors = signal(false);
 
   protected isSyncing = signal(false);
   protected invoiceSyncResult = signal('');
+  protected isSyncingBills = signal(false);
+  protected billSyncResult = signal('');
 
   public ngOnInit(): void {
     this.store.loadInvoiceStats();
+    this.store.loadBillStats();
   }
 
   protected showOnlyCurrentMembers = signal(false);
@@ -235,6 +337,27 @@ export class AocBexio implements OnInit {
       await this.store.loadInvoiceStats();
     } finally {
       this.isSyncing.set(false);
+    }
+  }
+
+  protected async syncBills(): Promise<void> {
+    this.isSyncingBills.set(true);
+    this.billSyncResult.set('');
+    try {
+      const result = await this.store.syncBills();
+      this.billSyncResult.set(`Downloaded ${result.count} bills.`);
+      await this.store.loadBillStats();
+    } finally {
+      this.isSyncingBills.set(false);
+    }
+  }
+
+  protected async linkVendors(): Promise<void> {
+    this.isLinkingVendors.set(true);
+    try {
+      await this.store.linkBillVendors();
+    } finally {
+      this.isLinkingVendors.set(false);
     }
   }
 

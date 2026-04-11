@@ -1,7 +1,7 @@
 import { DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE, DEFAULT_URL } from '@bk2/shared-constants';
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
-import { MoneyModel } from 'libs/shared/models/src/lib/money.model';
-import { AvatarInfo } from 'libs/shared/models/src/lib/avatar-info';
+import { MoneyModel } from './money.model';
+import { AvatarInfo } from './avatar-info';
 
 /**
  * Bill = Lieferantenrechnung (Kreditor) in Bexio
@@ -25,9 +25,8 @@ export class BillModel implements BkModel, SearchableModel, TaggedModel {
 
   public paymentDate = DEFAULT_DATE; // Datum der Zahlung
   public bexioUrl = DEFAULT_URL; // URL to bexio invoice
-  public bookingAccountId = DEFAULT_ID; // Bexio ID of the booking account
   public attachments: string[] = []; // uuid's from Bexio
-  public bookingAccounts: string[] = [];
+  public bookingAccount: string = '';
 
   // bill sender (person or org) Rechnungssteller
   public vendor: AvatarInfo | undefined;

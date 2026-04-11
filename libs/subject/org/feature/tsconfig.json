@@ -40,6 +40,7 @@
     {"path": "../../../subject/org/ui/tsconfig.lib.json"},
     {"path": "../../../subject/org/util/tsconfig.lib.json"},
     {"path": "../../../subject/org/data-access/tsconfig.lib.json"},
-    {"path": "../../../cms/menu/feature/tsconfig.lib.json"}
+    {"path": "../../../cms/menu/feature/tsconfig.lib.json"},
+    {"path": "../../../finance/bill/feature/tsconfig.lib.json"}
   ]
 }

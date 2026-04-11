@@ -1,0 +1,17 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../../dist/libs/finance/bill/feature",
+    "declaration": true,
+    "composite": true,
+    "module": "es2020",
+    "target": "es2020",
+    "types": []
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
+  "references": [
+    {"path": "../data-access/tsconfig.lib.json"},
+    {"path": "../util/tsconfig.lib.json"}
+  ]
+}

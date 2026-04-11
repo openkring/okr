@@ -64,6 +64,11 @@ export type AocBexioState = {
   lastSyncedAt: string; // "YYYY-MM-DD HH:mm:ss" or ''
   receiverLinkCount: number;    // invoices updated in last linkInvoiceReceivers run, -1 = not run
   receiverPendingCount: number; // invoices still missing a receiver, -1 = not counted yet
+  billCount: number;
+  lastBillSyncedAt: string; // "YYYY-MM-DD HH:mm:ss" or ''
+  vendorLinkedCount: number;   // bills updated in last linkBillVendors run, -1 = not run
+  vendorPendingCount: number;  // bills still missing a vendor, -1 = not counted yet
+  vendorUnmatched: string[];   // vendor names that could not be matched
 };
 
 const initialState: AocBexioState = {
@@ -73,6 +78,11 @@ const initialState: AocBexioState = {
   lastSyncedAt: '',
   receiverLinkCount: -1,
   receiverPendingCount: -1,
+  billCount: -1,
+  lastBillSyncedAt: '',
+  vendorLinkedCount: -1,
+  vendorPendingCount: -1,
+  vendorUnmatched: [],
 };
 
 export const AocBexioStore = signalStore(
@@ -604,6 +614,86 @@ export const AocBexioStore = signalStore(
       const syncBexioInvoicesFn = httpsCallable<{ fromDate?: string }, { count: number }>(functions, 'syncBexioInvoices');
       const result = await syncBexioInvoicesFn(fromDate ? { fromDate } : {});
       return result.data;
+    },
+
+    async loadBillStats(): Promise<void> {
+      const db = getFirestore(getApp());
+      const [snap, configDoc] = await Promise.all([
+        getCountFromServer(collection(db, 'bills')),
+        getDoc(doc(db, 'config', 'bexioSync')),
+      ]);
+      patchState(store, {
+        billCount: snap.data().count,
+        lastBillSyncedAt: configDoc.data()?.['lastBillSyncedAt'] ?? '',
+      });
+    },
+
+    async syncBills(fromDate?: string): Promise<{ count: number }> {
+      const functions = getFunctions(getApp(), 'europe-west6');
+      if (store.appStore.env.useEmulators) {
+        connectFunctionsEmulator(functions, 'localhost', 5001);
+      }
+      const syncBexioBillsFn = httpsCallable<{ fromDate?: string }, { count: number }>(functions, 'syncBexioBills');
+      const result = await syncBexioBillsFn(fromDate ? { fromDate } : {});
+      return result.data;
+    },
+
+    async linkBillVendors(): Promise<void> {
+      const tenantId = store.appStore.env.tenantId;
+      const persons = store.appStore.allPersons();
+      const orgs = store.appStore.allOrgs();
+      if (persons.length === 0 && orgs.length === 0) {
+        console.warn('linkBillVendors: persons/orgs not yet loaded, aborting');
+        return;
+      }
+
+      // 1) build name.lowercase -> AvatarInfo lookup
+      const lookup = new Map<string, AvatarInfo>();
+      for (const p of persons) {
+        const name = getFullName(p.firstName ?? '', p.lastName ?? '').trim().toLowerCase();
+        if (name) lookup.set(name, { key: p.bkey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
+      }
+      for (const o of orgs) {
+        const name = (o.name ?? '').trim().toLowerCase();
+        if (name) lookup.set(name, { key: o.bkey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
+      }
+
+      // 2) load all bills with notes (= unresolved vendor name)
+      const db = getFirestore(getApp());
+      const billQuery = query(
+        collection(db, 'bills'),
+        where('tenants', 'array-contains', tenantId),
+        where('notes', '!=', '')
+      );
+      const snapshot = await getDocs(billQuery);
+      const pending = snapshot.docs.filter(d => !!d.data()['notes']);
+      patchState(store, { vendorPendingCount: pending.length, vendorUnmatched: [] });
+      if (pending.length === 0) return;
+
+      // 3) match and write
+      const BATCH_SIZE = 500;
+      let linked = 0;
+      const unmatched: string[] = [];
+      for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db);
+        const chunk = pending.slice(i, i + BATCH_SIZE);
+        for (const d of chunk) {
+          const data = d.data();
+          const vendorName = String(data['notes'] ?? '').trim().toLowerCase();
+          const vendor = lookup.get(vendorName);
+          if (!vendor) {
+            if (!unmatched.includes(vendorName)) unmatched.push(vendorName);
+            continue;
+          }
+          const billId: string = data['billId'] ?? '';
+          const totalCents: number = data['totalAmount']?.amount ?? 0;
+          const indexStr = `i: ${billId} a: ${(totalCents / 100).toFixed(2)} n: ${vendor.label}`;
+          batch.update(d.ref, { vendor, index: indexStr, notes: '' });
+          linked++;
+        }
+        await batch.commit();
+      }
+      patchState(store, { vendorLinkedCount: linked, vendorPendingCount: pending.length - linked, vendorUnmatched: unmatched });
     },
 
     async edit(bexioIndex: BexioIndex): Promise<void> {

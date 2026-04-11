@@ -115,6 +115,11 @@ export const syncBexioInvoices = Bexio.syncBexioInvoices;
 export const scheduledBexioInvoiceSync = Bexio.scheduledBexioInvoiceSync;
 export const showInvoicePdf = Bexio.showInvoicePdf;
 
+// bexio bill sync
+export const syncBexioBills = Bexio.syncBexioBills;
+export const scheduleBexioBillSync = Bexio.scheduleBexioBillSync;
+export const showBillPdf = Bexio.showBillPdf;
+
 // zefix registry lookup
 export const zefixSearch = Zefix.zefixSearch;
 export const zefixGetByUid = Zefix.zefixGetByUid;
