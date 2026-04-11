@@ -9,14 +9,10 @@ This is an Angular/Ionic project using TypeScript, Firebase, and pnpm. Use Angul
 ## Commands
 
 ```sh
-# Development
-pnpm dev                          # serve the default app (scs-app)
-pnpm nx serve <app>               # serve a specific app (e.g. test-app)
-
 # Build
-pnpm run build                    # production build of test-app
-pnpm nx build <project>           # build specific project
-pnpm run build:functions          # build Cloud Functions
+pnpm nx build <app>           # build specific project in development environment
+pnpm nx build <app> --configuration production          # build specific app for production environment and deployment
+pnpm nx build functions --configuration production          # build Cloud Functions
 
 # Test
 pnpm run test <project>           # run tests for a project (e.g. pnpm run test shared-util-core)
@@ -27,15 +23,18 @@ pnpm nx test <project>            # run tests for a specific library
 pnpm run lint                     # lint all projects
 pnpm nx lint <project>            # lint specific project
 
-# Deploy
-pnpm run deploy:functions         # build + deploy Cloud Functions to Firebase
-
 # Environment setup (required before first run)
 source ./apps/<app-dir>/.env      # load env vars (never commit .env)
 ts-node ./set-env.js              # generate environment.ts from env vars
+
+# Deployment
+pnpm nx serve <app>               # serve a specific app (e.g. test-app) locally in development environment
+firebase deploy --only hosting:<app-id> # deploy a specific app to production on Firebase
+firebase deploy --only functions    # deploy firebase functions
 ```
 
 Run `pnpm nx show project <project>` to see all available targets for a project.
+
 
 ## Development Workflow
 
@@ -52,8 +51,7 @@ When making changes to TypeScript files, always run `npx tsc --noEmit` or the pr
 
 ### Monorepo structure (Nx)
 
-- `apps/scs-app` — main Angular/Ionic application
-- `apps/test-app` — secondary application
+- `apps` —  Angular/Ionic applications
 - `apps/functions` — Firebase Cloud Functions (Node.js/esbuild)
 - `libs/` — feature libraries following the `@bk2/<domain>-<layer>` import alias convention
 
@@ -113,7 +111,7 @@ Matrix chat authentication is done via a Firebase Cloud Function (`getMatrixCred
 
 - **Zoneless**: uses `provideZonelessChangeDetection()` (no `zone.js` in components)
 - **Standalone components** only (no NgModules for components/pipes/directives)
-- **Ionic Angular** for UI components and routing strategy
+- **Ionic Angular** for UI components and routing strategy, only use standalone ionic components
 - **Transloco** for i18n (default language: `de`); translation keys use `@domain.key` format
 - **SSR** is configured but Ionic hydration is intentionally disabled
 - Test runner: **Vitest** (jsdom environment, `globals: true`)
@@ -140,19 +138,24 @@ The build process is prepared for deployment with AppHosting. That's why we have
 
 All security sensitive configuration must be read from the environment. There is a file set-env.js, that writes the development or production environment file per app. Both set-env.js and environment.ts must not be git-committed. They are git-ignored. It is strictly forbidden to generate a config file with security sensitive information (e.g. API-keys, access tokens) into a file and to git-commit this.
 
+Save secrets for Firebase cloud functions with `firebase functions:secrets:set SECRET_NAME`
+
 ### Cloud Functions
 
-Located in `apps/functions/src/`. Organized into sub-modules: `auth`, `matrix`, `matrix-simple`, `oidc-bridge`, `replication`. Built with esbuild via `pnpm run build:functions` and deployed with `firebase deploy --only functions`
+Located in `apps/functions/src/`. Organized into sub-modules: `auth`, `matrix`, `matrix-simple`, `oidc-bridge`, `replication`. Built with esbuild via `pnpm nx build functions --configuration production` and deployed with `firebase deploy --only functions`
 
 ### Security
 
 - CORS rules (Content security policies CSP) are configured in firebase.json in the project root.
 
+### Build
+
+- all libaries are buildable
+- all build artefacts reside in dist/* 
+- never generate build artefacts such as *.d.ts, *.js or *.js.map into the apps or libs tree. Keep the source code in apps and libs tree clean.
+
 ### Deployment
 
-- For development environment, use `pnpm nx build APP_NAME` and  `pnpm nx serve APP_NAME`.
-- For production environment, use `pnpm nx build APP_NAME --configuration production` and deploy with `firebase deploy --only hosting:APP_NAME`
-Production app name for scs-app is scs-app-54aef.
 - Try to keep the bundle size low by lazy loading (with router config) components.
 - First meaningful paint under 1 second.
 - Do not use SSR or hydration nor Firebase App Hosting (Ionic/stencils are not ready with Angular hydration)
@@ -166,7 +169,7 @@ Production app name for scs-app is scs-app-54aef.
 
 - use ngx-vest-forms with Angular template driven forms and create vest validations in util component of the feature
 - do only create form models if needed
-- a feature typically consists of FEATURE-list.component.ts (a list view of FEATURE[]), FEATURE-edit.modal.ts using FEATURE.form.ts (in ui component of the feature) as well as FEATURE.store.ts (feature related store).
+- a feature typically consists of FEATURE-list.ts (a list view of FEATURE[]), FEATURE-edit.modal.ts (the detail view) using FEATURE.form.ts (in ui component of the feature) as well as FEATURE.store.ts (feature related store).
 - for icons, do not use addIcons. Use SvgIconPipe instead with an svg image like this:
     `<ion-icon slot="start" src="{{'menu' | svgIcon }}" />`
 
@@ -177,7 +180,8 @@ Production app name for scs-app is scs-app-54aef.
 - api calls for external integrations should use a firebase cloud function where possible. This Cloud functions stores the access token securely and caches token as well as data for later requests.
 - do not try to find icon assets in the code. The icons reside in the database and are loaded via url.
 - Always git commit directly to main. Do not create feature branches or worktrees.
-- When creating a new library layer (data-access, feature, ui, util), always create three files: `tsconfig.json`, update `tsconfig.lib.json` with `references`, and create `package.json`. Use an existing sibling lib (e.g. `libs/folder/<layer>/`) as a template. The `tsconfig.json` lists all `@bk2/*` dependencies as references; the `tsconfig.lib.json` lists only intra-domain sibling lib references; the `package.json` must have `"name": "@bk2/<lib-name>"` (with the `@bk2/` scope) and all `@bk2/*` dependencies listed. Missing or mis-named `package.json` (without `@bk2/` scope) causes `TS6059 rootDir` build errors in dependent libs because Nx can't redirect imports to the compiled declaration files.
+- When creating a new library layer or feature (data-access, feature, ui, util), always create three files: `tsconfig.json`, update `tsconfig.lib.json` with `references`, and create `package.json`. Use an existing sibling lib (e.g. `libs/folder/<layer>/`) as a template. The `tsconfig.json` lists all `@bk2/*` dependencies as references; the `tsconfig.lib.json` lists only intra-domain sibling lib references; the `package.json` must have `"name": "@bk2/<lib-name>"` (with the `@bk2/` scope) and all `@bk2/*` dependencies listed. Missing or mis-named `package.json` (without `@bk2/` scope) causes `TS6059 rootDir` build errors in dependent libs because Nx can't redirect imports to the compiled declaration files.
+- when creating a new libray layer or feature, create a route for the list component (*.list) and for the detail component(*.page). Use existing routes as examples and ask user about guard permissions, if you are not sure.
 
 ## Working Style
 
