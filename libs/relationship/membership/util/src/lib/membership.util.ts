@@ -323,13 +323,9 @@ export function getMembershipIndexInfo(): string {
       membership.order.toString(),
       membership.relLog,
       membership.relIsLast.toString(),
-      getPrice(membership.price)
+      membership.rebate + '',
+      membership.rebateReason
     ];
-  }
-
-  function getPrice(price: MoneyModel | undefined): string {
-    if (!price) return '';
-    return (price.amount / 100).toFixed(2) + ' ' + price.currency;
   }
 
   // ---------------------- Address List -------------------------------
