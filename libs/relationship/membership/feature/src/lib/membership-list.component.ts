@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { FullNamePipe, RellogPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { DateFormat, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -303,17 +303,29 @@ export class MembershipListComponent {
    * @param membership 
    */
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): Promise<void> {
+    // view/edit on membership and person
     if (this.canChange()) {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
-      if (isOngoing(membership.dateOfExit)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
-        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'mcatchange'));
-      }
     } else { // registered
       actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
     }
+    actionSheetOptions.buttons.push(createActionSheetDivider());
+
+    // privileged operations on membership
+    if (this.canChange()) {
+      if (isOngoing(membership.dateOfExit)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'mcatchange'));
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
+      }
+    }
+    if (this.canDelete()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetDivider());
+
+    // contact operations
     if (await this.membershipStore.isPersonUser(membership.memberKey)) {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.chat', this.imgixBaseUrl, 'chatbubbles'));
     }
@@ -325,9 +337,6 @@ export class MembershipListComponent {
       actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.imgixBaseUrl, 'copy'));
       //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.imgixBaseUrl, 'tel'));
-    }
-    if (this.canDelete()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
