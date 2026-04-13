@@ -109,6 +109,47 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
       <ion-card>
         <ion-card-header>
+          <ion-card-title>Journal</ion-card-title>
+          <ion-card-subtitle>Initialer Download aller Buchungsjournal-Einträge aus Bexio. Danach werden neue Einträge täglich um 06:15 Uhr synchronisiert.</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="9">
+                @if(journalCount() < 0) {
+                  Loading...
+                } @else if(journalCount() === 0) {
+                  No journal entries yet. Download the full history from Bexio.
+                } @else {
+                  {{ journalCount() }} journal entries in Firestore. Last sync: {{ lastJournalSyncedAt() || 'unknown' }}.
+                }
+              </ion-col>
+              <ion-col size="3">
+                <ion-button (click)="syncJournal()" [disabled]="isSyncingJournal()">
+                  @if(isSyncingJournal()) {
+                    <ion-spinner name="crescent" slot="start" />
+                  } @else {
+                    <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
+                  }
+                  Full sync
+                </ion-button>
+              </ion-col>
+            </ion-row>
+            @if(journalSyncResult()) {
+              <ion-row>
+                <ion-col>
+                  <ion-item lines="none">
+                    <ion-label color="success">{{ journalSyncResult() }}</ion-label>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            }
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card>
+        <ion-card-header>
           <ion-card-title>{{ '@aoc.bexio.index.title' | translate | async }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
@@ -292,6 +333,8 @@ export class AocBexio implements OnInit {
   protected readonly vendorPendingCount = computed(() => this.store.vendorPendingCount());
   protected readonly vendorLinkedCount = computed(() => this.store.vendorLinkedCount());
   protected readonly vendorUnmatched = computed(() => this.store.vendorUnmatched());
+  protected readonly journalCount = computed(() => this.store.journalCount());
+  protected readonly lastJournalSyncedAt = computed(() => this.store.lastJournalSyncedAt());
 
   protected isLinking = signal(false);
   protected isLinkingVendors = signal(false);
@@ -300,10 +343,13 @@ export class AocBexio implements OnInit {
   protected invoiceSyncResult = signal('');
   protected isSyncingBills = signal(false);
   protected billSyncResult = signal('');
+  protected isSyncingJournal = signal(false);
+  protected journalSyncResult = signal('');
 
   public ngOnInit(): void {
     this.store.loadInvoiceStats();
     this.store.loadBillStats();
+    this.store.loadJournalStats();
   }
 
   protected showOnlyCurrentMembers = signal(false);
@@ -349,6 +395,18 @@ export class AocBexio implements OnInit {
       await this.store.loadBillStats();
     } finally {
       this.isSyncingBills.set(false);
+    }
+  }
+
+  protected async syncJournal(): Promise<void> {
+    this.isSyncingJournal.set(true);
+    this.journalSyncResult.set('');
+    try {
+      const result = await this.store.syncJournal();
+      this.journalSyncResult.set(`Downloaded ${result.count} journal entries.`);
+      await this.store.loadJournalStats();
+    } finally {
+      this.isSyncingJournal.set(false);
     }
   }
 

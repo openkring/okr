@@ -69,6 +69,8 @@ export type AocBexioState = {
   vendorLinkedCount: number;   // bills updated in last linkBillVendors run, -1 = not run
   vendorPendingCount: number;  // bills still missing a vendor, -1 = not counted yet
   vendorUnmatched: string[];   // vendor names that could not be matched
+  journalCount: number;
+  lastJournalSyncedAt: string; // "YYYY-MM-DD HH:mm:ss" or ''
 };
 
 const initialState: AocBexioState = {
@@ -83,6 +85,8 @@ const initialState: AocBexioState = {
   vendorLinkedCount: -1,
   vendorPendingCount: -1,
   vendorUnmatched: [],
+  journalCount: -1,
+  lastJournalSyncedAt: '',
 };
 
 export const AocBexioStore = signalStore(
@@ -635,6 +639,28 @@ export const AocBexioStore = signalStore(
       }
       const syncBexioBillsFn = httpsCallable<{ fromDate?: string }, { count: number }>(functions, 'syncBexioBills');
       const result = await syncBexioBillsFn(fromDate ? { fromDate } : {});
+      return result.data;
+    },
+
+    async loadJournalStats(): Promise<void> {
+      const db = getFirestore(getApp());
+      const [snap, configDoc] = await Promise.all([
+        getCountFromServer(collection(db, 'journallogs')),
+        getDoc(doc(db, 'config', 'bexioSync')),
+      ]);
+      patchState(store, {
+        journalCount: snap.data().count,
+        lastJournalSyncedAt: configDoc.data()?.['lastJournalSyncedAt'] ?? '',
+      });
+    },
+
+    async syncJournal(): Promise<{ count: number }> {
+      const functions = getFunctions(getApp(), 'europe-west6');
+      if (store.appStore.env.useEmulators) {
+        connectFunctionsEmulator(functions, 'localhost', 5001);
+      }
+      const syncBexioJournalFn = httpsCallable<void, { count: number }>(functions, 'syncBexioJournal');
+      const result = await syncBexioJournalFn();
       return result.data;
     },
 

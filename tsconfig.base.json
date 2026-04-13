@@ -71,6 +71,8 @@
       "@bk2/finance-invoice-feature": ["libs/finance/invoice/feature/src/index.ts"],
       "@bk2/finance-invoice-ui": ["libs/finance/invoice/ui/src/index.ts"],
       "@bk2/finance-invoice-util": ["libs/finance/invoice/util/src/index.ts"],
+      "@bk2/finance-journal-data-access": ["libs/finance/journal/data-access/src/index.ts"],
+      "@bk2/finance-journal-feature": ["libs/finance/journal/feature/src/index.ts"],
       "@bk2/icon-data-access": ["libs/icon/data-access/src/index.ts"],
       "@bk2/icon-feature": ["libs/icon/feature/src/index.ts"],
       "@bk2/icon-ui": ["libs/icon/ui/src/index.ts"],

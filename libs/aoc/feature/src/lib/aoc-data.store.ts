@@ -121,7 +121,7 @@ export const AocDataStore = signalStore(
         const maxDocs = 10; // for testing, you can restrict the amount of documents to process. 
         // set it to undefined to process all documents.
         
-        const collectionName = 'invoices';
+        const collectionName = 'journallogs';
 
         // fixing fields (types and undefined)
         // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values

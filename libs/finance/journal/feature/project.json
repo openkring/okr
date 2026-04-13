@@ -1,0 +1,24 @@
+{
+  "name": "finance-journal-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/journal/feature/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/journal/feature",
+        "main": "libs/finance/journal/feature/src/index.ts",
+        "tsConfig": "libs/finance/journal/feature/tsconfig.lib.json",
+        "assets": ["libs/finance/journal/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

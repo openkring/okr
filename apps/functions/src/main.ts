@@ -120,6 +120,10 @@ export const syncBexioBills = Bexio.syncBexioBills;
 export const scheduleBexioBillSync = Bexio.scheduleBexioBillSync;
 export const showBillPdf = Bexio.showBillPdf;
 
+// bexio journal sync
+export const syncBexioJournal = Bexio.syncBexioJournal;
+export const scheduleBexioJournalSync = Bexio.scheduleBexioJournalSync;
+
 // zefix registry lookup
 export const zefixSearch = Zefix.zefixSearch;
 export const zefixGetByUid = Zefix.zefixGetByUid;
