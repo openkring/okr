@@ -4,6 +4,7 @@ import { defineSecret } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
+import { convertDateFormatToString, addDuration, getTodayStr, DateFormat } from '@bk2/shared-util-core';
 
 const bexioApiKey = defineSecret('BEXIO_APIKEY');
 const bexioUserId = defineSecret('BEXIO_USER_ID'); // integer user ID from GET /2.0/users/me
@@ -371,6 +372,117 @@ export const syncBexioInvoices = onCall(
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
     const fromDate = request.data?.fromDate ?? '2000-01-01 00:00:00';
     return runInvoiceSync(fromDate, bexioTenantId.value(), 'syncBexioInvoices');
+  }
+);
+
+// --------------------------------- Invoice create ---------------------------------
+
+export interface InvoicePositionInput {
+  text: string;
+  unit_price: string;
+  account_id: number;
+  amount?: string;
+}
+
+interface BexioKbPosition {
+  type: 'KbPositionCustom';
+  amount: string;
+  unit_price: string;
+  account_id: number;
+  tax_id: null;
+  text: string;
+  discount_in_percent: string;
+}
+
+/**
+ * Create a new invoice in Bexio (POST /2.0/kb_invoice).
+ * Returns the newly assigned Bexio invoice ID.
+ */
+export const createBexioInvoice = onCall(
+  {
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [bexioApiKey],
+  },
+  async (request: CallableRequest<{
+    title: string;
+    bexioId: string;
+    header?: string;
+    footer?: string;
+    validFrom?: string;
+    validTo?: string;
+    positions?: InvoicePositionInput[];
+    template_slug?: string;
+  }>) => {
+    const CF_NAME = 'createBexioInvoice';
+
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Authentication required');
+    }
+
+    const { title, bexioId, header = '', footer = '', positions = [], template_slug = '' } = request.data;
+
+    if (!title) throw new HttpsError('invalid-argument', 'title is required');
+    if (!bexioId) throw new HttpsError('invalid-argument', 'bexioId is required');
+
+    const resolvedFrom = request.data.validFrom || getTodayStr();
+    const resolvedTo = request.data.validTo || addDuration(resolvedFrom, { days: 30 });
+    const isoFrom = convertDateFormatToString(resolvedFrom, DateFormat.StoreDate, DateFormat.IsoDate);
+    const isoTo = convertDateFormatToString(resolvedTo, DateFormat.StoreDate, DateFormat.IsoDate);
+
+    const bexioPositions: BexioKbPosition[] = positions.map(p => ({
+      type: 'KbPositionCustom',
+      amount: p.amount ?? '1',
+      unit_price: p.unit_price,
+      account_id: p.account_id,
+      tax_id: null,
+      text: p.text,
+      discount_in_percent: '0',
+    }));
+
+    logger.info(`${CF_NAME}: creating invoice "${title}" for contact ${bexioId}`);
+
+    try {
+      const response = await axios.post<{ id: number }>(
+        `${BEXIO_BASE}/kb_invoice`,
+        {
+          title,
+          contact_id: parseInt(bexioId, 10),
+          header,
+          footer,
+          is_valid_from: isoFrom,
+          is_valid_to: isoTo,
+          mwst_type: 2,
+          mwst_is_net: false,
+          show_position_taxes: false,
+          language_id: 1,
+          bank_account_id: 1,
+          currency_id: 1,
+          payment_type_id: 4,
+          template_slug,
+          positions: bexioPositions,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${bexioApiKey.value()}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      logger.info(`${CF_NAME}: created invoice with id ${response.data.id}`);
+      return { id: String(response.data.id) };
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const body = JSON.stringify(error.response?.data);
+        logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
+        throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
+      }
+      logger.error(`${CF_NAME}: unexpected error`, error);
+      throw new HttpsError('internal', 'Bexio invoice creation failed');
+    }
   }
 );
 

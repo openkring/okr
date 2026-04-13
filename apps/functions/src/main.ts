@@ -110,6 +110,9 @@ export const getBexioContacts = Bexio.getBexioContacts;
 export const createBexioContact = Bexio.createBexioContact;
 export const updateBexioContact = Bexio.updateBexioContact;
 
+// bexio invoice create
+export const createBexioInvoice = Bexio.createBexioInvoice;
+
 // bexio invoice sync
 export const syncBexioInvoices = Bexio.syncBexioInvoices;
 export const scheduledBexioInvoiceSync = Bexio.scheduledBexioInvoiceSync;
