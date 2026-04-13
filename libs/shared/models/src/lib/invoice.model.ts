@@ -21,7 +21,7 @@ export class InvoiceModel implements BkModel, SearchableModel, TaggedModel {
 
   public totalAmount: MoneyModel | undefined;
   public taxes = 0; // total taxes
-  public vatType: 'included' | 'excluded' | 'exempt' = 'exempt';  
+  public vatType: VAT_TYPE = 'exempt';  
   public state = 'created'; // Category invoice_state
   public paymentDate = DEFAULT_DATE; // Datum der Zahlung
   // booking-account is on the invoice position
@@ -36,3 +36,7 @@ export class InvoiceModel implements BkModel, SearchableModel, TaggedModel {
 
 export const InvoiceCollection = 'invoices';
 export const InvoiceModelName = 'invoice';
+
+
+export type VAT_TYPE = 'included' | 'excluded' | 'exempt';
+export const VAT_TYPE_VALUES = ['included', 'excluded', 'exempt'] as const satisfies VAT_TYPE[];
