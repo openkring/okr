@@ -389,7 +389,7 @@ interface BexioKbPosition {
   amount: string;
   unit_price: string;
   account_id: number;
-  tax_id: null;
+  tax_id: number;
   text: string;
   discount_in_percent: string;
 }
@@ -435,7 +435,7 @@ export const createBexioInvoice = onCall(
       amount: p.amount ?? '1',
       unit_price: p.unit_price,
       account_id: p.account_id,
-      tax_id: null,
+      tax_id: 6,
       text: p.text,
       discount_in_percent: '0',
     }));
@@ -448,6 +448,7 @@ export const createBexioInvoice = onCall(
         {
           title,
           contact_id: parseInt(bexioId, 10),
+          user_id: 1,
           header,
           footer,
           is_valid_from: isoFrom,

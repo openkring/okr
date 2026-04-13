@@ -8,9 +8,9 @@ import { BexioIdMask } from '@bk2/shared-config';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
-import { areNotesVisible, areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, getFullName, getItemLabel, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
+import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON, REBATE_REASON_VALUES } from '@bk2/shared-models';
+import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, NumberInputComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
+import { areTagsVisible, coerceBoolean, debugFormErrors, debugFormModel, getFullName, getItemLabel, hasRole, isOrg, isPerson } from '@bk2/shared-util-core';
 
 import { membershipValidations } from '@bk2/relationship-membership-util';
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -22,7 +22,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
     vestForms, FormsModule,
     TranslatePipe, AsyncPipe, AvatarPipe,
     TextInputComponent, DateInputComponent,
-    ChipsComponent, NotesInputComponent, CategorySelectComponent,
+    ChipsComponent, NotesInputComponent, CategorySelectComponent, NumberInputComponent, StringSelectComponent,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonCard, IonCardContent, IonAvatar, IonImg, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -127,11 +127,12 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                       </ion-item>
                     </ion-col>
                     
-<!--                     
-                    tbd: MembershipForm: change price to MoneyModel input
                     <ion-col size="12" size-md="6">
-                      <bk-number-input name="price" [value]="price()" (valueChange)="onFieldChange('price', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />                                        
-                    </ion-col> -->
+                      <bk-number-input name="rebate" [value]="rebate()" (valueChange)="onFieldChange('rebate', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />                                        
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <bk-string-select name="rebateReason"  [selectedString]="rebateReason()" (selectedStringChange)="onFieldChange('rebateReason', $event)" [readOnly]="readOnly()" [stringList]="rebateReasons" />
+                    </ion-col>         
                   </ion-row>
                 </ion-grid>
               }
@@ -225,7 +226,8 @@ export class MembershipFormComponent {
   protected order = computed(() => this.formData().order ?? 0);
   protected relLog = computed(() => this.formData().relLog ?? '');
   protected relIsLast = computed(() => this.formData().relIsLast ?? true);
-  protected price = linkedSignal(() => this.formData().price ?? 0);
+  protected rebate = linkedSignal(() => this.formData().rebate ?? 0);
+  protected rebateReason = computed(() => this.formData().rebateReason ?? 'none');
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected membershipState = computed(() => this.formData().category ?? DEFAULT_MSTATE);
@@ -237,6 +239,7 @@ export class MembershipFormComponent {
   // passing constants to template
   protected bexioMask = BexioIdMask;
   protected endFutureDate = END_FUTURE_DATE_STR;
+  protected rebateReasons = REBATE_REASON_VALUES;
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {

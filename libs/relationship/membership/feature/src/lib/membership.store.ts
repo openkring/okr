@@ -26,6 +26,7 @@ import { MatrixChatService } from '@bk2/chat-data-access';
 import { MemberNewModal } from './member-new.modal';
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
+import { InvoiceNewModal } from '@bk2/finance-invoice-feature';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -798,6 +799,21 @@ export const _MembershipStore = signalStore(
           return await browseUrl(`tel:${phone}`, '');
         }
       },
+
+      async createInvoice(membership: MembershipModel): Promise<void> {
+        const modal = await store.modalController.create({
+          component: InvoiceNewModal,
+          cssClass: 'wide-modal',
+          componentProps: { 
+            membership 
+          },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<{ id: string }>();
+        if (role === 'confirm' && data) {
+          await showToast(store.toastController, `@finance.invoice.operation.create.conf`);
+        }
+      }
     }
   }),
 );

@@ -326,7 +326,7 @@ export class MembershipListComponent {
     }
 
     // finance operations
-    if (hasRole('treasurer')) {
+    if (this.hasRole('treasurer')) {
       actionSheetOptions.buttons.push(createActionSheetButton('invoice.create', this.imgixBaseUrl, 'invoice'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
     }

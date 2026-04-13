@@ -36,7 +36,7 @@ import { ButtonCopyComponent } from './button-copy.component';
   <ion-card>
     @if(doShowTitle()) {
       <ion-card-header>
-        <ion-card-title>Notizen</ion-card-title>
+        <ion-card-title>{{ title() | translate | async }}</ion-card-title>
       </ion-card-header>
     }
     <ion-card-content>
@@ -93,6 +93,7 @@ export class NotesInputComponent {
   public maxLength = input(DESCRIPTION_LENGTH); // max number of characters allowed
   public rows = input(5); // number of rows
   public showTitle = input<boolean>(false);
+  public title = input('Notizen');
   protected clearable = input(true); // show a button to clear the notes
   protected copyable = input(true); // show a button to copy the notes
   protected encryptable = input(true); // show a button to encrypt or decrypt the notes
