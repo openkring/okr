@@ -43,3 +43,4 @@ export const ScsMemberFeesCollection = 'scs-member-fee';
 export const ScsMemberFeesModelName = 'scs-member-fee';
 
 export type INVOICE_STATE = 'initial' | 'review' | 'ready' | 'uploaded' | 'sent';
+export const INVOICE_STATE_VALUES = ['initial', 'review', 'ready', 'uploaded', 'sent'] as const satisfies INVOICE_STATE[];
