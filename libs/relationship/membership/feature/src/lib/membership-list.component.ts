@@ -314,16 +314,22 @@ export class MembershipListComponent {
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // privileged operations on membership
-    if (this.canChange()) {
+    if (this.canChange() || this.canDelete()) {
       if (isOngoing(membership.dateOfExit)) {
         actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'mcatchange'));
         actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
       }
+      if (this.canDelete()) {
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetDivider());
     }
-    if (this.canDelete()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
+
+    // finance operations
+    if (hasRole('treasurer')) {
+      actionSheetOptions.buttons.push(createActionSheetButton('invoice.create', this.imgixBaseUrl, 'invoice'));
+      actionSheetOptions.buttons.push(createActionSheetDivider());
     }
-    actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // contact operations
     if (await this.membershipStore.isPersonUser(membership.memberKey)) {
@@ -380,7 +386,9 @@ export class MembershipListComponent {
         case 'membership.changecat':
           await this.membershipStore.changeMembershipCategory(membership, this.readOnly());
           break;
-
+        case 'invoice.create':
+          await this.membershipStore.createInvoice(membership);
+          break;
         case 'person.copyemail':
           const email = this.membershipStore.getEmail(membership);
           if (email) {

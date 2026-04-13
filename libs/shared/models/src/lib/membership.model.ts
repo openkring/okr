@@ -1,6 +1,5 @@
-import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_PRIORITY, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
-import { MoneyModel } from 'libs/shared/models/src/lib/money.model';
 
 /**
  * A membership of a person or organization in a group or organization.
@@ -53,8 +52,8 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
   public relLog = ''; // log of changes e.g.  20200715:K->A->P
   public relIsLast = true; // is this the last membership of the same kind ? (building a linked list of memberships, ordered by priority)
 
-  // if >= 0: overwrites the default membership price MembershipCategories[membership.membershipCategory].price
-  public price: MoneyModel | undefined;
+  public rebate = 0;
+  public rebateReason: REBATE_REASON = 'none';
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];
@@ -63,3 +62,6 @@ export class MembershipModel implements BkModel, SearchableModel, TaggedModel {
 
 export const MembershipCollection = 'memberships';
 export const MembershipModelName = 'membership';
+
+export type REBATE_REASON = 'edu' | 'family' | 'custom' | 'hardship' | 'support' | 'none';
+export const REBATE_REASON_VALUES = ['edu', 'family', 'custom', 'hardship', 'support'] as const satisfies REBATE_REASON[];
