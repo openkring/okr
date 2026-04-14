@@ -3,7 +3,8 @@ import { Component, inject, input, model } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions,
   IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
-  IonIcon, IonItem, IonLabel, IonList, ModalController
+  IonIcon, IonImg, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, IonThumbnail,
+  ItemReorderEventDetail, ModalController
 } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
@@ -11,6 +12,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { ImageConfig, ImageType, UserModel } from '@bk2/shared-models';
 import { UploadEntry } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { IMGIX_THUMBNAIL_PARAMS } from '@bk2/shared-util-core';
 import { UploadService } from '@bk2/avatar-data-access';
 
 import { ImageEditModalComponent } from './image-edit.modal';
@@ -25,12 +27,14 @@ const IMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     TranslatePipe, AsyncPipe, SvgIconPipe,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonList, IonItem, IonLabel, IonButtons, IonButton, IonIcon,
+    IonThumbnail, IonImg, IonReorderGroup, IonReorder,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
     .image-list-header { display: flex; justify-content: space-between; align-items: center; }
-    ion-item { --min-height: 44px; }
+    ion-item { --min-height: 52px; }
     .image-meta { font-size: 0.8rem; color: var(--ion-color-medium); }
+    ion-thumbnail { --size: 44px; --border-radius: 4px; margin-inline-end: 8px; }
   `],
   template: `
     <ion-card>
@@ -52,15 +56,24 @@ const IMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             <ion-item>
               <ion-label color="medium">{{ '@content.section.images.empty' | translate | async }}</ion-label>
             </ion-item>
-          }
-          @for(img of images(); track $index) {
-            <ion-item (click)="showActions(img, $index)" [button]="!readOnly()">
-              <ion-icon slot="start" src="{{'image' | svgIcon }}" color="medium" />
-              <ion-label>
-                <p>{{ img.label || img.url }}</p>
-                <p class="image-meta">{{ typeName(img.type) }}{{ img.altText ? ' · ' + img.altText : '' }}</p>
-              </ion-label>
-            </ion-item>
+          } @else {
+            <!-- Casting $event to $any is a temporary fix for https://github.com/ionic-team/ionic-framework/issues/24245 -->
+            <ion-reorder-group [disabled]="readOnly()" (ionItemReorder)="reorder($any($event))">
+              @for(img of images(); track $index) {
+                <ion-item (click)="showActions(img, $index)" [button]="!readOnly()">
+                  @if(!readOnly()) {
+                    <ion-reorder slot="start" />
+                  }
+                  <ion-thumbnail slot="start">
+                    <ion-img [src]="thumbnailUrl(img)" [alt]="img.altText || img.label" />
+                  </ion-thumbnail>
+                  <ion-label>
+                    <p>{{ img.label || img.url }}</p>
+                    <p class="image-meta">{{ typeName(img.type) }}{{ img.altText ? ' · ' + img.altText : '' }}</p>
+                  </ion-label>
+                </ion-item>
+              }
+            </ion-reorder-group>
           }
         </ion-list>
       </ion-card-content>
@@ -82,6 +95,17 @@ export class ImagesConfigComponent {
 
   protected typeName(type: ImageType): string {
     return ImageType[type] ?? 'Image';
+  }
+
+  protected thumbnailUrl(img: ImageConfig): string {
+    const url = img.url ?? '';
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `${this.env.services.imgixBaseUrl}/${url}?${IMGIX_THUMBNAIL_PARAMS}`;
+  }
+
+  protected reorder(ev: CustomEvent<ItemReorderEventDetail>): void {
+    this.images.set(ev.detail.complete(this.images()));
   }
 
   protected async addImages(): Promise<void> {

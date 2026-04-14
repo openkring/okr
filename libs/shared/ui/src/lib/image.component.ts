@@ -80,6 +80,7 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
   styles: [`
       ion-thumbnail { margin: auto; height: 100px; width: 100px; padding: 10px; text-align: right; position: relative;}
       .image-container { position: relative; display: flex; justify-content: center; align-items: flex-start; width: 100%; height: auto; }
+      .image-container img { object-fit: cover; }
     `],
   template: `
       @if(image(); as image) {
@@ -203,10 +204,15 @@ export class ImageComponent {
     };
   });
 
-  // fill mode requires the container to have position:relative and an explicit height
+  // fill mode requires the container to have position:relative and an explicit height.
+  // height may arrive as a plain number string (e.g. '329') or with a unit ('329px' / '50%').
+  // Plain numbers are treated as px so that ngStyle emits a valid CSS value.
   protected containerStyles = computed(() => {
     if (!this.fill()) return {};
-    return { 'height': this.height() !== 'auto' ? this.height() : '400px' };
+    const h = this.height();
+    if (h === 'auto') return { 'height': '400px' };
+    const cssHeight = /^\d+(\.\d+)?$/.test(h) ? h + 'px' : h;
+    return { 'height': cssHeight };
   });
 
   // that was the original idea: we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
