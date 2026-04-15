@@ -132,7 +132,6 @@ export class MembershipListComponent {
   public view = input<'contact' | 'mcat' | 'group'>('mcat');
 
   // filters
-  protected searchTerm = linkedSignal(() => this.membershipStore.searchTerm());
   protected selectedCategory = linkedSignal(() => this.membershipStore.selectedMembershipCategory());
   protected selectedTag = linkedSignal(() => this.membershipStore.selectedTag());
   protected selectedYear = linkedSignal(() => this.membershipStore.selectedYear()); 

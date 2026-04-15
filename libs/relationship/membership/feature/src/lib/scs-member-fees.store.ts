@@ -4,32 +4,34 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
+import { doc } from 'firebase/firestore';
 import { of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import {
-  MembershipCollection, MembershipModel,
-  OwnershipCollection, OwnershipModel,
-  ScsMemberFeesModel,
-} from '@bk2/shared-models';
-import { confirm, showToast } from '@bk2/shared-util-angular';
-import {
-  DateFormat, debugListLoaded, getSystemQuery, getTodayStr, isAfterDate, nameMatches,
-} from '@bk2/shared-util-core';
+import { ExportFormat, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, ScsMemberFeesCollection, ScsMemberFeesModel } from '@bk2/shared-models';
+import { confirm, exportXlsx, showToast } from '@bk2/shared-util-angular';
+import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@bk2/shared-util-core';
+
+import { ActivityService } from '@bk2/activity-data-access';
 
 import { ScsMemberFeeService, convertMembershipToFee, getFeeTotal } from '@bk2/relationship-membership-data-access';
 import { MembershipEditModalComponent } from './membership-edit.modal';
+import { ScsMemberFeeUploadModal } from './scs-member-fee-upload.modal';
+import { ScsMemberFeesTotalsModal } from './scs-member-fees-totals.modal';
+import { ExportFormats } from '@bk2/shared-categories';
 
 export type ScsMemberFeesState = {
   searchTerm: string;
   selectedMcat: string;
+  selectedState: string;
   version: number;
 };
 
 const initialState: ScsMemberFeesState = {
   searchTerm: '',
   selectedMcat: 'all',
+  selectedState: 'all',
   version: 0,
 };
 
@@ -45,6 +47,7 @@ export const _ScsMemberFeesStore = signalStore(
       scsMemberFeeService: inject(ScsMemberFeeService),
       appStore,
       firestoreService: inject(FirestoreService),
+      activityService: inject(ActivityService),
       modalController: inject(ModalController),
       toastController: inject(ToastController),
       alertController: inject(AlertController),
@@ -52,18 +55,18 @@ export const _ScsMemberFeesStore = signalStore(
     };
   }),
 
-  withProps((store) => ({
+  withProps((state) => ({
     // All memberships of this tenant (active/passive/etc.) — filtered locally
     allMembershipsResource: rxResource({
       params: () => ({
-        currentUser: store.appStore.currentUser(),
-        version: store.version(),
+        currentUser: state.appStore.currentUser(),
+        version: state.version(),
       }),
       stream: ({ params }) => {
         if (!params.currentUser) return of([]);
-        const query = getSystemQuery(store.appStore.tenantId());
+        const query = getSystemQuery(state.appStore.tenantId());
         query.push({ key: 'memberModelType', operator: '==', value: 'person' });
-        return store.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc').pipe(
+        return state.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc').pipe(
           debugListLoaded('ScsMemberFeesStore.allMemberships', params.currentUser)
         );
       },
@@ -72,14 +75,14 @@ export const _ScsMemberFeesStore = signalStore(
     // All locker ownerships — filtered locally by ownerKey and validTo
     allLockerOwnershipsResource: rxResource({
       params: () => ({
-        currentUser: store.appStore.currentUser(),
-        version: store.version(),
+        currentUser: state.appStore.currentUser(),
+        version: state.version(),
       }),
       stream: ({ params }) => {
         if (!params.currentUser) return of([]);
-        const query = getSystemQuery(store.appStore.tenantId());
+        const query = getSystemQuery(state.appStore.tenantId());
         query.push({ key: 'resourceType', operator: '==', value: 'locker' });
-        return store.firestoreService.searchData<OwnershipModel>(OwnershipCollection, query, 'ownerName2', 'asc').pipe(
+        return state.firestoreService.searchData<OwnershipModel>(OwnershipCollection, query, 'ownerName2', 'asc').pipe(
           debugListLoaded('ScsMemberFeesStore.allLockerOwnerships', params.currentUser)
         );
       },
@@ -88,30 +91,30 @@ export const _ScsMemberFeesStore = signalStore(
     // Persisted fee records from scs-memberfees collection
     feeRecordsResource: rxResource({
       params: () => ({
-        currentUser: store.appStore.currentUser(),
-        version: store.version(),
+        currentUser: state.appStore.currentUser(),
+        version: state.version(),
       }),
       stream: ({ params }) => {
         if (!params.currentUser) return of([]);
-        return store.scsMemberFeeService.list();
+        return state.scsMemberFeeService.list();
       },
     }),
   })),
 
-  withComputed((store) => ({
+  withComputed((state) => ({
     isLoading: computed(() =>
-      store.allMembershipsResource.isLoading() ||
-      store.allLockerOwnershipsResource.isLoading() ||
-      store.feeRecordsResource.isLoading()
+      state.allMembershipsResource.isLoading() ||
+      state.allLockerOwnershipsResource.isLoading() ||
+      state.feeRecordsResource.isLoading()
     ),
-    currentUser: computed(() => store.appStore.currentUser()),
-    tenantId: computed(() => store.appStore.tenantId()),
+    currentUser: computed(() => state.appStore.currentUser()),
+    tenantId: computed(() => state.appStore.tenantId()),
 
     // current active+passive memberships of the default org
     defaultOrgMemberships: computed(() => {
       const today = getTodayStr();
-      const orgId = store.appStore.defaultOrg()?.bkey ?? store.appStore.tenantId();
-      return store.allMembershipsResource.value()?.filter((m: MembershipModel) => 
+      const orgId = state.appStore.defaultOrg()?.bkey ?? state.appStore.tenantId();
+      return state.allMembershipsResource.value()?.filter((m: MembershipModel) => 
         m.orgKey === orgId && 
         m.orgModelType === 'org' &&
         isAfterDate(m.dateOfExit, today) &&
@@ -123,7 +126,7 @@ export const _ScsMemberFeesStore = signalStore(
     srvMembershipsByKey: computed(() => {
       const today = getTodayStr();
       const map = new Map<string, MembershipModel>();
-      store.allMembershipsResource.value()?.filter((m: MembershipModel) => 
+      state.allMembershipsResource.value()?.filter((m: MembershipModel) => 
         m.orgKey === 'srv' &&
         m.orgModelType === 'org' &&
         isAfterDate(m.dateOfExit, today)
@@ -135,7 +138,7 @@ export const _ScsMemberFeesStore = signalStore(
     lockerOwnerKeys: computed((): Set<string> => {
       const today = getTodayStr(DateFormat.StoreDate);
       const keys = new Set<string>();
-      store.allLockerOwnershipsResource.value()?.filter((o: OwnershipModel) => 
+      state.allLockerOwnershipsResource.value()?.filter((o: OwnershipModel) => 
         isAfterDate(o.validTo, today)
       ).forEach((o: OwnershipModel) => keys.add(o.ownerKey));
       return keys;
@@ -144,29 +147,29 @@ export const _ScsMemberFeesStore = signalStore(
     // persisted fee records indexed by member key
     feeRecordsByMemberKey: computed(() => {
       const map = new Map<string, ScsMemberFeesModel>();
-      store.feeRecordsResource.value()?.forEach((f: ScsMemberFeesModel) => {
+      state.feeRecordsResource.value()?.forEach((f: ScsMemberFeesModel) => {
         if (f.member?.key) map.set(f.member.key, f);
       });
       return map;
     }),
 
-    mcatScs: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
-    mcatSrv: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_srv')),
-    mcatScsCategory: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
+    mcatScs: computed(() => state.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
+    mcatSrv: computed(() => state.appStore.allCategories()?.find(c => c.name === 'mcat_srv')),
+    mcatScsCategory: computed(() => state.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
   })),
 
-  withComputed((store) => ({
+  withComputed((state) => ({
     // Merged list: persisted records take priority; generated models fill in the rest
-    feeModels: computed((): ScsMemberFeesModel[] => {
+    allFees: computed((): ScsMemberFeesModel[] => {
       const currentYear = getTodayStr(DateFormat.Year);
-      const tenantId = store.tenantId();
-      const srvMap = store.srvMembershipsByKey();
-      const lockerKeys = store.lockerOwnerKeys();
-      const feeMap = store.feeRecordsByMemberKey();
-      const mcatScs = store.mcatScs();
-      const mcatSrv = store.mcatSrv();
+      const tenantId = state.tenantId();
+      const srvMap = state.srvMembershipsByKey();
+      const lockerKeys = state.lockerOwnerKeys();
+      const feeMap = state.feeRecordsByMemberKey();
+      const mcatScs = state.mcatScs();
+      const mcatSrv = state.mcatSrv();
 
-      return store.defaultOrgMemberships().map((membership: MembershipModel) => {
+      return state.defaultOrgMemberships().map((membership: MembershipModel) => {
         const existing = feeMap.get(membership.memberKey);
         if (existing) return existing;
         return convertMembershipToFee(
@@ -183,37 +186,37 @@ export const _ScsMemberFeesStore = signalStore(
 
     membershipsByMemberKey: computed(() => {
       const map = new Map<string, MembershipModel>();
-      store.defaultOrgMemberships().forEach((m: MembershipModel) => map.set(m.memberKey, m));
+      state.defaultOrgMemberships().forEach((m: MembershipModel) => map.set(m.memberKey, m));
       return map;
     }),
 
-    mcatCategory: computed(() => store.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
+    mcatCategory: computed(() => state.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
   })),
 
-  withComputed((store) => ({
-    filteredFees: computed((): ScsMemberFeesModel[] => {
-      const searchTerm = store.searchTerm().toLowerCase();
-      const selectedMcat = store.selectedMcat();
-      let fees = store.feeModels();
-      if (selectedMcat && selectedMcat !== 'all') {
-        fees = fees.filter(f => f.category === selectedMcat);
-      }
-      if (searchTerm) {
-        fees = fees.filter(f => nameMatches(f.index, searchTerm));
-      }
-      return fees;
-    }),
+  withComputed((state) => ({
+      filteredFees: computed(() => {
+        return state.allFees()?.filter((fee: ScsMemberFeesModel) => 
+          nameMatches(fee.index, state.searchTerm()) &&
+          nameMatches(fee.category, state.selectedMcat()) &&
+          nameMatches(fee.state, state.selectedState()))
+      })
   })),
 
-  withMethods((store) => ({
+  withMethods((state) => ({
     setSearchTerm(searchTerm: string): void {
-      patchState(store, { searchTerm });
+      patchState(state, { searchTerm });
     },
+
     setSelectedMcat(selectedMcat: string): void {
-      patchState(store, { selectedMcat });
+      patchState(state, { selectedMcat });
     },
+
+    setSelectedState(selectedState: string): void {
+      patchState(state, { selectedState });
+    },
+
     refreshData(): void {
-      patchState(store, { version: store.version() + 1 });
+      patchState(state, { version: state.version() + 1 });
     },
 
     getTotal(fee: ScsMemberFeesModel): number {
@@ -224,29 +227,28 @@ export const _ScsMemberFeesStore = signalStore(
      * Save an edited fee record to Firestore and reload.
      */
     async saveFee(fee: ScsMemberFeesModel): Promise<void> {
-      await store.scsMemberFeeService.save(fee, store.appStore.currentUser() ?? undefined);
-      patchState(store, { version: store.version() + 1 });
+      await state.scsMemberFeeService.save(fee, state.appStore.currentUser() ?? undefined);
+      patchState(state, { version: state.version() + 1 });
     },
 
     /**
      * Generate and persist fee records for all default org members that don't have one yet.
      */
     async generateFees(): Promise<void> {
-      const confirmed = await confirm(store.alertController, '@finance.scsMemberFee.operation.generate.confirm', true);
+      const confirmed = await confirm(state.alertController, '@finance.scsMemberFee.operation.generate.confirm', true);
       if (!confirmed) return;
 
       const currentYear = getTodayStr(DateFormat.Year);
-      const tenantId = store.tenantId();
-      const srvMap = store.srvMembershipsByKey();
-      const lockerKeys = store.lockerOwnerKeys();
-      const feeMap = store.feeRecordsByMemberKey();
-      const mcatScs = store.mcatScs();
-      const mcatSrv = store.mcatSrv();
-      const currentUser = store.appStore.currentUser() ?? undefined;
+      const tenantId = state.tenantId();
+      const srvMap = state.srvMembershipsByKey();
+      const lockerKeys = state.lockerOwnerKeys();
+      const feeMap = state.feeRecordsByMemberKey();
+      const mcatScs = state.mcatScs();
+      const mcatSrv = state.mcatSrv();
+      const currentUser = state.appStore.currentUser() ?? undefined;
 
-      const saves = store.defaultOrgMemberships()
-        .filter((m: MembershipModel) => !feeMap.has(m.memberKey))
-        .map((m: MembershipModel) => {
+      const members = state.defaultOrgMemberships().filter((m: MembershipModel) => !feeMap.has(m.memberKey));
+      const saves = members.map((m: MembershipModel) => {
           const fee = convertMembershipToFee(
             m,
             srvMap.get(m.memberKey),
@@ -256,12 +258,56 @@ export const _ScsMemberFeesStore = signalStore(
             currentYear,
             tenantId
           );
-          return store.scsMemberFeeService.save(fee, currentUser);
-        });
+          return state.scsMemberFeeService.save(fee, currentUser, false);
+      });
+      const msg = 'generated ' + members.length + ' scs member fees.';
+      state.activityService.log('membership', 'create', currentUser, msg);
 
       await Promise.all(saves);
-      patchState(store, { version: store.version() + 1 });
-      await showToast(store.toastController, '@finance.scsMemberFee.operation.generate.conf');
+      patchState(state, { version: state.version() + 1 });
+      await showToast(state.toastController, '@finance.scsMemberFee.operation.generate.conf');
+    },
+
+    async showTotals(): Promise<void> {
+      const modal = await state.modalController.create({
+        component: ScsMemberFeesTotalsModal,
+        componentProps: {
+          fees: state.filteredFees(),
+        },
+      });
+      await modal.present();
+    },
+
+    async archive(): Promise<void> {
+      const confirmed = await confirm(state.alertController, '@finance.scsMemberFee.operation.archive.confirm', true);
+      if (!confirmed) return;
+
+      const fees = state.filteredFees();
+      const batch = state.firestoreService.getBatch();
+      for (const fee of fees) {
+        if (!fee.bkey) continue;
+        const ref = doc(state.firestoreService.firestore, `${ScsMemberFeesCollection}/${fee.bkey}`);
+        batch.update(ref, { isArchived: true });
+      }
+      await batch.commit();
+      patchState(state, { version: state.version() + 1 });
+      await showToast(state.toastController, '@finance.scsMemberFee.operation.archive.conf');
+    },
+
+    async export(type: string): Promise<void> {
+      if (type === 'raw') {
+        const fees = state.filteredFees();
+        let keys: (keyof ScsMemberFeesModel)[] = [];
+        const table: string[][] = [];
+        const fn = generateRandomString(10) + '.' + ExportFormats[ExportFormat.XLSX].abbreviation;
+        let tableName = '';
+        keys = Object.keys(new ScsMemberFeesModel(state.appStore.tenantId())) as (keyof ScsMemberFeesModel)[];
+        table.push(keys);
+        for (const fee of fees) {
+          table.push(getDataRow<ScsMemberFeesModel>(fee, keys));
+        }
+        exportXlsx(table, fn, 'Jahresbeitragsrechnungen');
+      }
     },
 
     /**
@@ -269,10 +315,10 @@ export const _ScsMemberFeesStore = signalStore(
      */
     async deleteFee(fee: ScsMemberFeesModel): Promise<void> {
       if (!fee.bkey) return;
-      const confirmed = await confirm(store.alertController, '@finance.scsMemberFee.operation.delete.confirm', true);
+      const confirmed = await confirm(state.alertController, '@finance.scsMemberFee.operation.delete.confirm', true);
       if (!confirmed) return;
-      await store.scsMemberFeeService.delete(fee, store.appStore.currentUser() ?? undefined);
-      patchState(store, { version: store.version() + 1 });
+      await state.scsMemberFeeService.delete(fee, state.appStore.currentUser() ?? undefined);
+      patchState(state, { version: state.version() + 1 });
     },
 
     /**
@@ -280,30 +326,40 @@ export const _ScsMemberFeesStore = signalStore(
      */
     async uploadToBexio(fee: ScsMemberFeesModel): Promise<void> {
       if (!fee.memberBexioId) {
-        await showToast(store.toastController, '@finance.scsMemberFee.operation.upload.noBexioId');
+        await showToast(state.toastController, '@finance.scsMemberFee.operation.upload.noBexioId');
         return;
       }
+
+      const positions = buildBexioPositions(fee);
+      const modal = await state.modalController.create({
+        component: ScsMemberFeeUploadModal,
+        componentProps: { fee, positions },
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<{ header: string; footer: string }>();
+      if (role !== 'confirm' || !data) return;
+
       const fn = httpsCallable<{
         title: string;
         bexioId: string;
         header?: string;
         footer?: string;
         positions?: { text: string; unit_price: number; account_id: number; amount: number }[];
-      }, { id: string }>(store.functions, 'createBexioInvoice');
+      }, { id: string }>(state.functions, 'createBexioInvoice');
 
-      const total = getFeeTotal(fee);
-      const positions = buildBexioPositions(fee);
       await fn({
-        title: `Jahresbeitrag ${getTodayStr(DateFormat.Year)} – ${fee.member?.name2 ?? ''}`,
+        title: `Jahresbeitrag ${getYear()}`,
         bexioId: fee.memberBexioId,
+        header: data.header,
+        footer: data.footer,
         positions,
       });
 
       // Mark as uploaded
       const updated: ScsMemberFeesModel = { ...fee, state: 'uploaded' };
-      await store.scsMemberFeeService.save(updated, store.appStore.currentUser() ?? undefined);
-      patchState(store, { version: store.version() + 1 });
-      await showToast(store.toastController, '@finance.scsMemberFee.operation.upload.conf');
+      await state.scsMemberFeeService.save(updated, state.appStore.currentUser() ?? undefined);
+      patchState(state, { version: state.version() + 1 });
+      await showToast(state.toastController, '@finance.scsMemberFee.operation.upload.conf');
     },
 
     /**
@@ -311,7 +367,7 @@ export const _ScsMemberFeesStore = signalStore(
      */
     async downloadPdf(fee: ScsMemberFeesModel): Promise<void> {
       const fn = httpsCallable<{ invoiceId: string }, { content: string }>(
-        store.functions, 'showInvoicePdf'
+        state.functions, 'showInvoicePdf'
       );
       const memberName = `${fee.member?.name2 ?? ''}_${fee.member?.name1 ?? ''}`;
       const result = await fn({ invoiceId: fee.bkey });
@@ -331,17 +387,17 @@ export const _ScsMemberFeesStore = signalStore(
     async editMembership(fee: ScsMemberFeesModel, readOnly = false): Promise<void> {
       const memberKey = fee.member?.key;
       if (!memberKey) return;
-      const membership = store.membershipsByMemberKey().get(memberKey);
+      const membership = state.membershipsByMemberKey().get(memberKey);
       if (!membership) return;
-      const mcat = store.mcatCategory();
+      const mcat = state.mcatCategory();
       if (!mcat) return;
-      const modal = await store.modalController.create({
+      const modal = await state.modalController.create({
         component: MembershipEditModalComponent,
         componentProps: {
           membership: { ...membership },
-          currentUser: store.appStore.currentUser(),
+          currentUser: state.appStore.currentUser(),
           tags: '',
-          priv: store.appStore.privacySettings(),
+          priv: state.appStore.privacySettings(),
           mcat,
           isNew: false,
           readOnly,
@@ -357,18 +413,31 @@ export const _ScsMemberFeesStore = signalStore(
  */
 function buildBexioPositions(fee: ScsMemberFeesModel): { text: string; unit_price: number; account_id: number; amount: number }[] {
   const positions: { text: string; unit_price: number; account_id: number; amount: number }[] = [];
-  const addPos = (text: string, unit_price: number, account_id = 159) => {
+  const addPos = (text: string, unit_price: number, account_id: number) => {
     if (unit_price !== 0) positions.push({ text, unit_price, account_id, amount: 1 });
   };
 
-  addPos('Jahresbeitrag SCS', fee.jb);
-  addPos('Jahresbeitrag SRV', fee.srv, 159);
-  addPos('Jahresbeitrag BEV', fee.bev, 159);
-  addPos('Eintrittsgeld', fee.entryFee, 159);
-  addPos('Schliessfach', fee.locker, 284);
-  addPos('Hallentraining', fee.hallenTraining, 284);
-  addPos('Skiff', fee.skiff, 284);
-  addPos('Skiff-Versicherung', fee.skiffInsurance, 284);
+  let mcat: string;
+  switch (fee.category) {
+    case 'active': mcat = 'Aktiv A1'; break;
+    case 'active2': mcat = 'Aktiv A2'; break;
+    case 'active3': mcat = 'Aktiv A3'; break;
+    case 'free': mcat = 'Freimitglied'; break;
+    case 'junior': mcat = 'Jugendliche'; break;
+    case 'honorary': mcat = 'Ehrenmitglied'; break;
+    case 'candidate':  mcat = 'Kandidierende'; break;
+    case 'passive': mcat = 'Passive'; break;
+    default: mcat = ''; break;
+  }
+
+  addPos('SCS Jahresbeitrag ' + mcat, fee.jb, 159);
+  addPos('SRV Verbandsbeitrag', fee.srv, 284);
+  addPos('Getränke 2025', fee.bev, 306);
+  addPos('Einmalige Eintrittsgebühr', fee.entryFee, 158);
+  addPos('Miete Garderobenkasten', fee.locker, 286);
+  addPos('Hallentraining', fee.hallenTraining, 289);
+  addPos('Miete Skiff Lagerplatz', fee.skiff, 286);
+  addPos('Anteil Skiff-Versicherung', fee.skiffInsurance, 231);
   if (fee.rebate > 0) addPos(`Rabatt (${fee.rebateReason})`, -fee.rebate, 159);
   return positions;
 }

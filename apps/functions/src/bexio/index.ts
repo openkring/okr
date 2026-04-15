@@ -9,6 +9,7 @@ import { convertDateFormatToString, addDuration, getTodayStr, DateFormat } from 
 const bexioApiKey = defineSecret('BEXIO_APIKEY');
 const bexioUserId = defineSecret('BEXIO_USER_ID'); // integer user ID from GET /2.0/users/me
 const bexioTenantId = defineSecret('BEXIO_TENANT_ID'); // Firestore tenantId for invoice writes
+const bexioDefaultTaxId = defineSecret('BEXIO_DEFAULT_TAX_ID'); // tax code ID from GET /2.0/tax
 
 const BEXIO_BASE = 'https://api.bexio.com/2.0';
 
@@ -402,7 +403,7 @@ export const createBexioInvoice = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
-    secrets: [bexioApiKey],
+    secrets: [bexioApiKey, bexioDefaultTaxId],
   },
   async (request: CallableRequest<{
     title: string;
@@ -430,12 +431,13 @@ export const createBexioInvoice = onCall(
     const isoFrom = convertDateFormatToString(resolvedFrom, DateFormat.StoreDate, DateFormat.IsoDate);
     const isoTo = convertDateFormatToString(resolvedTo, DateFormat.StoreDate, DateFormat.IsoDate);
 
+    const defaultTaxId = parseInt(bexioDefaultTaxId.value(), 10);
     const bexioPositions: BexioKbPosition[] = positions.map(p => ({
       type: 'KbPositionCustom',
       amount: p.amount ?? '1',
       unit_price: p.unit_price,
       account_id: p.account_id,
-      tax_id: 6,
+      tax_id: defaultTaxId,
       text: p.text,
       discount_in_percent: '0',
     }));

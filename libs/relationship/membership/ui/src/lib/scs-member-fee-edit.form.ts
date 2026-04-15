@@ -131,6 +131,7 @@ export class ScsMemberFeeEditForm {
 
 
   protected onFieldChange(field: keyof ScsMemberFeesModel, value: unknown, fd: ScsMemberFeesModel): void {
+    this.dirty.emit(true);
     this.formDataChange.emit({ ...fd, [field]: value });
   }
 }

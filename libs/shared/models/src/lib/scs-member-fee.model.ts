@@ -42,5 +42,5 @@ export class ScsMemberFeesModel implements BkModel, SearchableModel, TaggedModel
 export const ScsMemberFeesCollection = 'scs-memberfees';
 export const ScsMemberFeesModelName = 'scs-member-fee';
 
-export type INVOICE_STATE = 'initial' | 'review' | 'ready' | 'uploaded' | 'sent';
-export const INVOICE_STATE_VALUES = ['initial', 'review', 'ready', 'uploaded', 'sent'] as const satisfies INVOICE_STATE[];
+export type INVOICE_STATE = 'initial' | 'review' | 'ready' | 'uploaded' | 'sent' | 'paid' | 'cancelled';
+export const INVOICE_STATE_VALUES = ['initial', 'review', 'ready', 'uploaded', 'sent', 'paid', 'cancelled'] as const satisfies INVOICE_STATE[];

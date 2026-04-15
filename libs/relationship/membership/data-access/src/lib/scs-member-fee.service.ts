@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ENV } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { CategoryListModel, MembershipModel, ScsMemberFeesCollection, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
-import { getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, DateFormat } from '@bk2/shared-util-core';
+import { getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, DateFormat, getYear } from '@bk2/shared-util-core';
 import { ActivityService } from '@bk2/activity-data-access';
 
 @Injectable({
@@ -24,7 +24,7 @@ export class ScsMemberFeeService {
     );
   }
 
-  public async save(fee: ScsMemberFeesModel, currentUser?: UserModel): Promise<string | undefined> {
+  public async save(fee: ScsMemberFeesModel, currentUser?: UserModel, addActivity = true): Promise<string | undefined> {
     if (fee.bkey && fee.bkey.length > 0) {
       const key = await this.firestoreService.updateModel<ScsMemberFeesModel>(
         ScsMemberFeesCollection, fee, false, '@finance.scsMemberFee.operation.update', currentUser
@@ -35,7 +35,9 @@ export class ScsMemberFeeService {
       const key = await this.firestoreService.createModel<ScsMemberFeesModel>(
         ScsMemberFeesCollection, fee, '@finance.scsMemberFee.operation.create', currentUser
       );
-      void this.activityService.log('scs-member-fee', 'create', currentUser, fee.index);
+      if (addActivity) {
+        void this.activityService.log('scs-member-fee', 'create', currentUser, fee.index);
+      }
       return key;
     }
   }
@@ -90,7 +92,7 @@ export function convertMembershipToFee(
     ? (getCategoryAttribute(mcatSrv, srvMembership.category, 'price') as number || 0)
     : 0;
   fee.bev = 0;
-  fee.entryFee = membership.dateOfEntry.startsWith(currentYear) ? 750 : 0;
+  fee.entryFee = getEntryFee(membership);
   fee.locker = hasLocker ? 20 : 0;
   fee.hallenTraining = 0;
   fee.skiff = 0;
@@ -98,6 +100,16 @@ export function convertMembershipToFee(
 
   fee.state = 'initial';
   return fee;
+}
+
+export function getEntryFee(membership: MembershipModel): number {
+  const currentYear = getYear();
+  const entryYear = parseInt(membership.dateOfEntry.substring(0, 4));
+  const birthYear = parseInt(membership.dateOfEntry.substring(0, 4));
+  // tbd: we also need to check for entries in the last year that did not yet pay the entry fee
+  // tbd: we also need to check for re-entries, e.g. 19940101:A1,20251231:X,20260215:P does not have to pay
+  if (entryYear === currentYear && (currentYear - birthYear) > 25) return 750;
+  return 0;
 }
 
 export function getFeeTotal(fee: ScsMemberFeesModel): number {

@@ -70,7 +70,7 @@ import { StringSelectComponent } from 'libs/shared/ui/src/lib/string-select.comp
           }
           @if(showStrings()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
-              <bk-string-select name="iconSet" [selectedString]="selectedString()" (selectedStringChange)="stringsChanged.emit($event)" [stringList]="strings()" [readOnly]="false" />
+              <bk-string-select [name]="stringsName()" [selectedString]="selectedString()" (selectedStringChange)="stringsChanged.emit($event)" [stringList]="strings()" [readOnly]="false" />
             </ion-col>
           }
         </ion-row>
@@ -97,6 +97,7 @@ export class ListFilterComponent {
   public gridIcon = input<'calendar' | 'grid'>('grid'); // the icon to show in grid view
   public initialView = input<'list' | 'grid' | undefined>();
   public strings = input<string[]>([]);
+  public stringsName = input<string>('iconSet');
 
   public selectedTag = input<string>('');
   public selectedType = input<string>('');
