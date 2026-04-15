@@ -1,17 +1,18 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
+import { getTitleLabel } from '@bk2/shared-util-angular';
+import { PersonSelectModalComponent } from '@bk2/shared-feature';
+import { ENV } from '@bk2/shared-config';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
 
 import { PersonalRelFormComponent } from '@bk2/relationship-personal-rel-ui';
-import { getTitleLabel } from '@bk2/shared-util-angular';
-import { PersonSelectModalComponent } from '@bk2/shared-feature';
-import { ENV } from '@bk2/shared-config';
 
 @Component({
   selector: 'bk-personal-rel-edit-modal',
@@ -38,6 +39,7 @@ import { ENV } from '@bk2/shared-config';
           [readOnly]="isReadOnly()"
           [tenants]="env.tenantId"
           (selectPerson)="selectPerson($event)"
+          (showPersonOutput)="onShowPerson($event)"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -58,6 +60,7 @@ import { ENV } from '@bk2/shared-config';
 })
 export class PersonalRelEditModalComponent {
   private readonly modalController = inject(ModalController);
+  private readonly router = inject(Router);
   protected readonly env = inject(ENV);
 
   // inputs
@@ -154,6 +157,11 @@ export class PersonalRelEditModalComponent {
       }
     }
     return undefined;
+  }
+
+  protected async onShowPerson(personKey: string): Promise<void> {
+    await this.modalController.dismiss(null, 'cancel');
+    await this.router.navigateByUrl(`/person/${personKey}`);
   }
 
  protected hasRole(role: RoleName | undefined): boolean {

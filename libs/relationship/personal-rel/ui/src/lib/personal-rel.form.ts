@@ -1,7 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
-import { Router } from '@angular/router';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -122,9 +121,6 @@ import { personalRelValidations } from '@bk2/relationship-personal-rel-util';
   `
 })
 export class PersonalRelFormComponent {
-  private readonly router = inject(Router);
-  private readonly modalController = inject(ModalController);
-
   // inputs
   public formData = model.required<PersonalRelModel>();
   public currentUser = input<UserModel | undefined>();
@@ -139,6 +135,7 @@ export class PersonalRelFormComponent {
   public dirty = output<boolean>();
   public valid = output<boolean>();
   public selectPerson = output<boolean>();
+  public showPersonOutput = output<string>();
 
   // validation and errors
   protected readonly suite = personalRelValidations;
@@ -181,8 +178,7 @@ export class PersonalRelFormComponent {
     return hasRole(role, this.currentUser());
   }
 
-  protected async showPerson(personKey: string): Promise<void> {
-    if (this.modalController) this.modalController.dismiss(null, 'cancel');
-    await this.router.navigateByUrl(`/person/${personKey}`);
+  protected showPerson(personKey: string): void {
+    this.showPersonOutput.emit(personKey);
   }
 }
