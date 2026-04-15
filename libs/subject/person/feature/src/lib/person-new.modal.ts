@@ -9,7 +9,7 @@ import { isOrg } from '@bk2/shared-util-core';
 import { convertFormToNewPerson, createNewPersonFormModel, PersonNewFormModel } from '@bk2/subject-person-util';
 import { PersonNewForm } from '@bk2/subject-person-ui';
 
-import { PersonNewStore } from './person-new.store';
+import { PersonStore } from './person.store';
 
 @Component({
   selector: 'bk-person-new-modal',
@@ -18,7 +18,7 @@ import { PersonNewStore } from './person-new.store';
     HeaderComponent, ChangeConfirmationComponent, PersonNewForm,
     IonContent
   ],
-  providers: [PersonNewStore],
+  providers: [PersonStore],
   template: `
     <bk-header title="@subject.person.operation.create.label" [isModal]="true" />
     @if(showConfirmation()) {
@@ -45,7 +45,7 @@ import { PersonNewStore } from './person-new.store';
 })
 export class PersonNewModal {
   private readonly modalController = inject(ModalController);
-  protected readonly personNewStore = inject(PersonNewStore);
+  protected readonly store = inject(PersonStore);
 
   // inputs
   public org = input.required<OrgModel>();
@@ -57,14 +57,14 @@ export class PersonNewModal {
   public formData = linkedSignal(() => createNewPersonFormModel(this.org()));
 
   // derived signals and fields
-  protected currentUser = computed(() => this.personNewStore.currentUser());
-  protected mcat = computed(() => this.personNewStore.membershipCategory());
-  protected tags = computed(() => this.personNewStore.getTags());
-  protected tenantId = computed(() => this.personNewStore.tenantId());
-  protected genders = computed(() => this.personNewStore.appStore.getCategory('gender'));
+  protected currentUser = computed(() => this.store.currentUser());
+  protected mcat = computed(() => this.store.membershipCategory());
+  protected tags = computed(() => this.store.getTags());
+  protected tenantId = computed(() => this.store.tenantId());
+  protected genders = computed(() => this.store.appStore.getCategory('gender'));
 
   constructor() {
-    effect(() => this.personNewStore.setOrgId(this.org()?.bkey));
+    effect(() => this.store.setOrgId(this.org()?.bkey));
   }
 
   /******************************* actions *************************************** */
@@ -95,7 +95,7 @@ export class PersonNewModal {
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       if (isOrg(data, this.tenantId())) {
-        this.personNewStore.setOrgId(data.bkey); // Use newly selected org
+        this.store.setOrgId(data.bkey); // Use newly selected org
         this.formData.update((vm) => ({
           ...vm,
           orgKey: data.bkey,

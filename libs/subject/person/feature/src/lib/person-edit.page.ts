@@ -5,6 +5,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter }
 import { PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@bk2/shared-util-core';
+import { getTitleLabel } from '@bk2/shared-util-angular';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
@@ -18,8 +19,7 @@ import { AddressesAccordionComponent } from '@bk2/subject-address-feature';
 import { AvatarToolbarComponent } from '@bk2/avatar-feature';
 import { PersonFormComponent } from '@bk2/subject-person-ui';
 
-import { PersonEditStore } from './person-edit.store';
-import { getTitleLabel } from '@bk2/shared-util-angular';
+import { PersonStore } from './person.store';
 
 @Component({
   selector: 'bk-person-edit-page',
@@ -31,7 +31,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
     PersonalRelAccordionComponent, WorkrelAccordionComponent,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
-  providers: [PersonEditStore],
+  providers: [PersonStore],
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     <bk-header [title]="headerTitle()" />
@@ -46,7 +46,6 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
         modelType="person" 
         [readOnly]="isReadOnly()" 
         (imageSelected)="onImageSelected($event)"
-        #avatarToolbar
       />
 
       @if(formData(); as formData) {
@@ -87,7 +86,7 @@ import { getTitleLabel } from '@bk2/shared-util-angular';
   `
 })
 export class PersonEditPage implements ViewWillEnter   {
-  protected readonly personEditStore = inject(PersonEditStore);
+  protected readonly store = inject(PersonStore);
 
   // inputs
   public personKey = input.required<string>();
@@ -105,14 +104,14 @@ export class PersonEditPage implements ViewWillEnter   {
   protected headerTitle = computed(() => getTitleLabel('subject.person', this.person()?.bkey, this.isReadOnly()));
   protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
   protected parentKey = computed(() => PersonModelName + '.' + this.personKey());
-  protected priv = computed(() => this.personEditStore.privacySettings());
-  protected currentUser = computed(() => this.personEditStore.currentUser());
-  protected person = computed(() => this.personEditStore.person());
-  protected defaultResource = computed(() => this.personEditStore.defaultResource());
-  protected tags = computed(() => this.personEditStore.getTags());
-  protected tenantId = computed(() => this.personEditStore.tenantId());
-  protected genders = computed(() => this.personEditStore.appStore.getCategory('gender'));
-  protected listId = computed(() => 'p_' + this.personEditStore.person()?.bkey);
+  protected priv = computed(() => this.store.privacySettings());
+  protected currentUser = computed(() => this.store.currentUser());
+  protected person = computed(() => this.store.person());
+  protected defaultResource = computed(() => this.store.defaultResource());
+  protected tags = computed(() => this.store.getTags());
+  protected tenantId = computed(() => this.store.tenantId());
+  protected genders = computed(() => this.store.appStore.getCategory('gender'));
+  protected listId = computed(() => 'p_' + this.store.person()?.bkey);
   protected hideAddButton = computed(() => {
     if (this.hasRole('resourceAdmin')) return false;
     return this.isReadOnly();
@@ -122,14 +121,14 @@ export class PersonEditPage implements ViewWillEnter   {
    * Lifecycle hook that is called when the view is about to enter and become the active page.
    */
   ionViewWillEnter() {
-    this.personEditStore.setPersonKey(this.personKey());
+    this.store.setPersonKey(this.personKey());
   }
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     const person = this.formData();
     if (!person) return;
-    await this.personEditStore.save(person);
+    await this.store.save(person);
   }
 
   public async cancel(): Promise<void> {
@@ -154,7 +153,7 @@ export class PersonEditPage implements ViewWillEnter   {
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   public async onImageSelected(photo: Photo): Promise<void> {
-    await this.personEditStore.saveAvatar(photo);
+    await this.store.saveAvatar(photo);
   }
 
   /******************************* helpers *************************************** */

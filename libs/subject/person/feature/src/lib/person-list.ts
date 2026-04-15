@@ -8,12 +8,12 @@ import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
+import { SIZE_MD } from '@bk2/shared-constants';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
 
-import { PersonListStore } from './person-list.store';
-import { SIZE_MD } from '@bk2/shared-constants';
+import { PersonStore } from './person.store';
 
 @Component({
   selector: 'bk-person-list',
@@ -25,7 +25,7 @@ import { SIZE_MD } from '@bk2/shared-constants';
     IonLabel, IonContent, IonItem, IonPopover,
     IonAvatar, IonImg, IonList
   ],
-  providers: [PersonListStore],
+  providers: [PersonStore],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
   `],
@@ -102,7 +102,7 @@ import { SIZE_MD } from '@bk2/shared-constants';
     `
 })
 export class PersonList {
-  protected readonly personListStore = inject(PersonListStore);
+  protected readonly store = inject(PersonStore);
   private readonly actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -110,42 +110,42 @@ export class PersonList {
   public readonly contextMenuName = input.required<string>();
 
   // derived signals
-  protected personsCount = computed(() => this.personListStore.personsCount());
-  protected filteredPersons = computed(() => this.personListStore.filteredPersons() ?? []);
+  protected personsCount = computed(() => this.store.personsCount());
+  protected filteredPersons = computed(() => this.store.filteredPersons() ?? []);
   protected filteredPersonsCount = computed(() => this.filteredPersons().length);
-  protected isLoading = computed(() => this.personListStore.isLoading());
-  protected readonly tags = computed(() => this.personListStore.getTags());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected readonly tags = computed(() => this.store.getTags());
   protected readonly types = computed(() => {
-    const cat = this.personListStore.appStore.getCategory('gender');
+    const cat = this.store.appStore.getCategory('gender');
     return typeof window !== 'undefined' && window.innerWidth < SIZE_MD ? undefined : cat;
   });
-  protected readonly currentUser = computed(() => this.personListStore.appStore.currentUser());
+  protected readonly currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   private readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.personListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
   protected personModelName = PersonModelName;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.personListStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.personListStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.personListStore.setSelectedGender(type);
+    this.store.setSelectedGender(type);
   }
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.personListStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.personListStore.export('raw'); break;
-      case 'copyEmailAddresses': await this.personListStore.copyEmailAddresses(); break;
+      case 'add': await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export('raw'); break;
+      case 'copyEmailAddresses': await this.store.copyEmailAddresses(); break;
       default: error(undefined, `PersonListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -168,7 +168,7 @@ export class PersonList {
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> {    
     if (hasRole('registered', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
-      if (await this.personListStore.isPersonUser(person.bkey)) {
+      if (await this.store.isPersonUser(person.bkey)) {
         actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.imgixBaseUrl, 'chatbubbles'));
       }
       if (person.favEmail) {
@@ -214,31 +214,31 @@ export class PersonList {
       if (!data) return;
       switch (data.action) {
         case 'person.view':
-          await this.personListStore.edit(person, true);
+          await this.store.edit(person, true);
           break;
         case 'person.chat':
-          await this.personListStore.chat(person);
+          await this.store.chat(person);
           break;
         case 'person.copyemail':
-          await this.personListStore.copy(person.favEmail, '@subject.person.operation.copy.email.conf');
+          await this.store.copy(person.favEmail, '@subject.person.operation.copy.email.conf');
           break;
         case 'person.copyphone':
-          await this.personListStore.copy(person.favPhone, '@subject.person.operation.copy.phone.conf');
+          await this.store.copy(person.favPhone, '@subject.person.operation.copy.phone.conf');
           break;
         case 'person.sendemail':
-          await this.personListStore.sendEmail(person.favEmail);
+          await this.store.sendEmail(person.favEmail);
           break;
         case 'person.call':
-          await this.personListStore.call(person.favPhone);
+          await this.store.call(person.favPhone);
           break;
         case 'person.delete':
-          await this.personListStore.delete(person, this.readOnly());
+          await this.store.delete(person, this.readOnly());
           break;
         case 'person.show':
-          await this.personListStore.showOnMap(person);
+          await this.store.showOnMap(person);
           break;
         case 'person.edit':
-          await this.personListStore.edit(person, this.readOnly());
+          await this.store.edit(person, this.readOnly());
           break;
       }
     }
