@@ -1,8 +1,8 @@
-import { Component, effect, inject, input, output } from '@angular/core';
+import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAvatar, IonIcon, IonImg, IonItem, IonLabel, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { ColorsIonic } from '@bk2/shared-categories';
+import { ColorsIonic, getCategoryStringField } from '@bk2/shared-categories';
 import { ColorIonic } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 
@@ -25,7 +25,7 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
     `,
   ],
   template: `
-    <ion-toolbar>
+    <ion-toolbar color="{{colorName()}}">
       <ion-avatar (click)="editImage()">
         <ion-img [src]="avatarToolbarStore.url()" [alt]="alt()" />
         @if(readOnly() === false) {
@@ -34,12 +34,12 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
       </ion-avatar>
 
       @if(title()) {
-        <ion-item lines="none">
+        <ion-item lines="none" color="{{colorName()}}">
           <ion-title (click)="avatarToolbarStore.showZoomedImage()">{{ title() }}</ion-title>
         </ion-item>
       }
       @if(subTitle(); as subTitle) {
-        <ion-item lines="none">
+        <ion-item lines="none" color="{{colorName()}}">
           @if(subTitle.startsWith('tel:')) {
             <ion-label><small><a href="{{ subTitle }}">{{ subTitle.substring(4) }}</a></small></ion-label>
           } @else if(subTitle.startsWith('mailto:')) {
@@ -55,6 +55,7 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
 export class AvatarToolbarComponent {
   protected avatarToolbarStore = inject(AvatarToolbarStore);
 
+  // inputs
   public key = input.required<string>(); // = ModelType.ModelKey e.g. person.1asdfölj
   public readOnly = input(true);
   public alt = input('Avatar');
@@ -63,9 +64,15 @@ export class AvatarToolbarComponent {
   public subTitle = input<string | undefined>(); // if subTitle starts with tel: or mailto: a href link is created
   public modelType = input.required<'person' | 'org' | 'group'>();
 
+  // signals
   public imageSelected = output<Photo>();
 
+  // computed
+  protected colorName = computed(() => getCategoryStringField(ColorsIonic, this.color(), 'name') );
+
+  // constants
   protected colorsIonic = ColorsIonic;
+
 
   constructor() {
     effect(() => {
