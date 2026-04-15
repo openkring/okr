@@ -1,8 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, input, signal, viewChild } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { IMAGE_STYLE_SHAPE, SliderSection } from '@bk2/shared-models';
 import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+
 
 /**
  * We are building a slider with pure html and css.
@@ -47,28 +48,31 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
     }
 
     .carousel-slide {
+    position: relative;
     flex: 0 0 100%;
     scroll-snap-align: center;
+    overflow: hidden;
+    border-radius: 8px;
+    aspect-ratio: 16 / 9;
 
     /* SCROLL-STATE: Enable snapped detection for this slide */
     container-type: scroll-state;
     container-name: slide;
     }
 
-    .carousel-slide img {
-    width: 100%;
-    height: 300px;
-    object-fit: cover;
-    border-radius: 8px;
+    /* bk-img is the host element — reachable from parent CSS unlike the img inside it.
+       position: absolute + inset: 0 fills the slide reliably without a height: 100% chain. */
+    .carousel-slide bk-img {
+    position: absolute;
+    inset: 0;
     display: block;
-
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease, scale 0.3s ease;
     opacity: 0.5;
-    scale: 0.75;
+    scale: 0.95;
     }
 
     @container slide scroll-state(snapped: x) {
-    .carousel-slide img {
+    .carousel-slide bk-img {
         opacity: 1;
         scale: 1;
     }
@@ -141,10 +145,10 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
         <bk-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content background="black">
             <div class="carousel-container">
-                <div class="carousel">
+                <div class="carousel" #carouselEl>
                     @for(image of images(); track image.url) {
                         <div class="carousel-slide">
-                            <bk-img [image]="image" [imageStyle]="imageStyle()"  />
+                            <bk-img [image]="image" [imageStyle]="carouselImageStyle()" />
                         </div>
                     }
                 </div>
@@ -156,15 +160,48 @@ import { ImageComponent, OptionalCardHeaderComponent, SpinnerComponent } from '@
     }
   `
 })
-export class SliderSectionComponent {
+export class SliderSectionComponent implements AfterViewInit, OnDestroy {
 
   // inputs
   public section = input<SliderSection>();
   public editMode = input(false);
 
+  private readonly carouselEl = viewChild<ElementRef>('carouselEl');
+  private readonly containerWidth = signal(800); // fallback until measured
+  private resizeObserver?: ResizeObserver;
+
+  public ngAfterViewInit(): void {
+    const el = this.carouselEl()?.nativeElement;
+    if (!el) return;
+    this.resizeObserver = new ResizeObserver(([entry]) => {
+      const w = Math.round(entry.contentRect.width);
+      if (w > 0) this.containerWidth.set(w);
+    });
+    this.resizeObserver.observe(el);
+  }
+
+  public ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+  }
+
   // derived signals
   protected images = computed(() => this.section()?.properties.images ?? []);
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
   protected readonly title = computed(() => this.section()?.title);
-  protected readonly subTitle = computed(() => this.section()?.subTitle);  
+  protected readonly subTitle = computed(() => this.section()?.subTitle);
+
+  // Passes the measured container width to imgix for optimal srcset generation.
+  // Height is intentionally '100%' — the visual height is controlled by the
+  // CSS aspect-ratio: 16/9 on .carousel-slide, so the container shrinks/grows
+  // responsively without any fixed pixel height.
+  protected carouselImageStyle = computed(() => {
+    const w = this.containerWidth();
+    return {
+      ...this.imageStyle(),
+      width: String(w),
+      height: '100%',
+      fill: true,
+      sizes: '100vw',
+    };
+  });
 }
