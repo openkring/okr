@@ -1,0 +1,119 @@
+import { inject, Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+import { ENV } from '@bk2/shared-config';
+import { FirestoreService } from '@bk2/shared-data-access';
+import { CategoryListModel, MembershipModel, ScsMemberFeesCollection, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
+import { getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, DateFormat } from '@bk2/shared-util-core';
+import { ActivityService } from '@bk2/activity-data-access';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ScsMemberFeeService {
+  private readonly env = inject(ENV);
+  private readonly firestoreService = inject(FirestoreService);
+  private readonly activityService = inject(ActivityService);
+
+  public list(): Observable<ScsMemberFeesModel[]> {
+    return this.firestoreService.searchData<ScsMemberFeesModel>(
+      ScsMemberFeesCollection,
+      getSystemQuery(this.env.tenantId),
+      'index',
+      'asc'
+    );
+  }
+
+  public async save(fee: ScsMemberFeesModel, currentUser?: UserModel): Promise<string | undefined> {
+    if (fee.bkey && fee.bkey.length > 0) {
+      const key = await this.firestoreService.updateModel<ScsMemberFeesModel>(
+        ScsMemberFeesCollection, fee, false, '@finance.scsMemberFee.operation.update', currentUser
+      );
+      void this.activityService.log('scs-member-fee', 'update', currentUser, fee.index);
+      return key;
+    } else {
+      const key = await this.firestoreService.createModel<ScsMemberFeesModel>(
+        ScsMemberFeesCollection, fee, '@finance.scsMemberFee.operation.create', currentUser
+      );
+      void this.activityService.log('scs-member-fee', 'create', currentUser, fee.index);
+      return key;
+    }
+  }
+
+  public async delete(fee: ScsMemberFeesModel, currentUser?: UserModel): Promise<void> {
+    await this.firestoreService.deleteModel<ScsMemberFeesModel>(
+      ScsMemberFeesCollection, fee, '@finance.scsMemberFee.operation.delete', currentUser
+    );
+    void this.activityService.log('scs-member-fee', 'delete', currentUser, fee.index);
+  }
+}
+
+/**
+ * Convert a MembershipModel into a ScsMemberFeesModel using the given category lists,
+ * locker ownership information, and current year.
+ */
+export function convertMembershipToFee(
+  membership: MembershipModel,
+  srvMembership: MembershipModel | undefined,
+  hasLocker: boolean,
+  mcatScs: CategoryListModel | undefined,
+  mcatSrv: CategoryListModel | undefined,
+  currentYear: string,
+  tenantId: string
+): ScsMemberFeesModel {
+  const fee = new ScsMemberFeesModel(tenantId);
+
+  fee.tenants = membership.tenants;
+  fee.isArchived = membership.isArchived;
+  fee.index = membership.index;
+  fee.tags = membership.tags;
+  fee.notes = membership.notes;
+
+  fee.member = {
+    key: membership.memberKey,
+    name1: membership.memberName1,
+    name2: membership.memberName2,
+    modelType: membership.memberModelType,
+    type: membership.memberType,
+    subType: '',
+    label: getFullName(membership.memberName1, membership.memberName2),
+  };
+  fee.memberDateOfBirth = membership.memberDateOfBirth;
+  fee.memberBexioId = membership.memberBexioId;
+  fee.dateOfEntry = membership.dateOfEntry;
+  fee.category = membership.category;
+  fee.rebate = membership.rebate ?? 0;
+  fee.rebateReason = membership.rebateReason ?? '';
+
+  fee.jb = mcatScs ? (getCategoryAttribute(mcatScs, membership.category, 'price') as number || 0) : 0;
+  fee.srv = (srvMembership && mcatSrv)
+    ? (getCategoryAttribute(mcatSrv, srvMembership.category, 'price') as number || 0)
+    : 0;
+  fee.bev = 0;
+  fee.entryFee = membership.dateOfEntry.startsWith(currentYear) ? 750 : 0;
+  fee.locker = hasLocker ? 20 : 0;
+  fee.hallenTraining = 0;
+  fee.skiff = 0;
+  fee.skiffInsurance = 0;
+
+  fee.state = 'initial';
+  return fee;
+}
+
+export function getFeeTotal(fee: ScsMemberFeesModel): number {
+  return ((fee.jb ?? 0) + 
+    (fee.srv ?? 0) + 
+    (fee.bev ?? 0) + 
+    (fee.entryFee ?? 0) + 
+    (fee.locker ?? 0) + 
+    (fee.hallenTraining ?? 0) + 
+    (fee.skiff ?? 0) + 
+    (fee.skiffInsurance ?? 0) - 
+    (fee.rebate ?? 0));
+}
+
+export function getFeeIndex(fee: ScsMemberFeesModel): string {
+  return fee.member
+    ? `n:${fee.member.name2} n:${fee.member.name1}`
+    : getTodayStr(DateFormat.StoreDate);
+}

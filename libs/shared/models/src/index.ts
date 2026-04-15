@@ -30,6 +30,7 @@ export * from './lib/image.shapes';
 export * from './lib/invitation.model';
 export * from './lib/invoice-position.model';
 export * from './lib/invoice.model';
+export * from './lib/scs-member-fee.model';
 export * from './lib/location.model';
 export * from './lib/log-info.model';
 export * from './lib/membership.model';

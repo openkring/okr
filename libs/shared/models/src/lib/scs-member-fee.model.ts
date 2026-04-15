@@ -1,4 +1,4 @@
-import { DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_MSTATE, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
+import { DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@bk2/shared-constants';
 import { BkModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarInfo } from './avatar-info';
 
@@ -39,7 +39,7 @@ export class ScsMemberFeesModel implements BkModel, SearchableModel, TaggedModel
   }
 }
 
-export const ScsMemberFeesCollection = 'scs-member-fee';
+export const ScsMemberFeesCollection = 'scs-memberfees';
 export const ScsMemberFeesModelName = 'scs-member-fee';
 
 export type INVOICE_STATE = 'initial' | 'review' | 'ready' | 'uploaded' | 'sent';

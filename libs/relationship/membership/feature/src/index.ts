@@ -1,3 +1,6 @@
+export * from './lib/scs-member-fees-list';
+export * from './lib/scs-member-fee-edit.modal';
+export * from './lib/scs-member-fees.store';
 export * from './lib/members-accordion.component';
 export * from './lib/members.component';
 export * from './lib/membership-category-change.modal';
