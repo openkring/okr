@@ -31,6 +31,8 @@ export class ScsMemberFeesModel implements BkModel, SearchableModel, TaggedModel
   public skiffInsurance = 0;
   public rebate = 0;
   public rebateReason = '';
+  public templateId = '';
+  public invoiceBexioId = '';
 
   public state: INVOICE_STATE = 'initial';
 

@@ -434,13 +434,14 @@ export const createBexioInvoice = onCall(
     const defaultTaxId = parseInt(bexioDefaultTaxId.value(), 10);
     const bexioPositions: BexioKbPosition[] = positions.map(p => ({
       type: 'KbPositionCustom',
-      amount: p.amount ?? '1',
-      unit_price: p.unit_price,
+      amount: String(p.amount ?? 1),
+      unit_price: String(p.unit_price),
       account_id: p.account_id,
       tax_id: defaultTaxId,
       text: p.text,
       discount_in_percent: '0',
     }));
+    logger.info(`${CF_NAME}: positions: ${JSON.stringify(bexioPositions)}`);
 
     logger.info(`${CF_NAME}: creating invoice "${title}" for contact ${bexioId}`);
 

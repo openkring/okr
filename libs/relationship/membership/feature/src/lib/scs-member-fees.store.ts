@@ -15,8 +15,9 @@ import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getSyste
 
 import { ActivityService } from '@bk2/activity-data-access';
 
-import { ScsMemberFeeService, convertMembershipToFee, getFeeTotal } from '@bk2/relationship-membership-data-access';
+import { ScsMemberFeeService, convertMembershipToFee, getFeeTotal, getTemplateId } from '@bk2/relationship-membership-data-access';
 import { MembershipEditModalComponent } from './membership-edit.modal';
+import { ScsMemberFeeInvoiceIdModal } from './scs-member-fee-invoice-id.modal';
 import { ScsMemberFeeUploadModal } from './scs-member-fee-upload.modal';
 import { ScsMemberFeesTotalsModal } from './scs-member-fees-totals.modal';
 import { ExportFormats } from '@bk2/shared-categories';
@@ -178,7 +179,6 @@ export const _ScsMemberFeesStore = signalStore(
           lockerKeys.has(membership.memberKey),
           mcatScs,
           mcatSrv,
-          currentYear,
           tenantId
         );
       });
@@ -238,7 +238,6 @@ export const _ScsMemberFeesStore = signalStore(
       const confirmed = await confirm(state.alertController, '@finance.scsMemberFee.operation.generate.confirm', true);
       if (!confirmed) return;
 
-      const currentYear = getTodayStr(DateFormat.Year);
       const tenantId = state.tenantId();
       const srvMap = state.srvMembershipsByKey();
       const lockerKeys = state.lockerOwnerKeys();
@@ -255,7 +254,6 @@ export const _ScsMemberFeesStore = signalStore(
             lockerKeys.has(m.memberKey),
             mcatScs,
             mcatSrv,
-            currentYear,
             tenantId
           );
           return state.scsMemberFeeService.save(fee, currentUser, false);
@@ -331,6 +329,9 @@ export const _ScsMemberFeesStore = signalStore(
       }
 
       const positions = buildBexioPositions(fee);
+      if (fee.templateId?.length === 0) {
+          fee.templateId = getTemplateId(fee.category);
+      }
       const modal = await state.modalController.create({
         component: ScsMemberFeeUploadModal,
         componentProps: { fee, positions },
@@ -344,19 +345,21 @@ export const _ScsMemberFeesStore = signalStore(
         bexioId: string;
         header?: string;
         footer?: string;
+        template_slug: string;
         positions?: { text: string; unit_price: number; account_id: number; amount: number }[];
       }, { id: string }>(state.functions, 'createBexioInvoice');
 
-      await fn({
+      const result = await fn({
         title: `Jahresbeitrag ${getYear()}`,
         bexioId: fee.memberBexioId,
         header: data.header,
         footer: data.footer,
+        template_slug: fee.templateId,
         positions,
       });
 
-      // Mark as uploaded
-      const updated: ScsMemberFeesModel = { ...fee, state: 'uploaded' };
+      // Mark as uploaded and store the Bexio invoice ID
+      const updated: ScsMemberFeesModel = { ...fee, state: 'uploaded', invoiceBexioId: String(result.data.id) };
       await state.scsMemberFeeService.save(updated, state.appStore.currentUser() ?? undefined);
       patchState(state, { version: state.version() + 1 });
       await showToast(state.toastController, '@finance.scsMemberFee.operation.upload.conf');
@@ -364,13 +367,30 @@ export const _ScsMemberFeesStore = signalStore(
 
     /**
      * Download a Bexio invoice PDF for a fee record.
+     * If invoiceBexioId is not yet stored, prompts the user to enter it and persists it first.
      */
     async downloadPdf(fee: ScsMemberFeesModel): Promise<void> {
+      let invoiceBexioId = fee.invoiceBexioId;
+
+      if (!invoiceBexioId) {
+        const modal = await state.modalController.create({
+          component: ScsMemberFeeInvoiceIdModal,
+          componentProps: { fee },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<{ invoiceId: string }>();
+        if (role !== 'confirm' || !data?.invoiceId) return;
+        invoiceBexioId = data.invoiceId;
+        const updated: ScsMemberFeesModel = { ...fee, invoiceBexioId };
+        await state.scsMemberFeeService.save(updated, state.appStore.currentUser() ?? undefined);
+        patchState(state, { version: state.version() + 1 });
+      }
+
       const fn = httpsCallable<{ invoiceId: string }, { content: string }>(
         state.functions, 'showInvoicePdf'
       );
       const memberName = `${fee.member?.name2 ?? ''}_${fee.member?.name1 ?? ''}`;
-      const result = await fn({ invoiceId: fee.bkey });
+      const result = await fn({ invoiceId: invoiceBexioId });
       const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
       const blob = new Blob([bytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -437,7 +457,7 @@ function buildBexioPositions(fee: ScsMemberFeesModel): { text: string; unit_pric
   addPos('Miete Garderobenkasten', fee.locker, 286);
   addPos('Hallentraining', fee.hallenTraining, 289);
   addPos('Miete Skiff Lagerplatz', fee.skiff, 286);
-  addPos('Anteil Skiff-Versicherung', fee.skiffInsurance, 231);
+  addPos('Anteil Skiff-Versicherung', fee.skiffInsurance, 165);
   if (fee.rebate > 0) addPos(`Rabatt (${fee.rebateReason})`, -fee.rebate, 159);
   return positions;
 }

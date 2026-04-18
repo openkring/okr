@@ -135,3 +135,23 @@ export function getAccountDescription(accountId: number): string {
   const account = _accountById.get(accountId);
   return account ? `${account.account_no} / ${account.name}` : String(accountId);
 }
+
+
+/**
+ * 
+ * This is a workaround to be able to quickly deploy the templates.
+ * tbd: these template need to be loaded dynamically from Bexio with https://api.bexio.com/3.0/document_templates
+ */
+
+export interface InvoiceTemplate {
+  id: string;
+  name: string;
+}
+
+export const BEXIO_INVOICE_TEMPLATES: InvoiceTemplate[] = [
+  { id: '609fa0a8a2ed2b15522c02b8', name: 'JB Aktive' },
+  { id: '67ffdf3eb355821a4d0666c5', name: 'JB Aktive - rechts' },
+  { id: '609fa0950083f217027adbc1', name: 'JB Passive' },
+  { id: '67ffdf72eed4ea21dd062435', name: 'JB Passive - rechts' },
+  { id: '5d5c1ae303cf22a15f8b456b', name: 'Standardrechnung' }
+];

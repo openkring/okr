@@ -6,6 +6,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { CategoryListModel, MembershipModel, ScsMemberFeesCollection, ScsMemberFeesModel, UserModel } from '@bk2/shared-models';
 import { getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, DateFormat, getYear } from '@bk2/shared-util-core';
 import { ActivityService } from '@bk2/activity-data-access';
+import { BEXIO_INVOICE_TEMPLATES } from '@bk2/relationship-membership-util';
 
 @Injectable({
   providedIn: 'root'
@@ -60,7 +61,6 @@ export function convertMembershipToFee(
   hasLocker: boolean,
   mcatScs: CategoryListModel | undefined,
   mcatSrv: CategoryListModel | undefined,
-  currentYear: string,
   tenantId: string
 ): ScsMemberFeesModel {
   const fee = new ScsMemberFeesModel(tenantId);
@@ -70,6 +70,7 @@ export function convertMembershipToFee(
   fee.index = membership.index;
   fee.tags = membership.tags;
   fee.notes = membership.notes;
+  fee.templateId = getTemplateId(membership.category);
 
   fee.member = {
     key: membership.memberKey,
@@ -100,6 +101,15 @@ export function convertMembershipToFee(
 
   fee.state = 'initial';
   return fee;
+}
+
+// tbd: this is a hardcoded interim workaround. It should be replaced with a user selection and dynamic template download from Bexio
+export function getTemplateId(mcat: string): string {
+  if (mcat === 'passive') {
+    return BEXIO_INVOICE_TEMPLATES[3].id;
+  } else {
+    return BEXIO_INVOICE_TEMPLATES[1].id;
+  }
 }
 
 export function getEntryFee(membership: MembershipModel): number {
