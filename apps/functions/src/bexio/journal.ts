@@ -38,10 +38,24 @@ async function fetchBexioJournalEntries(apiKey: string): Promise<BexioJournalEnt
   return all;
 }
 
+/** Load all AccountModel documents from Firestore and return a map of bkey → account number (id field). */
+async function loadAccountNumberMap(db: admin.firestore.Firestore): Promise<Map<string, string>> {
+  const snap = await db.collection('accounts').get();
+  const map = new Map<string, string>();
+  for (const doc of snap.docs) {
+    const accountNo = doc.data()?.['id'];
+    if (accountNo) map.set(doc.id, String(accountNo));
+  }
+  logger.info(`loadAccountNumberMap: loaded ${map.size} accounts`);
+  return map;
+}
+
 /** Write journal entries to Firestore in chunks and update the sync pointer. */
 async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: string, nowStr: string): Promise<void> {
   const db = admin.firestore();
   const BATCH_SIZE = 100; // keep well under Firestore's 10 MiB commit limit
+
+  const accountMap = await loadAccountNumberMap(db);
 
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
     const chunk = entries.slice(i, i + BATCH_SIZE);
@@ -49,6 +63,12 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
     for (const entry of chunk) {
       const bkey = String(entry.id);
       const amountCents = Math.round(parseFloat(entry.amount) * 100);
+      const debitAccount = entry.debit_account_id != null
+        ? (accountMap.get(String(entry.debit_account_id)) ?? String(entry.debit_account_id))
+        : '';
+      const creditAccount = entry.credit_account_id != null
+        ? (accountMap.get(String(entry.credit_account_id)) ?? String(entry.credit_account_id))
+        : '';
       const doc: Record<string, unknown> = {
         tenants: [tenantId],
         isArchived: false,
@@ -57,11 +77,11 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
         notes: '',
         title: entry.description ?? '',
         date: toStoreDate(entry.date),
-        debitAccount: entry.debit_account_id != null ? String(entry.debit_account_id) : '',
-        creditAccount: entry.credit_account_id != null ? String(entry.credit_account_id) : '',
+        debitAccount,
+        creditAccount,
         totalAmount: { amount: amountCents, currency: 'CHF', periodicity: 'one-time' },
       };
-      doc.index = 'd:' + doc.date + ' a:' + (amountCents / 100).toFixed(2) + ' ' + doc.debitAccount + '/' + doc.creditAccount;
+      doc.index = 'd:' + doc.date + ' a:' + (amountCents / 100).toFixed(2) + ' ' + debitAccount + '/' + creditAccount;
 
       batch.set(db.collection('journallogs').doc(bkey), doc, { merge: true });
     }
