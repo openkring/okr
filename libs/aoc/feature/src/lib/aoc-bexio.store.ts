@@ -664,6 +664,60 @@ export const AocBexioStore = signalStore(
       return result.data;
     },
 
+    async syncAccounts(): Promise<{ groups: number; accounts: number }> {
+      const functions = getFunctions(getApp(), 'europe-west6');
+      if (store.appStore.env.useEmulators) {
+        connectFunctionsEmulator(functions, 'localhost', 5001);
+      }
+      const fn = httpsCallable<void, { groups: number; accounts: number }>(functions, 'syncBexioAccounts');
+      const result = await fn();
+      return result.data;
+    },
+
+    async clearAccountTree(rootName: string): Promise<number> {
+      if (!rootName.trim() || !isFirestoreInitializedCheck()) return 0;
+      const tenantId = store.appStore.env.tenantId;
+      const db = getFirestore(getApp());
+
+      // 1. Find the root document by name + type
+      const rootSnap = await getDocs(query(
+        collection(db, 'accounts'),
+        where('tenants', 'array-contains', tenantId),
+        where('name', '==', rootName.trim()),
+        where('type', '==', 'root')
+      ));
+      if (rootSnap.empty) return 0;
+      const rootBkey = rootSnap.docs[0].id;
+
+      // 2. BFS to collect all bkeys in the tree
+      const allBkeys: string[] = [rootBkey];
+      const frontier: string[] = [rootBkey];
+      while (frontier.length > 0) {
+        // Firestore 'in' supports max 30 values per query
+        const chunk = frontier.splice(0, 30);
+        const childSnap = await getDocs(query(
+          collection(db, 'accounts'),
+          where('tenants', 'array-contains', tenantId),
+          where('parentId', 'in', chunk)
+        ));
+        for (const d of childSnap.docs) {
+          allBkeys.push(d.id);
+          frontier.push(d.id);
+        }
+      }
+
+      // 3. Delete in batches of 500
+      const BATCH_SIZE = 500;
+      for (let i = 0; i < allBkeys.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db);
+        for (const bkey of allBkeys.slice(i, i + BATCH_SIZE)) {
+          batch.delete(doc(db, 'accounts', bkey));
+        }
+        await batch.commit();
+      }
+      return allBkeys.length;
+    },
+
     async linkBillVendors(): Promise<void> {
       const tenantId = store.appStore.env.tenantId;
       const persons = store.appStore.allPersons();

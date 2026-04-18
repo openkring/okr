@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -18,7 +18,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
     AsyncPipe, TranslatePipe, SvgIconPipe,
     HeaderComponent, AvatarLabelComponent,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonCheckbox,
+    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonCheckbox, IonInput,
     IonCardSubtitle
 ],
   providers: [AocBexioStore],
@@ -144,6 +144,64 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 </ion-col>
               </ion-row>
             }
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Accounts</ion-card-title>
+          <ion-card-subtitle>Download Kontogruppen und Konten aus Bexio als hierarchische AccountModel-Struktur in die Firestore-Collection 'accounts'.</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="9">
+                @if(accountSyncResult()) {
+                  {{ accountSyncResult() }}
+                } @else {
+                  Kontogruppen und Konten aus Bexio herunterladen und als Baum speichern.
+                }
+              </ion-col>
+              <ion-col size="3">
+                <ion-button (click)="syncAccounts()" [disabled]="isSyncingAccounts()">
+                  @if(isSyncingAccounts()) {
+                    <ion-spinner name="crescent" slot="start" />
+                  } @else {
+                    <ion-icon src="{{ 'sync' | svgIcon }}" slot="start" />
+                  }
+                  Sync accounts
+                </ion-button>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  <ion-input
+                    label="Root-Name"
+                    labelPlacement="floating"
+                    placeholder="z.B. bexio"
+                    [value]="clearRootName()"
+                    (ionInput)="clearRootName.set($any($event.detail.value))"
+                  />
+                </ion-item>
+              </ion-col>
+              <ion-col size="3" class="ion-align-self-center">
+                <ion-button color="danger" (click)="clearAccountTree()" [disabled]="isClearingAccounts() || !clearRootName()">
+                  @if(isClearingAccounts()) {
+                    <ion-spinner name="crescent" slot="start" />
+                  } @else {
+                    <ion-icon src="{{ 'trash' | svgIcon }}" slot="start" />
+                  }
+                  Clear tree
+                </ion-button>
+              </ion-col>
+              @if(clearAccountResult()) {
+                <ion-col size="3" class="ion-align-self-center">
+                  <ion-label>{{ clearAccountResult() }}</ion-label>
+                </ion-col>
+              }
+            </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
@@ -345,6 +403,11 @@ export class AocBexio implements OnInit {
   protected billSyncResult = signal('');
   protected isSyncingJournal = signal(false);
   protected journalSyncResult = signal('');
+  protected isSyncingAccounts = signal(false);
+  protected accountSyncResult = signal('');
+  protected isClearingAccounts = signal(false);
+  protected clearAccountResult = signal('');
+  protected clearRootName = signal('');
 
   public ngOnInit(): void {
     this.store.loadInvoiceStats();
@@ -425,6 +488,28 @@ export class AocBexio implements OnInit {
       await this.store.linkInvoiceReceivers();
     } finally {
       this.isLinking.set(false);
+    }
+  }
+
+  protected async syncAccounts(): Promise<void> {
+    this.isSyncingAccounts.set(true);
+    this.accountSyncResult.set('');
+    try {
+      const result = await this.store.syncAccounts();
+      this.accountSyncResult.set(`Downloaded ${result.groups} groups and ${result.accounts} accounts.`);
+    } finally {
+      this.isSyncingAccounts.set(false);
+    }
+  }
+
+  protected async clearAccountTree(): Promise<void> {
+    this.isClearingAccounts.set(true);
+    this.clearAccountResult.set('');
+    try {
+      const count = await this.store.clearAccountTree(this.clearRootName());
+      this.clearAccountResult.set(count > 0 ? `Deleted ${count} documents.` : 'Root not found.');
+    } finally {
+      this.isClearingAccounts.set(false);
     }
   }
 

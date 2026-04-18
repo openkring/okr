@@ -36,6 +36,7 @@
         "bundle": true,
         "thirdParty": true,
         "skipTypeCheck": true,
+        "declaration": false,
         "format": ["cjs"],
         "platform": "node",
         "external": [
