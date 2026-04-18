@@ -40,6 +40,13 @@ Run `pnpm nx show project <project>` to see all available targets for a project.
 
 When making changes to TypeScript files, always run `npx tsc --noEmit` or the project's build command after edits to catch type errors immediately. Do not consider a task done until it compiles cleanly.
 
+**CRITICAL — type-checking vs. building:**
+
+- Type-check with `npx tsc --noEmit -p libs/<domain>/<layer>/tsconfig.json`. The `--noEmit` flag is mandatory. Never run `tsc` without it against a lib's `tsconfig.json`.
+- Build with `pnpm nx build <lib>`, which uses `tsconfig.lib.json` and writes output to `dist/`.
+- Every lib `tsconfig.json` must contain `"noEmit": true` in `compilerOptions`. This is a structural safeguard: even if `--noEmit` is accidentally omitted from the CLI, TypeScript will not emit files next to the sources. `tsconfig.lib.json` intentionally does NOT have `noEmit` — it is the only config that should ever produce output, and it writes to `dist/`.
+- If you ever see `*.d.ts`, `*.js`, or `*.js.map` files inside `libs/` or `apps/src/`, they are stale artifacts. Delete them and investigate which tsconfig is missing `"noEmit": true`.
+
 ## Architecture
 
 ### Tech Stack (non-negotiable, I will mass git revert you)

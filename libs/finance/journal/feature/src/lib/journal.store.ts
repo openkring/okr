@@ -2,12 +2,12 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
+import { map, of } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { BookingJournalModel, JournalCollection } from '@bk2/shared-models';
-import { debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { debugListLoaded, getYear, nameMatches } from '@bk2/shared-util-core';
 
 import { JournalViewModal } from './journal-view.modal';
 
@@ -18,7 +18,7 @@ export type JournalState = {
 
 const initialState: JournalState = {
   searchTerm: '',
-  selectedYear: 0, // 0 = all years
+  selectedYear: getYear(),
 };
 
 export const JournalStore = signalStore(
@@ -30,40 +30,45 @@ export const JournalStore = signalStore(
   })),
 
   withProps((store) => ({
-    allJournalResource: rxResource({
+    journalResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),
+        tenantId: store.appStore.tenantId(),
+        selectedYear: store.selectedYear(),
       }),
       stream: ({ params }) => {
         if (!params.currentUser) return of([]);
+        const { selectedYear, tenantId } = params;
+        // Use only a single-field date range — avoids requiring a composite Firestore index.
+        // tenants + isArchived are filtered in-memory on the small per-year result set.
+        const yearStr = String(selectedYear);
+        const nextYearStr = String(selectedYear + 1);
+        const query = [
+          { key: 'date', operator: '>=', value: yearStr },
+          { key: 'date', operator: '<',  value: nextYearStr },
+        ];
         return store.firestoreService.searchData<BookingJournalModel>(
           JournalCollection,
-          getSystemQuery(store.appStore.tenantId()),
+          query,
           'date',
           'desc'
-        ).pipe(debugListLoaded('JournalStore.allJournal', params.currentUser));
+        ).pipe(
+          map(entries => entries.filter(e => !e.isArchived && e.tenants?.includes(tenantId))),
+          debugListLoaded('JournalStore.journal', params.currentUser)
+        );
       },
     }),
   })),
 
   withComputed((store) => ({
-    isLoading: computed(() => store.allJournalResource.isLoading()),
+    isLoading: computed(() => store.journalResource.isLoading()),
 
     filteredJournal: computed(() => {
       const searchTerm = store.searchTerm().toLowerCase();
-      const selectedYear = store.selectedYear();
-
-      let entries = store.allJournalResource.value() ?? [];
-
-      if (selectedYear > 0) {
-        const yearPrefix = String(selectedYear);
-        entries = entries.filter(e => e.date.startsWith(yearPrefix));
-      }
-
+      let entries = store.journalResource.value() ?? [];
       if (searchTerm) {
         entries = entries.filter(e => nameMatches(e.index || e.title, searchTerm));
       }
-
       return entries;
     }),
   })),
