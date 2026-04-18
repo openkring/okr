@@ -106,6 +106,50 @@ pnpm nx build scs-app --configuration production && firebase deploy --only hosti
 
 ---
 
+## CORS Setup (Cloud Functions)
+
+### Allowed origins
+
+CORS is configured in `apps/functions/src/main.ts` using the `cors` Express middleware. The following origins are whitelisted:
+
+| Origin | Purpose |
+| --- | --- |
+| `http://localhost:4200` | Local dev (default app port) |
+| `http://localhost:4201` | Local dev (alternate port, e.g. second app) |
+| `https://scs-app-54aef.web.app` | Firebase Hosting (scs-app) |
+| `https://scs-app-54aef.firebaseapp.com` | Firebase Hosting (scs-app, legacy domain) |
+| `https://bkaiser-org.web.app` | Firebase Hosting (bkaiser-org) |
+| `https://bkaiser-org.firebaseapp.com` | Firebase Hosting (bkaiser-org, legacy domain) |
+| `https://seeclub.org` | Production (seeclub) |
+| `https://bkaiser.ch` | Production (bkaiser.ch) |
+| `https://bkaiser.com` | Production (bkaiser.com) |
+| `https://bkaiser.org` | Production (bkaiser.org) |
+| `https://p13.ch` | Production (p13.ch) |
+| `https://kwa.ch` | Production (kwa.ch) |
+| `https://silcrest7.ch` | Production (silcrest7.ch) |
+
+### How callable functions handle CORS
+
+Firebase `onCall` functions (used for all Bexio, Auth, Matrix, etc. integrations) handle CORS automatically when called via the Firebase SDK (`httpsCallable`). The Express-level CORS middleware covers any additional HTTP endpoints (`onRequest`).
+
+### Diagnosing "No Access-Control-Allow-Origin" errors
+
+A CORS error on an `onCall` function almost always means one of:
+
+1. **Function not deployed** — the URL returns a 404 without any CORS headers. Deploy with `firebase deploy --only functions:<name>`.
+2. **AppCheck rejection** — `enforceAppCheck: true` causes the function to reject the preflight before setting CORS headers if the AppCheck token is missing or invalid (common in local dev against production).
+3. **Wrong origin** — the calling origin is not in the Express CORS allowlist above (only relevant for `onRequest` functions).
+
+### Adding a new allowed origin
+
+Edit the `origin` array in `apps/functions/src/main.ts`, then redeploy all functions:
+
+```sh
+firebase deploy --only functions
+```
+
+---
+
 ## Passkey Authentication (Future Consideration)
 
 Firebase Auth supports passkeys natively since late 2024 via `signInWithPasskey()` and `linkWithPasskey()` in the JS SDK (thin WebAuthn wrapper). On web, the implementation effort is moderate. The Capacitor/Ionic mobile setup adds significant complexity.
