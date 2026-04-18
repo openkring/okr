@@ -218,7 +218,8 @@ interface BexioInvoice {
 /** Convert Bexio date "YYYY-MM-DD" to StoreDate "YYYYMMDD". Returns '' for null/empty. */
 function toStoreDate(bexioDate: string | null | undefined): string {
   if (!bexioDate) return '';
-  return bexioDate.replace(/-/g, '');
+  const date = bexioDate.length > 10 ? bexioDate.substring(0, 10) : bexioDate;
+  return date.replace(/-/g, '');
 }
 
 /** Map kb_item_status_id to a human-readable state string. */
@@ -668,7 +669,7 @@ const BEXIO_BASE_V3 = 'https://api.bexio.com/3.0';
 
 interface BexioJournalEntry {
   id: number;
-  date: string | null;            // "YYYY-MM-DD"
+  date: string | null;            // YYYY-MM-DDTyy:mm:ss+hh:mm
   description: string | null;
   debit_account_id: number | null;
   credit_account_id: number | null;
@@ -715,7 +716,7 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
         tags: '',
         notes: '',
         title: entry.description ?? '',
-        date: entry.date?.substring(0, 8),
+        date: toStoreDate(entry.date),
         debitAccount: entry.debit_account_id != null ? String(entry.debit_account_id) : '',
         creditAccount: entry.credit_account_id != null ? String(entry.credit_account_id) : '',
         totalAmount: { amount: amountCents, currency: 'CHF', periodicity: 'one-time' },
