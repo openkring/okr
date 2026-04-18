@@ -6,7 +6,7 @@ import { Browser } from '@capacitor/browser';
 import { CalEventModel, EventsConfig, EventsSection } from '@bk2/shared-models';
 import { MoreButton, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe, WeekdayPipe } from '@bk2/shared-pipes';
 import { TranslatePipe } from '@bk2/shared-i18n';
 
@@ -67,7 +67,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
   `,
 })
 export class EventsSectionComponent implements OnInit {
-  protected calendarStore = inject(CalendarStore);
+  protected store = inject(CalendarStore);
   private readonly platformId = inject(PLATFORM_ID);
   private actionSheetController = inject(ActionSheetController);
 
@@ -88,14 +88,14 @@ export class EventsSectionComponent implements OnInit {
   protected readonly showUpcomingEvents = computed(() => this.config()?.showUpcomingEvents ?? true);
   protected readonly showEventTime = computed(() => this.config()?.showEventTime ?? false);
   protected readonly showEventLocation = computed(() => this.config()?.showEventLocation ?? false);
-  protected readonly calevents = computed(() => this.calendarStore.calevents());
-  private currentUser = computed(() => this.calendarStore.appStore.currentUser());
+  protected readonly calevents = computed(() => this.store.calevents());
+  private currentUser = computed(() => this.store.appStore.currentUser());
 
   protected isLoading = computed(() => false);
   //protected filteredEvents = computed(() => this.eventsStore.filteredEvents());
 
   // passing constants to the template
-  private imgixBaseUrl = this.calendarStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
    constructor() {
     effect(() => {
@@ -104,7 +104,7 @@ export class EventsSectionComponent implements OnInit {
       const showPastEvents = this.showPastEvents();
       const showUpcomingEvents = this.showUpcomingEvents();
       untracked(() => {
-        this.calendarStore.setConfig(calendarName, maxEvents, showPastEvents, showUpcomingEvents);
+        this.store.setConfig(calendarName, maxEvents, showPastEvents, showUpcomingEvents);
         debugMessage(`EventsSection(): calendarName=${calendarName}`, this.currentUser());
       });
     });
@@ -136,28 +136,22 @@ export class EventsSectionComponent implements OnInit {
   }
 
   protected getIcon(event: CalEventModel): string {
-    const state = event.isOpen ? this.calendarStore.states()[event.bkey] : this.calendarStore.invitationStates()[event.bkey];
+    const state = event.isOpen ? this.store.states()[event.bkey] : this.store.invitationStates()[event.bkey];
     return getAttendanceIcon(state);
   }
 
   protected getIconColor(event: CalEventModel): string {
-    const state = event.isOpen ? this.calendarStore.states()[event.bkey] : this.calendarStore.invitationStates()[event.bkey];
+    const state = event.isOpen ? this.store.states()[event.bkey] : this.store.invitationStates()[event.bkey];
     return getAttendanceColor(state);
   }
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
+   * we intentionally dont want to provide all operations in the dashboard widget. User should open the 
+   * full calendar list with the more button and then has access to all functionality.
    * @param calevent 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
-/*     if (this.canChange(calevent)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.imgixBaseUrl, 'add'));
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.imgixBaseUrl, 'person-add'));
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash'));
-    } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.imgixBaseUrl, 'eye-on'));
-    } */
     if (calevent.isOpen) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
       if (state !== 'accepted') {
@@ -168,7 +162,7 @@ export class EventsSectionComponent implements OnInit {
       }
     } else {  // invitation
       // get invitation for current user
-      const inv = this.calendarStore.invitations().find(inv => inv.caleventKey === calevent.bkey);
+      const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.bkey);
       if (inv) {
         if (inv.state !== 'accepted') {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
@@ -178,6 +172,7 @@ export class EventsSectionComponent implements OnInit {
         }
       }
     }
+    actionSheetOptions.buttons.push(createActionSheetDivider());
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.imgixBaseUrl, 'calendar-number'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -215,10 +210,10 @@ export class EventsSectionComponent implements OnInit {
           await this.store.invitePerson(calEvent, this.canChange(calEvent));
           break; */
         case 'calevent.subscribe':
-          await this.calendarStore.subscribe(calEvent);
+          await this.store.subscribe(calEvent);
           break;
         case 'calevent.unsubscribe':
-          await this.calendarStore.unsubscribe(calEvent);
+          await this.store.unsubscribe(calEvent);
           break;
         case 'calevent.downloadIcs':
           await this.download(calEvent.bkey);
@@ -250,12 +245,12 @@ export class EventsSectionComponent implements OnInit {
 
     // 2) group calendar: check if currentUser is admin or mainContact of the owning group
     if (calevent) {
-      const allCalendars = this.calendarStore.allCalendars();
+      const allCalendars = this.store.allCalendars();
       for (const calKey of calevent.calendars) {
         const cal = allCalendars.find(c => c.bkey === calKey);
         if (cal?.owner?.startsWith('group.')) {
           const groupKey = cal.owner.substring(6);
-          const group = this.calendarStore.appStore.getGroup(groupKey);
+          const group = this.store.appStore.getGroup(groupKey);
           if (group?.admin?.key === personKey || group?.mainContact?.key === personKey) return true;
         }
       }

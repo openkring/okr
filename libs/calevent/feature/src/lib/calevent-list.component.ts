@@ -7,8 +7,8 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { CalEventModel, RoleName } from '@bk2/shared-models';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { DateFormat, addTime, debugData, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { DateFormat, addTime, debugData, getAttendanceState, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
 import { format } from 'date-fns';
 
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
@@ -23,6 +23,8 @@ import { AvatarDisplayComponent } from '@bk2/avatar-ui';
 import { CalEventDurationPipe } from '@bk2/calevent-util';
 import { CalEventStore } from './calevent.store';
 import { Browser } from '@capacitor/browser';
+
+const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
 
 @Component({
     selector: 'bk-calevent-list',
@@ -169,8 +171,8 @@ import { Browser } from '@capacitor/browser';
           </ion-card>
         } @else {
           <ion-list lines="inset">
-            @for(event of filteredCalEvents(); track event.bkey) {
-              <ion-item (click)="showActions(event)">
+            @for(event of filteredCalEvents(); track event.bkey; let i = $index) {
+              <ion-item [id]="'calevent-' + i" (click)="showActions(event)">
                 <ion-label>{{ event | calEventDuration }}</ion-label>
                 <ion-label>{{event.name}}</ion-label>
                 <ion-label class="ion-hide-md-down">{{ event.locationKey | part:true }}</ion-label>
@@ -188,6 +190,7 @@ export class CalEventListComponent implements OnInit {
   protected readonly store = inject(CalEventStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
+  private readonly content = viewChild<IonContent>('content');
 
   // inputs
   public listId = input.required<string>();     // calendar name or all or my
@@ -213,6 +216,10 @@ export class CalEventListComponent implements OnInit {
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
   protected isListView = linkedSignal(() => this.view() === 'list');
   protected expertMode = computed(() => this.hasRole('admin'));
+  private readonly firstFutureIndex = computed(() => {
+    const today = format(new Date(), 'yyyyMMdd');
+    return this.filteredCalEvents().findIndex(e => e.startDate >= today);
+  });
 
   protected calendarEvents = computed<EventInput[]>(() => {
     return this.filteredCalEvents().map(event => {
@@ -302,15 +309,32 @@ export class CalEventListComponent implements OnInit {
   constructor() {
     effect(() => this.store.setCalendarName(this.listId()));
 
-    // When the filtered results change and we're in calendar view, navigate to
-    // the week of the first result so the user sees it immediately.
+    // List view: scroll to the first event that is today or in the future.
     effect(() => {
-      const first = this.filteredCalEvents()[0];
-      if (!first || this.isListView()) return;
-      const d = first.startDate; // stored as 'YYYYMMDD'
-      if (!d || d.length < 8) return;
-      const date = new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8));
-      this.fullCalendar()?.getApi()?.gotoDate(date);
+      const idx = this.firstFutureIndex();
+      if (!this.isListView() || this.isLoading() || idx < 0) return;
+      if (!isPlatformBrowser(this.platformId)) return;
+      setTimeout(() => {
+        document.getElementById(`calevent-${idx}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    });
+
+    // Calendar view: start at today for the current year; jump to first event when a past/future year is selected.
+    effect(() => {
+      const year = this.store.selectedYear();
+      const events = this.filteredCalEvents();
+      if (this.isListView() || this.isLoading()) return;
+      const currentYear = new Date().getFullYear();
+      if (year === currentYear) {
+        this.fullCalendar()?.getApi()?.today();
+      } else {
+        const first = events[0];
+        if (!first) return;
+        const d = first.startDate;
+        if (!d || d.length < 8) return;
+        const date = new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8));
+        this.fullCalendar()?.getApi()?.gotoDate(date);
+      }
     });
   }
 
@@ -420,22 +444,47 @@ export class CalEventListComponent implements OnInit {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param calEvent 
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): void {
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
-    if (!calEvent.isOpen && this.store.isGroupCalevent(calEvent)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.imgixBaseUrl, 'add'));
-    }
-    if (!calEvent.isOpen) {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
+    if (calevent.isOpen) {
+      const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
+      if (state !== 'accepted') {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
+      }
+      if (state !== 'declined') {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.imgixBaseUrl, 'cancel'));
+      }
+    } else {  // invitation
+      // get invitation for current user
+      const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.bkey);
+      if (inv) {
+        if (inv.state !== 'accepted') {
+          actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.imgixBaseUrl, 'checkbox-circle'));
+        }
+        if (inv.state !== 'declined') {
+          actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.imgixBaseUrl, 'cancel'));
+        }
+      }
+      if (this.store.isGroupCalevent(calevent)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.imgixBaseUrl, 'add'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.imgixBaseUrl, 'person-add'));
     }
+    actionSheetOptions.buttons.push(createActionSheetDivider());
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.imgixBaseUrl, 'calendar-number'));
+
+    actionSheetOptions.buttons.push(createActionSheetDivider());
+    // tbd: not sure who should have permission to change events, we currently leave it open
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.imgixBaseUrl, 'edit'));
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.imgixBaseUrl, 'trash'));
+
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+    if (actionSheetOptions.buttons.length === 1) { // only cancel button
+      actionSheetOptions.buttons = [];
+    }
   }
 
   /**
    * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * Permissions:
-   * - eventAdmin, responsibles, if group-calendar: admin/mainContact: add, edit, delete
    * @param actionSheetOptions 
    * @param calEvent 
    */
@@ -446,6 +495,15 @@ export class CalEventListComponent implements OnInit {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
+        case 'calevent.subscribe':
+          await this.store.subscribe(calEvent);
+          break;
+        case 'calevent.unsubscribe':
+          await this.store.unsubscribe(calEvent);
+          break;
+        case 'calevent.downloadIcs':
+          await this.download(calEvent.bkey);
+        break;
         case 'calevent.delete':
           await this.store.delete(calEvent, false);
           break;
@@ -593,5 +651,10 @@ export class CalEventListComponent implements OnInit {
     if (calevent?.responsiblePersons?.some(p => p.key === personKey)) return true;
 
     return false;
+  }
+
+  protected async download(key: string): Promise<void> {
+    const url = `${ICS_FUNCTION_URL}?calendar=e:${key}`;
+    await Browser.open({ url, windowName: '_blank' });
   }
 }
