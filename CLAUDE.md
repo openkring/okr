@@ -174,6 +174,7 @@ Located in `apps/functions/src/`. Organized into sub-modules: `auth`, `matrix`, 
 
 ### Patterns
 
+- for date conversions in Cloud Functions and libs, always use `convertDateFormatToString` / `convertDateFormat` / `DateFormat` from `@bk2/shared-util-core`. Never write custom date helpers (e.g. no `toStoreDate` in bexio/shared.ts or similar).
 - use ngx-vest-forms with Angular template driven forms and create vest validations in util component of the feature
 - do only create form models if needed
 - a feature typically consists of FEATURE-list.ts (a list view of FEATURE[]), FEATURE-edit.modal.ts (the detail view) using FEATURE.form.ts (in ui component of the feature) as well as FEATURE.store.ts (feature related store).
