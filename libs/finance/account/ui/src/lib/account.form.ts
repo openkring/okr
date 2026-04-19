@@ -66,7 +66,7 @@ import { accountValidations } from '@bk2/finance-account-util';
     }
   `
 })
-export class AccountFormComponent {
+export class AccountForm {
   public readonly formData = model.required<AccountModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);

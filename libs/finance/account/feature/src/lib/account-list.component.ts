@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AccountModel, RoleName } from '@bk2/shared-models';
@@ -12,15 +12,16 @@ import { MenuComponent } from '@bk2/cms-menu-feature';
 
 import { FlatAccountNode } from '@bk2/finance-account-util';
 import { AccountStore } from './account.store';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'bk-account-list',
   standalone: true,
   imports: [
-    TranslatePipe, SvgIconPipe,
+    TranslatePipe, SvgIconPipe, AsyncPipe,
     SpinnerComponent, EmptyListComponent, MenuComponent,
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
-    IonTitle, IonMenuButton, IonContent, IonItem, IonItemDivider,
+    IonTitle, IonMenuButton, IonContent, IonItem,
     IonBackdrop, IonList, IonPopover, IonSelect, IonSelectOption
   ],
   providers: [AccountStore],
@@ -49,7 +50,7 @@ import { AccountStore } from './account.store';
     <ion-toolbar>
       <ion-item lines="none">
         <ion-select
-          label="{{ '@account.field.selectRoot' | translate | async }}"
+          label="{{ '@finance.account.field.selectRoot' | translate | async }}"
           [value]="accountStore.selectedRootKey()"
           (ionChange)="onRootSelected($event)"
           interface="popover">
@@ -63,8 +64,8 @@ import { AccountStore } from './account.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item color="primary" lines="none">
-        <ion-label slot="start"><strong>{{ '@account.list.header.id' | translate | async }}</strong></ion-label>
-        <ion-label><strong>{{ '@account.list.header.name' | translate | async }}</strong></ion-label>
+        <ion-label slot="start"><strong>{{ '@finance.account.list.header.id' | translate | async }}</strong></ion-label>
+        <ion-label><strong>{{ '@finance.account.list.header.name' | translate | async }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -74,16 +75,16 @@ import { AccountStore } from './account.store';
       <bk-spinner />
       <ion-backdrop />
     } @else if(!accountStore.selectedRootKey()) {
-      <bk-empty-list message="@account.field.selectRootHint" />
+      <bk-empty-list message="@finance.account.field.selectRootHint" />
     } @else if(visibleNodes().length === 0) {
-      <bk-empty-list message="@account.field.empty" />
+      <bk-empty-list message="@finance.account.field.empty" />
     } @else {
       <ion-list lines="inset">
         @for(node of visibleNodes(); track node.account.bkey) {
           <ion-item (click)="showActions(node)" [style.padding-inline-start.px]="node.depth * 16">
             <ion-icon
               slot="start"
-              [src]="node.hasChildren ? (node.isExpanded ? 'chevron-down' : 'chevron-forward') | svgIcon : '' | svgIcon"
+              [src]="expandIconName(node) | svgIcon"
               (click)="onToggleExpand($event, node.account.bkey)"
             />
             <ion-label>
@@ -134,6 +135,12 @@ export class AccountList {
         break;
       default: error(undefined, `AccountList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
+  }
+
+  /*-------------------------- tree helpers --------------------------------*/
+  protected expandIconName(node: FlatAccountNode): string {
+    if (!node.hasChildren) return '';
+    return node.isExpanded ? 'chevron-down' : 'chevron-forward';
   }
 
   /*-------------------------- node action sheet --------------------------------*/

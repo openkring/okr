@@ -7,13 +7,13 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
 
-import { AccountFormComponent } from '@bk2/finance-account-ui';
+import { AccountForm } from '@bk2/finance-account-ui';
 
 @Component({
   selector: 'bk-account-edit-modal',
   standalone: true,
   imports: [
-    HeaderComponent, ChangeConfirmationComponent, AccountFormComponent,
+    HeaderComponent, ChangeConfirmationComponent, AccountForm,
     IonContent
   ],
   template: `
@@ -52,7 +52,7 @@ export class AccountEditModalComponent {
   public formData = linkedSignal(() => safeStructuredClone(this.account()));
   protected showForm = signal(true);
 
-  protected headerTitle = computed(() => getTitleLabel('account', this.account().bkey, this.isReadOnly()));
+  protected headerTitle = computed(() => getTitleLabel('finance.account', this.account().bkey, this.isReadOnly()));
   protected types = computed(() => this.appStore.getCategory('account_type'));
 
   public async save(): Promise<void> {

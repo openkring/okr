@@ -1,13 +1,16 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { HeaderComponent } from '@bk2/shared-ui';
 import { AvatarLabelComponent } from '@bk2/avatar-ui';
 import { ColorIonic } from '@bk2/shared-models';
+import { StringSelectComponent } from '@bk2/shared-ui';
 import { DateFormat, getFullName, getTodayStr, isAfterDate } from '@bk2/shared-util-core';
+
+export const CONTACT_FILTERS = ['Alle', 'Nur Personen', 'Nur Mitglieder', 'Nur Orgs', 'Nur Abweichungen'];
 
 import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
@@ -16,9 +19,9 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe, SvgIconPipe,
-    HeaderComponent, AvatarLabelComponent,
+    HeaderComponent, AvatarLabelComponent, StringSelectComponent,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonCheckbox, IonInput,
+    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonInput,
     IonCardSubtitle
 ],
   providers: [AocBexioStore],
@@ -226,8 +229,8 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
               </ion-col>
             </ion-row>
             <ion-row>
-              <ion-col>
-                <ion-checkbox labelPlacement="end" [checked]="showOnlyCurrentMembers()" (ionChange)="showOnlyCurrentMembers.set($event.detail.checked)">Show only current members</ion-checkbox>
+              <ion-col size="6">
+                <bk-string-select name="bexioContactFilter" [selectedString]="contactFilter()" (selectedStringChange)="contactFilter.set($event)" [stringList]="contactFilters" [readOnly]="false" />
               </ion-col>
             </ion-row>
             @if(filteredIndex().length > 0) {
@@ -415,16 +418,16 @@ export class AocBexio implements OnInit {
     this.store.loadJournalStats();
   }
 
-  protected showOnlyCurrentMembers = signal(false);
+  protected readonly contactFilters = CONTACT_FILTERS;
+  protected contactFilter = signal(CONTACT_FILTERS[0]);
   protected readonly filteredIndex = computed(() => {
     const today = getTodayStr(DateFormat.StoreDate);
-    if (this.showOnlyCurrentMembers()) {
-      return this.index().filter(i => {
-        if (!i.dateOfExit || i.dateOfExit.length !== 8) return false;
-        return isAfterDate(i.dateOfExit, today);
-      })
-    } else {
-      return this.index();
+    switch (this.contactFilter()) {
+      case 'Nur Personen':    return this.index().filter(i => i.type === 'person');
+      case 'Nur Mitglieder':  return this.index().filter(i => isAfterDate(i.dateOfExit, today));
+      case 'Nur Orgs':        return this.index().filter(i => i.type === 'org');
+      case 'Nur Abweichungen': return this.index().filter(i => !this.store.compareAddressData(i));
+      default:                return this.index();
     }
   });
 

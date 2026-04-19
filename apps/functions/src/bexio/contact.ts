@@ -44,7 +44,7 @@ export const createBexioContact = onCall(
     try {
       const response = await axios.post<BexioContact>(
         `${BEXIO_BASE}/contact`,
-        { name_1, name_2, street_name, house_number, postcode, city, mail, contact_type_id, user_id: userId, owner_id: userId },
+        { name_1, name_2, street_name, house_number, postcode, city, contact_type_id, user_id: userId, owner_id: userId, ...(mail ? { mail } : {}) },
         {
           headers: {
             'Authorization': `Bearer ${bexioApiKey.value()}`,
@@ -96,7 +96,7 @@ export const updateBexioContact = onCall(
     try {
       await axios.post<BexioContact>(
         `${BEXIO_BASE}/contact/${id}`,
-        { name_1, name_2, street_name, house_number, postcode, city, mail, contact_type_id, user_id: userId, owner_id: userId },
+        { name_1, name_2, street_name, house_number, postcode, city, contact_type_id, user_id: userId, owner_id: userId, ...(mail ? { mail } : {}) },
         {
           headers: {
             'Authorization': `Bearer ${bexioApiKey.value()}`,

@@ -23,14 +23,16 @@ interface BexioAccount {
   is_locked: boolean;
 }
 
-const ROOT_BKEY = 'bexio_root';
+// by default, the tenant id is used as the id of the root as well as the prefix on each id (bkey, parentId)
+// this is to ensure different namespaces per account chart (Kontoplan)
+// also, we pad every id with leading 0 to make the ids sortable
 
 async function fetchBexioAccountGroups(apiKey: string): Promise<BexioAccountGroup[]> {
   const response = await axios.get<BexioAccountGroup[]>(`${BEXIO_BASE}/account_groups`, {
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Accept': 'application/json' },
   });
   const all = Array.isArray(response.data) ? response.data : [];
-  return all.filter(g => g.is_active === true && g.is_locked === false);
+  return all.filter(g => g.is_active === true);
 }
 
 async function fetchBexioAccounts(apiKey: string): Promise<BexioAccount[]> {
@@ -38,7 +40,7 @@ async function fetchBexioAccounts(apiKey: string): Promise<BexioAccount[]> {
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Accept': 'application/json' },
   });
   const all = Array.isArray(response.data) ? response.data : [];
-  return all.filter(a => a.is_active === true && a.is_locked === false);
+  return all.filter(a => a.is_active === true);
 }
 
 async function persistAccounts(
@@ -55,11 +57,11 @@ async function persistAccounts(
 
   // 1) root
   docs.push({
-    bkey: ROOT_BKEY,
+    bkey: tenantId,
     data: {
       tenants: [tenantId],
       isArchived: false,
-      name: 'bexio',
+      name: tenantId,
       index: '',
       tags: [],
       notes: '',
@@ -72,19 +74,18 @@ async function persistAccounts(
 
   // 2) account groups
   for (const g of groups) {
-    const parentId = g.parent_fibu_account_group_id === null
-      ? ROOT_BKEY
-      : String(g.parent_fibu_account_group_id);
+    let parentId = tenantId; 
+    if (g.parent_fibu_account_group_id) parentId = parentId + String(g.parent_fibu_account_group_id).padStart(4, '0');
     docs.push({
-      bkey: String(g.id),
+      bkey: tenantId + String(g.id).padStart(4, '0'),
       data: {
         tenants: [tenantId],
         isArchived: false,
         name: g.name,
         index: '',
         tags: [],
-        notes: String(g.id),
-        id: g.account_no,
+        notes: '',
+        id: g.account_no.padStart(4, '0'),
         parentId,
         type: 'group',
         label: '',
@@ -94,19 +95,18 @@ async function persistAccounts(
 
   // 3) leaf accounts
   for (const a of accounts) {
-    const parentId = a.fibu_account_group_id === null
-      ? ROOT_BKEY
-      : String(a.fibu_account_group_id);
+    let parentId = tenantId;
+    if (a.fibu_account_group_id) parentId = parentId + String(a.fibu_account_group_id).padStart(4, '0');
     docs.push({
-      bkey: String(a.id),
+      bkey: tenantId + String(a.id).padStart(4, '0'),
       data: {
         tenants: [tenantId],
         isArchived: false,
         name: a.name,
         index: '',
         tags: [],
-        notes: String(a.id),
-        id: a.account_no,
+        notes: '',
+        id: a.account_no.padStart(4, '0'),
         parentId,
         type: 'leaf',
         label: '',

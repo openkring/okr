@@ -113,10 +113,16 @@ export const AccountStore = signalStore(
       store.accountsResource.reload();
     },
 
+    /**
+     * Deleting any node (leaf, group, root) cascades to all its descendants.
+     * If the deleted node happens to be the currently selected root, the selection is cleared.
+     * @param account 
+     * @param readOnly 
+     * @returns 
+     */
     async delete(account: AccountModel, readOnly = true): Promise<void> {
       if (readOnly) return;
-      await store.accountService.delete(account, store.currentUser());
-      // deselect root if we deleted it
+      await store.accountService.deleteTree(account.bkey, store.currentUser());
       if (store.selectedRootKey() === account.bkey) {
         patchState(store, { selectedRootKey: '', expandedKeys: [] });
       }

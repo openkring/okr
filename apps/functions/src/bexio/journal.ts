@@ -64,10 +64,10 @@ async function persistJournalEntries(entries: BexioJournalEntry[], tenantId: str
       const bkey = String(entry.id);
       const amountCents = Math.round(parseFloat(entry.amount) * 100);
       const debitAccount = entry.debit_account_id != null
-        ? (accountMap.get(String(entry.debit_account_id)) ?? String(entry.debit_account_id))
+        ? (accountMap.get(String(entry.debit_account_id).padStart(4, '0')) ?? String(entry.debit_account_id))
         : '';
       const creditAccount = entry.credit_account_id != null
-        ? (accountMap.get(String(entry.credit_account_id)) ?? String(entry.credit_account_id))
+        ? (accountMap.get(String(entry.credit_account_id).padStart(4, '0')) ?? String(entry.credit_account_id))
         : '';
       const doc: Record<string, unknown> = {
         tenants: [tenantId],
