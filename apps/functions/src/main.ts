@@ -15,6 +15,7 @@ import * as Rag from './rag';
 import * as Email from './email';
 import * as Bexio from './bexio';
 import * as Zefix from './zefix';
+import * as Srv from './srv';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -129,6 +130,11 @@ export const scheduleBexioJournalSync = Bexio.scheduleBexioJournalSync;
 
 // bexio account sync
 export const syncBexioAccounts = Bexio.syncBexioAccounts;
+
+// srv (Regasoft SRV) contact sync
+export const getSrvContacts = Srv.getSrvContacts;
+export const createSrvContact = Srv.createSrvContact;
+export const updateSrvContact = Srv.updateSrvContact;
 
 // zefix registry lookup
 export const zefixSearch = Zefix.zefixSearch;
