@@ -334,6 +334,7 @@ export class ScsMemberFees {
       opts.buttons.push(createActionSheetButton('invoice.edit', imgixBaseUrl, 'edit'));
       opts.buttons.push(createActionSheetButton('invoice.upload', imgixBaseUrl, 'upload'));
       opts.buttons.push(createActionSheetButton('invoice.download', imgixBaseUrl, 'download'));
+      opts.buttons.push(createActionSheetButton('invoice.paid', imgixBaseUrl, 'checkmark'));
       opts.buttons.push(createActionSheetDivider());
       if (fee.bkey) {
         opts.buttons.push(createActionSheetButton('invoice.delete', imgixBaseUrl, 'trash'));
@@ -364,6 +365,9 @@ export class ScsMemberFees {
         break;
       case 'invoice.delete':
         await this.store.deleteFee(fee);
+        break;
+      case 'invoice.paid':
+        await this.store.setStatus(fee, 'paid');
         break;
       case 'person.edit':
         if (fee.member?.key) {
