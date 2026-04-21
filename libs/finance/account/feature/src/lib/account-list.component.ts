@@ -55,7 +55,7 @@ import { AsyncPipe } from '@angular/common';
           (ionChange)="onRootSelected($event)"
           interface="popover">
           @for(root of accountStore.rootAccounts(); track root.bkey) {
-            <ion-select-option [value]="root.bkey">{{ root.id }} {{ root.name }}</ion-select-option>
+            <ion-select-option [value]="root.bkey">{{ root.name }}</ion-select-option>
           }
         </ion-select>
       </ion-item>

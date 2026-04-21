@@ -53,8 +53,8 @@ import { JournalStore } from './journal.store';
               <ion-col size="2" class="ion-align-self-center journal-date">{{ formatDate(entry.date) }}</ion-col>
               <ion-col>
                 <ion-label>
+                  <p class="journal-account">{{ getAccountInfo(entry.debitAccount) }} / {{ getAccountInfo(entry.creditAccount) }}</p>
                   <p class="journal-title">{{ entry.title }}</p>
-                  <p class="journal-account">S: {{ entry.debitAccount }} / H: {{ entry.creditAccount }}</p>
                 </ion-label>
               </ion-col>
               <ion-col size="3" class="ion-align-self-center amount">{{ getAmount(entry.totalAmount?.amount) }}</ion-col>
@@ -93,6 +93,12 @@ export class JournalList {
   protected getAmount(cents?: number): string {
     if (cents === undefined) return '';
     return (cents / 100).toFixed(2);
+  }
+
+  protected getAccountInfo(bexioAccountId: string): string {
+    const accountKey = this.store.appStore.tenantId() + bexioAccountId.padStart(4, '0');
+    const account = this.store.getAccount(accountKey);
+    return !account ? bexioAccountId : account.id ;
   }
 
   protected async showActions(entry: BookingJournalModel): Promise<void> {

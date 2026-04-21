@@ -20,20 +20,20 @@ export class AccountService {
   /*-------------------------- CRUD operations --------------------------------*/
   public async create(account: AccountModel, currentUser?: UserModel): Promise<string | undefined> {
     account.index = getAccountIndex(account);
-    return await this.firestoreService.createModel<AccountModel>(AccountCollection, account, '@account.operation.create', currentUser);
+    return await this.firestoreService.createModel<AccountModel>(AccountCollection, account, '@finance.account.operation.create', currentUser);
   }
 
   public read(key: string): Observable<AccountModel | undefined> {
     return findByKey<AccountModel>(this.list(), key);
   }
 
-  public async update(account: AccountModel, currentUser?: UserModel, confirmMessage = '@account.operation.update'): Promise<string | undefined> {
+  public async update(account: AccountModel, currentUser?: UserModel, confirmMessage = '@finane.account.operation.update'): Promise<string | undefined> {
     account.index = getAccountIndex(account);
     return await this.firestoreService.updateModel<AccountModel>(AccountCollection, account, false, confirmMessage, currentUser);
   }
 
   public async delete(account: AccountModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<AccountModel>(AccountCollection, account, '@account.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<AccountModel>(AccountCollection, account, '@finane.account.operation.delete', currentUser);
   }
 
   /**

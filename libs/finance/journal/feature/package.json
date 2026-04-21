@@ -15,6 +15,7 @@
     "@bk2/shared-ui": "*",
     "@bk2/shared-util-angular": "*",
     "@bk2/shared-util-core": "*",
-    "@bk2/finance-journal-data-access": "*"
+    "@bk2/finance-journal-data-access": "*",
+    "@bk2/finance-account-data-access": "*"
   }
 }

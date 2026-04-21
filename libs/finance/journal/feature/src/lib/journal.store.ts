@@ -2,12 +2,13 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { map, of } from 'rxjs';
+import { of } from 'rxjs';
 
+import { AccountService } from '@bk2/finance-account-data-access';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { BookingJournalModel, JournalCollection } from '@bk2/shared-models';
-import { debugListLoaded, getYear, nameMatches } from '@bk2/shared-util-core';
+import { AccountModel, BookingJournalModel, JournalCollection } from '@bk2/shared-models';
+import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@bk2/shared-util-core';
 
 import { JournalViewModal } from './journal-view.modal';
 
@@ -27,6 +28,17 @@ export const JournalStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
+    accountService: inject(AccountService),
+  })),
+
+  withProps((store) => ({
+    accountsResource: rxResource({
+      params: () => store.appStore.currentUser(),
+      stream: ({ params: currentUser }) => {
+        if (!currentUser) return of([] as AccountModel[]);
+        return store.accountService.list();
+      },
+    }),
   })),
 
   withProps((store) => ({
@@ -43,17 +55,15 @@ export const JournalStore = signalStore(
         // tenants + isArchived are filtered in-memory on the small per-year result set.
         const yearStr = String(selectedYear);
         const nextYearStr = String(selectedYear + 1);
-        const query = [
-          { key: 'date', operator: '>=', value: yearStr },
-          { key: 'date', operator: '<',  value: nextYearStr },
-        ];
+        const query = getSystemQuery(tenantId);
+        query.push({ key: 'date', operator: '>=', value: yearStr });
+        query.push({ key: 'date', operator: '<',  value: nextYearStr });
         return store.firestoreService.searchData<BookingJournalModel>(
           JournalCollection,
           query,
           'date',
           'desc'
         ).pipe(
-          map(entries => entries.filter(e => !e.isArchived && e.tenants?.includes(tenantId))),
           debugListLoaded('JournalStore.journal', params.currentUser)
         );
       },
@@ -74,6 +84,10 @@ export const JournalStore = signalStore(
   })),
 
   withMethods((store) => ({
+    getAccount(bkey: string): AccountModel | undefined {
+      return (store.accountsResource.value() ?? []).find(a => a.bkey === bkey);
+    },
+
     setSearchTerm(searchTerm: string): void {
       patchState(store, { searchTerm });
     },
