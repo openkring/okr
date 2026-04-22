@@ -119,25 +119,13 @@ export class MenuListComponent {
    */
   protected async showActions(menuItem: MenuItemModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, menuItem);
-    await this.executeActions(actionSheetOptions, menuItem);
-  }
-
-  /**
-   * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param menuItem 
-   */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, menuItem: MenuItemModel): void {
-    if (hasRole('registered', this.menuStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('menu.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    }
-    if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    }
     if (hasRole('admin', this.menuStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetButton('menu.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('menu.delete', this.imgixBaseUrl, 'trash'));
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
+      await this.executeActions(actionSheetOptions, menuItem);
+    } else {
+      await this.menuStore.edit(menuItem, this.readOnly());
     }
   }
 
@@ -157,9 +145,6 @@ export class MenuListComponent {
           break;
         case 'menu.edit':
           await this.menuStore.edit(menuItem, this.readOnly());
-          break;
-        case 'menu.view':
-          await this.menuStore.edit(menuItem, true);
           break;
       }
     }
