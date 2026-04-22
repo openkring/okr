@@ -400,6 +400,7 @@ export class CalEventListComponent implements OnInit {
     calevent.type = parts.type || '';
     await this.store.quickEntry(calevent);
     bkQuickEntry.value = '';
+    if (!this.isListView()) this.navigateCalendarTo(calevent.startDate);
   }
 
   protected clear(bkQuickEntry: IonTextarea): void {
@@ -504,9 +505,13 @@ export class CalEventListComponent implements OnInit {
         case 'calevent.downloadIcs':
           await this.download(calEvent.bkey);
         break;
-        case 'calevent.delete':
+        case 'calevent.delete': {
+          const isGrid = !this.isListView();
+          const targetDate = calEvent.startDate;
           await this.store.delete(calEvent, false);
+          if (isGrid) this.navigateCalendarTo(targetDate);
           break;
+        }
         case 'calevent.edit':
           const isGrid = !this.isListView();
           const targetDate = calEvent.startDate;
@@ -572,9 +577,11 @@ export class CalEventListComponent implements OnInit {
     const calevent = this.filteredCalEvents().find(e => e.bkey === eventKey);
     if (!calevent) { arg.revert(); return; }
     const start = arg.event.start as Date;
-    const updated: CalEventModel = { ...calevent, startDate: format(start, DateFormat.StoreDate), startTime: format(start, 'HH:mm') };
+    const newStartDate = format(start, DateFormat.StoreDate);
+    const updated: CalEventModel = { ...calevent, startDate: newStartDate, startTime: format(start, 'HH:mm') };
     const saved = await this.store.update(updated, false);
     if (!saved) arg.revert();
+    else this.navigateCalendarTo(newStartDate);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -586,9 +593,11 @@ export class CalEventListComponent implements OnInit {
     const start = arg.event.start as Date;
     const end = arg.event.end as Date;
     const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
-    const updated: CalEventModel = { ...calevent, startDate: format(start, DateFormat.StoreDate), startTime: format(start, 'HH:mm'), endDate: format(end, DateFormat.StoreDate), durationMinutes };
+    const newStartDate = format(start, DateFormat.StoreDate);
+    const updated: CalEventModel = { ...calevent, startDate: newStartDate, startTime: format(start, 'HH:mm'), endDate: format(end, DateFormat.StoreDate), durationMinutes };
     const saved = await this.store.update(updated, false);
     if (!saved) arg.revert();
+    else this.navigateCalendarTo(newStartDate);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
