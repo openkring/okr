@@ -5,7 +5,7 @@ import { vestForms } from 'ngx-vest-forms';
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, NAME_LENGTH } from '@bk2/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@bk2/shared-models';
-import { CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, PropertyListComponent, StringsComponent, TextInputComponent, UrlInputComponent, IconInput } from '@bk2/shared-ui';
+import { CategorySelectComponent, ChipsComponent, ErrorNoteComponent, NotesInputComponent, StringsComponent, TextInputComponent, UrlInputComponent, IconInput } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
 
 import { menuItemValidations } from '@bk2/cms-menu-util';
@@ -16,7 +16,7 @@ import { menuItemValidations } from '@bk2/cms-menu-util';
   imports: [
     vestForms, FormsModule,
     TextInputComponent, UrlInputComponent, CategorySelectComponent, ChipsComponent, NotesInputComponent,
-    StringsComponent, PropertyListComponent, ErrorNoteComponent,
+    StringsComponent, ErrorNoteComponent,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent,
     IconInput
 ],
@@ -82,10 +82,13 @@ import { menuItemValidations } from '@bk2/cms-menu-util';
         </ion-card-content>
       </ion-card>
 
+<!-- 
+      currently not needed
       @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call') {
         <bk-property-list [properties]="data()" (propertiesChange)="onFieldChange('data', $event)" />
-      }
+      } -->
 
+      <!-- sub-/context-menus -->
       @if(menuAction() === 'main' || menuAction() === 'context' || menuAction() === 'sub') {
         <bk-strings
           [strings]="menuItems()"
@@ -96,11 +99,11 @@ import { menuItemValidations } from '@bk2/cms-menu-util';
         /> 
       }
 
-      @if(hasRole('privileged')) {
+      @if(hasRole('contentAdmin')) {
         <bk-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
-      @if(hasRole('admin')) {
+      @if(hasRole('contentAdmin')) {
         <bk-notes name="description" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
