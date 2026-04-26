@@ -9,7 +9,7 @@ import { isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, AvatarInfo, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@bk2/shared-models';
-import { getFullName, getSystemQuery } from '@bk2/shared-util-core';
+import { getCatAbbreviation, getFullName, getSystemQuery } from '@bk2/shared-util-core';
 import { ModalController } from '@ionic/angular/standalone';
 import { AocBexioContactEditModal } from 'libs/aoc/feature/src/lib/aoc-bexio-contact-edit.modal';
 import { createFavoriteAddress } from '@bk2/subject-address-util';
@@ -32,6 +32,7 @@ export interface BexioIndex {
   mkey: string;     // membership bkey
   mbexioId: string; // membership.memberBexioId
   dateOfExit: string;   // exit date, this is needed to finde the current members
+  mcat: string; 
 
   // bexio
   bx_id: string;     // Bexio contact ID
@@ -98,13 +99,12 @@ export const AocBexioStore = signalStore(
   })),
   withComputed(state => ({
     currentUser: computed(() => state.appStore.currentUser()),
+    tenantId: computed(() => state.appStore.tenantId())
   })),
   withMethods(store => ({
     async buildIndex(): Promise<void> {
       if (!isFirestoreInitializedCheck()) return;
       patchState(store, { isLoading: true, index: [] });
-
-      const tenantId = store.appStore.env.tenantId;
 
       // 1. Load persons and orgs from AppStore (already in memory)
       const persons = store.appStore.allPersons();
@@ -113,10 +113,10 @@ export const AocBexioStore = signalStore(
 
       // 2. Load memberships for the default org (orgKey === tenantId)
       const allMemberships = await firstValueFrom(
-        store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(tenantId), 'memberName2', 'asc')
+        store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.tenantId()), 'memberName2', 'asc')
       );
       console.log('all memberships: ' + allMemberships.length);
-      const memberships = allMemberships.filter(m => m.orgKey === tenantId); // only members of defaultOrg
+      const memberships = allMemberships.filter(m => m.orgKey === store.tenantId()); // only members of defaultOrg
       console.log(`Loaded ${memberships.length} memberships for default org`);
 
       const index: BexioIndex[] = [];
@@ -140,6 +140,7 @@ export const AocBexioStore = signalStore(
           mkey: membership?.bkey ?? '',
           mbexioId: membership?.memberBexioId ?? '',
           dateOfExit: membership?.dateOfExit ?? '',
+          mcat: this.getCategoryAbbreviation(membership?.category ?? ''),
 
           bx_id: '',
           bx_name1: '',
@@ -174,6 +175,7 @@ export const AocBexioStore = signalStore(
           mkey: membership?.bkey ?? '',
           mbexioId: membership?.memberBexioId ?? '',
           dateOfExit: '',  // not needed for orgs
+          mcat: this.getCategoryAbbreviation(membership?.category ?? ''),
 
           bx_id: '',
           bx_name1: '',
@@ -242,7 +244,6 @@ export const AocBexioStore = signalStore(
 
         // log entries that have a bexioId set, to verify reconciliation worked
         const withId = index.filter(i => !!i.bexioId);
-        console.log(`Entries with bexioId: ${withId.map(i => `${i.key}=${i.bexioId}`).join(', ') || 'none'}`);
 
         // 7. Join by key: primary = bexioId match, fallback = name key (only when bexioId missing)
         for (const contact of contacts) {
@@ -297,6 +298,7 @@ export const AocBexioStore = signalStore(
                 mkey: '',
                 mbexioId: '',
                 dateOfExit: '',
+                mcat: '',
 
                 bx_id: contact.id + '',
                 bx_name1: bxname1,
@@ -370,9 +372,8 @@ export const AocBexioStore = signalStore(
 
       // also update the membership.memberBexioId if a membership exists
       if (item.mkey) {
-        const tenantId = store.appStore.env.tenantId;
         const allMemberships = await firstValueFrom(
-          store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(tenantId), 'memberName2', 'asc')
+          store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.tenantId()), 'memberName2', 'asc')
         );
         const membership = allMemberships.find(m => m.bkey === item.mkey);
         if (membership) {
@@ -398,6 +399,11 @@ export const AocBexioStore = signalStore(
           : i
         ),
       });
+    },
+
+    getCategoryAbbreviation(mcat: string): string {
+      const cat = store.appStore.getCategory('mcat_' + store.tenantId());
+      return getCatAbbreviation(cat, mcat);
     },
 
     async updateInBexio(item: BexioIndex): Promise<void> {
@@ -441,12 +447,11 @@ export const AocBexioStore = signalStore(
     },
 
     async addToBk(item: BexioIndex): Promise<void> {
-      const tenantId = store.appStore.env.tenantId;
       const currentUser = store.currentUser();
       let bkey: string | undefined;
 
       if (item.type === 'person') {
-        const person = new PersonModel(tenantId);
+        const person = new PersonModel(store.tenantId());
         person.firstName = item.bx_name1;
         person.lastName = item.bx_name2;
         person.favEmail = item.bx_email;
@@ -459,12 +464,12 @@ export const AocBexioStore = signalStore(
         bkey = await store.firestoreService.createModel<PersonModel>(PersonCollection, person, undefined, currentUser);
         const avatarKey = 'person.' + bkey;
         if (person.favEmail) {
-          await this.saveAddress(createFavoriteAddress('email', 'home', person.favEmail, tenantId), avatarKey);
+          await this.saveAddress(createFavoriteAddress('email', 'home', person.favEmail, store.tenantId()), avatarKey);
         }
-        await this.saveAddress(createFavoriteAddress('postal', 'home', person.favStreetName, tenantId, person.favStreetNumber, '', person.favZipCode, person.favCity, person.favCountryCode), avatarKey);
+        await this.saveAddress(createFavoriteAddress('postal', 'home', person.favStreetName, store.tenantId(), person.favStreetNumber, '', person.favZipCode, person.favCity, person.favCountryCode), avatarKey);
 
       } else {
-        const org = new OrgModel(tenantId);
+        const org = new OrgModel(store.tenantId());
         org.name = item.bx_name2;
         org.favEmail = item.bx_email;
         org.favStreetName = item.bx_streetName;
@@ -476,9 +481,9 @@ export const AocBexioStore = signalStore(
         bkey = await store.firestoreService.createModel<OrgModel>(OrgCollection, org, undefined, currentUser);
         const avatarKey = 'org.' + bkey;
         if (org.favEmail) {
-          await this.saveAddress(createFavoriteAddress('email', 'work', org.favEmail, tenantId), avatarKey);
+          await this.saveAddress(createFavoriteAddress('email', 'work', org.favEmail, store.tenantId()), avatarKey);
         }
-        await this.saveAddress(createFavoriteAddress('postal', 'work', org.favStreetName, tenantId, org.favStreetNumber, '', org.favZipCode, org.favCity, org.favCountryCode), avatarKey);
+        await this.saveAddress(createFavoriteAddress('postal', 'work', org.favStreetName, store.tenantId(), org.favStreetNumber, '', org.favZipCode, org.favCity, org.favCountryCode), avatarKey);
       }
 
       if (bkey) {
@@ -534,8 +539,6 @@ export const AocBexioStore = signalStore(
     },
 
     async linkInvoiceReceivers(): Promise<void> {
-      const tenantId = store.appStore.env.tenantId;
-
       const persons = store.appStore.allPersons();
       const orgs = store.appStore.allOrgs();
       if (persons.length === 0 && orgs.length === 0) {
@@ -568,7 +571,7 @@ export const AocBexioStore = signalStore(
       const db = getFirestore(getApp());
       const invoiceQuery = query(
         collection(db, InvoiceCollection),
-        where('tenants', 'array-contains', tenantId),
+        where('tenants', 'array-contains', store.tenantId()),
         where('notes', '!=', '')
       );
       const snapshot = await getDocs(invoiceQuery);
@@ -676,13 +679,12 @@ export const AocBexioStore = signalStore(
 
     async clearAccountTree(rootName: string): Promise<number> {
       if (!rootName.trim() || !isFirestoreInitializedCheck()) return 0;
-      const tenantId = store.appStore.env.tenantId;
       const db = getFirestore(getApp());
 
       // 1. Find the root document by name + type
       const rootSnap = await getDocs(query(
         collection(db, 'accounts'),
-        where('tenants', 'array-contains', tenantId),
+        where('tenants', 'array-contains', store.tenantId()),
         where('name', '==', rootName.trim()),
         where('type', '==', 'root')
       ));
@@ -697,7 +699,7 @@ export const AocBexioStore = signalStore(
         const chunk = frontier.splice(0, 30);
         const childSnap = await getDocs(query(
           collection(db, 'accounts'),
-          where('tenants', 'array-contains', tenantId),
+          where('tenants', 'array-contains', store.tenantId()),
           where('parentId', 'in', chunk)
         ));
         for (const d of childSnap.docs) {
@@ -719,7 +721,6 @@ export const AocBexioStore = signalStore(
     },
 
     async linkBillVendors(): Promise<void> {
-      const tenantId = store.appStore.env.tenantId;
       const persons = store.appStore.allPersons();
       const orgs = store.appStore.allOrgs();
       if (persons.length === 0 && orgs.length === 0) {
@@ -742,7 +743,7 @@ export const AocBexioStore = signalStore(
       const db = getFirestore(getApp());
       const billQuery = query(
         collection(db, 'bills'),
-        where('tenants', 'array-contains', tenantId),
+        where('tenants', 'array-contains', store.tenantId()),
         where('notes', '!=', '')
       );
       const snapshot = await getDocs(billQuery);
@@ -783,7 +784,7 @@ export const AocBexioStore = signalStore(
         componentProps: {
           bexioIndex,
           currentUser: store.currentUser(),
-          tenantId: store.appStore.tenantId(),
+          tenantId: store.tenantId(),
         }
       });
       await modal.present();

@@ -246,7 +246,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
               </ion-row>
               @for(item of filteredIndex(); track item.key + '_' + item.bkey + '_' + item.bx_id) {
                 <ion-row>
-                  <ion-col size="5">
+                  <ion-col size="4">
                     @if(item.bkey) {
                       <bk-avatar-label
                         [key]="avatarKey(item)"
@@ -259,6 +259,11 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                         <ion-label color="medium">{{ displayName(item) }}</ion-label>
                       </ion-item>
                     }
+                  </ion-col>
+                  <ion-col size="1">
+                    <ion-item lines="none">
+                      <ion-label>{{ item.mcat }}</ion-label>
+                    </ion-item>
                   </ion-col>
                   <ion-col size="3">
                     <ion-item lines="none">
