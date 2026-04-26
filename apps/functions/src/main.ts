@@ -133,6 +133,8 @@ export const syncBexioAccounts = Bexio.syncBexioAccounts;
 
 // srv (Regasoft SRV) contact sync
 export const getSrvContacts = Srv.getSrvContacts;
+export const getSrvLicensedMembers = Srv.getSrvLicensedMembers;
+export const getSrvMemberDetail = Srv.getSrvMemberDetail;
 export const createSrvContact = Srv.createSrvContact;
 export const updateSrvContact = Srv.updateSrvContact;
 
