@@ -84,3 +84,6 @@ vite.config.*.timestamp*
 vitest.config.*.timestamp*
 
 **/GoogleService-Info.plist
+
+/playwright-report
+/test-results
