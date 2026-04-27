@@ -3,8 +3,15 @@
   "compilerOptions": {
     "outDir": "../../../dist/libs/shared/pipes",
     "declaration": true,
-    "composite": true
+    "composite": true,
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-pipes.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.spec2.ts",
+    "vite.config.ts"
+  ]
 }

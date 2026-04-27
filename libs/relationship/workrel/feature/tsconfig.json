@@ -30,7 +30,6 @@
     {"path": "../../../relationship/workrel/ui/tsconfig.lib.json"},
     {"path": "../../../relationship/workrel/util/tsconfig.lib.json"},
     {"path": "../../../comment/feature/tsconfig.lib.json"},
-    {"path": "../../../cms/menu/feature/tsconfig.lib.json"},
-
+    {"path": "../../../cms/menu/feature/tsconfig.lib.json"}
   ]
 }

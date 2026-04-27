@@ -3,8 +3,16 @@
   "compilerOptions": {
     "outDir": "../../../dist/libs/shared/data-access",
     "declaration": true,
-    "composite": true
+    "composite": true,
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-data-access.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.spec2.ts",
+    "**/test-setup.ts",
+    "vite.config.ts"
+  ]
 }

@@ -4,6 +4,7 @@
     "outDir": "../../../dist/libs/shared/util-functions",
     "composite": true,
     "declaration": true,
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-util-functions.tsbuildinfo"
   },
   "include": ["src/**/*"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "vite.config.ts"],

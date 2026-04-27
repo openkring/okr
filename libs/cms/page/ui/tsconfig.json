@@ -23,6 +23,6 @@
     {"path": "../../../shared/pipes/tsconfig.lib.json"},
     {"path": "../../../shared/ui/tsconfig.lib.json"},
     {"path": "../../../shared/util-core/tsconfig.lib.json"},
-    {"path": "../../../cms/page/util/tsconfig.lib.json"},
+    {"path": "../../../cms/page/util/tsconfig.lib.json"}
   ]
 }

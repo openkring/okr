@@ -6,8 +6,14 @@
     "composite": true,
     "module": "es2020",
     "target": "es2020",
-    "types": []
+    "types": [],
+    "tsBuildInfoFile": "../../../dist/out-tsc/resource-ui.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "vite.config.ts"
+  ]
 }

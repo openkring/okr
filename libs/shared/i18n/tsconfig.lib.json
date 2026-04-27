@@ -3,8 +3,15 @@
   "compilerOptions": {
     "outDir": "../../../dist/libs/shared/i18n",
     "declaration": true,
-    "composite": true
+    "composite": true,
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-i18n.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/test-setup.ts",
+    "vite.config.ts"
+  ]
 }

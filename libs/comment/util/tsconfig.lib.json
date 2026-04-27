@@ -6,8 +6,15 @@
     "composite": true,
     "module": "es2020",
     "target": "es2020",
-    "types": []
+    "types": [],
+    "tsBuildInfoFile": "../../../dist/out-tsc/comment-util.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/test-setup.ts",
+    "vite.config.ts"
+  ]
 }

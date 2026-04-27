@@ -1,10 +1,18 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
+    "rootDir": ".",
     "outDir": "../../../dist/libs/shared/models",
     "declaration": true,
-    "composite": true
+    "composite": true,
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-models.tsbuildinfo"
   },
-  "include": ["src/**/*"],
-  "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/test-setup.ts",
+    "vite.config.ts"
+  ]
 }

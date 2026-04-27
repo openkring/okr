@@ -4,12 +4,25 @@
     "outDir": "../../../dist/libs/shared/util-core",
     "declaration": true,
     "composite": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "paths": {
-      "@bk2/shared-models": ["../../../dist/libs/shared/models/src/index.d.ts"],
-      "@bk2/shared-constants": ["../../../dist/libs/shared/constants/src/index.d.ts"]
-    }
+      "@bk2/shared-models": [
+        "../../../dist/libs/shared/models/src/index.d.ts"
+      ],
+      "@bk2/shared-constants": [
+        "../../../dist/libs/shared/constants/src/index.d.ts"
+      ]
+    },
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-util-core.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "jest.config.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts"
+  ]
 }

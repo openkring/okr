@@ -1,12 +1,19 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc/libs/resource-feature",    "declaration": true,
+    "outDir": "../../../dist/out-tsc/libs/resource-feature",
+    "declaration": true,
     "composite": true,
     "module": "es2020",
     "target": "es2020",
-    "types": []
+    "types": [],
+    "tsBuildInfoFile": "../../../dist/out-tsc/resource-feature.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "vite.config.ts"
+  ]
 }
