@@ -535,7 +535,10 @@ export const _MatrixChatStore = signalStore(
        */
       async sendPollResponse(pollEventId: string, answerId: string): Promise<void> {
         const roomId = store.currentRoomId();
-        if (!roomId) return;
+        if (!roomId) {
+          console.warn('MatrixChatStore.sendPollResponse: No room selected');
+          return;
+        }
         try {
           await store.matrixService.sendPollResponse(roomId, pollEventId, answerId);
         } catch (error) {
@@ -549,7 +552,10 @@ export const _MatrixChatStore = signalStore(
        */
       async endPoll(pollEventId: string): Promise<void> {
         const roomId = store.currentRoomId();
-        if (!roomId) return;
+        if (!roomId) {
+          console.warn('MatrixChatStore.endPoll: No room selected');
+          return;
+        }
         try {
           await store.matrixService.sendPollEnd(roomId, pollEventId);
         } catch (error) {
