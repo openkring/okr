@@ -62,6 +62,7 @@ Key actions (withMethods):
 - `inviteUser(roomId)` / `leaveRoom(roomId)` — membership management.
 - `setReplying(message)` / `clearReply()` — in-reply-to state.
 - `selectThread(eventId)` / `clearThread()` — thread navigation.
+- `sendPoll(data)` — send an MSC3381 poll event (see [Poll events](#poll-events-msc3381) below).
 
 ## MatrixInitializationService
 
@@ -96,3 +97,30 @@ Main chat UI component. Uses the `_MatrixChatStore` to render the room list, mes
 ## Library Path
 
 `@bk2/chat-feature` (`libs/chat/feature/src/lib/`)
+
+---
+
+## Poll events (MSC3381)
+
+When `sendPoll()` fires, `client.sendEvent()` makes a `PUT /rooms/{roomId}/send/org.matrix.msc3381.poll.start/{txnId}` request. The homeserver (Synapse) stores it as a regular room event — it doesn't interpret poll events server-side.
+
+### What other clients see
+
+- **Element Web / Element X / FluffyChat** — render it as an interactive poll widget. The `kind` field (`disclosed` vs `undisclosed`) controls whether the running tally is visible while voting.
+- **Clients without MSC3381 support** — fall back to the `body` field, which we build as plain text (`"Question\n1. Answer1\n2. Answer2"`).
+
+### `disclosed` vs `undisclosed`
+
+Client-enforced only, not server-enforced:
+- `disclosed` — tally shown to each voter as votes come in
+- `undisclosed` — individual votes hidden until a `poll.end` event is sent (not yet implemented)
+
+### Voting
+
+Other clients send `org.matrix.msc3381.poll.response` events referencing the `poll.start` event ID. This app currently does not send responses or render poll results — polls are functional in Element but appear as unhandled event types in our message list.
+
+### Out of scope (not implemented)
+
+- Displaying poll results / vote responses in the message list
+- Ending a poll (`org.matrix.msc3381.poll.end`)
+- Multiple-choice polls (`max_selections > 1`)

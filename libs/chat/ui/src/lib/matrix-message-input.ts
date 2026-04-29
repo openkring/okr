@@ -433,7 +433,7 @@ export class MatrixMessageInput {
     actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.image', this.imgixBaseUrl, 'image'));
     actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.file', this.imgixBaseUrl, 'document'));
     actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.position', this.imgixBaseUrl, 'location'));
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.survey', this.imgixBaseUrl, 'poll'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.survey', this.imgixBaseUrl, 'help-circle'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
