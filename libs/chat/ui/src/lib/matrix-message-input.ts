@@ -253,6 +253,7 @@ export class MatrixMessageInput {
   messageSent = output<string>();
   fileSent = output<File>();
   locationSent = output<void>();
+  surveyRequested = output<void>();
   videoCallStarted = output<void>();
   typing = output<boolean>();
   cancelReplyClicked = output<void>();
@@ -432,6 +433,7 @@ export class MatrixMessageInput {
     actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.image', this.imgixBaseUrl, 'image'));
     actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.file', this.imgixBaseUrl, 'document'));
     actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.position', this.imgixBaseUrl, 'location'));
+    actionSheetOptions.buttons.push(createActionSheetButton('chat.attachment.survey', this.imgixBaseUrl, 'poll'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
@@ -456,8 +458,11 @@ export class MatrixMessageInput {
           this.selectFile('*/*');
           break;
         case 'chat.attachment.position':
-            this.locationSent.emit();
-        break;
+          this.locationSent.emit();
+          break;
+        case 'chat.attachment.survey':
+          this.surveyRequested.emit();
+          break;
       }
     }
   }
