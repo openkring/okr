@@ -11,6 +11,12 @@ import { MatrixConfig, MatrixMessage, MatrixRoom, TypingNotification } from '@bk
 import { AppStore } from '@bk2/shared-feature';
 import { debugData, debugMessage } from '@bk2/shared-util-core';
 
+export interface MatrixPollData {
+  kind: 'disclosed' | 'undisclosed';
+  question: string;
+  answers: string[];   // min 2, max 20
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -914,6 +920,29 @@ private async updateRoomsList(): Promise<void> {
     }
 
     return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
+  }
+
+  /**
+   * Send a poll (MSC3381)
+   */
+  async sendPoll(roomId: string, data: MatrixPollData): Promise<void> {
+    if (!this.client) throw new Error('Client not initialized');
+
+    const answers = data.answers.map((body, i) => ({
+      id: String(i + 1),
+      'org.matrix.msc3381.poll.answer': { msgtype: 'm.text', body }
+    }));
+    const fallback = `${data.question}\n${data.answers.map((a, i) => `${i + 1}. ${a}`).join('\n')}`;
+
+    await this.client.sendEvent(roomId, 'org.matrix.msc3381.poll.start' as any, {
+      'org.matrix.msc3381.poll': {
+        question: { msgtype: 'm.text', body: data.question },
+        kind: `org.matrix.msc3381.poll.${data.kind}`,
+        max_selections: 1,
+        answers
+      },
+      body: fallback
+    } as any);
   }
 
   /**
