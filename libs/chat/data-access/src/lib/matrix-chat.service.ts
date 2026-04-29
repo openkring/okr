@@ -266,18 +266,29 @@ export class MatrixChatService {
 
     // Room events — live timeline only (toStartOfTimeline=true means historical/pagination events)
     this.client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined, toStartOfTimeline: boolean | undefined) => {
-      if (toStartOfTimeline) return; // historical events are handled by loadMessagesForRoom
+      if (toStartOfTimeline) return;
       if (!room) return;
-      if (event.getType() === EventType.RoomMessage) {
+
+      const eventType = event.getType();
+
+      if (eventType === EventType.RoomMessage) {
         const relatesTo = event.getContent()?.['m.relates_to'];
         if (relatesTo?.rel_type === RelationType.Replace && relatesTo?.event_id) {
           this.applyMessageEdit(relatesTo.event_id as string, event, room);
         } else {
           this.handleNewMessage(event, room);
         }
-      } else if (event.getType() === 'm.reaction') {
+      } else if (eventType === 'm.reaction') {
         const targetId = event.getContent()?.['m.relates_to']?.event_id as string | undefined;
         if (targetId) this.refreshMessageReactions(targetId, room);
+      } else if (eventType === 'org.matrix.msc3381.poll.start') {
+        this.handleNewMessage(event, room);
+      } else if (eventType === 'org.matrix.msc3381.poll.response') {
+        const pollEventId = event.getContent()?.['m.relates_to']?.event_id as string | undefined;
+        if (pollEventId) this.refreshPollTally(pollEventId, room);
+      } else if (eventType === 'org.matrix.msc3381.poll.end') {
+        const pollEventId = event.getContent()?.['m.relates_to']?.event_id as string | undefined;
+        if (pollEventId) this.markPollEnded(pollEventId, room);
       }
     });
 
@@ -451,10 +462,14 @@ export class MatrixChatService {
       const messages = await Promise.all(
         allEvents
           .filter(e => {
-            if (e.getType() !== EventType.RoomMessage) return false;
-            // Exclude edit events — they update existing messages, not new ones
-            const rel = e.getContent()?.['m.relates_to'];
-            return !(rel?.rel_type === RelationType.Replace && rel?.event_id);
+            // Include regular room messages (excluding edit events)
+            if (e.getType() === EventType.RoomMessage) {
+              const rel = e.getContent()?.['m.relates_to'];
+              return !(rel?.rel_type === RelationType.Replace && rel?.event_id);
+            }
+            // Include poll start events
+            if (e.getType() === 'org.matrix.msc3381.poll.start') return true;
+            return false;
           })
           .map(async e => {
             const msg = this.mapEventToMessage(e, room);
@@ -462,6 +477,15 @@ export class MatrixChatService {
             const senderMember = room.getMember(e.getSender()!);
             const senderAvatarMxc = (senderMember as any)?.getMxcAvatarUrl?.() as string | undefined;
             const senderAvatar = senderAvatarMxc ? await this.resolveMediaUrl(senderAvatarMxc) : undefined;
+
+            // Attach poll tally and ended flag for poll.start events
+            if (e.getType() === 'org.matrix.msc3381.poll.start') {
+              const eventId = e.getId()!;
+              const { pollVotes, myVoteAnswerId } = this.computePollTally(eventId, room);
+              const pollEnded = this.isPollEnded(eventId, room);
+              return { ...msg, senderAvatar: senderAvatar || undefined, pollVotes, myVoteAnswerId, pollEnded };
+            }
+
             if ((msg.type === 'm.image' || msg.type === 'm.file' || msg.type === 'm.audio') && mxcUrl) {
               return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.resolveMediaUrl(mxcUrl) };
             }
@@ -680,6 +704,31 @@ export class MatrixChatService {
     if (!targetEvent) return;
     const updated = [...msgs];
     updated[idx] = { ...msgs[idx], reactions: this.getReactionsForEvent(targetEvent, room) };
+    subject.next(updated);
+  }
+
+  /** Re-compute poll tally and update the poll message in the BehaviorSubject. */
+  private refreshPollTally(pollEventId: string, room: Room): void {
+    const subject = this.messages$.get(room.roomId);
+    if (!subject) return;
+    const msgs = subject.value ?? [];
+    const idx = msgs.findIndex(m => m.eventId === pollEventId);
+    if (idx < 0) return;
+    const { pollVotes, myVoteAnswerId } = this.computePollTally(pollEventId, room);
+    const updated = [...msgs];
+    updated[idx] = { ...msgs[idx], pollVotes, myVoteAnswerId };
+    subject.next(updated);
+  }
+
+  /** Mark a poll message as ended in the BehaviorSubject. */
+  private markPollEnded(pollEventId: string, room: Room): void {
+    const subject = this.messages$.get(room.roomId);
+    if (!subject) return;
+    const msgs = subject.value ?? [];
+    const idx = msgs.findIndex(m => m.eventId === pollEventId);
+    if (idx < 0) return;
+    const updated = [...msgs];
+    updated[idx] = { ...msgs[idx], pollEnded: true };
     subject.next(updated);
   }
 
@@ -999,6 +1048,29 @@ private async updateRoomsList(): Promise<void> {
         answers
       },
       body: fallback
+    } as any);
+  }
+
+  /**
+   * Send a poll vote response (MSC3381)
+   */
+  async sendPollResponse(roomId: string, pollEventId: string, answerId: string): Promise<void> {
+    if (!this.client) throw new Error('Client not initialized');
+    await this.client.sendEvent(roomId, 'org.matrix.msc3381.poll.response' as any, {
+      'org.matrix.msc3381.poll.response': { answers: [answerId] },
+      'm.relates_to': { rel_type: 'm.reference', event_id: pollEventId }
+    } as any);
+  }
+
+  /**
+   * End a poll (MSC3381) — only the poll creator should call this
+   */
+  async sendPollEnd(roomId: string, pollEventId: string): Promise<void> {
+    if (!this.client) throw new Error('Client not initialized');
+    await this.client.sendEvent(roomId, 'org.matrix.msc3381.poll.end' as any, {
+      'org.matrix.msc3381.poll.end': {},
+      'm.relates_to': { rel_type: 'm.reference', event_id: pollEventId },
+      body: 'The poll has ended.'
     } as any);
   }
 
