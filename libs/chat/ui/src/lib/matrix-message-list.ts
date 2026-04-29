@@ -5,14 +5,16 @@ import { IonIcon, IonChip, IonAvatar } from '@ionic/angular/standalone';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { MatrixMessage } from '@bk2/shared-models';
 import { TranslatePipe } from '@bk2/shared-i18n';
+import { PollMessageComponent } from './poll-message.component';
 
 @Component({
   selector: 'bk-matrix-message-list',
   standalone: true,
   imports: [
-    CommonModule, 
+    CommonModule,
     IonIcon, IonChip, IonAvatar,
-    SvgIconPipe, TranslatePipe, AsyncPipe
+    SvgIconPipe, TranslatePipe, AsyncPipe,
+    PollMessageComponent
   ],
   styles: [`
     :host {
@@ -401,6 +403,14 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                           </div>
                         </a>
                       }
+                      @case ('org.matrix.msc3381.poll.start') {
+                        <bk-poll-message
+                          [message]="message"
+                          [currentUserId]="currentUserId() ?? ''"
+                          (voteClicked)="pollVoteClicked.emit($event)"
+                          (endPollClicked)="pollEndClicked.emit($event)"
+                        />
+                      }
                       @default {
                         <p class="message-text">{{ message.body }}</p>
                       }
@@ -464,6 +474,8 @@ export class MatrixMessageList {
   fileClicked = output<MatrixMessage>();
   reactionClicked = output<{messageId: string, emoji: string}>();
   threadClicked = output<string>();
+  pollVoteClicked = output<{ pollEventId: string; answerId: string }>();
+  pollEndClicked = output<{ pollEventId: string }>();
 
   messagesContainer = viewChild<ElementRef>('messagesContainer');
 
