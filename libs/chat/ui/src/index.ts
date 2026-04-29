@@ -3,3 +3,4 @@ export * from './lib/matrix-message-list';
 export * from './lib/matrix-room-list';
 export * from './lib/room-edit.form';
 export * from './lib/poll-create.form';
+export * from './lib/poll-message.component';
