@@ -153,7 +153,7 @@ export class PersonEditPage implements ViewWillEnter   {
    * @param photo the avatar photo that is uploaded to and stored in the firebase storage
    */
   public async onImageSelected(photo: Photo): Promise<void> {
-    await this.store.saveAvatar(photo);
+    await this.store.saveAvatar(photo, this.personKey());
   }
 
   /******************************* helpers *************************************** */

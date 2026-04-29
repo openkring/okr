@@ -1,9 +1,10 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { storeDateToRegasoftDate, regasoftDateToStoreDate } from '@bk2/shared-util-core';
+import { Club, RegasoftMember, SrvContactData, SrvMemberLicenseDetail } from '@bk2/shared-models';
 
-import { regasoftApiKey, regasoftClubId, REGASOFT_BASE, RegasoftMember, PersonClub } from './shared';
+import { regasoftApiKey, regasoftClubId, REGASOFT_BASE } from './shared';
 
 function regasoftHeaders(apiKey: string, clubId: string) {
   return {
@@ -11,43 +12,6 @@ function regasoftHeaders(apiKey: string, clubId: string) {
     'ApiKey': apiKey,
     'ClubId': clubId,
   };
-}
-
-/** Convert StoreDate "YYYYMMDD" to Regasoft ISO datetime "YYYY-MM-DDTHH:mm:ss". Returns null for empty. */
-function storeDateToRegasoftDate(storeDate: string | undefined): string | null {
-  if (!storeDate || storeDate.length < 8) return null;
-  const isoDate = convertDateFormatToString(storeDate.substring(0, 8), DateFormat.StoreDate, DateFormat.IsoDate, false);
-  return isoDate ? `${isoDate}T00:00:00` : null;
-}
-
-/** Convert Regasoft ISO datetime "YYYY-MM-DDTHH:mm:ss" to StoreDate "YYYYMMDD". Returns '' for null. */
-function regasoftDateToStoreDate(isoDateTime: string | null | undefined): string {
-  if (!isoDateTime) return '';
-  const isoDate = isoDateTime.length > 10 ? isoDateTime.substring(0, 10) : isoDateTime;
-  return convertDateFormatToString(isoDate, DateFormat.IsoDate, DateFormat.StoreDate, false);
-}
-
-export interface SrvContactData {
-  srvId?: number;
-  firstName: string;
-  lastName: string;
-  fullname?: string;
-  email: string | null;
-  mobile: string | null;
-  dateOfBirth: string;       // StoreDate YYYYMMDD
-  gender: number;            // 1=male, 2=female
-  membershipType?: string;   // 'Active' | 'Passive'
-  nationIOC?: string;
-  language?: number;
-  hasNewsletter?: boolean;
-  hasLicense?: boolean;
-  street?: string | null;
-  streetAdditional?: string | null;
-  postcode?: string | null;
-  city?: string | null;
-  countryName?: string | null;
-  countryId?: string | null;
-  telefon?: string | null;
 }
 
 /**
@@ -100,7 +64,7 @@ export const getSrvContacts = onCall(
         street: m.street ?? null,
         postcode: m.postcode ?? null,
         city: m.city ?? null,
-        personClubs: (m.personClubs ?? []) as PersonClub[],
+        clubs: (m.personClubs ?? []) as Club[],
       }));
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
@@ -166,15 +130,6 @@ export const getSrvLicensedMembers = onCall(
   }
 );
 
-export interface SrvMemberLicenseDetail {
-  rid: number;
-  licenseDate: string;            // StoreDate YYYYMMDD
-  licenseValidUntil: string;      // StoreDate YYYYMMDD
-  licenseImage: string | null;
-  licenseImageName: string | null;
-  licenseImageMimeType: string | null;
-}
-
 /**
  * Fetch member detail from GET /api/club/members/{id} for a list of rids.
  * Returns license dates taken from the individual detail records.
@@ -210,14 +165,24 @@ export const getSrvMemberDetail = onCall(
     for (let i = 0; i < results.length; i++) {
       const r = results[i];
       if (r.status === 'fulfilled') {
-        const m = r.value.data;
+        const raw = r.value.data as RegasoftMember | { data: RegasoftMember };
+        const m: RegasoftMember = 'data' in raw ? raw.data : raw;
         details.push({
-          rid: m.id,
+          rid:                  m.id,
+          hasNewsletter:        m.hasNewsletter ?? false,
+          street:               m.street ?? '',
+          postcode:             m.postcode ?? '',
+          city:                 m.city ?? '',
+          licenseId:            m.licenseId != null ? String(m.licenseId) : '',
           licenseDate:          regasoftDateToStoreDate(m.licenseDate),
           licenseValidUntil:    regasoftDateToStoreDate(m.licenseValidUntil),
           licenseImage:         m.licenseImage ?? null,
           licenseImageName:     m.licenseImageName ?? null,
           licenseImageMimeType: m.licenseImageMimeType ?? null,
+          inactiveDate:         regasoftDateToStoreDate(m.inactiveDate),
+          dateOfDeath:          regasoftDateToStoreDate(m.dateOfDeath),
+          leavingDate:          regasoftDateToStoreDate(m.leavingDate),
+          clubs:                m.personClubs ?? [],
         });
       } else {
         logger.warn(`${CF_NAME}: failed to fetch rid ${rids[i]}`, r.reason);
@@ -316,7 +281,8 @@ export const updateSrvContact = onCall(
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
 
-    const { srvId, firstName, lastName, email, mobile, dateOfBirth, gender } = request.data;
+    const { srvId, firstName, lastName, email, mobile, dateOfBirth, gender,
+            membershipType, street, postcode, city, dateOfDeath, leavingDate } = request.data;
     if (!srvId || !firstName || !lastName) {
       throw new HttpsError('invalid-argument', 'srvId, firstName and lastName are required');
     }
@@ -331,6 +297,12 @@ export const updateSrvContact = onCall(
       mobile: mobile ?? null,
       birthday: storeDateToRegasoftDate(dateOfBirth),
       gender,
+      membershipType,
+      street: street ?? null,
+      postcode: postcode ?? null,
+      city: city ?? null,
+      dateOfDeath: storeDateToRegasoftDate(dateOfDeath ?? undefined),
+      leavingDate: storeDateToRegasoftDate(leavingDate ?? undefined),
     };
 
     try {

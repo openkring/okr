@@ -8,6 +8,28 @@ import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteP
 import { CategoryChangeFormModel } from './category-change-form.model';
 import { MEMBER_NEW_FORM_SHAPE, MemberNewFormModel } from './member-new-form.model';
 
+export function createGroupMembership(group: GroupModel, person: PersonModel, tenantId: string): MembershipModel {
+  const membership = new MembershipModel(tenantId);
+  membership.memberKey = person.bkey;
+  membership.memberName1 = person.firstName;
+  membership.memberName2 = person.lastName;
+  membership.memberModelType = 'person';
+  membership.memberType = person.gender;
+  membership.memberDateOfBirth = person.dateOfBirth;
+  membership.memberDateOfDeath = person.dateOfDeath;
+  membership.memberZipCode = person.favZipCode;
+  membership.memberBexioId = person.bexioId;
+  membership.orgKey = group.bkey ?? DEFAULT_KEY;
+  membership.orgName = group.name ?? DEFAULT_NAME;
+  membership.orgModelType = 'group';
+  membership.dateOfEntry = getTodayStr();
+  membership.dateOfExit = END_FUTURE_DATE_STR;
+  membership.index = getMembershipIndex(membership);
+  membership.order = 1; // default priority for the first membership
+  membership.relIsLast = true; // this is the last membership of this person in
+  return membership;
+}
+
 export function newMembershipForPerson(person: PersonModel, orgKey: string, orgName: string, membershipCategory: CategoryItemModel, dateOfEntry = getTodayStr(DateFormat.StoreDate)): MembershipModel {
   const membership = new MembershipModel('dummy');
   membership.tenants = person.tenants;

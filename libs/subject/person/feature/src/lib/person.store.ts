@@ -241,10 +241,9 @@ export const PersonStore = signalStore(
             store.addressService.create(address, store.currentUser());
         },
 
-        async saveAvatar(photo: Photo): Promise<void> {
-          const person = store.person();
-          if (!person) return;
-          await store.avatarService.saveAvatarPhoto(photo, person.bkey, store.appStore.env.tenantId, PersonModelName);
+        async saveAvatar(photo: Photo, bkey: string): Promise<void> {
+          if (!bkey) return;
+          await store.avatarService.saveAvatarPhoto(photo, bkey, store.appStore.env.tenantId, PersonModelName);
           store.personResource.reload();
         },
 

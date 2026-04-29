@@ -300,6 +300,12 @@ export const AppStore = signalStore(
         return cat ? cat.items.find(i => i.name === itemName) : undefined;
       },
 
+      getCategoryItemByAbbreviation(categoryName?: string, abbreviation?: string): CategoryItemModel | undefined {
+        if (!categoryName || !abbreviation) return undefined;
+        const cat = this.getCategory(categoryName);
+        return cat ? cat.items.find(i => i.abbreviation === abbreviation) : undefined;
+      },
+
       getCategoryIcon(categoryName?: string, itemName?: string): string {
         return this.getCategoryItem(categoryName, itemName)?.icon ?? '';
       },

@@ -12,6 +12,7 @@ export * from './lib/icon.util';
 export * from './lib/img.util';
 export * from './lib/log.util';
 export * from './lib/query.util';
+export * from './lib/regasoft.util';
 export * from './lib/search.util';
 export * from './lib/sort.util';
 export * from './lib/type.util';

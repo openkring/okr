@@ -296,7 +296,7 @@ export class MembershipFormComponent {
       component: OrgSelectModalComponent,
       cssClass: 'list-modal',
       componentProps: {
-        selectedTag: 'selectable',
+        selectedTag: 'all',
         currentUser: this.currentUser()
       }
     });

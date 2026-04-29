@@ -4,144 +4,26 @@ import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular/standalone';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
+import { rxResource } from '@angular/core/rxjs-interop';
+
 import { isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, OrgSelectModalComponent } from '@bk2/shared-feature';
-import { MembershipCollection, MembershipModel, OrgModel, OwnershipModel, PersonModel } from '@bk2/shared-models';
-import { debugListLoaded, getFullName, getSystemQuery, getTodayStr, isAfterOrEqualDate } from '@bk2/shared-util-core';
-import { navigateByUrl } from '@bk2/shared-util-angular';
+import { MembershipCollection, MembershipModel, OrgModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvMismatch } from '@bk2/shared-models';
+import { debugListLoaded, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@bk2/shared-util-core';
+
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
-import { rxResource } from '@angular/core/rxjs-interop';
 import { MemberNewModal, MembershipEditModalComponent } from '@bk2/relationship-membership-feature';
+import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { PersonService } from '@bk2/subject-person-data-access';
+import { PersonEditModal } from '@bk2/subject-person-feature';
+
 import { AocSrvMismatchModal } from './aoc-srv-mismatch.modal';
+import { newMembershipForPerson } from '@bk2/relationship-membership-util';
 
-// ─── Regasoft contact as returned by the getSrvContacts CF ───────────────────
+export { getMismatches };
 
-export interface PersonClub {
-  clubId: number;
-  clubName: string;
-  mainClub: boolean;
-}
-
-export interface SrvContact {
-  srvId: number;
-  serviceId?: number;
-  firstName: string;
-  lastName: string;
-  email: string | null;
-  mobile: string | null;
-  telefon: string | null;
-  dateOfBirth: string;        // StoreDate YYYYMMDD
-  gender: number;             // 1=male, 2=female
-  membershipType?: string | null;
-  nationIOC?: string | null;
-  hasNewsletter: boolean;
-  mainClub: boolean;
-  hasLicense: boolean;
-  licenseId?: number | null;
-  licenseDate?: string;       // StoreDate YYYYMMDD
-  licenseValidUntil?: string; // StoreDate YYYYMMDD
-  leavingDate?: string;       // StoreDate YYYYMMDD
-  dateOfDeath?: string;       // StoreDate YYYYMMDD
-  street?: string | null;
-  postcode?: string | null;
-  city?: string | null;
-  personClubs: PersonClub[];
-}
-
-// ─── Index entry ──────────────────────────────────────────────────────────────
-
-export interface SrvIndex {
-  key: string;       // getFullName(firstName, lastName).trim().toLowerCase()
-  firstName: string;
-  lastName: string;
-
-  // Main membership (m prefix) — orgKey = tenantId
-  mKey: string;        // m.bkey
-  personKey: string;   // m.memberKey
-  mDateOfExit: string; // StoreDate
-  dateOfBirth: string; // StoreDate
-  gender: string;      // 'male' | 'female'
-  state: string;       // m.state
-  mCategory: string;   // abbreviated category
-  mEmail: string;
-  mPhone: string;
-  mStreet: string;
-  mZipCode: string;
-  mCity: string;
-
-  // Parent membership (p prefix) — orgKey = 'srv'
-  pKey: string;        // p.bkey
-  memberId: string;    // p.memberId = SRV serviceId stored in BK
-  pDateOfExit: string; // StoreDate
-  pState: string;
-  pCategory: string;   // abbreviated category
-
-  // Search index field: 'f:firstname l:lastname s:serviceId r:rid'
-  indexField: string;
-
-  // Regasoft (r prefix)
-  rid: string;           // r.srvId as string
-  rServiceId: string;    // r.serviceId as string
-  rFirstName: string;
-  rLastName: string;
-  rEmail: string;
-  rPhone: string;        // r.mobile || r.telefon
-  rStreet: string;
-  rZipCode: string;
-  rCity: string;
-  rDateOfBirth: string;  // r.dateOfBirth (StoreDate)
-  rCategory: string;     // first uppercase char of membershipType
-  rDateOfExit: string;   // r.leavingDate || r.dateOfDeath (StoreDate)
-  nationIOC: string;
-  hasNewsletter: boolean;
-  mainClub: boolean;
-  otherClubs: string;    // personClubs[*].clubName joined by ', '
-  licenseId: string;
-  licenseDate: string;            // StoreDate
-  licenseValidUntil: string;      // StoreDate
-  licenseImage: string | null;
-  licenseImageName: string | null;
-  licenseImageMimeType: string | null;
-}
-
-// ─── Store state ──────────────────────────────────────────────────────────────
-
-// ─── Mismatch detection ───────────────────────────────────────────────────────
-
-export interface SrvMismatch {
-  field: string;
-  bkValue: string;
-  rValue: string;
-}
-
-export function getMismatches(item: SrvIndex): SrvMismatch[] {
-  if (!item.rid) return []; // no Regasoft record → nothing to compare
-
-  const result: SrvMismatch[] = [];
-  const chk = (field: string, bk: string, r: string) => {
-    if (r && bk !== r) result.push({ field, bkValue: bk, rValue: r });
-  };
-
-  chk('firstName',   item.firstName,   item.rFirstName);
-  chk('lastName',    item.lastName,    item.rLastName);
-  chk('memberId',    item.memberId,    item.rServiceId);
-  chk('email',       item.mEmail,      item.rEmail);
-  chk('phone',       item.mPhone,      item.rPhone);
-  chk('street',      item.mStreet,     item.rStreet);
-  chk('zipCode',     item.mZipCode,    item.rZipCode);
-  chk('city',        item.mCity,       item.rCity);
-  chk('dateOfBirth', item.dateOfBirth, item.rDateOfBirth);
-
-  if (item.pKey) {
-    const expectedCat = item.mainClub ? item.rCategory : 'D';
-    if (expectedCat && item.pCategory !== expectedCat) {
-      result.push({ field: 'pCategory', bkValue: item.pCategory, rValue: expectedCat });
-    }
-  }
-
-  return result;
-}
+const PARENT_ORG = 'srv';
 
 // ─── Store state ──────────────────────────────────────────────────────────────
 
@@ -163,7 +45,7 @@ const initialState: AocSrvState = {
 
 function memberCatAbbr(category: string): string {
   const map: Record<string, string> = {
-    active: 'A', passive: 'P', junior: 'J', double: 'D', candidate: 'C',
+    active: 'A', active2: 'A', active3: 'A', honorary: 'A', free: 'A', passive: 'P', junior: 'J', double: 'D', candidate: 'K',
   };
   return map[category] ?? '';
 }
@@ -173,6 +55,7 @@ function buildIndexEntry(
   p: MembershipModel | undefined,
   r: SrvContact | undefined,
   person: PersonModel | undefined,
+  isProdEnv: boolean
 ): SrvIndex {
   const firstName = m?.memberName1 ?? r?.firstName ?? p?.memberName1 ?? '';
   const lastName  = m?.memberName2 ?? r?.lastName  ?? p?.memberName2 ?? '';
@@ -207,7 +90,7 @@ function buildIndexEntry(
     rServiceId:       r?.serviceId != null ? String(r.serviceId) : '',
     rFirstName:       r?.firstName ?? '',
     rLastName:        r?.lastName ?? '',
-    rEmail:           r?.email ?? '',
+    rEmail:           getEmail(r, isProdEnv),
     rPhone:           r?.mobile || r?.telefon || '',
     rStreet:          r?.street ?? '',
     rZipCode:         r?.postcode ?? '',
@@ -218,7 +101,7 @@ function buildIndexEntry(
     nationIOC:        r?.nationIOC ?? '',
     hasNewsletter:    r?.hasNewsletter ?? false,
     mainClub:         r?.mainClub ?? false,
-    otherClubs:       r?.personClubs?.map(c => c.clubName).join(', ') ?? '',
+    clubs:            r?.clubs?.map(c => c.clubName) ?? [],
     licenseId:            r?.licenseId != null ? String(r.licenseId) : '',
     licenseDate:          r?.licenseDate ?? '',
     licenseValidUntil:    r?.licenseValidUntil ?? '',
@@ -230,6 +113,14 @@ function buildIndexEntry(
 
 function storageKey(tenantId: string): string {
   return `bk2-aoc-srv-index-${tenantId}`;
+}
+
+// in the test system, Regasoft adds a 'x' after the email address, we need to remove this to make it comparable
+function getEmail(r?: SrvContact, isProdEnv = true): string {
+  const email = r?.email;
+  if (!email ) return '';
+  if (!isProdEnv && r.email?.endsWith('x'))  return email.substring(0, email.length-1);
+  return email;
 }
 
 function stripForStorage(entry: SrvIndex): Omit<SrvIndex, 'licenseImage' | 'licenseImageName' | 'licenseImageMimeType'> & { licenseImage: null; licenseImageName: null; licenseImageMimeType: null } {
@@ -258,6 +149,8 @@ export const AocSrvStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
+    personService: inject(PersonService),
+    membershipService: inject(MembershipService),
     modalController: inject(ModalController),
     router: inject(Router),
     ownershipService: inject(OwnershipService),
@@ -284,13 +177,13 @@ export const AocSrvStore = signalStore(
     }),
   })),
 
-  // Parent memberships: orgKey = 'srv' (SRV federation memberships)
+  // Parent memberships: orgKey = PARENT_ORG 
   withProps((store) => ({
     parentMembershipsResource: rxResource({
       params: () => ({ currentUser: store.currentUser() }),
       stream: ({ params }) => {
         const query = getSystemQuery(store.tenantId());
-        query.push({ key: 'orgKey',          operator: '==', value: 'srv' });
+        query.push({ key: 'orgKey',          operator: '==', value: PARENT_ORG });
         query.push({ key: 'memberModelType', operator: '==', value: 'person' });
         query.push({ key: 'orgModelType',    operator: '==', value: 'org' });
         return store.firestoreService
@@ -317,8 +210,8 @@ export const AocSrvStore = signalStore(
     foreignNationMembers: computed(() =>
       state.index().filter(i => !!i.nationIOC && i.nationIOC !== 'SUI')
     ),
-    clubMembers: computed(() =>
-      state.index().filter(i => !!i.otherClubs)
+    doubleMembers: computed(() =>
+      state.index().filter(i => (i && i.clubs.length > 1))
     ),
     mcat:    computed(() => state.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
     genders: computed(() => state.appStore.getCategory('gender')),
@@ -377,6 +270,7 @@ export const AocSrvStore = signalStore(
       const processedParentKeys    = new Set<string>();
       const processedRegasoftIds   = new Set<number>();
       const index: SrvIndex[] = [];
+      const isProdEnv = store.appStore.env.production;
 
       // ── Process main memberships ─────────────────────────────────────────
       for (const m of mainMemberships) {
@@ -392,7 +286,7 @@ export const AocSrvStore = signalStore(
         if (r) processedRegasoftIds.add(r.srvId);
 
         const person = store.appStore.getPerson(m.memberKey);
-        index.push(buildIndexEntry(m, p, r, person));
+        index.push(buildIndexEntry(m, p, r, person, isProdEnv));
       }
 
       // ── Orphan parent memberships (no matching main) ─────────────────────
@@ -407,13 +301,13 @@ export const AocSrvStore = signalStore(
         }
         if (r) processedRegasoftIds.add(r.srvId);
 
-        index.push(buildIndexEntry(undefined, p, r, undefined));
+        index.push(buildIndexEntry(undefined, p, r, undefined, isProdEnv));
       }
 
       // ── Orphan Regasoft contacts (no matching main or parent) ────────────
       for (const r of regasoftContacts) {
         if (processedRegasoftIds.has(r.srvId)) continue;
-        index.push(buildIndexEntry(undefined, undefined, r, undefined));
+        index.push(buildIndexEntry(undefined, undefined, r, undefined, isProdEnv));
       }
 
       index.sort((a, b) => {
@@ -422,29 +316,33 @@ export const AocSrvStore = signalStore(
         return nameA.localeCompare(nameB);
       });
 
-      // ── Enrich license dates from member detail endpoint ─────────────────
-      const licensedRids = index
-        .filter(i => !!i.licenseDate && !!i.rid)
-        .map(i => Number(i.rid))
-        .filter(n => n > 0);
-      if (licensedRids.length > 0) {
+      // ── Enrich all Regasoft members from detail endpoint ─────────────────
+      const allRids = index.map(i => Number(i.rid)).filter(n => n > 0);
+      if (allRids.length > 0) {
         try {
-          const detailFn = httpsCallable<{ rids: number[] }, { rid: number; licenseDate: string; licenseValidUntil: string; licenseImage: string | null; licenseImageName: string | null; licenseImageMimeType: string | null }[]>(
-            functions, 'getSrvMemberDetail'
-          );
-          const detailResult = await detailFn({ rids: licensedRids });
+          const detailFn = httpsCallable<{ rids: number[] }, SrvMemberLicenseDetail[]>(functions, 'getSrvMemberDetail');
+          const detailResult = await detailFn({ rids: allRids });
           const detailMap = new Map(detailResult.data.map(d => [d.rid, d]));
           for (const entry of index) {
             const detail = detailMap.get(Number(entry.rid));
             if (detail) {
-              entry.licenseDate          = detail.licenseDate;
-              entry.licenseValidUntil    = detail.licenseValidUntil;
-              entry.licenseImage         = detail.licenseImage;
-              entry.licenseImageName     = detail.licenseImageName;
+              entry.hasNewsletter      = detail.hasNewsletter;
+              entry.rStreet            = detail.street;
+              entry.rZipCode           = detail.postcode;
+              entry.rCity              = detail.city;
+              entry.licenseId          = detail.licenseId;
+              entry.licenseDate        = detail.licenseDate;
+              entry.licenseValidUntil  = detail.licenseValidUntil;
+              entry.licenseImage       = detail.licenseImage;
+              entry.licenseImageName   = detail.licenseImageName;
               entry.licenseImageMimeType = detail.licenseImageMimeType;
+              entry.rDateOfExit        = detail.inactiveDate || detail.leavingDate || detail.dateOfDeath;
+              entry.clubs              = detail.clubs.map(c => c.mainClub ? '!' + c.clubName : c.clubName);
             }
           }
-          console.log(`AocSrvStore.buildIndex: enriched ${detailResult.data.length} license details`);
+          const withClubs = index.filter(i => i.clubs.length > 0).length;
+          const multiClubs = index.filter(i => i.clubs.length > 1).length;
+          console.log(`AocSrvStore.buildIndex: enriched ${detailResult.data.length} member details, ${withClubs} with clubs, ${multiClubs} with >1 club`);
         } catch (e) {
           console.error('AocSrvStore.buildIndex: getSrvMemberDetail failed', e);
         }
@@ -456,11 +354,10 @@ export const AocSrvStore = signalStore(
     },
 
     async showRegasoftDetail(item: SrvIndex): Promise<void> {
-      const mismatches = getMismatches(item);
-      if (mismatches.length === 0) return;
       const modal = await store.modalController.create({
         component: AocSrvMismatchModal,
-        componentProps: { item, mismatches },
+        cssClass: 'wide-modal',
+        componentProps: { item },
       });
       await modal.present();
     },
@@ -498,39 +395,30 @@ export const AocSrvStore = signalStore(
       URL.revokeObjectURL(url);
     },
 
-    async addClubMembership(item: SrvIndex): Promise<void> {
-      const orgModal = await store.modalController.create({
-        component: OrgSelectModalComponent,
-        cssClass: 'list-modal',
-        componentProps: { selectedTag: 'selectable', currentUser: store.appStore.currentUser() },
-      });
-      await orgModal.present();
-      const { data: org, role } = await orgModal.onWillDismiss<OrgModel>();
-      if (role !== 'confirm' || !org) return;
-
-      const mcat = store.mcat();
-      const genders = store.genders();
-      if (!mcat || !genders) return;
-
-      const modal = await store.modalController.create({
-        component: MemberNewModal,
-        componentProps: {
-          currentUser: store.appStore.currentUser(),
-          mcat,
-          tags: store.appStore.getTags('membership'),
-          tenantId: store.tenantId(),
-          genders,
-          org,
-        },
-      });
-      await modal.present();
-    },
-
     async editPerson(item: SrvIndex): Promise<void> {
-      await navigateByUrl(store.router, `/person/${item.mKey}`);
+      const person = store.appStore.getPerson(item.personKey);
+      if (person) {
+        const modal = await store.modalController.create({
+          component: PersonEditModal,
+          componentProps: {
+              person,
+              currentUser: store.currentUser(),
+              tags: store.appStore.getTags('person'),
+              tenantId: store.tenantId(),
+              genders: store.appStore.getCategory('gender'),
+              readOnly: false
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data) {
+          if (isPerson(data, store.tenantId()))
+            await store.personService.update(data, store.currentUser());
+        }
+      }
     },
 
-    async editScsMember(mKey: string): Promise<void> {
+    async editMember(mKey: string): Promise<void> {
       const membership = store.mainMemberships().find(m => m.bkey === mKey);
       const mcat = store.mcat();
       if (!membership || !mcat) return;
@@ -547,9 +435,15 @@ export const AocSrvStore = signalStore(
         },
       });
       await modal.present();
+      const { data, role } = await modal.onDidDismiss();
+      if (role === 'confirm' && data) {
+        if (isMembership(data, store.tenantId())) {
+          store.membershipService.update(data, store.currentUser());
+        }
+      }
     },
 
-    async editSrvMember(pKey: string): Promise<void> {
+    async editParentMember(pKey: string): Promise<void> {
       const membership = store.parentMemberships().find(m => m.bkey === pKey);
       const mcat = store.mcat();
       if (!membership || !mcat) return;
@@ -566,6 +460,27 @@ export const AocSrvStore = signalStore(
         },
       });
       await modal.present();
+      const { data, role } = await modal.onDidDismiss();
+      if (role === 'confirm' && data) {
+        if (isMembership(data, store.tenantId())) {
+          store.membershipService.update(data, store.currentUser());
+        }
+      }
+    },
+
+    async createParentMember(item: SrvIndex): Promise<void> {
+      const person = store.appStore.getPerson(item.personKey);
+      const org = store.appStore.getOrg(PARENT_ORG);
+      if (person && org) {
+        const cat = store.appStore.getCategoryItemByAbbreviation('mcat_' + org.bkey, item.rCategory);
+        if (cat) {
+          const defaultDateOfEntry = getYear() + '0101'; // first day of the current year
+          const membership = newMembershipForPerson(person, org.bkey, org.name, cat, defaultDateOfEntry);
+          membership.memberId = item.rServiceId;
+          store.membershipService.create(membership, store.currentUser());
+        }
+        store.parentMembershipsResource.reload();
+      }
     },
 
     async addToRegasoft(item: SrvIndex): Promise<void> {
@@ -613,8 +528,55 @@ export const AocSrvStore = signalStore(
     },
 
     async updateRegasoft(item: SrvIndex): Promise<void> {
-      console.log('updateRegasoft is not yet implemented');
+      if (!item.rid) return;
+      const functions = getFunctions(getApp(), 'europe-west6');
+      if (store.appStore.env.useEmulators) {
+        connectFunctionsEmulator(functions, 'localhost', 5001);
+      }
+      const fn = httpsCallable<object, { id: string }>(functions, 'updateSrvContact');
+      const changed = new Set(getMismatches(item).map(m => m.field));
+      const person  = store.appStore.getPerson(item.personKey);
+      const catToMembershipType: Record<string, string> = { A: 'Active', P: 'Passive', J: 'Junior', D: 'Double', C: 'Candidate' };
+
+      try {
+        await fn({
+          srvId:          Number(item.rid),
+          firstName:      changed.has('firstName')   ? item.firstName         : item.rFirstName,
+          lastName:       changed.has('lastName')    ? item.lastName          : item.rLastName,
+          email:          changed.has('email')       ? item.mEmail  || null   : item.rEmail  || null,
+          mobile:         changed.has('phone')       ? item.mPhone  || null   : item.rPhone  || null,
+          dateOfBirth:    changed.has('dateOfBirth') ? item.dateOfBirth       : item.rDateOfBirth,
+          gender:         item.gender === 'female' ? 2 : 1,
+          membershipType: catToMembershipType[item.mCategory] ?? undefined,
+          street:         changed.has('street')      ? item.mStreet || null   : item.rStreet || null,
+          postcode:       changed.has('zipCode')     ? item.mZipCode || null  : item.rZipCode || null,
+          city:           changed.has('city')        ? item.mCity   || null   : item.rCity   || null,
+          leavingDate:    item.mDateOfExit || null,
+          dateOfDeath:    person?.dateOfDeath || null,
+        });
+      } catch (e) {
+        console.error('AocSrvStore.updateRegasoft: updateSrvContact failed', e);
+        throw e;
+      }
+
+      patchState(store, {
+        index: store.index().map(i => {
+          if (i.key !== item.key) return i;
+          return {
+            ...i,
+            rFirstName:   changed.has('firstName')   ? item.firstName    : i.rFirstName,
+            rLastName:    changed.has('lastName')    ? item.lastName     : i.rLastName,
+            rEmail:       changed.has('email')       ? item.mEmail       : i.rEmail,
+            rPhone:       changed.has('phone')       ? item.mPhone       : i.rPhone,
+            rDateOfBirth: changed.has('dateOfBirth') ? item.dateOfBirth  : i.rDateOfBirth,
+            rStreet:      changed.has('street')      ? item.mStreet      : i.rStreet,
+            rZipCode:     changed.has('zipCode')     ? item.mZipCode     : i.rZipCode,
+            rCity:        changed.has('city')        ? item.mCity        : i.rCity,
+            rCategory:    catToMembershipType[item.mCategory] ? item.mCategory : i.rCategory,
+            rDateOfExit:  item.mDateOfExit || i.rDateOfExit,
+          };
+        }),
+      });
     }
   }))
 );
-

@@ -10,13 +10,12 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
 import { confirm, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
-import { DEFAULT_KEY, DEFAULT_NAME, END_FUTURE_DATE_STR } from '@bk2/shared-constants';
+import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
 
 import { GroupService } from '@bk2/subject-group-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { getMembershipIndex } from '@bk2/relationship-membership-util';
+import { createGroupMembership } from '@bk2/relationship-membership-util';
 import { MatrixChatService } from '@bk2/chat-data-access';
 import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
@@ -404,7 +403,7 @@ export const GroupStore = signalStore(
       const group = store.group();
       if (group) {
         if (person) {
-          membership = createMembership(group, person, store.tenantId());
+          membership = createGroupMembership(group, person, store.tenantId());
         } else {
           const modal = await store.modalController.create({
             component: PersonSelectModalComponent,
@@ -418,7 +417,7 @@ export const GroupStore = signalStore(
           const { data, role } = await modal.onWillDismiss();
           if (role === 'confirm') {
             if (isPerson(data, store.tenantId())) {
-              membership = createMembership(group, data, store.tenantId());
+              membership = createGroupMembership(group, data, store.tenantId());
             }
           }
         }
@@ -431,24 +430,3 @@ export const GroupStore = signalStore(
   }))
 );
 
-function createMembership(group: GroupModel, person: PersonModel, tenantId: string): MembershipModel {
-  const membership = new MembershipModel(tenantId);
-  membership.memberKey = person.bkey;
-  membership.memberName1 = person.firstName;
-  membership.memberName2 = person.lastName;
-  membership.memberModelType = 'person';
-  membership.memberType = person.gender;
-  membership.memberDateOfBirth = person.dateOfBirth;
-  membership.memberDateOfDeath = person.dateOfDeath;
-  membership.memberZipCode = person.favZipCode;
-  membership.memberBexioId = person.bexioId;
-  membership.orgKey = group.bkey ?? DEFAULT_KEY;
-  membership.orgName = group.name ?? DEFAULT_NAME;
-  membership.orgModelType = 'group';
-  membership.dateOfEntry = getTodayStr();
-  membership.dateOfExit = END_FUTURE_DATE_STR;
-  membership.index = getMembershipIndex(membership);
-  membership.order = 1; // default priority for the first membership
-  membership.relIsLast = true; // this is the last membership of this person in
-  return membership;
-}

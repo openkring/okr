@@ -1,17 +1,17 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonSpinner, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonSpinner, IonTitle, IonToolbar, ToastController } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ListFilterComponent } from '@bk2/shared-ui';
 import { convertDateFormatToString, DateFormat, getAge as getAgeFn } from '@bk2/shared-util-core';
-import { ColorIonic } from '@bk2/shared-models';
+import { ColorIonic, SrvIndex } from '@bk2/shared-models';
 
 import { AvatarLabelComponent } from '@bk2/avatar-ui';
 
-import { AocSrvStore, getMismatches, SrvIndex } from './aoc-srv.store';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@bk2/shared-util-angular';
+import { AocSrvStore, getMismatches } from './aoc-srv.store';
+import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-aoc-srv',
@@ -93,15 +93,13 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
                 <ion-col size="2"><strong>SRV serviceId</strong></ion-col>
               </ion-row>
               @for(item of filteredIndex(); track $index) {
-                <ion-row [style.color]="getMismatches(item).length > 0 ? 'var(--ion-color-danger)' : ''"
-                         [style.font-weight]="getMismatches(item).length > 0 ? 'bold' : ''"
-                         (click)="showIndexActions(item)">
+                <ion-row (click)="showIndexActions(item)">
                   <ion-col size="6">
                     @if(item.personKey) {
                       <bk-avatar-label
                         [key]="getAvatarKey(item)"
                         [label]="displayName(item)"
-                        [color]="color"
+                        [color]="getColor(item)"
                         [alt]="displayName(item)"
                       />
                     } @else {
@@ -174,7 +172,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
                       <bk-avatar-label
                         [key]="getAvatarKey(item)"
                         [label]="displayName(item)"
-                        [color]="color"
+                        [color]="getColor(item)"
                         [alt]="displayName(item)"
                       />
                     } @else {
@@ -235,7 +233,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
                       <bk-avatar-label
                         [key]="getAvatarKey(item)"
                         [label]="displayName(item)"
-                        [color]="color"
+                        [color]="getColor(item)"
                         [alt]="displayName(item)"
                       />
                     } @else {
@@ -261,16 +259,16 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
       <ion-card>
         <ion-card-header>
           <ion-card-title>Mitglieder in anderen Vereinen</ion-card-title>
-          <ion-card-subtitle>{{ store.clubMembers().length }} Mitglieder auch in anderen SRV-Vereinen</ion-card-subtitle>
+          <ion-card-subtitle>{{ store.doubleMembers().length }} Mitglieder auch in anderen SRV-Vereinen</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
-                @if(store.clubMembers().length === 0) {
+                @if(store.doubleMembers().length === 0) {
                   Keine Mitglieder in anderen Vereinen im Index.
                 } @else {
-                  {{ store.clubMembers().length }} Mitglieder in anderen Vereinen
+                  {{ store.doubleMembers().length }} Mitglieder in anderen Vereinen
                 }
               </ion-col>
               <ion-col size="3">
@@ -280,19 +278,19 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
                 </ion-button>
               </ion-col>
             </ion-row>
-            @if(showClubs() && store.clubMembers().length > 0) {
+            @if(showClubs() && store.doubleMembers().length > 0) {
               <ion-row>
                 <ion-col size="6"><strong>Name</strong></ion-col>
                 <ion-col size="6"><strong>Andere Vereine</strong></ion-col>
               </ion-row>
-              @for(item of store.clubMembers(); track item.rid) {
+              @for(item of store.doubleMembers(); track item.rid) {
                 <ion-row (click)="showClubActions(item)">
                   <ion-col size="6">
                     @if(item.personKey) {
                       <bk-avatar-label
                         [key]="getAvatarKey(item)"
                         [label]="displayName(item)"
-                        [color]="color"
+                        [color]="getColor(item)"
                         [alt]="displayName(item)"
                       />
                     } @else {
@@ -301,7 +299,11 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
                       </ion-item>
                     }
                   </ion-col>
-                  <ion-col size="6">{{ item.otherClubs }}</ion-col>
+                  <ion-col size="6">
+                    <ion-item lines="none">
+                      {{ item.clubs.join(',') }}
+                    </ion-item>
+                  </ion-col>
                 </ion-row>
               }
             }
@@ -315,6 +317,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 export class AocSrv implements OnInit {
   protected readonly store = inject(AocSrvStore);
   private actionSheetController = inject(ActionSheetController);
+  private toastController = inject(ToastController);
 
   // computed
   protected readonly isLoading = computed(() => this.store.isLoading());
@@ -361,6 +364,10 @@ export class AocSrv implements OnInit {
     return getAgeFn(dateOfBirth) + '';
   }
 
+  protected getColor(item: SrvIndex): ColorIonic {
+    return getMismatches(item).length > 0 ? ColorIonic.Danger : ColorIonic.Light;
+  }
+
   protected displayName(item: SrvIndex): string {
     return item.firstName || item.lastName
       ? `${item.firstName} ${item.lastName}`.trim()
@@ -395,7 +402,9 @@ protected async buildIndex(): Promise<void> {
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.create', this.imgixBaseUrl, 'add'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.imgixBaseUrl, 'copy'));
       actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('regasoft.add', this.imgixBaseUrl, 'add'));
       actionSheetOptions.buttons.push(createActionSheetButton('regasoft.update', this.imgixBaseUrl, 'edit'));
@@ -414,6 +423,7 @@ protected async buildIndex(): Promise<void> {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.imgixBaseUrl, 'copy'));
       actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
       actionSheetOptions.buttons.push(createActionSheetButton('license.create', this.imgixBaseUrl, 'edit'));
@@ -433,6 +443,7 @@ protected async buildIndex(): Promise<void> {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.imgixBaseUrl, 'copy'));
       actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, item);
@@ -449,9 +460,9 @@ protected async buildIndex(): Promise<void> {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
+      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.imgixBaseUrl, 'copy'));
       actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.create', this.imgixBaseUrl, 'add'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, item);
   }
@@ -472,10 +483,13 @@ protected async buildIndex(): Promise<void> {
             await this.store.editPerson(item);
             break;
           case 'membership.edit':
-            await this.store.editScsMember(item.mKey);
+            await this.store.editMember(item.mKey);
             break;
           case 'parentMembership.edit':
-            await this.store.editSrvMember(item.mKey);
+            await this.store.editParentMember(item.pKey);
+            break;
+          case 'parentMembership.create':
+            await this.store.createParentMember(item);
             break;
           case 'regasoft.add':
             await this.store.addToRegasoft(item);
@@ -486,14 +500,14 @@ protected async buildIndex(): Promise<void> {
           case 'regasoft.update':
             await this.store.updateRegasoft(item);
             break;
+          case 'regasoft.copy':
+            await copyToClipboardWithConfirmation(this.toastController, item.rServiceId ?? ''); 
+            break;
           case 'license.create':
             await this.store.createLicense(item);
             break;
           case 'license.download':
             await this.store.downloadLicense(item);
-            break;
-          case 'membership.create':
-            await this.store.addClubMembership(item);
             break;
         }
       }
