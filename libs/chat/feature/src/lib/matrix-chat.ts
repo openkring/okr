@@ -1,6 +1,6 @@
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ToastController, ActionSheetOptions, ActionSheetController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ToastController, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { SpinnerComponent } from '@bk2/shared-ui';
@@ -8,6 +8,8 @@ import { SpinnerComponent } from '@bk2/shared-ui';
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
 
 import { MatrixChatStore } from './matrix-chat.store';
+import { PollCreateModal } from './poll-create.modal';
+import { MatrixPollData } from '@bk2/chat-data-access';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, downloadToBrowser, showToast } from '@bk2/shared-util-angular';
@@ -337,6 +339,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
                   (messageSent)="onMessageSent($event)"
                   (fileSent)="onFileSent($event)"
                   (locationSent)="onLocationSent()"
+                  (surveyRequested)="onSurveyRequested()"
                   (videoCallStarted)="onVideoCallStarted()"
                   (typing)="onTyping($event)"
                   (cancelReplyClicked)="onCancelReply()"
@@ -396,6 +399,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
                   (messageSent)="onThreadMessageSent($event)"
                   (fileSent)="onThreadFileSent($event)"
                   (typing)="onTyping($event)"
+                  (surveyRequested)="onSurveyRequested()"
                 />
             </div>
           </div>
@@ -439,6 +443,7 @@ export class MatrixChat implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly toastController = inject(ToastController);
   private actionSheetController = inject(ActionSheetController);
+  private readonly modalController = inject(ModalController);
 
   private isInitializing = false; // Guard flag to prevent multiple initializations
   private isRequestingRoomAccess = false;
@@ -669,6 +674,19 @@ export class MatrixChat implements OnDestroy {
       (err) => console.error('Location error:', err),
       { enableHighAccuracy: true }
     );
+  }
+
+  async onSurveyRequested(): Promise<void> {
+    const modal = await this.modalController.create({ component: PollCreateModal });
+    await modal.present();
+    const { data, role } = await modal.onDidDismiss<MatrixPollData>();
+    if (role === 'confirm' && data) {
+      try {
+        await this.store.sendPoll(data);
+      } catch (error) {
+        console.error('MatrixChat: Failed to send poll:', error);
+      }
+    }
   }
 
   async onTyping(isTyping: boolean) {
