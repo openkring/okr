@@ -1,15 +1,14 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
-import { IonButton, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { IonButton } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { SvgIconPipe } from '@bk2/shared-pipes';
 import { MatrixMessage } from '@bk2/shared-models';
 
 @Component({
   selector: 'bk-poll-message',
   standalone: true,
-  imports: [AsyncPipe, TranslatePipe, SvgIconPipe, IonList, IonItem, IonLabel, IonButton, IonIcon],
+  imports: [AsyncPipe, TranslatePipe, IonButton],
   styles: [`
     .poll-question {
       font-weight: 600;
@@ -72,7 +71,7 @@ import { MatrixMessage } from '@bk2/shared-models';
     @for (answer of message().pollAnswers ?? []; track answer.id) {
       <div
         class="answer-row"
-        [class.ended]="message().pollEnded"
+        [class.ended]="message().pollEnded || isUndisclosed()"
         (click)="onAnswerClick(answer.id)"
       >
         <div class="radio-dot" [class.voted]="answer.id === message().myVoteAnswerId"></div>
