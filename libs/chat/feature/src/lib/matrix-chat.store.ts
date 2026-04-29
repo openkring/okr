@@ -531,6 +531,34 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
+       * Vote on a poll (MSC3381)
+       */
+      async sendPollResponse(pollEventId: string, answerId: string): Promise<void> {
+        const roomId = store.currentRoomId();
+        if (!roomId) return;
+        try {
+          await store.matrixService.sendPollResponse(roomId, pollEventId, answerId);
+        } catch (error) {
+          console.error('MatrixChatStore.sendPollResponse: Failed to send poll response:', error);
+          throw error;
+        }
+      },
+
+      /**
+       * End a poll (MSC3381) — only the creator should call this
+       */
+      async endPoll(pollEventId: string): Promise<void> {
+        const roomId = store.currentRoomId();
+        if (!roomId) return;
+        try {
+          await store.matrixService.sendPollEnd(roomId, pollEventId);
+        } catch (error) {
+          console.error('MatrixChatStore.endPoll: Failed to end poll:', error);
+          throw error;
+        }
+      },
+
+      /**
        * Send a reaction emoji to a message (called from the reaction chip in the message list).
        */
       async sendReaction(eventId: string, emoji: string): Promise<void> {
