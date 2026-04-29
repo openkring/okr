@@ -626,7 +626,7 @@ export class MatrixChatService {
 
   /**
    * Scan the room timeline for all poll.response events referencing pollEventId.
-   * Deduplicates by sender — only the highest getOriginServerTs() per sender counts.
+   * Deduplicates by sender — only the highest getTs() per sender counts.
    * Returns vote counts per answerId and the current user's voted answerId.
    */
   private computePollTally(
