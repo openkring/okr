@@ -14,7 +14,7 @@ import { bkPrompt, confirm, copyToClipboardWithConfirmation, showToast } from '@
 
 import { ActivityService } from '@bk2/activity-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
-import { MatrixChatService } from '@bk2/chat-data-access';
+import { MatrixChatService, MatrixPollData } from '@bk2/chat-data-access';
 
 import { RoomEditModal } from './room-edit.modal';
 import { bkTranslate } from '@bk2/shared-i18n';
@@ -508,6 +508,24 @@ export const _MatrixChatStore = signalStore(
           debugMessage(`MatrixChatStore.sendLocation: Sent location to room ${roomId}`, store.currentUser());
         } catch (error) {
           console.error('MatrixChatStore.sendLocation: Failed to send location:', error);
+          throw error;
+        }
+      },
+
+      /**
+       * Send a poll (MSC3381)
+       */
+      async sendPoll(data: MatrixPollData): Promise<void> {
+        const roomId = store.currentRoomId();
+        if (!roomId) {
+          console.warn('MatrixChatStore.sendPoll: No room selected');
+          return;
+        }
+        try {
+          await store.matrixService.sendPoll(roomId, data);
+          debugMessage(`MatrixChatStore.sendPoll: Sent poll "${data.question}" to room ${roomId}`, store.currentUser());
+        } catch (error) {
+          console.error('MatrixChatStore.sendPoll: Failed to send poll:', error);
           throw error;
         }
       },
