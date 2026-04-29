@@ -104,23 +104,53 @@ Main chat UI component. Uses the `_MatrixChatStore` to render the room list, mes
 
 When `sendPoll()` fires, `client.sendEvent()` makes a `PUT /rooms/{roomId}/send/org.matrix.msc3381.poll.start/{txnId}` request. The homeserver (Synapse) stores it as a regular room event — it doesn't interpret poll events server-side.
 
+All polls created by this app are `disclosed` (`org.matrix.msc3381.poll.disclosed`) — results are visible to voters as they come in. The `undisclosed` option was intentionally removed from the creation UI.
+
 ### What other clients see
 
-- **Element Web / Element X / FluffyChat** — render it as an interactive poll widget. The `kind` field (`disclosed` vs `undisclosed`) controls whether the running tally is visible while voting.
-- **Clients without MSC3381 support** — fall back to the `body` field, which we build as plain text (`"Question\n1. Answer1\n2. Answer2"`).
+- **Element Web / Element X / FluffyChat** — render it as an interactive poll widget.
+- **Clients without MSC3381 support** — fall back to the `body` field, built as plain text (`"Question\n1. Answer1\n2. Answer2"`).
 
-### `disclosed` vs `undisclosed`
+### Creating a poll
 
-Client-enforced only, not server-enforced:
-- `disclosed` — tally shown to each voter as votes come in
-- `undisclosed` — individual votes hidden until a `poll.end` event is sent (not yet implemented)
+`MatrixChatStore.sendPoll(data: MatrixPollData)` → `MatrixChatService.sendPoll(roomId, data)`. Opened via `PollCreateModal` from `MatrixMessageInput`'s action sheet. The form (`PollCreateForm` in `chat-ui`) collects a question and 2–20 answers.
 
 ### Voting
 
-Other clients send `org.matrix.msc3381.poll.response` events referencing the `poll.start` event ID. This app currently does not send responses or render poll results — polls are functional in Element but appear as unhandled event types in our message list.
+Users tap an answer in `PollMessageComponent` (rendered by `MatrixMessageList` for `poll.start` event types). The tap emits up through `MatrixMessageList.pollVoteClicked` → `MatrixChat.onPollVoteClicked()` → `MatrixChatStore.sendPollResponse()` → `MatrixChatService.sendPollResponse()`, which sends an `org.matrix.msc3381.poll.response` event:
+
+```json
+{
+  "type": "org.matrix.msc3381.poll.response",
+  "content": {
+    "org.matrix.msc3381.poll.response": { "answers": ["<answerId>"] },
+    "m.relates_to": { "rel_type": "m.reference", "event_id": "<pollStartEventId>" }
+  }
+}
+```
+
+Users can change their vote at any time by tapping a different answer. Only the latest `poll.response` per user is counted.
+
+### Vote tally
+
+`MatrixChatService.computePollTally(pollEventId, room, currentUserId)` scans the room timeline for all `poll.response` events referencing the poll, deduplicates by sender (highest `getOriginServerTs()` wins), and returns `{ pollVotes: Record<answerId, count>, myVoteAnswerId }`. Called on room load and on each incoming `poll.response` event from the live timeline.
+
+The tally is stored directly on `MatrixMessage`:
+
+```typescript
+pollAnswers?: Array<{ id: string; body: string }>;
+pollVotes?: Record<string, number>;   // answerId → vote count
+myVoteAnswerId?: string;
+```
+
+### Poll card visual design
+
+Radio-row style. Each answer row: radio dot (filled + primary if user's vote) · answer text · `count · percent%`. Footer: `{total} Stimmen gesamt [ · Du hast abgestimmt]`.
+
+For `undisclosed` polls received from other clients: per-answer counts are hidden (`—`); only the total vote count is shown; voting is disabled.
 
 ### Out of scope (not implemented)
 
-- Displaying poll results / vote responses in the message list
 - Ending a poll (`org.matrix.msc3381.poll.end`)
 - Multiple-choice polls (`max_selections > 1`)
+- Per-voter identity display
