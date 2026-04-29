@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, input, linkedSignal, output } from '@angular/core';
+import { Component, OnInit, computed, effect, input, linkedSignal, output, signal } from '@angular/core';
 import {
-  IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonNote, IonList
+  IonItem, IonInput, IonSelect, IonSelectOption, IonNote, IonList
 } from '@ionic/angular/standalone';
 
 import { AnyCharacterMask } from '@bk2/shared-config';
@@ -15,7 +15,7 @@ import { MatrixPollData } from '@bk2/chat-data-access';
   imports: [
     AsyncPipe, TranslatePipe,
     StringsComponent,
-    IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonNote, IonList
+    IonItem, IonInput, IonSelect, IonSelectOption, IonNote, IonList
   ],
   template: `
     <ion-list>
@@ -63,7 +63,7 @@ import { MatrixPollData } from '@bk2/chat-data-access';
     </ion-list>
   `
 })
-export class PollCreateForm {
+export class PollCreateForm implements OnInit {
   public formData = input.required<MatrixPollData>();
   public formDataChange = output<MatrixPollData>();
   public valid = output<boolean>();
@@ -72,7 +72,7 @@ export class PollCreateForm {
 
   protected kind = linkedSignal(() => this.formData().kind);
   protected question = linkedSignal(() => this.formData().question);
-  protected answers = linkedSignal(() => [...this.formData().answers]);
+  protected answers = signal<string[]>([]);
 
   protected kindDescription = computed(() =>
     this.kind() === 'disclosed'
@@ -90,5 +90,9 @@ export class PollCreateForm {
       this.formDataChange.emit(data);
       this.valid.emit(data.question.trim().length > 0 && data.answers.length >= 2);
     });
+  }
+
+  ngOnInit(): void {
+    this.answers.set([...this.formData().answers]);
   }
 }
