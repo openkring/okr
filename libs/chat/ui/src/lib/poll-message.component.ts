@@ -72,7 +72,7 @@ import { MatrixMessage } from '@bk2/shared-models';
       <div
         class="answer-row"
         [class.ended]="message().pollEnded || isUndisclosed()"
-        (click)="onAnswerClick(answer.id)"
+        (click)="onAnswerClick(answer.id); $event.stopPropagation()"
       >
         <div class="radio-dot" [class.voted]="answer.id === message().myVoteAnswerId"></div>
         <span class="answer-text" [class.voted]="answer.id === message().myVoteAnswerId">
