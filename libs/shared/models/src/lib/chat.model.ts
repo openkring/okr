@@ -24,6 +24,11 @@ export interface MatrixMessage {
   reactions?: Map<string, Set<string>>; // emoji -> Set of user IDs
   isRedacted: boolean;
   isEdited: boolean;
+  // Poll fields — only populated on org.matrix.msc3381.poll.start messages
+  pollAnswers?: Array<{ id: string; body: string }>;
+  pollVotes?: Record<string, number>;   // answerId → vote count
+  myVoteAnswerId?: string;
+  pollEnded?: boolean;
 }
 
 export interface MatrixRoom {

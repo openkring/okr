@@ -12,7 +12,6 @@ import { AppStore } from '@bk2/shared-feature';
 import { debugData, debugMessage } from '@bk2/shared-util-core';
 
 export interface MatrixPollData {
-  kind: 'disclosed' | 'undisclosed';
   question: string;
   answers: string[];   // min 2, max 20
 }
@@ -923,7 +922,7 @@ private async updateRoomsList(): Promise<void> {
   }
 
   /**
-   * Send a poll (MSC3381)
+   * Send a poll (MSC3381) — always disclosed
    */
   async sendPoll(roomId: string, data: MatrixPollData): Promise<void> {
     if (!this.client) throw new Error('Client not initialized');
@@ -937,7 +936,7 @@ private async updateRoomsList(): Promise<void> {
     await this.client.sendEvent(roomId, 'org.matrix.msc3381.poll.start' as any, {
       'org.matrix.msc3381.poll': {
         question: { msgtype: 'm.text', body: data.question },
-        kind: `org.matrix.msc3381.poll.${data.kind}`,
+        kind: 'org.matrix.msc3381.poll.disclosed',
         max_selections: 1,
         answers
       },

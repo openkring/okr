@@ -34,7 +34,7 @@ import { PollCreateForm } from '@bk2/chat-ui';
 export class PollCreateModal {
   private readonly modalController = inject(ModalController);
 
-  protected formData = signal<MatrixPollData>({ kind: 'disclosed', question: '', answers: [] });
+  protected formData = signal<MatrixPollData>({ question: '', answers: [] });
   protected formValid = signal(false);
 
   protected onFormDataChange(data: MatrixPollData): void {
