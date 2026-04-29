@@ -149,8 +149,11 @@ Radio-row style. Each answer row: radio dot (filled + primary if user's vote) ·
 
 For `undisclosed` polls received from other clients: per-answer counts are hidden (`—`); only the total vote count is shown; voting is disabled.
 
+### Ending a poll
+
+The poll creator sees an "Umfrage beenden" button on their poll card (single tap, no confirmation). Tapping it calls `MatrixChatStore.endPoll(pollEventId)` → `MatrixChatService.sendPollEnd(roomId, pollEventId)`, which sends `org.matrix.msc3381.poll.end` referencing the poll start event. Once received, the card becomes non-interactive, answer rows are disabled, and the footer shows "Umfrage beendet". The `pollEnded: true` flag is set on the `MatrixMessage` both on initial room load (if a `poll.end` already exists in the timeline) and on the live `RoomEvent.Timeline` event.
+
 ### Out of scope (not implemented)
 
-- Ending a poll (`org.matrix.msc3381.poll.end`)
 - Multiple-choice polls (`max_selections > 1`)
 - Per-voter identity display
