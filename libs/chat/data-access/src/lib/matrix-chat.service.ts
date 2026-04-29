@@ -549,16 +549,28 @@ export class MatrixChatService {
     const sender = room.getMember(event.getSender()!);
     const content = event.getContent();
     const relatesTo = content['m.relates_to'];
+    const eventType = event.getType();
+
+    let pollAnswers: Array<{ id: string; body: string }> | undefined;
+    if (eventType === 'org.matrix.msc3381.poll.start') {
+      const rawAnswers = content['org.matrix.msc3381.poll']?.answers;
+      if (Array.isArray(rawAnswers)) {
+        pollAnswers = rawAnswers.map((a: any) => ({
+          id: String(a.id),
+          body: a['org.matrix.msc3381.poll.answer']?.body ?? String(a.id)
+        }));
+      }
+    }
 
     return {
       eventId: event.getId()!,
       roomId: room.roomId,
       sender: event.getSender()!,
       senderName: sender?.name || event.getSender()!,
-      senderAvatar: undefined, // resolved asynchronously by callers via resolveMediaUrl
+      senderAvatar: undefined,
       body: content.body || '',
       timestamp: event.getTs(),
-      type: content.msgtype || 'm.text',
+      type: content.msgtype ?? eventType,
       content: content,
       relatesTo: (relatesTo?.event_id && relatesTo?.rel_type) ? {
         eventId: relatesTo.event_id as string,
@@ -567,6 +579,7 @@ export class MatrixChatService {
       reactions: this.getReactionsForEvent(event, room),
       isRedacted: event.isRedacted(),
       isEdited: !!relatesTo && relatesTo.rel_type === RelationType.Replace,
+      pollAnswers,
     };
   }
 
@@ -609,6 +622,51 @@ export class MatrixChatService {
       }
     }
     return reactions.size > 0 ? reactions : undefined;
+  }
+
+  /**
+   * Scan the room timeline for all poll.response events referencing pollEventId.
+   * Deduplicates by sender — only the highest getOriginServerTs() per sender counts.
+   * Returns vote counts per answerId and the current user's voted answerId.
+   */
+  private computePollTally(
+    pollEventId: string,
+    room: Room
+  ): { pollVotes: Record<string, number>; myVoteAnswerId: string | undefined } {
+    const currentUserId = this.getCurrentUserId();
+    const latestByUser = new Map<string, { answerId: string; ts: number }>();
+
+    for (const event of room.getLiveTimeline().getEvents()) {
+      if (event.getType() !== 'org.matrix.msc3381.poll.response') continue;
+      const relatesTo = event.getContent()?.['m.relates_to'];
+      if (relatesTo?.event_id !== pollEventId) continue;
+      const sender = event.getSender();
+      if (!sender) continue;
+      const answerId: string | undefined =
+        event.getContent()?.['org.matrix.msc3381.poll.response']?.answers?.[0];
+      if (!answerId) continue;
+      const ts = event.getTs();
+      const prev = latestByUser.get(sender);
+      if (!prev || ts > prev.ts) {
+        latestByUser.set(sender, { answerId, ts });
+      }
+    }
+
+    const pollVotes: Record<string, number> = {};
+    let myVoteAnswerId: string | undefined;
+    for (const [sender, { answerId }] of latestByUser) {
+      pollVotes[answerId] = (pollVotes[answerId] ?? 0) + 1;
+      if (sender === currentUserId) myVoteAnswerId = answerId;
+    }
+    return { pollVotes, myVoteAnswerId };
+  }
+
+  /** Returns true if a poll.end event referencing pollEventId exists in the room timeline. */
+  private isPollEnded(pollEventId: string, room: Room): boolean {
+    return room.getLiveTimeline().getEvents().some(event => {
+      if (event.getType() !== 'org.matrix.msc3381.poll.end') return false;
+      return event.getContent()?.['m.relates_to']?.event_id === pollEventId;
+    });
   }
 
   /** Re-map one message in a room's BehaviorSubject after its reactions changed. */
