@@ -328,6 +328,8 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
                     (fileClicked)="onFileClicked($event)"
                     (reactionClicked)="onReactionClicked($event)"
                     (threadClicked)="onThreadClicked($event)"
+                    (pollVoteClicked)="onPollVoteClicked($event)"
+                    (pollEndClicked)="onPollEndClicked($event)"
                   />
                 }
 
@@ -391,6 +393,8 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
                     (fileClicked)="onFileClicked($event)"
                     (reactionClicked)="onReactionClicked($event)"
                     (threadClicked)="onThreadClicked($event)"
+                    (pollVoteClicked)="onPollVoteClicked($event)"
+                    (pollEndClicked)="onPollEndClicked($event)"
                   />
                 }
 
@@ -686,6 +690,22 @@ export class MatrixChat implements OnDestroy {
       } catch (error) {
         console.error('MatrixChat: Failed to send poll:', error);
       }
+    }
+  }
+
+  protected async onPollVoteClicked(e: { pollEventId: string; answerId: string }): Promise<void> {
+    try {
+      await this.store.sendPollResponse(e.pollEventId, e.answerId);
+    } catch (error) {
+      console.error('MatrixChat: Failed to send poll response:', error);
+    }
+  }
+
+  protected async onPollEndClicked(e: { pollEventId: string }): Promise<void> {
+    try {
+      await this.store.endPoll(e.pollEventId);
+    } catch (error) {
+      console.error('MatrixChat: Failed to end poll:', error);
     }
   }
 
