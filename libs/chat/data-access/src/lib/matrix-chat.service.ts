@@ -283,6 +283,8 @@ export class MatrixChatService {
         if (targetId) this.refreshMessageReactions(targetId, room);
       } else if (eventType === 'org.matrix.msc3381.poll.start') {
         this.handleNewMessage(event, room);
+        const pollId = event.getId();
+        if (pollId) this.refreshPollTally(pollId, room);
       } else if (eventType === 'org.matrix.msc3381.poll.response') {
         const pollEventId = event.getContent()?.['m.relates_to']?.event_id as string | undefined;
         if (pollEventId) this.refreshPollTally(pollEventId, room);
@@ -295,12 +297,18 @@ export class MatrixChatService {
     // When a sent message is confirmed by the server, replace the local-echo entry
     // (temp ID like ~!room:id.$local) with the confirmed event (real server ID).
     this.client.on(RoomEvent.LocalEchoUpdated, (event: MatrixEvent, room: Room, oldEventId?: string) => {
-      if (event.getType() !== EventType.RoomMessage) return;
+      const et = event.getType();
+      if (et !== EventType.RoomMessage && et !== 'org.matrix.msc3381.poll.start') return;
       const subject = this.messages$.get(room.roomId);
       if (!subject) return;
       const msgs = subject.value ?? [];
       const oldIdx = oldEventId ? msgs.findIndex(m => m.eventId === oldEventId) : -1;
-      const newMsg = this.mapEventToMessage(event, room);
+      const baseMsg = this.mapEventToMessage(event, room);
+      // For poll.start: preserve tally fields from the existing entry (avoids wiping votes on echo confirmation)
+      const oldMsg = oldIdx >= 0 ? msgs[oldIdx] : undefined;
+      const newMsg = (et === 'org.matrix.msc3381.poll.start' && oldMsg)
+        ? { ...baseMsg, pollVotes: oldMsg.pollVotes, myVoteAnswerId: oldMsg.myVoteAnswerId, pollEnded: oldMsg.pollEnded }
+        : baseMsg;
       if (oldIdx >= 0) {
         // Replace the temp-ID entry in-place so the message doesn't jump around
         const updated = [...msgs];
