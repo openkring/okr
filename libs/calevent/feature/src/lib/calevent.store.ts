@@ -152,9 +152,8 @@ export const CalEventStore = signalStore(
       }),
       stream: ({ params }) => {
         const calName = params.calendarName;
-        if (!calName || calName.length === 0) {
-          return of([]);
-        }
+        if (!calName || calName.length === 0) return of([]);
+        if (!store.appStore.fbUser()) return of([]);
         const allEvents$ = store.appStore.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.env.tenantId), 'startDate', 'asc');
         const maxEvents = store.maxEvents();
         return allEvents$.pipe(
@@ -197,6 +196,7 @@ export const CalEventStore = signalStore(
         currentUser: store.appStore.currentUser()
       }),
       stream: ({params}) => {
+        if (!params.currentUser) return of([]);
         return store.firestoreService.searchData<CalendarModel>(CalendarCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
           debugListLoaded<CalendarModel>('CalEventStore.calendars', params.currentUser)
         );
