@@ -93,5 +93,46 @@ Section IDs in `page.sections` may contain `@TID@`, which is resolved to the ten
 ## Data Access
 `PageService` (`@bk2/cms-page-data-access`) and `SectionService` (`@bk2/cms-section-data-access`) are the Firestore gateways. `PageStore` combines them: it first loads the `PageModel`, then fans out to individual section reads via `combineLatest`.
 
+## External / Embedded Access (showMenu)
+
+Pages can be embedded in external sites or opened in a browser without the main
+navigation by suppressing the toolbar and side menu via `showMenu`.
+
+### How it works
+
+`showMenu` is resolved at two levels:
+
+| Level | Component | What it controls |
+|---|---|---|
+| Route | `AppComponent` | `ion-split-pane` / `ion-menu` (side drawer) |
+| Page | `PageDispatcher` → page component | `ion-header` / toolbar |
+
+**Priority (highest to lowest):**
+
+1. Query param `?showMenu=false` in the URL — overrides everything.
+2. Route `data: { showMenu: false }` — static configuration in `app.routes.ts`.
+3. Default: `true` (menu shown).
+
+`AppComponent` traverses the router state tree on every `NavigationEnd` to find
+`showMenu` in any child route's data (`findRouteData`). This is necessary because
+`AppComponent` lives at the root and cannot read child route data directly.
+
+`PageDispatcher` reads `showMenu` from `this.route.snapshot.data` as a fallback
+when the query param is absent.
+
+### `/public/news` — News page without navigation
+
+Route definition (`app.routes.ts`):
+
+```typescript
+{ path: 'news', loadComponent: () => … PageDispatcher, data: { id: 'news', showMenu: false } }
+```
+
+- `http://…/public/news` — toolbar and side menu both hidden (route data).
+- `http://…/public/news?showMenu=true` — re-enables navigation (query param overrides).
+
+This pattern applies to any page that should be embeddable. Add `showMenu: false`
+to the route `data` in `app.routes.ts`.
+
 ## Search Index Format
 `n:<name> k:<bkey>`
