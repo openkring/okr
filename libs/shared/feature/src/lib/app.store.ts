@@ -294,6 +294,11 @@ export const AppStore = signalStore(
         }
       },
 
+      tryGetCategory(categoryName?: string): CategoryListModel | undefined {
+        if (!categoryName) return undefined;
+        return store.allCategories()?.find(cat => cat.name === categoryName);
+      },
+
       getCategoryItem(categoryName?: string, itemName?: string): CategoryItemModel | undefined {
         if (!categoryName || !itemName) return undefined;
         const cat = this.getCategory(categoryName);

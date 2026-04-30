@@ -211,7 +211,7 @@ export class CalEventListComponent implements OnInit {
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
   protected popupId = computed(() => `c_calevent_${this.listId}`);
-  protected types = computed(() => this.store.appStore.getCategory('calevent_type'));
+  protected types = computed(() => this.store.appStore.tryGetCategory('calevent_type'));
   private currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
   protected isListView = linkedSignal(() => this.view() === 'list');
