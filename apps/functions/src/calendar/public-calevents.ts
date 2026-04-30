@@ -1,6 +1,9 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
+import * as corsLib from 'cors';
+
+const cors = corsLib({ origin: true });
 
 interface CalEventDoc {
   bkey: string;
@@ -30,7 +33,7 @@ interface CalEventDoc {
  */
 export const getPublicCalEvents = onRequest(
   { region: 'europe-west6' },
-  async (req, res) => {
+  (req, res) => cors(req, res, async () => {
     const tenantId = (req.query['tenantId'] as string)?.trim();
     if (!tenantId) {
       res.status(400).json({ error: 'Missing required query parameter: tenantId' });
@@ -61,5 +64,5 @@ export const getPublicCalEvents = onRequest(
       logger.error('getPublicCalEvents: error', { tenantId, err });
       res.status(500).json({ error: 'Failed to fetch public calendar events' });
     }
-  }
+  })
 );
