@@ -71,82 +71,84 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
   ],
     providers: [CalEventStore],
     template: `
-    <ion-header>
-      @if(contextMenuName() !== 'disable') {
-        <ion-toolbar [color]="color()">
-          @if(showMenu() === true) {
-            <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-          }
-          <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calevent.plural' | translate | async }}</ion-title>
-          @if(canChange()) {
-            <ion-buttons slot="end">
-              <ion-button id="{{ popupId() }}">
-                <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
-              </ion-button>
-              <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-                <ng-template>
-                  <ion-content>
-                    <bk-menu [menuName]="contextMenuName()"/>
-                  </ion-content>
-                </ng-template>
-              </ion-popover>
-            </ion-buttons>
-          }
+    @if(showMenu()) {
+      <ion-header>
+        @if(contextMenuName() !== 'disable') {
+          <ion-toolbar [color]="color()">
+            @if(showMenuButton() === true) {
+              <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
+            }
+            <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calevent.plural' | translate | async }}</ion-title>
+            @if(canChange()) {
+              <ion-buttons slot="end">
+                <ion-button id="{{ popupId() }}">
+                  <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
+                </ion-button>
+                <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                  <ng-template>
+                    <ion-content>
+                      <bk-menu [menuName]="contextMenuName()"/>
+                    </ion-content>
+                  </ng-template>
+                </ion-popover>
+              </ion-buttons>
+            }
+          </ion-toolbar>
+        }
+
+        <!-- quick entry -->
+        @if(canChange() && expertMode()) {
+          <ion-item lines="none">
+            <ion-textarea #bkQuickEntry 
+              (keyup.enter)="quickEntry(bkQuickEntry)"
+              label = "{{'@input.eventQuickEntry.label' | translate | async }}"
+              labelPlacement = "floating"
+              placeholder = "{{'@input.eventQuickEntry.placeholder' | translate | async }}"
+              [counter]="true"
+              fill="outline"
+              [maxlength]="1000"
+              [rows]="1"
+              inputmode="text"
+              type="text"
+              [autoGrow]="true">
+            </ion-textarea>
+            <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(bkQuickEntry)" />
+          </ion-item>
+        }
+
+        <!-- search and filters -->
+        <bk-list-filter
+          (searchTermChanged)="onSearchtermChange($event)"
+          (tagChanged)="onTagSelected($event)" [tags]="tags()"
+          (typeChanged)="onTypeSelected($event)" [types]="types()"
+          (yearChanged)="onYearSelected($event)" [years]="years()"
+          [initialView]="view()" (viewToggleChanged)="onViewChange($event)" gridIcon="calendar"
+        />
+
+        <!-- list header -->
+      @if(isListView()) {
+        <ion-toolbar>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="6" size-md="3">
+                <ion-label><strong>{{ '@calevent.list.header.duration' | translate | async }}</strong></ion-label>
+              </ion-col>
+              <ion-col size="6" size-md="4">
+                <ion-label><strong>{{ '@calevent.list.header.name' | translate | async }}</strong></ion-label>
+              </ion-col>
+              <ion-col size="3" class="ion-hide-md-down">
+                <ion-label><strong>{{ '@calevent.list.header.location' | translate | async }}</strong></ion-label>
+              </ion-col>
+              <ion-col size="2" class="ion-hide-md-down">
+                <ion-label><strong>{{ '@calevent.list.header.responsible' | translate | async }}</strong></ion-label>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
         </ion-toolbar>
       }
 
-      <!-- quick entry -->
-      @if(canChange() && expertMode()) {
-        <ion-item lines="none">
-          <ion-textarea #bkQuickEntry 
-            (keyup.enter)="quickEntry(bkQuickEntry)"
-            label = "{{'@input.eventQuickEntry.label' | translate | async }}"
-            labelPlacement = "floating"
-            placeholder = "{{'@input.eventQuickEntry.placeholder' | translate | async }}"
-            [counter]="true"
-            fill="outline"
-            [maxlength]="1000"
-            [rows]="1"
-            inputmode="text"
-            type="text"
-            [autoGrow]="true">
-          </ion-textarea>
-          <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="clear(bkQuickEntry)" />
-        </ion-item>
-      }
-
-      <!-- search and filters -->
-      <bk-list-filter
-        (searchTermChanged)="onSearchtermChange($event)"
-        (tagChanged)="onTagSelected($event)" [tags]="tags()"
-        (typeChanged)="onTypeSelected($event)" [types]="types()"
-        (yearChanged)="onYearSelected($event)" [years]="years()"
-        [initialView]="view()" (viewToggleChanged)="onViewChange($event)" gridIcon="calendar"
-      />
-
-      <!-- list header -->
-    @if(isListView()) {
-      <ion-toolbar>
-        <ion-grid>
-          <ion-row>
-            <ion-col size="6" size-md="3">
-              <ion-label><strong>{{ '@calevent.list.header.duration' | translate | async }}</strong></ion-label>
-            </ion-col>
-            <ion-col size="6" size-md="4">
-              <ion-label><strong>{{ '@calevent.list.header.name' | translate | async }}</strong></ion-label>
-            </ion-col>
-            <ion-col size="3" class="ion-hide-md-down">
-              <ion-label><strong>{{ '@calevent.list.header.location' | translate | async }}</strong></ion-label>
-            </ion-col>
-            <ion-col size="2" class="ion-hide-md-down">
-              <ion-label><strong>{{ '@calevent.list.header.responsible' | translate | async }}</strong></ion-label>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-toolbar>
-    }
-
-  </ion-header>
+    </ion-header>
+  }
 
   <!-- list data -->
   <ion-content #content>
@@ -176,7 +178,9 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
                 <ion-label>{{ event | calEventDuration }}</ion-label>
                 <ion-label>{{event.name}}</ion-label>
                 <ion-label class="ion-hide-md-down">{{ event.locationKey | part:true }}</ion-label>
+                @if(showMenu()) {
                 <ion-label class="ion-hide-md-down"><bk-avatar-display [avatars]="event.responsiblePersons" /></ion-label>
+                }
               </ion-item>
             }
           </ion-list>
@@ -190,14 +194,14 @@ export class CalEventListComponent implements OnInit {
   protected readonly store = inject(CalEventStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
-  private readonly content = viewChild<IonContent>('content');
 
   // inputs
   public listId = input.required<string>();     // calendar name or all or my
   public contextMenuName = input.required<string>(); // the name of the context menu to use or 'disable' to disable the header toolbar with the context menu
   public color = input('secondary');
   public view = input<'list' | 'grid'>('grid'); // initial view mode
-  public showMenu = input<boolean>(true);
+  public showMenu = input<boolean>(true);   // for /public/calendar
+  public showMenuButton = input<boolean>(true); // for group view
   
   // filters
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
@@ -432,6 +436,7 @@ export class CalEventListComponent implements OnInit {
    * @param calEvent 
    */
   protected async showActions(calEvent: CalEventModel): Promise<void> {
+    if (!this.showMenu()) return;
     if (this.canChange(calEvent)) {
       const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
       this.addActionSheetButtons(actionSheetOptions, calEvent);

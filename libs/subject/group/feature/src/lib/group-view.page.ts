@@ -99,28 +99,28 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
           }
           @case ('calendar') {
             @defer (on immediate) {
-              <bk-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="grid" [showMenu]="false" />
+              <bk-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="grid" [showMenuButton]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('tasks') {
             @defer (on immediate) {
-               <bk-task-list [listId]="id" contextMenuName="c-tasks" color="light" view="group" [showMenu]="false" />
+               <bk-task-list [listId]="id" contextMenuName="c-tasks" color="light" view="group" [showMenuButton]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('files') {
             @defer (on immediate) {
-              <bk-document-list [listId]="listId()" contextMenuName="c-folder" color="light" [showMenu]="false" />
+              <bk-document-list [listId]="listId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('album') {
             @defer (on immediate) {
-              <bk-document-list [listId]="albumId()" contextMenuName="c-folder" color="light" [showMenu]="false" />
+              <bk-document-list [listId]="albumId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }

@@ -43,7 +43,7 @@ import { TaskStore } from './task.store';
     <ion-header>
       <!-- title and actions -->
       <ion-toolbar [color]="color()">
-        @if(showMenu()) {
+        @if(showMenuButton()) {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
         <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ '@task.plural' | translate | async }}</ion-title>
@@ -146,7 +146,7 @@ export class TaskListComponent {
   public listId = input.required<string>(); // all, my, calendarId
   public contextMenuName = input.required<string>();
   public color = input('secondary');
-  public showMenu = input(true);
+  public showMenuButton = input(true);
 
   // derived signals
   protected filteredTasks = computed(() => this.taskStore.filteredTasks() ?? []);

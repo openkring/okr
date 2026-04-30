@@ -59,42 +59,42 @@ import { GraphPage } from "./graph.page";
                 }
                 @case ('content') {
                     @defer (on idle) {
-                        <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMenu()" />
+                        <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
                 }
                 @case ('dashboard') {
                     @defer (on idle) {
-                        <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMenu()" />
+                        <bk-dashboard-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
                 }
                 @case ('blog') {
                     @defer (on idle) {
-                        <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMenu()" />
+                        <bk-blog-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
                 }
                 @case ('files') {
                     @defer (on idle) {
-                        <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMenu()" />
+                        <bk-files-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
                 }
                 @case ('album') {
                     @defer (on idle) {
-                        <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMainMenu]="showMenu()" />
+                        <bk-album-page [id]="id()" [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
                 }
                 @case ('graph') {
                     @defer (on idle) {
-                        <bk-graph-page [color]="color()" [showMainMenu]="showMenu()" />
+                        <bk-graph-page [color]="color()" [showMenu]="showMenu()" />
                     } @placeholder {
                         <bk-spinner />
                     }
