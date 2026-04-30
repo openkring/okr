@@ -95,8 +95,7 @@ import { PollMessageComponent } from './poll-message.component';
     }
 
     .own-message .message-bubble {
-      background: var(--ion-color-primary);
-      color: var(--ion-color-primary-contrast);
+      background: #1aa76345;
     }
 
     .message-bubble.edited::after {

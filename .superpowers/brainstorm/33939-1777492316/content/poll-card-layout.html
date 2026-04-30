@@ -1,0 +1,89 @@
+<h2>Poll card layout in the message list</h2>
+<p class="subtitle">How should a poll appear after it's been sent?</p>
+
+<div class="cards">
+
+  <!-- Option A: Answer buttons become result bars after voting -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:14px;border-radius:8px;font-family:sans-serif;font-size:13px;color:#e0e0e0;max-width:320px">
+        <div style="font-size:11px;color:#888;margin-bottom:6px">Bruno Kaiser · Umfrage</div>
+        <div style="font-weight:600;margin-bottom:12px;font-size:14px">Was sollen wir zum Grillfest bringen?</div>
+        <!-- Before voting: tappable buttons -->
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="border:1px solid #4a9eff;border-radius:20px;padding:8px 14px;cursor:pointer;color:#4a9eff;text-align:center">🥗 Salat</div>
+          <div style="border:1px solid #555;border-radius:20px;padding:8px 14px;cursor:pointer;text-align:center">🍺 Getränke</div>
+          <div style="border:1px solid #555;border-radius:20px;padding:8px 14px;cursor:pointer;text-align:center">🍰 Dessert</div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#666">3 Stimmen · Tippen zum Abstimmen</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Tap to vote, then see bars</h3>
+      <p>Before voting: answer choices shown as tappable pills. After voting: answers become progress bars with percentages. Your choice is highlighted. Element-style.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Always show bars with counts -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:14px;border-radius:8px;font-family:sans-serif;font-size:13px;color:#e0e0e0;max-width:320px">
+        <div style="font-size:11px;color:#888;margin-bottom:6px">Bruno Kaiser · Umfrage</div>
+        <div style="font-weight:600;margin-bottom:12px;font-size:14px">Was sollen wir zum Grillfest bringen?</div>
+        <!-- Always show bars -->
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>🥗 Salat ✓</span><span style="color:#4a9eff">5 (50%)</span></div>
+            <div style="background:#333;border-radius:4px;height:6px"><div style="background:#4a9eff;width:50%;height:6px;border-radius:4px"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>🍺 Getränke</span><span style="color:#888">3 (30%)</span></div>
+            <div style="background:#333;border-radius:4px;height:6px"><div style="background:#555;width:30%;height:6px;border-radius:4px"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>🍰 Dessert</span><span style="color:#888">2 (20%)</span></div>
+            <div style="background:#333;border-radius:4px;height:6px"><div style="background:#555;width:20%;height:6px;border-radius:4px"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#666">10 Stimmen · Tippen zum Abstimmen</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Always show bars + tap to vote</h3>
+      <p>Results always visible as progress bars. Tapping an answer casts/changes your vote and updates the bars. Your current choice is checkmarked.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Compact — radio-button style -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:14px;border-radius:8px;font-family:sans-serif;font-size:13px;color:#e0e0e0;max-width:320px">
+        <div style="font-size:11px;color:#888;margin-bottom:6px">Bruno Kaiser · Umfrage</div>
+        <div style="font-weight:600;margin-bottom:12px;font-size:14px">Was sollen wir zum Grillfest bringen?</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#1e3a5f;border-radius:6px">
+            <div style="width:14px;height:14px;border-radius:50%;background:#4a9eff;flex-shrink:0"></div>
+            <span style="flex:1">🥗 Salat</span>
+            <span style="color:#4a9eff;font-size:12px">5</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:6px">
+            <div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #555;flex-shrink:0"></div>
+            <span style="flex:1">🍺 Getränke</span>
+            <span style="color:#666;font-size:12px">3</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:6px">
+            <div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #555;flex-shrink:0"></div>
+            <span style="flex:1">🍰 Dessert</span>
+            <span style="color:#666;font-size:12px">2</span>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#666">10 Stimmen · Tippen zum Abstimmen</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Radio-button style with count</h3>
+      <p>Each answer is a row with a radio dot, label, and raw count. Your choice highlighted. No percentage bars — simpler to implement and render.</p>
+    </div>
+  </div>
+
+</div>

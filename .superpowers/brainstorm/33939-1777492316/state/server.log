@@ -1,0 +1,6 @@
+{"type":"server-started","port":54994,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:54994","screen_dir":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33939-1777492316/content","state_dir":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33939-1777492316/state"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33939-1777492316/content/poll-card-layout.html"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33939-1777492316/content/poll-card-c-final.html"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33939-1777492316/content/waiting-1.html"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33939-1777492316/content/waiting-2.html"}
+{"type":"server-stopped","reason":"idle timeout"}
