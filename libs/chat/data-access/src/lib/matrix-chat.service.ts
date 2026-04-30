@@ -28,6 +28,7 @@ export class MatrixChatService {
   private messages$ = new Map<string, BehaviorSubject<MatrixMessage[] | null>>();
   private typing$ = new Subject<TypingNotification>();
   private errors$ = new Subject<MatrixError>();
+  private readonly tokenExpired$ = new Subject<void>();
   private readonly roomsUpdateTrigger$ = new Subject<void>();
   private roomsUpdateSub: Subscription | null = null;
   private readonly _mediaCache = new Map<string, string>(); // mxc:// -> blob URL
@@ -104,6 +105,10 @@ export class MatrixChatService {
 
   get errors(): Observable<MatrixError> {
     return this.errors$.asObservable();
+  }
+
+  get tokenExpired(): Observable<void> {
+    return this.tokenExpired$.asObservable();
   }
 
   get activeCall(): Observable<MatrixCall | null> {
@@ -257,9 +262,15 @@ export class MatrixChatService {
       } else if (state === 'ERROR') {
         console.error('MatrixChatService: Sync error', data);
         if (data?.error) {
-          // Cast to MatrixError or wrap it
           const matrixError = data.error as MatrixError;
           this.errors$.next(matrixError);
+        }
+      } else if (state === 'STOPPED') {
+        const errcode = (data?.error as MatrixError | undefined)?.errcode;
+        if (errcode === 'M_UNKNOWN_TOKEN') {
+          console.warn('MatrixChatService: Access token expired — clearing credentials and requesting re-auth');
+          this.clearStoredCredentials();
+          this.tokenExpired$.next();
         }
       }
     });

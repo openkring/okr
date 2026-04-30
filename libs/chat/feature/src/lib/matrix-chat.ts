@@ -1,5 +1,6 @@
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ToastController, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
@@ -574,6 +575,14 @@ export class MatrixChat implements OnDestroy {
       if (localEl  && localFeed?.stream)  localEl.srcObject  = localFeed.stream;
       if (remoteEl && remoteFeed?.stream) remoteEl.srcObject = remoteFeed.stream;
     });
+
+    // Re-authenticate when the Matrix access token expires (M_UNKNOWN_TOKEN).
+    this.store.matrixService.tokenExpired
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        console.warn('MatrixChat: Token expired — reconnecting');
+        this.store.cleanup().then(() => this.initializeMatrixIfNeeded());
+      });
   }
 
   private async requestRoomAccess(groupId: string): Promise<void> {
