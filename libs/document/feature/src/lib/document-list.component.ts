@@ -29,7 +29,7 @@ import { DocumentStore } from './document.store';
   <ion-header>
     @if(contextMenuName() !== 'disable') {
       <ion-toolbar [color]="color()">
-        @if(showMainMenu() === true) {
+        @if(showMenu() === true) {
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
         <ion-title>{{ filteredDocumentsCount()}}/{{documentsCount()}} {{ '@document.plural' | translate | async }}</ion-title>
@@ -185,7 +185,7 @@ export class DocumentListComponent {
   public readonly contextMenuName = input.required<string>();
   public color = input('secondary');
   public view = input<'list' | 'grid'>('list'); // initial view mode
-  public showMainMenu = input<boolean>(true);
+  public showMenu = input<boolean>(true);
 
   // filters
   protected readonly searchTerm = linkedSignal(() => this.documentStore.searchTerm());

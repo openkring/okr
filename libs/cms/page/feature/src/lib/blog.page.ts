@@ -53,7 +53,7 @@ import { BlogStream } from './blog-stream';
     }
   `],
   template: `
-    @if(showMainMenu()) {
+    @if(showMenu()) {
       <ion-header>
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
@@ -132,7 +132,7 @@ export class BlogPage {
 
   public contextMenuName = input<string>();
   public color = input('secondary');
-  public showMainMenu = input(true);
+  public showMenu = input(true);
 
   protected tenantId = computed(() => this.pageStore.tenantId());
   protected popupId = computed(() => 'c_blogpage_' + this.pageStore.page()?.bkey);

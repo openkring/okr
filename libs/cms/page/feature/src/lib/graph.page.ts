@@ -64,7 +64,7 @@ import { error } from '@bk2/shared-util-angular';
     .dot-section  { background: var(--ion-color-warning); }
   `],
   template: `
-    @if(showMainMenu()) {
+    @if(showMenu()) {
       <ion-header>
         <ion-toolbar color="secondary">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
@@ -133,7 +133,7 @@ export class GraphPage {
   // inputs
   public contextMenuName = input<string>();
   public color = input('secondary');
-  public showMainMenu = input(true);
+  public showMenu = input(true);
 
   // derived signals
   protected popupId = computed(() => 'c_graphpage_' + this.pageStore.page()?.bkey);

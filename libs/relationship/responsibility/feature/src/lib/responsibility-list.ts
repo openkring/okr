@@ -31,7 +31,7 @@ import { AvatarDisplayComponent } from '@bk2/avatar-ui';
     <ion-header>
       @if(contextMenuName() !== 'disable') {
         <ion-toolbar color="secondary">
-          @if(showMainMenu() === true) {
+          @if(showMenu() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
           <ion-title>{{ count() }} {{ '@responsibility.list.title' | translate | async}}</ion-title>
@@ -106,7 +106,7 @@ export class ResponsibilityList {
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>(); // the name of the context menu to use or 'disable' to disable the header toolbar with the context menu
-  public showMainMenu = input<boolean>(true);
+  public showMenu = input<boolean>(true);
 
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

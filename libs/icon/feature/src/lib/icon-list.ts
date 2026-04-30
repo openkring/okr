@@ -60,7 +60,7 @@ import { ICON_SETS, IconStore } from './icon.store';
     <ion-header>
       @if(contextMenuName() !== 'disable') {
         <ion-toolbar color="secondary">
-          @if(showMainMenu() === true) {
+          @if(showMenu() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
           <ion-title>{{ filteredCount() }}/{{ store.iconsCount() }} {{ '@icon.plural' | translate | async }}</ion-title>
@@ -175,7 +175,7 @@ export class IconListComponent {
   public contextMenuName = input.required<string>();
   public color = input('secondary');
   public view = input<'list' | 'grid'>('grid'); // initial view mode
-  public showMainMenu = input<boolean>(true);
+  public showMenu = input<boolean>(true);
 
   // filters
   protected searchTerm = linkedSignal(() => this.store.searchTerm());

@@ -74,7 +74,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
     <ion-header>
       @if(contextMenuName() !== 'disable') {
         <ion-toolbar [color]="color()">
-          @if(showMainMenu() === true) {
+          @if(showMenu() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
           <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ '@calevent.plural' | translate | async }}</ion-title>
@@ -197,7 +197,7 @@ export class CalEventListComponent implements OnInit {
   public contextMenuName = input.required<string>(); // the name of the context menu to use or 'disable' to disable the header toolbar with the context menu
   public color = input('secondary');
   public view = input<'list' | 'grid'>('grid'); // initial view mode
-  public showMainMenu = input<boolean>(true);
+  public showMenu = input<boolean>(true);
   
   // filters
   protected searchTerm = linkedSignal(() => this.store.searchTerm());

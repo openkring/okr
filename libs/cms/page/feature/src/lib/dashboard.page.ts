@@ -227,7 +227,7 @@ import { PageStore } from './page.store';
     }
 `],
   template: `
-    @if(showMainMenu()) {
+    @if(showMenu()) {
       <ion-header>
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
@@ -319,7 +319,7 @@ export class DashboardPage {
   // inputs
   public contextMenuName = input<string>();
   public color = input('secondary');
-  public showMainMenu = input(true);
+  public showMenu = input(true);
 
   // derived signals
   protected tenantId = computed(() => this.pageStore.tenantId());
