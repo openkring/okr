@@ -2,6 +2,8 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
+export { getPublicCalEvents } from './public-calevents';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Types (inlined to avoid monorepo cross-bundle imports)
 // ─────────────────────────────────────────────────────────────────────────────

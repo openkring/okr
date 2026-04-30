@@ -102,6 +102,7 @@ export const oidcUserInfo = OidcBridge.oidcUserInfo;
 
 // calendar
 export const generateCalendarICS = Calendar.generateCalendarICS;
+export const getPublicCalEvents = Calendar.getPublicCalEvents;
 
 // email webhooks
 export const mailtrapWebhook = Email.mailtrapWebhook;

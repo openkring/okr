@@ -21,8 +21,10 @@ import { getCaleventIndex, isCalEvent } from '@bk2/calevent-util';
 import { RegressionSelectionModalComponent } from '@bk2/calevent-ui';
 
 import { CalEventEditModalComponent } from './calevent-edit.modal';
-import { firstValueFrom, map, of } from 'rxjs';
+import { from, firstValueFrom, map, of } from 'rxjs';
 import { CalEventViewModal } from 'libs/calevent/feature/src/lib/calevent-view.modal';
+
+const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';
 
 export type CalEventState = {
   calendarName: string; // all, my, or specific calendar name, tbd: my_pkey (for another user)
@@ -153,7 +155,11 @@ export const CalEventStore = signalStore(
       stream: ({ params }) => {
         const calName = params.calendarName;
         if (!calName || calName.length === 0) return of([]);
-        if (!store.appStore.fbUser()) return of([]);
+        if (!store.appStore.fbUser()) {
+          if (calName !== 'public') return of([]);
+          const url = `${PUBLIC_CALEVENTS_CF_URL}?tenantId=${encodeURIComponent(store.appStore.tenantId())}`;
+          return from(fetch(url).then(r => r.ok ? r.json() as Promise<CalEventModel[]> : []));
+        }
         const allEvents$ = store.appStore.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.env.tenantId), 'startDate', 'asc');
         const maxEvents = store.maxEvents();
         return allEvents$.pipe(
