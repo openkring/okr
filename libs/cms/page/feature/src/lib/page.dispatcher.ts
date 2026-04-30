@@ -126,7 +126,12 @@ export class PageDispatcher implements ViewWillEnter {
 
   // ?showMenu=false hides the toolbar and main menu (for embedding in external sites)
   private readonly queryParamMap = toSignal(this.route.queryParamMap);
-  protected showMenu = computed(() => coerceBoolean(this.queryParamMap()?.get('showMenu') ?? 'true'));
+  private readonly routeData = toSignal(this.route.data);
+  protected showMenu = computed(() => {
+    const qp = this.queryParamMap()?.get('showMenu');
+    if (qp != null) return coerceBoolean(qp);
+    return coerceBoolean(this.routeData()?.['showMenu'] ?? 'true');
+  });
 
   // computed
   protected page = computed(() => this.pageStore.page());
