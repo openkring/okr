@@ -1,7 +1,7 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
-import * as corsLib from 'cors';
+import corsLib from 'cors';
 
 const cors = corsLib({ origin: true });
 
