@@ -22,7 +22,6 @@ import { MatrixChatService } from '@bk2/chat-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 
-import { PersonNewModal } from './person-new.modal';
 
 export type PersonState = {
   orgId: string;
@@ -177,10 +176,11 @@ export const PersonStore = signalStore(
         /******************************** actions ******************************************* */
         async add(readOnly = true): Promise<void> {
             if (readOnly) return;
+            const { PersonNewModal } = await import('./person-new.modal');
             const modal = await store.modalController.create({
                 component: PersonNewModal,
                 componentProps: {
-                org: store.appStore.defaultOrg()
+                    org: store.appStore.defaultOrg()
                 }
             });
             modal.present();
