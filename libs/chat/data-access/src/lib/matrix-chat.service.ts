@@ -260,10 +260,14 @@ export class MatrixChatService {
         debugMessage('MatrixChatService: Initial sync complete, updating rooms list', this.appStore.currentUser());
         this.repairDmRoomsAccountData().then(() => this.updateRoomsList());
       } else if (state === 'ERROR') {
-        console.error('MatrixChatService: Sync error', data);
-        if (data?.error) {
-          const matrixError = data.error as MatrixError;
-          this.errors$.next(matrixError);
+        const matrixError = data?.error as MatrixError | undefined;
+        if (matrixError?.errcode === 'M_UNKNOWN_TOKEN') {
+          console.warn('MatrixChatService: Access token expired (ERROR state) — clearing credentials');
+          this.clearStoredCredentials();
+          this.tokenExpired$.next();
+        } else {
+          console.error('MatrixChatService: Sync error', data);
+          if (matrixError) this.errors$.next(matrixError);
         }
       } else if (state === 'STOPPED') {
         const errcode = (data?.error as MatrixError | undefined)?.errcode;

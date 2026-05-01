@@ -577,12 +577,25 @@ export class MatrixChat implements OnDestroy {
     });
 
     // Re-authenticate when the Matrix access token expires (M_UNKNOWN_TOKEN).
+    // Fast path: component is mounted when STOPPED fires.
     this.store.matrixService.tokenExpired
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
         console.warn('MatrixChat: Token expired — reconnecting');
         this.store.cleanup().then(() => this.initializeMatrixIfNeeded());
       });
+
+    // Slow path: component mounts AFTER the token expired (user was on another page).
+    // The service clears stored credentials on M_UNKNOWN_TOKEN. If the client is
+    // stopped, the store still thinks we're initialized, but credentials are gone.
+    effect(() => {
+      const syncState = this.store.syncState();
+      const isInitialized = this.store.isMatrixInitialized();
+      if (syncState === 'STOPPED' && isInitialized && !this.store.matrixService.getStoredCredentials()) {
+        console.warn('MatrixChat: Token expired while unmounted — triggering re-auth');
+        untracked(() => this.store.cleanup().then(() => this.initializeMatrixIfNeeded()));
+      }
+    });
   }
 
   private async requestRoomAccess(groupId: string): Promise<void> {
