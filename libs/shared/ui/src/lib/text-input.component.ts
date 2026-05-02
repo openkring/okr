@@ -114,7 +114,7 @@ export class TextInputComponent {
       if (!input) return;
       requestAnimationFrame(() => {
         const clearBtn = ((input as unknown as { el: HTMLElement }).el)
-          ?.shadowRoot?.querySelector<HTMLElement>('[part="clear-button"]');
+          ?.shadowRoot?.querySelector<HTMLElement>('[part~="clear-button"]');
         if (clearBtn) clearBtn.tabIndex = -1;
       });
     });
