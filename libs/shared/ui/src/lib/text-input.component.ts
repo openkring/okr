@@ -106,17 +106,24 @@ export class TextInputComponent {
     });
 
     // The Ionic clear button lives in the shadow DOM with tabindex="0", so Tab
-    // stops on it before moving to the next field. Patch it to tabindex="-1"
-    // whenever the value is non-empty (= when Ionic actually renders the button).
-    effect(() => {
-      if (!this.shouldClearInput() || !this.value()) return;
+    // stops on it before moving to the next field. Observe the shadow root and
+    // set tabIndex=-1 on the button the moment Stencil renders it.
+    effect((onCleanup) => {
+      if (!this.shouldClearInput()) return;
       const input = this.textInput();
       if (!input) return;
-      requestAnimationFrame(() => {
-        const clearBtn = ((input as unknown as { el: HTMLElement }).el)
-          ?.shadowRoot?.querySelector<HTMLElement>('[part~="clear-button"]');
-        if (clearBtn) clearBtn.tabIndex = -1;
+      let observer: MutationObserver | undefined;
+      input.getInputElement().then(nativeInput => {
+        const shadowRoot = nativeInput.getRootNode() as ShadowRoot;
+        const patch = () => {
+          const btn = shadowRoot.querySelector<HTMLElement>('[part~="clear-button"]');
+          if (btn) btn.tabIndex = -1;
+        };
+        patch();
+        observer = new MutationObserver(patch);
+        observer.observe(shadowRoot, { childList: true, subtree: true });
       });
+      onCleanup(() => observer?.disconnect());
     });
   }
 
