@@ -6,7 +6,7 @@ import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { OrgSelectModalComponent } from '@bk2/shared-feature';
 import { isOrg } from '@bk2/shared-util-core';
 
-import { convertFormToNewPerson, createNewPersonFormModel, PersonNewFormModel } from '@bk2/subject-person-util';
+import { createNewPersonFormModel, PersonNewFormModel } from '@bk2/subject-person-util';
 import { PersonNewForm } from '@bk2/subject-person-ui';
 
 import { PersonStore } from './person.store';
@@ -70,7 +70,7 @@ export class PersonNewModal {
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     this.formDirty.set(false);
-    await this.modalController.dismiss(convertFormToNewPerson(this.formData(), this.tenantId()), 'confirm');  
+    await this.modalController.dismiss(this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {
