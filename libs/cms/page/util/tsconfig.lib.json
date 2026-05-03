@@ -1,7 +1,7 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc/libs/cms/page/util",
+    "outDir": "../../../../dist/libs/cms/page/util",
     "declaration": true,
     "composite": true,
     "module": "es2020",

@@ -12,6 +12,7 @@
     "lib": ["es2021", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@bk2/shared-constants": ["dist/libs/shared/constants/src"],

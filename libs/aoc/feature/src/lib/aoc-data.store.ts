@@ -2,6 +2,8 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, Observable, of, take } from 'rxjs';
+import { StaticSuite } from 'vest';
+import { AlertController } from '@ionic/angular/standalone';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
@@ -10,18 +12,13 @@ import { AddressCollection, AddressModel, BkModel, CalEventCollection, CalEventM
   MenuItemModel, OrgCollection, OrgModel, OwnershipCollection, OwnershipModel, PageCollection, PageModel, PersonalRelCollection, PersonalRelModel, PersonCollection, 
   PersonModel, ReservationCollection, ReservationModel, TaskCollection, TransferCollection, UserCollection, 
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel, 
-  AvatarInfo,
-  AVATAR_INFO_SHAPE,
-  CategoryListModel,
-  ResponsibilityModel,
-  ResponsibilityCollection, 
-} from '@bk2/shared-models';
+  AvatarInfo, AVATAR_INFO_SHAPE, CategoryListModel, ResponsibilityModel, ResponsibilityCollection } from '@bk2/shared-models';
 import { getCategoryIndex, getSystemQuery, removeProperty } from '@bk2/shared-util-core';
+import { confirm } from '@bk2/shared-util-angular';
 
 import { addressValidations, computeFavoriteAddressInfo, getAddressIndex } from '@bk2/subject-address-util';
 import { commentValidations, getCommentIndex } from '@bk2/comment-util';
 import { calEventValidations, getCaleventIndex } from '@bk2/calevent-util';
-import { StaticSuite } from 'vest';
 import { documentValidations, getDocumentIndex } from '@bk2/document-util';
 import { getLocationIndex, locationValidations } from '@bk2/location-util';
 import { getMembershipIndex, membershipValidations } from '@bk2/relationship-membership-util';
@@ -39,8 +36,6 @@ import { getWorkrelIndex, workrelValidations } from '@bk2/relationship-workrel-u
 import { getUserIndex, userValidations } from '@bk2/user-util';
 import { categoryListValidations } from '@bk2/category-util';
 import { getGroupIndex, groupValidations, isAdminMember } from '@bk2/subject-group-util';
-import { confirm } from '@bk2/shared-util-angular';
-import { AlertController } from '@ionic/angular/standalone';
 import { getResponsibilityIndex } from '@bk2/relationship-responsibility-util';
 
 export interface FavMismatch {
