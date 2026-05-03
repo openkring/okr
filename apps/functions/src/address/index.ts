@@ -55,11 +55,11 @@ export const generateQrBill = onCall<GenerateQrBillRequest, Promise<GenerateQrBi
     try {
       await new Promise<void>((resolve, reject) => {
         const doc = new PDFDocument({ autoFirstPage: false });
-        const qrBill = new SwissQRBill(data);
         const stream = createWriteStream(tempPath);
-
-        qrBill.attachTo(doc);
         doc.pipe(stream);
+
+        const qrBill = new SwissQRBill(data);
+        qrBill.attachTo(doc);
         doc.end();
 
         stream.on('finish', resolve);
@@ -77,6 +77,10 @@ export const generateQrBill = onCall<GenerateQrBillRequest, Promise<GenerateQrBi
       logger.info('generateQrBill: PDF uploaded', { storagePath });
       return { storagePath };
 
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('generateQrBill: failed', { tenantId, addressBkey, message });
+      throw new HttpsError('internal', message);
     } finally {
       if (fs.existsSync(tempPath)) {
         fs.unlinkSync(tempPath);
