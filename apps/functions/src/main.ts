@@ -15,6 +15,7 @@ import * as Rag from './rag';
 import * as Email from './email';
 import * as Bexio from './bexio';
 import * as Zefix from './zefix';
+import * as Location from './location';
 import * as Srv from './srv';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
@@ -152,6 +153,9 @@ export const onRagFileDeleted = Rag.onRagFileDeleted;
 
 // address
 export const generateQrBill = Address.generateQrBill;
+
+// location conversion (address ↔ coords ↔ what3words)
+export const convertLocation = Location.convertLocation;
 
 // test
 export const getEcho = Test.getEcho;
