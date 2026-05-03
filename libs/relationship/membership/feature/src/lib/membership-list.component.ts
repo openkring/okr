@@ -305,22 +305,26 @@ export class MembershipListComponent {
    */
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, membership: MembershipModel): Promise<void> {
     // view/edit on membership and person
-    if (this.canChange()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
+    if (this.canChange(membership)) {
+      if (!this.group()) { // group memberships can not be edited
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.imgixBaseUrl, 'edit'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
     } else { // registered
-      actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
+      if (!this.group()) { // group memberships can not be viewed
+        actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // privileged operations on membership
-    if (this.canChange() || this.canDelete()) {
-      if (isOngoing(membership.dateOfExit)) {
+    if (this.canChange(membership) || this.canDelete(membership)) {
+      if (isOngoing(membership.dateOfExit) && !this.group()) {
         actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'mcatchange'));
         actionSheetOptions.buttons.push(createActionSheetButton('membership.end', this.imgixBaseUrl, 'stop-circle'));
       }
-      if (this.canDelete()) {
+      if (this.canDelete(membership)) {
         actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
       }
       actionSheetOptions.buttons.push(createActionSheetDivider());
@@ -426,26 +430,30 @@ export class MembershipListComponent {
    * Check whether the current user is allowed to make changes on the data.
    * @returns true if the current user is allowed to make changes
    */
-  protected canChange(): boolean {
+  protected canChange(membership?: MembershipModel): boolean {
     if (this.view() === 'group') {
       if (hasRole('privileged', this.currentUser())) return true;
       if (hasRole('memberAdmin', this.currentUser())) return true;
-      if (isAdminMember(this.group(), this.currentUser()?.personKey)) return true;
-    } else { // normal membership list
+      if (isAdminMember(this.group(), this.currentUser()?.personKey)) {
+        // group admin may only change memberships that belong to the current group
+        if (membership && membership.orgKey !== this.orgId()) return false;
+        return true;
+      }
+    } else {
       if (hasRole('memberAdmin', this.currentUser())) return true;
     }
     return false;
   }
 
-  /**
-   * Check whether the current user is allowed to delete data.
-   * @returns true if the current user is allowed to delete
-   */
-  protected canDelete(): boolean {
+  protected canDelete(membership?: MembershipModel): boolean {
     if (hasRole('admin', this.currentUser())) return true;
     if (hasRole('memberAdmin', this.currentUser())) return true;
     if (this.view() === 'group') {
-      if (isAdminMember(this.group(), this.currentUser()?.personKey)) return true;
+      if (isAdminMember(this.group(), this.currentUser()?.personKey)) {
+        // group admin may only delete memberships that belong to the current group
+        if (membership && membership.orgKey !== this.orgId()) return false;
+        return true;
+      }
     }
     return false;
   }

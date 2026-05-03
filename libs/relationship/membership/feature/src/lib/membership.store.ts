@@ -9,7 +9,7 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categ
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName, TaskModel } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, nameMatches, warn } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, nameMatches, warn } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl, showToast } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
@@ -441,6 +441,11 @@ export const _MembershipStore = signalStore(
         if (readOnly) { console.log('MembershipStore.addMemberToGroup: readOnly mode.'); return; }
         const member = store.member() ?? store.appStore.currentPerson();
         if (!member) { console.log('MembershipStore.addMemberToGroup: no member.'); return; }
+        const alreadyMember = store.members().some(m => m.memberKey === member.bkey && isOngoing(m.dateOfExit));
+        if (alreadyMember) {
+          await showToast(store.toastController, '@membership.operation.add.alreadyMember.error');
+          return;
+        }
         const membership = convertMemberAndOrgToMembership(member, PersonModelName, group, GroupModelName, store.tenantId());
         this.edit(membership, readOnly, true);
       },
