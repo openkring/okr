@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { RoleName, TaskModel } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { extractTagAndDate, getAvatarInfo, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -236,17 +236,17 @@ export class TaskListComponent {
    * @param task 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
-    if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.imgixBaseUrl, 'checkbox_task'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    }
-    if (!this.readOnly()) {
+    actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.imgixBaseUrl, 'checkbox'));
+    actionSheetOptions.buttons.push(createActionSheetDivider());
+    if (this.canChange()) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.imgixBaseUrl, 'edit'));
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.imgixBaseUrl, 'eye-on'));
     }
     if (hasRole('admin', this.taskStore.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.imgixBaseUrl, 'trash'));
     }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }

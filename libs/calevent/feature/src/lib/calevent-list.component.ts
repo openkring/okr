@@ -416,7 +416,7 @@ export class CalEventListComponent implements OnInit {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.store.add(this.canChange(), undefined, undefined, !this.isListView()); break;
+      case 'add':  await this.store.add(!this.canChange(), undefined, undefined, !this.isListView()); break;
       case 'exportRaw': await this.store.export("raw"); break;
       case 'exportIcs': 
         const cal =  this.store.calendar();
