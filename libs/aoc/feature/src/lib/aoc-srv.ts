@@ -477,6 +477,7 @@ protected async buildIndex(): Promise<void> {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       if (data) {
         switch (data.action) {
           case 'person.edit':

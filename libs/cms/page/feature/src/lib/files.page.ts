@@ -293,6 +293,7 @@ export class FilesPage {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'page.removesection':
           if (sectionId) {

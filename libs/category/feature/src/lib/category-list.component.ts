@@ -169,6 +169,7 @@ export class CategoryListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'category.delete':
           await this.categoryListStore.delete(cat, this.readOnly());
