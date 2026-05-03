@@ -266,20 +266,19 @@ export class DocumentListComponent {
    * @param document 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, document: DocumentModel): void {
-    if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('document.preview', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.imgixBaseUrl, 'download'));
-      actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.imgixBaseUrl, 'timeline'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    }
     if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.imgixBaseUrl, 'upload'));
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.imgixBaseUrl, 'eye-on'));
     }
+    // actionSheetOptions.buttons.push(createActionSheetButton('document.preview', this.imgixBaseUrl, 'eye-on'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.download', this.imgixBaseUrl, 'download'));
+    actionSheetOptions.buttons.push(createActionSheetButton('document.showRevisions', this.imgixBaseUrl, 'timeline'));
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('document.delete', this.imgixBaseUrl, 'trash'));
     }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -313,10 +312,7 @@ export class DocumentListComponent {
           await this.documentStore.preview(document, true);
           break;
         case 'document.showRevisions':
-          const revisions = await this.documentStore.getRevisions(document);
-          for (const rev of revisions) {
-            console.log(` - revision: ${rev.bkey} / version: ${rev.version} / last update: ${rev.dateOfDocLastUpdate}`);
-          }
+          await this.documentStore.showRevisions(document);
           break;
       }
     }
