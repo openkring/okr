@@ -443,7 +443,7 @@ export const _MembershipStore = signalStore(
         if (!member) { console.log('MembershipStore.addMemberToGroup: no member.'); return; }
         const alreadyMember = store.members().some(m => m.memberKey === member.bkey && isOngoing(m.dateOfExit));
         if (alreadyMember) {
-          await showToast(store.toastController, '@membership.operation.add.alreadyMember.error');
+          await showToast(store.toastController, '@membership.operation.create.alreadyMember.error');
           return;
         }
         const membership = convertMemberAndOrgToMembership(member, PersonModelName, group, GroupModelName, store.tenantId());
