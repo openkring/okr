@@ -48,7 +48,7 @@ import { ButtonCopyComponent } from './button-copy.component';
           <ion-input-password-toggle slot="end" tabindex="-1"></ion-input-password-toggle>
         </ion-input>
         @if (isCopyable()) {
-          <bk-button-copy [value]="value()" />
+          <bk-button-copy [value]="value()" tabindex="-1" />
         }
       }
     </ion-item>

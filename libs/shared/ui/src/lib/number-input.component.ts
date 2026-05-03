@@ -39,7 +39,7 @@ import { ButtonCopyComponent } from './button-copy.component';
       [readonly]="isReadOnly()"
     />
     @if (isCopyable()) {
-      <bk-button-copy [value]="value()" />
+      <bk-button-copy [value]="value()" tabindex="-1" />
     }
   </ion-item>
   @if(shouldShowHelper()) {

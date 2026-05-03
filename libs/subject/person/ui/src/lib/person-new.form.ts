@@ -47,12 +47,26 @@ import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel, personNewFormValidations } f
           <ion-grid>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="firstName" [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)" autocomplete="given-name" [readOnly]="isReadOnly()" [autofocus]="true" [maxLength]=30 />
+                <bk-text-input
+                  name="firstName"
+                  [value]="firstName()" (valueChange)="onFieldChange('firstName', $event)"
+                  autocomplete="given-name"
+                  [readOnly]="isReadOnly()"
+                  [autofocus]="true"
+                  [clearInput]="false"
+                  [maxLength]=30 
+                />
                 <bk-error-note [errors]="firstNameErrors()" />                                                                                                                                                            
               </ion-col>
 
               <ion-col size="12" size-md="6">
-                <bk-text-input name="lastName" [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)" autocomplete="family-name" [readOnly]="isReadOnly()" [maxLength]=30 />
+                <bk-text-input name="lastName"
+                  [value]="lastName()" (valueChange)="onFieldChange('lastName', $event)"
+                  autocomplete="family-name"
+                  [readOnly]="isReadOnly()"
+                  [clearInput]="false"
+                  [maxLength]=30
+                />
                 <bk-error-note [errors]="lastNameErrors()" />                                                                                                                                                            
               </ion-col>
             </ion-row>
@@ -86,11 +100,22 @@ import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel, personNewFormValidations } f
             <ion-grid>
               <ion-row>
                 <ion-col size="9">
-                  <bk-text-input name="streetName" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [readOnly]="isReadOnly()" />
+                  <bk-text-input
+                    name="streetName"
+                    [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)"
+                    autocomplete="street-address"
+                    [clearInput]="false"
+                    [readOnly]="isReadOnly()"
+                  />
                   <bk-error-note [errors]="streetNameErrors()" />                                                                                                                     
                 </ion-col>
                 <ion-col size="3">
-                  <bk-text-input name="streetNumber" [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)" [readOnly]="isReadOnly()" />
+                  <bk-text-input
+                    name="streetNumber"
+                    [value]="streetNumber()" (valueChange)="onFieldChange('streetNumber', $event)"
+                    [clearInput]="false"
+                    [readOnly]="isReadOnly()"
+                  />
                   <bk-error-note [errors]="streetNumberErrors()" />                                                                                                                     
                 </ion-col>
               </ion-row>
@@ -99,29 +124,56 @@ import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel, personNewFormValidations } f
 
               <ion-row>
                 <ion-col size="12" size-md="3">
-                  <bk-text-input name="countryCode" [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)" [readOnly]="isReadOnly()" />
+                  <bk-text-input
+                    name="countryCode"
+                    [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)"
+                    [clearInput]="false"
+                    [readOnly]="isReadOnly()"
+                  />
                 </ion-col>
         
                 <ion-col size="12" size-md="3">
-                  <bk-text-input name="zipCode" [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)" [readOnly]="isReadOnly()" />
+                  <bk-text-input
+                    name="zipCode"
+                    [value]="zipCode()" (valueChange)="onFieldChange('zipCode', $event)"
+                    [clearInput]="false"
+                    [readOnly]="isReadOnly()"
+                  />
                 </ion-col>
                 
                 <ion-col size="12" size-md="6">
-                  <bk-text-input name="city" [value]="city()" (valueChange)="onFieldChange('city', $event)" [readOnly]="isReadOnly()" />
+                  <bk-text-input
+                    name="city"
+                    [value]="city()" (valueChange)="onFieldChange('city', $event)"
+                    [clearInput]="false"
+                    [readOnly]="isReadOnly()"
+                  />
                 </ion-col>
               </ion-row>
 
               <ion-row>
                 <ion-col size="12" size-md="6"> 
-                  <bk-phone [value]="phone()" (valueChange)="onFieldChange('phone', $event)" [readOnly]="isReadOnly()" />
+                  <bk-phone
+                    [value]="phone()" (valueChange)="onFieldChange('phone', $event)"
+                    [clearInput]="false"
+                    [readOnly]="isReadOnly()"
+                  />
                   <bk-error-note [errors]="phoneErrors()" />                                                                                                                     
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <bk-email [value]="email()" (valueChange)="onFieldChange('email', $event)" [readOnly]="isReadOnly()" />
+                  <bk-email
+                    [value]="email()" (valueChange)="onFieldChange('email', $event)"
+                    [clearInput]="false"
+                    [readOnly]="isReadOnly()"
+                  />
                   <bk-error-note [errors]="emailErrors()" />                                                                                                                     
                 </ion-col>
-                <ion-col size="12" size-md="6">
-                  <bk-text-input name="web" [value]="web()" (valueChange)="onFieldChange('web', $event)" [readOnly]="isReadOnly()" />
+                  <ion-col size="12" size-md="6">
+                    <bk-text-input name="web"
+                    [value]="web()" (valueChange)="onFieldChange('web', $event)"
+                    [clearInput]="false"
+                    [readOnly]="isReadOnly()"
+                  />
                   <bk-error-note [errors]="webErrors()" />                                                                                                                     
                 </ion-col>
               </ion-row>
@@ -139,10 +191,23 @@ import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel, personNewFormValidations } f
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="ssnId" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [readOnly]="isReadOnly()" [copyable]=true />
+                <bk-text-input name="ssnId"
+                  [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)"
+                  [maxLength]=16
+                  [mask]="ssnMask"
+                  [showHelper]=true
+                  [readOnly]="isReadOnly()"
+                  [copyable]=true
+                />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-text-input name="bexioId" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]=6 [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
+                <bk-text-input name="bexioId"
+                  [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)"
+                  [maxLength]=6
+                  [mask]="bexioMask"
+                  [showHelper]=true
+                  [readOnly]="isReadOnly()"
+                />                                        
               </ion-col>
             </ion-row>
           </ion-grid>

@@ -45,7 +45,7 @@ import { ButtonCopyComponent } from './button-copy.component';
       [maskitoElement]="maskPredicate"
     />
     @if (isCopyable()) {
-      <bk-button-copy [value]="value()" />
+      <bk-button-copy [value]="value()" tabindex="-1" />
     }
   </ion-item>
   @if(shouldShowHelper()) {

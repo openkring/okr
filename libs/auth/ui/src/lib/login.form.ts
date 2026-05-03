@@ -43,7 +43,8 @@ import { authCredentialsValidations, emailValidations, loginValidations, passwor
                   [copyable]="false"
                   [clearInput]="false"
                   [readOnly]="false"
-                  autocomplete="username email" />
+                  autocomplete="username email"
+                />
                 <bk-error-note [errors]="emailErrors()" />
               </ion-col>
             </ion-row>
