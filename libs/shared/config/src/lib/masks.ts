@@ -42,7 +42,7 @@ export const ZoomMask: MaskitoOptions = {
   mask: [/\d/, /\d/]
 };
 export const What3WordMask: MaskitoOptions = {
-  mask: [/\w+/, /\./, /\w+/, /\./, /\w+/]
+  mask: /^[\p{L}\p{N}-]+(\.[\p{L}\p{N}-]+(\.[\p{L}\p{N}-]+)?)?$/u,
 };
 export const ChVatMask: MaskitoOptions = {
   mask: ['C', 'H', 'E', '-', /\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, '.', /\d/, /\d/, /\d/, ' ', 'M', 'W', 'S', 'T'],
