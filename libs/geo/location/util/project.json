@@ -1,7 +1,7 @@
 {
   "name": "location-util",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/location/util/src",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/geo/location/util/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:util", "scope:location", "platform:mobile", "platform:web"],
@@ -11,9 +11,9 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/location/util",
-        "main": "libs/location/util/src/index.ts",
-        "tsConfig": "libs/location/util/tsconfig.lib.json",
-        "assets": ["libs/location/util/*.md"],
+        "main": "libs/geo/location/util/src/index.ts",
+        "tsConfig": "libs/geo/location/util/tsconfig.lib.json",
+        "assets": ["libs/geo/location/util/*.md"],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },
@@ -21,7 +21,7 @@
       "executor": "@nx/vite:test",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "configFile": "libs/location/util/vite.config.ts"
+        "configFile": "libs/geo/location/util/vite.config.ts"
       }
     },
     "lint": {

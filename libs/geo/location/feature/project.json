@@ -1,7 +1,7 @@
 {
   "name": "location-feature",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/location/feature/src",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/geo/location/feature/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:feature", "scope:location", "platform:mobile", "platform:web"],
@@ -11,9 +11,9 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/location/feature",
-        "main": "libs/location/feature/src/index.ts",
-        "tsConfig": "libs/location/feature/tsconfig.lib.json",
-        "assets": ["libs/location/feature/*.md"],
+        "main": "libs/geo/location/feature/src/index.ts",
+        "tsConfig": "libs/geo/location/feature/tsconfig.lib.json",
+        "assets": ["libs/geo/location/feature/*.md"],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },

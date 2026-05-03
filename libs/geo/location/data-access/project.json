@@ -1,7 +1,7 @@
 {
   "name": "location-data-access",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/location/data-access/src",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/geo/location/data-access/src",
   "prefix": "bk",
   "projectType": "library",
   "tags": ["type:data-access", "scope:location", "platform:mobile", "platform:web"],
@@ -11,9 +11,9 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/location/data-access",
-        "main": "libs/location/data-access/src/index.ts",
-        "tsConfig": "libs/location/data-access/tsconfig.lib.json",
-        "assets": ["libs/location/data-access/*.md"],
+        "main": "libs/geo/location/data-access/src/index.ts",
+        "tsConfig": "libs/geo/location/data-access/tsconfig.lib.json",
+        "assets": ["libs/geo/location/data-access/*.md"],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },

@@ -10,7 +10,7 @@ import { bkTranslate } from '@bk2/shared-i18n';
 import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
 import { MapViewModalComponent } from '@bk2/shared-ui';
 
-import { LocationService } from '@bk2/location-data-access';
+import { LocationConversionService, LocationService } from '@bk2/location-data-access';
 import { isLocation } from '@bk2/location-util';
 
 import { LocationEditModalComponent } from './location-edit.modal';
@@ -31,6 +31,7 @@ export const LocationListStore = signalStore(
   withState(initialState),
   withProps(() => ({
     locationService: inject(LocationService),
+    locationConversionService: inject(LocationConversionService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     toastController: inject(ToastController),
@@ -102,8 +103,9 @@ export const LocationListStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data) {
           if (isLocation(data, store.appStore.tenantId())) {
+            await store.locationConversionService.convert(data);
             data.bkey?.length > 0 ?
-              await store.locationService.update(data, store.currentUser()) : 
+              await store.locationService.update(data, store.currentUser()) :
               await store.locationService.create(data, store.currentUser());
           }
         }

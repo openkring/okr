@@ -1,5 +1,5 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
     "types": ["node", "vitest"],
@@ -16,11 +16,8 @@
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
   "references": [
-    {"path": "../../shared/models/tsconfig.lib.json"},
-    {"path": "../../shared/config/tsconfig.lib.json"},
-    {"path": "../../shared/constants/tsconfig.lib.json"},
-    {"path": "../../shared/util-core/tsconfig.lib.json"},
-    {"path": "../../shared/data-access/tsconfig.lib.json"},
-    {"path": "../../location/util/tsconfig.lib.json"}
+    {"path": "../../../shared/models/tsconfig.lib.json"},
+    {"path": "../../../shared/constants/tsconfig.lib.json"},
+    {"path": "../../../shared/util-core/tsconfig.lib.json"}
   ]
 }

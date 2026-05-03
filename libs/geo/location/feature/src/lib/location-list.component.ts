@@ -100,7 +100,7 @@ import { LocationListStore } from './location-list.store';
   `
 })
 export class LocationListComponent {
-  protected locationListStore = inject(LocationListStore);
+  protected store = inject(LocationListStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -108,42 +108,42 @@ export class LocationListComponent {
   public contextMenuName = input.required<string>();
 
   // filters
-  protected searchTerm = linkedSignal(() => this.locationListStore.searchTerm());
-  protected selectedTag = linkedSignal(() => this.locationListStore.selectedTag());
-  protected selectedType = linkedSignal(() => this.locationListStore.selectedType());
+  protected searchTerm = linkedSignal(() => this.store.searchTerm());
+  protected selectedTag = linkedSignal(() => this.store.selectedTag());
+  protected selectedType = linkedSignal(() => this.store.selectedType());
 
   // fields
-  protected filteredLocations = computed(() => this.locationListStore.filteredLocations() ?? []);
-  protected locationsCount = computed(() => this.locationListStore.locationsCount());
+  protected filteredLocations = computed(() => this.store.filteredLocations() ?? []);
+  protected locationsCount = computed(() => this.store.locationsCount());
   protected selectedLocationsCount = computed(() => this.filteredLocations().length);
-  protected isLoading = computed(() => this.locationListStore.isLoading());
-  protected tags = computed(() => this.locationListStore.getTags());
-  protected types = computed(() => this.locationListStore.appStore.getCategory('location_type'))
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
+  protected types = computed(() => this.store.appStore.getCategory('location_type'))
   protected popupId = computed(() => 'c_locations_' + this.listId());
-  protected currentUser = computed(() => this.locationListStore.currentUser());
+  protected currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.locationListStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.locationListStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.locationListStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.locationListStore.setSelectedType(type);
+    this.store.setSelectedType(type);
   }
 
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'add':  await this.locationListStore.add(); break;
-      case 'exportRaw': await this.locationListStore.export("raw"); break;
+      case 'add':  await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `LocationListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -191,26 +191,26 @@ export class LocationListComponent {
       if (!data) return;
       switch (data.action) {
         case 'location.delete':
-          await this.locationListStore.delete(location, this.readOnly());
+          await this.store.delete(location, this.readOnly());
           break;
         case 'location.edit':
-          await this.locationListStore.edit(location, this.readOnly());
+          await this.store.edit(location, this.readOnly());
           break;
         case 'location.view':
-          await this.locationListStore.edit(location, true);
+          await this.store.edit(location, true);
           break;
         case 'location.showOnMap':
-          await this.locationListStore.showOnMap(location);
+          await this.store.showOnMap(location);
           break;
         case 'location.copy':
-          await this.locationListStore.copy(location);
+          await this.store.copy(location);
           break;
       }
     }
   }
 
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.locationListStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 }
 

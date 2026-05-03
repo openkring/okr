@@ -1,13 +1,13 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../../dist/libs/location/ui",
+    "outDir": "../../../../dist/libs/location/data-access",
     "declaration": true,
     "composite": true,
     "module": "es2020",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../dist/out-tsc/location-ui.tsbuildinfo"
+    "tsBuildInfoFile": "../../../../dist/out-tsc/location-data-access.tsbuildinfo"
   },
   "include": [
     "src/**/*.ts"
