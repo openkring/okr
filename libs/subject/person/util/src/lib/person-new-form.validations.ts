@@ -10,7 +10,7 @@ export const personNewFormValidations = staticSuite((model: PersonNewFormModel, 
   if (field) only(field);
 
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
-  stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH, 4, true);
+  stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH, 2, true);
   stringValidations('gender', model.gender, WORD_LENGTH);
   dateValidations('dateOfBirth', model.dateOfBirth);
   dateValidations('dateOfDeath', model.dateOfDeath);
