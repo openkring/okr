@@ -186,29 +186,29 @@ export const PersonStore = signalStore(
             modal.present();
             const { data, role } = await modal.onWillDismiss();
             if (role === 'confirm' && data) {
-                const person = data as PersonNewFormModel;
+                const p = data as PersonNewFormModel;
 
-                if (store.personService.checkIfExists(store.persons(), person.firstName, person.lastName)) {
+                if (store.personService.checkIfExists(store.persons(), p.firstName, p.lastName)) {
                 if (!confirm(store.alertController, '@subject.person.operation.create.exists.error', true)) return;           
                 }
 
-                const personKey = await store.personService.create(convertFormToNewPerson(person, store.tenantId()), store.currentUser());
+                const personKey = await store.personService.create(convertFormToNewPerson(p, store.tenantId()), store.currentUser());
                 const avatarKey = `person.${personKey}`;
-                if ((person.email ?? '').length > 0) {
-                this.saveAddress(convertNewPersonFormToEmailAddress(person, store.tenantId()), avatarKey);
+                if ((p.email ?? '').length > 0) {
+                this.saveAddress(convertNewPersonFormToEmailAddress(p, store.tenantId()), avatarKey);
                 }
-                if ((person.phone ?? '').length > 0) {
-                this.saveAddress(convertNewPersonFormToPhoneAddress(person, store.tenantId()), avatarKey);
+                if ((p.phone ?? '').length > 0) {
+                this.saveAddress(convertNewPersonFormToPhoneAddress(p, store.tenantId()), avatarKey);
                 }
-                if ((person.web ?? '').length > 0) {
-                this.saveAddress(convertNewPersonFormToWebAddress(person, store.tenantId()), avatarKey);
+                if ((p.web ?? '').length > 0) {
+                this.saveAddress(convertNewPersonFormToWebAddress(p, store.tenantId()), avatarKey);
                 }
-                if ((person.city ?? '').length > 0) {
-                this.saveAddress(convertNewPersonFormToPostalAddress(person, store.tenantId()), avatarKey);
+                if ((p.city ?? '').length > 0) {
+                this.saveAddress(convertNewPersonFormToPostalAddress(p, store.tenantId()), avatarKey);
                 }
-                if (person.shouldAddMembership) {
-                if ((person.orgKey ?? '').length > 0 && (person.membershipCategory ?? '').length > 0) {
-                    await this.saveMembership(person, personKey);
+                if (p.shouldAddMembership) {
+                if ((p.orgKey ?? '').length > 0 && (p.membershipCategory ?? '').length > 0) {
+                    await this.saveMembership(p, personKey);
                 }
                 }
             }
