@@ -233,7 +233,7 @@ export class IconListComponent {
     const actionSheet = await this.actionSheetController.create(actionSheetOptions);
     await actionSheet.present();
     const { data } = await actionSheet.onDidDismiss();
-    console.log('IconList.executeActions: ', data);
+    if (!data) return;
     if (data) {
       switch (data.action) {
         case 'icon.copy':

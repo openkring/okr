@@ -139,6 +139,7 @@ export class MenuListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'menu.delete':
           await this.menuStore.delete(menuItem, this.readOnly());

@@ -167,6 +167,7 @@ export class KeyListComponent {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
+      if (!data) return;
       switch (data.action) {
         case 'key.delete':
           await this.resourceListStore.delete(key, this.readOnly());
