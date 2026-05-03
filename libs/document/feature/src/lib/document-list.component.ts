@@ -103,6 +103,7 @@ import { DocumentStore } from './document.store';
                   </ion-thumbnail>
                   <ion-label>
                     <h3>{{ folder.title || folder.name }}</h3>
+                    <p>{{ folderDocumentCounts().get(folder.bkey) ?? 0 }} Dateien</p>
                   </ion-label>
                 </ion-item>
               </ion-col>
@@ -150,7 +151,7 @@ import { DocumentStore } from './document.store';
                     <ion-icon style="width: 60%; height: 60%; margin: 20%;" src="{{ 'folder' | svgIcon }}" />
                   </ion-thumbnail>
                 </div>
-                <p style="font-size: 0.75rem; margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ folder.title || folder.name }}</p>
+                <p style="font-size: 0.75rem; margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ folder.title || folder.name }} ({{ folderDocumentCounts().get(folder.bkey) ?? 0 }})</p>
               </ion-col>
             }
             <!-- documents -->
@@ -198,6 +199,7 @@ export class DocumentListComponent {
   protected filteredDocuments = computed(() => this.documentStore.filteredDocuments() ?? []);
   protected filteredDocumentsCount = computed(() => this.filteredDocuments().length);
   protected subFolders = computed(() => this.documentStore.subFolders());
+  protected folderDocumentCounts = computed(() => this.documentStore.folderDocumentCounts());
   protected isLoading = computed(() => this.documentStore.isLoading());
   protected isEmpty = computed(() => this.filteredDocumentsCount() === 0 && this.subFolders().length === 0);
   protected tags = computed(() => this.documentStore.getTags());
@@ -267,7 +269,7 @@ export class DocumentListComponent {
    * @param document 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, document: DocumentModel): void {
-    if (!this.readOnly()) {
+    if (this.canChange()) {
       actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.imgixBaseUrl, 'upload'));
     } else {

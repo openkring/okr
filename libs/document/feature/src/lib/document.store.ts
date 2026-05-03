@@ -99,6 +99,15 @@ export const DocumentStore = signalStore(
     return {
       // documents
       documentsCount: computed(() => state.documents()?.length ?? 0),
+      folderDocumentCounts: computed(() => {
+        const counts = new Map<string, number>();
+        for (const doc of state.documents()) {
+          for (const key of doc.folderKeys) {
+            counts.set(key, (counts.get(key) ?? 0) + 1);
+          }
+        }
+        return counts;
+      }),
       filteredDocuments: computed(() => {
         const allDocs = state.documents() ;
 
