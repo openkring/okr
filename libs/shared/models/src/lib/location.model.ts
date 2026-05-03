@@ -17,6 +17,7 @@ export class LocationModel implements BkModel, NamedModel, SearchableModel, Tagg
   public seaLevel = 0; // meters above sea level
   public speed = 0; // m/s
   public direction = 0; // degrees
+  public distance = 0; // distance in km from a given point
   public notes = DEFAULT_NOTES;
 
   constructor(tenantId: string) {
