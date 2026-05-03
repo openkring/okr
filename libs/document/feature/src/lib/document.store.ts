@@ -241,7 +241,6 @@ export const DocumentStore = signalStore(
         const tenantId = store.tenantId();
         const folderKey = store.listId().startsWith('f:') ? store.listId().substring(2) : undefined;
         const basePath = `tenant/${tenantId}/${DocumentModelName}`;
-
         const files = await store.uploadService.pickMultipleFiles(DEFAULT_MIMETYPES);
         if (!files || files.length === 0) return;
 
@@ -354,6 +353,17 @@ export const DocumentStore = signalStore(
       async download(document?: DocumentModel, readOnly = true): Promise<void> {
         if (!document || readOnly) return;
         window.open(document.url, '_blank');
+      },
+
+      async showRevisions(document: DocumentModel): Promise<void> {
+        const revisions = await this.getRevisions(document);
+        const { DocumentRevisionsModal } = await import('./document-revisions.modal');
+        const modal = await store.modalController.create({
+          component: DocumentRevisionsModal,
+          componentProps: { revisions }
+        });
+        await modal.present();
+        await modal.onWillDismiss();
       }
     };
   }),
