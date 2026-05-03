@@ -25,19 +25,33 @@ import { coerceBoolean } from '@bk2/shared-util-core';
     TranslatePipe, AsyncPipe, SvgIconPipe,
     MaskitoDirective,
     IonList, IonItem,
-    IonLabel, IonInput, IonIcon, IonNote,
+    IonLabel, IonInput, IonIcon,
     IonReorderGroup, IonReorder,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton
   ],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    .title { font-size: 1.25rem; font-weight: 500; margin-left: 0;}
+    ion-card-header { padding: 0; }
+  `],
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+        <ion-card-title>
+          <ion-item lines="none" no-padding>
+            <div class="title">{{ cardTitle() | translate | async }}</div>
+            @if(!isReadOnly() && inputStyle() === 'select') {
+                <ion-button slot="end" fill="clear" (click)="selectClicked.emit()" size="default">
+                  <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+                </ion-button>
+            }
+          </ion-item>
+        </ion-card-title>
       </ion-card-header>
-      <ion-card-content>
+      <ion-card-content class="ion-no-padding">
         @if((description() ?? '').length > 0) {
           <ion-item lines="none">
-            <ion-note>{{ description() | translate | async }}</ion-note>
+            <ion-label>{{ description() | translate | async }}</ion-label>
           </ion-item>
         }
         @if(isReadOnly()) {
@@ -52,10 +66,10 @@ import { coerceBoolean } from '@bk2/shared-util-core';
               }
             </ion-list>
         } @else {
-          <ion-item lines="none">
             <!-- we deliberately use ion-input here, because we do not want to interfere with the vest from update of strings() -->
             @if(inputStyle() === 'text') {
-              <ion-input [value]="''" (ionChange)="save($event)" #stringInput
+              <ion-item lines="none">
+                <ion-input [value]="''" (ionChange)="save($event)" #stringInput
                   label="{{ addLabel() | translate | async }}"
                   labelPlacement="floating"
                   inputMode="text"
@@ -64,11 +78,10 @@ import { coerceBoolean } from '@bk2/shared-util-core';
                   [maxlength]="maxLength()"
                   placeholder="ssssss"
                   [maskito]="mask()"
-                  [maskitoElement]="maskPredicate" />
-            } @else { <!-- select -->
-              <ion-button slot="start" fill="clear" (click)="selectClicked.emit()">{{ selectLabel() | translate | async }}</ion-button>
-            }
-          </ion-item>
+                  [maskitoElement]="maskPredicate"
+                />
+              </ion-item>
+            } 
 
           @if(strings(); as strings) {
             <ion-list>
@@ -101,7 +114,7 @@ export class StringsComponent {
 
   // inputs
   public strings = model.required<string[]>(); // the keys of the menu items
-  public title = input('@input.strings.label');
+  public title = input<string>();
   public addLabel = input('@input.strings.addString');
   public copyable = input(false);
   public editable = input(false);
@@ -120,6 +133,8 @@ export class StringsComponent {
   public selectClicked = output<void>();
   // view children
   public stringInput = viewChild<IonInput>('stringInput');
+
+  protected cardTitle = computed(() => this.title() || '@input.strings.label');
 
   public save($event: CustomEvent): void {
     const newString = ($event?.detail?.value.trim() ?? '').toLowerCase();

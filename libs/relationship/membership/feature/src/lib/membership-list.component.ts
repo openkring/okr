@@ -8,12 +8,13 @@ import { FullNamePipe, RellogPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { DateFormat, getTodayStr, getYearList, hasRole, isOngoing } from '@bk2/shared-util-core';
+import { SIZE_SM } from '@bk2/shared-constants';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
+import { getMainContact } from '@bk2/subject-group-util';
 
 import { MembershipStore } from './membership.store';
-import { SIZE_SM } from '@bk2/shared-constants';
 
 @Component({
   selector: 'bk-membership-list',
@@ -145,7 +146,7 @@ export class MembershipListComponent {
   protected orgTypes = computed(() => this.membershipStore.orgTypes());
   protected readonly popupId = crypto.randomUUID();
   protected orgName = computed(() => this.membershipStore.orgName());
-  protected admin = computed(() => this.group()?.admin);
+  protected admin = computed(() => getMainContact(this.group()));
   protected tags = computed(() => {
     if (typeof window !== 'undefined' && window.innerWidth < SIZE_SM) return ''; // only show types on desktop, on mobile there is not enough space
     return this.hasYearFilter() ? '' : this.membershipStore.getTags();

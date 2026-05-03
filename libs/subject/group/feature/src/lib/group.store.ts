@@ -8,9 +8,9 @@ import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
+import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
 import { confirm, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
 
 import { GroupService } from '@bk2/subject-group-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
@@ -187,8 +187,7 @@ export const GroupStore = signalStore(
       if (currentUser) {
         const avatar = getAvatarInfoForCurrentUser(currentUser);
         if (avatar) {
-          newGroup.admin = avatar;
-          newGroup.mainContact = avatar;
+          newGroup.admins = [avatar];
         }
         await this.edit(newGroup, readOnly, true);
         const currentPerson = store.appStore.getPerson(currentUser.personKey);
@@ -231,6 +230,7 @@ export const GroupStore = signalStore(
             data.albumFolder = data.hasAlbum ? `a_${data.bkey}` : '';
             await store.groupService.create(data, store.currentUser());
             this.setGroupKey(data.bkey);
+            await this.ensureAllAdminsAreMember(data);
 
             // create default calendar segment
             await this.createGroupCalendar(data);
@@ -245,6 +245,7 @@ export const GroupStore = signalStore(
             await store.chatService.createGroupRoom(data.bkey, [], 'Gruppen Chat: ' + data.name);
           } else {
             await store.groupService.update(data, store.currentUser());
+            await this.ensureAllAdminsAreMember(data);
           }
           this.reload();
         }
@@ -398,9 +399,25 @@ export const GroupStore = signalStore(
     },
 
     /******************************* members *************************************** */
-    async addMember(person?: PersonModel): Promise<void> {
+    async ensureAllAdminsAreMember(group: GroupModel): Promise<void> {
+      const groupAvatar = getAvatarInfo(group, 'group') as AvatarInfo;
+      if (group?.admins?.length > 0) {
+        for (const admin of group.admins) {
+          await this.ensureAdminIsMember(admin, groupAvatar, group);
+        }
+      }
+    },
+
+    async ensureAdminIsMember(admin: AvatarInfo, groupAvatar: AvatarInfo, group: GroupModel): Promise<void> {
+      if (await store.membershipService.isMemberOf(admin, groupAvatar)) return;
+      if (admin.modelType === 'person') {
+        await this.addMember(store.appStore.getPerson(admin.key), group);
+      }
+    },
+
+    async addMember(person?: PersonModel, groupOverride?: GroupModel): Promise<void> {
       let membership: MembershipModel | undefined;
-      const group = store.group();
+      const group = groupOverride ?? store.group();
       if (group) {
         if (person) {
           membership = createGroupMembership(group, person, store.tenantId());

@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { generateRandomString, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe, AvatarDisplayComponent } from '@bk2/avatar-ui';
@@ -146,9 +146,13 @@ export class GroupListComponent {
    * @param group 
    */
   protected async showActions(group: GroupModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, group);
-    await this.executeActions(actionSheetOptions, group);
+    if (this.readOnly()) {
+      await this.groupStore.view(group, this.readOnly());
+    } else {
+      const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+      this.addActionSheetButtons(actionSheetOptions, group);
+      await this.executeActions(actionSheetOptions, group);
+    }
   }
 
   /**
@@ -157,20 +161,13 @@ export class GroupListComponent {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): void {
     actionSheetOptions.buttons.push(createActionSheetButton('group.show', this.imgixBaseUrl, 'eye-on'));
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    if (hasRole('registered', this.groupStore.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('group.view', this.imgixBaseUrl, 'eye-on'));
-    }
-    if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('group.edit', this.imgixBaseUrl, 'edit'));
-    }
+    actionSheetOptions.buttons.push(createActionSheetButton('group.edit', this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.groupStore.appStore.currentUser())) {
+      actionSheetOptions.buttons.push(createActionSheetDivider());
       actionSheetOptions.buttons.push(createActionSheetButton('group.addPage', this.imgixBaseUrl, 'add'));
       actionSheetOptions.buttons.push(createActionSheetButton('group.delete', this.imgixBaseUrl, 'trash'));
     }
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
-    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
   }
 
   /**

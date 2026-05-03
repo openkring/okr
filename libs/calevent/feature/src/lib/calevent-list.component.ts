@@ -2,13 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, OnInit, PLATFORM_ID, viewChild } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-
-import { TranslatePipe } from '@bk2/shared-i18n';
-import { CalEventModel, RoleName } from '@bk2/shared-models';
-import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
-import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { DateFormat, addTime, debugData, getAttendanceState, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
+import { Browser } from '@capacitor/browser';
 import { format } from 'date-fns';
 
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
@@ -17,12 +11,19 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
+import { TranslatePipe } from '@bk2/shared-i18n';
+import { CalEventModel, RoleName } from '@bk2/shared-models';
+import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
+import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { DateFormat, addTime, debugData, getAttendanceState, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
+
 import { MenuComponent } from '@bk2/cms-menu-feature';
 import { AvatarDisplayComponent } from '@bk2/avatar-ui';
+import { isAdminMember } from '@bk2/subject-group-util';
 
 import { CalEventDurationPipe } from '@bk2/calevent-util';
 import { CalEventStore } from './calevent.store';
-import { Browser } from '@capacitor/browser';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
 
@@ -636,7 +637,7 @@ export class CalEventListComponent implements OnInit {
    * CalendarEvents may be created, changed or deleted by the following users:
    * - user has role eventAdmin or privileged
    * - user is responsiblePerson of the calevent
-   * - if calevent is part of a group calendar: user is admin or mainContact of that group
+   * - if calevent is part of a group calendar: user is admin of that group
    * @param calevent 
    * @returns 
    */
@@ -648,16 +649,14 @@ export class CalEventListComponent implements OnInit {
     const personKey = this.currentUser()?.personKey;
     if (!personKey) return false;
 
-    // 2) group calendar: check if currentUser is admin or mainContact of the owning group
+    // 2) group calendar: check if currentUser is admin of the owning group
     if (calevent) {
       const allCalendars = this.store.calendarsResource.value() ?? [];
       for (const calKey of calevent.calendars) {
         const cal = allCalendars.find(c => c.bkey === calKey);
         if (cal?.owner?.startsWith('group.')) {
-          const groupKey = cal.owner.substring(6);
-          const group = this.store.appStore.getGroup(groupKey);
-          if (group?.admin?.key === personKey || group?.mainContact?.key === personKey) return true;
-        }
+          const group = this.store.appStore.getGroup(cal.owner.substring(6));
+          return isAdminMember(group, personKey);        }
       }
     }
 

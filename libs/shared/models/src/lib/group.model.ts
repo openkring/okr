@@ -25,8 +25,8 @@ export class GroupModel implements BkModel, NamedModel, SearchableModel, TaggedM
   public albumFolder = '';
   public hasMembers = true;
 
-  public mainContact: AvatarInfo = AVATAR_INFO_SHAPE;
-  public admin: AvatarInfo = AVATAR_INFO_SHAPE;
+  // first admin is the also the main contact
+  public admins: AvatarInfo[] = [];
 
   // hierarchy
   public parentKey = DEFAULT_KEY;

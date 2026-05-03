@@ -106,11 +106,9 @@ import { calEventValidations } from '@bk2/calevent-util';
     </ion-card>
  
     @if(currentUser(); as currentUser) {
-      <bk-avatars
+      <bk-avatars name="responsiblePersons"
+        [avatars]="responsiblePersons()" (avatarsChange)="onFieldChange('responsiblePersons', $event)"
         (selectClicked)="selectPerson()"
-        name="responsiblePersons"
-        [avatars]="responsiblePersons()"
-        (avatarsChange)="onFieldChange('responsiblePersons', $event)"
         [currentUser]="currentUser"
         [readOnly]="isReadOnly()"
         title="@calevent.field.responsible.label"

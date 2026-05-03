@@ -38,7 +38,7 @@ import { getTransferIndex, transferValidations } from '@bk2/relationship-transfe
 import { getWorkrelIndex, workrelValidations } from '@bk2/relationship-workrel-util';
 import { getUserIndex, userValidations } from '@bk2/user-util';
 import { categoryListValidations } from '@bk2/category-util';
-import { getGroupIndex, groupValidations } from '@bk2/subject-group-util';
+import { getGroupIndex, groupValidations, isAdminMember } from '@bk2/subject-group-util';
 import { confirm } from '@bk2/shared-util-angular';
 import { AlertController } from '@ionic/angular/standalone';
 import { getResponsibilityIndex } from '@bk2/relationship-responsibility-util';
@@ -121,7 +121,7 @@ export const AocDataStore = signalStore(
         const maxDocs = 10; // for testing, you can restrict the amount of documents to process. 
         // set it to undefined to process all documents.
         
-        const collectionName = 'journallogs';
+        const collectionName = 'groups';
 
         // fixing fields (types and undefined)
         // use s:string, n:number, b:boolean m:map {} a:array [] including =value for default values
@@ -181,8 +181,17 @@ export const AocDataStore = signalStore(
       async fixCustomIssues<T>(doc: T): Promise<T> {
         console.log(`  - custom fixes of document ${(doc as any).bkey} ...`);
         const d = doc as any;
-        //const baseImgix = 'https://bkaiser.imgix.net/';
-        //d.tenants = ['scs'];
+        if (!Array.isArray(d.admins)) d.admins = [];
+        if (d.mainContact?.key && !isAdminMember(d, d.mainContact.key)) {
+          d.mainContact.label = d.mainContact.name1 + ' ' + d.mainContact.name2;
+          d.admins = [d.mainContact, ...d.admins];
+        }
+        if (!isAdminMember(d, d.admin?.key)) {
+          d.admin.label = d.admin.name1 + ' ' + d.admin.name2;
+          d.admins.push(d.admin);
+        }
+        delete d.admin;
+        delete d.mainContact;
 
         d.tags = '';
 

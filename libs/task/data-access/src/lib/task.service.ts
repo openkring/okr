@@ -91,8 +91,7 @@ export class TaskService {
     /**
    * Adds a new task to a group membership. 
    * The task is assigned to the group and the author is the current user. 
-   * The task is initially assigned to the mainContact of the group.
-   * If the mainContact does not exist, the author is assigned, but can be changed in the task edit modal.
+   * The task is initially assigned to the mainContact of the group. The mainContact is the first admin defined.
    * This is currently only implemented for memberships in Seeclub Stäfa (orgKey = 'scs').
    * @param membership the membership for which to create the task. We need the membership to get the group (org) for which the task is created and to check if it is a SCS membership.
    * @param group the group to which the task is assigned.
@@ -108,7 +107,7 @@ export class TaskService {
     const task = new TaskModel(this.env.tenantId);
     task.name = name;
     task.author = author;
-    task.assignee = group.mainContact ?? author;
+    task.assignee = group.admins[0] ?? author;
     task.calendars = [group.bkey];  // task is assigned to the group calendar
     await this.create(task, currentUser);
   }

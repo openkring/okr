@@ -7,7 +7,8 @@ import { coerceBoolean, isPerson, safeStructuredClone } from '@bk2/shared-util-c
 
 import { GroupFormComponent } from '@bk2/subject-group-ui';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
+import { PersonSelectModalComponent } from '@bk2/shared-feature';
+import { GroupStore } from 'libs/subject/group/feature/src/lib/group.store';
 
 @Component({
   selector: 'bk-group-edit-modal',
@@ -16,6 +17,7 @@ import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
     HeaderComponent, ChangeConfirmationComponent, GroupFormComponent,
     IonContent
   ],
+  providers: [GroupStore],
   template: `
     <bk-header [title]="headerTitle()" [isModal]="true" />
     @if(showConfirmation()) {
@@ -33,7 +35,7 @@ import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
               [tenantId]="tenantId()"
               [isNew]="isNew()"
               [readOnly]="isReadOnly()"
-              (selectPerson)="selectPerson($event)"
+              (selectPerson)="selectPerson()"
               (dirty)="formDirty.set($event)"
               (valid)="formValid.set($event)"
           />
@@ -44,7 +46,7 @@ import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 })
 export class GroupEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
+  private readonly store = inject(GroupStore);
 
   // inputs
   public group = input.required<GroupModel>();
@@ -82,7 +84,7 @@ export class GroupEditModalComponent {
     this.formData.set(formData);
   }
 
-  protected async selectPerson(field: 'mainContact' | 'admin'): Promise<void> {
+  protected async selectPerson(): Promise<void> {
     const person = await this.selectPersonModal();
     if (!person) return;
     
@@ -97,7 +99,7 @@ export class GroupEditModalComponent {
       if (!vm) return vm;
       return {
         ...vm,
-        [field]: personAvatar
+        admins: [...(vm.admins ?? []), personAvatar]
       };
     });
     this.formDirty.set(true);
@@ -115,7 +117,7 @@ export class GroupEditModalComponent {
     modal.present();
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm' && data) {
-      if (isPerson(data, this.appStore.env.tenantId)) {
+      if (isPerson(data, this.store.tenantId())) {
         return data;
       }
     }

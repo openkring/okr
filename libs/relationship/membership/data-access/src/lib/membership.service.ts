@@ -1,12 +1,12 @@
 import { inject, Injectable } from '@angular/core';
-import { map, Observable, of } from 'rxjs';
+import { firstValueFrom, map, Observable, of } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AvatarInfo, CategoryListModel, MembershipCollection, MembershipModel, UserModel } from '@bk2/shared-models';
 import { error } from '@bk2/shared-util-angular';
-import { addDuration, findByKey, getAvatarInfo, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr } from '@bk2/shared-util-core';
+import { addDuration, DateFormat, findByKey, getAvatarInfo, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, isAfterDate } from '@bk2/shared-util-core';
 
 import { createComment } from '@bk2/comment-util';
 
@@ -203,6 +203,25 @@ export class MembershipService {
         return orgKeys;
       })
     );
+  }
+
+  /**
+   * Returns true if there is a current membership of member in org.
+   * @param member a person, group or org
+   * @param org  a group or org
+   * @returns 
+   */
+  public async isMemberOf(member: AvatarInfo, org: AvatarInfo): Promise<boolean> {
+    if (!member?.key || !org?.key) return false;
+    const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'memberModelType', operator: '==', value: member.modelType });
+    query.push({ key: 'memberKey', operator: '==', value: member.key });
+    query.push({ key: 'orgModelType', operator: '==', value: org.modelType });
+    query.push({ key: 'orgKey', operator: '==', value: org.key });
+    query.push({ key: 'relIsLast', operator: '==', value: true });
+    const memberships = await firstValueFrom(this.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc'));
+    const result = memberships.filter(m => isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? [];
+    return result.length > 0;
   }
 
   /**

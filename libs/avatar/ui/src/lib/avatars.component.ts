@@ -23,18 +23,31 @@ import { AvatarDisplayComponent } from './avatar-display.component';
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe,
     AvatarDisplayComponent,
-    IonList, IonItem, IonLabel, IonIcon, IonNote, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton
+    IonList, IonItem, IonLabel, IonIcon, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton
 ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    .title { font-size: 1.25rem; font-weight: 500; margin-left: 0;}
+    ion-card-header { padding: 0; }
+  `],
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+        <ion-card-title>
+          <ion-item lines="none" no-padding>
+            <div class="title">{{ cardTitle() | translate | async }}</div>
+            @if(!isReadOnly()) {
+                <ion-button slot="end" fill="clear" (click)="selectClicked.emit()" size="default">
+                  <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+                </ion-button>
+            }
+          </ion-item>
+        </ion-card-title>
       </ion-card-header>
-      <ion-card-content>
+      <ion-card-content class="ion-no-padding">
         @if((description() ?? '').length > 0) {
           <ion-item lines="none">
-            <ion-note>{{ description() | translate | async }}</ion-note>
+            <ion-label>{{ description() | translate | async }}</ion-label>
           </ion-item>
         }
         @if(isReadOnly()) {
@@ -42,9 +55,6 @@ import { AvatarDisplayComponent } from './avatar-display.component';
             <bk-avatar-display [avatars]="avatars()" [showName]="false" />
           </ion-item>
         } @else {
-          <ion-item lines="none">
-            <ion-button slot="end" fill="clear" (click)="selectClicked.emit()">{{ '@general.operation.select.subject' | translate | async }}</ion-button>
-          </ion-item>
           @if(avatars(); as avatars) {
             <ion-list>
               <!-- Casting $event to $any is a temporary fix for this bug https://github.com/ionic-team/ionic-framework/issues/24245 -->
@@ -76,6 +86,7 @@ export class AvatarsComponent {
 
   // inputs
   public avatars = model.required<AvatarInfo[]>(); // the keys of the menu items
+  public title = input<string>();
   public currentUser = input.required<UserModel>();
   public name = input('avatar'); // the name of the menu
   public copyable = input(false);
@@ -96,8 +107,7 @@ export class AvatarsComponent {
   public selectClicked = output<void>();
 
   // computed labels
-  protected title = computed(() => `@input.${this.name()}.label`);
-  protected addLabel = computed(() => `@input.${this.name()}.addString`);
+  protected cardTitle = computed(() => this.title() || `@input.${this.name()}.label`);
 
   public add(newAvatar: AvatarInfo): void {
     this.avatars.update(arr => [...arr, newAvatar])

@@ -11,6 +11,7 @@ import { PrettyDatePipe, SvgIconPipe, WeekdayPipe } from '@bk2/shared-pipes';
 import { TranslatePipe } from '@bk2/shared-i18n';
 
 import { CalendarStore } from './calendar-section.store';
+import { isAdminMember } from '@bk2/subject-group-util';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
 
@@ -249,9 +250,8 @@ export class EventsSectionComponent implements OnInit {
       for (const calKey of calevent.calendars) {
         const cal = allCalendars.find(c => c.bkey === calKey);
         if (cal?.owner?.startsWith('group.')) {
-          const groupKey = cal.owner.substring(6);
-          const group = this.store.appStore.getGroup(groupKey);
-          if (group?.admin?.key === personKey || group?.mainContact?.key === personKey) return true;
+          const group = this.store.appStore.getGroup(cal.owner.substring(6));
+          return isAdminMember(group, personKey);
         }
       }
     }

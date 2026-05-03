@@ -1,5 +1,15 @@
-import { GroupModel, RoleName, Roles, UserModel } from '@bk2/shared-models';
+import { AvatarInfo, GroupModel, RoleName, Roles, UserModel } from '@bk2/shared-models';
 import { addIndexElement } from '@bk2/shared-util-core';
+
+/*-------------------------- admins --------------------------------*/
+export function getMainContact(group?: GroupModel): AvatarInfo | undefined {
+  return group?.admins?.[0];
+}
+
+export function isAdminMember(group?: GroupModel, personKey?: string): boolean {
+  if (!group || !personKey || personKey.length === 0) return false;
+  return group.admins?.some(a => a.key === personKey) ?? false;
+}
 
 /*-------------------------- search index --------------------------------*/
 /**
