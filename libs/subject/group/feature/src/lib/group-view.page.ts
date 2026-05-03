@@ -6,6 +6,7 @@ import { ViewWillEnter } from '@ionic/angular';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { ChangeConfirmationComponent } from '@bk2/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@bk2/shared-util-core';
+import { isAdminMember } from '@bk2/subject-group-util';
 import { DEFAULT_ID, DEFAULT_NAME } from '@bk2/shared-constants';
 
 import { PageDispatcher, PageStore } from '@bk2/cms-page-feature';
@@ -85,49 +86,49 @@ import { CalEventListComponent } from '@bk2/calevent-feature';
         @switch (selectedSegment()) {
           @case ('content') {
             @defer (on immediate) {
-              <bk-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" />
+              <bk-page-dispatcher id="{{id + '_content'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('chat') {
             @defer (on immediate) {
-              <bk-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" />
+              <bk-page-dispatcher id="{{id + '_chat'}}" contextMenuName="c-contentpage" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('calendar') {
             @defer (on immediate) {
-              <bk-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="grid" [showMenuButton]="false" />
+              <bk-calevent-list [listId]="id" contextMenuName="c-calevents" color="light" view="grid" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('tasks') {
             @defer (on immediate) {
-               <bk-task-list [listId]="id" contextMenuName="c-tasks" color="light" view="group" [showMenuButton]="false" />
+               <bk-task-list [listId]="id" contextMenuName="c-tasks" color="light" view="group" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('files') {
             @defer (on immediate) {
-              <bk-document-list [listId]="listId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" />
+              <bk-document-list [listId]="listId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('album') {
             @defer (on immediate) {
-              <bk-document-list [listId]="albumId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" />
+              <bk-document-list [listId]="albumId()" contextMenuName="c-folder" color="light" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
           }
           @case ('members') {
             @defer (on immediate) {
-              <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" />
+              <bk-membership-list listId="persons" [orgId]="id" [group]="group()" contextMenuName="c-groupmembers" color="light" view="group" [groupAdmin]="isGroupAdmin()" />
             } @placeholder {
               <div class="placeholder-center"><ion-spinner /></div>
             }
@@ -160,6 +161,7 @@ export class GroupViewPageComponent implements ViewWillEnter {
   protected readonly listId = computed(() => `f:${this.groupKey()}`);
   protected readonly albumId = computed(() => `f:a_${this.groupKey()}`);
   protected currentUser = computed(() => this.groupStore.currentUser());
+  protected isGroupAdmin = computed(() => isAdminMember(this.group(), this.currentUser()?.personKey));
   protected selectedSegment = computed(() => this.groupStore.segment());
   protected group = computed(() => this.groupStore.group());
   protected name = computed(() => this.formData()?.name ?? DEFAULT_NAME);

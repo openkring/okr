@@ -12,7 +12,7 @@ import { SIZE_SM } from '@bk2/shared-constants';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
-import { getMainContact } from '@bk2/subject-group-util';
+import { getMainContact, isAdminMember } from '@bk2/subject-group-util';
 
 import { MembershipStore } from './membership.store';
 
@@ -49,7 +49,7 @@ import { MembershipStore } from './membership.store';
             <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <bk-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -128,6 +128,7 @@ export class MembershipListComponent {
   public listId = input.required<string>(); 
   public orgId = input.required<string>();
   public group = input<GroupModel | undefined>(undefined);
+  public groupAdmin = input(false);
   public contextMenuName = input.required<string>();
   public color = input('secondary');
   public view = input<'contact' | 'mcat' | 'group'>('mcat');
@@ -429,7 +430,7 @@ export class MembershipListComponent {
     if (this.view() === 'group') {
       if (hasRole('privileged', this.currentUser())) return true;
       if (hasRole('memberAdmin', this.currentUser())) return true;
-      if (this.admin()?.key === this.currentUser()?.personKey) return true;
+      if (isAdminMember(this.group(), this.currentUser()?.personKey)) return true;
     } else { // normal membership list
       if (hasRole('memberAdmin', this.currentUser())) return true;
     }
@@ -444,7 +445,7 @@ export class MembershipListComponent {
     if (hasRole('admin', this.currentUser())) return true;
     if (hasRole('memberAdmin', this.currentUser())) return true;
     if (this.view() === 'group') {
-      if (this.admin()?.key === this.currentUser()?.personKey) return true;
+      if (isAdminMember(this.group(), this.currentUser()?.personKey)) return true;
     }
     return false;
   }

@@ -132,7 +132,7 @@ import { PageStore } from './page.store';
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           <ion-title>{{ pageStore.page()?.name | translate | async }}</ion-title>
-          @if(hasRole('contentAdmin')) {
+          @if(isEditable()) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
                 <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
@@ -141,7 +141,7 @@ import { PageStore } from './page.store';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <bk-menu [menuName]="contextMenuName"/>
+                      <bk-menu [menuName]="contextMenuName" [forceVisible]="groupAdmin()"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -152,7 +152,7 @@ import { PageStore } from './page.store';
       </ion-header>
     }
     <ion-content class="ion-no-padding">
-      @if(hasRole('contentAdmin')) {
+      @if(isEditable()) {
         @if(isEmptyPage()) {
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">{{ '@content.section.error.emptyPage' | translate | async }}</ion-label>
@@ -218,6 +218,9 @@ export class ContentPage {
   public contextMenuName = input<string>();
   public color = input('secondary');
   public showMenu = input(true);
+  public groupAdmin = input(false);
+
+  protected isEditable = computed(() => this.hasRole('contentAdmin') || this.groupAdmin());
 
   // derived signals
   protected tenantId = computed(() => this.pageStore.tenantId());
@@ -261,8 +264,8 @@ export class ContentPage {
       // Exclude nested sections
       if (nested.has(s.bkey)) return false;
       
-      // ContentAdmin sees all sections
-      if (this.hasRole('contentAdmin')) return true;
+      // ContentAdmin and group admins see all sections
+      if (this.isEditable()) return true;
       
       // Regular users only see published sections
       return s.state === 'published';
@@ -298,10 +301,14 @@ export class ContentPage {
   }
 
   /******************************* actions *************************************** */
+  protected toggleEditMode(): void {
+    this.editMode.update(value => !value);
+  }
+
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
-      case 'toggleEditMode':  this.editMode.update(value => !value); break;
+      case 'toggleEditMode':  this.toggleEditMode(); break;
       case 'editPage': 
         const page = this.pageStore.page();
         if (page) {
@@ -341,7 +348,7 @@ export class ContentPage {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, sectionType: string): void {
-    if (hasRole('contentAdmin', this.pageStore.appStore.currentUser())) {
+    if (this.isEditable()) {
       actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.pageStore.imgixBaseUrl(), 'edit'));
       if (sectionType === 'article') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.pageStore.imgixBaseUrl(), 'upload'));
@@ -397,8 +404,8 @@ export class ContentPage {
     
     const nestedSections = this.pageStore.pageSections().filter(s => sectionIds.includes(s.bkey));
     
-    // ContentAdmin sees all nested sections
-    if (this.hasRole('contentAdmin')) return nestedSections;
+    // ContentAdmin and group admins see all nested sections
+    if (this.isEditable()) return nestedSections;
     
     // Regular users only see published nested sections
     return nestedSections.filter(s => s.state === 'published');

@@ -88,7 +88,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <bk-menu [menuName]="contextMenuName()"/>
+                      <bk-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -203,6 +203,7 @@ export class CalEventListComponent implements OnInit {
   public view = input<'list' | 'grid'>('grid'); // initial view mode
   public showMenu = input<boolean>(true);   // for /public/calendar
   public showMenuButton = input<boolean>(true); // for group view
+  public groupAdmin = input(false);
   
   // filters
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
@@ -645,6 +646,7 @@ export class CalEventListComponent implements OnInit {
     // 1) general roles
     if (this.hasRole('eventAdmin')) return true;
     if (this.hasRole('privileged')) return true;
+    if (this.groupAdmin()) return true;
 
     const personKey = this.currentUser()?.personKey;
     if (!personKey) return false;

@@ -47,7 +47,7 @@ import { TaskStore } from './task.store';
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
         <ion-title>{{ selectedTasksCount()}}/{{tasksCount()}} {{ '@task.plural' | translate | async }}</ion-title>
-        @if(hasRole('privileged') || hasRole('eventAdmin')) {
+        @if(canChange()) {
           <ion-buttons slot="end">
             <ion-button id="c-tasks">
               <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
@@ -55,7 +55,7 @@ import { TaskStore } from './task.store';
             <ion-popover trigger="c-tasks" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <bk-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -147,6 +147,7 @@ export class TaskListComponent {
   public contextMenuName = input.required<string>();
   public color = input('secondary');
   public showMenuButton = input(true);
+  public groupAdmin = input(false);
 
   // derived signals
   protected filteredTasks = computed(() => this.taskStore.filteredTasks() ?? []);
@@ -158,7 +159,7 @@ export class TaskListComponent {
   protected importances = computed(() => this.taskStore.appStore.getCategory('importance'));
   protected states = computed(() => this.taskStore.appStore.getCategory('task_state'));
   protected currentUser = computed(() => this.taskStore.appStore.currentUser());
-  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()));
+  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !this.groupAdmin());
 
   private imgixBaseUrl = this.taskStore.appStore.env.services.imgixBaseUrl;
 
@@ -289,6 +290,10 @@ export class TaskListComponent {
   }
 
   /******************************* helpers *************************************** */
+  protected canChange(): boolean {
+    return hasRole('privileged', this.currentUser()) || hasRole('eventAdmin', this.currentUser()) || this.groupAdmin();
+  }
+
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.taskStore.currentUser());
   }

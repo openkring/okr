@@ -59,7 +59,7 @@ import { GraphPage } from "./graph.page";
                 }
                 @case ('content') {
                     @defer (on idle) {
-                        <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" />
+                        <bk-content-page [contextMenuName]="contextMenuName()" [color]="color()" [showMenu]="showMenu()" [groupAdmin]="groupAdmin()" />
                     } @placeholder {
                         <bk-spinner />
                     }
@@ -123,6 +123,7 @@ export class PageDispatcher implements ViewWillEnter {
   public color = input('secondary');
   public isGroupView = input(false);
   public selectedRoom = input<string | undefined>();
+  public groupAdmin = input(false);
 
   // ?showMenu=false hides the toolbar and main menu (for embedding in external sites)
   private readonly queryParamMap = toSignal(this.route.queryParamMap);

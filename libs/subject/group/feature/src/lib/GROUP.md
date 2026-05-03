@@ -28,8 +28,7 @@ Collection name: `groups`
 | `hasAlbum` | boolean | Group has a photo album folder |
 | `albumFolder` | string | Storage folder key for album (set to `a_<bkey>` when `hasAlbum = true`) |
 | `hasMembers` | boolean | Group has a members list |
-| `mainContact` | AvatarInfo | Reference to the main contact person (name, key, modelType) |
-| `admin` | AvatarInfo | Reference to the group admin person |
+| `admins` | AvatarInfo[] | Ordered list of group admin persons. The first element (`admins[0]`) is the main contact. Use `getMainContact(group)` and `isAdminMember(group, personKey)` from `@bk2/subject-group-util`. |
 | `parentKey` | string | Key of the parent org or group |
 | `parentName` | string | Name of the parent org or group |
 | `parentModelType` | `'org'` \| `'group'` | Type of the parent |
@@ -107,3 +106,37 @@ Any future feature lib that needs to open the group edit modal across a dependen
 - List / view: any authenticated user
 - Edit / create / delete: requires `'memberAdmin'` or `'admin'` role
 - Add page: requires `'admin'` role
+
+## Group Admin Elevation
+
+Users listed in `group.admins` receive elevated edit permissions within their group's view, equivalent to `contentAdmin` for that group's content. This is scoped strictly to the group they administer.
+
+### How it works
+
+`GroupViewPageComponent` computes `isGroupAdmin` from the currently loaded group and the current user's `personKey`:
+
+```typescript
+protected isGroupAdmin = computed(() =>
+  isAdminMember(this.group(), this.currentUser()?.personKey)
+);
+```
+
+`this.group()` is the group loaded for this specific view (via `groupStore.setGroupKey(groupKey)`), so `isGroupAdmin` is only `true` when the user is in the `admins` array of the exact group being viewed.
+
+This flag is passed as `[groupAdmin]="isGroupAdmin()"` to every child component in the view:
+
+| Component | Effect |
+|---|---|
+| `PageDispatcher` → `ContentPage` | Shows context menu; enables edit mode; section actions available |
+| `CalEventListComponent` | `canChange()` returns `true` |
+| `TaskListComponent` | `readOnly` becomes `false` |
+| `DocumentListComponent` | `readOnly` becomes `false` |
+| `MembershipListComponent` | Uses `isAdminMember` directly via the `group` input |
+
+### `forceVisible` in `MenuComponent`
+
+The context menu items for the content page (e.g. `c-contentpage`) have `roleNeeded: 'contentAdmin'` in the database. Group admins do not hold that role, so the items would normally be hidden.
+
+`ContentPage` passes `[forceVisible]="groupAdmin()"` to `bk-menu`. When `forceVisible` is `true`, `MenuComponent` bypasses the `roleNeeded` check and renders all items. The flag propagates through recursive sub-menu renders automatically.
+
+The `roleNeeded: 'contentAdmin'` configuration in the database does **not** need to change — it continues to protect the menu from regular users. Group admins get access only via the scoped `forceVisible` flag, which is only ever `true` inside `GroupViewPageComponent` for the group the user actually administers.

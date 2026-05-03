@@ -33,7 +33,7 @@ import { DocumentStore } from './document.store';
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         }
         <ion-title>{{ filteredDocumentsCount()}}/{{documentsCount()}} {{ '@document.plural' | translate | async }}</ion-title>
-        @if(!readOnly()) {
+        @if(canChange()) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{'menu' | svgIcon }}" />
@@ -41,7 +41,7 @@ import { DocumentStore } from './document.store';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()"/>
+                  <bk-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -186,6 +186,7 @@ export class DocumentListComponent {
   public color = input('secondary');
   public view = input<'list' | 'grid'>('list'); // initial view mode
   public showMenuButton = input<boolean>(true);
+  public groupAdmin = input(false);
 
   // filters
   protected readonly searchTerm = linkedSignal(() => this.documentStore.searchTerm());
@@ -204,7 +205,7 @@ export class DocumentListComponent {
   protected sources = computed(() => this.documentStore.appStore.getCategory('document_source'));
   protected readonly currentUser = computed(() => this.documentStore.appStore.currentUser());
   protected isListView = linkedSignal(() => this.view() === 'list');
-  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
+  protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()) && !this.groupAdmin());
   protected popupId = computed(() => `c_docs_${this.listId}`);
   protected readonly folderKey = computed(() => {
     const id = this.documentStore.listId();
@@ -323,6 +324,10 @@ export class DocumentListComponent {
   }
 
   /******************************* helpers *************************************** */
+  protected canChange(): boolean {
+    return !this.readOnly();
+  }
+
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.documentStore.currentUser());
   }

@@ -48,7 +48,7 @@ import { VersionCheckService } from '@bk2/shared-util-angular';
                   </ion-item>
                   <div slot="content">
                     @for(menuItemName of menuItem.menuItems; track menuItemName) {
-                      <bk-menu [menuName]="menuItemName" />
+                      <bk-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" />
                     }
                   </div>
                 </ion-accordion>
@@ -92,6 +92,7 @@ export class MenuComponent {
 
   // inputs
   public menuName = input.required<string>();
+  public forceVisible = input(false);
 
   // derived signals
   protected menuItem = computed(() => this.menuStore.menu());
@@ -109,7 +110,7 @@ export class MenuComponent {
     }
     return menuLabel;
   });
-  protected readonly isVisible = computed(() => hasRole(this.roleNeeded(), this.currentUser()));
+  protected readonly isVisible = computed(() => this.forceVisible() || hasRole(this.roleNeeded(), this.currentUser()));
 
   constructor() {
     effect(() => {
