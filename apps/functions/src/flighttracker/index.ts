@@ -131,7 +131,8 @@ export const getFlightInfo = onCall(
 
     const flight = flightRaw?.data?.[0];
     if (!flight) {
-      throw new HttpsError('not-found', `No flight found for ${flightNumber} on ${date}`);
+      logger.info('getFlightInfo: no results', { flightNumber, date });
+      throw new HttpsError('not-found', 'Flight not found');
     }
 
     const dep = flight.departure ?? {};
