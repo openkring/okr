@@ -15,6 +15,12 @@ import { isLocation } from '@bk2/location-util';
 
 import { LocationEditModalComponent } from './location-edit.modal';
 
+function zoomForBounds(latSpan: number, lngSpan: number): number {
+  const span = Math.max(latSpan, lngSpan);
+  if (span === 0) return 15;
+  return Math.min(15, Math.max(1, Math.round(Math.log2(360 / span)) - 1));
+}
+
 export type LocationListState = {
   searchTerm: string;
   selectedTag: string;
@@ -112,6 +118,11 @@ export const LocationListStore = signalStore(
         store.locationsResource.reload();
       },
 
+      async convert(location: LocationModel): Promise<void> {
+        await store.locationConversionService.convert(location);
+        await store.locationService.update(location, store.currentUser());
+      },
+
       async delete(location: LocationModel, readOnly = true): Promise<void> {
         if (readOnly) return;
         await store.locationService.delete(location, store.currentUser());
@@ -122,22 +133,49 @@ export const LocationListStore = signalStore(
         console.log(`LocationListStore.export(${type}) is not yet implemented.`);
       },
 
-      async showOnMap(location: LocationModel): Promise<void> {
-        console.log('LocationListStore.show is not yet implemented.');
-        const modal = await store.modalController.create({
-          component: MapViewModalComponent,
-          componentProps: {
-            title: location.name,
-            initialPosition: {
-              lat: location.latitude,
-              lng: location.longitude,
-            },
-            zoom: 15,
-            enableTrafficLayer: false
-          }
-        });
-        modal.present();
-        await modal.onWillDismiss();
+      async showOnMap(location?: LocationModel): Promise<void> {
+        if (location) { // show a single location as the center of the map
+          const modal = await store.modalController.create({
+            component: MapViewModalComponent,
+            componentProps: {
+              title: location.name,
+              initialPosition: {
+                lat: location.latitude,
+                lng: location.longitude,
+              },
+              zoom: 15,
+              enableTrafficLayer: false
+            }
+          });
+          modal.present();
+          await modal.onWillDismiss();
+        } else {
+          const locations = (store.filteredLocations() ?? [])
+            .filter(l => l.latitude !== 0 || l.longitude !== 0);
+          if (locations.length === 0) return;
+
+          const center = locations.find(l => l.bkey === store.appStore.tenantId()) ?? locations[0];
+          const lats = locations.map(l => l.latitude);
+          const lngs = locations.map(l => l.longitude);
+          const latSpan = Math.max(...lats) - Math.min(...lats);
+          const lngSpan = Math.max(...lngs) - Math.min(...lngs);
+          const otherCoords = locations
+            .filter(l => l.bkey !== center.bkey)
+            .map(l => ({ lat: l.latitude, lng: l.longitude }));
+
+          const modal = await store.modalController.create({
+            component: MapViewModalComponent,
+            componentProps: {
+              initialPosition: { lat: center.latitude, lng: center.longitude },
+              coordinates: otherCoords,
+              zoom: zoomForBounds(latSpan, lngSpan),
+              enableTrafficLayer: false
+            }
+          });
+          modal.present();
+          await modal.onWillDismiss();
+        }
+
       },
 
       async copy(location: LocationModel): Promise<void> {

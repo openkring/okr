@@ -143,6 +143,7 @@ export class LocationListComponent {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
       case 'add':  await this.store.add(this.readOnly()); break;
+      case 'showOnMap': await this.store.showOnMap(); break;
       case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `LocationListComponent.call: unknown method ${selectedMethod}`);
     }
@@ -164,18 +165,18 @@ export class LocationListComponent {
    * @param location 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, location: LocationModel): void {
-    if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('location.showOnMap', this.imgixBaseUrl, 'location'));
-      actionSheetOptions.buttons.push(createActionSheetButton('location.copy', this.imgixBaseUrl, 'copy'));
-      actionSheetOptions.buttons.push(createActionSheetButton('location.view', this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    }
     if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('location.edit', this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('location.convert', this.imgixBaseUrl, 'edit'));
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('location.view', this.imgixBaseUrl, 'eye-on'));
     }
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('location.delete', this.imgixBaseUrl, 'trash'));
     }
+    actionSheetOptions.buttons.push(createActionSheetButton('location.showOnMap', this.imgixBaseUrl, 'location'));
+    actionSheetOptions.buttons.push(createActionSheetButton('location.copy', this.imgixBaseUrl, 'copy'));
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
   }
 
   /**
@@ -201,6 +202,9 @@ export class LocationListComponent {
           break;
         case 'location.showOnMap':
           await this.store.showOnMap(location);
+          break;
+        case 'location.convert': 
+          await this.store.convert(location);
           break;
         case 'location.copy':
           await this.store.copy(location);

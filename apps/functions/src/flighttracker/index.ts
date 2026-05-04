@@ -99,9 +99,10 @@ async function fetchLivePosition(icao24: string): Promise<FlightLivePosition | u
   try {
     const { data } = await axios.get('https://opensky-network.org/api/states/all', {
       params: { icao24: icao24.toLowerCase() },
-      timeout: 5000,
+      timeout: 12000,
     });
     const state = data?.states?.[0];
+    logger.info('fetchLivePosition', { icao24, stateCount: data?.states?.length ?? 0, state });
     if (!state || state[8] === true) return undefined; // no data or on ground
     const lng: number | null = state[5];
     const lat: number | null = state[6];
@@ -203,19 +204,29 @@ export const getFlightInfo = onCall(
       };
     }
 
-    if (flight.live?.latitude != null && flight.live?.longitude != null) {
-      result.live = {
-        latitude: flight.live.latitude,
-        longitude: flight.live.longitude,
-        altitude: flight.live.altitude ?? 0,
-        direction: flight.live.direction ?? 0,
-        speed_horizontal: flight.live.speed_horizontal ?? 0,
-      };
-    } else if (flight.aircraft?.icao24) {
+    logger.info('getFlightInfo: raw live+aircraft', { live: flight.live, aircraft: flight.aircraft });
+
+    if (flight.aircraft?.icao24) {
       result.live = await fetchLivePosition(flight.aircraft.icao24) ?? undefined;
     }
+    if (!result.live && flight.live?.latitude != null && flight.live?.longitude != null) {
+      const lat = Number(flight.live.latitude);
+      const lng = Number(flight.live.longitude);
+      // Reject null-island (0,0) and implausible coordinates
+      if (!isNaN(lat) && !isNaN(lng) && (Math.abs(lat) > 0.5 || Math.abs(lng) > 0.5)) {
+        result.live = {
+          latitude: lat,
+          longitude: lng,
+          altitude: flight.live.altitude ?? 0,
+          direction: flight.live.direction ?? 0,
+          speed_horizontal: flight.live.speed_horizontal ?? 0,
+        };
+      } else {
+        logger.warn('getFlightInfo: AviationStack live coords rejected', { lat, lng });
+      }
+    }
 
-    logger.info('getFlightInfo: done', { flightNumber: result.flightNumber, status: result.status });
+    logger.info('getFlightInfo: done', { flightNumber: result.flightNumber, status: result.status, live: result.live });
     return result;
   }
 );

@@ -1,0 +1,5 @@
+{"type":"server-started","port":62027,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:62027","screen_dir":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33073-1777882458/content","state_dir":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33073-1777882458/state"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33073-1777882458/content/layout.html"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33073-1777882458/content/waiting.html"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/33073-1777882458/content/design-page.html"}
+{"type":"server-stopped","reason":"idle timeout"}

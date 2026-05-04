@@ -1,0 +1,118 @@
+<h2>Flight Tracker — Page Design</h2>
+<p class="subtitle">Full-page layout with toolbar + map. Does this look right?</p>
+
+<div class="mockup">
+  <div class="mockup-header">flighttracker-search.component.ts — bk-flighttracker-search</div>
+  <div class="mockup-body" style="font-family:sans-serif;font-size:13px;background:#f5f5f5;min-height:520px;">
+
+    <!-- Ion Header -->
+    <div style="background:#3880ff;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:18px;">☰</span>
+      <span style="font-weight:bold;font-size:16px;">✈ Flight Tracker</span>
+    </div>
+
+    <!-- Search toolbar -->
+    <div style="background:#fff;border-bottom:1px solid #ddd;padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <input style="border:1px solid #ccc;border-radius:6px;padding:6px 10px;font-size:13px;flex:1;min-width:120px;" placeholder="Flight number (e.g. LX 1234)" value="">
+      <input type="date" style="border:1px solid #ccc;border-radius:6px;padding:6px 10px;font-size:13px;width:130px;" value="2026-05-04">
+      <button style="background:#3880ff;color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;">Search</button>
+      <button style="background:#fff;color:#3880ff;border:1px solid #3880ff;border-radius:6px;padding:7px 12px;font-size:13px;cursor:pointer;">↺ Reload</button>
+    </div>
+
+    <!-- Status bar (shown after search) -->
+    <div style="background:#e8f4fd;border-bottom:1px solid #bee3f8;padding:6px 12px;display:flex;gap:12px;align-items:center;font-size:12px;color:#2b6cb0;">
+      <span style="font-weight:bold;">LX 1234</span>
+      <span style="background:#38a169;color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;">Active</span>
+      <span>ZRH → JFK</span>
+      <span>35,000 ft &nbsp;·&nbsp; 520 kn &nbsp;·&nbsp; 270°</span>
+    </div>
+
+    <!-- Map area -->
+    <div style="background:#c8dfc8;height:340px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+      <!-- Simulated map -->
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#c8dfc8 0%,#b0cfb0 40%,#8ab4d0 60%,#7aa8cc 100%);"></div>
+
+      <!-- Route line -->
+      <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 600 340" preserveAspectRatio="none">
+        <line x1="140" y1="240" x2="460" y2="100" stroke="#3880ff" stroke-width="2" stroke-dasharray="6,4" opacity="0.7"/>
+      </svg>
+
+      <!-- Departure marker -->
+      <div style="position:absolute;left:120px;top:220px;text-align:center;">
+        <div style="font-size:20px;">📍</div>
+        <div style="background:#fff;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:bold;margin-top:2px;box-shadow:0 1px 3px rgba(0,0,0,.2);">ZRH</div>
+      </div>
+
+      <!-- Arrival marker -->
+      <div style="position:absolute;right:120px;top:80px;text-align:center;">
+        <div style="font-size:20px;">📍</div>
+        <div style="background:#fff;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:bold;margin-top:2px;box-shadow:0 1px 3px rgba(0,0,0,.2);">JFK</div>
+      </div>
+
+      <!-- Airplane marker (clickable) -->
+      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;cursor:pointer;">
+        <div style="font-size:28px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));transform:rotate(-45deg);">✈</div>
+        <div style="background:#3880ff;color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;margin-top:2px;box-shadow:0 1px 3px rgba(0,0,0,.3);">tap for details</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Detail Modal (on plane tap)</h3>
+  <div class="mockup">
+    <div class="mockup-header">flighttracker-detail.modal.ts — bk-flighttracker-detail-modal</div>
+    <div class="mockup-body" style="font-family:sans-serif;font-size:12px;">
+
+      <div style="background:#3880ff;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:bold;">✈ LX 1234 · Active</span>
+        <span style="cursor:pointer;font-size:16px;">✕</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#eee;">
+
+        <!-- Departure -->
+        <div style="background:#fff;padding:10px;">
+          <div style="font-size:10px;font-weight:bold;color:#3880ff;margin-bottom:6px;text-transform:uppercase;">Departure</div>
+          <div><b>Airport:</b> Zürich</div>
+          <div><b>IATA:</b> ZRH</div>
+          <div><b>Terminal:</b> 2</div>
+          <div><b>Gate:</b> B42</div>
+          <div><b>Delay:</b> 5 min</div>
+          <div><b>Scheduled:</b> 10:15</div>
+          <div><b>Estimated:</b> 10:20</div>
+        </div>
+
+        <!-- Arrival -->
+        <div style="background:#fff;padding:10px;">
+          <div style="font-size:10px;font-weight:bold;color:#3880ff;margin-bottom:6px;text-transform:uppercase;">Arrival</div>
+          <div><b>Airport:</b> New York JFK</div>
+          <div><b>IATA:</b> JFK</div>
+          <div><b>Terminal:</b> 1</div>
+          <div><b>Gate:</b> —</div>
+          <div><b>Delay:</b> —</div>
+          <div><b>Scheduled:</b> 13:45</div>
+          <div><b>Estimated:</b> 13:45</div>
+        </div>
+
+        <!-- Aircraft -->
+        <div style="background:#fff;padding:10px;">
+          <div style="font-size:10px;font-weight:bold;color:#3880ff;margin-bottom:6px;text-transform:uppercase;">Aircraft</div>
+          <div><b>Reg:</b> HB-JHE</div>
+          <div><b>IATA:</b> B77W</div>
+          <div><b>ICAO24:</b> 4B195A</div>
+        </div>
+
+        <!-- Live -->
+        <div style="background:#fff;padding:10px;">
+          <div style="font-size:10px;font-weight:bold;color:#3880ff;margin-bottom:6px;text-transform:uppercase;">Live Position</div>
+          <div><b>Altitude:</b> 35,000 ft</div>
+          <div><b>Direction:</b> 270°</div>
+          <div><b>Speed:</b> 520 kn</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

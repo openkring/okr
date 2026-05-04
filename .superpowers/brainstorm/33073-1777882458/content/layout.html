@@ -1,0 +1,65 @@
+<h2>Flight Tracker — Page Layout</h2>
+<p class="subtitle">How should the search controls and map be arranged?</p>
+
+<div class="cards">
+
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#1e1e2e;padding:12px;font-family:monospace;font-size:12px;">
+      <div style="background:#2a2a3e;border-radius:6px;padding:8px;margin-bottom:6px;display:flex;gap:8px;align-items:center;">
+        <div style="background:#3a3a5e;border-radius:4px;height:28px;flex:1;display:flex;align-items:center;padding:0 8px;color:#aaa;font-size:11px;">✈ Flight number (e.g. UA123)</div>
+        <div style="background:#3a3a5e;border-radius:4px;height:28px;width:100px;display:flex;align-items:center;padding:0 8px;color:#aaa;font-size:11px;">📅 Date</div>
+        <div style="background:#4f8ef7;border-radius:4px;height:28px;width:64px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;">Search</div>
+        <div style="background:#2a2a3e;border:1px solid #4f8ef7;border-radius:4px;height:28px;width:64px;display:flex;align-items:center;justify-content:center;color:#4f8ef7;font-size:11px;">↺ Reload</div>
+      </div>
+      <div style="background:#1a3a2a;border-radius:6px;height:220px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a3a2a,#0d2a1a);"></div>
+        <div style="position:relative;text-align:center;color:#aaa;font-size:11px;">
+          <div style="font-size:24px;margin-bottom:4px;">🗺</div>
+          Map (full width)<br/>
+          <span style="font-size:10px;opacity:0.6;">Departure ✈ Arrival markers + plane icon</span>
+        </div>
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:#fff3;border-radius:10px;padding:2px 8px;color:#fff;font-size:10px;">Click plane icon → detail modal</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Toolbar + Full-width Map</h3>
+      <p>Search bar sits above a full-width map — maximises map space, feels like a standard flight tracker app.</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#1e1e2e;padding:12px;font-family:monospace;font-size:12px;">
+      <div style="display:flex;gap:8px;height:260px;">
+        <!-- sidebar -->
+        <div style="background:#2a2a3e;border-radius:6px;width:160px;flex-shrink:0;padding:8px;display:flex;flex-direction:column;gap:6px;">
+          <div style="color:#ccc;font-size:10px;font-weight:bold;margin-bottom:2px;">FLIGHT TRACKER</div>
+          <div style="background:#3a3a5e;border-radius:4px;height:26px;display:flex;align-items:center;padding:0 6px;color:#aaa;font-size:10px;">✈ Flight number</div>
+          <div style="background:#3a3a5e;border-radius:4px;height:26px;display:flex;align-items:center;padding:0 6px;color:#aaa;font-size:10px;">📅 Date</div>
+          <div style="background:#4f8ef7;border-radius:4px;height:26px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;">Search</div>
+          <div style="background:#2a2a3e;border:1px solid #4f8ef7;border-radius:4px;height:26px;display:flex;align-items:center;justify-content:center;color:#4f8ef7;font-size:10px;">↺ Reload</div>
+          <div style="margin-top:auto;background:#1a2a3a;border-radius:4px;padding:6px;font-size:9px;color:#8af;">
+            <div style="margin-bottom:2px;">UA123 · 2026-05-04</div>
+            <div style="color:#5a9;">🟢 Active</div>
+            <div style="color:#aaa;margin-top:4px;">ALT 35,000ft</div>
+            <div style="color:#aaa;">SPD 520 kn</div>
+          </div>
+        </div>
+        <!-- map -->
+        <div style="background:#1a3a2a;border-radius:6px;flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a3a2a,#0d2a1a);"></div>
+          <div style="position:relative;text-align:center;color:#aaa;font-size:11px;">
+            <div style="font-size:20px;margin-bottom:4px;">🗺</div>
+            Map
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Side Panel + Map</h3>
+      <p>Controls and live flight summary in a left panel, map on the right — shows key data at a glance without needing to click the plane icon.</p>
+    </div>
+  </div>
+
+</div>
