@@ -17,6 +17,7 @@ import * as Bexio from './bexio';
 import * as Zefix from './zefix';
 import * as Location from './location';
 import * as Srv from './srv';
+import * as Flighttracker from './flighttracker';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -156,6 +157,9 @@ export const generateQrBill = Address.generateQrBill;
 
 // location conversion (address ↔ coords ↔ what3words)
 export const convertLocation = Location.convertLocation;
+
+// flight tracker
+export const getFlightInfo = Flighttracker.getFlightInfo;
 
 // test
 export const getEcho = Test.getEcho;
