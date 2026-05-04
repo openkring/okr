@@ -26,15 +26,6 @@ const PLANE_ICON_URL =
     '</svg>'
   );
 
-let GoogleMap: any;
-let MapType: any;
-
-if (typeof window !== 'undefined') {
-  import('@capacitor/google-maps').then((m) => {
-    GoogleMap = m.GoogleMap;
-    MapType = m.MapType;
-  });
-}
 
 function zoomForBounds(latSpan: number, lngSpan: number): number {
   const span = Math.max(latSpan, lngSpan);
@@ -103,7 +94,7 @@ function zoomForBounds(latSpan: number, lngSpan: number): number {
             {{ '@flighttracker.search.button' | translate | async }}
           </ion-button>
           <ion-button slot="end" fill="outline" (click)="onReload()" [disabled]="isLoading() || !flightData()">
-            <ion-icon slot="icon-only" src="{{'refresh' | svgIcon}}" />
+            <ion-icon slot="icon-only" src="{{'reload' | svgIcon}}" />
           </ion-button>
         </ion-item>
       </ion-toolbar>
@@ -213,6 +204,7 @@ export class FlightTrackerSearchComponent implements AfterViewInit, OnDestroy {
     const mapRef = document.getElementById(this.mapId);
     if (!mapRef) return;
     await this.waitForMapDimensions(mapRef);
+    const { GoogleMap, MapType } = await import('@capacitor/google-maps');
     this.map = await GoogleMap.create({
       id: this.mapId,
       element: mapRef,
