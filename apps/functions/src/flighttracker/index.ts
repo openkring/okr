@@ -55,9 +55,10 @@ async function resolveAirportCoords(
   const snap = await db.collection('locations').doc(iata).get();
   if (snap.exists) {
     const d = snap.data();
-    if (d?.type === 'airport' && d.latitude != null && d.longitude != null) {
+    if (d?.latitude != null && d?.longitude != null) {
       return { lat: d.latitude, lng: d.longitude };
     }
+    return undefined; // document exists but no coords — don't overwrite
   }
   try {
     const { data } = await axios.get(`${AVIATION_BASE}/airports`, {
@@ -124,9 +125,8 @@ export const getFlightInfo = onCall(
       });
       flightRaw = data;
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      logger.error('getFlightInfo: flights API error', { msg });
-      throw new HttpsError('internal', msg);
+      logger.error('getFlightInfo: flights API error', { err: String(err) });
+      throw new HttpsError('internal', 'Flight data service error');
     }
 
     const flight = flightRaw?.data?.[0];
@@ -138,8 +138,8 @@ export const getFlightInfo = onCall(
     const arr = flight.arrival ?? {};
 
     const [depCoords, arrCoords] = await Promise.all([
-      resolveAirportCoords(dep.iata, key),
-      resolveAirportCoords(arr.iata, key),
+      dep.iata ? resolveAirportCoords(dep.iata, key) : Promise.resolve(undefined),
+      arr.iata ? resolveAirportCoords(arr.iata, key) : Promise.resolve(undefined),
     ]);
 
     const result: FlightInfoResponse = {
