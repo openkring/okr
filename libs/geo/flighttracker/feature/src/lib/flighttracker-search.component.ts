@@ -18,14 +18,14 @@ import { FlightInfoResponse } from '@bk2/flighttracker-data-access';
 import { FlightDetailModal } from './flighttracker-detail.modal';
 import { FlightTrackerStore } from './flighttracker.store';
 
-const PLANE_ICON_URL =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(
+function planeIconUrl(direction: number): string {
+  const svg =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36">' +
+    `<g transform="rotate(${direction}, 12, 12)">` +
     '<path fill="%233880ff" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>' +
-    '</svg>'
-  );
-
+    '</g></svg>';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
 
 function zoomForBounds(latSpan: number, lngSpan: number): number {
   const span = Math.max(latSpan, lngSpan);
@@ -234,7 +234,7 @@ export class FlightTrackerSearchComponent implements AfterViewInit, OnDestroy {
         coordinate: { lat: data.live.latitude, lng: data.live.longitude },
         title: data.flightNumber,
         snippet: `${data.live.altitude.toFixed(0)} ft · ${data.live.speed_horizontal.toFixed(0)} kn`,
-        iconUrl: PLANE_ICON_URL,
+        iconUrl: planeIconUrl(data.live.direction),
       });
       this.markerIds.push(this.planeMarkerId!);
     }
