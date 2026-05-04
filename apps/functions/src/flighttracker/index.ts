@@ -5,7 +5,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import axios from 'axios';
 
 const aviationApiKey = defineSecret('AVIATIONSTACK_APIKEY');
-const AVIATION_BASE = 'https://api.aviationstack.com/v1';
+const AVIATION_BASE = 'http://api.aviationstack.com/v1';
 
 export interface FlightInfoRequest {
   flightNumber: string; // e.g. "LX1234"
@@ -95,6 +95,33 @@ async function resolveAirportCoords(
   }
 }
 
+async function fetchLivePosition(icao24: string): Promise<FlightLivePosition | undefined> {
+  try {
+    const { data } = await axios.get('https://opensky-network.org/api/states/all', {
+      params: { icao24: icao24.toLowerCase() },
+      timeout: 5000,
+    });
+    const state = data?.states?.[0];
+    if (!state || state[8] === true) return undefined; // no data or on ground
+    const lng: number | null = state[5];
+    const lat: number | null = state[6];
+    if (lat == null || lng == null) return undefined;
+    const altM: number | null = state[13] ?? state[7];
+    const speedMs: number | null = state[9];
+    const track: number | null = state[10];
+    return {
+      latitude: lat,
+      longitude: lng,
+      altitude: altM != null ? Math.round(altM * 3.28084) : 0,
+      direction: track ?? 0,
+      speed_horizontal: speedMs != null ? Math.round(speedMs * 1.94384) : 0,
+    };
+  } catch (err: unknown) {
+    logger.warn('fetchLivePosition: OpenSky failed', { err: String(err) });
+    return undefined;
+  }
+}
+
 export const getFlightInfo = onCall(
   {
     region: 'europe-west6',
@@ -118,9 +145,7 @@ export const getFlightInfo = onCall(
       const { data } = await axios.get(`${AVIATION_BASE}/flights`, {
         params: {
           access_key: key,
-          flight_iata: flightNumber.trim(),
-          flight_date: date.trim(),
-          limit: 1,
+          flight_iata: flightNumber.trim()
         },
       });
       flightRaw = data;
@@ -186,6 +211,8 @@ export const getFlightInfo = onCall(
         direction: flight.live.direction ?? 0,
         speed_horizontal: flight.live.speed_horizontal ?? 0,
       };
+    } else if (flight.aircraft?.icao24) {
+      result.live = await fetchLivePosition(flight.aircraft.icao24) ?? undefined;
     }
 
     logger.info('getFlightInfo: done', { flightNumber: result.flightNumber, status: result.status });
