@@ -1,0 +1,24 @@
+{
+  "name": "flighttracker-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/geo/flighttracker/feature/src",
+  "prefix": "bk",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:flighttracker", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/flighttracker/feature",
+        "main": "libs/geo/flighttracker/feature/src/index.ts",
+        "tsConfig": "libs/geo/flighttracker/feature/tsconfig.lib.json",
+        "assets": ["libs/geo/flighttracker/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
