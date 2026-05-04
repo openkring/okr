@@ -303,7 +303,6 @@ export class FlightTrackerSearchComponent implements AfterViewInit, OnDestroy {
         geodesic: true,
         strokeColor: '#3880ff',
         strokeWeight: 3,
-        strokeOpacity: 1.0,
       });
       polylines.push({
         path: [
@@ -328,8 +327,10 @@ export class FlightTrackerSearchComponent implements AfterViewInit, OnDestroy {
       });
     }
 
-    const result = await this.map.addPolylines(polylines);
-    this.polylineIds.push(...(result?.ids ?? []));
+    try {
+      const result = await this.map.addPolylines(polylines);
+      this.polylineIds.push(...(result?.ids ?? []));
+    } catch { /* ignore */ }
   }
 
   private async openDetailModal(): Promise<void> {
