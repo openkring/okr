@@ -152,6 +152,7 @@ export class FlightTrackerSearchComponent implements AfterViewInit, OnDestroy {
   private map: any;
   private markerIds: string[] = [];
   private planeMarkerId: string | null = null;
+  private polylineIds: string[] = [];
   private resizeObserver?: ResizeObserver;
 
   constructor() {
@@ -238,6 +239,7 @@ export class FlightTrackerSearchComponent implements AfterViewInit, OnDestroy {
       this.markerIds.push(this.planeMarkerId!);
     }
     await this.fitCameraToMarkers(data);
+    await this.drawRoute(data);
   }
 
   private async addAirportMarker(
@@ -252,6 +254,10 @@ export class FlightTrackerSearchComponent implements AfterViewInit, OnDestroy {
   }
 
   private async clearMarkers(): Promise<void> {
+    if (this.polylineIds.length > 0) {
+      try { await this.map.removePolylines(this.polylineIds); } catch { /* ignore */ }
+      this.polylineIds = [];
+    }
     for (const id of this.markerIds) {
       try { await this.map.removeMarker(id); } catch { /* ignore */ }
     }
@@ -279,6 +285,51 @@ export class FlightTrackerSearchComponent implements AfterViewInit, OnDestroy {
       coordinate: { lat: (minLat + maxLat) / 2, lng: (minLng + maxLng) / 2 },
       zoom,
     });
+  }
+
+  private async drawRoute(data: FlightInfoResponse): Promise<void> {
+    const dep = data.departure;
+    const arr = data.arrival;
+    if (dep.lat == null || dep.lng == null || arr.lat == null || arr.lng == null) return;
+
+    const polylines: any[] = [];
+
+    if (data.live) {
+      polylines.push({
+        path: [
+          { lat: dep.lat, lng: dep.lng },
+          { lat: data.live.latitude, lng: data.live.longitude },
+        ],
+        geodesic: true,
+        strokeColor: '#3880ff',
+        strokeWeight: 3,
+        strokeOpacity: 1.0,
+      });
+      polylines.push({
+        path: [
+          { lat: data.live.latitude, lng: data.live.longitude },
+          { lat: arr.lat, lng: arr.lng },
+        ],
+        geodesic: true,
+        strokeColor: '#3880ff',
+        strokeWeight: 2,
+        strokeOpacity: 0.35,
+      });
+    } else {
+      polylines.push({
+        path: [
+          { lat: dep.lat, lng: dep.lng },
+          { lat: arr.lat, lng: arr.lng },
+        ],
+        geodesic: true,
+        strokeColor: '#3880ff',
+        strokeWeight: 2,
+        strokeOpacity: 0.35,
+      });
+    }
+
+    const result = await this.map.addPolylines(polylines);
+    this.polylineIds.push(...(result?.ids ?? []));
   }
 
   private async openDetailModal(): Promise<void> {
