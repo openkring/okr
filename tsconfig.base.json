@@ -89,6 +89,8 @@
       "@bk2/location-feature": ["libs/geo/location/feature/src/index.ts"],
       "@bk2/location-ui": ["libs/geo/location/ui/src/index.ts"],
       "@bk2/location-util": ["libs/geo/location/util/src/index.ts"],
+      "@bk2/flighttracker-data-access": ["libs/geo/flighttracker/data-access/src/index.ts"],
+      "@bk2/flighttracker-feature": ["libs/geo/flighttracker/feature/src/index.ts"],
       "@bk2/profile-data-access": ["libs/profile/data-access/src/index.ts"],
       "@bk2/profile-feature": ["libs/profile/feature/src/index.ts"],
       "@bk2/profile-ui": ["libs/profile/ui/src/index.ts"],
