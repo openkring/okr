@@ -36,7 +36,7 @@ import { NewsStore } from './news-section.store';
           @if (news().length === 0) {
             <bk-empty-list message="@cms.news.empty" />
           } @else {
-            <ion-list lines="inset">
+            <ion-list lines="none">
               @for (article of news(); track article.bkey) {
                 <ion-item (click)="navigateToArticle(article)">
                   @if (article.properties?.images?.[0]?.url; as imgUrl) {
@@ -50,6 +50,10 @@ import { NewsStore } from './news-section.store';
                       <p class="subtitle">{{ article.subTitle }}</p>
                     }
                     <p class="title">{{ article.title }}</p>
+                  </ion-label>
+                </ion-item>
+                <ion-item lines="inset">
+                  <ion-label>
                     <div class="excerpt" [innerHTML]="articleExcerpt(article)"></div>
                   </ion-label>
                 </ion-item>
