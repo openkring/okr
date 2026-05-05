@@ -1,5 +1,5 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { isBrowser } from './platform.util';
 import { AlertController } from '@ionic/angular/standalone';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -40,7 +40,7 @@ export class VersionCheckService {
    * without needing to reload the app.
    */
   checkVersion(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isBrowser(this.platformId)) return;
 
     const configDoc = doc(this.firestore, AppVersionCollection, AppVersionCollection);
     onSnapshot(configDoc, async (snapshot) => {
