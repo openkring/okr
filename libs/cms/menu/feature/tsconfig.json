@@ -31,6 +31,7 @@
     {"path": "../../../cms/menu/util/tsconfig.lib.json"},
     {"path": "../../../auth/data-access/tsconfig.lib.json"},
     {"path": "../../../activity/data-access/tsconfig.lib.json"},
-    {"path": "../../../activity/util/tsconfig.lib.json"}
+    {"path": "../../../activity/util/tsconfig.lib.json"},
+    {"path": "../../../chat/data-access/tsconfig.lib.json"}
   ]
 }

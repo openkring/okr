@@ -20,6 +20,7 @@
     "@bk2/cms-menu-ui": "*",
     "@bk2/cms-menu-util": "*",
     "@bk2/auth-data-access": "*",
-    "@bk2/activity-data-access": "*"
+    "@bk2/activity-data-access": "*",
+    "@bk2/chat-data-access": "*"
   }
 }
