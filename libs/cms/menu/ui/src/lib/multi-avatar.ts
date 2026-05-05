@@ -24,7 +24,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
       background: rgba(0, 0, 0, 0.08);
     }
 
-    ion-icon { color: var(--ion-color-dark); }
+    ion-icon { color: var(--ion-color-dark); margin-inline-end: 8px; }
     .letter { color: black; }
 
     @media (prefers-color-scheme: dark) {
@@ -32,21 +32,30 @@ import { TranslatePipe } from '@bk2/shared-i18n';
         background: rgba(255, 255, 255, 0.12);
       }
 
-      ion-icon { color: var(--ion-color-white); }
+      ion-icon { color: var(--ion-color-white); margin-inline-end: 8px; }
       .letter { color: white; }
     }
 
     .letter-avatar {
       background: var(--ion-color-light);
+      height: 25px;
+      width: 25px;
+      margin-inline-end: 8px;
       .letter {
         width: 100%;
         height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
+        font-size: 12px;
         font-weight: bold;
       }
+    }
+
+    .logo-avatar {
+      height: 25px;
+      width: 25px;
+      margin-inline-end: 8px;
     }
 `],
   template: `
@@ -65,7 +74,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
         } @else {
           @if(icon.startsWith('//')) {
             <ion-item [button]="true">
-              <ion-avatar slot="start" [style.background-color]="'var(--ion-color-light)'">
+              <ion-avatar slot="start" class="logo-avatar">
                 <ion-img src="{{ name | avatar:getModelName(name) }}" alt="Avatar Logo" />
               </ion-avatar>
               <ion-label>{{ label() | translate | async }}</ion-label>

@@ -25,6 +25,7 @@ import { VersionCheckService } from '@bk2/shared-util-angular';
     @media (prefers-color-scheme: dark) {
       ion-icon { color: var(--ion-color-white); }
     }
+    ::ng-deep ion-accordion ion-icon[slot="start"] { margin-inline-end: 8px; }
     `],
   providers: [MenuStore],
   template: `

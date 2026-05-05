@@ -27,7 +27,7 @@ import { TasksStore } from './tasks-section.store';
         box-shadow: none !important;
       }
       ion-label { font-size: 1em; }
-      ion-icon { font-size: 28px; width: 28px; height: 28px; }
+      ion-icon { font-size: 28px; width: 28px; height: 28px; margin-inline-end: 8px;}
     `,
   ],
   providers: [TasksStore], 
