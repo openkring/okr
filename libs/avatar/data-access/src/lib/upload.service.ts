@@ -61,10 +61,11 @@ export class UploadService {
    * @returns the selected file or undefined if the file dialog was cancelled
    */
   public async pickFile(mimeTypes: string[]): Promise<File | undefined> {
-    const result = await FilePicker.pickFiles({
-      types: mimeTypes,
-      limit: 1,
-    });
+    if (!Capacitor.isNativePlatform()) {
+      const files = await this.pickFilesNative(mimeTypes, false);
+      return files[0];
+    }
+    const result = await FilePicker.pickFiles({ types: mimeTypes, limit: 1 });
     if (result.files.length !== 1) {
       warn('UploadService.pickFile: expected 1 file, got ' + result.files.length);
       return undefined;
@@ -83,10 +84,35 @@ export class UploadService {
    * @returns the selected files (empty array if cancelled or no blobs available)
    */
   public async pickMultipleFiles(mimeTypes: string[]): Promise<File[]> {
+    if (!Capacitor.isNativePlatform()) {
+      return this.pickFilesNative(mimeTypes, true);
+    }
     const result = await FilePicker.pickFiles({ types: mimeTypes });
     return result.files
       .filter(f => !!f.blob)
       .map(f => new File([f.blob!], f.name, { type: f.mimeType }));
+  }
+
+  // Uses a native <input type="file"> element so the browser handles the file
+  // dialog synchronously within the user gesture — required for Safari, faster on Chrome.
+  private pickFilesNative(mimeTypes: string[], multiple: boolean): Promise<File[]> {
+    return new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = mimeTypes.join(',');
+      input.multiple = multiple;
+      input.style.display = 'none';
+      document.body.appendChild(input);
+      input.onchange = () => {
+        resolve(Array.from(input.files ?? []));
+        document.body.removeChild(input);
+      };
+      input.oncancel = () => {
+        resolve([]);
+        document.body.removeChild(input);
+      };
+      input.click();
+    });
   }
 
   /**

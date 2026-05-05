@@ -43,9 +43,13 @@ const IMAGE_MIMETYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
           <ion-card-title>{{ title() | translate | async }}</ion-card-title>
           @if(!readOnly()) {
             <ion-buttons>
-              <ion-button (click)="addImages()">
-                <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
-              </ion-button>
+              <label style="display: flex; align-items: center;">
+                <input type="file" multiple accept="image/jpeg,image/png,image/gif,image/webp"
+                       style="display: none;" (change)="onFilesSelected($event)">
+                <ion-button>
+                  <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+                </ion-button>
+              </label>
             </ion-buttons>
           }
         </div>
@@ -108,8 +112,10 @@ export class ImagesConfigComponent {
     this.images.set(ev.detail.complete(this.images()));
   }
 
-  protected async addImages(): Promise<void> {
-    const files = await this.uploadService.pickMultipleFiles(IMAGE_MIMETYPES);
+  protected async onFilesSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = ''; // allow re-selecting the same files next time
     if (!files.length) return;
 
     const basePath = this.storagePath();
@@ -130,7 +136,6 @@ export class ImagesConfigComponent {
       overlay: '',
     }));
 
-    // Persist each uploaded file as a document in the database
     await Promise.all(files.map((f, idx) => {
       const downloadUrl = urls[idx];
       if (!downloadUrl) return Promise.resolve();
