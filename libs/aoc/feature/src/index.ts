@@ -13,3 +13,5 @@ export * from './lib/aoc-storage';
 export * from './lib/aoc-tag';
 export * from './lib/aoc-email';
 export * from './lib/aoc-user-account';
+export * from './lib/aoc-session';
+export * from './lib/aoc-session.store';
