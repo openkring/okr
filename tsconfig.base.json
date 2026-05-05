@@ -131,6 +131,7 @@
       "@bk2/resource-feature": ["libs/resource/feature/src/index.ts"],
       "@bk2/resource-ui": ["libs/resource/ui/src/index.ts"],
       "@bk2/resource-util": ["libs/resource/util/src/index.ts"],
+      "@bk2/session-data-access": ["libs/session/data-access/src/index.ts"],
       "@bk2/shared-categories": ["libs/shared/categories/src/index.ts"],
       "@bk2/shared-config": ["libs/shared/config/src/index.ts"],
       "@bk2/shared-constants": ["libs/shared/constants/src/index.ts"],
