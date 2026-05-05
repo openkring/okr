@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, effect, inject, PLATFORM_ID } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { authState } from 'rxfire/auth';
@@ -8,7 +8,10 @@ import { AUTH, ENV, FIRESTORE } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@bk2/shared-models';
 import { die, getSystemQuery } from '@bk2/shared-util-core';
-import { AppNavigationService } from '@bk2/shared-util-angular';
+import { AppNavigationService, isBrowser } from '@bk2/shared-util-angular';
+
+import { SessionService } from '@bk2/session-data-access';
+import { App } from '@capacitor/app';
 
 import { AppConfigService } from './app-config.service';
 
@@ -64,7 +67,9 @@ export const AppStore = signalStore(
     auth: inject(AUTH),
     env: inject(ENV),
     fbUser: toSignal(authState(inject(AUTH))),
-    appNavigationService: inject(AppNavigationService)
+    appNavigationService: inject(AppNavigationService),
+    platformId: inject(PLATFORM_ID),
+    sessionService: inject(SessionService)
   })),
   
   withProps((store) => ({
@@ -342,12 +347,57 @@ export const AppStore = signalStore(
 
   withHooks({
     onInit(store) {
-      patchState(store, { 
+      patchState(store, {
         tenantId: store.env.tenantId,
         production: store.env.production,
         useEmulators: store.env.useEmulators,
         firebase: store.env.firebase,
         services: store.env.services
+      });
+
+      if (!isBrowser(store.platformId)) return;
+
+      // Start anonymous session immediately on bootstrap
+      store.sessionService.startSession();
+
+      // Upgrade session when user becomes authenticated
+      effect(() => {
+        const user = store.currentUser();
+        if (user) {
+          store.sessionService.upgradeSession(user);
+        }
+      });
+
+      // End session on logout
+      effect(() => {
+        const fbUser = store.fbUser();
+        if (!fbUser) {
+          store.sessionService.endSession();
+        }
+      });
+
+      // End session when tab is hidden; restart when visible again
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          store.sessionService.endSession();
+        } else if (document.visibilityState === 'visible' && !store.sessionService.hasActiveSession) {
+          store.sessionService.startSession().then(() => {
+            const user = store.currentUser();
+            if (user) store.sessionService.upgradeSession(user);
+          });
+        }
+      });
+
+      // Capacitor: supplement visibilitychange on native iOS/Android
+      App.addListener('appStateChange', ({ isActive }) => {
+        if (!isActive) {
+          store.sessionService.endSession();
+        } else if (isActive && !store.sessionService.hasActiveSession) {
+          store.sessionService.startSession().then(() => {
+            const user = store.currentUser();
+            if (user) store.sessionService.upgradeSession(user);
+          });
+        }
       });
     }
   })
