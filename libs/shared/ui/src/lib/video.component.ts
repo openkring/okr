@@ -1,5 +1,6 @@
-import { isPlatformBrowser } from '@angular/common';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, inject, input, PLATFORM_ID } from '@angular/core';
+
+import { isBrowser } from '@bk2/shared-util-angular';
 
 let ixPlayerLoaded = false;
 function loadIxPlayer(): void {
@@ -55,7 +56,7 @@ function loadIxPlayer(): void {
     public url = input.required<string>();
 
     constructor() {
-      if (isPlatformBrowser(this.platformId)) {
+      if (isBrowser(this.platformId)) {
         loadIxPlayer();
       }
     }

@@ -1,5 +1,5 @@
 import { Injectable, signal, effect, PLATFORM_ID, inject } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { isBrowser } from '@bk2/shared-util-angular';
 
 /**
  * Service to track browser online/offline status using Signals.
@@ -16,7 +16,7 @@ export class NetworkStatusService {
   private onlineStatusSignal = signal<'online' | 'offline'>('offline');
 
   constructor() {
-    if (isPlatformBrowser(this.platformId)) {
+    if (isBrowser(this.platformId)) {
       // Initialize with current online status
       this.isOnlineSignal.set(navigator.onLine);
       this.onlineStatusSignal.set(navigator.onLine ? 'online' : 'offline');

@@ -1,5 +1,4 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
@@ -9,6 +8,7 @@ import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { ENV } from '@bk2/shared-config';
+import { isBrowser } from '@bk2/shared-util-angular';
 
 /**
  * Service for Firebase Cloud Messaging (FCM) push notifications.
@@ -23,7 +23,7 @@ export class FcmService {
   private readonly env = inject(ENV);
 
   constructor() {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isBrowser(this.platformId)) return;
     try {
       this.messaging = getMessaging(getApp());
     } catch (error) {
@@ -38,7 +38,7 @@ export class FcmService {
    * On web uses Firebase Messaging (service worker / VAPID).
    */
   async registerAndSave(uid: string): Promise<void> {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isBrowser(this.platformId)) return;
 
     if (Capacitor.isNativePlatform()) {
       await this.registerNativeAndSave(uid);
@@ -168,7 +168,7 @@ export class FcmService {
    * Native Capacitor always supported; web requires Notification + serviceWorker APIs.
    */
   isSupported(): boolean {
-    if (!isPlatformBrowser(this.platformId)) return false;
+    if (!isBrowser(this.platformId)) return false;
     if (Capacitor.isNativePlatform()) return true;
     return 'Notification' in window && 'serviceWorker' in navigator;
   }

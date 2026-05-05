@@ -1,4 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
+
 import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
@@ -7,6 +7,7 @@ import { AppStore } from '@bk2/shared-feature';
 import { LocationCollection, LocationModel, MAP_CONFIG_SHAPE, MapSection } from '@bk2/shared-models';
 import { OptionalCardHeaderComponent } from '@bk2/shared-ui';
 import { debugMessage, die } from '@bk2/shared-util-core';
+import { isBrowser } from '@bk2/shared-util-angular';
 import { FirestoreService } from '@bk2/shared-data-access';
 
 // Dynamic imports for Capacitor plugins to avoid SSR issues
@@ -111,7 +112,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
     
     // Watch for editMode changes and update map configuration
     effect(() => {
-      if (this.map && isPlatformBrowser(this.platformId)) {
+      if (this.map && isBrowser(this.platformId)) {
         console.log('MapSectionComponent: editMode changed, updating map config', this.editMode());
         // Note: Google Maps API doesn't have a direct method to update these options after creation
         // We need to call setOptions if available, or recreate the map
@@ -132,7 +133,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   }
 
   async ngAfterViewInit(): Promise<void> {
-    if (isPlatformBrowser(this.platformId)) {
+    if (isBrowser(this.platformId)) {
       await this.loadMap();
       await this.checkGeolocationStatus();
     }
@@ -319,7 +320,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   }
 
   public async addMarker(lat: number, lng: number): Promise<string> {
-    if (!isPlatformBrowser(this.platformId) || !this.map) {
+    if (!isBrowser(this.platformId) || !this.map) {
       return '';
     }
     return await this.map.addMarker({

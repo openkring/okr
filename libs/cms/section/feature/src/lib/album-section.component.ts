@@ -1,4 +1,4 @@
-import { AsyncPipe, isPlatformBrowser, NgStyle } from '@angular/common';
+import { AsyncPipe, NgStyle } from '@angular/common';
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject, input, linkedSignal, PLATFORM_ID, viewChild } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { AlbumSection, AlbumStyle, BackgroundStyle, ImageActionType, ImageConfig, ImageStyle, ImageType } from '@bk2/shared-models';
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { browse, CategoryComponent, ImageComponent, LabelComponent, showZoomedImage, SpinnerComponent, VideoComponent } from '@bk2/shared-ui';
-import { downloadToBrowser } from '@bk2/shared-util-angular';
+import { downloadToBrowser, isBrowser } from '@bk2/shared-util-angular';
 import { debugData, debugMessage } from '@bk2/shared-util-core';
 
 import { AlbumStyles, convertThumbnailToFullImage, getBackgroundStyle } from '@bk2/cms-section-util';
@@ -280,7 +280,7 @@ export class AlbumSectionComponent {
    * @returns 
    */
   private getValue(key: 'width' | 'height', defaultValue: number): number {
-    if (isPlatformBrowser(this.platformId)) {
+    if (isBrowser(this.platformId)) {
       const el = this.imageContainer();
       if (el) {
         const value = (el.nativeElement[key] ?? defaultValue) as number;

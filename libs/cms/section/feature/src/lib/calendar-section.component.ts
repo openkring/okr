@@ -1,4 +1,4 @@
-import { AsyncPipe, isPlatformBrowser } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input, viewChild } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { CalendarSection, CalEventModel } from '@bk2/shared-models';
 import { SpinnerComponent } from '@bk2/shared-ui';
 import { DateFormat, debugData, debugMessage } from '@bk2/shared-util-core';
+import { isBrowser } from '@bk2/shared-util-angular';
 import { convertCalEventToFullCalendar } from '@bk2/calevent-util';
 import { CalEventStore } from '@bk2/calevent-feature';
 
@@ -132,12 +133,12 @@ export class CalendarSectionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
+    if (isBrowser(this.platformId)) {
       // angular component calls render() from ngAfterViewInit() which is too early for fullcalendar in Ionic (should be in ionViewDidLoad())
       // the calendar renders correctly if render() is called after the page is loaded, e.g. by resizing the window.
       // that's what this hack is doing: trigger resize window after 1ms
       setTimeout( () => {
-        if (isPlatformBrowser(this.platformId)) {
+        if (isBrowser(this.platformId)) {
           window.dispatchEvent(new Event('resize'));
         }
       }, 1);

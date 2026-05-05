@@ -1,6 +1,5 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, OnInit, PLATFORM_ID, viewChild } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 import { format } from 'date-fns';
@@ -15,7 +14,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { CalEventModel, RoleName } from '@bk2/shared-models';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser } from '@bk2/shared-util-angular';
 import { DateFormat, addTime, debugData, getAttendanceState, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -319,7 +318,7 @@ export class CalEventListComponent implements OnInit {
     effect(() => {
       const idx = this.firstFutureIndex();
       if (!this.isListView() || this.isLoading() || idx < 0) return;
-      if (!isPlatformBrowser(this.platformId)) return;
+      if (!isBrowser(this.platformId)) return;
       setTimeout(() => {
         document.getElementById(`calevent-${idx}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 150);
@@ -345,7 +344,7 @@ export class CalEventListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
+    if (isBrowser(this.platformId)) {
       setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     }
   }

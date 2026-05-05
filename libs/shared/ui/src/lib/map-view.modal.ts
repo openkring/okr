@@ -1,8 +1,8 @@
-import { isPlatformBrowser } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, OnInit, inject, input, PLATFORM_ID, computed } from '@angular/core';
 import { IonContent } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
+import { isBrowser } from '@bk2/shared-util-angular';
 import { coerceBoolean, die } from '@bk2/shared-util-core';
 
 import { HeaderComponent } from './header.component';
@@ -72,7 +72,7 @@ export class MapViewModalComponent implements OnInit, OnDestroy {
   }
 
   async loadMap() {
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isBrowser(this.platformId)) {
       console.warn('MapSectionComponent.loadMap: Not in browser, skipping map load');
       return;
     }

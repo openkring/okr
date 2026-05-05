@@ -1,4 +1,4 @@
-import { AsyncPipe, isPlatformBrowser } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ToastController, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
@@ -13,7 +13,7 @@ import { PollCreateModal } from './poll-create.modal';
 import { MatrixPollData } from '@bk2/chat-data-access';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions, downloadToBrowser, showToast } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, downloadToBrowser, isBrowser, showToast } from '@bk2/shared-util-angular';
 import { MatrixMessage, RoleName } from '@bk2/shared-models';
 
 @Component({
@@ -510,7 +510,7 @@ export class MatrixChat implements OnDestroy {
     effect(() => {
       const matrixUser = this.store.matrixUser();
       const isInitialized = this.store.isMatrixInitialized();
-      if (matrixUser && !isInitialized && isPlatformBrowser(this.platformId)) {
+      if (matrixUser && !isInitialized && isBrowser(this.platformId)) {
         untracked(() => this.initializeMatrixIfNeeded());
       }
     });
@@ -660,7 +660,7 @@ export class MatrixChat implements OnDestroy {
   // Event handlers
   onRoomSelected(roomId: string) {
     this.store.setCurrentRoom(roomId);
-    if (isPlatformBrowser(this.platformId) && window.innerWidth < 768) {
+    if (isBrowser(this.platformId) && window.innerWidth < 768) {
       this.showRoomList.set(false);
     }
   }

@@ -1,4 +1,4 @@
-import { AsyncPipe, DecimalPipe, isPlatformBrowser } from '@angular/common';
+import { AsyncPipe, DecimalPipe } from '@angular/common';
 import {
   AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy,
   PLATFORM_ID, computed, effect, inject
@@ -10,6 +10,7 @@ import {
 } from '@ionic/angular/standalone';
 
 import { ENV } from '@bk2/shared-config';
+import { isBrowser } from '@bk2/shared-util-angular';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { SpinnerComponent } from '@bk2/shared-ui';
@@ -166,7 +167,7 @@ export class FlightTrackerSearchComponent implements AfterViewInit, OnDestroy {
   }
 
   async ngAfterViewInit(): Promise<void> {
-    if (isPlatformBrowser(this.platformId)) {
+    if (isBrowser(this.platformId)) {
       await this.loadMap();
     }
   }

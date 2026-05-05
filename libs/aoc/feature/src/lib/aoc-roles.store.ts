@@ -1,7 +1,5 @@
-import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, PLATFORM_ID } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { Capacitor } from '@capacitor/core';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
@@ -48,7 +46,6 @@ export const AocRolesStore = signalStore(
     userService: inject(UserService),
     modalController: inject(ModalController),
     toastController: inject(ToastController),
-    platformId: inject(PLATFORM_ID),
   })),
   withProps(store => ({
     personsResource: rxResource({

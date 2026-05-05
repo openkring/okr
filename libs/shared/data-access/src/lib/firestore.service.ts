@@ -21,7 +21,6 @@
  * - Error Handling: Add robust error handling to searchData to catch and log Firestore errors, aiding debugging (e.g., CORS or permission issues).
  * 
  */
-import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
 import { collection, deleteDoc, doc, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
@@ -30,7 +29,7 @@ import { firstValueFrom, Observable, of, shareReplay } from 'rxjs';
 
 import { ENV, FIRESTORE, isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { BkModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@bk2/shared-models";
-import { error, showToast } from '@bk2/shared-util-angular';
+import { error, isBrowser, showToast } from '@bk2/shared-util-angular';
 import { debugData, debugMessage, generateRandomString, getFullName, getQuery, getSystemQuery, removeKeyFromBkModel, removeUndefinedFields } from '@bk2/shared-util-core';
 
 import { createComment } from '@bk2/comment-util';
@@ -63,7 +62,7 @@ export class FirestoreService {
   ): Promise<string | undefined> 
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isBrowser(this.platformId)) {
       return error(undefined, 'FirestoreService.createModel: This method can only be called in the browser context.', true);
     }
 
@@ -118,7 +117,7 @@ export class FirestoreService {
   ): Promise<string | undefined> 
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isBrowser(this.platformId)) {
       return error(undefined, 'FirestoreService.createObject: This method can only be called in the browser context.', true);
     }
     if (collectionName?.length === 0) {
@@ -152,7 +151,7 @@ export class FirestoreService {
    */
   public readModel<T extends BkModel>(collectionName: string, key: string | undefined): Observable<T | undefined> {
     // ensure that the method is only called in the browser context; return undefined in SSR context
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isBrowser(this.platformId)) {
       return of(error(undefined, 'FirestoreService.readModel: This method can only be called in the browser context.', true));
     }
     if (collectionName?.length === 0) {
@@ -179,7 +178,7 @@ export class FirestoreService {
    */
   public readObject<T>(collectionName: string, key: string | undefined): Observable<T | undefined> {
     // ensure that the method is only called in the browser context; return undefined in SSR context
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isBrowser(this.platformId)) {
       return of(error(undefined, 'FirestoreService.readObject: This method can only be called in the browser context.', true));
     }
     if (collectionName?.length === 0) {
@@ -215,7 +214,7 @@ export class FirestoreService {
   ): Promise<string | undefined> 
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isBrowser(this.platformId)) {
       return error(undefined, 'FirestoreService.updateModel: This method can only be called in the browser context.', true);
     }
     if (collectionName?.length === 0) {
@@ -281,7 +280,7 @@ export class FirestoreService {
   ): Promise<string | undefined> 
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isBrowser(this.platformId)) {
       return error(undefined, 'FirestoreService.updateObject: This method can only be called in the browser context.', true);
     }
     if (collectionName?.length === 0) {
@@ -350,7 +349,7 @@ export class FirestoreService {
   */
   public async deleteObject(collectionName: string, key: string, confirmMessage?: string): Promise<string | undefined> {
     // ensure that the method is only called in the browser context; return undefined in SSR context
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isBrowser(this.platformId)) {
       return error(undefined, 'FirestoreService.deleteObject: This method can only be called in the browser context.', true);
     }
     if (collectionName?.length === 0) {
@@ -391,7 +390,7 @@ export class FirestoreService {
     orderByParam = 'name',
     sortOrderParam = 'asc'
   ): Observable<T[]> {
-    if (!isPlatformBrowser(this.platformId)) {
+    if (!isBrowser(this.platformId)) {
       return of([]);
     }
 

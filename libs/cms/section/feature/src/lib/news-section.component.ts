@@ -1,11 +1,11 @@
-import { isPlatformBrowser } from '@angular/common';
+
 import { Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
 import { EmptyListComponent, MoreButton, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions, navigateByUrl } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, isBrowser, navigateByUrl } from '@bk2/shared-util-angular';
 import { ArticleSection, IMAGE_STYLE_SHAPE, NewsConfig, SectionModel } from '@bk2/shared-models';
 import { ThumbnailUrlPipe } from '@bk2/shared-pipes';
 
@@ -100,9 +100,9 @@ export class NewsSectionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
+    if (isBrowser(this.platformId)) {
       setTimeout(() => {
-        if (isPlatformBrowser(this.platformId)) window.dispatchEvent(new Event('resize'));
+        if (isBrowser(this.platformId)) window.dispatchEvent(new Event('resize'));
       }, 1);
     }
   }
