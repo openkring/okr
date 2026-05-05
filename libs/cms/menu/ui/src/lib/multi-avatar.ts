@@ -82,8 +82,8 @@ import { TranslatePipe } from '@bk2/shared-i18n';
                 <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
               }
             </ion-item>
-          }
-        }
+          } 
+        } 
       } @else {
         @if(safariWorkaround()) {
           <!-- label→input: user's click is trusted in Safari; popover dismiss event is not.
@@ -92,10 +92,11 @@ import { TranslatePipe } from '@bk2/shared-i18n';
             <label for="doc-files-input" style="width:100%;cursor:pointer;display:flex;align-items:center;gap:12px;padding:4px 0;">
               <ion-icon slot="start" src="{{icon | svgIcon }}" />
               <ion-label>{{ label() | translate | async }}</ion-label>
+
             </label>
           </ion-item>
         } @else {
-          <ion-item button>
+          <ion-item [button]="true">
             <ion-icon slot="start" src="{{icon | svgIcon }}" />
             <ion-label>{{ label() | translate | async }}</ion-label>
             @if(badge() > 0) {
@@ -104,8 +105,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           </ion-item>
         }
       }
-    }
-  `
+    }  `
 })
 export class MultiAvatarComponent {
   public icon = input.required<string>();

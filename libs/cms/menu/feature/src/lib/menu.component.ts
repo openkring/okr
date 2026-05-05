@@ -99,7 +99,7 @@ export class MenuComponent {
   // derived signals
 
   // restrict the workaround to known problem areas (e.g. file selection dialogue)
-  protected safariWorkaround = computed(() => this.menuName() === 'files-add' && isSafari()); 
+  protected safariWorkaround = computed(() => this.menuName() === 'files-add'); // also used with chrome
   protected menuItem = computed(() => this.menuStore.menu());
   private currentUser = computed(() => this.menuStore.currentUser());
   protected roleNeeded = computed(() => this.menuItem()?.roleNeeded);
