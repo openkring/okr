@@ -237,6 +237,32 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
       padding: 24px;
       text-align: center;
     }
+
+    .messages-column {
+      position: relative;
+    }
+
+    .thread-panel {
+      position: relative;
+    }
+
+    .drop-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.12);
+      border: 2px dashed var(--ion-color-primary, #3880ff);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 20;
+      pointer-events: none;
+      color: var(--ion-color-primary, #3880ff);
+      font-size: 1rem;
+      font-weight: 600;
+    }
   `],
   template: `
     @if (isMatrixReady()) {
@@ -288,7 +314,18 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
             </div>
 
             <!-- Messages Area -->
-            <div class="messages-column" (click)="onMessagesColumnClicked()">
+            <div class="messages-column"
+              (click)="onMessagesColumnClicked()"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)"
+            >
+              @if(isDragOver()) {
+                <div class="drop-overlay">
+                  <ion-icon src="{{'upload' | svgIcon}}"></ion-icon>
+                  <span>Dateien hierher ziehen</span>
+                </div>
+              }
               @if (currentRoom()) {
                 <!-- Room Header -->
                 <ion-header class="room-header">
@@ -362,7 +399,18 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
             </div>
 
             <!-- Thread Panel (always in DOM; CSS width animates it in/out) -->
-            <div class="thread-panel" [class.collapsed]="!selectedThreadId()">
+            <div class="thread-panel"
+              [class.collapsed]="!selectedThreadId()"
+              (dragover)="onThreadDragOver($event)"
+              (dragleave)="onThreadDragLeave($event)"
+              (drop)="onThreadDrop($event)"
+            >
+              @if(isThreadDragOver()) {
+                <div class="drop-overlay">
+                  <ion-icon src="{{'upload' | svgIcon}}"></ion-icon>
+                  <span>Dateien hierher ziehen</span>
+                </div>
+              }
                 <ion-header class="room-header">
                   <ion-toolbar>
                     <ion-title>Thread</ion-title>
@@ -475,6 +523,8 @@ export class MatrixChat implements OnDestroy {
   // Local state
   protected readonly replyToMessage = computed(() => this.store.replyToMessage());
   protected showRoomList = signal(!this.isGroupView());
+  protected isDragOver = signal(false);
+  protected isThreadDragOver = signal(false);
 
   // Messages signal
   protected readonly messages = computed(() => this.store.messages());
@@ -799,6 +849,59 @@ export class MatrixChat implements OnDestroy {
 
   onCancelReply() {
     this.store.setReplyToMessage(undefined);
+  }
+
+  protected onDragOver(event: DragEvent): void {
+    if (!this.currentRoomId()) return;
+    event.preventDefault();
+    this.isDragOver.set(true);
+  }
+
+  protected onDragLeave(event: DragEvent): void {
+    const host = event.currentTarget as HTMLElement;
+    if (!host.contains(event.relatedTarget as Node | null)) {
+      this.isDragOver.set(false);
+    }
+  }
+
+  protected async onDrop(event: DragEvent): Promise<void> {
+    event.preventDefault();
+    this.isDragOver.set(false);
+    if (!this.currentRoomId()) return;
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    if (!files.length) return;
+    const results = await Promise.allSettled(files.map(f => this.store.sendFile(f)));
+    const failures = results.filter(r => r.status === 'rejected').length;
+    if (failures > 0) {
+      await showToast(this.toastController, `${failures} Datei(en) konnten nicht gesendet werden`);
+    }
+  }
+
+  protected onThreadDragOver(event: DragEvent): void {
+    if (!this.selectedThreadId()) return;
+    event.preventDefault();
+    this.isThreadDragOver.set(true);
+  }
+
+  protected onThreadDragLeave(event: DragEvent): void {
+    const host = event.currentTarget as HTMLElement;
+    if (!host.contains(event.relatedTarget as Node | null)) {
+      this.isThreadDragOver.set(false);
+    }
+  }
+
+  protected async onThreadDrop(event: DragEvent): Promise<void> {
+    event.preventDefault();
+    this.isThreadDragOver.set(false);
+    const threadId = this.selectedThreadId();
+    if (!threadId) return;
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    if (!files.length) return;
+    const results = await Promise.allSettled(files.map(f => this.store.sendFile(f, threadId)));
+    const failures = results.filter(r => r.status === 'rejected').length;
+    if (failures > 0) {
+      await showToast(this.toastController, `${failures} Datei(en) konnten nicht gesendet werden`);
+    }
   }
 
   toggleRoomList() {
