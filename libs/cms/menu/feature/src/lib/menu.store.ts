@@ -4,15 +4,18 @@ import { MenuController, ModalController, PopoverController } from '@ionic/angul
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
+import { combineLatest, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { ENV } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
-import { CategoryListModel, MenuItemModel } from '@bk2/shared-models';
-import { debugListLoaded, die, nameMatches, safeStructuredClone, warn } from '@bk2/shared-util-core';
+import { CategoryListModel, MenuItemModel, TaskCollection, TaskModel } from '@bk2/shared-models';
+import { debugListLoaded, die, getSystemQuery, nameMatches, safeStructuredClone, warn } from '@bk2/shared-util-core';
 import { AppNavigationService, isInSplitPane, navigateByUrl } from '@bk2/shared-util-angular';
 
 import { AuthService } from '@bk2/auth-data-access';
 import { ActivityService } from '@bk2/activity-data-access';
+import { MatrixChatService } from '@bk2/chat-data-access';
 
 import { MenuService } from '@bk2/cms-menu-data-access';
 import { getTarget, isMenuItem } from '@bk2/cms-menu-util';
@@ -43,7 +46,8 @@ export const _MenuStore = signalStore(
     menuController: inject(MenuController),
     popoverController: inject(PopoverController),
     authService: inject(AuthService),
-    activityService: inject(ActivityService)
+    activityService: inject(ActivityService),
+    matrixChatService: inject(MatrixChatService),
   })),
   withProps((store) => ({
     menuItemsResource: rxResource({
@@ -58,7 +62,32 @@ export const _MenuStore = signalStore(
       stream: ({ params }) => {
         return store.menuService.read(params.name);
       }
-    })
+    }),
+    notificationCountResource: rxResource({
+      params: () => ({
+        name: store.name(),
+        personKey: store.appStore.currentUser()?.personKey,
+        tenantId: store.appStore.env.tenantId,
+      }),
+      stream: ({ params }): Observable<number> => {
+        const { name, personKey, tenantId } = params;
+        if (name !== 'dashboard' || !personKey) return of(0);
+
+        const chatCount$ = store.matrixChatService.rooms.pipe(
+          map(rooms => rooms.reduce((sum: number, r) => sum + r.unreadCount, 0))
+        );
+
+        const taskQuery = getSystemQuery(tenantId);
+        taskQuery.push({ key: 'completionDate', operator: '==', value: '' });
+        const taskCount$ = store.appStore.firestoreService.searchData<TaskModel>(TaskCollection, taskQuery, 'dueDate', 'asc').pipe(
+          map(tasks => tasks.filter(t => t.assignee?.key === personKey || t.author?.key === personKey).length)
+        );
+
+        return combineLatest([chatCount$, taskCount$]).pipe(
+          map(([chat, tasks]) => chat + tasks)
+        );
+      }
+    }),
   })),
 
   withComputed((state) => {
@@ -74,6 +103,7 @@ export const _MenuStore = signalStore(
       currentUser: computed(() => state.appStore.currentUser()),
       isMenuLoading: computed(() => state.menuResource.isLoading()),
       isLoading: computed(() => state.menuItemsResource.isLoading() || state.menuResource.isLoading()),
+      notificationCount: computed(() => state.notificationCountResource.value() ?? 0),
     };
   }),
 
