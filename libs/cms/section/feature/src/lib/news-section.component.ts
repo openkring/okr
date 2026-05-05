@@ -39,10 +39,10 @@ import { NewsStore } from './news-section.store';
             <ion-list lines="none">
               @for (article of news(); track article.bkey) {
                 <ion-item (click)="navigateToArticle(article)">
-                  @if (article.properties.images[0]?.url; as imgUrl) {
+                  @if (article.properties.images.length > 0 && article.properties.images[0].url) {
                     <ion-thumbnail slot="start">
-                      <img [src]="imgUrl | thumbnailUrl"
-                           [alt]="article.properties.images[0]?.altText || article.title" />
+                      <img [src]="article.properties.images[0].url | thumbnailUrl"
+                           [alt]="article.properties.images[0].altText || article.title" />
                     </ion-thumbnail>
                   }
                   <ion-label>
