@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
-import { IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular/standalone';
+import { IonBadge, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 
@@ -9,17 +9,23 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    IonCardHeader, IonCardTitle, IonCardSubtitle
+    IonCardHeader, IonCardTitle, IonCardSubtitle, IonBadge
   ],
   styles: [`
   /* iOS places the subtitle above the title */
   ion-card-header { display: flex; flex-flow: column-reverse; padding-bottom: 0px; }
+  .title-row { display: flex; align-items: center; justify-content: space-between; }
 `],
   template: `
-      @if(doShowHeader()) {
+    @if(doShowHeader()) {
       <ion-card-header>
         @if(title()) {
-          <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+          <div class="title-row">
+            <ion-card-title>{{ title() | translate | async }}</ion-card-title>
+            @if((count() ?? 0) > 0) {
+              <ion-badge color="danger">{{ count() }}</ion-badge>
+            }
+          </div>
         }
         @if(subTitle()) {
           <ion-card-subtitle>{{ subTitle() | translate | async }} </ion-card-subtitle>
@@ -29,9 +35,9 @@ import { TranslatePipe } from '@bk2/shared-i18n';
   `
 })
 export class OptionalCardHeaderComponent {
-  // inputs
   public title = input<string | undefined>();
   public subTitle = input<string | undefined>();
+  public count = input<number>();
 
   protected doShowHeader = computed(() => !!this.title() || !!this.subTitle());
 }
