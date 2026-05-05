@@ -14,9 +14,10 @@ export class SessionService {
 
   private session: SessionModel | null = null;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000; // must stay < 30-min orphan cleanup threshold
 
   public get hasActiveSession(): boolean {
-    return this.session !== null && this.session.bkey !== '' && this.session.bkey !== undefined;
+    return this.session !== null && !!this.session.bkey;
   }
 
   public async startSession(): Promise<void> {
@@ -70,7 +71,7 @@ export class SessionService {
 
   private startHeartbeat(): void {
     this.stopHeartbeat();
-    this.heartbeatTimer = setInterval(() => this.heartbeat(), 5 * 60 * 1000);
+    this.heartbeatTimer = setInterval(() => this.heartbeat(), this.HEARTBEAT_INTERVAL_MS);
   }
 
   private stopHeartbeat(): void {
@@ -89,6 +90,7 @@ export class SessionService {
   }
 
   private calcDurationSeconds(startedAt: string, endedAt: string): number {
+    if (!startedAt || !endedAt || startedAt.length < 14 || endedAt.length < 14) return 0;
     const parse = (sdt: string): number => {
       const y = +sdt.slice(0, 4), mo = +sdt.slice(4, 6) - 1;
       const d = +sdt.slice(6, 8), h = +sdt.slice(8, 10);
