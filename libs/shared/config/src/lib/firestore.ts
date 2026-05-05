@@ -7,17 +7,12 @@ export const FIRESTORE_EMULATOR_PORT = 8080;
 // Flag to track initialization
 let isFirestoreInitialized = false;
 
-/**
- * Checks for safari in userAgent but excludes Chrome/Chromium, as they also include 'safari' in their user agent.
- * Returns false on the server (where navigator is not defined). ensuring compatibility with SSR.
- * @returns true if the browser is Safari, false otherwise
- */
+// Detects Safari (including iOS Safari). Excludes Chrome/Chromium/CriOS/Opera which also include 'safari' in their UA.
+// Cannot import from @bk2/shared-util-angular — that lib already imports from @bk2/shared-config (circular).
 export function isSafari(): boolean {
-  if (typeof navigator === 'undefined') {
-    return false; // Server-side, not Safari
-  }
-  const userAgent = navigator.userAgent.toLowerCase();
-  return userAgent.includes('safari') && !userAgent.includes('chrome') && !userAgent.includes('chromium');
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /safari/i.test(ua) && !/OPR\/|opera|chrome|chromium|crios|firefox|fxios/i.test(ua);
 }
 
 /**
