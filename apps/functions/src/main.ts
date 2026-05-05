@@ -18,6 +18,7 @@ import * as Zefix from './zefix';
 import * as Location from './location';
 import * as Srv from './srv';
 import * as Flighttracker from './flighttracker';
+import * as Session from './session';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -160,6 +161,10 @@ export const convertLocation = Location.convertLocation;
 
 // flight tracker
 export const getFlightInfo = Flighttracker.getFlightInfo;
+
+// session analytics
+export const endSession = Session.endSession;
+export const cleanupOrphanSessions = Session.cleanupOrphanSessions;
 
 // test
 export const getEcho = Test.getEcho;
