@@ -60,22 +60,25 @@ export class UploadService {
    * @param mimeTypes a list of mime types to filter the file dialog (e.g. ['image/png', 'image/jpg', 'application/pdf'])
    * @returns the selected file or undefined if the file dialog was cancelled
    */
-  public async pickFile(mimeTypes: string[]): Promise<File | undefined> {
+  // Safari requires the file dialog to be opened synchronously within the user
+  // gesture call stack. Using async/await here would introduce a microtask
+  // boundary that consumes Safari's transient user activation before input.click().
+  public pickFile(mimeTypes: string[]): Promise<File | undefined> {
     if (!Capacitor.isNativePlatform()) {
-      const files = await this.pickFilesNative(mimeTypes, false);
-      return files[0];
+      return this.pickFilesNative(mimeTypes, false).then(files => files[0]);
     }
-    const result = await FilePicker.pickFiles({ types: mimeTypes, limit: 1 });
-    if (result.files.length !== 1) {
-      warn('UploadService.pickFile: expected 1 file, got ' + result.files.length);
-      return undefined;
-    }
-    const blob = result.files[0].blob;
-    if (!blob) {
-      warn('UploadService.pickFile: blob is mandatory.');
-      return undefined;
-    }
-    return new File([blob], result.files[0].name, { type: result.files[0].mimeType });
+    return FilePicker.pickFiles({ types: mimeTypes, limit: 1 }).then(result => {
+      if (result.files.length !== 1) {
+        warn('UploadService.pickFile: expected 1 file, got ' + result.files.length);
+        return undefined;
+      }
+      const blob = result.files[0].blob;
+      if (!blob) {
+        warn('UploadService.pickFile: blob is mandatory.');
+        return undefined;
+      }
+      return new File([blob], result.files[0].name, { type: result.files[0].mimeType });
+    });
   }
 
   /**
@@ -83,36 +86,39 @@ export class UploadService {
    * @param mimeTypes a list of mime types to filter the file dialog
    * @returns the selected files (empty array if cancelled or no blobs available)
    */
-  public async pickMultipleFiles(mimeTypes: string[]): Promise<File[]> {
+  // See pickFile — no async keyword for Safari user activation reasons.
+  public pickMultipleFiles(mimeTypes: string[]): Promise<File[]> {
     if (!Capacitor.isNativePlatform()) {
       return this.pickFilesNative(mimeTypes, true);
     }
-    const result = await FilePicker.pickFiles({ types: mimeTypes });
-    return result.files
-      .filter(f => !!f.blob)
-      .map(f => new File([f.blob!], f.name, { type: f.mimeType }));
+    return FilePicker.pickFiles({ types: mimeTypes }).then(result =>
+      result.files
+        .filter(f => !!f.blob)
+        .map(f => new File([f.blob!], f.name, { type: f.mimeType }))
+    );
   }
 
-  // Uses a native <input type="file"> element so the browser handles the file
-  // dialog synchronously within the user gesture — required for Safari, faster on Chrome.
+  // input.click() is intentionally outside the Promise constructor so it runs in
+  // the direct synchronous call stack of the user gesture, not inside a callback.
   private pickFilesNative(mimeTypes: string[], multiple: boolean): Promise<File[]> {
-    return new Promise((resolve) => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = mimeTypes.join(',');
-      input.multiple = multiple;
-      input.style.display = 'none';
-      document.body.appendChild(input);
-      input.onchange = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = mimeTypes.join(',');
+    input.multiple = multiple;
+    input.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;overflow:hidden;opacity:0;';
+    document.body.appendChild(input);
+    const promise = new Promise<File[]>((resolve) => {
+      input.addEventListener('change', () => {
         resolve(Array.from(input.files ?? []));
         document.body.removeChild(input);
-      };
-      input.oncancel = () => {
+      }, { once: true });
+      input.addEventListener('cancel', () => {
         resolve([]);
         document.body.removeChild(input);
-      };
-      input.click();
+      }, { once: true });
     });
+    input.click();
+    return promise;
   }
 
   /**

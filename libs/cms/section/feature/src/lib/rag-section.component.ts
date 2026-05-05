@@ -13,6 +13,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { RagConfig, SectionModel } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { hasRole } from '@bk2/shared-util-core';
+import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
 
 import { RagStore } from './rag-section.store';
 
@@ -58,6 +59,7 @@ import { RagStore } from './rag-section.store';
         .source-row a:hover { text-decoration: underline; }
         .source-row ion-icon { font-size: 0.9rem; flex-shrink: 0; }
         .source-row ion-button { --padding-start: 4px; --padding-end: 4px; margin: 0; }
+        .file-pick-label { cursor: pointer; display: flex; align-items: center; color: var(--ion-color-primary); padding: 4px; }
         .toolbar {
             display: flex;
             align-items: center;
@@ -112,11 +114,17 @@ import { RagStore } from './rag-section.store';
                             </ion-button>
                         }
 
-                        <!-- Add document (edit mode + contentAdmin only) -->
+                        <!-- Add document (edit mode + contentAdmin only).
+                             <label>+<input> bypasses Ionic's shadow-DOM re-dispatch
+                             so Safari receives a trusted user gesture for the file dialog. -->
                         @if (editMode() && isContentAdmin()) {
-                            <ion-button fill="clear" (click)="ragStore.addDocument()">
-                                <ion-icon slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
-                            </ion-button>
+                            <input id="rag-file-input" type="file" multiple
+                                   [accept]="acceptMimeTypes"
+                                   style="display:none"
+                                   (change)="onFilesSelected($event)" />
+                            <label for="rag-file-input" class="file-pick-label">
+                                <ion-icon src="{{ 'add-circle' | svgIcon }}" />
+                            </label>
                         }
                     </div>
 
@@ -209,6 +217,14 @@ export class RagSectionComponent {
     protected readonly reversedChatEntries = computed(() => [...this.ragStore.chatEntries()].reverse());
 
     protected searchTerm = signal('');
+    protected readonly acceptMimeTypes = DEFAULT_MIMETYPES.join(',');
+
+    protected onFilesSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const files = Array.from(input.files ?? []);
+        input.value = ''; // reset so the same file can be picked again
+        this.ragStore.addDocument(files);
+    }
 
     constructor() {
         effect(() => {

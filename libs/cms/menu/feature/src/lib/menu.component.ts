@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, forwardRef, inject, input, Version } from '@angular/core';
+import { Component, computed, effect, forwardRef, inject, input } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -7,10 +7,10 @@ import { MenuItemModel } from '@bk2/shared-models';
 import { SpinnerComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_MENU_ACTION } from '@bk2/shared-constants';
+import { isSafari, VersionCheckService } from '@bk2/shared-util-angular';
 
 import { MenuStore } from './menu.store';
 import { MultiAvatarComponent } from '@bk2/cms-menu-ui';
-import { VersionCheckService } from '@bk2/shared-util-angular';
 
 @Component({
   selector: 'bk-menu',
@@ -49,7 +49,7 @@ import { VersionCheckService } from '@bk2/shared-util-angular';
                   </ion-item>
                   <div slot="content">
                     @for(menuItemName of menuItem.menuItems; track menuItemName) {
-                      <bk-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" />
+                      <bk-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" />
                     }
                   </div>
                 </ion-accordion>
@@ -63,7 +63,7 @@ import { VersionCheckService } from '@bk2/shared-util-angular';
             @case('main') {
               <ion-list>
                 @for(menuItemName of menuItem.menuItems; track menuItemName) {
-                  <bk-menu [menuName]="menuItemName" />
+                  <bk-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" />
                 }
               </ion-list>
             }
@@ -75,7 +75,7 @@ import { VersionCheckService } from '@bk2/shared-util-angular';
               </ion-list>
             }
             @case('call') {
-              <bk-multi-avatar [icon]="icon()" [label]="label()" [badge]="notificationCount()" (click)="select(menuItem)" />
+              <bk-multi-avatar [icon]="icon()" [label]="label()" [badge]="notificationCount()" (click)="select(menuItem)" [safariWorkaround]="safariWorkaround()"/>
             }
           }
         } @else {
@@ -94,8 +94,12 @@ export class MenuComponent {
   // inputs
   public menuName = input.required<string>();
   public forceVisible = input(false);
+  public excludeNames = input<string[]>([]);
 
   // derived signals
+
+  // restrict the workaround to known problem areas (e.g. file selection dialogue)
+  protected safariWorkaround = computed(() => this.menuName() === 'files-add' && isSafari()); 
   protected menuItem = computed(() => this.menuStore.menu());
   private currentUser = computed(() => this.menuStore.currentUser());
   protected roleNeeded = computed(() => this.menuItem()?.roleNeeded);
@@ -111,7 +115,11 @@ export class MenuComponent {
     }
     return menuLabel;
   });
-  protected readonly isVisible = computed(() => this.forceVisible() || hasRole(this.roleNeeded(), this.currentUser()));
+  protected readonly isVisible = computed(() => {
+    const name = this.menuItem()?.name;
+    if (name && this.excludeNames().includes(name)) return false;
+    return this.forceVisible() || hasRole(this.roleNeeded(), this.currentUser());
+  });
   protected readonly notificationCount = computed(() => this.menuStore.notificationCount());
 
   constructor() {

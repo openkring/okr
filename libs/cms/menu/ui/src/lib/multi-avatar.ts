@@ -85,13 +85,24 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           }
         }
       } @else {
-        <ion-item [button]="true">
-          <ion-icon slot="start" src="{{icon | svgIcon }}" />
-          <ion-label>{{ label() | translate | async }}</ion-label>
-          @if(badge() > 0) {
-            <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
-          }
-        </ion-item>
+        @if(safariWorkaround()) {
+          <!-- label→input: user's click is trusted in Safari; popover dismiss event is not.
+            ion-item[button] ensures dismissOnSelect closes the popover after the click. -->
+          <ion-item button detail="false" lines="none">
+            <label for="doc-files-input" style="width:100%;cursor:pointer;display:flex;align-items:center;gap:12px;padding:4px 0;">
+              <ion-icon slot="start" src="{{icon | svgIcon }}" />
+              <ion-label>{{ label() | translate | async }}</ion-label>
+            </label>
+          </ion-item>
+        } @else {
+          <ion-item button>
+            <ion-icon slot="start" src="{{icon | svgIcon }}" />
+            <ion-label>{{ label() | translate | async }}</ion-label>
+            @if(badge() > 0) {
+              <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
+            }
+          </ion-item>
+        }
       }
     }
   `
@@ -100,6 +111,7 @@ export class MultiAvatarComponent {
   public icon = input.required<string>();
   public label = input<string>();
   public badge = input<number>(0);
+  public safariWorkaround = input<boolean>(false);
 
   protected name = computed(() => {
     const icon = this.icon();

@@ -4,6 +4,7 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCo
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { DocumentModel, RoleName } from '@bk2/shared-models';
+import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
 import { FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe, FileLogoPipe, ThumbnailUrlPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
@@ -26,6 +27,15 @@ import { DocumentStore } from './document.store';
   ],
   providers: [DocumentStore],
   template: `
+  @if(canChange()) {
+    <!-- Input outside ALL Ionic web components so Safari's id lookup and
+         label activation are not affected by slot/shadow DOM boundaries.
+         Off-screen instead of display:none — Safari won't activate a display:none input via label. -->
+    <input id="doc-files-input" type="file" multiple
+           [accept]="acceptMimeTypes"
+           style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;"
+           (change)="onFilesSelected($event)" />
+  }
   <ion-header>
     @if(contextMenuName() !== 'disable') {
       <ion-toolbar [color]="color()">
@@ -41,7 +51,7 @@ import { DocumentStore } from './document.store';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <bk-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()"/>
+                  <bk-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [excludeNames]="['addFiles']"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -241,12 +251,21 @@ export class DocumentListComponent {
     this.documentStore.setSelectedType(type);
   }
 
+  protected readonly acceptMimeTypes = DEFAULT_MIMETYPES.join(',');
+
+  protected onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    this.documentStore.addFiles(files);
+  }
+
   /******************************* actions *************************************** */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch(selectedMethod) {
       case 'add':  await this.documentStore.add(); break;
-      case 'addFiles': await this.documentStore.addFiles(); break;
+      case 'addFiles': break; // handled by the toolbar label→input (Safari-compatible)
       case 'addFolder': await this.documentStore.addFolder(); break;
       case 'exportRaw': await this.documentStore.export('raw'); break;
       default: error(undefined, `DocumentListComponent.call: unknown method ${selectedMethod}`);

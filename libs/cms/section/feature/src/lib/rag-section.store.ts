@@ -85,29 +85,23 @@ export const RagStore = signalStore(
         },
 
         /**
-         * Opens the file picker (multi-select), uploads all selected files to
-         * tenant/{tenantId}/rag/, creates a DocumentModel per file in the 'rag'
-         * folder, and persists them. The Storage trigger automatically indexes
-         * each file into the Google File Search store.
+         * Uploads the given files to tenant/{tenantId}/rag/, creates a
+         * DocumentModel per file in the 'rag' folder, and persists them.
+         * File picking is done in the component via a native <label>+<input>
+         * so that Safari's isTrusted user-gesture check is satisfied.
          */
-        async addDocument(): Promise<void> {
+        async addDocument(files: File[]): Promise<void> {
+            if (files.length === 0) return;
             const tenantId = store.appStore.env.tenantId;
             const currentUser = store.currentUser();
             const storagePath = `tenant/${tenantId}/rag`;
 
-            // Ensure the 'rag' folder exists (idempotent)
             await store.folderService.ensureGroupFolder(RAG_FOLDER_KEY, 'RAG', tenantId, currentUser ?? undefined);
 
-            // Pick multiple files
-            const files = await store.uploadService.pickMultipleFiles(DEFAULT_MIMETYPES);
-            if (files.length === 0) return; // user cancelled
-
-            // Upload all files in one modal
             const uploads = files.map(file => ({ file, fullPath: `${storagePath}/${file.name}` }));
             const downloadUrls = await store.uploadService.uploadFiles(uploads, '@cms.rag.upload');
-            if (!downloadUrls) return; // upload cancelled
+            if (!downloadUrls) return;
 
-            // Create and persist a DocumentModel for each successfully uploaded file
             await Promise.all(files.map(async (file, i) => {
                 const downloadUrl = downloadUrls[i];
                 if (!downloadUrl) return;

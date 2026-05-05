@@ -16,7 +16,6 @@ import { DocumentService } from '@bk2/document-data-access';
 import { FolderService } from '@bk2/folder-data-access';
 import { newFolderModel } from '@bk2/folder-util';
 import { UploadService } from '@bk2/avatar-data-access';
-import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
 
 export type DocumentState = {
   documentKey: string;
@@ -244,14 +243,13 @@ export const DocumentStore = signalStore(
        * All created documents are automatically assigned to the current folder (if listId = f:<key>).
        * No per-file navigation — the list reloads after all uploads complete.
        */
-      async addFiles(): Promise<void> {
+      async addFiles(files: File[]): Promise<void> {
+        if (!files.length) return;
         const currentUser = store.currentUser();
         if (!currentUser) return;
         const tenantId = store.tenantId();
         const folderKey = store.listId().startsWith('f:') ? store.listId().substring(2) : undefined;
         const basePath = `tenant/${tenantId}/${DocumentModelName}`;
-        const files = await store.uploadService.pickMultipleFiles(DEFAULT_MIMETYPES);
-        if (!files || files.length === 0) return;
 
         for (const file of files) {
           const fullPath = `${basePath}/${file.name}`;
