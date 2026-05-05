@@ -8,7 +8,6 @@ export class LocationModel implements BkModel, NamedModel, SearchableModel, Tagg
   public index = DEFAULT_INDEX;
   public name = DEFAULT_NAME; // a meaningful name for the location
   public tags = DEFAULT_TAGS;
-  public address = ''; // from google places
   public type = DEFAULT_LOCATION_TYPE;
   public latitude = 0;
   public longitude = 0;

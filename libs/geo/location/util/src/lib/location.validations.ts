@@ -12,7 +12,6 @@ export const locationValidations = staticSuite((model: LocationModel, tenants: s
   stringValidations('index', model.index, SHORT_NAME_LENGTH);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
   //tagValidations('tags', model.tags);
-  stringValidations('address', model.address, SHORT_NAME_LENGTH);
   stringValidations('type', model.type, WORD_LENGTH);
   numberValidations('latitude', model.latitude, false, -90, 90);
   numberValidations('longitude', model.longitude, false, -180, 180);

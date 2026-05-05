@@ -22,7 +22,6 @@ describe('Location Utils', () => {
     location = new LocationModel(tenantId);
     location.bkey = 'loc-1';
     location.name = 'Main Office';
-    location.address = '123 Main St';
     location.latitude = 12345;
     location.longitude = 67890;
     location.what3words = 'bla.bla.bla';

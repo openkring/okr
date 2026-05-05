@@ -109,7 +109,7 @@ export const LocationListStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data) {
           if (isLocation(data, store.appStore.tenantId())) {
-            await store.locationConversionService.convert(data);
+            await store.locationConversionService.convert(data);  // address string comes from AddressModel (not yet wired)
             data.bkey?.length > 0 ?
               await store.locationService.update(data, store.currentUser()) :
               await store.locationService.create(data, store.currentUser());
