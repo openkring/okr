@@ -1,5 +1,4 @@
 // libs/aoc/feature/src/lib/aoc-session.ts
-import { AsyncPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import {
   IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader,
@@ -7,9 +6,7 @@ import {
   IonMenuButton, IonRow, IonTitle, IonToolbar
 } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { SpinnerComponent } from '@bk2/shared-ui';
-import { SvgIconPipe } from '@bk2/shared-pipes';
 import { DateFormat, convertDateFormatToString } from '@bk2/shared-util-core';
 import { AocSessionStore, DateFilter } from './aoc-session.store';
 
@@ -17,8 +14,6 @@ import { AocSessionStore, DateFilter } from './aoc-session.store';
   selector: 'bk-aoc-session',
   standalone: true,
   imports: [
-    AsyncPipe,
-    TranslatePipe, SvgIconPipe,
     SpinnerComponent,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonButton, IonTitle,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
@@ -116,12 +111,15 @@ export class AocSession {
       return new Date(y, mo, d, h, m, s).getTime();
     };
     const age = (Date.now() - parse(session.lastSeenAt)) / 1000 / 60;
-    return age > 30 ? 'orphaned' : 'active';
+    if (age > 30) return 'orphaned';
+    if (age > 10) return 'stale';
+    return 'active';
   }
 
   protected statusColor(session: { isActive: boolean; lastSeenAt: string }): string {
     const label = this.statusLabel(session);
     if (label === 'active') return 'success';
+    if (label === 'stale') return 'tertiary';
     if (label === 'orphaned') return 'warning';
     return 'medium';
   }
