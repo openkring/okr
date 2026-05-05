@@ -1,13 +1,10 @@
 // libs/aoc/feature/src/lib/aoc-session.ts
 import { Component, inject } from '@angular/core';
-import {
-  IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader,
-  IonCardTitle, IonCol, IonContent, IonGrid, IonHeader, IonItem, IonLabel,
-  IonMenuButton, IonRow, IonTitle, IonToolbar
-} from '@ionic/angular/standalone';
+import { IonBadge, IonButton, IonButtons, IonCard, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonItem, IonLabel, IonMenuButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { SpinnerComponent } from '@bk2/shared-ui';
 import { DateFormat, convertDateFormatToString } from '@bk2/shared-util-core';
+
 import { AocSessionStore, DateFilter } from './aoc-session.store';
 
 @Component({
@@ -16,8 +13,7 @@ import { AocSessionStore, DateFilter } from './aoc-session.store';
   imports: [
     SpinnerComponent,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonButton, IonTitle,
-    IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-    IonGrid, IonRow, IonCol, IonItem, IonLabel, IonBadge,
+    IonContent, IonCard, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonBadge,
   ],
   providers: [AocSessionStore],
   template: `
