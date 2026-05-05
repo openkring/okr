@@ -23,7 +23,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           <div class="title-row">
             <ion-card-title>{{ title() | translate | async }}</ion-card-title>
             @if((count() ?? 0) > 0) {
-              <ion-badge color="danger">{{ count() }}</ion-badge>
+              <ion-badge color="danger">{{ (count() ?? 0) > 99 ? '99+' : count() }}</ion-badge>
             }
           </div>
         }
@@ -37,7 +37,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 export class OptionalCardHeaderComponent {
   public title = input<string | undefined>();
   public subTitle = input<string | undefined>();
-  public count = input<number>();
+  public count = input<number | undefined>();
 
   protected doShowHeader = computed(() => !!this.title() || !!this.subTitle());
 }
