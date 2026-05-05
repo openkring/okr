@@ -7,9 +7,9 @@ import { of } from 'rxjs';
 
 import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
-import { AppStore } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName, TaskModel } from '@bk2/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, nameMatches, warn } from '@bk2/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl, showToast } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
@@ -431,16 +431,27 @@ export const _MembershipStore = signalStore(
 
       /**
        * Add a person to a given group as a member.
-       * We propose the current person as member. User can change this to another person in the edit modal.
+       * First shows a person select modal so the user can pick any person.
        * The group stays fix.
-       * @param group 
-       * @param readOnly 
-       * @returns 
+       * @param group
+       * @param readOnly
+       * @returns
        */
       async addMemberToGroup(group: GroupModel, readOnly = true): Promise<void> {
         if (readOnly) { console.log('MembershipStore.addMemberToGroup: readOnly mode.'); return; }
-        const member = store.member() ?? store.appStore.currentPerson();
-        if (!member) { console.log('MembershipStore.addMemberToGroup: no member.'); return; }
+        const modal = await store.modalController.create({
+          component: PersonSelectModalComponent,
+          cssClass: 'list-modal',
+          componentProps: {
+            selectedTag: '',
+            currentUser: store.currentUser(),
+          },
+        });
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
+        if (role !== 'confirm') return;
+        if (!isPerson(data, store.tenantId())) { console.log('MembershipStore.addMemberToGroup: no valid person selected.'); return; }
+        const member = data as PersonModel;
         const alreadyMember = store.members().some(m => m.memberKey === member.bkey && isOngoing(m.dateOfExit));
         if (alreadyMember) {
           await showToast(store.toastController, '@membership.operation.create.alreadyMember.error');
