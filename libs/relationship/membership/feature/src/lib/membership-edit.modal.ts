@@ -4,6 +4,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 import { AvatarInfo, CategoryListModel, MembershipModel, MembershipModelName, PrivacySettings, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, getFullName, hasRole, newAvatarInfo, safeStructuredClone } from '@bk2/shared-util-core';
+import { AppStore } from '@bk2/shared-feature';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
@@ -34,9 +35,9 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
           [objectAvatar]="orgAvatar()"
           [currentUser]="currentUser"
         />
-        @if(mcat(); as mcat) {
+        @if(currentMcat(); as mcat) {
           @if(formData(); as formData) {
-            <bk-membership-form 
+            <bk-membership-form
               [formData]="formData"
               (formDataChange)="onFormDataChange($event)"
               [currentUser]="currentUser"
@@ -66,6 +67,7 @@ import { RelationshipToolbarComponent } from '@bk2/avatar-ui';
 })
 export class MembershipEditModalComponent {
   private readonly modalController = inject(ModalController);
+  private readonly appStore = inject(AppStore);
 
   // inputs
   public membership = input.required<MembershipModel>();
@@ -91,16 +93,21 @@ export class MembershipEditModalComponent {
   // derived signals
   protected headerTitle = computed(() => this.isReadOnly() ? '@membership.operation.view.label' : '@membership.operation.update.label');
   protected readonly parentKey = computed(() => `${MembershipModelName}.${this.memberKey()}`);
-  protected readonly name = computed(() => getFullName(this.membership().memberName1, this.membership().memberName2, this.currentUser()?.nameDisplay));
+  protected readonly name = computed(() => { const m = this.formData() ?? this.membership(); return getFullName(m.memberName1, m.memberName2, this.currentUser()?.nameDisplay); });
   protected memberAvatar = computed<AvatarInfo>(() => {
-    const m = this.membership();
+    const m = this.formData() ?? this.membership();
     return newAvatarInfo(m.memberKey, m.memberName1, m.memberName2, m.memberModelType, '', '', this.name());
   });
   protected orgAvatar = computed<AvatarInfo>(() => {
-    const m = this.membership();
+    const m = this.formData() ?? this.membership();
     return newAvatarInfo(m.orgKey, '', m.orgName, m.orgModelType, '', '', m.orgName);
   });
   protected memberKey = computed(() => this.formData()?.memberKey ?? '');
+  protected currentMcat = computed<CategoryListModel>(() => {
+    const orgKey = (this.formData() ?? this.membership()).orgKey;
+    const org = this.appStore.allOrgs().find(o => o.bkey === orgKey);
+    return this.appStore.tryGetCategory(org?.membershipCategoryKey ?? 'mcat_default') ?? this.mcat();
+  });
 
   /******************************* actions *************************************** */
   public async save(): Promise<boolean> {
