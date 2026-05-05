@@ -371,7 +371,7 @@ export const AppStore = signalStore(
       // End session on logout
       effect(() => {
         const fbUser = store.fbUser();
-        if (!fbUser) {
+        if (fbUser === null) {
           store.sessionService.endSession();
         }
       });

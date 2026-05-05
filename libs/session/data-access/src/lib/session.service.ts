@@ -14,6 +14,7 @@ export class SessionService {
 
   private session: SessionModel | null = null;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private startInFlight = false;
   private readonly HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000; // must stay < 30-min orphan cleanup threshold
 
   public get hasActiveSession(): boolean {
@@ -22,25 +23,31 @@ export class SessionService {
 
   public async startSession(): Promise<void> {
     if (!isBrowser(this.platformId)) return;
-    if (this.hasActiveSession) return;
+    if (this.hasActiveSession || this.startInFlight) return;
+    this.startInFlight = true;
 
-    const session = new SessionModel(this.env.tenantId);
-    session.startedAt = getTodayStr(DateFormat.StoreDateTime);
-    session.lastSeenAt = session.startedAt;
-    session.isActive = true;
-    session.browser = getBrowser();
-    session.os = this.detectOs();
+    try {
+      const session = new SessionModel(this.env.tenantId);
+      session.startedAt = getTodayStr(DateFormat.StoreDateTime);
+      session.lastSeenAt = session.startedAt;
+      session.isActive = true;
+      session.browser = getBrowser();
+      session.os = this.detectOs();
 
-    const key = await this.firestoreService.createModel<SessionModel>(SessionCollection, session, undefined, undefined);
-    if (key) {
-      session.bkey = key;
-      this.session = session;
-      this.startHeartbeat();
+      const key = await this.firestoreService.createModel<SessionModel>(SessionCollection, session, undefined, undefined);
+      if (key) {
+        session.bkey = key;
+        this.session = session;
+        this.startHeartbeat();
+      }
+    } finally {
+      this.startInFlight = false;
     }
   }
 
   public async upgradeSession(user: UserModel): Promise<void> {
     if (!this.session) return;
+    if (this.session.userKey === user.bkey) return;  // already upgraded, skip redundant write
     this.session.userKey = user.bkey;
     this.session.userEmail = user.loginEmail;
     await this.firestoreService.updateModel<SessionModel>(SessionCollection, this.session, undefined);
