@@ -1,12 +1,13 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
 import { EmptyListComponent, MoreButton, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, navigateByUrl } from '@bk2/shared-util-angular';
 import { ArticleSection, IMAGE_STYLE_SHAPE, NewsConfig, SectionModel } from '@bk2/shared-models';
+import { ThumbnailUrlPipe } from '@bk2/shared-pipes';
 
 import { NewsStore } from './news-section.store';
 
@@ -22,7 +23,8 @@ import { NewsStore } from './news-section.store';
   providers: [NewsStore],
   imports: [
     OptionalCardHeaderComponent, SpinnerComponent, EmptyListComponent,
-    IonCard, IonCardContent, MoreButton, IonList, IonItem, IonLabel
+    IonCard, IonCardContent, MoreButton, IonList, IonItem, IonLabel, IonThumbnail,
+    ThumbnailUrlPipe,
   ],
   template: `
     @if (isLoading()) {
@@ -37,6 +39,12 @@ import { NewsStore } from './news-section.store';
             <ion-list lines="inset">
               @for (article of news(); track article.bkey) {
                 <ion-item (click)="navigateToArticle(article)">
+                  @if (article.properties?.images?.[0]?.url; as imgUrl) {
+                    <ion-thumbnail slot="start">
+                      <img [src]="imgUrl | thumbnailUrl"
+                           [alt]="article.properties?.images?.[0]?.altText || article.title" />
+                    </ion-thumbnail>
+                  }
                   <ion-label>
                     @if (article.subTitle) {
                       <p class="subtitle">{{ article.subTitle }}</p>
