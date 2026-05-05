@@ -35,10 +35,10 @@ import { VersionCheckService } from '@bk2/shared-util-angular';
         @if(menuItem(); as menuItem) {
           @switch(action()) {
             @case('navigate') {
-              <bk-multi-avatar [icon]="icon()" [label]="label()" (click)="select(menuItem)" />
+              <bk-multi-avatar [icon]="icon()" [label]="label()" [badge]="notificationCount()" (click)="select(menuItem)" />
             }
             @case('browse') {
-              <bk-multi-avatar [icon]="icon()" [label]="label()" (click)="select(menuItem)" />
+              <bk-multi-avatar [icon]="icon()" [label]="label()" [badge]="notificationCount()" (click)="select(menuItem)" />
             }
             @case('sub') {
               <ion-accordion-group>
@@ -74,7 +74,7 @@ import { VersionCheckService } from '@bk2/shared-util-angular';
               </ion-list>
             }
             @case('call') {
-              <bk-multi-avatar [icon]="icon()" [label]="label()" (click)="select(menuItem)" />
+              <bk-multi-avatar [icon]="icon()" [label]="label()" [badge]="notificationCount()" (click)="select(menuItem)" />
             }
           }
         } @else {
@@ -111,6 +111,7 @@ export class MenuComponent {
     return menuLabel;
   });
   protected readonly isVisible = computed(() => this.forceVisible() || hasRole(this.roleNeeded(), this.currentUser()));
+  protected readonly notificationCount = computed(() => this.menuStore.notificationCount());
 
   constructor() {
     effect(() => {
