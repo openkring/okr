@@ -23,7 +23,8 @@ import { TranslatePipe } from '@bk2/shared-i18n';
           <div class="title-row">
             <ion-card-title>{{ title() | translate | async }}</ion-card-title>
             @if((count() ?? 0) > 0) {
-              <ion-badge color="danger">{{ (count() ?? 0) > 99 ? '99+' : count() }}</ion-badge>
+              @let c = count()!;
+              <ion-badge color="danger">{{ c > 99 ? '99+' : c }}</ion-badge>
             }
           </div>
         }

@@ -31,19 +31,14 @@ export const TasksStore = signalStore(
     tasksForCurrentUserResource: rxResource({
       params: () => ({
         personKey: store.appStore.currentUser()?.personKey,
-        maxItems: store.maxItems()
       }),
       stream: ({params}) => {
         const personKey = params.personKey;
         if (!personKey) return of([]);
         const query = getSystemQuery(store.appStore.env.tenantId);
-        query.push({ key: 'completionDate', operator: '==', value: '' }); // only get tasks that are not completed (completionDate is empty)  
+        query.push({ key: 'completionDate', operator: '==', value: '' }); // only get tasks that are not completed (completionDate is empty)
         return store.appStore.firestoreService.searchData<TaskModel>(TaskCollection, query, 'dueDate', 'asc').pipe(
-          map(tasks => {
-            const filteredTasks = tasks.filter(task => task.assignee?.key === personKey || task.author?.key === personKey);
-            // Limit results if maxItems is defined
-            return params.maxItems !== undefined ? filteredTasks.slice(0, params.maxItems) : filteredTasks;
-          })
+          map(tasks => tasks.filter(task => task.assignee?.key === personKey || task.author?.key === personKey))
         );
       }
     })
@@ -51,7 +46,12 @@ export const TasksStore = signalStore(
 
   withComputed((state) => {
     return {
-      tasks: computed(() => state.tasksForCurrentUserResource.value() ?? []),
+      tasks: computed(() => {
+        const all = state.tasksForCurrentUserResource.value() ?? [];
+        const max = state.maxItems();
+        return max !== undefined ? all.slice(0, max) : all;
+      }),
+      totalTaskCount: computed(() => (state.tasksForCurrentUserResource.value() ?? []).length),
       isLoading: computed(() => state.tasksForCurrentUserResource.isLoading()),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.env.tenantId),

@@ -71,6 +71,8 @@ export const _MenuStore = signalStore(
       }),
       stream: ({ params }): Observable<number> => {
         const { name, personKey, tenantId } = params;
+        // Only activate real subscriptions for the dashboard menu item.
+        // All other menu instances return 0 immediately — no Firestore or Matrix connections.
         if (name !== 'dashboard' || !personKey) return of(0);
 
         const chatCount$ = store.matrixChatService.rooms.pipe(

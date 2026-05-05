@@ -98,7 +98,7 @@ export class TasksSectionComponent implements OnInit {
   protected readonly showMoreButton = computed(() => this.moreUrl().length > 0);
   protected readonly maxItems = computed(() => this.config()?.maxItems ?? undefined); // undefined = show all tasks
   protected readonly tasks = computed(() => this.tasksStore.tasks());
-  protected readonly numberOfTasks = computed(() => this.tasks().length);
+  protected readonly numberOfTasks = computed(() => this.tasksStore.totalTaskCount());
   protected currentUser = computed(() => this.tasksStore.currentUser());
   protected isLoading = computed(() => false);
 
