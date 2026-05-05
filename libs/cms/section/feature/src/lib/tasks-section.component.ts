@@ -42,7 +42,7 @@ import { TasksStore } from './tasks-section.store';
     <bk-spinner />
     } @else {        
         <ion-card>
-            <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+            <bk-optional-card-header [title]="title()" [subTitle]="subTitle()" [count]="numberOfTasks()" />
             <ion-card-content>
                 @if(numberOfTasks() === 0) {
                     <bk-empty-list message="@task.field.empty-my" />
