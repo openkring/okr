@@ -49,6 +49,7 @@ export * from './lib/resource.model';
 export * from './lib/roles';
 export * from './lib/section.model';
 export * from './lib/section.shapes';
+export * from './lib/session.model';
 export * from './lib/social-post.model';
 export * from './lib/swisscities.model';
 export * from './lib/tag.model';
