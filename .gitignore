@@ -86,4 +86,4 @@ vitest.config.*.timestamp*
 **/GoogleService-Info.plist
 
 /playwright-report
-/test-results
+/test-results.superpowers/
