@@ -1,7 +1,7 @@
 import { EventInput } from '@fullcalendar/core';
 
 import { CalEventModel } from '@bk2/shared-models';
-import { addTime, getIsoDateTime, isType } from '@bk2/shared-util-core';
+import { addTime, convertDateFormatToString, DateFormat, getIsoDateTime, isType } from '@bk2/shared-util-core';
 
 export function isCalEvent(calEvent: unknown, tenantId: string): calEvent is CalEventModel {
   return isType(calEvent, new CalEventModel(tenantId));
@@ -59,4 +59,26 @@ export function getCaleventIndex(calevent: CalEventModel): string {
 
 export function getCaleventIndexInfo(): string {
   return 'd:ate n:ame p:ersons l:ocationKey c:alendars';
+}
+
+/*-------------------------- SCHEDULE POLL --------------------------------*/
+export function isSchedulePoll(events: CalEventModel[]): boolean {
+  return events.some(e => e.state === 'proposed');
+}
+
+export function getCalEventCssClass(state: 'proposed' | 'provisional' | 'definitive'): string {
+  if (state === 'proposed') return 'state-proposed';
+  if (state === 'provisional') return 'state-provisional';
+  return '';
+}
+
+export function formatScheduleCloseMessage(
+  eventName: string,
+  startDate: string,
+  authorMessage?: string
+): string {
+  const date = convertDateFormatToString(startDate, DateFormat.StoreDate, DateFormat.ViewDate);
+  const lines = [`✅ ${eventName}`, `Termin: ${date}`];
+  if (authorMessage?.trim()) lines.push(authorMessage.trim());
+  return lines.join('\n');
 }

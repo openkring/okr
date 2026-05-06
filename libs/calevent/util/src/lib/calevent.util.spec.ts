@@ -1,7 +1,7 @@
 import { CalEventModel } from '@bk2/shared-models';
 import * as coreUtils from '@bk2/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { convertCalEventToFullCalendar, isCalEvent, isFullDayEvent } from './calevent.util';
+import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, isCalEvent, isFullDayEvent, isSchedulePoll } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@bk2/shared-util-core', async importOriginal => {
@@ -91,5 +91,56 @@ describe('CalEvent Utils', () => {
         allDay: false,
       });
     });
+  });
+});
+
+describe('isSchedulePoll', () => {
+  it('returns true when at least one event has state proposed', () => {
+    const e1 = new CalEventModel('t1');
+    const e2 = new CalEventModel('t1');
+    e1.state = 'proposed';
+    expect(isSchedulePoll([e1, e2])).toBe(true);
+  });
+
+  it('returns false when no events are proposed', () => {
+    const e = new CalEventModel('t1');
+    e.state = 'definitive';
+    expect(isSchedulePoll([e])).toBe(false);
+  });
+
+  it('returns false for empty array', () => {
+    expect(isSchedulePoll([])).toBe(false);
+  });
+});
+
+describe('getCalEventCssClass', () => {
+  it('returns state-proposed for proposed', () => {
+    expect(getCalEventCssClass('proposed')).toBe('state-proposed');
+  });
+
+  it('returns state-provisional for provisional', () => {
+    expect(getCalEventCssClass('provisional')).toBe('state-provisional');
+  });
+
+  it('returns empty string for definitive', () => {
+    expect(getCalEventCssClass('definitive')).toBe('');
+  });
+});
+
+describe('formatScheduleCloseMessage', () => {
+  it('formats message with event name and date', () => {
+    const msg = formatScheduleCloseMessage('Vereins-Ausflug', '20250622');
+    expect(msg).toContain('✅ Vereins-Ausflug');
+    expect(msg).toContain('Termin:');
+  });
+
+  it('appends author message when provided', () => {
+    const msg = formatScheduleCloseMessage('Ausflug', '20250622', 'Freue mich!');
+    expect(msg).toContain('Freue mich!');
+  });
+
+  it('omits blank author message', () => {
+    const msg = formatScheduleCloseMessage('Ausflug', '20250622', '  ');
+    expect(msg.split('\n')).toHaveLength(2);
   });
 });
