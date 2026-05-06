@@ -241,10 +241,10 @@ export class CalEventListComponent implements OnInit {
       const cssClass = getCalEventCssClass(event.state);
       const isProposed = event.state === 'proposed';
       const acceptanceCount = isProposed
-        ? this.store.invitations().filter(inv => inv.caleventKey === event.bkey && inv.state === 'accepted').length
+        ? this.store.seriesInvitations().filter(inv => inv.caleventKey === event.bkey && inv.state === 'accepted').length
         : 0;
       const invitedCount = isProposed
-        ? this.store.invitations().filter(inv => inv.caleventKey === event.bkey).length
+        ? this.store.seriesInvitations().filter(inv => inv.caleventKey === event.bkey).length
         : 0;
 
       const commonProps: Partial<EventInput> = {
@@ -329,7 +329,11 @@ export class CalEventListComponent implements OnInit {
         const acc = arg.event.extendedProps?.['acceptanceCount'] ?? 0;
         const tot = arg.event.extendedProps?.['invitedCount'] ?? 0;
         const title = arg.event.title;
-        return { html: `<div class="fc-event-title-container"><div class="fc-event-title">${title} <span class="accept-badge">${acc}/${tot}</span></div></div>` };
+        const escapedTitle = title
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        return { html: `<div class="fc-event-title-container"><div class="fc-event-title">${escapedTitle} <span class="accept-badge">${acc}/${tot}</span></div></div>` };
       }
       return true;
     },
@@ -594,6 +598,7 @@ export class CalEventListComponent implements OnInit {
       componentProps: { seriesId: calevent.seriesId },
     });
     await modal.present();
+    await modal.onDidDismiss();
   }
 
   private async confirmCloseSchedule(calevent: CalEventModel): Promise<void> {
@@ -612,22 +617,24 @@ export class CalEventListComponent implements OnInit {
         { text: this.translocoService.translate('@general.cancel'), role: 'cancel' },
         {
           text: this.translocoService.translate('@schedule.confirm'),
-          handler: async (data: { authorMessage?: string }) => {
-            await this.store.closeSchedule(calevent);
-            // Send Matrix notification after Firestore batch resolves
-            try {
-              const groupId = this.store.groupCalendarId();
-              if (groupId) {
-                const functions = getFunctions(getApp(), 'europe-west6');
-                const fn = httpsCallable<{ groupId: string }, { roomId: string }>(functions, 'requestGroupRoomAccess');
-                const result = await fn({ groupId });
-                const { roomId } = result.data;
-                const message = formatScheduleCloseMessage(calevent.name, calevent.startDate, data.authorMessage);
-                await this.matrixChatService.sendMessage(roomId, message);
-              }
-            } catch (err) {
-              console.warn('confirmCloseSchedule: Matrix notification failed (non-critical):', err);
-            }
+          handler: (data: { authorMessage?: string }) => {
+            this.store.closeSchedule(calevent)
+              .then(async () => {
+                try {
+                  const groupId = this.store.groupCalendarId();
+                  if (groupId) {
+                    const functions = getFunctions(getApp(), 'europe-west6');
+                    const fn = httpsCallable<{ groupId: string }, { roomId: string }>(functions, 'requestGroupRoomAccess');
+                    const result = await fn({ groupId });
+                    const { roomId } = result.data;
+                    const message = formatScheduleCloseMessage(calevent.name, calevent.startDate, data.authorMessage);
+                    await this.matrixChatService.sendMessage(roomId, message);
+                  }
+                } catch (err) {
+                  console.warn('confirmCloseSchedule: Matrix notification failed (non-critical):', err);
+                }
+              })
+              .catch(err => console.warn('confirmCloseSchedule: closeSchedule failed:', err));
           },
         },
       ],
