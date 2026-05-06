@@ -1,0 +1,32 @@
+// Schedule poll state colours
+.state-proposed {
+  --fc-event-bg-color: #1e2d45;
+  --fc-event-border-color: #3d5a80;
+  --fc-event-text-color: #7ba7d6;
+}
+
+.state-provisional {
+  --fc-event-bg-color: #2a2010;
+  --fc-event-border-color: #7a5a10;
+  --fc-event-text-color: #c89a30;
+}
+
+// Badge on proposed FullCalendar events
+.fc-event .accept-badge {
+  display: inline-block;
+  background: rgba(61, 90, 128, 0.6);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: 0.75em;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+// List view: left border for state
+ion-item.state-proposed {
+  border-left: 3px solid #3d5a80;
+}
+
+ion-item.state-provisional {
+  border-left: 3px solid #7a5a10;
+}
