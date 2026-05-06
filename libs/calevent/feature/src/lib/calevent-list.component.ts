@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, OnInit, PLATFORM_ID, viewChild } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 import { format } from 'date-fns';
 
@@ -15,13 +15,17 @@ import { CalEventModel, RoleName } from '@bk2/shared-models';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser } from '@bk2/shared-util-angular';
-import { DateFormat, addTime, debugData, getAttendanceState, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
+import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceState, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 import { AvatarDisplayComponent } from '@bk2/avatar-ui';
 import { isAdminMember } from '@bk2/subject-group-util';
 
-import { CalEventDurationPipe } from '@bk2/calevent-util';
+import { CalEventDurationPipe, formatScheduleCloseMessage, getCalEventCssClass } from '@bk2/calevent-util';
+import { MatrixChatService } from '@bk2/chat-data-access';
+import { TranslocoService } from '@jsverse/transloco';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getApp } from 'firebase/app';
 import { CalEventStore } from './calevent.store';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
@@ -174,7 +178,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
         } @else {
           <ion-list lines="inset">
             @for(event of filteredCalEvents(); track event.bkey; let i = $index) {
-              <ion-item [id]="'calevent-' + i" (click)="showActions(event)">
+              <ion-item [id]="'calevent-' + i" (click)="showActions(event)" [class]="getCalEventCssClass(event.state)">
                 <ion-label>{{ event | calEventDuration }}</ion-label>
                 <ion-label>{{event.name}}</ion-label>
                 <ion-label class="ion-hide-md-down">{{ event.locationKey | part:true }}</ion-label>
@@ -193,7 +197,13 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
 export class CalEventListComponent implements OnInit {
   protected readonly store = inject(CalEventStore);
   private readonly actionSheetController = inject(ActionSheetController);
+  private readonly alertController = inject(AlertController);
+  private readonly modalController = inject(ModalController);
+  private readonly matrixChatService = inject(MatrixChatService);
+  private readonly translocoService = inject(TranslocoService);
   private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
+
+  protected readonly getCalEventCssClass = getCalEventCssClass;
 
   // inputs
   public listId = input.required<string>();     // calendar name or all or my
@@ -228,6 +238,26 @@ export class CalEventListComponent implements OnInit {
 
   protected calendarEvents = computed<EventInput[]>(() => {
     return this.filteredCalEvents().map(event => {
+      const cssClass = getCalEventCssClass(event.state);
+      const isProposed = event.state === 'proposed';
+      const acceptanceCount = isProposed
+        ? this.store.invitations().filter(inv => inv.caleventKey === event.bkey && inv.state === 'accepted').length
+        : 0;
+      const invitedCount = isProposed
+        ? this.store.invitations().filter(inv => inv.caleventKey === event.bkey).length
+        : 0;
+
+      const commonProps: Partial<EventInput> = {
+        title: event.name,
+        classNames: cssClass ? [cssClass] : [],
+        extendedProps: {
+          eventKey: event.bkey,
+          state: event.state,
+          acceptanceCount,
+          invitedCount,
+        },
+      };
+
       const isFullDay = event.fullDay === true;
       if (isFullDay) {
         const toIsoDate = (d: string) => `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;
@@ -237,23 +267,17 @@ export class CalEventListComponent implements OnInit {
         const ed = new Date(+endDate.slice(0,4), +endDate.slice(4,6) - 1, +endDate.slice(6,8) + 1);
         const endIso = `${ed.getFullYear()}-${String(ed.getMonth()+1).padStart(2,'0')}-${String(ed.getDate()).padStart(2,'0')}`;
         return {
-          title: event.name,
+          ...commonProps,
           start: startIso,
           end: endIso,
           allDay: true,
-          extendedProps: { eventKey: event.bkey },
-          backgroundColor: '#3788d8',
-          borderColor: '#3788d8'
-        };
+        } as EventInput;
       }
       return {
-        title: event.name,
+        ...commonProps,
         start: getIsoDateTime(event.startDate, event.startTime),
         end: getIsoDateTime(event.endDate || event.startDate, addTime(event.startTime, 0, event.durationMinutes)),
-        extendedProps: { eventKey: event.bkey },
-        backgroundColor: '#3788d8',
-        borderColor: '#3788d8'
-      };
+      } as EventInput;
     });
   });
 
@@ -300,6 +324,15 @@ export class CalEventListComponent implements OnInit {
     eventClick: (arg: any) => { this.onEventClick(arg); },
     eventDrop: (arg: any) => { this.onEventDrop(arg); },
     eventResize: (arg: any) => { this.onEventResize(arg); },
+    eventContent: (arg: any) => {
+      if (arg.event.extendedProps?.['state'] === 'proposed') {
+        const acc = arg.event.extendedProps?.['acceptanceCount'] ?? 0;
+        const tot = arg.event.extendedProps?.['invitedCount'] ?? 0;
+        const title = arg.event.title;
+        return { html: `<div class="fc-event-title-container"><div class="fc-event-title">${title} <span class="accept-badge">${acc}/${tot}</span></div></div>` };
+      }
+      return true;
+    },
   };
 
   // double-click tracking
@@ -427,6 +460,9 @@ export class CalEventListComponent implements OnInit {
           Browser.open({ url: url, windowName: '_blank' });
         }
         break;
+      case 'schedule':
+        this.store.schedule();
+        break;
       default: error(undefined, `CalEventListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
@@ -475,6 +511,17 @@ export class CalEventListComponent implements OnInit {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.imgixBaseUrl, 'add'));
       }
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.imgixBaseUrl, 'person-add'));
+    }
+    // Show schedule-poll buttons for proposed events
+    if (calevent.state === 'proposed') {
+      actionSheetOptions.buttons.push(
+        createActionSheetButton('calevent.viewSchedule', this.imgixBaseUrl, 'list')
+      );
+      if (this.canChange(calevent)) {
+        actionSheetOptions.buttons.push(
+          createActionSheetButton('calevent.closeSchedule', this.imgixBaseUrl, 'lock-closed')
+        );
+      }
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.imgixBaseUrl, 'calendar-number'));
@@ -530,8 +577,62 @@ export class CalEventListComponent implements OnInit {
         case 'calevent.invitePerson':
           await this.store.invitePerson(calEvent, false);
           break;
+        case 'calevent.viewSchedule':
+          await this.openScheduleTable(calEvent);
+          break;
+        case 'calevent.closeSchedule':
+          await this.confirmCloseSchedule(calEvent);
+          break;
       }
     }
+  }
+
+  private async openScheduleTable(calevent: CalEventModel): Promise<void> {
+    const { ScheduleTableModal } = await import('./schedule-table.modal');
+    const modal = await this.modalController.create({
+      component: ScheduleTableModal,
+      componentProps: { seriesId: calevent.seriesId },
+    });
+    await modal.present();
+  }
+
+  private async confirmCloseSchedule(calevent: CalEventModel): Promise<void> {
+    const formattedDate = convertDateFormatToString(calevent.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+    const alert = await this.alertController.create({
+      header: this.translocoService.translate('@schedule.closeTitle'),
+      message: this.translocoService.translate('@schedule.closeMessage', { date: formattedDate }),
+      inputs: [
+        {
+          name: 'authorMessage',
+          type: 'textarea',
+          placeholder: this.translocoService.translate('@schedule.optionalMessage'),
+        },
+      ],
+      buttons: [
+        { text: this.translocoService.translate('@general.cancel'), role: 'cancel' },
+        {
+          text: this.translocoService.translate('@schedule.confirm'),
+          handler: async (data: { authorMessage?: string }) => {
+            await this.store.closeSchedule(calevent);
+            // Send Matrix notification after Firestore batch resolves
+            try {
+              const groupId = this.store.groupCalendarId();
+              if (groupId) {
+                const functions = getFunctions(getApp(), 'europe-west6');
+                const fn = httpsCallable<{ groupId: string }, { roomId: string }>(functions, 'requestGroupRoomAccess');
+                const result = await fn({ groupId });
+                const { roomId } = result.data;
+                const message = formatScheduleCloseMessage(calevent.name, calevent.startDate, data.authorMessage);
+                await this.matrixChatService.sendMessage(roomId, message);
+              }
+            } catch (err) {
+              console.warn('confirmCloseSchedule: Matrix notification failed (non-critical):', err);
+            }
+          },
+        },
+      ],
+    });
+    await alert.present();
   }
 
   protected onViewChange(showList: boolean): void {

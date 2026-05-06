@@ -18,6 +18,7 @@
     "@bk2/shared-data-access": "*",
     "@bk2/calevent-ui": "*",
     "@bk2/calevent-util": "*",
-    "@bk2/cms-menu-feature": "*"
+    "@bk2/cms-menu-feature": "*",
+    "@bk2/chat-data-access": "*"
   }
 }
