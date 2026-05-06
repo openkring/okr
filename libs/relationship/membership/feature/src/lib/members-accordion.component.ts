@@ -43,7 +43,7 @@ import { MembershipStore } from './membership.store';
         </ion-select>
       }
       @if(!isReadOnly()) {
-        <ion-button fill="clear" (click)="add()" size="default">
+        <ion-button fill="clear" slot="end" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
       }
