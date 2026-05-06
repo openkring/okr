@@ -177,17 +177,21 @@ export const IMGIX_THUMBNAIL_PARAMS = `fm=jpg&width=${THUMBNAIL_SIZE}&height=${T
 export const IMGIX_JSON_PARAMS = 'fm=json';
 
 export function getImgixJpgUrl(url: string, imgixBaseUrl: string): string {
+  if (url.startsWith(imgixBaseUrl)) return `${url}?${IMGIX_THUMBNAIL_PARAMS}`;
   return `${imgixBaseUrl}/${url}?${IMGIX_JPG_PARAMS}`;
 }
 
 export function getImgixPdfUrl(url: string, imgixBaseUrl: string): string {
+  if (url.startsWith(imgixBaseUrl)) return `${url}?${IMGIX_THUMBNAIL_PARAMS}`;
   return `${imgixBaseUrl}/${url}?${IMGIX_PDF_PARAMS}`;
 }
 
 export function getImgixThumbnailUrl(url: string, imgixBaseUrl: string): string {
+  if (url.startsWith(imgixBaseUrl)) return `${url}?${IMGIX_THUMBNAIL_PARAMS}`;
   return `${imgixBaseUrl}/${url}?${IMGIX_THUMBNAIL_PARAMS}`;
 }
 
 export function getImgixJsonUrl(url: string, imgixBaseUrl: string): string {
+  if (url.startsWith(imgixBaseUrl)) return `${url}?${IMGIX_THUMBNAIL_PARAMS}`;
   return `${imgixBaseUrl}/${url}?${IMGIX_JSON_PARAMS}`;
 }
