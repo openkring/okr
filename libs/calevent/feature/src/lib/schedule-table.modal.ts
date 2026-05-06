@@ -1,20 +1,18 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, input, computed } from '@angular/core';
+import { Component, inject, input, computed, effect } from '@angular/core';
 import {
-  IonButton,
   IonContent, IonAvatar,
   ModalController,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { HeaderComponent } from '@bk2/shared-ui';
-import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
+import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@bk2/shared-util-core';
 import { CalEventStore } from './calevent.store';
 
 @Component({
   selector: 'bk-schedule-table-modal',
   standalone: true,
   imports: [
-    IonButton,
     IonContent, IonAvatar,
     AsyncPipe, TranslatePipe,
     HeaderComponent,
@@ -29,7 +27,7 @@ import { CalEventStore } from './calevent.store';
               <th class="member-col"></th>
               @for (event of proposedEvents(); track event.bkey) {
                 <th class="date-col">
-                  <div>{{ formatDayName(event.startDate) }}</div>
+                  <div>{{ formatDayName(event.startDate) | translate | async }}</div>
                   <div class="date-sub">{{ formatShortDate(event.startDate) }}</div>
                 </th>
               }
@@ -69,7 +67,7 @@ import { CalEventStore } from './calevent.store';
       </div>
       @if (pendingCount() > 0) {
         <p class="pending-hint">
-          {{ '@schedule.pendingCount' | translate | async }}
+          {{ '@schedule.pendingCount' | translate: { count: pendingCount() } | async }}
         </p>
       }
     </ion-content>
@@ -97,13 +95,19 @@ export class ScheduleTableModal {
 
   readonly seriesId = input.required<string>();
 
+  constructor() {
+    effect(() => {
+      this.store.setScheduleSeriesId(this.seriesId());
+    });
+  }
+
   protected readonly proposedEvents = computed(() =>
     this.store.calEvents().filter(e => e.seriesId === this.seriesId() && e.state === 'proposed')
       .sort((a, b) => a.startDate.localeCompare(b.startDate))
   );
 
   protected readonly invitations = computed(() =>
-    this.store.invitations().filter(inv =>
+    this.store.seriesInvitations().filter(inv =>
       this.proposedEvents().some(e => e.bkey === inv.caleventKey)
     )
   );
@@ -134,20 +138,11 @@ export class ScheduleTableModal {
   });
 
   protected formatDayName(storeDate: string): string {
-    const d = this.parseDateStr(storeDate);
-    return d.toLocaleDateString('de-CH', { weekday: 'short' });
+    return getWeekdayI18nKey(storeDate, true);
   }
 
   protected formatShortDate(storeDate: string): string {
     return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.DDMM, false);
-  }
-
-  private parseDateStr(storeDate: string): Date {
-    return new Date(
-      +storeDate.substring(0, 4),
-      +storeDate.substring(4, 6) - 1,
-      +storeDate.substring(6, 8)
-    );
   }
 
   protected initials(first: string, last: string): string {
@@ -181,6 +176,7 @@ export class ScheduleTableModal {
   }
 
   protected async close(): Promise<void> {
+    this.store.setScheduleSeriesId('');
     await this.modalCtrl.dismiss();
   }
 }

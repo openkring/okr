@@ -29,13 +29,14 @@ const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions
 export type CalEventState = {
   calendarName: string; // all, my, or specific calendar name, tbd: my_pkey (for another user)
   seriesId: string;
+  scheduleSeriesId: string;
   maxEvents: number | undefined; // max events to show, undefined means all
   showPastEvents: boolean; // whether to show past events
   showUpcomingEvents: boolean; // whether to show upcoming events
   // an offset to calculate the start date
   // example: -30 = always starting one month in the history
   // example: 0 = today
-  startDaysOffset: number; 
+  startDaysOffset: number;
 
   //filters
   searchTerm: string;
@@ -47,6 +48,7 @@ export type CalEventState = {
 export const initialState: CalEventState = {
   calendarName: '',
   seriesId: '',
+  scheduleSeriesId: '',
   maxEvents: undefined,
   showPastEvents: false,
   showUpcomingEvents: true,
@@ -210,10 +212,29 @@ export const CalEventStore = signalStore(
     }),
   })),
 
+  withProps((store) => ({
+    seriesInvitationsResource: rxResource({
+      params: () => ({
+        seriesId: store.scheduleSeriesId(),
+        proposedEventKeys: (store.caleventsResource.value() ?? [])
+          .filter((e: CalEventModel) => e.seriesId === store.scheduleSeriesId() && e.state === 'proposed')
+          .map((e: CalEventModel) => e.bkey),
+        tenantId: store.appStore.env.tenantId,
+      }),
+      stream: ({ params }) => {
+        if (!params.seriesId || params.proposedEventKeys.length === 0) return of([]);
+        return store.appStore.firestoreService
+          .searchData<InvitationModel>(InvitationCollection, getSystemQuery(params.tenantId), 'inviteeKey', 'asc')
+          .pipe(map((invs: InvitationModel[]) => invs.filter(inv => params.proposedEventKeys.includes(inv.caleventKey))));
+      },
+    }),
+  })),
+
   withComputed((state) => {
     return {
       calEvents: computed(() => state.caleventsResource.value() ?? []),
       invitations: computed(() => state.invitationsForCurrentUserResource.value() ?? []),
+      seriesInvitations: computed(() => state.seriesInvitationsResource.value() ?? []),
 
       calendar: computed(() => {
         const calName = state.calendarName();
@@ -295,6 +316,10 @@ export const CalEventStore = signalStore(
 
       setStartDaysOffset(startDaysOffset: number) {
         patchState(store, { startDaysOffset });
+      },
+
+      setScheduleSeriesId(seriesId: string): void {
+        patchState(store, { scheduleSeriesId: seriesId });
       },
 
       /******************************** getters ******************************************* */
