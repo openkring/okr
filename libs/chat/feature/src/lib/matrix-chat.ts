@@ -626,6 +626,17 @@ export class MatrixChat implements OnDestroy {
       if (remoteEl && remoteFeed?.stream) remoteEl.srcObject = remoteFeed.stream;
     });
 
+    // Auto-mark the current room as read whenever it still has unread messages while being viewed.
+    // This handles the sync-delay case: setCurrentRoom() calls markRoomAsRead() but the Matrix
+    // client may not have the room yet (join via CF, room arrives in the next sync cycle).
+    // When rooms() updates and the current room appears with unreadCount > 0, this re-sends
+    // the receipt so the badge resets without requiring the user to re-select the room.
+    effect(() => {
+      const room = this.store.currentRoom();
+      if (!room || room.unreadCount === 0) return;
+      untracked(() => this.store.markCurrentRoomAsRead());
+    });
+
     // Re-authenticate when the Matrix access token expires (M_UNKNOWN_TOKEN).
     // Fast path: component is mounted when STOPPED fires.
     this.store.matrixService.tokenExpired

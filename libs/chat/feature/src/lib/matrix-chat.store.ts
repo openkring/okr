@@ -221,6 +221,14 @@ export const _MatrixChatStore = signalStore(
         }
       },
 
+      markCurrentRoomAsRead(): void {
+        const roomId = store.currentRoomId();
+        if (!roomId) return;
+        store.matrixService.markRoomAsRead(roomId).catch(err =>
+          console.warn('MatrixChatStore.markCurrentRoomAsRead: failed (non-critical):', err)
+        );
+      },
+
       setSelectedThread(threadId: string | undefined): void {
         patchState(store, { selectedThreadId: threadId });
       },
