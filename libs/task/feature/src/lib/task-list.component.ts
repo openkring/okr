@@ -64,7 +64,7 @@ import { TaskStore } from './task.store';
       </ion-toolbar>
 
       <!-- quick entry -->
-      @if(!readOnly()) {
+      @if(canChange()) {
         <ion-item lines="none">
           <ion-textarea #bkQuickEntry 
             (keyup.enter)="quickEntry(bkQuickEntry)"
@@ -140,7 +140,7 @@ import { TaskStore } from './task.store';
     `
 })
 export class TaskListComponent {
-  protected taskStore = inject(TaskStore);
+  protected store = inject(TaskStore);
   private actionSheetController = inject(ActionSheetController);
 
   public listId = input.required<string>(); // all, my, calendarId
@@ -150,40 +150,39 @@ export class TaskListComponent {
   public groupAdmin = input(false);
 
   // derived signals
-  protected filteredTasks = computed(() => this.taskStore.filteredTasks() ?? []);
-  protected tasksCount = computed(() => this.taskStore.tasksCount());
+  protected filteredTasks = computed(() => this.store.filteredTasks() ?? []);
+  protected tasksCount = computed(() => this.store.tasksCount());
   protected selectedTasksCount = computed(() => this.filteredTasks().length);
-  protected isLoading = computed(() => this.taskStore.isLoading());
-  protected tags = computed(() => this.taskStore.tags());
-  protected priorities = computed(() => this.taskStore.appStore.getCategory('priority'));
-  protected importances = computed(() => this.taskStore.appStore.getCategory('importance'));
-  protected states = computed(() => this.taskStore.appStore.getCategory('task_state'));
-  protected currentUser = computed(() => this.taskStore.appStore.currentUser());
-  protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !this.groupAdmin());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.tags());
+  protected priorities = computed(() => this.store.appStore.getCategory('priority'));
+  protected importances = computed(() => this.store.appStore.getCategory('importance'));
+  protected states = computed(() => this.store.appStore.getCategory('task_state'));
+  protected currentUser = computed(() => this.store.appStore.currentUser());
 
-  private imgixBaseUrl = this.taskStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => {
-      this.taskStore.setCalendarName(this.listId());
+      this.store.setCalendarName(this.listId());
     });
   }
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.taskStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.taskStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onPrioritySelected(priority: string): void {
-    this.taskStore.setSelectedPriority(priority);
+    this.store.setSelectedPriority(priority);
   }
 
   protected onStateSelected(state: string): void {
-    this.taskStore.setSelectedState(state);
+    this.store.setSelectedState(state);
   }
 
   /******************************* getters *************************************** */
@@ -204,18 +203,18 @@ export class TaskListComponent {
    * @param taskName 
    */
   protected async quickEntry(bkQuickEntry: IonTextarea): Promise<void> {
-    const task = new TaskModel(this.taskStore.tenantId());
+    const task = new TaskModel(this.store.tenantId());
     [task.tags, task.dueDate, task.name] = extractTagAndDate(bkQuickEntry.value?.trim() ?? '');
-    task.author = getAvatarInfo(this.taskStore.currentUser(), 'user');
-    await this.taskStore.quickEntry(task);
+    task.author = getAvatarInfo(this.store.currentUser(), 'user');
+    await this.store.quickEntry(task);
     bkQuickEntry.value = '';
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.taskStore.add(this.readOnly()); break;
-      case 'export': await this.taskStore.export('raw'); break;
+      case 'add': await this.store.add(!this.canChange()); break;
+      case 'export': await this.store.export('raw'); break;
       default: error(undefined, `TaskListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -238,12 +237,12 @@ export class TaskListComponent {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, task: TaskModel): void {
     actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.imgixBaseUrl, 'checkbox'));
     actionSheetOptions.buttons.push(createActionSheetDivider());
-    if (this.canChange()) {
+    if (this.canChange(task)) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.imgixBaseUrl, 'edit'));
     } else {
       actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.imgixBaseUrl, 'eye-on'));
     }
-    if (hasRole('admin', this.taskStore.appStore.currentUser())) {
+    if (hasRole('admin', this.store.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
@@ -265,16 +264,16 @@ export class TaskListComponent {
       if (!data) return;
       switch (data.action) {
         case 'task.delete':
-          await this.taskStore.delete(task, this.readOnly());
+          await this.store.delete(task, !this.canChange(task));
           break;
         case 'task.edit':
-          await this.taskStore.edit(task, this.readOnly());
+          await this.store.edit(task, !this.canChange(task));
           break;
         case 'task.view':
-          await this.taskStore.edit(task, true);
+          await this.store.edit(task, true);
           break;
         case 'task.complete':
-          await this.taskStore.setCompleted(task, this.readOnly());
+          await this.store.setCompleted(task, !this.canChange(task));
           break;
 
       }
@@ -282,7 +281,7 @@ export class TaskListComponent {
   }
 
   public async toggleCompleted(task: TaskModel): Promise<void> {
-    await this.taskStore.setCompleted(task);
+    await this.store.setCompleted(task);
   }
 
   protected clear(bkQuickEntry: IonTextarea): void {
@@ -290,11 +289,24 @@ export class TaskListComponent {
   }
 
   /******************************* helpers *************************************** */
-  protected canChange(): boolean {
-    return hasRole('privileged', this.currentUser()) || hasRole('eventAdmin', this.currentUser()) || this.groupAdmin();
+  protected canChange(task?: TaskModel): boolean {
+    // 1) general roles
+    if (this.hasRole('privileged')) return true; 
+    if (this.hasRole('eventAdmin')) return true;
+
+    // 2) group todo: allow group admin to change
+    if (this.groupAdmin()) return true;
+
+    // 3) task data: allow author and assignee to make changes
+    const currentUser = this.store.currentUser();
+    if (task && currentUser) {
+      if (task.author?.key === currentUser.personKey) return true;
+      if (task.assignee?.key === currentUser.personKey) return true;
+    }
+    return false;
   }
 
   protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.taskStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 }
