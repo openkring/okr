@@ -1,51 +1,50 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import {
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-  IonContent, IonItem, IonLabel, IonInput, IonTextarea,
-  IonChip, IonIcon, IonDatetime, IonDatetimeButton, IonModal,
+  IonButton,
+  IonChip, IonIcon, IonDatetime, IonModal,
+  IonContent, IonItem, IonInput, IonTextarea,
   ModalController,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { SvgIconPipe } from '@bk2/shared-pipes';
+import { HeaderComponent } from '@bk2/shared-ui';
+import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
 
 @Component({
   selector: 'bk-schedule-new-modal',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-    IonContent, IonItem, IonLabel, IonInput, IonTextarea,
-    IonChip, IonIcon, IonDatetime, IonDatetimeButton, IonModal,
-    TranslatePipe, SvgIconPipe,
+    IonButton,
+    IonChip, IonIcon, IonDatetime, IonModal,
+    IonContent, IonItem, IonInput, IonTextarea,
+    AsyncPipe, TranslatePipe, SvgIconPipe,
+    HeaderComponent,
   ],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ '@schedule.title' | translate | async }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="cancel()">{{ '@general.cancel' | translate | async }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <bk-header title="@schedule.title" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
-        <ion-label position="stacked">{{ '@schedule.topic' | translate | async }}</ion-label>
         <ion-input
+          [label]="'@schedule.topic' | translate | async"
+          labelPlacement="stacked"
           [value]="name()"
-          (ionInput)="name.set($any($event.target).value)"
+          (ionInput)="name.set(($any($event.target)).value ?? '')"
           required
         />
       </ion-item>
       <ion-item>
-        <ion-label position="stacked">{{ '@schedule.description' | translate | async }}</ion-label>
         <ion-textarea
+          [label]="'@schedule.description' | translate | async"
+          labelPlacement="stacked"
           [value]="description()"
-          (ionInput)="description.set($any($event.target).value)"
+          (ionInput)="description.set(($any($event.target)).value ?? '')"
           [rows]="2"
         />
       </ion-item>
 
       <ion-item lines="none">
-        <ion-label>{{ '@schedule.dates' | translate | async }}</ion-label>
+        {{ '@schedule.dates' | translate | async }}
       </ion-item>
 
       <div class="date-chips">
@@ -55,12 +54,16 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
             <ion-icon src="{{ 'close-circle' | svgIcon }}" />
           </ion-chip>
         }
-        <ion-chip id="open-date-picker" color="primary" [outline]="true">
+        <ion-chip color="primary" [outline]="true" (click)="datePickerOpen.set(true)">
           {{ '@schedule.addDate' | translate | async }}
         </ion-chip>
       </div>
 
-      <ion-modal trigger="open-date-picker" [keepContentsMounted]="true">
+      <ion-modal
+        [isOpen]="datePickerOpen()"
+        [keepContentsMounted]="true"
+        (ionModalDidDismiss)="datePickerOpen.set(false)"
+      >
         <ng-template>
           <ion-datetime
             presentation="date"
@@ -92,14 +95,14 @@ export class ScheduleNewModal {
   protected readonly description = signal('');
   protected readonly selectedDates = signal<string[]>([]);
   protected readonly pendingDates = signal<string[]>([]);
+  protected readonly datePickerOpen = signal(false);
 
   protected readonly canSubmit = computed(
     () => this.name().trim().length > 0 && this.selectedDates().length > 0
   );
 
   protected formatDate(isoDate: string): string {
-    const d = new Date(isoDate);
-    return d.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    return convertDateFormatToString(isoDate, DateFormat.IsoDate, DateFormat.ViewDate);
   }
 
   protected onDatetimeChange(event: CustomEvent): void {
@@ -109,21 +112,19 @@ export class ScheduleNewModal {
 
   protected confirmDates(): void {
     this.selectedDates.set([...this.pendingDates()].sort());
-    // close the inner modal
-    const modal = document.querySelector('ion-modal[trigger="open-date-picker"]') as HTMLIonModalElement;
-    modal?.dismiss();
+    this.datePickerOpen.set(false);
   }
 
   protected removeDate(date: string): void {
     this.selectedDates.update(dates => dates.filter(d => d !== date));
   }
 
-  protected cancel(): void {
-    this.modalCtrl.dismiss(null, 'cancel');
+  protected async cancel(): Promise<void> {
+    await this.modalCtrl.dismiss(null, 'cancel');
   }
 
-  protected submit(): void {
-    this.modalCtrl.dismiss({
+  protected async submit(): Promise<void> {
+    await this.modalCtrl.dismiss({
       name: this.name().trim(),
       description: this.description().trim(),
       dates: this.selectedDates(),
