@@ -362,6 +362,60 @@ export const CalEventStore = signalStore(
         await this.edit(newCalevent, true, readOnly, false, skipReload);
       },
 
+      async schedule(): Promise<void> {
+        if (!store.isGroupCalendar()) return;
+        const { ScheduleNewModal } = await import('./schedule-new.modal');
+        const modal = await store.modalController.create({
+          component: ScheduleNewModal,
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<{ name: string; description: string; dates: string[] }>();
+        if (role !== 'confirm' || !data) return;
+
+        const seriesId = generateRandomString(18);
+        let index = 0;
+        for (const isoDate of data.dates) {
+          const startDate = isoDate.replace(/-/g, '').substring(0, 8);
+          const calevent = new CalEventModel(store.tenantId());
+          calevent.bkey = seriesId + index.toString().padStart(2, '0');
+          calevent.seriesId = seriesId;
+          calevent.name = data.name;
+          calevent.description = data.description;
+          calevent.state = 'proposed';
+          calevent.isOpen = false;
+          calevent.startDate = startDate;
+          calevent.fullDay = true;
+          calevent.durationMinutes = 1440;
+          calevent.calendars = [store.calendarName()];
+          const user = store.currentUser();
+          calevent.responsiblePersons = user
+            ? [{ key: user.personKey, name1: user.firstName, name2: user.lastName, modelType: 'person', type: '', subType: '', label: '' }]
+            : [];
+          calevent.index = getCaleventIndex(calevent);
+          await store.calEventService.create(calevent, store.currentUser());
+          await this.inviteGroupMembers(calevent, false);
+          index++;
+        }
+      },
+
+      async closeSchedule(selectedEvent: CalEventModel): Promise<void> {
+        const seriesId = selectedEvent.seriesId;
+        const batch = store.firestoreService.getBatch();
+
+        const selectedRef = doc(store.firestoreService.firestore, `calevents/${selectedEvent.bkey}`);
+        batch.update(selectedRef, { state: 'definitive', seriesId: '' });
+
+        const others = store.calEvents().filter(
+          e => e.seriesId === seriesId && e.bkey !== selectedEvent.bkey && e.state === 'proposed'
+        );
+        for (const other of others) {
+          const ref = doc(store.firestoreService.firestore, `calevents/${other.bkey}`);
+          batch.update(ref, { isArchived: true });
+        }
+
+        await batch.commit();
+      },
+
       async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false, skipReload = false): Promise<boolean> {
         const modal = await store.modalController.create({
           component: CalEventEditModalComponent,
