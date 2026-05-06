@@ -403,9 +403,49 @@ export const requestGroupRoomAccess = onCall(
       console.log(`requestGroupRoomAccess: Created new room: ${roomId}`);
     }
 
-    // Step 3: Force-join the target user via Synapse admin API.
-    // Rooms created by this function use preset:'public_chat' which allows the admin API
-    // to force-join users without the admin account needing to be a room member first.
+    // Step 3: Get admin user ID (the MATRIX_ADMIN_TOKEN may belong to a regular user, not a
+    // dedicated service account — so we need to get the admin into the room before they can
+    // invite or force-join others in invite-only rooms).
+    const whoamiResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/account/whoami`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    const adminUserId = whoamiResp.ok
+      ? ((await whoamiResp.json()) as { user_id: string }).user_id
+      : null;
+
+    // Step 4: Ensure the admin is in the room via make_room_admin.
+    // For invite-only rooms (created with old private_chat preset before commit 75c6ac9e),
+    // Synapse uses the highest-power existing room member to invite the admin, then auto-joins
+    // them. This gets the admin into the room regardless of join_rules.
+    // For public rooms (new), the admin is already the room creator — this is a quick no-op.
+    if (adminUserId) {
+      const makeAdminResp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/make_room_admin`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: adminUserId }),
+        }
+      );
+      if (!makeAdminResp.ok) {
+        console.warn(`requestGroupRoomAccess: make_room_admin for ${adminUserId} → ${makeAdminResp.status}: ${await makeAdminResp.text()}`);
+      }
+    }
+
+    // Step 5: Invite the target user. The admin is now in the room (step 4) and can send invites.
+    // Ignore errors: "already in room" means user is already a member and the force-join will succeed.
+    await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/invite`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: matrixUserId }),
+      }
+    );
+
+    // Step 6: Force-join the target user. With a pending invite (step 5), this succeeds even
+    // for invite-only rooms. For already-joined users this is a no-op.
     const joinResp = await fetch(
       `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
       {
