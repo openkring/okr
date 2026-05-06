@@ -35,6 +35,7 @@ export class CalEventModel implements BkModel, NamedModel, SearchableModel, Tagg
   // attendees are only used for open events, where there are no invitations sent
   public isOpen = false; // whether the event is open to all users or only to invited persons
   public attendees: Attendee[] = []; // list of attendees with their status
+  public state: 'proposed' | 'provisional' | 'definitive' = 'definitive'; // proposed, provisional, or definitive scheduling state
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];
