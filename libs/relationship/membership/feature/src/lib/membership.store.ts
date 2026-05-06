@@ -138,7 +138,10 @@ export const _MembershipStore = signalStore(
     return {
       // members of a given org or group (if orgId is set), otherwise []
       members: computed(() => { 
-        return state.allMemberships()?.filter((membership: MembershipModel) => membership.orgKey === state.orgId()) ?? []
+        return state.allMemberships()?.filter((membership: MembershipModel) => 
+          membership.orgKey === state.orgId() &&
+          membership.orgModelType === state.orgType()
+        ) ?? []
       }),
 
       // memberships of the current member 

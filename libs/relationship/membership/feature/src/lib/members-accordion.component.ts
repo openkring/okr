@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, IonThumbnail } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { MembershipModel, RoleName } from '@bk2/shared-models';
@@ -19,16 +19,29 @@ import { MembershipStore } from './membership.store';
   imports: [
     TranslatePipe, RellogPipe, AsyncPipe, SvgIconPipe, AvatarPipe, FullNamePipe,
     EmptyListComponent,
-    IonAccordion, IonItem, IonLabel, IonIcon, IonList, IonButton, IonImg, IonThumbnail
+    IonAccordion, IonItem, IonLabel, IonIcon, IonList, IonButton, IonImg, IonThumbnail,
+    IonSelect, IonSelectOption
   ],
   providers: [MembershipStore],
   styles: [`
     ion-thumbnail { width: 30px; height: 30px; }
+    ion-select { max-width: 120px; }
   `],
   template: `
   <ion-accordion toggle-icon-slot="start" value="members">
     <ion-item slot="header" [color]="color()">
       <ion-label>{{ title() | translate | async }}</ion-label>
+      @if(hasRole('privileged')) {
+        <ion-select
+          slot="end"
+          interface="popover"
+          [value]="selectedMemberType()"
+          (ionChange)="selectedMemberType.set($event.detail.value)">
+          @for(type of memberTypes; track type) {
+            <ion-select-option [value]="type">{{ type }}</ion-select-option>
+          }
+        </ion-select>
+      }
       @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -36,11 +49,11 @@ import { MembershipStore } from './membership.store';
       }
     </ion-item>
     <div slot="content">
-      @if(members().length === 0) {
+      @if(membersForType().length === 0) {
         <bk-empty-list message="@general.noData.members" />
       } @else {
         <ion-list lines="inset">
-          @for(member of members(); track $index) {
+          @for(member of membersForType(); track $index) {
             <ion-item (click)="showActions(member)">
               <ion-thumbnail slot="start">
                 <ion-img src="{{ 'person.' + member.memberKey | avatar:'membership' }}" alt="membership avatar" />
@@ -56,31 +69,35 @@ import { MembershipStore } from './membership.store';
   `,
 })
 export class MembersAccordionComponent {
-  protected readonly membershipStore = inject(MembershipStore);
+  protected readonly store = inject(MembershipStore);
   private actionSheetController = inject(ActionSheetController);
 
   public orgKey = input.required<string>();
-  public orgType = input<'org' | 'group'>('org');
+  public orgType = input.required<'org' | 'group'>();
   public readonly color = input('light');
   public readonly title = input('@members.plural');
   public readonly readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   protected isoDate = signal(getTodayStr(DateFormat.IsoDate));
+  protected readonly memberTypes: ('person' | 'org' | 'group')[] = ['person', 'org', 'group'];
+  protected selectedMemberType = signal<'person' | 'org' | 'group'>('person');
 
-  private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
-  protected members = computed(() => this.membershipStore.members());
-  private currentUser = computed(() => this.membershipStore.currentUser());
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+  protected membersForType = computed(() =>
+    this.store.members().filter(m => m.memberModelType === this.selectedMemberType())
+  );
+  private currentUser = computed(() => this.store.currentUser());
   private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
 
   constructor() {
-    effect(() => this.membershipStore.setOrgId(this.orgKey(), this.orgType()));
-    effect(() => this.membershipStore.setShowMode(!this.maySeeOldMemberships()));
+    effect(() => this.store.setOrgId(this.orgKey(), this.orgType()));
+    effect(() => this.store.setShowMode(!this.maySeeOldMemberships()));
   }
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    await this.membershipStore.add(this.isReadOnly());
+    await this.store.add(this.isReadOnly());
   }
 
  /**
@@ -106,7 +123,7 @@ export class MembersAccordionComponent {
         actionSheetOptions.buttons.push(createActionSheetButton('membership.changecat', this.imgixBaseUrl, 'mcatchange'));
       }
     }
-    if (hasRole('admin', this.membershipStore.appStore.currentUser()) && !this.isReadOnly()) {
+    if (hasRole('admin', this.store.appStore.currentUser()) && !this.isReadOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('membership.delete', this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('membership.view', this.imgixBaseUrl, 'eye-on'));
@@ -126,19 +143,19 @@ export class MembersAccordionComponent {
       if (!data) return;
       switch (data.action) {
         case 'membership.delete':
-          await this.membershipStore.delete(membership, this.isReadOnly());
+          await this.store.delete(membership, this.isReadOnly());
           break;
         case 'membership.edit':
-          await this.membershipStore.edit(membership, this.isReadOnly());
+          await this.store.edit(membership, this.isReadOnly());
           break;
         case 'membership.view':
-          await this.membershipStore.edit(membership, true);
+          await this.store.edit(membership, true);
           break;
         case 'membership.end':
-          await this.membershipStore.end(membership, undefined, this.isReadOnly());
+          await this.store.end(membership, undefined, this.isReadOnly());
           break;
         case 'membership.changecat':
-          await this.membershipStore.changeMembershipCategory(membership, this.isReadOnly());
+          await this.store.changeMembershipCategory(membership, this.isReadOnly());
           break;
       }
     }
@@ -146,7 +163,7 @@ export class MembersAccordionComponent {
 
   /******************************* helpers *************************************** */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.membershipStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected isOngoing(membership: MembershipModel): boolean {

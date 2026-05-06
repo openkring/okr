@@ -55,7 +55,7 @@ import { MembershipStore } from './membership.store';
   `,
 })
 export class MembershipAccordionComponent {
-  protected readonly membershipStore = inject(MembershipStore);
+  protected readonly store = inject(MembershipStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -69,22 +69,22 @@ export class MembershipAccordionComponent {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // derived fields
-  protected memberships = computed(() => this.membershipStore.memberships());
-  private currentUser = computed(() => this.membershipStore.currentUser());
+  protected memberships = computed(() => this.store.memberships());
+  private currentUser = computed(() => this.store.currentUser());
   private maySeeOldMemberships = computed(() => hasRole('privileged', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
-  private imgixBaseUrl = this.membershipStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => { 
-      this.membershipStore.setMember(this.member(), this.modelType()),
-      this.membershipStore.setOrgId();
-      this.membershipStore.setShowMode(!this.maySeeOldMemberships());
+      this.store.setMember(this.member(), this.modelType()),
+      this.store.setOrgId();
+      this.store.setShowMode(!this.maySeeOldMemberships());
     });
   }
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    await this.membershipStore.add(this.isReadOnly());
+    await this.store.add(this.isReadOnly());
   }
 
   /**
@@ -130,19 +130,19 @@ export class MembershipAccordionComponent {
       if (!data) return;
       switch (data.action) {
         case 'membership.delete':
-          await this.membershipStore.delete(membership, this.isReadOnly());
+          await this.store.delete(membership, this.isReadOnly());
           break;
         case 'membership.edit':
-          await this.membershipStore.edit(membership, this.isReadOnly());
+          await this.store.edit(membership, this.isReadOnly());
           break;
         case 'membership.view':
-          await this.membershipStore.edit(membership, true);
+          await this.store.edit(membership, true);
           break;
         case 'membership.end':
-          await this.membershipStore.end(membership, undefined, this.isReadOnly());
+          await this.store.end(membership, undefined, this.isReadOnly());
           break;
         case 'membership.changecat':
-          await this.membershipStore.changeMembershipCategory(membership, this.isReadOnly());
+          await this.store.changeMembershipCategory(membership, this.isReadOnly());
           break;
       }
     }

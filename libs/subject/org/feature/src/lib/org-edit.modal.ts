@@ -74,7 +74,7 @@ import { OrgStore } from 'libs/subject/org/feature/src/lib/org.store';
                       <bk-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
                       <bk-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                     }
-                    <bk-members-accordion [orgKey]="orgKey()" [readOnly]="isReadOnly()" />
+                    <bk-members-accordion [orgKey]="orgKey()" [orgType]="orgType()" [readOnly]="isReadOnly()" />
                     <bk-bill-accordion [listId]="orgKey()" />
                     <bk-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
                 }
@@ -115,6 +115,7 @@ export class OrgEditModalComponent {
   protected readonly parentKey = computed(() => `${OrgModelName}.${this.orgKey()}`);
   protected path = computed(() => getDocumentStoragePath(this.env.tenantId, 'org', this.org()?.bkey));
   protected orgKey = computed(() => this.org()?.bkey ?? '');
+  protected orgType = computed((): 'org' | 'group' => this.org()?.type === 'group' ? 'group' : 'org');
   protected isNew = computed(() => !this.org()?.bkey.length);
   protected listId = computed(() => 'o_' + this.orgKey());
   protected priv = computed(() => this.store.privacySettings());
