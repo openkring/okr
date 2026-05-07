@@ -218,7 +218,7 @@ export class MembershipListComponent {
       // Ensure orgId is updated whenever it changes
       const orgId = this.orgId();
       if (orgId) {
-        this.membershipStore.setOrgId(orgId);
+        this.membershipStore.setOrgId(orgId, this.view() === 'group' ? 'group' : 'org');
       }
     });
 

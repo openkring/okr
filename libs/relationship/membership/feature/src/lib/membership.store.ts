@@ -216,7 +216,10 @@ export const _MembershipStore = signalStore(
 
   withComputed((state) => {
     return {
-      membershipCategory: computed<CategoryListModel>(() => state.appStore.getCategory(state.membershipCategoryKey()) ?? state.defaultMcat()),
+      membershipCategory: computed<CategoryListModel>(() => {
+        const key = state.membershipCategoryKey();
+        return key ? (state.appStore.getCategory(key) ?? state.defaultMcat()) : state.defaultMcat();
+      }),
       groupsCount: computed(() => state.groupsOfMember().length),
       defaultOrg: computed(() => state.org()),
       currentPerson : computed(() => state.appStore.currentPerson()),
