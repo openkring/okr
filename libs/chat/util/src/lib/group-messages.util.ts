@@ -11,7 +11,7 @@ export interface ImageBatchGroup {
 
 export type MessageOrBatch = MatrixMessage | ImageBatchGroup;
 
-function isImageMessage(msg: MatrixMessage): boolean {
+export function isImageMessage(msg: MatrixMessage): boolean {
   if (msg.type === 'm.image') return true;
   if (msg.type === 'm.file' && (msg.content?.info?.mimetype as string | undefined)?.startsWith('image/')) return true;
   return false;

@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { groupMessages, ImageBatchGroup } from './group-messages.util';
 import { MatrixMessage } from '@bk2/shared-models';
 
 let idSeq = 0;
+beforeEach(() => {
+  idSeq = 0;
+});
 function msg(overrides: Partial<MatrixMessage> = {}): MatrixMessage {
   return {
     eventId: `evt-${++idSeq}`,
