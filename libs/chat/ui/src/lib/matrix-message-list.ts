@@ -6,6 +6,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { MatrixMessage } from '@bk2/shared-models';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { PollMessageComponent } from './poll-message.component';
+import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
 
 @Component({
   selector: 'bk-matrix-message-list',
@@ -119,6 +120,20 @@ import { PollMessageComponent } from './poll-message.component';
       max-width: 100%;
       max-height: 300px;
       border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .image-batch-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .image-batch-thumb {
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: 6px;
       cursor: pointer;
     }
 
@@ -296,155 +311,142 @@ import { PollMessageComponent } from './poll-message.component';
         @for (dayGroup of groupedMessages(); track dayGroup.date) {
           <div class="day-divider">{{ dayGroup.date }}</div>
           
-          @for (message of dayGroup.messages; track message.eventId) {
-            @if (message.type === 'm.notice') {
-              <div class="notice-row">
-                <div class="notice-bubble">{{ message.body }} · {{ formatTime(message.timestamp) }}</div>
+          @for (item of dayGroup.messages; track trackItem(item); let i = $index) {
+            @if (isBatch(item)) {
+              <div class="message-row" [class.own-message]="item.sender === currentUserId()">
+                <ion-avatar
+                  class="message-avatar"
+                  [class.hidden]="shouldHideAvatarForItem(item, i, dayGroup.messages)"
+                >
+                  @if (item.senderAvatar) {
+                    <img [src]="item.senderAvatar" [alt]="item.senderName" />
+                  } @else {
+                    <div>{{ item.senderName.charAt(0) }}</div>
+                  }
+                </ion-avatar>
+                <div class="message-content">
+                  @if (item.sender !== currentUserId() && shouldShowSenderForItem(item, i, dayGroup.messages)) {
+                    <div class="message-sender">{{ item.senderName }}</div>
+                  }
+                  <div class="message-bubble">
+                    <div class="image-batch-grid">
+                      @for (msg of item.messages; track msg.eventId) {
+                        @if (msg.mediaUrl) {
+                          <img
+                            [src]="msg.mediaUrl"
+                            [alt]="msg.body"
+                            class="image-batch-thumb"
+                            (click)="imageClicked.emit({ message: msg, group: item.messages }); $event.stopPropagation()"
+                          />
+                        }
+                      }
+                    </div>
+                  </div>
+                  <div class="message-timestamp">
+                    {{ item.messages.length > 1 ? item.messages.length + ' Bilder · ' : '' }}{{ formatTime(item.timestamp) }}
+                  </div>
+                </div>
               </div>
             } @else {
-            <div
-              class="message-row"
-              [class.own-message]="isOwnMessage(message)"
-            >
-              <ion-avatar 
-                class="message-avatar"
-                [class.hidden]="shouldHideAvatar(message, $index, dayGroup.messages)"
-              >
-                @if (message.senderAvatar) {
-                  <img [src]="message.senderAvatar" [alt]="message.senderName" />
-                } @else {
-                  <div>{{ message.senderName.charAt(0) }}</div>
-                }
-              </ion-avatar>
-
-              <div class="message-content">
-                @if (!isOwnMessage(message) && shouldShowSender(message, $index, dayGroup.messages)) {
-                  <div class="message-sender">{{ message.senderName }}</div>
-                }
-
-                <div 
-                  class="message-bubble"
-                  [class.edited]="message.isEdited"
-                  [class.redacted]="message.isRedacted"
-                  (click)="messageClicked.emit(message)"
-                >
-                  @if (message.isRedacted) {
-                    <p class="message-text">Message deleted</p>
-                  } @else {
-                    @switch (message.type) {
-                      @case ('m.text') {
-                        @if (message.content.formatted_body) {
-                          <p class="message-text" [innerHTML]="message.content.formatted_body"></p>
-                        } @else {
-                          <p class="message-text">{{ message.body }}</p>
-                        }
-                      }
-                      @case ('m.image') {
-                        @if (message.mediaUrl) {
-                          <img
-                            [src]="message.mediaUrl"
-                            [alt]="message.body"
-                            class="message-image"
-                            (click)="imageClicked.emit(message); $event.stopPropagation()"
-                          />
-                        }
-                        @if (message.body) {
-                          <p class="message-text">{{ message.body }}</p>
-                        }
-                      }
-                      @case ('m.file') {
-                        @if (isImageFile(message) && message.mediaUrl) {
-                          <img
-                            [src]="message.mediaUrl"
-                            [alt]="message.body"
-                            class="message-image"
-                            (click)="imageClicked.emit(message); $event.stopPropagation()"
-                          />
-                          @if (message.body) {
-                            <p class="message-text">{{ message.body }}</p>
-                          }
-                        } @else if (isAudioFile(message) && message.mediaUrl) {
-                          <audio
-                            controls
-                            class="message-audio"
-                            [src]="message.mediaUrl"
-                            (click)="$event.stopPropagation()"
-                          ></audio>
-                        } @else {
-                          <div class="message-file" (click)="fileClicked.emit(message); $event.stopPropagation()">
-                            <ion-icon src="{{'document' | svgIcon}}"></ion-icon>
-                            <span>{{ message.body }}</span>
-                          </div>
-                        }
-                      }
-                      @case ('m.location') {
-                        <a
-                          [href]="message.content.info?.maps_link || getGoogleMapsUrl(message)"
-                          target="_blank"
-                          class="message-location-map"
-                          (click)="$event.stopPropagation()"
-                        >
-                          @if (getOsmTileData(message); as td) {
-                            <div class="location-tile-wrapper">
-                              <img
-                                [src]="td.url"
-                                [style.left.px]="td.offsetX"
-                                [style.top.px]="td.offsetY"
-                                alt="Karte"
-                                class="location-tile-img"
-                              />
-                              <span class="location-pin">📍</span>
-                            </div>
-                          }
-                          <div class="location-map-label">
-                            <ion-icon src="{{'location' | svgIcon}}"></ion-icon>
-                            <span>{{ message.body }}</span>
-                          </div>
-                        </a>
-                      }
-                      @case ('org.matrix.msc3381.poll.start') {
-                        <bk-poll-message
-                          [message]="message"
-                          [currentUserId]="currentUserId() ?? ''"
-                          (voteClicked)="pollVoteClicked.emit($event)"
-                          (endPollClicked)="pollEndClicked.emit($event)"
-                        />
-                      }
-                      @default {
-                        <p class="message-text">{{ message.body }}</p>
-                      }
-                    }
-                  }
+              @if (item.type === 'm.notice') {
+                <div class="notice-row">
+                  <div class="notice-bubble">{{ item.body }} · {{ formatTime(item.timestamp) }}</div>
                 </div>
-
-                <div class="message-timestamp">
-                  {{ formatTime(message.timestamp) }}
-                </div>
-
-                @if (message.reactions && message.reactions.size > 0) {
-                  <div class="message-reactions">
-                    @for (reaction of getReactions(message); track reaction.emoji) {
-                      <ion-chip 
-                        class="reaction-chip"
-                        (click)="reactionClicked.emit({messageId: message.eventId, emoji: reaction.emoji})"
-                      >
-                        {{ reaction.emoji }} {{ reaction.count }}
-                      </ion-chip>
-                    }
-                  </div>
-                }
-
-                @if (threadReplyCounts().get(message.eventId); as replyCount) {
-                  <div
-                    class="thread-indicator"
-                    (click)="threadClicked.emit(message.eventId)"
+              } @else {
+                <div class="message-row" [class.own-message]="isOwnMessage(item)">
+                  <ion-avatar
+                    class="message-avatar"
+                    [class.hidden]="shouldHideAvatarForItem(item, i, dayGroup.messages)"
                   >
-                    <ion-icon src="{{'chatbox' | svgIcon}}"></ion-icon>
-                    {{ replyCount }} {{ replyCount === 1 ? 'Antwort' : 'Antworten' }}
+                    @if (item.senderAvatar) {
+                      <img [src]="item.senderAvatar" [alt]="item.senderName" />
+                    } @else {
+                      <div>{{ item.senderName.charAt(0) }}</div>
+                    }
+                  </ion-avatar>
+                  <div class="message-content">
+                    @if (!isOwnMessage(item) && shouldShowSenderForItem(item, i, dayGroup.messages)) {
+                      <div class="message-sender">{{ item.senderName }}</div>
+                    }
+                    <div
+                      class="message-bubble"
+                      [class.edited]="item.isEdited"
+                      [class.redacted]="item.isRedacted"
+                      (click)="messageClicked.emit(item)"
+                    >
+                      @if (item.isRedacted) {
+                        <p class="message-text">Message deleted</p>
+                      } @else {
+                        @switch (item.type) {
+                          @case ('m.text') {
+                            @if (item.content.formatted_body) {
+                              <p class="message-text" [innerHTML]="item.content.formatted_body"></p>
+                            } @else {
+                              <p class="message-text">{{ item.body }}</p>
+                            }
+                          }
+                          @case ('m.file') {
+                            @if (isAudioFile(item) && item.mediaUrl) {
+                              <audio controls class="message-audio" [src]="item.mediaUrl" (click)="$event.stopPropagation()"></audio>
+                            } @else {
+                              <div class="message-file" (click)="fileClicked.emit(item); $event.stopPropagation()">
+                                <ion-icon src="{{'document' | svgIcon}}"></ion-icon>
+                                <span>{{ item.body }}</span>
+                              </div>
+                            }
+                          }
+                          @case ('m.location') {
+                            <a
+                              [href]="item.content.info?.maps_link || getGoogleMapsUrl(item)"
+                              target="_blank"
+                              class="message-location-map"
+                              (click)="$event.stopPropagation()"
+                            >
+                              @if (getOsmTileData(item); as td) {
+                                <div class="location-tile-wrapper">
+                                  <img [src]="td.url" [style.left.px]="td.offsetX" [style.top.px]="td.offsetY" alt="Karte" class="location-tile-img" />
+                                  <span class="location-pin">📍</span>
+                                </div>
+                              }
+                              <div class="location-map-label">
+                                <ion-icon src="{{'location' | svgIcon}}"></ion-icon>
+                                <span>{{ item.body }}</span>
+                              </div>
+                            </a>
+                          }
+                          @case ('org.matrix.msc3381.poll.start') {
+                            <bk-poll-message
+                              [message]="item"
+                              [currentUserId]="currentUserId() ?? ''"
+                              (voteClicked)="pollVoteClicked.emit($event)"
+                              (endPollClicked)="pollEndClicked.emit($event)"
+                            />
+                          }
+                          @default {
+                            <p class="message-text">{{ item.body }}</p>
+                          }
+                        }
+                      }
+                    </div>
+                    <div class="message-timestamp">{{ formatTime(item.timestamp) }}</div>
+                    @if (item.reactions && item.reactions.size > 0) {
+                      <div class="message-reactions">
+                        @for (reaction of getReactions(item); track reaction.emoji) {
+                          <ion-chip class="reaction-chip" (click)="reactionClicked.emit({ messageId: item.eventId, emoji: reaction.emoji })">
+                            {{ reaction.emoji }} {{ reaction.count }}
+                          </ion-chip>
+                        }
+                      </div>
+                    }
+                    @if (threadReplyCounts().get(item.eventId); as replyCount) {
+                      <div class="thread-indicator" (click)="threadClicked.emit(item.eventId)">
+                        <ion-icon src="{{'chatbox' | svgIcon}}"></ion-icon>
+                        {{ replyCount }} {{ replyCount === 1 ? 'Antwort' : 'Antworten' }}
+                      </div>
+                    }
                   </div>
-                }
-              </div>
-            </div>
+                </div>
+              }
             }
           }
         }
@@ -469,7 +471,7 @@ export class MatrixMessageList {
   threadReplyCounts = input<Map<string, number>>(new Map());
 
   messageClicked = output<MatrixMessage>();
-  imageClicked = output<MatrixMessage>();
+  imageClicked = output<{ message: MatrixMessage; group: MatrixMessage[] }>();
   fileClicked = output<MatrixMessage>();
   reactionClicked = output<{messageId: string, emoji: string}>();
   threadClicked = output<string>();
@@ -480,17 +482,16 @@ export class MatrixMessageList {
 
   groupedMessages = computed(() => {
     const messages = this.messages();
-    const groups: { date: string; messages: MatrixMessage[] }[] = [];
-    
+    const groups: { date: string; messages: MessageOrBatch[] }[] = [];
+
     let currentDate = '';
     let currentGroup: MatrixMessage[] = [];
 
     for (const message of messages) {
       const messageDate = this.formatDate(message.timestamp);
-      
       if (messageDate !== currentDate) {
         if (currentGroup.length > 0) {
-          groups.push({ date: currentDate, messages: currentGroup });
+          groups.push({ date: currentDate, messages: groupMessages(currentGroup) });
         }
         currentDate = messageDate;
         currentGroup = [message];
@@ -498,11 +499,9 @@ export class MatrixMessageList {
         currentGroup.push(message);
       }
     }
-
     if (currentGroup.length > 0) {
-      groups.push({ date: currentDate, messages: currentGroup });
+      groups.push({ date: currentDate, messages: groupMessages(currentGroup) });
     }
-
     return groups;
   });
 
@@ -522,20 +521,25 @@ export class MatrixMessageList {
     return message.sender === this.currentUserId();
   }
 
-  shouldHideAvatar(message: MatrixMessage, index: number, messages: MatrixMessage[]): boolean {
-    if (this.isOwnMessage(message)) return true;
-    if (index === 0) return false;
-    
-    const prevMessage = messages[index - 1];
-    return prevMessage.sender === message.sender && 
-           message.timestamp - prevMessage.timestamp < 60000; // 1 minute
+  protected isBatch(item: MessageOrBatch): item is ImageBatchGroup {
+    return 'kind' in item;
   }
 
-  shouldShowSender(message: MatrixMessage, index: number, messages: MatrixMessage[]): boolean {
+  protected trackItem(item: MessageOrBatch): string {
+    return this.isBatch(item) ? `batch-${item.sender}-${item.timestamp}` : item.eventId;
+  }
+
+  protected shouldHideAvatarForItem(item: MessageOrBatch, index: number, items: MessageOrBatch[]): boolean {
+    const sender = item.sender;
+    if (sender === this.currentUserId()) return true;
+    if (index === 0) return false;
+    const prev = items[index - 1];
+    return prev.sender === sender && item.timestamp - prev.timestamp < 60000;
+  }
+
+  protected shouldShowSenderForItem(item: MessageOrBatch, index: number, items: MessageOrBatch[]): boolean {
     if (index === 0) return true;
-    
-    const prevMessage = messages[index - 1];
-    return prevMessage.sender !== message.sender;
+    return items[index - 1].sender !== item.sender;
   }
 
   formatDate(timestamp: number): string {
