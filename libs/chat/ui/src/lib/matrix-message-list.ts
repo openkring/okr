@@ -522,11 +522,11 @@ export class MatrixMessageList {
   }
 
   protected isBatch(item: MessageOrBatch): item is ImageBatchGroup {
-    return 'kind' in item;
+    return (item as ImageBatchGroup).kind === 'image-batch';
   }
 
   protected trackItem(item: MessageOrBatch): string {
-    return this.isBatch(item) ? `batch-${item.sender}-${item.timestamp}` : item.eventId;
+    return this.isBatch(item) ? `batch-${item.messages[0].eventId}` : item.eventId;
   }
 
   protected shouldHideAvatarForItem(item: MessageOrBatch, index: number, items: MessageOrBatch[]): boolean {
@@ -574,12 +574,6 @@ export class MatrixMessageList {
     if (!mxcUrl || !mxcUrl.startsWith('mxc://')) return '';
     const parts = mxcUrl.substring(6).split('/');
     return `${this.homeserverUrl()}/_matrix/media/v3/download/${parts[0]}/${parts[1]}`;
-  }
-
-  isImageFile(message: MatrixMessage): boolean {
-    const mimetype = message.content?.info?.mimetype || '';
-    if (mimetype.startsWith('image/')) return true;
-    return /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(message.body || '');
   }
 
   isAudioFile(message: MatrixMessage): boolean {
