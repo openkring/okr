@@ -6,7 +6,7 @@ import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, I
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { SpinnerComponent } from '@bk2/shared-ui';
 
-import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
+import { ImageLightboxModal, LightboxImage, MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -21,7 +21,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
   standalone: true,
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
-    SpinnerComponent, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
+    SpinnerComponent, MatrixRoomList, MatrixMessageList, MatrixMessageInput, ImageLightboxModal,
     IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge
   ],
   providers: [MatrixChatStore],
@@ -376,8 +376,12 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
                   [roomId]="currentRoomId()"
                   [typingUsers]="typingUsers()"
                   [replyToMessage]="replyToMessage()"
+                  [pendingImages]="pendingImages()"
                   (messageSent)="onMessageSent($event)"
                   (fileSent)="onFileSent($event)"
+                  (fileQueued)="onFileQueued($event)"
+                  (removeImage)="onRemoveImage($event)"
+                  (filesSent)="onFilesSent($event)"
                   (locationSent)="onLocationSent()"
                   (surveyRequested)="onSurveyRequested()"
                   (videoCallStarted)="onVideoCallStarted()"
@@ -451,6 +455,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
                   [typingUsers]="[]"
                   (messageSent)="onThreadMessageSent($event)"
                   (fileSent)="onThreadFileSent($event)"
+                  (fileQueued)="onThreadFileQueued($event)"
                   (typing)="onTyping($event)"
                   (surveyRequested)="onSurveyRequested()"
                 />
@@ -525,6 +530,7 @@ export class MatrixChat implements OnDestroy {
   protected showRoomList = signal(!this.isGroupView());
   protected isDragOver = signal(false);
   protected isThreadDragOver = signal(false);
+  protected pendingImages = signal<File[]>([]);
 
   // Messages signal
   protected readonly messages = computed(() => this.store.messages());
@@ -808,12 +814,49 @@ export class MatrixChat implements OnDestroy {
     await this.executeActions(actionSheetOptions, message);
   }
 
-  async onImageClicked(message: MatrixMessage): Promise<void> {
-    await downloadToBrowser(message.content.url);
+  protected async onImageClicked(event: { message: MatrixMessage; group: MatrixMessage[] }): Promise<void> {
+    const images: LightboxImage[] = event.group.map(m => ({
+      mediaUrl: m.mediaUrl ?? (m.content?.url as string | undefined) ?? '',
+      filename: m.body,
+    }));
+    const initialIndex = event.group.indexOf(event.message);
+    const modal = await this.modalController.create({
+      component: ImageLightboxModal,
+      componentProps: { images, initialIndex },
+      cssClass: 'fullscreen-modal',
+    });
+    await modal.present();
   }
 
   async onFileClicked(message: MatrixMessage): Promise<void> {
     await downloadToBrowser(message.content.url);
+  }
+
+  protected onFileQueued(file: File): void {
+    this.pendingImages.update(prev => [...prev, file]);
+  }
+
+  protected onRemoveImage(index: number): void {
+    this.pendingImages.update(prev => prev.filter((_, i) => i !== index));
+  }
+
+  protected async onFilesSent(files: File[]): Promise<void> {
+    this.pendingImages.set([]);
+    const results = await Promise.allSettled(files.map(f => this.store.sendFile(f)));
+    const failures = results.filter(r => r.status === 'rejected').length;
+    if (failures > 0) {
+      await showToast(this.toastController, `${failures} Bild(er) konnten nicht gesendet werden`);
+    }
+  }
+
+  protected async onThreadFileQueued(file: File): Promise<void> {
+    const threadId = this.store.selectedThreadId();
+    if (!threadId) return;
+    try {
+      await this.store.sendFile(file, threadId);
+    } catch (error) {
+      console.error('Failed to send thread image:', error);
+    }
   }
 
   async onReactionClicked(event: { messageId: string; emoji: string }) {
@@ -881,10 +924,20 @@ export class MatrixChat implements OnDestroy {
     if (!this.currentRoomId()) return;
     const files = Array.from(event.dataTransfer?.files ?? []);
     if (!files.length) return;
-    const results = await Promise.allSettled(files.map(f => this.store.sendFile(f)));
-    const failures = results.filter(r => r.status === 'rejected').length;
-    if (failures > 0) {
-      await showToast(this.toastController, `${failures} Datei(en) konnten nicht gesendet werden`);
+
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    const otherFiles = files.filter(f => !f.type.startsWith('image/'));
+
+    if (imageFiles.length > 0) {
+      this.pendingImages.update(prev => [...prev, ...imageFiles]);
+    }
+
+    if (otherFiles.length > 0) {
+      const results = await Promise.allSettled(otherFiles.map(f => this.store.sendFile(f)));
+      const failures = results.filter(r => r.status === 'rejected').length;
+      if (failures > 0) {
+        await showToast(this.toastController, `${failures} Datei(en) konnten nicht gesendet werden`);
+      }
     }
   }
 
