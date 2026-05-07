@@ -1,4 +1,4 @@
-import { Component, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
@@ -328,6 +328,20 @@ export class MatrixMessageInput {
       this.messageText.set(draft);
     });
 
+    // Revoke object URLs for files removed from the pending list
+    effect(() => {
+      const current = new Set(this.pendingImages());
+      for (const [file, url] of this._objectUrlCache) {
+        if (!current.has(file)) {
+          URL.revokeObjectURL(url);
+          this._objectUrlCache.delete(file);
+        }
+      }
+    });
+
+    // Revoke all remaining object URLs on destroy
+    this._destroyRef.onDestroy(() => this.revokeObjectUrls());
+
     // Attach cursor tracking directly to the native textarea inside ion-textarea's shadow DOM
     afterNextRender(() => {
       const getNative = () => this.textInput()?.nativeElement?.querySelector('textarea') as HTMLTextAreaElement | null;
@@ -359,6 +373,7 @@ export class MatrixMessageInput {
 
   private savedCursorPos: number | null = null;
 
+  private readonly _destroyRef = inject(DestroyRef);
   private readonly _objectUrlCache = new Map<File, string>();
 
   protected getObjectUrl(file: File): string {
