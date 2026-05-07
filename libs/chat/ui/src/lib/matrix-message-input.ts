@@ -100,6 +100,39 @@ import { ButtonCopyComponent } from '@bk2/shared-ui';
 
     .file-input { display: none; }
 
+    .pending-images-strip {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 8px 12px;
+      background: var(--ion-color-light-shade);
+      border-bottom: 1px solid var(--ion-border-color, #dedede);
+    }
+
+    .pending-thumb-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .pending-thumb {
+      width: 52px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 6px;
+      display: block;
+    }
+
+    .pending-thumb-remove {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      --padding-start: 0;
+      --padding-end: 0;
+      width: 20px;
+      height: 20px;
+      margin: 0;
+    }
+
     .emoji-picker-wrapper { position: relative; }
     .emoji-picker-popover {
       position: absolute;
@@ -149,6 +182,25 @@ import { ButtonCopyComponent } from '@bk2/shared-ui';
   `],
   template: `
     @if (!isRecording()) {
+      @if (pendingImages().length > 0) {
+        <div class="pending-images-strip">
+          @for (file of pendingImages(); track file; let i = $index) {
+            <div class="pending-thumb-wrapper">
+              <img [src]="getObjectUrl(file)" [alt]="file.name" class="pending-thumb" />
+              <ion-button
+                fill="clear"
+                size="small"
+                color="danger"
+                class="pending-thumb-remove"
+                (click)="removeImage.emit(i)"
+              >
+                <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
+              </ion-button>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Reply preview strip — only shown while composing a reply -->
       @if (replyToMessage()) {
         <div class="reply-preview">
@@ -249,6 +301,7 @@ export class MatrixMessageInput {
   typingUsers = input<string[]>([]);
   replyToMessage = input<any>();
   fileAccept = input<string>('*/*');
+  pendingImages = input<File[]>([]);
 
   messageSent = output<string>();
   fileSent = output<File>();
@@ -257,6 +310,9 @@ export class MatrixMessageInput {
   videoCallStarted = output<void>();
   typing = output<boolean>();
   cancelReplyClicked = output<void>();
+  fileQueued = output<File>();
+  removeImage = output<number>();
+  filesSent = output<File[]>();
 
   protected messageText = signal<string>('');
   showEmojiPicker = signal<boolean>(false);
@@ -303,15 +359,36 @@ export class MatrixMessageInput {
 
   private savedCursorPos: number | null = null;
 
+  private readonly _objectUrlCache = new Map<File, string>();
+
+  protected getObjectUrl(file: File): string {
+    if (!this._objectUrlCache.has(file)) {
+      this._objectUrlCache.set(file, URL.createObjectURL(file));
+    }
+    return this._objectUrlCache.get(file)!;
+  }
+
+  private revokeObjectUrls(): void {
+    for (const url of this._objectUrlCache.values()) {
+      URL.revokeObjectURL(url);
+    }
+    this._objectUrlCache.clear();
+  }
+
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
   private recordingTimer: ReturnType<typeof setInterval> | null = null;
 
   canSend = computed(() => {
-    return this.messageText().trim().length > 0 && !this.disabled();
+    return (this.messageText().trim().length > 0 || this.pendingImages().length > 0) && !this.disabled();
   });
 
-  sendMessage() {
+  sendMessage(): void {
+    const files = this.pendingImages();
+    if (files.length > 0) {
+      this.filesSent.emit([...files]);
+      this.revokeObjectUrls();
+    }
     const text = this.messageText().trim();
     if (text) {
       this.messageSent.emit(text);
@@ -475,13 +552,15 @@ export class MatrixMessageInput {
     }
   }
 
-  onFileSelected(event: Event) {
+  onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-
     if (file) {
-      this.fileSent.emit(file);
-      // Reset file input
+      if (file.type.startsWith('image/')) {
+        this.fileQueued.emit(file);
+      } else {
+        this.fileSent.emit(file);
+      }
       input.value = '';
     }
   }
