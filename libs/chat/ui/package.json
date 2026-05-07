@@ -12,7 +12,9 @@
     "@bk2/shared-categories": "*",
     "@bk2/shared-ui": "*",
     "@bk2/shared-util-core": "*",
-    "@bk2/chat-util": "*"
+    "@bk2/chat-util": "*",
+    "@bk2/shared-util-angular": "*",
+    "@bk2/shared-pipes": "*"
   }
 }
 
