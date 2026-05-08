@@ -563,8 +563,7 @@ export class MatrixChatService {
               const eventId = e.getId()!;
               const { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds } = this.computePollTally(eventId, room);
               const pollEnded = this.isPollEnded(eventId, room);
-              const maxSelections: number = msg.content['org.matrix.msc3381.poll']?.max_selections ?? 1;
-              return { ...msg, senderAvatar: senderAvatar || undefined, pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds, pollEnded, maxSelections };
+              return { ...msg, senderAvatar: senderAvatar || undefined, pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds, pollEnded };
             }
 
             if ((msg.type === 'm.image' || msg.type === 'm.file' || msg.type === 'm.audio') && mxcUrl) {
@@ -657,6 +656,7 @@ export class MatrixChatService {
     const eventType = event.getType();
 
     let pollAnswers: Array<{ id: string; body: string }> | undefined;
+    let maxSelections: number | undefined;
     if (eventType === 'org.matrix.msc3381.poll.start') {
       const rawAnswers = content['org.matrix.msc3381.poll']?.answers;
       if (Array.isArray(rawAnswers)) {
@@ -665,6 +665,7 @@ export class MatrixChatService {
           body: a['org.matrix.msc3381.poll.answer']?.body ?? String(a.id)
         }));
       }
+      maxSelections = content['org.matrix.msc3381.poll']?.max_selections ?? 1;
     }
 
     return {
@@ -685,6 +686,7 @@ export class MatrixChatService {
       isRedacted: event.isRedacted(),
       isEdited: !!relatesTo && relatesTo.rel_type === RelationType.Replace,
       pollAnswers,
+      maxSelections,
     };
   }
 
@@ -769,7 +771,8 @@ export class MatrixChatService {
     for (const [sender, { answerIds, ts }] of latestByUser) {
       const member = room.getMember(sender);
       const displayName = member?.name ?? sender;
-      const voter: MatrixReadReceipt = { userId: sender, displayName, ts };
+      const avatarUrl: string | undefined = (member as any)?.getAvatarUrl?.(this.client!.baseUrl, 32, 32, 'crop') || undefined;
+      const voter: MatrixReadReceipt = { userId: sender, displayName, avatarUrl, ts };
       for (const answerId of answerIds) {
         pollVotes[answerId] = (pollVotes[answerId] ?? 0) + 1;
         if (!pollVoters[answerId]) pollVoters[answerId] = [];
