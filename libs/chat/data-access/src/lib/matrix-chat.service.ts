@@ -468,7 +468,7 @@ export class MatrixChatService {
     return this.receipts$.get(roomId)!.asObservable();
   }
 
-  private buildAndEmitReceipts(room: Room): void {
+  private async buildAndEmitReceipts(room: Room): Promise<void> {
     const currentUserId = this.getCurrentUserId();
     if (!currentUserId || !this.client) return;
     const subject = this.receipts$.get(room.roomId);
@@ -481,9 +481,9 @@ export class MatrixChatService {
       const receipt = room.getReadReceiptForUserId(member.userId);
       if (!receipt) continue;
       const mxcUrl = (member as any)?.getMxcAvatarUrl?.() as string | undefined;
-      const avatarUrl = mxcUrl
-        ? (this.client.mxcUrlToHttp(mxcUrl, 18, 18, 'crop', true) ?? undefined)
-        : undefined;
+      // resolveMediaUrl fetches with Authorization header and returns a blob URL,
+      // avoiding M_NOT_FOUND from servers with authenticated media enabled.
+      const avatarUrl = mxcUrl ? (await this.resolveMediaUrl(mxcUrl) || undefined) : undefined;
       const entry: MatrixReadReceipt = {
         userId: member.userId,
         displayName: member.rawDisplayName || member.userId.split(':')[0].substring(1),
