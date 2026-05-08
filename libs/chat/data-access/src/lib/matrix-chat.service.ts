@@ -562,6 +562,7 @@ export class MatrixChatService {
             if (e.getType() === 'org.matrix.msc3381.poll.start') {
               const eventId = e.getId()!;
               const { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds } = this.computePollTally(eventId, room);
+              await this.resolveVoterAvatars(pollVoters);
               const pollEnded = this.isPollEnded(eventId, room);
               return { ...msg, senderAvatar: senderAvatar || undefined, pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds, pollEnded };
             }
@@ -771,8 +772,8 @@ export class MatrixChatService {
     for (const [sender, { answerIds, ts }] of latestByUser) {
       const member = room.getMember(sender);
       const displayName = member?.name ?? sender;
-      const avatarUrl: string | undefined = (member as any)?.getAvatarUrl?.(this.client!.baseUrl, 32, 32, 'crop') || undefined;
-      const voter: MatrixReadReceipt = { userId: sender, displayName, avatarUrl, ts };
+      const mxcAvatarUrl: string | undefined = (member as any)?.getMxcAvatarUrl?.() || undefined;
+      const voter: MatrixReadReceipt = { userId: sender, displayName, avatarUrl: mxcAvatarUrl, ts };
       for (const answerId of answerIds) {
         pollVotes[answerId] = (pollVotes[answerId] ?? 0) + 1;
         if (!pollVoters[answerId]) pollVoters[answerId] = [];
@@ -808,14 +809,37 @@ export class MatrixChatService {
     subject.next(updated);
   }
 
+  /** Resolve all mxc:// avatarUrls in pollVoters to authenticated blob URLs in-place. */
+  private async resolveVoterAvatars(pollVoters: Record<string, MatrixReadReceipt[]>): Promise<void> {
+    const seen = new Set<string>();
+    const resolveMap = new Map<string, Promise<string>>();
+    for (const voters of Object.values(pollVoters)) {
+      for (const voter of voters) {
+        if (voter.avatarUrl && voter.avatarUrl.startsWith('mxc://') && !seen.has(voter.avatarUrl)) {
+          seen.add(voter.avatarUrl);
+          resolveMap.set(voter.avatarUrl, this.resolveMediaUrl(voter.avatarUrl));
+        }
+      }
+    }
+    await Promise.all(resolveMap.values());
+    for (const voters of Object.values(pollVoters)) {
+      for (const voter of voters) {
+        if (voter.avatarUrl && resolveMap.has(voter.avatarUrl)) {
+          voter.avatarUrl = await resolveMap.get(voter.avatarUrl) || undefined;
+        }
+      }
+    }
+  }
+
   /** Re-compute poll tally and update the poll message in the BehaviorSubject. */
-  private refreshPollTally(pollEventId: string, room: Room): void {
+  private async refreshPollTally(pollEventId: string, room: Room): Promise<void> {
     const subject = this.messages$.get(room.roomId);
     if (!subject) return;
     const msgs = subject.value ?? [];
     const idx = msgs.findIndex(m => m.eventId === pollEventId);
     if (idx < 0) return;
     const { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds } = this.computePollTally(pollEventId, room);
+    await this.resolveVoterAvatars(pollVoters);
     const updated = [...msgs];
     updated[idx] = { ...msgs[idx], pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds };
     subject.next(updated);
