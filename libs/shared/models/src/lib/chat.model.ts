@@ -26,8 +26,11 @@ export interface MatrixMessage {
   isEdited: boolean;
   // Poll fields — only populated on org.matrix.msc3381.poll.start messages
   pollAnswers?: Array<{ id: string; body: string }>;
-  pollVotes?: Record<string, number>;   // answerId → vote count
-  myVoteAnswerId?: string;
+  pollVotes?: Record<string, number>;         // answerId → vote count
+  pollVoters?: Record<string, MatrixReadReceipt[]>; // answerId → voters list
+  myVoteAnswerId?: string;                    // first selected answerId (single-select compat)
+  myVoteAnswerIds?: string[];                 // all selected answerIds (multi-select)
+  maxSelections?: number;                     // 1 = single, >1 = multi
   pollEnded?: boolean;
 }
 

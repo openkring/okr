@@ -483,7 +483,7 @@ export class MatrixMessageList {
   fileClicked = output<MatrixMessage>();
   reactionClicked = output<{messageId: string, emoji: string}>();
   threadClicked = output<string>();
-  pollVoteClicked = output<{ pollEventId: string; answerId: string }>();
+  pollVoteClicked = output<{ pollEventId: string; answerIds: string[] }>();
   pollEndClicked = output<{ pollEventId: string }>();
 
   messagesContainer = viewChild<ElementRef>('messagesContainer');

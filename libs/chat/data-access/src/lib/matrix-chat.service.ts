@@ -14,6 +14,7 @@ import { debugData, debugMessage } from '@bk2/shared-util-core';
 export interface MatrixPollData {
   question: string;
   answers: string[];   // min 2, max 20
+  maxSelections?: number; // 1 = single choice (default), >1 = multiple choice
 }
 
 @Injectable({
@@ -339,7 +340,7 @@ export class MatrixChatService {
       // For poll.start: preserve tally fields from the existing entry (avoids wiping votes on echo confirmation)
       const oldMsg = oldIdx >= 0 ? msgs[oldIdx] : undefined;
       const newMsg = (et === 'org.matrix.msc3381.poll.start' && oldMsg)
-        ? { ...baseMsg, pollVotes: oldMsg.pollVotes, myVoteAnswerId: oldMsg.myVoteAnswerId, pollEnded: oldMsg.pollEnded }
+        ? { ...baseMsg, pollVotes: oldMsg.pollVotes, pollVoters: oldMsg.pollVoters, myVoteAnswerId: oldMsg.myVoteAnswerId, myVoteAnswerIds: oldMsg.myVoteAnswerIds, pollEnded: oldMsg.pollEnded, maxSelections: oldMsg.maxSelections }
         : baseMsg;
       if (oldIdx >= 0) {
         // Replace the temp-ID entry in-place so the message doesn't jump around
@@ -560,9 +561,10 @@ export class MatrixChatService {
             // Attach poll tally and ended flag for poll.start events
             if (e.getType() === 'org.matrix.msc3381.poll.start') {
               const eventId = e.getId()!;
-              const { pollVotes, myVoteAnswerId } = this.computePollTally(eventId, room);
+              const { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds } = this.computePollTally(eventId, room);
               const pollEnded = this.isPollEnded(eventId, room);
-              return { ...msg, senderAvatar: senderAvatar || undefined, pollVotes, myVoteAnswerId, pollEnded };
+              const maxSelections: number = msg.content['org.matrix.msc3381.poll']?.max_selections ?? 1;
+              return { ...msg, senderAvatar: senderAvatar || undefined, pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds, pollEnded, maxSelections };
             }
 
             if ((msg.type === 'm.image' || msg.type === 'm.file' || msg.type === 'm.audio') && mxcUrl) {
@@ -735,9 +737,14 @@ export class MatrixChatService {
   private computePollTally(
     pollEventId: string,
     room: Room
-  ): { pollVotes: Record<string, number>; myVoteAnswerId: string | undefined } {
+  ): {
+    pollVotes: Record<string, number>;
+    pollVoters: Record<string, MatrixReadReceipt[]>;
+    myVoteAnswerId: string | undefined;
+    myVoteAnswerIds: string[];
+  } {
     const currentUserId = this.getCurrentUserId();
-    const latestByUser = new Map<string, { answerId: string; ts: number }>();
+    const latestByUser = new Map<string, { answerIds: string[]; ts: number }>();
 
     for (const event of room.getLiveTimeline().getEvents()) {
       if (event.getType() !== 'org.matrix.msc3381.poll.response') continue;
@@ -745,23 +752,35 @@ export class MatrixChatService {
       if (relatesTo?.event_id !== pollEventId) continue;
       const sender = event.getSender();
       if (!sender) continue;
-      const answerId: string | undefined =
-        event.getContent()?.['org.matrix.msc3381.poll.response']?.answers?.[0];
-      if (!answerId) continue;
+      const answerIds: string[] = event.getContent()?.['org.matrix.msc3381.poll.response']?.answers ?? [];
+      if (!answerIds.length) continue;
       const ts = event.getTs();
       const prev = latestByUser.get(sender);
       if (!prev || ts > prev.ts) {
-        latestByUser.set(sender, { answerId, ts });
+        latestByUser.set(sender, { answerIds, ts });
       }
     }
 
     const pollVotes: Record<string, number> = {};
+    const pollVoters: Record<string, MatrixReadReceipt[]> = {};
     let myVoteAnswerId: string | undefined;
-    for (const [sender, { answerId }] of latestByUser) {
-      pollVotes[answerId] = (pollVotes[answerId] ?? 0) + 1;
-      if (sender === currentUserId) myVoteAnswerId = answerId;
+    let myVoteAnswerIds: string[] = [];
+
+    for (const [sender, { answerIds, ts }] of latestByUser) {
+      const member = room.getMember(sender);
+      const displayName = member?.name ?? sender;
+      const voter: MatrixReadReceipt = { userId: sender, displayName, ts };
+      for (const answerId of answerIds) {
+        pollVotes[answerId] = (pollVotes[answerId] ?? 0) + 1;
+        if (!pollVoters[answerId]) pollVoters[answerId] = [];
+        pollVoters[answerId].push(voter);
+      }
+      if (sender === currentUserId) {
+        myVoteAnswerIds = answerIds;
+        myVoteAnswerId = answerIds[0];
+      }
     }
-    return { pollVotes, myVoteAnswerId };
+    return { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds };
   }
 
   /** Returns true if a poll.end event referencing pollEventId exists in the room timeline. */
@@ -793,9 +812,9 @@ export class MatrixChatService {
     const msgs = subject.value ?? [];
     const idx = msgs.findIndex(m => m.eventId === pollEventId);
     if (idx < 0) return;
-    const { pollVotes, myVoteAnswerId } = this.computePollTally(pollEventId, room);
+    const { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds } = this.computePollTally(pollEventId, room);
     const updated = [...msgs];
-    updated[idx] = { ...msgs[idx], pollVotes, myVoteAnswerId };
+    updated[idx] = { ...msgs[idx], pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds };
     subject.next(updated);
   }
 
@@ -1123,7 +1142,7 @@ private async updateRoomsList(): Promise<void> {
       'org.matrix.msc3381.poll': {
         question: { msgtype: 'm.text', body: data.question },
         kind: 'org.matrix.msc3381.poll.disclosed',
-        max_selections: 1,
+        max_selections: data.maxSelections ?? 1,
         answers
       },
       body: fallback
@@ -1131,12 +1150,12 @@ private async updateRoomsList(): Promise<void> {
   }
 
   /**
-   * Send a poll vote response (MSC3381)
+   * Send a poll vote response (MSC3381). Supports single and multiple selections.
    */
-  async sendPollResponse(roomId: string, pollEventId: string, answerId: string): Promise<void> {
+  async sendPollResponse(roomId: string, pollEventId: string, answerIds: string[]): Promise<void> {
     if (!this.client) throw new Error('Client not initialized');
     await this.client.sendEvent(roomId, 'org.matrix.msc3381.poll.response' as any, {
-      'org.matrix.msc3381.poll.response': { answers: [answerId] },
+      'org.matrix.msc3381.poll.response': { answers: answerIds },
       'm.relates_to': { rel_type: 'm.reference', event_id: pollEventId }
     } as any);
   }

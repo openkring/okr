@@ -4,7 +4,7 @@ import { IonItem, IonInput, IonList } from '@ionic/angular/standalone';
 
 import { AnyCharacterMask } from '@bk2/shared-config';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { StringsComponent } from '@bk2/shared-ui';
+import { CheckboxComponent, StringsComponent } from '@bk2/shared-ui';
 import { MatrixPollData } from '@bk2/chat-data-access';
 
 @Component({
@@ -12,7 +12,7 @@ import { MatrixPollData } from '@bk2/chat-data-access';
   standalone: true,
   imports: [
     AsyncPipe, TranslatePipe,
-    StringsComponent,
+    StringsComponent, CheckboxComponent,
     IonItem, IonInput, IonList
   ],
   template: `
@@ -41,6 +41,13 @@ import { MatrixPollData } from '@bk2/chat-data-access';
         [mask]="anyCharMask"
         [maxLength]="100"
       />
+
+      <!-- Multiple answers toggle -->
+      <bk-checkbox
+        name="allowMultipleAnswers"
+        [(checked)]="allowMultipleAnswers"
+        [readOnly]="false"
+      />
     </ion-list>
   `
 })
@@ -53,12 +60,14 @@ export class PollCreateForm implements OnInit {
 
   protected question = signal('');
   protected answers = signal<string[]>([]);
+  protected allowMultipleAnswers = signal(false);
 
   constructor() {
     effect(() => {
       const data: MatrixPollData = {
         question: this.question(),
-        answers: this.answers()
+        answers: this.answers(),
+        maxSelections: this.allowMultipleAnswers() ? 20 : 1,
       };
       this.formDataChange.emit(data);
       this.valid.emit(data.question.trim().length > 0 && data.answers.length >= 2);
@@ -68,5 +77,6 @@ export class PollCreateForm implements OnInit {
   ngOnInit(): void {
     this.question.set(this.formData().question);
     this.answers.set([...this.formData().answers]);
+    this.allowMultipleAnswers.set((this.formData().maxSelections ?? 1) > 1);
   }
 }

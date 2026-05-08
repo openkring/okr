@@ -557,14 +557,14 @@ export const _MatrixChatStore = signalStore(
       /**
        * Vote on a poll (MSC3381)
        */
-      async sendPollResponse(pollEventId: string, answerId: string): Promise<void> {
+      async sendPollResponse(pollEventId: string, answerIds: string[]): Promise<void> {
         const roomId = store.currentRoomId();
         if (!roomId) {
           console.warn('MatrixChatStore.sendPollResponse: No room selected');
           return;
         }
         try {
-          await store.matrixService.sendPollResponse(roomId, pollEventId, answerId);
+          await store.matrixService.sendPollResponse(roomId, pollEventId, answerIds);
         } catch (error) {
           console.error('MatrixChatStore.sendPollResponse: Failed to send poll response:', error);
           throw error;

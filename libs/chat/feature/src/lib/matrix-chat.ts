@@ -790,9 +790,9 @@ export class MatrixChat implements OnDestroy {
     }
   }
 
-  protected async onPollVoteClicked(e: { pollEventId: string; answerId: string }): Promise<void> {
+  protected async onPollVoteClicked(e: { pollEventId: string; answerIds: string[] }): Promise<void> {
     try {
-      await this.store.sendPollResponse(e.pollEventId, e.answerId);
+      await this.store.sendPollResponse(e.pollEventId, e.answerIds);
     } catch (error) {
       console.error('MatrixChat: Failed to send poll response:', error);
     }
