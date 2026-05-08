@@ -3,7 +3,8 @@ import { AsyncPipe, CommonModule } from '@angular/common';
 import { IonIcon, IonChip, IonAvatar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { MatrixMessage } from '@bk2/shared-models';
+import { MatrixMessage, MatrixReadReceipt } from '@bk2/shared-models';
+import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { PollMessageComponent } from './poll-message.component';
 import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
@@ -15,7 +16,7 @@ import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
     CommonModule,
     IonIcon, IonChip, IonAvatar,
     SvgIconPipe, TranslatePipe, AsyncPipe,
-    PollMessageComponent
+    PollMessageComponent, MatrixReadReceiptStrip
   ],
   styles: [`
     :host {
@@ -345,6 +346,9 @@ import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
                   <div class="message-timestamp">
                     {{ item.messages.length > 1 ? item.messages.length + ' Bilder · ' : '' }}{{ formatTime(item.timestamp) }}
                   </div>
+                  @if (receiptsByEventId().get(item.messages[0].eventId); as receipts) {
+                    <bk-matrix-read-receipt-strip [receipts]="receipts" />
+                  }
                 </div>
               </div>
             } @else {
@@ -429,6 +433,9 @@ import { groupMessages, ImageBatchGroup, MessageOrBatch } from '@bk2/chat-util';
                       }
                     </div>
                     <div class="message-timestamp">{{ formatTime(item.timestamp) }}</div>
+                    @if (receiptsByEventId().get(item.eventId); as receipts) {
+                      <bk-matrix-read-receipt-strip [receipts]="receipts" />
+                    }
                     @if (item.reactions && item.reactions.size > 0) {
                       <div class="message-reactions">
                         @for (reaction of getReactions(item); track reaction.emoji) {
@@ -469,6 +476,7 @@ export class MatrixMessageList {
   homeserverUrl = input<string>('https://bkchat.etke.host');
   typingUsers = input<string[]>([]);
   threadReplyCounts = input<Map<string, number>>(new Map());
+  receiptsByEventId = input<Map<string, MatrixReadReceipt[]>>(new Map());
 
   messageClicked = output<MatrixMessage>();
   imageClicked = output<{ message: MatrixMessage; group: MatrixMessage[] }>();
