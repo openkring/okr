@@ -361,6 +361,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
                     [homeserverUrl]="homeserverUrl()"
                     [typingUsers]="typingUsers()"
                     [threadReplyCounts]="threadReplyCounts()"
+                    [receiptsByEventId]="receiptsByEventId()"
                     (messageClicked)="onMessageClicked($event)"
                     (imageClicked)="onImageClicked($event)"
                     (fileClicked)="onFileClicked($event)"
@@ -536,6 +537,7 @@ export class MatrixChat implements OnDestroy {
   protected readonly messages = computed(() => this.store.messages());
   protected readonly isMessagesLoading = computed(() => this.store.isMessagesLoading());
   protected readonly typingUsers = computed(() => this.store.typingUsers());
+  protected readonly receiptsByEventId = computed(() => this.store.receiptsByEventId());
 
   // Thread signals
   protected readonly selectedThreadId = computed(() => this.store.selectedThreadId());
