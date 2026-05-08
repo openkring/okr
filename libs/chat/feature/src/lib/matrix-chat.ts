@@ -21,7 +21,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
   standalone: true,
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
-    SpinnerComponent, MatrixRoomList, MatrixMessageList, MatrixMessageInput, ImageLightboxModal,
+    SpinnerComponent, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
     IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge
   ],
   providers: [MatrixChatStore],

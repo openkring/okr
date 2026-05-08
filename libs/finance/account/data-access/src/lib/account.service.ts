@@ -27,13 +27,13 @@ export class AccountService {
     return findByKey<AccountModel>(this.list(), key);
   }
 
-  public async update(account: AccountModel, currentUser?: UserModel, confirmMessage = '@finane.account.operation.update'): Promise<string | undefined> {
+  public async update(account: AccountModel, currentUser?: UserModel, confirmMessage = '@finance.account.operation.update'): Promise<string | undefined> {
     account.index = getAccountIndex(account);
     return await this.firestoreService.updateModel<AccountModel>(AccountCollection, account, false, confirmMessage, currentUser);
   }
 
   public async delete(account: AccountModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<AccountModel>(AccountCollection, account, '@finane.account.operation.delete', currentUser);
+    await this.firestoreService.deleteModel<AccountModel>(AccountCollection, account, '@finance.account.operation.delete', currentUser);
   }
 
   /**

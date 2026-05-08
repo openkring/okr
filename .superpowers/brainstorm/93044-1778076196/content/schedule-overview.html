@@ -1,0 +1,235 @@
+<h2>Scheduling Feature — 3 Key UI Surfaces</h2>
+<p class="subtitle">Which screens feel right? Click any to select. These show the main touch points for the "find a common date" flow.</p>
+
+<style>
+  .screens { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; }
+  .screen-card { flex: 1; min-width: 280px; border: 2px solid #333; border-radius: 10px; overflow: hidden; background: #1a1a2e; cursor: pointer; transition: border-color 0.2s; }
+  .screen-card:hover { border-color: #667eea; }
+  .screen-card.selected-card { border-color: #667eea; box-shadow: 0 0 0 2px #667eea44; }
+  .screen-title { background: #2d2d44; padding: 8px 12px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #aaa; border-bottom: 1px solid #333; }
+  .phone { padding: 10px; font-size: 12px; color: #ddd; }
+
+  /* Mock Ionic toolbar */
+  .ion-toolbar { background: #3d5a80; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; border-radius: 6px 6px 0 0; }
+  .ion-toolbar span { font-weight: 600; font-size: 13px; color: white; }
+  .ion-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; cursor: pointer; }
+
+  /* Screen A: Create Schedule Modal */
+  .form-field { margin: 8px 0; }
+  .form-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
+  .form-input { background: #2a2a3e; border: 1px solid #444; border-radius: 6px; padding: 7px 10px; width: 100%; color: #eee; font-size: 12px; box-sizing: border-box; }
+  .date-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .date-chip { background: #3d5a80; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; display: flex; align-items: center; gap: 4px; }
+  .date-chip .remove { color: #ff8080; cursor: pointer; font-weight: bold; }
+  .date-entry-options { display: flex; gap: 6px; margin: 6px 0; }
+  .entry-btn { flex: 1; background: #252538; border: 1px solid #444; color: #bbb; padding: 6px 4px; border-radius: 8px; font-size: 10px; text-align: center; cursor: pointer; }
+  .entry-btn:hover { border-color: #667eea; color: #667eea; }
+  .modal-footer { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-primary { flex: 1; background: #3d5a80; color: white; padding: 8px; border-radius: 8px; font-size: 12px; text-align: center; border: none; }
+  .btn-secondary { flex: 1; background: #333; color: #bbb; padding: 8px; border-radius: 8px; font-size: 12px; text-align: center; border: none; }
+
+  /* Screen B: Schedule Table (Xoyondo-style) */
+  .sched-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .sched-table th { background: #252538; color: #aaa; padding: 4px 6px; text-align: center; border: 1px solid #333; }
+  .sched-table td { padding: 4px 6px; border: 1px solid #333; text-align: center; }
+  .sched-table .member-cell { text-align: left; display: flex; align-items: center; gap: 5px; padding: 4px 6px; }
+  .avatar { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: white; flex-shrink: 0; }
+  .av-blue { background: #3d5a80; }
+  .av-green { background: #2d6a4f; }
+  .av-orange { background: #a05000; }
+  .av-purple { background: #5a3d80; }
+  .av-me { background: #667eea; }
+  .resp-yes { color: #4caf50; font-size: 14px; }
+  .resp-no { color: #ef5350; font-size: 14px; }
+  .resp-maybe { color: #ffc107; font-size: 14px; }
+  .resp-empty { color: #444; font-size: 14px; }
+  .date-header { writing-mode: horizontal-tb; }
+  .date-sub { font-size: 9px; color: #777; }
+  .count-row td { background: #1e1e30; color: #aaa; font-size: 10px; font-weight: bold; }
+  .count-best { color: #4caf50 !important; }
+  .my-row td { background: #252540; }
+
+  /* Screen C: Calendar with proposed dates */
+  .cal-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; margin-bottom: 4px; }
+  .cal-nav { color: #aaa; cursor: pointer; font-size: 14px; }
+  .cal-month { font-weight: 600; font-size: 13px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-day-name { text-align: center; font-size: 9px; color: #666; padding: 3px 0; }
+  .cal-day { text-align: center; font-size: 11px; padding: 4px 2px; border-radius: 4px; cursor: pointer; position: relative; }
+  .cal-day.empty { background: transparent; }
+  .cal-day.normal { color: #ccc; }
+  .cal-day.normal:hover { background: #333; }
+  .cal-day.proposed { background: #2d3a5a; color: #7ba7d6; border: 1px solid #3d5a80; font-weight: 600; }
+  .cal-day.proposed::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #3d5a80; }
+  .cal-day.today { background: #333; color: white; border-radius: 50%; }
+  .legend { display: flex; gap: 12px; margin-top: 8px; font-size: 10px; color: #888; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+  .close-action { background: #5a3d1a; color: #ffa040; border: 1px solid #7a5020; padding: 5px 10px; border-radius: 8px; font-size: 11px; text-align: center; margin-top: 8px; }
+</style>
+
+<div class="screens">
+
+  <!-- Screen A: Create Schedule Modal -->
+  <div class="screen-card" id="cardA" onclick="toggleCardSelect(this, 'A')">
+    <div class="screen-title">A — Create Schedule Modal</div>
+    <div class="phone">
+      <div class="ion-toolbar">
+        <span>Termin finden</span>
+        <button class="ion-btn">Abbrechen</button>
+      </div>
+      <div style="padding: 8px 0;">
+        <div class="form-field">
+          <div class="form-label">Thema / Titel</div>
+          <div class="form-input">Vereins-Ausflug 2025</div>
+        </div>
+        <div class="form-field">
+          <div class="form-label">Beschreibung (optional)</div>
+          <div class="form-input" style="height:40px">Bitte wählt eure verfügbaren Termine...</div>
+        </div>
+        <div class="form-label" style="margin-top:10px">Terminvorschläge</div>
+        <div class="date-chips">
+          <div class="date-chip">Sa 14.06. <span class="remove">×</span></div>
+          <div class="date-chip">So 15.06. <span class="remove">×</span></div>
+          <div class="date-chip">Sa 21.06. <span class="remove">×</span></div>
+          <div class="date-chip" style="background:#1e3a1e; border: 1px dashed #4caf50; color:#aaa">+ Termin</div>
+        </div>
+        <div class="form-label" style="margin-top:4px">Datum hinzufügen via:</div>
+        <div class="date-entry-options">
+          <div class="entry-btn">📅<br>Kalender</div>
+          <div class="entry-btn">🗓<br>Monatsauswahl</div>
+          <div class="entry-btn">✏️<br>Freitext</div>
+        </div>
+        <div class="modal-footer" style="margin-top:12px">
+          <div class="btn-secondary">Entwurf</div>
+          <div class="btn-primary">Einladen →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen B: Schedule Response Table -->
+  <div class="screen-card" id="cardB" onclick="toggleCardSelect(this, 'B')">
+    <div class="screen-title">B — Terminabstimmung Tabelle</div>
+    <div class="phone">
+      <div class="ion-toolbar">
+        <span>Vereins-Ausflug 2025</span>
+        <button class="ion-btn" style="background:rgba(255,80,80,0.3)">Abschl.</button>
+      </div>
+      <div style="padding: 6px 0; font-size: 10px; color: #888; font-style: italic;">
+        Wähle deine verfügbaren Termine
+      </div>
+      <table class="sched-table">
+        <thead>
+          <tr>
+            <th style="text-align:left; min-width:80px">Mitglied</th>
+            <th><div class="date-header">Sa<br><span class="date-sub">14.6</span></div></th>
+            <th><div class="date-header">So<br><span class="date-sub">15.6</span></div></th>
+            <th><div class="date-header">Sa<br><span class="date-sub">21.6</span></div></th>
+            <th><div class="date-header">So<br><span class="date-sub">22.6</span></div></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="my-row">
+            <td><div class="member-cell"><div class="avatar av-me">Du</div></div></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-no">✗</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-maybe">?</span></td>
+          </tr>
+          <tr>
+            <td><div class="member-cell"><div class="avatar av-blue">AS</div></div></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-no">✗</span></td>
+            <td><span class="resp-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td><div class="member-cell"><div class="avatar av-green">MK</div></div></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-empty">–</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td><div class="member-cell"><div class="avatar av-orange">TF</div></div></td>
+            <td><span class="resp-no">✗</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-empty">–</span></td>
+          </tr>
+          <tr>
+            <td><div class="member-cell"><div class="avatar av-purple">LB</div></div></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-no">✗</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-no">✗</span></td>
+          </tr>
+          <tr class="count-row">
+            <td style="font-size:9px; color:#666">Zusagen</td>
+            <td>3</td>
+            <td>2</td>
+            <td class="count-best">4 ★</td>
+            <td>2</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size:10px; color:#666; margin-top:6px; font-style:italic">
+        2 noch nicht geantwortet
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen C: Group Calendar with proposed dates -->
+  <div class="screen-card" id="cardC" onclick="toggleCardSelect(this, 'C')">
+    <div class="screen-title">C — Gruppenkalender mit Vorschlägen</div>
+    <div class="phone">
+      <div class="ion-toolbar">
+        <span>Vereinskalender</span>
+        <button class="ion-btn">+ Neu</button>
+      </div>
+      <div style="padding: 8px 0;">
+        <div class="cal-header">
+          <span class="cal-nav">‹</span>
+          <span class="cal-month">Juni 2025</span>
+          <span class="cal-nav">›</span>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-day-name">Mo</div><div class="cal-day-name">Di</div><div class="cal-day-name">Mi</div><div class="cal-day-name">Do</div><div class="cal-day-name">Fr</div><div class="cal-day-name">Sa</div><div class="cal-day-name">So</div>
+          <!-- Week 1 -->
+          <div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day normal">1</div><div class="cal-day normal">2</div>
+          <!-- Week 2 -->
+          <div class="cal-day normal">3</div><div class="cal-day normal">4</div><div class="cal-day normal">5</div><div class="cal-day normal">6</div><div class="cal-day normal">7</div><div class="cal-day normal">8</div><div class="cal-day normal">9</div>
+          <!-- Week 3 -->
+          <div class="cal-day normal">10</div><div class="cal-day normal">11</div><div class="cal-day normal">12</div><div class="cal-day normal">13</div><div class="cal-day normal">14</div><div class="cal-day proposed" title="Ausflug (vorgeschlagen)">15</div><div class="cal-day proposed">16</div>
+          <!-- Week 4 -->
+          <div class="cal-day normal">17</div><div class="cal-day normal">18</div><div class="cal-day normal">19</div><div class="cal-day normal">20</div><div class="cal-day normal">21</div><div class="cal-day proposed">22</div><div class="cal-day proposed">23</div>
+          <!-- Week 5 -->
+          <div class="cal-day today">24</div><div class="cal-day normal">25</div><div class="cal-day normal">26</div><div class="cal-day normal">27</div><div class="cal-day normal">28</div><div class="cal-day normal">29</div><div class="cal-day normal">30</div>
+        </div>
+        <div class="legend">
+          <span><span class="legend-dot" style="background:#2d3a5a; border:1px solid #3d5a80;"></span>Vorgeschlagen</span>
+          <span><span class="legend-dot" style="background:#1a3a1a; border:1px solid #2d5a2d;"></span>Provisorisch</span>
+          <span><span class="legend-dot" style="background:#2d1a1a; border:1px solid #5a2d2d;"></span>Definitiv</span>
+        </div>
+        <div class="close-action">🔒 Abstimmung abschliessen (Autor)</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top: 20px; padding: 12px; background: #1e1e30; border-radius: 8px; font-size: 12px; color: #aaa; line-height: 1.6;">
+  <strong style="color:#ccc">Flow:</strong>
+  Autor öffnet Kontextmenü im Gruppenkalender → <strong>Screen A</strong> (Abstimmung erstellen) →
+  Termine erscheinen im Kalender als blaue Vorschläge (<strong>Screen C</strong>) →
+  Mitglieder öffnen <strong>Screen B</strong> (Tabelle) oder antworten direkt im Kalender →
+  Autor schliesst Abstimmung in Screen C → Nachricht an Gruppe.
+</div>
+
+<script>
+function toggleCardSelect(el, choice) {
+  document.querySelectorAll('.screen-card').forEach(c => c.classList.remove('selected-card'));
+  el.classList.add('selected-card');
+  if (window.recordSelection) recordSelection(choice, el.querySelector('.screen-title').textContent);
+}
+</script>

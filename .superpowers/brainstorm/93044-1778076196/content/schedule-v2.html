@@ -1,0 +1,263 @@
+<h2>Scheduling Feature — Updated Screens</h2>
+<p class="subtitle">Revised per feedback: single date-picker entry, full names in table, acceptance counts on calendar</p>
+
+<style>
+  .screens { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; }
+  .screen-card { flex: 1; min-width: 280px; border: 2px solid #333; border-radius: 10px; overflow: hidden; background: #1a1a2e; }
+  .screen-title { background: #2d2d44; padding: 8px 12px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #aaa; border-bottom: 1px solid #333; }
+  .phone { padding: 10px; font-size: 12px; color: #ddd; }
+
+  .ion-toolbar { background: #3d5a80; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; border-radius: 6px 6px 0 0; }
+  .ion-toolbar span { font-weight: 600; font-size: 13px; color: white; }
+  .ion-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; cursor: pointer; }
+
+  /* ── Screen A: Create modal ── */
+  .form-field { margin: 8px 0; }
+  .form-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
+  .form-input { background: #2a2a3e; border: 1px solid #444; border-radius: 6px; padding: 7px 10px; width: 100%; color: #eee; font-size: 12px; box-sizing: border-box; }
+  .date-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .date-chip { background: #3d5a80; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; display: flex; align-items: center; gap: 4px; }
+  .date-chip .remove { color: #ff9090; cursor: pointer; font-weight: bold; }
+  .add-chip { background: transparent; border: 1px dashed #3d5a80; color: #7ba7d6; padding: 4px 10px; border-radius: 12px; font-size: 11px; cursor: pointer; }
+  .modal-footer { display: flex; gap: 8px; margin-top: 12px; }
+  .btn-primary { flex: 1; background: #3d5a80; color: white; padding: 8px; border-radius: 8px; font-size: 12px; text-align: center; border: none; }
+  .btn-secondary { flex: 1; background: #333; color: #bbb; padding: 8px; border-radius: 8px; font-size: 12px; text-align: center; border: none; }
+
+  /* mini calendar overlay */
+  .mini-cal-overlay { background: #252538; border: 1px solid #3d5a80; border-radius: 10px; padding: 8px; margin-top: 6px; }
+  .mini-cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .mini-cal-header span { font-size: 12px; font-weight: 600; }
+  .mini-cal-nav { color: #888; font-size: 13px; cursor: pointer; }
+  .mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .mcd { text-align: center; font-size: 10px; padding: 4px 2px; border-radius: 4px; cursor: pointer; color: #ccc; }
+  .mcd:hover { background: #333; }
+  .mcd.name { color: #555; font-size: 9px; }
+  .mcd.sel { background: #3d5a80; color: white; font-weight: 600; }
+  .mcd.sel2 { background: #2d4a70; color: #7ba7d6; font-weight: 600; }
+  .mcd.empty { cursor: default; }
+  .mini-cal-hint { font-size: 9px; color: #666; text-align: center; margin-top: 4px; }
+  .mini-cal-confirm { background: #3d5a80; color: white; border: none; width: 100%; padding: 5px; border-radius: 6px; font-size: 11px; margin-top: 6px; cursor: pointer; }
+
+  /* ── Screen B: Table ── */
+  .sched-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .sched-table th { background: #252538; color: #aaa; padding: 4px 5px; text-align: center; border: 1px solid #333; }
+  .sched-table td { padding: 3px 5px; border: 1px solid #2a2a40; text-align: center; }
+  .member-cell { text-align: left; display: flex; align-items: center; gap: 5px; }
+  .member-info { display: flex; flex-direction: column; }
+  .member-name { font-size: 11px; color: #ddd; line-height: 1.2; }
+  .member-initials { font-size: 9px; color: #888; }
+  .avatar { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: white; flex-shrink: 0; }
+  .av-blue { background: #3d5a80; }
+  .av-green { background: #2d6a4f; }
+  .av-orange { background: #a05000; }
+  .av-purple { background: #5a3d80; }
+  .av-me { background: #667eea; }
+  .resp-yes { color: #4caf50; font-size: 13px; }
+  .resp-no { color: #ef5350; font-size: 13px; }
+  .resp-maybe { color: #ffc107; font-size: 13px; }
+  .resp-empty { color: #444; font-size: 13px; }
+  .count-row td { background: #1e1e30; font-size: 10px; font-weight: bold; }
+  .count-best { color: #4caf50 !important; }
+  .my-row td { background: #252540; }
+
+  /* ── Screen C: Calendar ── */
+  .cal-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+  .cal-nav { color: #aaa; cursor: pointer; font-size: 14px; }
+  .cal-month { font-weight: 600; font-size: 13px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-day-name { text-align: center; font-size: 9px; color: #555; padding: 3px 0; }
+  .cal-day { text-align: center; font-size: 11px; padding: 3px 1px; border-radius: 5px; cursor: pointer; position: relative; min-height: 32px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 3px; }
+  .cal-day.normal { color: #ccc; }
+  .cal-day.proposed { background: #1e2d45; color: #7ba7d6; border: 1px solid #2d4a6a; font-weight: 600; }
+  .cal-day.today { background: #333; color: white; }
+  .accept-badge { background: #2d5a2d; color: #7dc47d; font-size: 9px; border-radius: 4px; padding: 0 3px; margin-top: 2px; line-height: 1.4; }
+  .proposed-badge { background: #1a3050; color: #5a8abf; font-size: 9px; border-radius: 4px; padding: 0 3px; margin-top: 2px; line-height: 1.4; }
+
+  /* Action sheet overlay on proposed date click */
+  .action-sheet { background: #252538; border: 1px solid #3d5a80; border-radius: 10px; padding: 8px; margin-top: 10px; }
+  .action-sheet-title { font-size: 10px; color: #888; text-align: center; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #333; }
+  .action-item { padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+  .action-item:hover { background: #333; }
+  .action-accept { color: #4caf50; }
+  .action-decline { color: #ef5350; }
+  .action-close-poll { color: #ffa040; background: #2a1e10; border: 1px solid #5a3a10; }
+  .action-close-poll:hover { background: #3a2810; }
+  .action-icon { font-size: 14px; width: 20px; text-align: center; }
+
+  .legend { display: flex; gap: 10px; margin-top: 8px; font-size: 9px; color: #777; flex-wrap: wrap; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 3px; display: inline-block; margin-right: 3px; }
+</style>
+
+<div class="screens">
+
+  <!-- Screen A: Create modal + date picker -->
+  <div class="screen-card">
+    <div class="screen-title">A — Create Schedule (+ Termin tapped)</div>
+    <div class="phone">
+      <div class="ion-toolbar">
+        <span>Termin finden</span>
+        <button class="ion-btn">Abbrechen</button>
+      </div>
+      <div style="padding: 8px 0;">
+        <div class="form-field">
+          <div class="form-label">Thema / Titel</div>
+          <div class="form-input">Vereins-Ausflug 2025</div>
+        </div>
+        <div class="form-field">
+          <div class="form-label">Beschreibung (optional)</div>
+          <div class="form-input" style="height:32px; color:#666; font-size:11px">Bitte wählt eure verfügbaren Termine...</div>
+        </div>
+        <div class="form-label" style="margin-top:10px">Terminvorschläge</div>
+        <div class="date-chips">
+          <div class="date-chip">Sa 14.06. <span class="remove">×</span></div>
+          <div class="date-chip">So 15.06. <span class="remove">×</span></div>
+          <div class="date-chip add-chip">+ Termin</div>
+        </div>
+
+        <!-- Calendar picker opens inline when +Termin is tapped -->
+        <div class="mini-cal-overlay">
+          <div class="mini-cal-header">
+            <span class="mini-cal-nav">‹</span>
+            <span>Juni 2025</span>
+            <span class="mini-cal-nav">›</span>
+          </div>
+          <div class="mini-grid">
+            <div class="mcd name">Mo</div><div class="mcd name">Di</div><div class="mcd name">Mi</div><div class="mcd name">Do</div><div class="mcd name">Fr</div><div class="mcd name">Sa</div><div class="mcd name">So</div>
+            <div class="mcd empty"></div><div class="mcd empty"></div><div class="mcd empty"></div><div class="mcd empty"></div><div class="mcd empty"></div><div class="mcd">1</div><div class="mcd">2</div>
+            <div class="mcd">3</div><div class="mcd">4</div><div class="mcd">5</div><div class="mcd">6</div><div class="mcd">7</div><div class="mcd">8</div><div class="mcd">9</div>
+            <div class="mcd">10</div><div class="mcd">11</div><div class="mcd">12</div><div class="mcd">13</div><div class="mcd">14</div><div class="mcd sel2">15</div><div class="mcd sel2">16</div>
+            <div class="mcd">17</div><div class="mcd">18</div><div class="mcd">19</div><div class="mcd">20</div><div class="mcd">21</div><div class="mcd sel">22</div><div class="mcd sel">23</div>
+            <div class="mcd">24</div><div class="mcd">25</div><div class="mcd">26</div><div class="mcd">27</div><div class="mcd">28</div><div class="mcd">29</div><div class="mcd">30</div>
+          </div>
+          <div class="mini-cal-hint">Mehrere Tage antippen zum Auswählen</div>
+          <button class="mini-cal-confirm">2 Tage übernehmen</button>
+        </div>
+
+        <div class="modal-footer">
+          <div class="btn-secondary">Entwurf</div>
+          <div class="btn-primary">Mitglieder einladen →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen B: Response table with full names -->
+  <div class="screen-card">
+    <div class="screen-title">B — Antwort-Tabelle (mit vollständigen Namen)</div>
+    <div class="phone">
+      <div class="ion-toolbar">
+        <span>Vereins-Ausflug 2025</span>
+        <button class="ion-btn">Details</button>
+      </div>
+      <div style="padding: 4px 0 6px; font-size: 10px; color: #888; font-style: italic;">Wähle deine verfügbaren Termine</div>
+      <table class="sched-table">
+        <thead>
+          <tr>
+            <th style="text-align:left; min-width:100px">Mitglied</th>
+            <th style="min-width:32px">Sa<br><span style="font-size:9px;color:#666">14.6</span></th>
+            <th style="min-width:32px">So<br><span style="font-size:9px;color:#666">15.6</span></th>
+            <th style="min-width:32px">Sa<br><span style="font-size:9px;color:#666">21.6</span></th>
+            <th style="min-width:32px">So<br><span style="font-size:9px;color:#666">22.6</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="my-row">
+            <td><div class="member-cell"><div class="avatar av-me">BK</div><div class="member-info"><span class="member-name">Bruno Kaiser</span><span class="member-initials">du</span></div></div></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-no">✗</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-maybe">?</span></td>
+          </tr>
+          <tr>
+            <td><div class="member-cell"><div class="avatar av-blue">AS</div><div class="member-info"><span class="member-name">Anna Steiner</span></div></div></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-no">✗</span></td>
+            <td><span class="resp-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td><div class="member-cell"><div class="avatar av-green">MK</div><div class="member-info"><span class="member-name">Max Keller</span></div></div></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-empty">–</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td><div class="member-cell"><div class="avatar av-orange">TF</div><div class="member-info"><span class="member-name">Tina Frei</span></div></div></td>
+            <td><span class="resp-no">✗</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-empty">–</span></td>
+          </tr>
+          <tr>
+            <td><div class="member-cell"><div class="avatar av-purple">LB</div><div class="member-info"><span class="member-name">Lukas Bauer</span></div></div></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-no">✗</span></td>
+            <td><span class="resp-yes">✓</span></td>
+            <td><span class="resp-no">✗</span></td>
+          </tr>
+          <tr class="count-row">
+            <td style="color:#666;font-size:9px;text-align:left;padding-left:6px">Zusagen</td>
+            <td>4</td>
+            <td>2</td>
+            <td class="count-best">4 ★</td>
+            <td>2</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size:10px; color:#666; margin-top:5px; font-style:italic;">1 noch nicht geantwortet</div>
+    </div>
+  </div>
+
+  <!-- Screen C: Calendar + action sheet on date tap -->
+  <div class="screen-card">
+    <div class="screen-title">C — Kalender mit Zählern + Aktionsmenü (Autor)</div>
+    <div class="phone">
+      <div class="ion-toolbar">
+        <span>Vereinskalender</span>
+        <button class="ion-btn">+ Neu</button>
+      </div>
+      <div style="padding: 6px 0;">
+        <div class="cal-header">
+          <span class="cal-nav">‹</span>
+          <span class="cal-month">Juni 2025</span>
+          <span class="cal-nav">›</span>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-day-name">Mo</div><div class="cal-day-name">Di</div><div class="cal-day-name">Mi</div><div class="cal-day-name">Do</div><div class="cal-day-name">Fr</div><div class="cal-day-name">Sa</div><div class="cal-day-name">So</div>
+          <div class="cal-day normal" style="color:#444"></div><div class="cal-day normal" style="color:#444"></div><div class="cal-day normal" style="color:#444"></div><div class="cal-day normal" style="color:#444"></div><div class="cal-day normal" style="color:#444"></div><div class="cal-day normal">1</div><div class="cal-day normal">2</div>
+          <div class="cal-day normal">3</div><div class="cal-day normal">4</div><div class="cal-day normal">5</div><div class="cal-day normal">6</div><div class="cal-day normal">7</div><div class="cal-day normal">8</div><div class="cal-day normal">9</div>
+          <div class="cal-day normal">10</div><div class="cal-day normal">11</div><div class="cal-day normal">12</div><div class="cal-day normal">13</div><div class="cal-day normal">14</div>
+          <div class="cal-day proposed">15<div class="accept-badge">4/6</div></div>
+          <div class="cal-day proposed">16<div class="proposed-badge">2/6</div></div>
+          <div class="cal-day normal">17</div><div class="cal-day normal">18</div><div class="cal-day normal">19</div><div class="cal-day normal">20</div><div class="cal-day normal">21</div>
+          <div class="cal-day proposed" style="border-color:#5a8a5a; background:#1a3020;">22<div class="accept-badge" style="background:#1a3a1a;color:#7dc47d;">5/6 ★</div></div>
+          <div class="cal-day proposed">23<div class="proposed-badge">2/6</div></div>
+          <div class="cal-day today">24</div><div class="cal-day normal">25</div><div class="cal-day normal">26</div><div class="cal-day normal">27</div><div class="cal-day normal">28</div><div class="cal-day normal">29</div><div class="cal-day normal">30</div>
+        </div>
+
+        <div class="legend">
+          <span><span class="legend-dot" style="background:#1e2d45; border:1px solid #2d4a6a;"></span>Vorgeschlagen</span>
+          <span style="margin-left:4px">Zähler = Zusagen / Eingeladene</span>
+        </div>
+
+        <!-- Action sheet appears when author taps a proposed date -->
+        <div class="action-sheet">
+          <div class="action-sheet-title">Sa, 22. Juni 2025 · Vereins-Ausflug 2025</div>
+          <div class="action-item action-accept"><span class="action-icon">✓</span> Zusagen</div>
+          <div class="action-item action-decline"><span class="action-icon">✗</span> Absagen</div>
+          <div class="action-item"><span class="action-icon">📋</span> Abstimmung anzeigen</div>
+          <div class="action-item action-close-poll"><span class="action-icon">🔒</span> Diesen Termin wählen &amp; Abstimmung schliessen</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top: 16px; padding: 12px; background: #1e1e30; border-radius: 8px; font-size: 12px; color: #aaa; line-height: 1.7;">
+  <strong style="color:#ccc">Änderungen gegenüber v1:</strong><br>
+  A — Kein Kalender/Monatsauswahl/Freitext-Button mehr. Tippen auf "+ Termin" öffnet direkt einen Kalender (Mehrfachauswahl).<br>
+  B — Vollständiger Name neben dem Avatar, Initialen als Untertitel.<br>
+  C — Kein separater Button. Zähler (Zusagen/Eingeladene) auf jedem Vorschlagsdatum. Beim Antippen eines Datums: normales Aktionsmenü mit zusätzlicher Option "Termin wählen &amp; schliessen" (nur für Autor sichtbar).
+</div>

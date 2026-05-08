@@ -34,7 +34,7 @@ export interface LightboxImage {
         @if (images().length > 1) {
           <ion-buttons slot="start">
             <ion-button [disabled]="currentIndex() === 0" (click)="prev()">
-              <ion-icon slot="icon-only" name="chevron-back"></ion-icon>
+              <ion-icon slot="icon-only" src="{{'chevron-back' | svgIcon }}" />
             </ion-button>
           </ion-buttons>
         }
@@ -45,14 +45,14 @@ export interface LightboxImage {
         <ion-buttons slot="end">
           @if (images().length > 1) {
             <ion-button [disabled]="currentIndex() === images().length - 1" (click)="next()">
-              <ion-icon slot="icon-only" name="chevron-forward"></ion-icon>
+              <ion-icon slot="icon-only" src="{{'chevron-forward' | svgIcon }}" />
             </ion-button>
           }
           <ion-button (click)="download()">
-            <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+            <ion-icon slot="icon-only" src="{{'download' | svgIcon }}" />
           </ion-button>
           <ion-button (click)="close()">
-            <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}"></ion-icon>
+            <ion-icon slot="icon-only" src="{{'cancel' | svgIcon }}" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>

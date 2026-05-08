@@ -1,0 +1,98 @@
+<h2>Architecture Approaches</h2>
+<p class="subtitle">Three ways to store and identify a "schedule poll" — pick one before we spec the details</p>
+
+<style>
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+  .tag-rec { background: #1a3a1a; color: #6fcf6f; border: 1px solid #2d6a2d; }
+  .tag-ok  { background: #1a2a3a; color: #6fa8cf; border: 1px solid #2d4a6a; }
+  .tag-no  { background: #3a1a1a; color: #cf6f6f; border: 1px solid #6a2d2d; }
+  table.compare { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  table.compare th { background: #252538; color: #aaa; padding: 6px 10px; text-align: left; border: 1px solid #333; }
+  table.compare td { padding: 6px 10px; border: 1px solid #2a2a40; vertical-align: top; color: #ccc; }
+  table.compare tr:nth-child(even) td { background: #1e1e30; }
+  .yes { color: #4caf50; }
+  .no  { color: #ef5350; }
+  .meh { color: #ffc107; }
+  .approach-title { font-size: 14px; font-weight: 600; margin: 14px 0 4px; color: #ddd; }
+  .approach-desc  { font-size: 12px; color: #aaa; line-height: 1.6; margin-bottom: 6px; }
+  code { background: #252538; padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #a8d0f0; }
+</style>
+
+<div class="approach-title">A — Pure CalEvent extension <span class="tag tag-rec">Recommended</span></div>
+<div class="approach-desc">
+  Add <code>state: 'proposed'|'provisional'|'definitive'</code> to <code>CalEventModel</code>.
+  Schedule dates share a <code>seriesId</code> (already exists). A series is a "schedule poll"
+  when any event in it has <code>state === 'proposed'</code>. No new Firestore collection.
+  Author = <code>responsiblePersons[0]</code>. Invited members tracked via existing invitations.
+  The schedule table modal loads all events with the same <code>seriesId</code>.
+</div>
+
+<div class="approach-title">B — Separate <code>schedules</code> collection <span class="tag tag-no">User excluded</span></div>
+<div class="approach-desc">
+  New Firestore collection <code>schedules/{id}</code> holds title, description, author, invited members, status.
+  Each proposed CalEvent carries a <code>scheduleId</code> reference.
+  Cleaner query path but extra collection, extra reads, extra service layer.
+</div>
+
+<div class="approach-title">C — Schedule metadata on the first event of the series <span class="tag tag-ok">Possible</span></div>
+<div class="approach-desc">
+  One "root" CalEvent in the series holds extra schedule fields (e.g. <code>isScheduleRoot: boolean</code>).
+  Other events just carry <code>seriesId</code>. No new collection, but root vs. leaf distinction
+  adds complexity to every query and makes deletion tricky.
+</div>
+
+<table class="compare">
+  <thead>
+    <tr>
+      <th>Criterion</th>
+      <th>A — Extend CalEvent</th>
+      <th>B — Separate collection</th>
+      <th>C — Root event</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>No new Firestore collection</td>
+      <td class="yes">✓ yes</td>
+      <td class="no">✗ no</td>
+      <td class="yes">✓ yes</td>
+    </tr>
+    <tr>
+      <td>Reuses existing seriesId logic</td>
+      <td class="yes">✓ fully</td>
+      <td class="meh">~ parallel</td>
+      <td class="yes">✓ fully</td>
+    </tr>
+    <tr>
+      <td>Query "all proposed in series"</td>
+      <td class="yes">✓ filter on state+seriesId</td>
+      <td class="yes">✓ join via scheduleId</td>
+      <td class="meh">~ same as A</td>
+    </tr>
+    <tr>
+      <td>Model schema change</td>
+      <td class="meh">1 field added</td>
+      <td class="no">New model + service</td>
+      <td class="meh">1 boolean added</td>
+    </tr>
+    <tr>
+      <td>Close-poll delete operation</td>
+      <td class="yes">✓ archive all proposed in series</td>
+      <td class="meh">delete schedule doc + archive events</td>
+      <td class="no">must not delete root</td>
+    </tr>
+    <tr>
+      <td>Aligns with user preference</td>
+      <td class="yes">✓ explicitly preferred</td>
+      <td class="no">✗ explicitly excluded</td>
+      <td class="meh">~ acceptable</td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="margin-top:16px; padding:12px; background:#1a2a1a; border:1px solid #2d5a2d; border-radius:8px; font-size:12px; color:#aaa; line-height:1.7;">
+  <strong style="color:#6fcf6f">Recommendation: A</strong><br>
+  Adding <code>state</code> to <code>CalEventModel</code> is the minimal schema change. The existing <code>seriesId</code>,
+  <code>responsiblePersons</code>, invitations collection, and subscribe/unsubscribe flow all carry over
+  without modification. The schedule table modal is the only new component needed beyond store operations.
+</div>

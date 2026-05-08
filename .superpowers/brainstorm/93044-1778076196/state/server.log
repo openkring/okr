@@ -1,0 +1,8 @@
+{"type":"server-started","port":53513,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:53513","screen_dir":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/93044-1778076196/content","state_dir":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/93044-1778076196/state"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/93044-1778076196/content/schedule-overview.html"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/93044-1778076196/content/schedule-v2.html"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/93044-1778076196/content/waiting-1.html"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/93044-1778076196/content/approaches.html"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/93044-1778076196/content/close-poll-flow.html"}
+{"type":"screen-added","file":"/Users/bruno/proj/bkaiser/bk2/.superpowers/brainstorm/93044-1778076196/content/waiting-2.html"}
+{"type":"server-stopped","reason":"idle timeout"}
