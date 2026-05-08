@@ -444,14 +444,14 @@ export function isFutureDate(date: string, dateFormat = DateFormat.StoreDate): b
 export function isAfterDate(date1: string, date2:string): boolean {
   // END_FUTURE_DATE_STR is always after any date
   if (date1 === END_FUTURE_DATE_STR) return true;
-  const date1StoreDate = parseDate(date1, DateFormat.StoreDate);
-  const date2StoreDate = parseDate(date2, DateFormat.StoreDate);
+  const date1StoreDate = parseDate(date1, DateFormat.StoreDate, false);
+  const date2StoreDate = parseDate(date2, DateFormat.StoreDate, false);
   if (!date1StoreDate || !date2StoreDate) return false;
   return isAfter(date1StoreDate, date2StoreDate);
 }
 
 export function isAfterOrEqualDate(date1: string, date2:string): boolean {
-  if (date1.startsWith(date2)) return true;
+  if (date1?.startsWith(date2)) return true;
   return isAfterDate(date1, date2);
 }
 
