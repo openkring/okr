@@ -5,8 +5,11 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { map, of } from 'rxjs';
 
 import { AppStore } from '@bk2/shared-feature';
-import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
+import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@bk2/shared-models';
 import { DateFormat, getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@bk2/shared-util-core';
+
+import { CalEventService } from '@bk2/calevent-data-access';
+import { CalEventEditModalComponent, CalEventViewModal } from '@bk2/calevent-feature';
 import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
 import { MembershipService } from '@bk2/relationship-membership-data-access';
@@ -30,7 +33,8 @@ export const CalendarStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     membershipService: inject(MembershipService),
-    modalController: inject(ModalController),  
+    modalController: inject(ModalController),
+    calEventService: inject(CalEventService),
   })),
   withProps((store) => ({
     // returns a list of unigue organization keys for the current user
@@ -203,6 +207,63 @@ export const CalendarStore = signalStore(
         store.calendarsForCurrentUserResource.reload();
         store.membershipsForCurrentUserResource.reload();
         store.visibleGroupsResource.reload();
+      },
+
+      getTypes(): CategoryListModel {
+        return store.appStore.getCategory('calevent_type');
+      },
+
+      getPeriodicities(): CategoryListModel {
+        return store.appStore.getCategory('periodicity');
+      },
+
+      getTags(): string {
+        return store.appStore.getTags('calevent');
+      },
+
+      getLocale(): string {
+        return store.appStore.appConfig().locale;
+      },
+
+      async edit(calevent: CalEventModel, isNew = false, readOnly = true, initialDirty = false): Promise<boolean> {
+        const modal = await store.modalController.create({
+          component: CalEventEditModalComponent,
+          componentProps: {
+            calevent,
+            currentUser: store.currentUser(),
+            types: this.getTypes(),
+            periodicities: this.getPeriodicities(),
+            tags: this.getTags(),
+            tenantId: store.appStore.tenantId(),
+            locale: this.getLocale(),
+            readOnly,
+            initialDirty
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data && !readOnly) {
+          if (isNew) {
+            await store.calEventService.create(data, store.currentUser());
+          } else {
+            await store.calEventService.update(data, store.currentUser());
+          }
+          this.reload();
+          return true;
+        }
+        return false;
+      },
+
+      async view(calevent: CalEventModel): Promise<void> {
+        const modal = await store.modalController.create({
+          component: CalEventViewModal,
+          componentProps: {
+            calevent,
+            periodicities: this.getPeriodicities(),
+            locale: this.getLocale()
+          }
+        });
+        modal.present();
       },
 
       async subscribe(calEvent: CalEventModel): Promise<void> {
