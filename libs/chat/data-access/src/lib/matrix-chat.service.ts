@@ -7,7 +7,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { MatrixConfig, MatrixMessage, MatrixRoom, TypingNotification } from '@bk2/shared-models';
+import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification } from '@bk2/shared-models';
 import { AppStore } from '@bk2/shared-feature';
 import { debugData, debugMessage } from '@bk2/shared-util-core';
 
@@ -33,6 +33,7 @@ export class MatrixChatService {
   private roomsUpdateSub: Subscription | null = null;
   private readonly _mediaCache = new Map<string, string>(); // mxc:// -> blob URL
   private readonly typingByRoom = new Map<string, string[]>(); // roomId -> typing userIds
+  private readonly receipts$ = new Map<string, BehaviorSubject<Map<string, MatrixReadReceipt[]>>>();
   // Rooms joined via CF admin API that haven't appeared in a sync cycle yet.
   // updateRoomsList() re-injects stubs for these so the UI renders immediately.
   private readonly pendingRooms = new Map<string, string>(); // roomId → display name
@@ -225,6 +226,7 @@ export class MatrixChatService {
     }
     this._mediaCache.clear();
     this.typingByRoom.clear();
+    this.receipts$.clear();
     if (this.client) {
       this.client.stopClient();
       await this.client.clearStores();
@@ -258,7 +260,13 @@ export class MatrixChatService {
       
       if (state === 'PREPARED') {
         debugMessage('MatrixChatService: Initial sync complete, updating rooms list', this.appStore.currentUser());
-        this.repairDmRoomsAccountData().then(() => this.updateRoomsList());
+        this.repairDmRoomsAccountData().then(() => {
+          this.updateRoomsList();
+          for (const [roomId] of this.receipts$) {
+            const room = this.client?.getRoom(roomId);
+            if (room) this.buildAndEmitReceipts(room);
+          }
+        });
       } else if (state === 'ERROR') {
         const matrixError = data?.error as MatrixError | undefined;
         if (matrixError?.errcode === 'M_UNKNOWN_TOKEN') {
@@ -354,8 +362,9 @@ export class MatrixChatService {
     });
 
     // Read receipts — update room list so unread counts reflect the new read position
-    this.client.on(RoomEvent.Receipt, () => {
+    this.client.on(RoomEvent.Receipt, (_event: MatrixEvent, room: Room) => {
       this.roomsUpdateTrigger$.next();
+      if (room) this.buildAndEmitReceipts(room);
     });
 
     // Redactions — either mark a message as deleted, or refresh reactions if a reaction was removed
@@ -448,6 +457,44 @@ export class MatrixChatService {
       this.loadMessagesForRoom(roomId);
     }
     return this.messages$.get(roomId)!.asObservable();
+  }
+
+  public getReadReceiptsForRoom(roomId: string): Observable<Map<string, MatrixReadReceipt[]>> {
+    if (!this.receipts$.has(roomId)) {
+      this.receipts$.set(roomId, new BehaviorSubject<Map<string, MatrixReadReceipt[]>>(new Map()));
+      const room = this.client?.getRoom(roomId);
+      if (room) this.buildAndEmitReceipts(room);
+    }
+    return this.receipts$.get(roomId)!.asObservable();
+  }
+
+  private buildAndEmitReceipts(room: Room): void {
+    const currentUserId = this.getCurrentUserId();
+    if (!currentUserId || !this.client) return;
+    const subject = this.receipts$.get(room.roomId);
+    if (!subject) return;
+
+    const result = new Map<string, MatrixReadReceipt[]>();
+    for (const member of room.getMembers()) {
+      if (member.userId === currentUserId) continue;
+      if (member.membership !== 'join') continue;
+      const receipt = room.getReadReceiptForUserId(member.userId);
+      if (!receipt) continue;
+      const mxcUrl = (member as any)?.getMxcAvatarUrl?.() as string | undefined;
+      const avatarUrl = mxcUrl
+        ? (this.client.mxcUrlToHttp(mxcUrl, 18, 18, 'crop', true) ?? undefined)
+        : undefined;
+      const entry: MatrixReadReceipt = {
+        userId: member.userId,
+        displayName: member.rawDisplayName || member.userId.split(':')[0].substring(1),
+        avatarUrl,
+        ts: receipt.data.ts,
+      };
+      const list = result.get(receipt.eventId) ?? [];
+      list.push(entry);
+      result.set(receipt.eventId, list);
+    }
+    subject.next(result);
   }
 
   /**
