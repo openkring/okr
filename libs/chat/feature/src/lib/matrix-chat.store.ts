@@ -8,7 +8,7 @@ import { Visibility, type MatrixCall } from 'matrix-js-sdk';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@bk2/shared-feature';
-import { MatrixAuthToken, MatrixMessage, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@bk2/shared-models';
+import { MatrixAuthToken, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@bk2/shared-models';
 import { debugItemLoaded, debugMessage } from '@bk2/shared-util-core';
 import { bkPrompt, confirm, copyToClipboardWithConfirmation, showToast } from '@bk2/shared-util-angular';
 
@@ -68,6 +68,18 @@ export const _MatrixChatStore = signalStore(
     callFeedsResource: rxResource({ stream: () => store.matrixService.callFeeds }),
     typingResource: rxResource({ stream: () => store.matrixService.typing }),
 
+    receiptsResource: rxResource({
+      params: () => ({
+        currentRoomId: store.currentRoomId(),
+        isMatrixInitialized: store.isMatrixInitialized(),
+      }),
+      stream: ({ params }) => {
+        const { currentRoomId, isMatrixInitialized } = params;
+        if (!currentRoomId || !isMatrixInitialized) return of(new Map<string, MatrixReadReceipt[]>());
+        return store.matrixService.getReadReceiptsForRoom(currentRoomId);
+      },
+    }),
+
     /**
      * Get messages for current room - returns an Observable that switches when room changes.
      * isMatrixInitialized is included in params so the resource re-fires when Matrix
@@ -123,6 +135,10 @@ export const _MatrixChatStore = signalStore(
         if (!state.isMatrixInitialized()) return true;
         return state.messagesResource.value() === null;
       }),
+
+      receiptsByEventId: computed(() =>
+        state.receiptsResource.value() ?? new Map<string, MatrixReadReceipt[]>()
+      ),
 
       threadReplyCounts: computed(() => {
         const messages = state.messagesResource.value() ?? [];
