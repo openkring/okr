@@ -29,6 +29,7 @@ export class MatrixChatService {
   private typing$ = new Subject<TypingNotification>();
   private errors$ = new Subject<MatrixError>();
   private readonly tokenExpired$ = new Subject<void>();
+  private readonly roomListToggle$ = new Subject<void>();
   private readonly roomsUpdateTrigger$ = new Subject<void>();
   private roomsUpdateSub: Subscription | null = null;
   private readonly _mediaCache = new Map<string, string>(); // mxc:// -> blob URL
@@ -110,6 +111,14 @@ export class MatrixChatService {
 
   get tokenExpired(): Observable<void> {
     return this.tokenExpired$.asObservable();
+  }
+
+  get roomListToggle(): Observable<void> {
+    return this.roomListToggle$.asObservable();
+  }
+
+  toggleRoomList(): void {
+    this.roomListToggle$.next();
   }
 
   get activeCall(): Observable<MatrixCall | null> {

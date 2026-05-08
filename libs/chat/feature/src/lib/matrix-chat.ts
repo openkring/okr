@@ -654,6 +654,12 @@ export class MatrixChat implements OnDestroy {
         this.store.cleanup().then(() => this.initializeMatrixIfNeeded());
       });
 
+    // When the user taps the chat menu item while already on the chat page,
+    // toggle the room list so they can switch to another room.
+    this.store.matrixService.roomListToggle
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.showRoomList.update(v => !v));
+
     // Slow path: component mounts AFTER the token expired (user was on another page).
     // The service clears stored credentials on M_UNKNOWN_TOKEN. If the client is
     // stopped, the store still thinks we're initialized, but credentials are gone.

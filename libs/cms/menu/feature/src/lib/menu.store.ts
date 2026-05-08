@@ -187,8 +187,15 @@ export const _MenuStore = signalStore(
             case '/auth/logout':
               await this.logout();
               break;
-            default:
-              await this.selectMenuItem(store.router, menuItem);
+            default: {
+              const currentPath = store.router.url.split('?')[0];
+              if (menuItem.url === currentPath && menuItem.url.includes('/chat/')) {
+                // Already on the chat page: toggle the room list instead of navigating
+                store.matrixChatService.toggleRoomList();
+              } else {
+                await this.selectMenuItem(store.router, menuItem);
+              }
+            }
           }
           if (!isInSplitPane()) store.menuController.close('main');
         }
