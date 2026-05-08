@@ -43,9 +43,9 @@ import { MessagesStore } from './messages-section.store';
                 </ion-item>
               }
             </ion-list>
-            @if(showMoreButton() && !editMode()) {
-              <bk-more-button [url]="moreUrl()" />
-            }
+          }
+          @if(showMoreButton() && !editMode()) {
+            <bk-more-button [url]="moreUrl()" />
           }
         </ion-card-content>
       </ion-card>

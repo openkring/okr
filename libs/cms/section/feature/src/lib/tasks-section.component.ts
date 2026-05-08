@@ -71,10 +71,10 @@ import { TasksStore } from './tasks-section.store';
                                 }
                             </ion-item>
                         }
-                        @if(showMoreButton() && !editMode()) {
-                          <bk-more-button [url]="moreUrl()" />
-                        }
                     </ion-list>
+                }
+                @if(showMoreButton() && !editMode()) {
+                  <bk-more-button [url]="moreUrl()" />
                 }
             </ion-card-content>
         </ion-card>

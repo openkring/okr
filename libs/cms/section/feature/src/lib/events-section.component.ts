@@ -57,10 +57,10 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
                 <ion-label>{{ (event.startDate | weekday) | translate | async }} {{ event.startDate | prettyDate:false }} {{event.name}}</ion-label>
               </ion-item>
             }
-            @if(showMoreButton() && !editMode()) {
-              <bk-more-button class="events-more" [url]="moreUrl()" />
-            }
           </ion-list>
+        }
+        @if(showMoreButton() && !editMode()) {
+          <bk-more-button class="events-more" [url]="moreUrl()" />
         }
       </ion-card-content>
     </ion-card>
@@ -174,6 +174,11 @@ export class EventsSectionComponent implements OnInit {
       }
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
+    if (this.canChange(calevent)) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.imgixBaseUrl, 'calendar-number'));
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.imgixBaseUrl, 'calendar-number'));
+    }
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.imgixBaseUrl, 'calendar-number'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -193,17 +198,14 @@ export class EventsSectionComponent implements OnInit {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
-/*         case 'calevent.delete':
-          await this.store.delete(calEvent, this.canChange(calEvent));
-          break;
         case 'calevent.edit': {
-          const targetDate = calEvent.startDate;
-          await this.store.edit(calEvent, false, this.canChange(calEvent), false, isGrid);
+          await this.store.edit(calEvent, false, this.canChange(calEvent), false);
           break;
         }
         case 'calevent.view':
           await this.store.edit(calEvent, false, true);
           break;
+          /*
         case 'calevent.inviteGroup':
           await this.store.inviteGroupMembers(calEvent, this.canChange(calEvent));
           break;
