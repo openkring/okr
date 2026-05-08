@@ -3,12 +3,12 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
 import { ExportFormats, memberTypeMatches, yearMatches } from '@bk2/shared-categories';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
-import { AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName, TaskModel } from '@bk2/shared-models';
+import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName, TaskModel } from '@bk2/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@bk2/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl, showToast } from '@bk2/shared-util-angular';
 import { selectDate } from '@bk2/shared-ui';
@@ -17,7 +17,7 @@ import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { TaskService } from '@bk2/task-data-access';
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getMemberEmailAddresses, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
+import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
 import { AddressService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { browseUrl } from '@bk2/subject-address-util';
@@ -26,6 +26,7 @@ import { MatrixChatService } from '@bk2/chat-data-access';
 import { MemberNewModal } from './member-new.modal';
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
+import { EmailEntry, MemberEmailAddressesModal } from './membership-email-addresses.modal';
 import { InvoiceNewModal } from '@bk2/finance-invoice-feature';
 
 export type MembershipState = {
@@ -774,25 +775,51 @@ export const _MembershipStore = signalStore(
 
       // persons, orgs, active, applied, passive, cancelled, deceased, entries, exits, all, memberships
       async copyEmailAddresses(listId: string, readOnly = true): Promise<void> {
-        if (!readOnly) {
-          const persons = store.appStore.allPersons();
-          let emails: string[] = [];
-          switch (listId) {
-            case 'persons': emails = await getMemberEmailAddresses(store.filteredPersons(), persons); break;
-            case 'orgs': emails = await getMemberEmailAddresses(store.filteredOrgs(), persons); break;
-            case 'active': emails = await getMemberEmailAddresses(store.filteredActive(), persons); break;
-            case 'applied': emails = await getMemberEmailAddresses(store.filteredApplied(), persons); break;
-            case 'passive': emails = await getMemberEmailAddresses(store.filteredPassive(), persons); break;
-            case 'cancelled': emails = await getMemberEmailAddresses(store.filteredCancelled(), persons); break;
-            case 'deceased': emails = await getMemberEmailAddresses(store.filteredDeceased(), persons); break;
-            case 'entries': emails = await getMemberEmailAddresses(store.filteredEntries(), persons); break;
-            case 'exits': emails = await getMemberEmailAddresses(store.filteredExits(), persons); break;
-            case 'all':
-            case 'memberships': emails = await getMemberEmailAddresses(store.filteredMembers() ?? [], persons); break;
-          }
-          if (emails.length > 0) {
-            await copyToClipboardWithConfirmation(store.toastController, emails.toString(), '@subject.address.operation.emailCopy.conf');
-          }
+        const persons = store.appStore.allPersons();
+        let filteredMemberships: MembershipModel[] = [];
+        switch (listId) {
+          case 'persons': filteredMemberships = store.filteredPersons() ?? []; break;
+          case 'orgs': filteredMemberships = store.filteredOrgs() ?? []; break;
+          case 'active': filteredMemberships = store.filteredActive(); break;
+          case 'applied': filteredMemberships = store.filteredApplied(); break;
+          case 'passive': filteredMemberships = store.filteredPassive(); break;
+          case 'cancelled': filteredMemberships = store.filteredCancelled(); break;
+          case 'deceased': filteredMemberships = store.filteredDeceased(); break;
+          case 'entries': filteredMemberships = store.filteredEntries(); break;
+          case 'exits': filteredMemberships = store.filteredExits(); break;
+          case 'all':
+          case 'memberships': filteredMemberships = store.filteredMembers() ?? []; break;
+        }
+
+        const memberKeySet = new Set(filteredMemberships.map(m => m.memberKey));
+        const filteredPersons = persons.filter(p => p.bkey && memberKeySet.has(p.bkey));
+
+        const mainEmails: EmailEntry[] = filteredPersons
+          .filter(p => !!p.favEmail)
+          .map(p => ({ email: p.favEmail, memberKey: p.bkey ?? '', memberName: getFullName(p.firstName, p.lastName) }))
+          .sort((a, b) => a.email.localeCompare(b.email));
+
+        const ccQuery = getSystemQuery(store.tenantId());
+        ccQuery.push({ key: 'addressChannel', operator: '==', value: 'email' });
+        ccQuery.push({ key: 'isCc', operator: '==', value: true });
+        const parentKeySet = new Set(filteredPersons.map(p => `person.${p.bkey}`));
+        const allCcAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, ccQuery));
+        const ccEmails: EmailEntry[] = allCcAddresses
+          .filter(a => parentKeySet.has(a.parentKey) && !!a.email)
+          .map(a => {
+            const person = filteredPersons.find(p => `person.${p.bkey}` === a.parentKey);
+            return { email: a.email, memberKey: person?.bkey ?? '', memberName: getFullName(person?.firstName, person?.lastName) };
+          })
+          .sort((a, b) => a.email.localeCompare(b.email));
+
+        const modal = await store.modalController.create({
+          component: MemberEmailAddressesModal,
+          componentProps: { mainEmails, ccEmails, canChange: !readOnly }
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<{ memberKey: string; readOnly: boolean }>();
+        if (role === 'navigate' && data?.memberKey) {
+          await navigateByUrl(store.router, `/person/${data.memberKey}`, { readOnly: data.readOnly });
         }
       },
 
