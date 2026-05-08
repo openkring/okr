@@ -31,6 +31,13 @@ export interface MatrixMessage {
   pollEnded?: boolean;
 }
 
+export interface MatrixReadReceipt {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;  // HTTP URL (18×18 crop via mxcUrlToHttp), may be undefined
+  ts: number;          // epoch ms from the receipt event
+}
+
 export interface MatrixRoom {
   roomId: string;
   name: string;

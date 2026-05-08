@@ -34,3 +34,24 @@ export function getMatrixTypingText(userIds: string[]): string {
   if (userIds.length === 2) return `${userIds.length} ${bkTranslate('@chat.fields.areTypeing')}`;
   return bkTranslate('@chat.fields.severalTypeing');
 }
+
+const RECEIPT_COLORS = ['#e57373','#f06292','#ba68c8','#7986cb','#4fc3f7','#4db6ac','#81c784','#ffb74d'];
+
+export function buildReceiptAriaLabel(receipts: Array<{ displayName: string }>): string {
+  if (receipts.length === 0) return '';
+  if (receipts.length === 1) return `Gelesen von ${receipts[0].displayName}`;
+  if (receipts.length === 2) return `Gelesen von ${receipts[0].displayName}, ${receipts[1].displayName}`;
+  return `Gelesen von ${receipts[0].displayName}, ${receipts[1].displayName} (+${receipts.length - 2} weitere)`;
+}
+
+export function hashUserIdToColor(userId: string): string {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return RECEIPT_COLORS[Math.abs(hash) % RECEIPT_COLORS.length];
+}
+
+export function formatReceiptTime(ts: number): string {
+  return `Gelesen ${new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
+}
