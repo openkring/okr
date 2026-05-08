@@ -19,6 +19,7 @@ import * as Location from './location';
 import * as Srv from './srv';
 import * as Flighttracker from './flighttracker';
 import * as Session from './session';
+import * as Task from './task';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -165,6 +166,9 @@ export const getFlightInfo = Flighttracker.getFlightInfo;
 // session analytics
 export const endSession = Session.endSession;
 export const cleanupOrphanSessions = Session.cleanupOrphanSessions;
+
+// task notifications
+export const onTaskWritten = Task.onTaskWritten;
 
 // test
 export const getEcho = Test.getEcho;
