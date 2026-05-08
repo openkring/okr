@@ -5,3 +5,4 @@ export * from './lib/room-edit.form';
 export * from './lib/poll-create.form';
 export * from './lib/poll-message.component';
 export * from './lib/image-lightbox.modal';
+export * from './lib/matrix-read-receipt-strip';
