@@ -1,7 +1,9 @@
 // apps/functions/src/task/index.ts
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
+import { convertDateFormatToString, DateFormat } from '@bk2/shared-util-core';
 
 const REGION = 'europe-west6';
 const TASK_COLLECTION = 'tasks';
@@ -80,7 +82,7 @@ export const onTaskWritten = onDocumentWritten(
 
     const title = after.name || 'Neue Aufgabe';
     const body = after.dueDate
-      ? `Fällig: ${formatStoreDate(after.dueDate)}`
+      ? `Fällig: ${convertDateFormatToString(after.dueDate, DateFormat.StoreDate, DateFormat.ViewDate, false)}`
       : 'Neue Aufgabe zugewiesen';
 
     // Data-only message: ensures the service worker's onBackgroundMessage handler is always
@@ -108,21 +110,16 @@ export const onTaskWritten = onDocumentWritten(
       if (!r.success && r.error?.code === 'messaging/registration-token-not-registered') {
         deletions.push(
           db.collection('users').doc(uid).collection('fcmTokens').doc(tokenEntries[i].docId).delete()
-            .catch(err => console.warn('onTaskWritten: Failed to delete stale token:', err))
+            .catch(err => logger.warn('onTaskWritten: Failed to delete stale token:', err))
         );
       }
     });
     await Promise.all(deletions);
 
-    console.log(
+    logger.info(
       `onTaskWritten: badgeCount=${badgeCount} sent=${response.successCount} ` +
       `failed=${response.failureCount} task=${event.params['taskId']}`
     );
   }
 );
 
-/** Format yyyyMMdd store date → dd.MM.yyyy for display in notification body */
-function formatStoreDate(storeDate: string): string {
-  if (!storeDate || storeDate.length !== 8) return storeDate;
-  return `${storeDate.slice(6, 8)}.${storeDate.slice(4, 6)}.${storeDate.slice(0, 4)}`;
-}
