@@ -125,6 +125,7 @@ import { ImagesConfigComponent } from './images-config';
                 [formData]="peopleConfig"
                 (formDataChange)="onPeopleConfigChange($event)"
                 (selectClicked)="selectPerson()"
+                (groupSelectClicked)="selectGroup()"
                 [currentUser]="currentUser()"
                 [readOnly]="isReadOnly()"
               />
@@ -645,10 +646,17 @@ export class SectionFormComponent {
     const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL);
     if (avatar) {
       const currentConfig = this.peopleConfig();
-      this.onPeopleConfigChange({ 
+      this.onPeopleConfigChange({
         ...currentConfig,
         persons: [...(currentConfig?.persons ?? []), avatar] } as PeopleConfig
       );
+    }
+  }
+
+  public async selectGroup(): Promise<void> {
+    const group = await this.modelSelectService.selectGroup();
+    if (group) {
+      this.onPeopleConfigChange({ ...this.peopleConfig(), groupId: group.bkey } as PeopleConfig);
     }
   }
 }

@@ -1,9 +1,9 @@
 import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { AppStore, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from "@bk2/shared-feature";
+import { AppStore, GroupSelectModalComponent, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from "@bk2/shared-feature";
 import { isOrg, isPerson, isResource } from "@bk2/shared-util-core";
-import { AvatarInfo, OrgModel, PersonModel, ResourceModel } from "@bk2/shared-models";
+import { AvatarInfo, GroupModel, OrgModel, PersonModel, ResourceModel } from "@bk2/shared-models";
 import { DEFAULT_LABEL, DEFAULT_TAGS } from "@bk2/shared-constants";
 
 
@@ -103,6 +103,23 @@ export class ModelSelectService {
         if (isResource(data, this.appStore.env.tenantId)) {
             return data;
         }
+    }
+    return undefined;
+  }
+
+  public async selectGroup(selectedTag = DEFAULT_TAGS): Promise<GroupModel | undefined> {
+    const modal = await this.modalController.create({
+      component: GroupSelectModalComponent,
+      cssClass: 'list-modal',
+      componentProps: {
+        selectedTag,
+        currentUser: this.appStore.currentUser(),
+      },
+    });
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm') {
+      return data as GroupModel;
     }
     return undefined;
   }

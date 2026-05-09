@@ -1,14 +1,15 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 import { FormsModule } from '@angular/forms';
 
 import { ColorsIonic, NameDisplays } from '@bk2/shared-categories';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AvatarInfo, ColorIonic, NameDisplay, UserModel, PeopleConfig } from '@bk2/shared-models';
-import { CategoryComponent, CheckboxComponent, TextInputComponent } from '@bk2/shared-ui';
+import { CategoryComponent, CheckboxComponent, StringSelectComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean } from '@bk2/shared-util-core';
+import { SvgIconPipe } from '@bk2/shared-pipes';
 
 import { AvatarsComponent } from '@bk2/avatar-ui';
 
@@ -18,22 +19,12 @@ import { AvatarsComponent } from '@bk2/avatar-ui';
   imports: [
     vestForms, FormsModule,
     TranslatePipe, AsyncPipe,
-    IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid,
-    CategoryComponent, AvatarsComponent,
-    CheckboxComponent, TextInputComponent
+    IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonButton, IonIcon,
+    CategoryComponent, AvatarsComponent, StringSelectComponent,
+    CheckboxComponent, TextInputComponent, SvgIconPipe
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-      @if(currentUser(); as currentUser) {
-        <bk-avatars (selectClicked)="selectClicked.emit()"
-          [avatars]="persons()"
-          (avatarsChange)="onPersonsChange($event)"
-          [readOnly]="readOnly()"
-          [currentUser]="currentUser"
-          title="@content.type.people.label"
-          addLabel="@content.type.people.addLabel" />
-      }
-
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ headerTitle() | translate | async}}</ion-card-title>
@@ -52,7 +43,21 @@ import { AvatarsComponent } from '@bk2/avatar-ui';
               </ion-col>  
               <ion-col size="12" size-md="6">
                 <bk-checkbox name="showLabel" [checked]="showLabel()" (checkedChange)="onFieldChange('showLabel', $event)" [readOnly]="isReadOnly()" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                  <bk-string-select name="peopleType" [selectedString]="type()" (selectedStringChange)="onTypeChange($event)" [readOnly]="readOnly()" [showHelper]="true" [stringList]="['persons', 'group', 'responsibility']" />
               </ion-col>  
+               <ion-col size="12" size-md="6">
+                @if(type() === 'group') {
+                  <ion-button fill="outline" [disabled]="isReadOnly()" (click)="groupSelectClicked.emit()">
+                    <ion-icon slot="start" src="{{ 'select' | svgIcon }}" />
+                    {{ groupId() || ('@content.type.people.selectGroup' | translate | async) }}
+                  </ion-button>
+                }
+                @if(type() === 'responsibility') {
+                  <ion-label>tbd: Verantwortlichkeit ist noch nicht implementiert.</ion-label>
+                }
+              </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-cat name="color" [value]="color()" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />                                               
               </ion-col>  
@@ -62,13 +67,22 @@ import { AvatarsComponent } from '@bk2/avatar-ui';
               <ion-col size="12" size-md="6">
                 <bk-text-input name="linkedSection" [value]="linkedSection()" (valueChange)="onFieldChange('linkedSection', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
               </ion-col>
-              <ion-col size="12" size-md="6">
-                <bk-text-input name="groupId" [value]="groupId()" (valueChange)="onGroupIdChange($event)" [readOnly]="isReadOnly()" [showHelper]=true />
-              </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
+      @if(currentUser(); as currentUser) {
+        @if(type() === 'persons') {
+          <bk-avatars (selectClicked)="selectClicked.emit()"
+            [avatars]="persons()"
+            (avatarsChange)="onPersonsChange($event)"
+            [readOnly]="readOnly()"
+            [currentUser]="currentUser"
+            title="@content.section.type.people.label"
+            addLabel="@content.section.type.people.addLabel"
+          />
+        }
+      }
   `
 })
 export class PeopleConfigComponent {
@@ -80,6 +94,7 @@ export class PeopleConfigComponent {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   public selectClicked = output<void>();
+  public groupSelectClicked = output<void>();
 
   // linked signals (fields)
   protected avatarConfig = linkedSignal(() => this.formData()?.avatar ?? {});
@@ -92,6 +107,7 @@ export class PeopleConfigComponent {
   protected linkedSection = linkedSignal(() => this.avatarConfig().linkedSection ?? '');
   protected persons = linkedSignal(() => this.formData()?.persons ?? []);
   protected groupId = linkedSignal(() => this.formData()?.groupId ?? '');
+  protected type = linkedSignal(() => this.formData().type ?? 'persons');
 
   // passing constants to template
   protected nameDisplays = NameDisplays;
@@ -111,5 +127,9 @@ export class PeopleConfigComponent {
 
   protected onGroupIdChange(groupId: string): void {
     this.formData.update(vm => ({ ...vm, groupId }));
+  }
+
+  protected onTypeChange(type: string): void {
+    this.formData.update(vm => ({ ...vm, type: type as PeopleConfig['type'] }));
   }
 }
