@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -287,12 +287,15 @@ export const GroupStore = signalStore(
 
     /******************************* cms: page & sections *************************************** */
     /**
-     * Creates a new content page that belongs to the group and optionally adds a default article section to it.
-     * The id of the page is generated as groupKey_postfix, typically this is groupId_content
-     * @param postfix default is _content
-     * @param name 
-     * @param sectionId 
+     * Checks whether the group already has a content page.
+     * The id of the page is generated as groupId_content
+     * @param groupId the id/key of the group to check
      */
+    async doesGroupContentPageExist(groupId: string): Promise<boolean> {
+      const page = await firstValueFrom(store.firestoreService.readModel<PageModel>(PageCollection, `${groupId}_content`));
+      return !!page;
+    },
+
     async createGroupPage(group: GroupModel, postfix: string, name: string, sectionId?: string): Promise<void> {
       const page = new PageModel(store.tenantId());
       page.bkey = `${group.bkey}_${postfix}`;

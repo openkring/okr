@@ -96,7 +96,7 @@ import { GroupStore } from './group.store';
     `
 })
 export class GroupListComponent {
-  protected readonly groupStore = inject(GroupStore);
+  protected readonly store = inject(GroupStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -106,36 +106,36 @@ export class GroupListComponent {
   // derived signals
   protected filteredGroups = computed(() => {
     switch(this.listId()) {
-      case 'my': return this.groupStore.myAccessibleGroups();
+      case 'my': return this.store.myAccessibleGroups();
       case 'all': 
-      default: return this.groupStore.filteredGroups();
+      default: return this.store.filteredGroups();
     }
   });
   protected groupsCount = computed(() => this.filteredGroups()?.length ?? 0);
   protected selectedGroupsCount = computed(() => this.filteredGroups().length);
-  protected isLoading = computed(() => this.groupStore.isLoading());
-  protected tags = computed(() => this.groupStore.getTags());
-  private currentUser = computed(() => this.groupStore.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.getTags());
+  private currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !this.canChange());
   protected popupId = computed(() => 'c_groups_' + generateRandomString(5));
 
-  private imgixBaseUrl = this.groupStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.groupStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.groupStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.groupStore.add(this.readOnly()); break;
-      case 'exportRaw': await this.groupStore.export("raw"); break;
+      case 'add': await this.store.add(this.readOnly()); break;
+      case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `GroupComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -147,10 +147,10 @@ export class GroupListComponent {
    */
   protected async showActions(group: GroupModel): Promise<void> {
     if (this.readOnly()) {
-      await this.groupStore.view(group, this.readOnly());
+      await this.store.view(group, this.readOnly());
     } else {
       const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-      this.addActionSheetButtons(actionSheetOptions, group);
+      await this.addActionSheetButtons(actionSheetOptions, group);
       await this.executeActions(actionSheetOptions, group);
     }
   }
@@ -159,12 +159,14 @@ export class GroupListComponent {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param group 
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): void {
+  private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): Promise<void> {
     actionSheetOptions.buttons.push(createActionSheetButton('group.show', this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('group.edit', this.imgixBaseUrl, 'edit'));
-    if (hasRole('admin', this.groupStore.appStore.currentUser())) {
+    if (hasRole('admin', this.store.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('group.addPage', this.imgixBaseUrl, 'add'));
+      if (await this.store.doesGroupContentPageExist(group.bkey) === false) {
+        actionSheetOptions.buttons.push(createActionSheetButton('group.addPage', this.imgixBaseUrl, 'add'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('group.delete', this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
@@ -183,20 +185,20 @@ export class GroupListComponent {
       if (!data) return;
       switch (data.action) {
         case 'group.delete':
-          await this.groupStore.delete(group, this.readOnly());
+          await this.store.delete(group, this.readOnly());
           break;
         case 'group.addPage':
           // tbd: add default article section explaining how to add content to the group page
-          await this.groupStore.createGroupPage(group, 'intro', 'Gruppe: ' + group.name);
+          await this.store.createGroupPage(group, 'intro', 'Gruppe: ' + group.name);
           break;
         case 'group.edit':
-          await this.groupStore.edit(group, this.readOnly());
+          await this.store.edit(group, this.readOnly());
           break;
         case 'group.view':
-          await this.groupStore.edit(group, true);
+          await this.store.edit(group, true);
           break;
         case 'group.show':
-          await this.groupStore.view(group, this.readOnly());
+          await this.store.view(group, this.readOnly());
           break;
       }
     }
@@ -204,7 +206,7 @@ export class GroupListComponent {
 
   /******************************** helpers ******************************************* */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.groupStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 
   protected canChange(): boolean {
