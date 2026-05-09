@@ -16,6 +16,7 @@
     "@bk2/shared-pipes": "*",
     "@bk2/shared-ui": "*",
     "@bk2/session-data-access": "*",
-    "@capacitor/app": "*"
+    "@capacitor/app": "*",
+    "@bk2/relationship-responsibility-data-access": "*"
   }
 }

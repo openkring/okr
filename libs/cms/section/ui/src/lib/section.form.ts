@@ -126,6 +126,7 @@ import { ImagesConfigComponent } from './images-config';
                 (formDataChange)="onPeopleConfigChange($event)"
                 (selectClicked)="selectPerson()"
                 (groupSelectClicked)="selectGroup()"
+                (responsibilitySelectClicked)="selectResponsibility()"
                 [currentUser]="currentUser()"
                 [readOnly]="isReadOnly()"
               />
@@ -657,6 +658,13 @@ export class SectionFormComponent {
     const group = await this.modelSelectService.selectGroup();
     if (group) {
       this.onPeopleConfigChange({ ...this.peopleConfig(), groupId: group.bkey } as PeopleConfig);
+    }
+  }
+
+  public async selectResponsibility(): Promise<void> {
+    const responsibility = await this.modelSelectService.selectResponsibility();
+    if (responsibility) {
+      this.onPeopleConfigChange({ ...this.peopleConfig(), responsibilityId: responsibility.bkey } as PeopleConfig);
     }
   }
 }

@@ -26,6 +26,7 @@
     {"path": "../../shared/i18n/tsconfig.lib.json"},
     {"path": "../../shared/pipes/tsconfig.lib.json"},
     {"path": "../../shared/ui/tsconfig.lib.json"},
-    {"path": "../../avatar/ui/tsconfig.lib.json"}
+    {"path": "../../avatar/ui/tsconfig.lib.json"},
+    {"path": "../../relationship/responsibility/data-access/tsconfig.lib.json"}
   ]
 }

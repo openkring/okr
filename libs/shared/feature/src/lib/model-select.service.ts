@@ -1,9 +1,9 @@
 import { inject, Injectable } from "@angular/core";
 import { ModalController } from "@ionic/angular/standalone";
 
-import { AppStore, GroupSelectModalComponent, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent } from "@bk2/shared-feature";
+import { AppStore, GroupSelectModalComponent, OrgSelectModalComponent, PersonSelectModalComponent, ResourceSelectModalComponent, ResponsibilitySelectModal } from "@bk2/shared-feature";
 import { isOrg, isPerson, isResource } from "@bk2/shared-util-core";
-import { AvatarInfo, GroupModel, OrgModel, PersonModel, ResourceModel } from "@bk2/shared-models";
+import { AvatarInfo, GroupModel, OrgModel, PersonModel, ResourceModel, ResponsibilityModel } from "@bk2/shared-models";
 import { DEFAULT_LABEL, DEFAULT_TAGS } from "@bk2/shared-constants";
 
 
@@ -120,6 +120,22 @@ export class ModelSelectService {
     const { data, role } = await modal.onWillDismiss();
     if (role === 'confirm') {
       return data as GroupModel;
+    }
+    return undefined;
+  }
+
+  public async selectResponsibility(): Promise<ResponsibilityModel | undefined> {
+    const currentUser = this.appStore.currentUser();
+    if (!currentUser) return undefined;
+    const modal = await this.modalController.create({
+      component: ResponsibilitySelectModal,
+      cssClass: 'list-modal',
+      componentProps: { currentUser },
+    });
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm') {
+      return data as ResponsibilityModel;
     }
     return undefined;
   }
