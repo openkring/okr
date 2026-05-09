@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
-import { IonAvatar, IonContent, IonItem, IonLabel, IonList, IonNote, IonToolbar } from '@ionic/angular/standalone';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { IonAvatar, IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { MatrixReadReceipt } from '@bk2/shared-models';
@@ -14,7 +14,7 @@ import { hashUserIdToColor } from '@bk2/chat-util';
   imports: [
     AsyncPipe, TranslatePipe,
     HeaderComponent,
-    IonContent, IonList, IonItem, IonLabel, IonAvatar, IonNote, IonToolbar,
+    IonContent, IonList, IonItem, IonLabel, IonAvatar,
   ],
   styles: [`
     .answer-header {
