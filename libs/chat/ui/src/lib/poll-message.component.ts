@@ -242,9 +242,9 @@ export class PollMessageComponent {
   protected async onHeaderClick(): Promise<void> {
     const url = this.env.services.imgixBaseUrl;
     const opts: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    opts.buttons.push(createActionSheetButton('poll.viewVotes', url, 'bar-chart'));
+    opts.buttons.push(createActionSheetButton('poll.viewVotes', url, 'chart'));
     if (!this.message().pollEnded && this.message().sender === this.currentUserId()) {
-      opts.buttons.push(createActionSheetButton('poll.end', url, 'close-circle'));
+      opts.buttons.push(createActionSheetButton('poll.end', url, 'cancel-circle'));
     }
     opts.buttons.push(createActionSheetButton('cancel', url, 'cancel'));
 

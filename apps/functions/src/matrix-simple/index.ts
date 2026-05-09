@@ -1429,6 +1429,10 @@ export const sendCallNotification = onCall(
         roomName: roomName ?? '',
         callerName: callerName ?? '',
         url: chatUrl,
+        // Badge count for the PWA Badging API in the service worker.
+        // Video calls are always urgent, so at minimum 1.
+        // Future: compute real total (unread chat + open tasks) per recipient.
+        badgeCount: '1',
       },
       android: {
         priority: 'high',

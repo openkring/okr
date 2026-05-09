@@ -11,6 +11,7 @@ import { filter, switchMap, take, tap } from 'rxjs/operators';
 import { AppStore } from '@bk2/shared-feature';
 import { MatrixChatService } from '@bk2/chat-data-access';
 import { FcmService } from '@bk2/shared-data-access';
+import { MatrixChatStore } from './matrix-chat.store';
 
 interface MatrixAuthToken {
   accessToken: string;
@@ -29,6 +30,7 @@ interface MatrixAuthToken {
 export class MatrixInitializationService {
   private readonly appStore = inject(AppStore);
   private readonly matrixService = inject(MatrixChatService);
+  private readonly matrixChatStore = inject(MatrixChatStore);
   private readonly fcmService = inject(FcmService);
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
@@ -124,11 +126,6 @@ export class MatrixInitializationService {
           const roomName   = payload.data['roomName']   ?? '';
           const url        = payload.data['url']        as string | undefined;
 
-          // Set badge so the app icon shows an indicator even while the app is open
-          if ('setAppBadge' in navigator) {
-            (navigator as any).setAppBadge(1).catch(() => {});
-          }
-
           // Show a notification via the service worker — works on all platforms including iOS Safari.
           // new Notification() from the main thread is blocked on iOS and unreliable on Android
           // when a service worker is active; SW.showNotification() is the correct cross-platform API.
@@ -149,9 +146,26 @@ export class MatrixInitializationService {
             this.router.navigateByUrl(url);
           }
         });
+
+        // Keep the PWA app icon badge in sync with the total unread count (chat + future: tasks).
+        // This covers the foreground case; the service worker handles the background case.
+        if ('setAppBadge' in navigator) {
+          runInInjectionContext(this.injector, () =>
+            toObservable(this.matrixChatStore.totalUnreadCount).subscribe(count => {
+              if (count > 0) {
+                (navigator as Navigator & { setAppBadge: (n: number) => Promise<void> })
+                  .setAppBadge(count).catch(() => {});
+              } else {
+                (navigator as Navigator & { clearAppBadge: () => Promise<void> })
+                  .clearAppBadge().catch(() => {});
+              }
+            })
+          );
+        }
       }
 
-      // Clear the badge when the user returns to the app
+      // Clear the badge immediately when the user brings the app to the foreground.
+      // The reactive subscription above will update it to the accurate count once rooms sync.
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible' && 'clearAppBadge' in navigator) {
           (navigator as any).clearAppBadge().catch(() => {});
