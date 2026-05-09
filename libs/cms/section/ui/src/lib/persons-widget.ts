@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, Signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
@@ -48,9 +48,10 @@ export class PersonsWidgetComponent {
   // inputs
   public section = input<PeopleSection>();
   public editMode = input(false);
+  public overridePersons = input<AvatarInfo[] | undefined>(undefined);
 
   // signals
-  protected persons = computed(() => this.section()?.properties.persons ?? []);
+  protected persons = computed(() => this.overridePersons() ?? this.section()?.properties.persons ?? []);
   protected avatar = computed(() => this.section()?.properties.avatar ?? AVATAR_CONFIG_SHAPE);
   protected avatarTitle = computed(() => this.avatar().title);
   protected count = computed(() => this.persons().length);

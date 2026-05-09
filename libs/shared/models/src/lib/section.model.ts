@@ -408,6 +408,7 @@ export interface PeopleSection extends BaseSection {
 export interface PeopleConfig {
   avatar: AvatarConfig;
   persons: AvatarInfo[]; // list of persons to be shown
+  groupId?: string; // if set, members of this group are used instead of persons
 }
 
 export interface AvatarConfig {

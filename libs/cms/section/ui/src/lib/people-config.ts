@@ -60,8 +60,11 @@ import { AvatarsComponent } from '@bk2/avatar-ui';
                 <bk-cat name="nameDisplay" [value]="nameDisplay()" (valueChange)="onFieldChange('nameDisplay', $event)" [readOnly]="isReadOnly()" [categories]="nameDisplays" />                                               
               </ion-col>  
               <ion-col size="12" size-md="6">
-                <bk-text-input name="linkedSection" [value]="linkedSection()" (valueChange)="onFieldChange('linkedSection', $event)" [readOnly]="isReadOnly()" [showHelper]=true />                                               
-              </ion-col> 
+                <bk-text-input name="linkedSection" [value]="linkedSection()" (valueChange)="onFieldChange('linkedSection', $event)" [readOnly]="isReadOnly()" [showHelper]=true />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <bk-text-input name="groupId" [value]="groupId()" (valueChange)="onGroupIdChange($event)" [readOnly]="isReadOnly()" [showHelper]=true />
+              </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -88,6 +91,7 @@ export class PeopleConfigComponent {
   protected nameDisplay = linkedSignal(() => this.avatarConfig().nameDisplay ?? NameDisplay.FirstLast);
   protected linkedSection = linkedSignal(() => this.avatarConfig().linkedSection ?? '');
   protected persons = linkedSignal(() => this.formData()?.persons ?? []);
+  protected groupId = linkedSignal(() => this.formData()?.groupId ?? '');
 
   // passing constants to template
   protected nameDisplays = NameDisplays;
@@ -103,5 +107,9 @@ export class PeopleConfigComponent {
       const avatar = { ...vm.avatar, [fieldName]: fieldValue };
       return { ...vm, avatar };
     });
+  }
+
+  protected onGroupIdChange(groupId: string): void {
+    this.formData.update(vm => ({ ...vm, groupId }));
   }
 }

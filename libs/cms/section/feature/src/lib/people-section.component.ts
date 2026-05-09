@@ -1,13 +1,15 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
-import { firstValueFrom } from 'rxjs/internal/firstValueFrom';
+import { firstValueFrom } from 'rxjs';
 
-import { PeopleSection, ViewPosition } from "@bk2/shared-models";
+import { AvatarInfo, PeopleSection, ViewPosition } from "@bk2/shared-models";
 import { SpinnerComponent } from "@bk2/shared-ui";
 
 import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
 import { SectionViewModal } from '@bk2/cms-section-feature';
 import { SectionService } from '@bk2/cms-section-data-access';
+import { MembershipService } from '@bk2/relationship-membership-data-access';
 
 @Component({
   selector: 'bk-people-section',
@@ -33,11 +35,11 @@ import { SectionService } from '@bk2/cms-section-data-access';
                   </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="9">
-                  <bk-persons-widget [section]="section" [editMode]="editMode()" />
+                  <bk-persons-widget [section]="section" [editMode]="editMode()" [overridePersons]="groupMembers()" />
                 </ion-col>
               } @else {
               <ion-col size="12">
-                <bk-persons-widget [section]="section" [editMode]="editMode()" />
+                <bk-persons-widget [section]="section" [editMode]="editMode()" [overridePersons]="groupMembers()" />
               </ion-col>
               }
             </ion-row>
@@ -52,6 +54,7 @@ import { SectionService } from '@bk2/cms-section-data-access';
 export class PeopleSectionComponent {
   private readonly modalController = inject(ModalController);
   private readonly sectionService = inject(SectionService);
+  private readonly membershipService = inject(MembershipService);
 
   // inputs
   public section = input<PeopleSection>();
@@ -65,6 +68,21 @@ export class PeopleSectionComponent {
   protected readonly avatarConfig = computed(() => this.section()?.properties.avatar);
   protected readonly avatarTitle = computed(() => this.avatarConfig()?.title);
   protected readonly linkedSectionId = computed(() => this.section()?.properties.avatar?.linkedSection);
+  protected readonly groupId = computed(() => this.section()?.properties.groupId ?? '');
+
+  protected readonly groupMembersResource = rxResource({
+    params: () => ({ groupId: this.groupId() }),
+    stream: ({ params }): ReturnType<typeof this.membershipService.listMembersOfOrg> => {
+      if (!params.groupId) return this.membershipService.listMembersOfOrg('');
+      return this.membershipService.listMembersOfOrg(params.groupId);
+    }
+  });
+
+  protected readonly groupMembers = computed<AvatarInfo[] | undefined>(() => {
+    if (!this.groupId()) return undefined;
+    const memberships = this.groupMembersResource.value();
+    return memberships ? this.membershipService.getMemberAvatars(memberships) : [];
+  });
 
   // passing constants to template
   public VP = ViewPosition;
