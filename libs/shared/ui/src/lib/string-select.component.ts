@@ -31,7 +31,7 @@ import { coerceBoolean } from '@bk2/shared-util-core';
 
       @if(shouldShowHelper()) {
     <ion-item lines="none">
-        <ion-note>{{ helperNote() | translate | async }}</ion-note>
+        <ion-note style="white-space: pre-line">{{ helperNote() | translate | async }}</ion-note>
     </ion-item>
       }
   `

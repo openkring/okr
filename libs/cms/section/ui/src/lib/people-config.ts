@@ -50,13 +50,15 @@ import { AvatarsComponent } from '@bk2/avatar-ui';
                <ion-col size="12" size-md="6">
                 @if(type() === 'group') {
                   <ion-button fill="outline" [disabled]="isReadOnly()" (click)="groupSelectClicked.emit()">
-                    <ion-icon slot="start" src="{{ 'select' | svgIcon }}" />
-                    {{ groupId() || ('@content.type.people.selectGroup' | translate | async) }}
+                    <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />
+                    {{ groupId() || ('@content.section.type.people.select.group' | translate | async) }}
                   </ion-button>
                 }
                 @if(type() === 'responsibility') {
-                  <ion-label>tbd: Verantwortlichkeit ist noch nicht implementiert.</ion-label>
-                }
+                  <ion-button fill="outline" [disabled]="isReadOnly()" (click)="responsibilitySelectClicked.emit()">
+                    <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />
+                    {{ groupId() || ('@content.section.type.people.select.responsibility' | translate | async) }}
+                  </ion-button>                }
               </ion-col>
               <ion-col size="12" size-md="6">
                 <bk-cat name="color" [value]="color()" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />                                               
@@ -95,6 +97,7 @@ export class PeopleConfigComponent {
 
   public selectClicked = output<void>();
   public groupSelectClicked = output<void>();
+  public responsibilitySelectClicked = output<void>();
 
   // linked signals (fields)
   protected avatarConfig = linkedSignal(() => this.formData()?.avatar ?? {});

@@ -39,7 +39,7 @@ import { GroupSelectStore } from './group-select.store';
             <ion-list lines="none">
               <ion-item class="item" (click)="select(group)">
                  <ion-avatar slot="start">
-                  <ion-img src="{{ 'group.' + group.bkey | avatar:defaultIcon }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'group.' + group.bkey | avatar:group.icon }}" alt="Group Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ group.name }}</ion-label>
               </ion-item>

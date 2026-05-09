@@ -407,8 +407,10 @@ export interface PeopleSection extends BaseSection {
 
 export interface PeopleConfig {
   avatar: AvatarConfig;
-  persons: AvatarInfo[]; // list of persons to be shown
-  groupId?: string; // if set, members of this group are used instead of persons
+  type: 'persons' | 'group' | 'responsibility';
+  persons: AvatarInfo[]; // explicit list of persons to be shown
+  groupId?: string; // members of this group are shown 
+  responsibilityId: string; // persons with this responsibility are shown (responsible and delegate)
 }
 
 export interface AvatarConfig {
