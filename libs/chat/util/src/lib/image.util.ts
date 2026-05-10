@@ -35,7 +35,10 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
   try {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore – libheif-js ships no TypeScript declarations
-    const { default: libheif } = await import('libheif-js/wasm-bundle');
+    const mod: any = await import('libheif-js/wasm-bundle');
+    // In the browser the Emscripten factory returns a Promise (async WASM init);
+    // in Node.js it returns the module directly. Awaiting handles both.
+    const libheif: any = await (mod.default ?? mod);
     const decoder = new libheif.HeifDecoder();
     const data = decoder.decode(new Uint8Array(await file.arrayBuffer()));
     if (!data.length) throw new Error('No images decoded from HEIC');
