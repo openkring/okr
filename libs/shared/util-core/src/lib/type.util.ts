@@ -1,5 +1,6 @@
 import { AVATAR_INFO_SHAPE, AvatarInfo, BaseProperty, BaseType, BkModel, GroupModel, MembershipModel, MetaTag, MoneyModel, OrgModel, OwnershipModel, PersonalRelModel, PersonModel, ResourceModel, UserModel } from '@bk2/shared-models';
 import { die, warn } from './log.util';
+import { convertDateFormatToString, DateFormat } from './date.util';
 
 /************************************************* Tupel ********************************************************** */
 /**
@@ -609,39 +610,35 @@ export function removeUndefinedFields(obj: Record<string, any>): Record<string, 
 }
 
 /**
- * Parses a string in the format yyyymmdd[,hhmm]:name[,location][//type] into its components.
- * @param input The input string.
- * @returns An object with startDate, startTime, name, location, type (all strings, empty if missing)
- * Example: 20260130,1830:Event Name,Zurich//meeting
- *   → { startDate: '20260130', startTime: '1830', name: 'Event Name', location: 'Zurich', type: 'meeting' }
+ * Parses a freeform text string with optional date/time and @person tokens into its components.
+ * @param input The input string, e.g. 'Team Meeting 30.01.2026,1830' or '@Maria Muster Team Meeting 30.01.2026'
+ * @returns An object with startDate (yyyyMMdd), startTime (HHmm), name, location (all strings, empty if missing)
  */
 export function parseEventString(input: string): {
   startDate: string;
   startTime: string;
   name: string;
   location: string;
-  type: string;
 } {
-  let startDate = '', startTime = '', name = '', location = '', type = '';
-  if (!input) return { startDate, startTime, name, location, type };
+  if (!input) return { startDate: '', startTime: '', name: '', location: '' };
 
-  // Split off type if present
-  const [main, typePart] = input.split('//');
-  if (typePart) type = typePart.trim();
+  // Extract dd.MM.yyyy or dd.MM.yyyy,HHmm token (modal-produced)
+  const dateTimeMatch = input.match(/\b(\d{2}\.\d{2}\.\d{4})(?:,(\d{4}))?\b/);
+  let startDate = '';
+  let startTime = '';
+  if (dateTimeMatch) {
+    startDate = convertDateFormatToString(dateTimeMatch[1], DateFormat.ViewDate, DateFormat.StoreDate, false);
+    startTime = dateTimeMatch[2] ?? '';
+  }
 
-  // Split date/time from rest
-  const [dateTime, rest] = main.split(':');
-  if (dateTime) {
-    const [date, time] = dateTime.split(',');
-    startDate = (date || '').trim();
-    startTime = (time || '').trim();
-  }
-  if (rest) {
-    const [n, loc] = rest.split(',');
-    name = (n || '').trim();
-    location = (loc || '').trim();
-  }
-  return { startDate, startTime, name, location, type };
+  // Strip @person (up to two words) and date+time tokens; remainder is the event name
+  const name = input
+    .replace(/@\w+(?:\s+\w+)?/g, '')
+    .replace(/\b\d{2}\.\d{2}\.\d{4}(?:,\d{4})?\b/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return { startDate, startTime, name, location: '' };
 }
 
   /**

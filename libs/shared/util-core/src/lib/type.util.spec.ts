@@ -75,7 +75,8 @@ import {
     // Sorting functions
     SortOrder,
     validateNumberRange,
-    zipCodeMatches
+    zipCodeMatches,
+    parseEventString
 } from './type.util';
 
 // Mock the log.util module
@@ -915,6 +916,52 @@ describe('type.util', () => {
       expect(booleans).toEqual([true]);
       expect(arrays).toHaveLength(1);
       expect(objects).toHaveLength(3); // array, object, date
+    });
+  });
+
+  describe('parseEventString', () => {
+    it('extracts date token and name from text', () => {
+      const result = parseEventString('Team Meeting 30.01.2026');
+      expect(result.startDate).toBe('20260130');
+      expect(result.startTime).toBe('');
+      expect(result.name).toBe('Team Meeting');
+      expect(result.location).toBe('');
+    });
+
+    it('extracts date+time token and name from text', () => {
+      const result = parseEventString('Team Meeting 30.01.2026,1830');
+      expect(result.startDate).toBe('20260130');
+      expect(result.startTime).toBe('1830');
+      expect(result.name).toBe('Team Meeting');
+    });
+
+    it('strips @person token from name', () => {
+      const result = parseEventString('@Maria Muster Team Meeting 30.01.2026');
+      expect(result.name).toBe('Team Meeting');
+      expect(result.startDate).toBe('20260130');
+    });
+
+    it('strips @person token wherever it appears', () => {
+      const result = parseEventString('Team Meeting @Maria Muster 30.01.2026,1830');
+      expect(result.name).toBe('Team Meeting');
+      expect(result.startDate).toBe('20260130');
+      expect(result.startTime).toBe('1830');
+    });
+
+    it('returns empty fields for text with no tokens', () => {
+      const result = parseEventString('Team Meeting');
+      expect(result.startDate).toBe('');
+      expect(result.startTime).toBe('');
+      expect(result.name).toBe('Team Meeting');
+      expect(result.location).toBe('');
+    });
+
+    it('returns all empty for empty input', () => {
+      const result = parseEventString('');
+      expect(result.startDate).toBe('');
+      expect(result.startTime).toBe('');
+      expect(result.name).toBe('');
+      expect(result.location).toBe('');
     });
   });
 });
