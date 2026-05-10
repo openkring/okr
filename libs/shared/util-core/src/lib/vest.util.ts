@@ -1,4 +1,4 @@
-import { LONG_NAME_LENGTH, NAME_LENGTH, NUMBER_LENGTH, SHORT_NAME_LENGTH, STORE_DATE_LENGTH, STORE_DATETIME_LENGTH, TIME_LENGTH, URL_LENGTH } from '@bk2/shared-constants';
+import { LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, STORE_DATE_LENGTH, STORE_DATETIME_LENGTH, TIME_LENGTH, URL_LENGTH } from '@bk2/shared-constants';
 import { enforce, omitWhen, test } from 'vest';
 import { checkDate, DateFormat } from './date.util';
 import { isArrayOfStrings, isAvatarInfo, isMoney } from './type.util';
@@ -10,7 +10,7 @@ import { AddressableModel, AvatarInfo, BkModel, isAddressableModel, isBaseModel,
  * - NamedModel: name
  * - TaggedModel: tags
  * - SearchableModel: index
- * - AddressableModel: favEmail, favPhone, favStreetName, favStreetNumber, favZipCode, favCity, favCountryCode
+ * - AddressableModel: favEmail, favPhone, favZipCode
  * - PersistedModel: tenants, isArchived
  * @param model BkModel
  * @param field optional field to validate
@@ -40,11 +40,7 @@ export function baseValidations(model: BkModel, givenTenants: string, givenTags:
     const m = model as unknown as AddressableModel;
     stringValidations('favEmail', m.favEmail, SHORT_NAME_LENGTH);
     stringValidations('favPhone', m.favPhone, SHORT_NAME_LENGTH);
-    stringValidations('favStreetName', m.favStreetName, NAME_LENGTH);
-    stringValidations('favStreetNumber', m.favStreetNumber, NUMBER_LENGTH);
     stringValidations('favZipCode', m.favZipCode, SHORT_NAME_LENGTH);
-    stringValidations('favCity', m.favCity, SHORT_NAME_LENGTH);
-    stringValidations('favCountryCode', m.favCountryCode, SHORT_NAME_LENGTH);
   });
 
   omitWhen(!isPersistedModel(model), () => {

@@ -501,13 +501,9 @@ export const AocDataStore = signalStore(
 
           const name = `${person.firstName} ${person.lastName}`;
           const checks: Array<[string, string, string]> = [
-            ['favEmail',        person.favEmail,        fav.favEmail],
-            ['favPhone',        person.favPhone,        fav.favPhone],
-            ['favStreetName',   person.favStreetName,   fav.favStreetName],
-            ['favStreetNumber', person.favStreetNumber, fav.favStreetNumber],
-            ['favZipCode',      person.favZipCode,      fav.favZipCode],
-            ['favCity',         person.favCity,         fav.favCity],
-            ['favCountryCode',  person.favCountryCode,  fav.favCountryCode],
+            ['favEmail',   person.favEmail,   fav.favEmail],
+            ['favPhone',   person.favPhone,   fav.favPhone],
+            ['favZipCode', person.favZipCode, fav.favZipCode],
           ];
           for (const [field, cached, fromAddress] of checks) {
             if (cached !== fromAddress) {

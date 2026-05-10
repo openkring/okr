@@ -131,10 +131,10 @@ export const AocBexioStore = signalStore(
           name2: person.lastName ?? '',
           type: 'person',
           bexioId: person.bexioId,
-          streetName: person.favStreetName,
-          streetNumber: person.favStreetNumber,
+          streetName: '',
+          streetNumber: '',
           zipCode: person.favZipCode,
-          city: person.favCity,
+          city: '',
           email: person.favEmail,
 
           mkey: membership?.bkey ?? '',
@@ -166,10 +166,10 @@ export const AocBexioStore = signalStore(
           name2: org.name,
           type: 'org',
           bexioId: org.bexioId,
-          streetName: org.favStreetName,
-          streetNumber: org.favStreetNumber,
+          streetName: '',
+          streetNumber: '',
           zipCode: org.favZipCode,
-          city: org.favCity,
+          city: '',
           email: org.favEmail,
           
           mkey: membership?.bkey ?? '',
@@ -454,36 +454,24 @@ export const AocBexioStore = signalStore(
         const person = new PersonModel(store.tenantId());
         person.firstName = item.bx_name1;
         person.lastName = item.bx_name2;
-        person.favEmail = item.bx_email;
-        person.favStreetName = item.bx_streetName;
-        person.favStreetNumber = item.bx_streetNumber;
-        person.favZipCode = item.bx_zipCode;
-        person.favCity = item.bx_city;
-        person.favCountryCode = 'CH';
         person.bexioId = item.bx_id;
         bkey = await store.firestoreService.createModel<PersonModel>(PersonCollection, person, undefined, currentUser);
         const avatarKey = 'person.' + bkey;
-        if (person.favEmail) {
-          await this.saveAddress(createFavoriteAddress('email', 'home', person.favEmail, store.tenantId()), avatarKey);
+        if (item.bx_email) {
+          await this.saveAddress(createFavoriteAddress('email', 'home', item.bx_email, store.tenantId()), avatarKey);
         }
-        await this.saveAddress(createFavoriteAddress('postal', 'home', person.favStreetName, store.tenantId(), person.favStreetNumber, '', person.favZipCode, person.favCity, person.favCountryCode), avatarKey);
+        await this.saveAddress(createFavoriteAddress('postal', 'home', item.bx_streetName, store.tenantId(), item.bx_streetNumber, '', item.bx_zipCode, item.bx_city, 'CH'), avatarKey);
 
       } else {
         const org = new OrgModel(store.tenantId());
         org.name = item.bx_name2;
-        org.favEmail = item.bx_email;
-        org.favStreetName = item.bx_streetName;
-        org.favStreetNumber = item.bx_streetNumber;
-        org.favZipCode = item.bx_zipCode;
-        org.favCity = item.bx_city;
-        org.favCountryCode = 'CH';
         org.bexioId = item.bx_id;
         bkey = await store.firestoreService.createModel<OrgModel>(OrgCollection, org, undefined, currentUser);
         const avatarKey = 'org.' + bkey;
-        if (org.favEmail) {
-          await this.saveAddress(createFavoriteAddress('email', 'work', org.favEmail, store.tenantId()), avatarKey);
+        if (item.bx_email) {
+          await this.saveAddress(createFavoriteAddress('email', 'work', item.bx_email, store.tenantId()), avatarKey);
         }
-        await this.saveAddress(createFavoriteAddress('postal', 'work', org.favStreetName, store.tenantId(), org.favStreetNumber, '', org.favZipCode, org.favCity, org.favCountryCode), avatarKey);
+        await this.saveAddress(createFavoriteAddress('postal', 'work', item.bx_streetName, store.tenantId(), item.bx_streetNumber, '', item.bx_zipCode, item.bx_city, 'CH'), avatarKey);
       }
 
       if (bkey) {

@@ -27,14 +27,6 @@ export function convertFormToNewPerson(vm: PersonNewFormModel, tenantId: string)
   person.ssnId = formatAhv(vm.ssnId ?? DEFAULT_ID, AhvFormat.Electronic);
   person.bexioId = vm.bexioId ?? DEFAULT_ID;
 
-  person.favEmail = vm.email ?? DEFAULT_EMAIL;
-  person.favPhone = vm.phone ?? DEFAULT_PHONE;
-  person.favStreetName = vm.streetName ?? DEFAULT_STREETNAME;
-  person.favStreetNumber = vm.streetNumber ?? DEFAULT_STREETNUMBER;
-  person.favZipCode = vm.zipCode ?? DEFAULT_ZIP;
-  person.favCity = vm.city ?? DEFAULT_CITY;
-  person.favCountryCode = vm.countryCode ?? DEFAULT_COUNTRY;
-
   person.notes = vm.notes ?? DEFAULT_NOTES;
   person.tags = vm.tags ?? DEFAULT_TAGS;
 
@@ -106,7 +98,7 @@ export function convertNewPersonFormToMembership(vm: PersonNewFormModel, personK
 export function getPersonIndex(person: PersonModel): string {
   let _index = '';
   _index = addIndexElement(_index, 'n', person.lastName);
-  _index = addIndexElement(_index, 'c', person.favCity);
+  _index = addIndexElement(_index, 'z', person.favZipCode);
   _index = addIndexElement(_index, 'fn', person.firstName);
   _index = addIndexElement(_index, 'bx', person.bexioId);
   _index = addIndexElement(_index, 'dob', person.dateOfBirth);
@@ -118,5 +110,5 @@ export function getPersonIndex(person: PersonModel): string {
  * This can be used in info boxes on the GUI.
  */
 export function getPersonIndexInfo(): string {
-  return 'n:name c:city fn:firstName dob:dateOfBirth bx:bexioId';
+  return 'n:name z:zipCode fn:firstName dob:dateOfBirth bx:bexioId';
 }

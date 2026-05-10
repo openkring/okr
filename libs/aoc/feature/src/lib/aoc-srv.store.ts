@@ -5,11 +5,12 @@ import { ModalController } from '@ionic/angular/standalone';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 
 import { isFirestoreInitializedCheck } from '@bk2/shared-config';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, OrgSelectModalComponent } from '@bk2/shared-feature';
-import { MembershipCollection, MembershipModel, OrgModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvMismatch } from '@bk2/shared-models';
+import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OrgModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvMismatch } from '@bk2/shared-models';
 import { debugListLoaded, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@bk2/shared-util-core';
 
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
@@ -55,7 +56,8 @@ function buildIndexEntry(
   p: MembershipModel | undefined,
   r: SrvContact | undefined,
   person: PersonModel | undefined,
-  isProdEnv: boolean
+  isProdEnv: boolean,
+  postal?: AddressModel
 ): SrvIndex {
   const firstName = m?.memberName1 ?? r?.firstName ?? p?.memberName1 ?? '';
   const lastName  = m?.memberName2 ?? r?.lastName  ?? p?.memberName2 ?? '';
@@ -76,9 +78,9 @@ function buildIndexEntry(
     mCategory:   memberCatAbbr(m?.category ?? ''),
     mEmail:      person?.favEmail ?? '',
     mPhone:      person?.favPhone ?? '',
-    mStreet:     person ? `${person.favStreetName} ${person.favStreetNumber}`.trim() : '',
-    mZipCode:    person?.favZipCode ?? '',
-    mCity:       person?.favCity ?? '',
+    mStreet:     postal ? `${postal.streetName} ${postal.streetNumber}`.trim() : '',
+    mZipCode:    postal?.zipCode ?? person?.favZipCode ?? '',
+    mCity:       postal?.city ?? '',
 
     pKey:        p?.bkey ?? '',
     memberId:    p?.memberId ?? '',
@@ -272,6 +274,20 @@ export const AocSrvStore = signalStore(
       const index: SrvIndex[] = [];
       const isProdEnv = store.appStore.env.production;
 
+      // Batch-load all favorite postal addresses once for the whole index build
+      const postalQuery = getSystemQuery(store.tenantId());
+      postalQuery.push({ key: 'addressChannel', operator: '==', value: 'postal' });
+      postalQuery.push({ key: 'isFavorite', operator: '==', value: true });
+      const allPostalAddresses = await firstValueFrom(
+        store.firestoreService.searchData<AddressModel>(AddressCollection, postalQuery)
+      );
+      const postalByPersonKey = new Map<string, AddressModel>();
+      for (const a of allPostalAddresses) {
+        if (a.parentKey?.startsWith('person.')) {
+          postalByPersonKey.set(a.parentKey.substring('person.'.length), a);
+        }
+      }
+
       // ── Process main memberships ─────────────────────────────────────────
       for (const m of mainMemberships) {
         const p = parentByMemberKey.get(m.memberKey);
@@ -286,7 +302,8 @@ export const AocSrvStore = signalStore(
         if (r) processedRegasoftIds.add(r.srvId);
 
         const person = store.appStore.getPerson(m.memberKey);
-        index.push(buildIndexEntry(m, p, r, person, isProdEnv));
+        const postal = postalByPersonKey.get(m.memberKey);
+        index.push(buildIndexEntry(m, p, r, person, isProdEnv, postal));
       }
 
       // ── Orphan parent memberships (no matching main) ─────────────────────
@@ -490,6 +507,12 @@ export const AocSrvStore = signalStore(
       }
       const fn = httpsCallable<object, { id: string }>(functions, 'createSrvContact');
       const p = store.appStore.getPerson(item.personKey);
+      const srvPostalAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, [
+        { key: 'parentKey', operator: '==', value: 'person.' + item.personKey },
+        { key: 'addressChannel', operator: '==', value: 'postal' },
+        { key: 'isFavorite', operator: '==', value: true }
+      ]));
+      const srvPostal = srvPostalAddresses[0];
       let srvId: string;
       try {
         const result = await fn({
@@ -505,12 +528,12 @@ export const AocSrvStore = signalStore(
           language:       0,
           hasNewsletter:  true,
           hasLicense:     false,
-          street:         p ? `${p.favStreetName} ${p.favStreetNumber}`.trim() || null : null,
+          street:         srvPostal ? `${srvPostal.streetName} ${srvPostal.streetNumber}`.trim() || null : null,
           streetAdditional: null,
-          postcode:       p?.favZipCode || null,
-          city:           p?.favCity || null,
-          countryName:    p?.favCountryCode ? 'Schweiz' : null,
-          countryId:      p?.favCountryCode || null,
+          postcode:       srvPostal?.zipCode || null,
+          city:           srvPostal?.city || null,
+          countryName:    srvPostal?.countryCode ? 'Schweiz' : null,
+          countryId:      srvPostal?.countryCode || null,
           telefon:        null,
         });
         srvId = String(result.data.id);

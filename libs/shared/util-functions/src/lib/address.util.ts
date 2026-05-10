@@ -3,18 +3,12 @@ import { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 
 import { AddressCollection, AddressModel, OrgCollection, PersonCollection } from '@bk2/shared-models';
-import { die } from '@bk2/shared-util-core';
-import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_PHONE, DEFAULT_URL } from '@bk2/shared-constants';
+import { DEFAULT_EMAIL, DEFAULT_PHONE } from '@bk2/shared-constants';
 
 export interface FavoriteAddressInfo {
   favEmail: string;
   favPhone: string;
-  favStreetName: string;
-  favStreetNumber: string;
   favZipCode: string;
-  favCity: string;
-  favCountryCode: string;
-  favWeb: string;
 }
 
 /**
@@ -43,11 +37,7 @@ export async function updateFavoriteAddressInfo(firestore: Firestore, address: A
     await ref.update({
       favEmail: favoriteAddressInfo.favEmail,
       favPhone: favoriteAddressInfo.favPhone,
-      favStreetName: favoriteAddressInfo.favStreetName,
-      favStreetNumber: favoriteAddressInfo.favStreetNumber,
       favZipCode: favoriteAddressInfo.favZipCode,
-      favCity: favoriteAddressInfo.favCity,
-      favCountryCode: favoriteAddressInfo.favCountryCode,
     });
     logger.info(`Successfully updated favorite address info for ${parentCollection}/${parentId}`);
   } catch (error) {
@@ -82,11 +72,7 @@ async function getFavoriteAddressInfo(firestore: Firestore, parentKey: string): 
           favoriteAddressInfo.favPhone = favoriteAddress.phone;
           break;
         case 'postal':
-          favoriteAddressInfo.favStreetName = favoriteAddress.streetName;
-          favoriteAddressInfo.favStreetNumber = favoriteAddress.streetNumber;
           favoriteAddressInfo.favZipCode = favoriteAddress.zipCode;
-          favoriteAddressInfo.favCity = favoriteAddress.city;
-          favoriteAddressInfo.favCountryCode = favoriteAddress.countryCode;
           break;
         case 'web':
           favoriteAddressInfo.favWeb = favoriteAddress.url;
@@ -103,11 +89,7 @@ function getEmptyFavoriteAddressInfo(): FavoriteAddressInfo {
   return {
     favEmail: DEFAULT_EMAIL,
     favPhone: DEFAULT_PHONE,
-    favStreetName: DEFAULT_NAME,
-    favStreetNumber: '',
     favZipCode: '',
-    favCity: '',
-    favCountryCode: '',
     favWeb: DEFAULT_URL,
   };
 }

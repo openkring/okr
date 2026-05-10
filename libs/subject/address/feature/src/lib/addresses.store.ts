@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, Platform, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getDownloadURL, ref } from 'firebase/storage';
@@ -243,56 +243,53 @@ export const AddressStore = signalStore(
         const tenantId = store.tenantId();
         const [parentModelType, parentKey] = getModelAndKey(address.parentKey);
 
+        const fetchPostal = async (pk: string): Promise<AddressModel | undefined> => {
+          const addrs = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, [
+            { key: 'parentKey', operator: '==', value: pk },
+            { key: 'addressChannel', operator: '==', value: 'postal' },
+            { key: 'isFavorite', operator: '==', value: true }
+          ]));
+          return addrs[0];
+        };
+
         // Resolve creditor from parent
         let creditorName = '';
-        let creditorStreet = '';
-        let creditorStreetNumber = '';
         let creditorZip = '';
-        let creditorCity = '';
-        let creditorCountry = 'CH';
+        const creditorPostal = await fetchPostal(address.parentKey);
         if (parentModelType === 'org') {
           const org = store.appStore.getOrg(parentKey) as OrgModel | undefined;
           creditorName = org?.name ?? '';
-          creditorStreet = org?.favStreetName ?? '';
-          creditorStreetNumber = org?.favStreetNumber ?? '';
-          creditorZip = org?.favZipCode ?? '';
-          creditorCity = org?.favCity ?? '';
-          creditorCountry = org?.favCountryCode || 'CH';
+          creditorZip = org?.favZipCode ?? creditorPostal?.zipCode ?? '';
         } else if (parentModelType === 'person') {
           const person = store.appStore.getPerson(parentKey) as PersonModel | undefined;
           creditorName = person ? `${person.firstName} ${person.lastName}` : '';
-          creditorStreet = person?.favStreetName ?? '';
-          creditorStreetNumber = person?.favStreetNumber ?? '';
-          creditorZip = person?.favZipCode ?? '';
-          creditorCity = person?.favCity ?? '';
-          creditorCountry = person?.favCountryCode || 'CH';
+          creditorZip = person?.favZipCode ?? creditorPostal?.zipCode ?? '';
         }
+        const creditorStreet = creditorPostal?.streetName ?? '';
+        const creditorStreetNumber = creditorPostal?.streetNumber ?? '';
+        const creditorCity = creditorPostal?.city ?? '';
+        const creditorCountry = creditorPostal?.countryCode || 'CH';
 
         // Resolve debtor: defaultOrg when parent != defaultOrg, else currentPerson
         const defaultOrg = store.defaultOrg() as OrgModel | undefined;
         const isCreditorDefaultOrg = parentModelType === 'org' && parentKey === defaultOrg?.bkey;
         let debtorName = '';
-        let debtorStreet = '';
-        let debtorStreetNumber = '';
         let debtorZip = '';
-        let debtorCity = '';
-        let debtorCountry = 'CH';
+        let debtorPostal: AddressModel | undefined;
         if (isCreditorDefaultOrg) {
           const person = store.currentPerson() as PersonModel | undefined;
           debtorName = person ? `${person.firstName} ${person.lastName}` : '';
-          debtorStreet = person?.favStreetName ?? '';
-          debtorStreetNumber = person?.favStreetNumber ?? '';
           debtorZip = person?.favZipCode ?? '';
-          debtorCity = person?.favCity ?? '';
-          debtorCountry = person?.favCountryCode || 'CH';
+          if (person?.bkey) debtorPostal = await fetchPostal('person.' + person.bkey);
         } else {
           debtorName = defaultOrg?.name ?? '';
-          debtorStreet = defaultOrg?.favStreetName ?? '';
-          debtorStreetNumber = defaultOrg?.favStreetNumber ?? '';
           debtorZip = defaultOrg?.favZipCode ?? '';
-          debtorCity = defaultOrg?.favCity ?? '';
-          debtorCountry = defaultOrg?.favCountryCode || 'CH';
+          if (defaultOrg?.bkey) debtorPostal = await fetchPostal('org.' + defaultOrg.bkey);
         }
+        const debtorStreet = debtorPostal?.streetName ?? '';
+        const debtorStreetNumber = debtorPostal?.streetNumber ?? '';
+        const debtorCity = debtorPostal?.city ?? '';
+        const debtorCountry = debtorPostal?.countryCode || 'CH';
 
         const data: Record<string, unknown> = {
           currency: 'CHF',

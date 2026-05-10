@@ -10,14 +10,14 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models';
 import { confirm, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, debugItemLoaded, getCountryName, getSystemQuery, hasRole, isPerson, nameMatches } from '@bk2/shared-util-core';
+import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches } from '@bk2/shared-util-core';
 import { EmailAddressesModal, MapViewModalComponent } from '@bk2/shared-ui';
 import { Languages } from '@bk2/shared-categories';
 
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel } from '@bk2/subject-person-util';
-import { browseUrl } from '@bk2/subject-address-util';
+import { browseUrl, stringifyPostalAddress } from '@bk2/subject-address-util';
 
 import { MatrixChatService } from '@bk2/chat-data-access';
 import { UserService } from '@bk2/user-data-access';
@@ -355,10 +355,14 @@ export const PersonStore = signalStore(
         
         async showOnMap(person?: PersonModel): Promise<void> {
             if (!person) return;
-            const countryName = getCountryName(person.favCountryCode, Languages[DefaultLanguage].abbreviation ?? 'de');
-            const addressStr = !countryName ? 
-                `${person.favStreetName} ${person.favStreetNumber}, ${person.favZipCode} ${person.favCity}` : 
-                `${person.favStreetName} ${person.favStreetNumber}, ${person.favZipCode} ${person.favCity}, ${countryName}`;
+            const postalAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, [
+              { key: 'parentKey', operator: '==', value: 'person.' + person.bkey },
+              { key: 'addressChannel', operator: '==', value: 'postal' },
+              { key: 'isFavorite', operator: '==', value: true }
+            ]));
+            const postalAddress = postalAddresses[0];
+            if (!postalAddress) return;
+            const addressStr = stringifyPostalAddress(postalAddress, Languages[DefaultLanguage].abbreviation ?? 'de');
 
             const coordinates = await store.geocodeService.geocodeAddress(addressStr);
             if (!coordinates) return;

@@ -17,7 +17,7 @@ import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 import { TaskService } from '@bk2/task-data-access';
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
-import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
+import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
 import { AddressService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { browseUrl } from '@bk2/subject-address-util';
@@ -694,6 +694,18 @@ export const _MembershipStore = signalStore(
         const fn = generateRandomString(10) + '.' + ExportFormats[ExportFormat.XLSX].abbreviation;
         let tableName = '';
 
+        // Batch-load all favorite postal addresses once for all export types
+        const postalQuery = getSystemQuery(store.tenantId());
+        postalQuery.push({ key: 'addressChannel', operator: '==', value: 'postal' });
+        postalQuery.push({ key: 'isFavorite', operator: '==', value: true });
+        const allPostal = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, postalQuery));
+        const postalByPersonKey = new Map<string, AddressModel>();
+        for (const a of allPostal) {
+          if (a.parentKey?.startsWith('person.')) {
+            postalByPersonKey.set(a.parentKey.substring('person.'.length), a);
+          }
+        }
+
         switch(type) {
           case 'raw':
             keys = Object.keys(new MembershipModel(store.appStore.tenantId())) as (keyof MembershipModel)[];
@@ -702,25 +714,24 @@ export const _MembershipStore = signalStore(
             break;
           case 'srv':
             table.push(['Clubname', 'MGRART_Titel', 'Beitrag', 'LastName', 'FirstName', 'SrvId', 'Birthday', 'Street', 'Postcode', 'City', 'Mobile', 'Email', 'Funktion', 'Kommentar']);
-            this.exportSrv(table);
+            this.exportSrv(table, postalByPersonKey);
             exportXlsx(table, fn, 'SRV Mitgliedschaften');
             return;
           case 'address':
-            const pkeys = ['firstName', 'lastName', 'favStreetName', 'favStreetNumber', 'favZipCode', 'favCity', 'favPhone', 'favEmail'] as (keyof PersonModel)[];
-            table.push(['Vorname', 'Name', 'Strassenname', 'Hausnummer', 'PLZ', 'Ort', 'Tel', 'E-Mail']);
+            table.push(['Vorname', 'Name', 'Strasse', 'PLZ', 'Ort', 'Tel', 'E-Mail']);
             for (const member of memberships) {
               const person = store.appStore.getPerson(member.memberKey);
               if (!person) continue;
-              table.push(getDataRow<PersonModel>(person, pkeys));
+              table.push(convertToAddressDataRow(person, postalByPersonKey.get(member.memberKey)));
             }
             exportXlsx(table, fn, 'Adressliste');
             return;
-          case 'clubdesk': 
+          case 'clubdesk':
             table.push(['Vorname', 'Nachname', 'Geschlecht', 'Anrede', 'Adresse', 'Ort', 'PLZ', 'Land', 'E-Mail', 'Telefon', 'Geburtsdatum', 'Eintritt', 'BexioId', 'Kategorie', 'Status', 'Funktion', 'RelLog']);
             for (const member of memberships) {
               const person = store.appStore.getPerson(member.memberKey);
               if (!person) continue;
-              table.push(convertToClubdeskImportRow(member, person));
+              table.push(convertToClubdeskImportRow(member, person, postalByPersonKey.get(member.memberKey)));
             }
             exportXlsx(table, fn, 'Clubdesk Import');
             return;
@@ -739,8 +750,8 @@ export const _MembershipStore = signalStore(
         exportXlsx(table, fn, tableName);
       },
 
-      exportSrv(table: string[][]): void {
-        // hardcoded and not considering any current membership filters. 
+      exportSrv(table: string[][], postalByPersonKey: Map<string, AddressModel>): void {
+        // hardcoded and not considering any current membership filters.
         // That's why it can be used from any membership (SCS, SRV, other).
         // Get all persons
         const persons = store.appStore.allPersons();
@@ -758,7 +769,7 @@ export const _MembershipStore = signalStore(
 
           // we export a row for each person with a current SCS membership or an exit in the last year or a current SRV membership
           if (currentScs || currentSrv) {
-            table.push(convertToSrvDataRow(person, currentScs, lastYearExit, currentSrv));
+            table.push(convertToSrvDataRow(person, currentScs, lastYearExit, currentSrv, postalByPersonKey.get(person.bkey)));
           }
         }
       },

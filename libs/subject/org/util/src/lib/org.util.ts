@@ -19,13 +19,6 @@ export function convertFormToNewOrg(vm: OrgNewFormModel, tenantId: string): OrgM
   org.bexioId = vm.bexioId ?? DEFAULT_ID;
   org.tags = vm.tags ?? DEFAULT_TAGS;
 
-  org.favEmail = vm.email ?? DEFAULT_EMAIL;
-  org.favPhone = vm.phone ?? DEFAULT_PHONE;
-  org.favStreetName = vm.streetName ?? DEFAULT_STREETNAME;
-  org.favStreetNumber = vm.streetNumber ?? DEFAULT_STREETNUMBER;
-  org.favZipCode = vm.zipCode ?? DEFAULT_ZIP;
-  org.favCity = vm.city ?? DEFAULT_CITY;
-  org.favCountryCode = vm.countryCode ?? DEFAULT_COUNTRY;
   return org;
 }
 
@@ -55,7 +48,7 @@ export function convertNewOrgFormToPostalAddress(vm: OrgNewFormModel, tenantId: 
 export function getOrgIndex(org: OrgModel): string {
   let _index = '';
   _index = addIndexElement(_index, 'n', org.name);
-  _index = addIndexElement(_index, 'c', org.favCity);
+  _index = addIndexElement(_index, 'z', org.favZipCode);
   _index = addIndexElement(_index, 'ot', org.type);
   _index = addIndexElement(_index, 'dof', org.dateOfFoundation);
   return _index;
@@ -66,5 +59,5 @@ export function getOrgIndex(org: OrgModel): string {
  * This can be used in info boxes on the GUI.
  */
 export function getOrgIndexInfo(): string {
-  return 'n:name c:city ot:orgType dof:dateOfFoundation';
+  return 'n:name z:zipCode ot:orgType dof:dateOfFoundation';
 }

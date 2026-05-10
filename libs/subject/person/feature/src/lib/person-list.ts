@@ -189,7 +189,7 @@ export class PersonList {
       //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.imgixBaseUrl, 'tel'));
     }
-    if (person.favCity && person.favStreetName && person.favZipCode) {
+    if (person.favZipCode) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.imgixBaseUrl, 'location'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));

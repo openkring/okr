@@ -23,11 +23,7 @@ describe('PersonModel', () => {
     expect(model.dateOfDeath).toBe(DEFAULT_DATE);
     expect(model.favEmail).toBe(DEFAULT_EMAIL);
     expect(model.favPhone).toBe(DEFAULT_PHONE);
-    expect(model.favStreetName).toBe(DEFAULT_NAME);
-    expect(model.favStreetNumber).toBe('');
     expect(model.favZipCode).toBe('');
-    expect(model.favCity).toBe('');
-    expect(model.favCountryCode).toBe('');
     expect(model.bexioId).toBe(DEFAULT_ID);
   });
 

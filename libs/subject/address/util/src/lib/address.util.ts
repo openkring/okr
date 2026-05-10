@@ -225,28 +225,14 @@ export async function copyAddress(toastController: ToastController, address: Add
 export function computeFavoriteAddressInfo(addresses: AddressModel[]): {
   favEmail: string;
   favPhone: string;
-  favStreetName: string;
-  favStreetNumber: string;
   favZipCode: string;
-  favCity: string;
-  favCountryCode: string;
 } {
-  const info = {
-    favEmail: '', favPhone: '',
-    favStreetName: '', favStreetNumber: '',
-    favZipCode: '', favCity: '', favCountryCode: '',
-  };
+  const info = { favEmail: '', favPhone: '', favZipCode: '' };
   for (const a of addresses.filter(a => a.isFavorite)) {
     switch (a.addressChannel) {
       case 'email':  info.favEmail = a.email ?? ''; break;
       case 'phone':  info.favPhone = a.phone ?? ''; break;
-      case 'postal':
-        info.favStreetName   = a.streetName ?? '';
-        info.favStreetNumber = a.streetNumber ?? '';
-        info.favZipCode      = a.zipCode ?? '';
-        info.favCity         = a.city ?? '';
-        info.favCountryCode  = a.countryCode ?? '';
-        break;
+      case 'postal': info.favZipCode = a.zipCode ?? ''; break;
     }
   }
   return info;

@@ -16,11 +16,7 @@ export class PersonModel implements BkModel, AddressableModel, SearchableModel, 
   public dateOfDeath = DEFAULT_DATE;
   public favEmail = DEFAULT_EMAIL;
   public favPhone = DEFAULT_PHONE;
-  public favStreetName = DEFAULT_NAME;
-  public favStreetNumber = '';
   public favZipCode = '';
-  public favCity = '';
-  public favCountryCode = '';
   public bexioId = DEFAULT_ID;
 
   constructor(tenantId: string) {

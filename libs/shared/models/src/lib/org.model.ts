@@ -25,11 +25,7 @@ export class OrgModel implements BkModel, NamedModel, AddressableModel, Searchab
 
   public favEmail = '';
   public favPhone = '';
-  public favStreetName = '';
-  public favStreetNumber = '';
   public favZipCode = '';
-  public favCity = '';
-  public favCountryCode = '';
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];
