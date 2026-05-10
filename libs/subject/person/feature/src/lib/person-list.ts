@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 import { SIZE_MD } from '@bk2/shared-constants';
 
@@ -165,37 +165,34 @@ export class PersonList {
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param person 
    */
-  private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> {    
-    if (hasRole('registered', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
-      if (await this.store.isPersonUser(person.bkey)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.imgixBaseUrl, 'chatbubbles'));
-      }
-      if (person.favEmail) {
-        actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.imgixBaseUrl, 'copy'));
-        actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.imgixBaseUrl, 'email'));
-      }
-      if (person.favPhone) {
-        actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.imgixBaseUrl, 'copy'));
-        //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
-        actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.imgixBaseUrl, 'tel'));
-      }
-      if (person.favCity && person.favStreetName && person.favZipCode) {
-        actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.imgixBaseUrl, 'location'));
-      }
-     /*
-       tbd: if person isUser:  send direct message
-      actionSheetOptions.buttons.push(createActionSheetButton('address.chat.start', this.imgixBaseUrl, 'chatbubble'));
-
-     */
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    }
+  private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> { 
     if (!this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.imgixBaseUrl, 'edit'));
+      if (this.hasRole('admin')) {
+        actionSheetOptions.buttons.push(createActionSheetButton('person.delete', this.imgixBaseUrl, 'trash'));
+      } 
+    } else {  // registered user
+      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.imgixBaseUrl, 'eye-on'));
     }
-    if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.delete', this.imgixBaseUrl, 'trash'));
+    actionSheetOptions.buttons.push(createActionSheetDivider());
+
+    // all users
+    if (await this.store.isPersonUser(person.bkey)) {
+      actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.imgixBaseUrl, 'chatbubbles'));
     }
+    if (person.favEmail) {
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.imgixBaseUrl, 'email'));
+    }
+    if (person.favPhone) {
+      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.imgixBaseUrl, 'copy'));
+      //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
+      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.imgixBaseUrl, 'tel'));
+    }
+    if (person.favCity && person.favStreetName && person.favZipCode) {
+      actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.imgixBaseUrl, 'location'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
     }
