@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, OnInit, PLATFORM_ID, viewChild } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, linkedSignal, OnInit, PLATFORM_ID, signal, viewChild } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 import { format } from 'date-fns';
@@ -11,10 +11,10 @@ import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { CalEventModel, RoleName } from '@bk2/shared-models';
+import { AvatarInfo, CalEventModel, PersonModel, RoleName } from '@bk2/shared-models';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser } from '@bk2/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, QuickEntryService } from '@bk2/shared-util-angular';
 import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceState, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -103,8 +103,9 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
         <!-- quick entry -->
         @if(canChange() && expertMode()) {
           <ion-item lines="none">
-            <ion-textarea #bkQuickEntry 
+            <ion-textarea #bkQuickEntry
               (keyup.enter)="quickEntry(bkQuickEntry)"
+              (ionInput)="onQuickEntryInput(bkQuickEntry)"
               label = "{{'@input.eventQuickEntry.label' | translate | async }}"
               labelPlacement = "floating"
               placeholder = "{{'@input.eventQuickEntry.placeholder' | translate | async }}"
@@ -199,6 +200,9 @@ export class CalEventListComponent implements OnInit {
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertController = inject(AlertController);
   private readonly modalController = inject(ModalController);
+  private readonly quickEntryService = inject(QuickEntryService);
+  private selectedQuickEntryPerson = signal<PersonModel | null>(null);
+  private isSettingQuickEntryValue = false;
   private readonly matrixChatService = inject(MatrixChatService);
   private readonly translocoService = inject(TranslocoService);
   private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
@@ -439,6 +443,20 @@ export class CalEventListComponent implements OnInit {
     }
     calevent.name = parts.name || '';
     calevent.locationKey = parts.location || '';
+    const person = this.selectedQuickEntryPerson();
+    if (person) {
+      const avatarInfo: AvatarInfo = {
+        key: person.bkey,
+        name1: person.firstName,
+        name2: person.lastName,
+        modelType: 'person',
+        type: person.gender,
+        subType: '',
+        label: `${person.firstName} ${person.lastName}`,
+      };
+      calevent.responsiblePersons = [avatarInfo];
+      this.selectedQuickEntryPerson.set(null);
+    }
     await this.store.quickEntry(calevent);
     bkQuickEntry.value = '';
     if (!this.isListView()) this.navigateCalendarTo(calevent.startDate);
@@ -446,6 +464,57 @@ export class CalEventListComponent implements OnInit {
 
   protected clear(bkQuickEntry: IonTextarea): void {
     bkQuickEntry.value = '';
+  }
+
+  protected async onQuickEntryInput(textarea: IonTextarea): Promise<void> {
+    if (this.isSettingQuickEntryValue) return;
+    const value = textarea.value ?? '';
+    const trigger = this.quickEntryService.detectTrigger(value);
+    if (!trigger) return;
+
+    if (trigger === 'person') {
+      const { PersonSelectModalComponent } = await import('@bk2/shared-feature');
+      const modal = await this.modalController.create({
+        component: PersonSelectModalComponent,
+        cssClass: 'list-modal',
+        componentProps: {
+          selectedTag: '',
+          currentUser: this.currentUser(),
+        },
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<PersonModel>();
+      this.isSettingQuickEntryValue = true;
+      if (role === 'confirm' && data) {
+        this.selectedQuickEntryPerson.set(data);
+        textarea.value = this.quickEntryService.replaceToken(value, '@', `@${data.firstName} ${data.lastName}`);
+      } else {
+        textarea.value = value.slice(0, -1); // remove stray '@'
+      }
+      this.isSettingQuickEntryValue = false;
+    }
+
+    if (trigger === 'date') {
+      const { DateTimeSelectModalComponent } = await import('@bk2/shared-ui');
+      const modal = await this.modalController.create({
+        component: DateTimeSelectModalComponent,
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<string>();
+      this.isSettingQuickEntryValue = true;
+      if (role === 'confirm' && data) {
+        const datePart = data.substring(0, 10); // 'yyyy-MM-dd'
+        const viewDate = convertDateFormatToString(datePart, DateFormat.IsoDate, DateFormat.ViewDate);
+        const timePart = data.length >= 16 ? data.substring(11, 16) : '00:00'; // 'HH:mm'
+        const token = timePart === '00:00'
+          ? viewDate
+          : `${viewDate},${timePart.replace(':', '')}`;
+        textarea.value = this.quickEntryService.replaceToken(value, '//', token);
+      } else {
+        textarea.value = value.slice(0, -2); // remove stray '//'
+      }
+      this.isSettingQuickEntryValue = false;
+    }
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
