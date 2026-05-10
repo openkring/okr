@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
@@ -7,10 +8,10 @@ import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
-import { AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models';
-import { confirm, copyToClipboardWithConfirmation, navigateByUrl } from '@bk2/shared-util-angular';
-import { chipMatches, debugItemLoaded, getCountryName, hasRole, isPerson, nameMatches } from '@bk2/shared-util-core';
-import { MapViewModalComponent } from '@bk2/shared-ui';
+import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models';
+import { confirm, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl } from '@bk2/shared-util-angular';
+import { chipMatches, debugItemLoaded, getCountryName, getSystemQuery, hasRole, isPerson, nameMatches } from '@bk2/shared-util-core';
+import { EmailAddressesModal, MapViewModalComponent } from '@bk2/shared-ui';
 import { Languages } from '@bk2/shared-categories';
 
 import { AddressService, GeocodingService } from '@bk2/subject-address-data-access';
@@ -285,10 +286,44 @@ export const PersonStore = signalStore(
             }
         },
 
-        async copyEmailAddresses(): Promise<void> {
-            const allEmails = store.filteredPersons().map(person => person.favEmail);
-            const emails = allEmails.filter(e => e); // this filters all empty emails, because '' is a falsy value
-            await copyToClipboardWithConfirmation(store.toastController, emails.toString() ?? '', '@subject.address.operation.emailCopy.conf');
+        async copyEmailAddresses(readOnly = true): Promise<void> {
+            const persons = store.filteredPersons();
+            const mainEmails = getMainEmailAddresses(persons);
+
+            const ccQuery = getSystemQuery(store.tenantId());
+            ccQuery.push({ key: 'addressChannel', operator: '==', value: 'email' });
+            ccQuery.push({ key: 'isCc', operator: '==', value: true });
+            const allCcAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, ccQuery));
+            const ccEmails = getCcEmailAddresses(persons, allCcAddresses);
+
+            const modal = await store.modalController.create({
+                component: EmailAddressesModal,
+                componentProps: { mainEmails, ccEmails, canChange: !readOnly }
+            });
+            await modal.present();
+            const { data, role } = await modal.onWillDismiss<{ memberKey: string; readOnly: boolean }>();
+            if (role === 'navigate' && data?.memberKey) {
+                const person = store.appStore.getPerson(data.memberKey);
+                if (!person) return;
+                const { PersonEditModal } = await import('./person-edit.modal');
+                const personModal = await store.modalController.create({
+                    component: PersonEditModal,
+                    componentProps: {
+                        person,
+                        currentUser: store.currentUser(),
+                        tags: this.getTags(),
+                        tenantId: store.tenantId(),
+                        genders: store.appStore.getCategory('gender'),
+                        readOnly: data.readOnly
+                    }
+                });
+                personModal.present();
+                const { data: personData, role: personRole } = await personModal.onDidDismiss();
+                if (personRole === 'confirm' && personData && !data.readOnly) {
+                    await this.save(personData);
+                    this.reload();
+                }
+            }
         },
 
         async copy(value: string, label: string): Promise<void> {

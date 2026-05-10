@@ -20,6 +20,7 @@ export * from './lib/date-picker.modal';
 export * from './lib/date-select.modal';
 export * from './lib/editor.component';
 export * from './lib/editor-toolbar.component';
+export * from './lib/email-addresses.modal';
 export * from './lib/email-input.component';
 export * from './lib/empty-list.component';
 export * from './lib/error-note.component';

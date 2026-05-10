@@ -1,12 +1,11 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { Router } from '@angular/router';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, RoleName, UserModel } from '@bk2/shared-models';
+import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
 import { ChangeConfirmationComponent, HeaderComponent } from '@bk2/shared-ui';
 import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@bk2/shared-util-core';
 import { getTitleLabel } from '@bk2/shared-util-angular';
-import { PersonSelectModalComponent } from '@bk2/shared-feature';
+import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { ENV } from '@bk2/shared-config';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
