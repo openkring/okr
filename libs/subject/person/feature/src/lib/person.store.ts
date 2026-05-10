@@ -293,7 +293,7 @@ export const PersonStore = signalStore(
             const ccQuery = getSystemQuery(store.tenantId());
             ccQuery.push({ key: 'addressChannel', operator: '==', value: 'email' });
             ccQuery.push({ key: 'isCc', operator: '==', value: true });
-            const allCcAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, ccQuery));
+            const allCcAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, ccQuery, 'none'));
             const ccEmails = getCcEmailAddresses(persons, allCcAddresses);
 
             const modal = await store.modalController.create({

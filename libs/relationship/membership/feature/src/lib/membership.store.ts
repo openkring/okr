@@ -809,7 +809,7 @@ export const _MembershipStore = signalStore(
         const ccQuery = getSystemQuery(store.tenantId());
         ccQuery.push({ key: 'addressChannel', operator: '==', value: 'email' });
         ccQuery.push({ key: 'isCc', operator: '==', value: true });
-        const allCcAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, ccQuery));
+        const allCcAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, ccQuery, 'none'));
         const ccEmails = getCcEmailAddresses(filteredPersons, allCcAddresses);
 
         const modal = await store.modalController.create({
