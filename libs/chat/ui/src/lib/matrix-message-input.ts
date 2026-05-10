@@ -6,6 +6,7 @@ import { SvgIconPipe } from '@bk2/shared-pipes';
 import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
 import { createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { AppStore } from '@bk2/shared-feature';
+import { isSupportedImageFile } from '@bk2/chat-util';
 import 'emoji-picker-element';
 import { ButtonCopyComponent } from '@bk2/shared-ui';
 
@@ -599,7 +600,7 @@ export class MatrixMessageInput {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file) {
-      if (file.type.startsWith('image/')) {
+      if (isSupportedImageFile(file)) {
         this.fileQueued.emit(file);
       } else {
         this.fileSent.emit(file);

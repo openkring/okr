@@ -11,7 +11,7 @@ import { ImageLightboxModal, LightboxImage, MatrixMessageInput, MatrixMessageLis
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
 import { MatrixPollData } from '@bk2/chat-data-access';
-import { convertHeicToJpeg } from '@bk2/chat-util';
+import { convertHeicToJpeg, isSupportedImageFile } from '@bk2/chat-util';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, downloadToBrowser, isBrowser, showToast } from '@bk2/shared-util-angular';
@@ -935,8 +935,8 @@ export class MatrixChat implements OnDestroy {
     const files = Array.from(event.dataTransfer?.files ?? []);
     if (!files.length) return;
 
-    const imageFiles = files.filter(f => f.type.startsWith('image/'));
-    const otherFiles = files.filter(f => !f.type.startsWith('image/'));
+    const imageFiles = files.filter(f => isSupportedImageFile(f));
+    const otherFiles = files.filter(f => !isSupportedImageFile(f));
 
     if (imageFiles.length > 0) {
       const normalized = await Promise.all(imageFiles.map(f => convertHeicToJpeg(f)));
