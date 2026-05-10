@@ -4,15 +4,21 @@ export function isHeicFile(file: File): boolean {
     || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
 }
 
+/** Returns true if the file is an AVIF image. */
+export function isAvifFile(file: File): boolean {
+  return file.type === 'image/avif' || file.name.toLowerCase().endsWith('.avif');
+}
+
 /**
- * Convert a HEIC/HEIF file to JPEG.
+ * Convert a HEIC/HEIF/AVIF file to JPEG.
  *
- * Fast path (Safari): createImageBitmap() decodes HEIC natively — no library needed.
- * Fallback (Chrome/Firefox): libheif-js (WASM) is lazy-loaded only when a HEIC file is detected.
+ * Fast path: createImageBitmap() — natively supported for AVIF in all modern browsers,
+ * and for HEIC in Safari.
+ * Fallback: libheif-js (WASM) — lazy-loaded, handles both HEIC and AVIF on Chrome/Firefox.
  * If both fail the original file is returned unchanged.
  */
 export async function convertHeicToJpeg(file: File): Promise<File> {
-  if (!isHeicFile(file)) return file;
+  if (!isHeicFile(file) && !isAvifFile(file)) return file;
 
   // Fast path: Safari decodes HEIC natively via createImageBitmap
   try {
