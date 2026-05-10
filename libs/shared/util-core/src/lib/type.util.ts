@@ -633,8 +633,8 @@ export function parseEventString(input: string): {
 
   // Strip @person (up to two words) and date+time tokens; remainder is the event name
   const name = input
-    .replace(/@\w+(?:\s+\w+)?/g, '')
-    .replace(/\b\d{2}\.\d{2}\.\d{4}(?:,\d{4})?\b/, '')
+    .replace(/@[^\s@]+(?:\s+[^\s@]+)?/g, '')
+    .replace(/\b\d{2}\.\d{2}\.\d{4}(?:,\d{4})?\b/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 

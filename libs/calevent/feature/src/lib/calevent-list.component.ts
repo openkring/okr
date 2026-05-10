@@ -439,7 +439,6 @@ export class CalEventListComponent implements OnInit {
     }
     calevent.name = parts.name || '';
     calevent.locationKey = parts.location || '';
-    calevent.type = parts.type || '';
     await this.store.quickEntry(calevent);
     bkQuickEntry.value = '';
     if (!this.isListView()) this.navigateCalendarTo(calevent.startDate);
