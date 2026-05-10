@@ -6,6 +6,7 @@
  *                  or libheif-js WASM (Chrome / Firefox fallback).
  *   AVIF         — converted to JPEG via createImageBitmap (all modern browsers)
  *                  or libheif-js WASM (older browser fallback).
+ *   SVG          — previewed and uploaded as-is; rendered natively by all browsers.
  *   All others   — uploaded as-is; the browser renders them natively.
  *
  * Types NOT in this set (TIFF, SVG, ICO, …) are treated as generic file attachments
@@ -16,6 +17,7 @@ export const SUPPORTED_IMAGE_MIME_TYPES = new Set([
   'image/png',
   'image/gif',
   'image/webp',
+  'image/svg+xml',
   'image/heic',
   'image/heif',
   'image/avif',
@@ -23,7 +25,7 @@ export const SUPPORTED_IMAGE_MIME_TYPES = new Set([
 ]);
 
 /** Extensions accepted as a fallback when the browser cannot determine the MIME type (e.g. some drag-and-drop scenarios). */
-const SUPPORTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif', '.avif', '.bmp'];
+const SUPPORTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.heic', '.heif', '.avif', '.bmp'];
 
 /** Returns true if the file is a supported chat image (MIME type or extension match). */
 export function isSupportedImageFile(file: File): boolean {
