@@ -10,6 +10,7 @@
     "@bk2/shared-models": "*",
     "@bk2/shared-config": "*",
     "@bk2/shared-data-access": "*",
-    "@bk2/shared-util-core": "*"
+    "@bk2/shared-util-core": "*",
+    "@bk2/chat-util": "*"
   }
 }

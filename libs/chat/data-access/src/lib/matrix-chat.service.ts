@@ -10,6 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification } from '@bk2/shared-models';
 import { AppStore } from '@bk2/shared-feature';
 import { debugData, debugMessage } from '@bk2/shared-util-core';
+import { convertHeicToJpeg } from '@bk2/chat-util';
 
 export interface MatrixPollData {
   question: string;
@@ -1103,7 +1104,7 @@ private async updateRoomsList(): Promise<void> {
   async sendFile(roomId: string, file: File, threadId?: string): Promise<ISendEventResponse> {
     if (!this.client) throw new Error('Client not initialized');
 
-    file = await this.normalizeHeic(file);
+    file = await convertHeicToJpeg(file);
 
     // Upload the file
     const upload = await this.client.uploadContent(file);
@@ -1686,18 +1687,6 @@ private async updateRoomsList(): Promise<void> {
       },
     };
     return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
-  }
-
-  /** Convert HEIC/HEIF files to JPEG before upload. Lazy-loads heic2any only when needed. */
-  private async normalizeHeic(file: File): Promise<File> {
-    const isHeic = file.type === 'image/heic' || file.type === 'image/heif'
-      || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
-    if (!isHeic) return file;
-    const heic2any = (await import('heic2any')).default;
-    const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 });
-    const blob = Array.isArray(result) ? result[0] : result;
-    const jpegName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
-    return new File([blob], jpegName, { type: 'image/jpeg' });
   }
 
   /** Send a notice message to a room so it persists across reloads. Fire-and-forget. */

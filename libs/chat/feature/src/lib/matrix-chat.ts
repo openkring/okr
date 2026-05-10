@@ -11,6 +11,7 @@ import { ImageLightboxModal, LightboxImage, MatrixMessageInput, MatrixMessageLis
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
 import { MatrixPollData } from '@bk2/chat-data-access';
+import { convertHeicToJpeg } from '@bk2/chat-util';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, downloadToBrowser, isBrowser, showToast } from '@bk2/shared-util-angular';
@@ -840,8 +841,9 @@ export class MatrixChat implements OnDestroy {
     await downloadToBrowser(message.content.url);
   }
 
-  protected onFileQueued(file: File): void {
-    this.pendingImages.update(prev => [...prev, file]);
+  protected async onFileQueued(file: File): Promise<void> {
+    const normalized = await convertHeicToJpeg(file);
+    this.pendingImages.update(prev => [...prev, normalized]);
   }
 
   protected onRemoveImage(index: number): void {
@@ -937,7 +939,8 @@ export class MatrixChat implements OnDestroy {
     const otherFiles = files.filter(f => !f.type.startsWith('image/'));
 
     if (imageFiles.length > 0) {
-      this.pendingImages.update(prev => [...prev, ...imageFiles]);
+      const normalized = await Promise.all(imageFiles.map(f => convertHeicToJpeg(f)));
+      this.pendingImages.update(prev => [...prev, ...normalized]);
     }
 
     if (otherFiles.length > 0) {
