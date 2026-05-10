@@ -7,7 +7,7 @@ import { MenuItemModel } from '@bk2/shared-models';
 import { SpinnerComponent } from '@bk2/shared-ui';
 import { hasRole } from '@bk2/shared-util-core';
 import { DEFAULT_MENU_ACTION } from '@bk2/shared-constants';
-import { isSafari, VersionCheckService } from '@bk2/shared-util-angular';
+import { VersionCheckService } from '@bk2/shared-util-angular';
 
 import { MenuStore } from './menu.store';
 import { MultiAvatarComponent } from '@bk2/cms-menu-ui';

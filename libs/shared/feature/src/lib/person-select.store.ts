@@ -1,11 +1,11 @@
 import { computed, inject } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { FirestoreService } from '@bk2/shared-data-access';
-import { PersonCollection, PersonModel, UserModel } from '@bk2/shared-models';
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { PersonModel, UserModel } from '@bk2/shared-models';
+import { chipMatches, nameMatches } from '@bk2/shared-util-core';
+
 import { AppStore } from './app.store';
 
 export type PersonSelectState = {
@@ -27,34 +27,21 @@ export const PersonSelectStore = signalStore(
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),    
   })),
-  withProps((store) => ({
-    personsResource: rxResource({
-      params: () => ({
-        currentUser: store.currentUser()
-      }),
-      stream: ({params}) => {
-        return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.tenantId()), 'lastName', 'asc').pipe(
-          debugListLoaded('persons (to select)', params.currentUser)
-        );
-      }
-    }),
-  })),
 
-  withComputed((state) => {
+  withComputed((store) => {
     return {
-      persons: computed(() => state.personsResource.value()),
-      isLoading: computed(() => state.personsResource.isLoading()),
-    };
+      persons: computed(() => store.appStore.allPersons()),
+      isLoading: computed(() => store.appStore.isLoading())
+    }
   }),
 
-  withComputed((state) => {
+  withComputed((store) => {
     return {
-      // all persons
-      personsCount: computed(() => state.personsResource.value()?.length ?? 0), 
+      personsCount: computed(() => store.persons()?.length ?? 0), 
       filteredPersons: computed(() => 
-        state.personsResource.value()?.filter((person: PersonModel) => 
-          nameMatches(person.index, state.searchTerm()) &&
-          chipMatches(person.tags, state.selectedTag()))
+        store.persons()?.filter((person: PersonModel) => 
+          nameMatches(person.index, store.searchTerm()) &&
+          chipMatches(person.tags, store.selectedTag()))
       )
     }
   }),

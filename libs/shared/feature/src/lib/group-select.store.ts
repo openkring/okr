@@ -1,11 +1,11 @@
 import { computed, inject } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { FirestoreService } from '@bk2/shared-data-access';
-import { GroupCollection, GroupModel, UserModel } from '@bk2/shared-models';
-import { chipMatches, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
+import { GroupModel, UserModel } from '@bk2/shared-models';
+import { chipMatches, nameMatches } from '@bk2/shared-util-core';
+
 import { AppStore } from './app.store';
 
 export type GroupSelectState = {
@@ -27,26 +27,22 @@ export const GroupSelectStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),    
   })),
-  withProps((store) => ({
-    groupsResource: rxResource({
-      stream: () => {
-        return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
-          debugListLoaded('groups (to select)', store.currentUser())
-        );
-      }
-    }),
-  })),
 
-  withComputed((state) => {
+  withComputed((store) => {
     return {
-      groups: computed(() => state.groupsResource.value()),
-      groupsCount: computed(() => state.groupsResource.value()?.length ?? 0), 
+      groups: computed(() => store.appStore.allGroups()),
+      isLoading: computed(() => store.appStore.isLoading())
+    }
+  }),
+
+  withComputed((store) => {
+    return {
+      groupsCount: computed(() => store.groups()?.length ?? 0), 
       filteredGroups: computed(() => 
-        state.groupsResource.value()?.filter((group: GroupModel) => 
-          nameMatches(group.index, state.searchTerm()) &&
-          chipMatches(group.tags, state.selectedTag()))
-      ),
-      isLoading: computed(() => state.groupsResource.isLoading()),
+        store.groups()?.filter((group: GroupModel) => 
+          nameMatches(group.index, store.searchTerm()) &&
+          chipMatches(group.tags, store.selectedTag()))
+      )
     }
   }),
 

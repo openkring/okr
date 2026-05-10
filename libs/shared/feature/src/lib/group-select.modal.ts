@@ -1,19 +1,18 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonList, ModalController } from '@ionic/angular/standalone';
 
 import { GroupModel, GroupModelName, UserModel } from '@bk2/shared-models';
 import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
+import { MultiAvatarComponent } from '@bk2/cms-menu-ui';
 
-import { AvatarPipe } from '@bk2/avatar-ui';
 import { GroupSelectStore } from './group-select.store';
 
 @Component({
   selector: 'bk-group-select-modal',
   standalone: true,
   imports: [
-    HeaderComponent, SpinnerComponent,
-    AvatarPipe, EmptyListComponent,
-    IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList,
+    HeaderComponent, SpinnerComponent, EmptyListComponent, MultiAvatarComponent,
+    IonContent, IonList,
   ],
   providers: [GroupSelectStore],
   styles: [`
@@ -35,16 +34,11 @@ import { GroupSelectStore } from './group-select.store';
         @if(selectedGroupsCount() === 0) {
           <bk-empty-list message="@subject.group.field.empty" />
         } @else {
-          @for(group of filteredGroups(); track $index) {
-            <ion-list lines="none">
-              <ion-item class="item" (click)="select(group)">
-                 <ion-avatar slot="start">
-                  <ion-img src="{{ 'group.' + group.bkey | avatar:group.icon }}" alt="Group Avatar Logo" />
-                </ion-avatar>
-                <ion-label>{{ group.name }}</ion-label>
-              </ion-item>
-            </ion-list>
-          }
+          <ion-list lines="inset">
+            @for(group of filteredGroups(); track $index) {
+              <bk-multi-avatar [icon]="group.icon" [label]="group.name"  (click)="select(group)"/>
+            }
+          </ion-list>
         }
       }
     </ion-content>

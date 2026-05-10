@@ -21,6 +21,7 @@ function getDefaultIcon(key: string): string {
   switch (modelType) {
     case 'person':
     case 'org':
+    case 'group':
     case 'resource':
       return modelType;
     default:

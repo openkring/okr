@@ -22,7 +22,7 @@ import { ResponsibilitySelectStore } from './responsibility-select.store';
     <bk-header
       [(searchTerm)]="searchTerm"
       [isSearchable]="true"
-      title="@relationship.responsibility.operation.select.label"
+      title="@responsibility.operation.select.label"
       [isModal]="true"
     />
     <ion-content>
@@ -30,7 +30,7 @@ import { ResponsibilitySelectStore } from './responsibility-select.store';
         <bk-spinner />
       } @else {
         @if(count() === 0) {
-          <bk-empty-list message="@relationship.responsibility.field.empty" />
+          <bk-empty-list message="@responsibility.field.empty" />
         } @else {
           <ion-list lines="none">
             @for(responsibility of filteredResponsibilities(); track responsibility.bkey) {

@@ -461,7 +461,7 @@ export const _MembershipStore = signalStore(
         const member = data as PersonModel;
         const alreadyMember = store.members().some(m => m.memberKey === member.bkey && isOngoing(m.dateOfExit));
         if (alreadyMember) {
-          await showToast(store.toastController, '@membership.operation.create.alreadyMember.error');
+          await showToast(store.toastController, '@membership.operation.create.alreadyMember');
           return;
         }
         const membership = convertMemberAndOrgToMembership(member, PersonModelName, group, GroupModelName, store.tenantId());
@@ -490,7 +490,7 @@ export const _MembershipStore = signalStore(
         if (role === 'confirm' && data) {
           const newMember = data as MemberNewFormModel;
           if (store.personService.checkIfExists(store.appStore.allPersons(), newMember.firstName, newMember.lastName)) {
-            if (!confirm(store.alertController, '@membership.operation.createMember.exists.error', true)) return;           
+            if (!confirm(store.alertController, '@membership.operation.createMember.alreadyMember', true)) return;           
           }
 
           const personKey = await store.personService.create(convertFormToNewPerson(newMember, tenantId), store.currentUser());

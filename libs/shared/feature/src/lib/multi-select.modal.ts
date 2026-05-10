@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input, linkedSignal } from '@angul
 import { FormsModule } from '@angular/forms';
 import { IonAvatar, IonContent, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
 
-import { GroupModel, GroupModelName, OrgModel, OrgModelName, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
+import { GroupModelName, OrgModel, OrgModelName, PersonModel, PersonModelName, UserModel } from '@bk2/shared-models';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { FullNamePipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, HeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
@@ -27,7 +27,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
   providers: [OrgSelectStore, GroupSelectStore, PersonSelectStore],
   styles: [`
     .item { padding: 0px; min-height: 40px; }
-    ion-avatar { margin-top: 0px; margin-bottom: 0px; }
+    ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
     ion-list { padding: 0px; }
     ion-segment { margin: 8px 0; }
   `],
@@ -78,7 +78,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
             @for(group of filteredGroups(); track $index) {
               <ion-item class="item" (click)="select('group', group.bkey)">
                 <ion-avatar slot="start">
-                  <ion-img src="{{ 'group.' + group.bkey | avatar:groupDefaultIcon }}" alt="Avatar Logo" />
+                  <ion-img src="{{ 'group.' + group.bkey | avatar:group.icon }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>{{ group.name }}</ion-label>
               </ion-item>

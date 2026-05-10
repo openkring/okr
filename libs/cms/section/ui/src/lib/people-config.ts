@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 import { FormsModule } from '@angular/forms';
 
@@ -19,7 +19,7 @@ import { AvatarsComponent } from '@bk2/avatar-ui';
   imports: [
     vestForms, FormsModule,
     TranslatePipe, AsyncPipe,
-    IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonButton, IonIcon,
+    IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonButton, IonIcon,
     CategoryComponent, AvatarsComponent, StringSelectComponent,
     CheckboxComponent, TextInputComponent, SvgIconPipe
   ],

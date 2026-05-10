@@ -96,7 +96,11 @@ export class ResponsibilityEditModal {
     const modal = await this.modalController.create({
       component: MultiSelectModalComponent,
       cssClass: 'list-modal',
-      componentProps: { contents: 'org,group', selectedTag: '', currentUser: this.currentUser() },
+      componentProps: { 
+        contents: 'org,group',
+        selectedTag: '',
+        currentUser: this.currentUser()
+      },
     });
     await modal.present();
     const { data, role } = await modal.onWillDismiss();
