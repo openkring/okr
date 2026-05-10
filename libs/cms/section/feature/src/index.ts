@@ -7,6 +7,7 @@ export * from './lib/iframe-section.component';
 export * from './lib/map-section.component';
 export * from './lib/missing-section.component';
 export * from './lib/people-section.component';
+export * from './lib/people-section.store';
 export * from './lib/section-view.modal';
 export * from './lib/section-list.component';
 export * from './lib/section-view.modal';

@@ -1,10 +1,10 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, Signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
+import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AVATAR_CONFIG_SHAPE, AvatarInfo, ColorIonic, NameDisplay, PeopleSection } from '@bk2/shared-models';
+import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, ColorIonic, NameDisplay } from '@bk2/shared-models';
 import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getFullName } from '@bk2/shared-util-core';
 
@@ -16,51 +16,44 @@ import { calculateCols } from '@bk2/cms-section-util';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe,
-    IonGrid,IonRow, IonCol,
+    IonGrid, IonRow, IonCol,
     AvatarLabelComponent
   ],
   template: `
-    @if(section(); as section) {
-      <ion-grid>
-        <ion-row>
-          @if(count() === 0) {
-            <ion-col>{{ '@content.section.error.noPeople' | translate | async }}</ion-col>
-          } @else {
-            @for(person of persons(); track person.key) {
-              <ion-col size="12" [sizeMd]="cols()" (click)="showPerson(person)">
-                <bk-avatar-label 
-                  [key]="person.modelType + '.' + person.key" 
-                  [label]="getPersonLabel(person)" 
-                  [color]="color()"
-                  [alt]="altText()"
-                />
-              </ion-col>
-            }
+    <ion-grid>
+      <ion-row>
+        @if(count() === 0) {
+          <ion-col>{{ '@content.section.error.noPeople' | translate | async }}</ion-col>
+        } @else {
+          @for(person of persons(); track person.key) {
+            <ion-col size="12" [sizeMd]="cols()" (click)="showPerson(person)">
+              <bk-avatar-label
+                [key]="person.modelType + '.' + person.key"
+                [label]="getPersonLabel(person)"
+                [color]="color()"
+                [alt]="altText()"
+              />
+            </ion-col>
           }
-        </ion-row>
-      </ion-grid>
-    }
+        }
+      </ion-row>
+    </ion-grid>
   `
 })
 export class PersonsWidgetComponent {
   private readonly router = inject(Router);
-  
-  // inputs
-  public section = input<PeopleSection>();
-  public editMode = input(false);
-  public overridePersons = input<AvatarInfo[] | undefined>(undefined);
 
-  // signals
-  protected persons = computed(() => this.overridePersons() ?? this.section()?.properties.persons ?? []);
-  protected avatar = computed(() => this.section()?.properties.avatar ?? AVATAR_CONFIG_SHAPE);
-  protected avatarTitle = computed(() => this.avatar().title);
+  public persons = input.required<AvatarInfo[]>();
+  public avatarConfig = input<AvatarConfig>(AVATAR_CONFIG_SHAPE);
+  public editMode = input(false);
+
   protected count = computed(() => this.persons().length);
-  protected cols = computed(() => calculateCols(this.count(), this.avatarTitle()));
-  protected showName = computed(() => this.avatar().showName ?? true);
-  protected showLabel = computed(() => this.avatar().showLabel ?? true);
-  protected nameDisplay = computed(() => this.avatar().nameDisplay ?? NameDisplay.FirstLast);
-  protected color = computed(() => this.avatar()?.color ?? ColorIonic.Light);
-  protected altText = computed(() => this.avatar().altText ?? 'avatar');
+  protected cols = computed(() => calculateCols(this.count(), this.avatarConfig().title));
+  protected showName = computed(() => this.avatarConfig().showName ?? true);
+  protected showLabel = computed(() => this.avatarConfig().showLabel ?? true);
+  protected nameDisplay = computed(() => this.avatarConfig().nameDisplay ?? NameDisplay.FirstLast);
+  protected color = computed(() => this.avatarConfig().color ?? ColorIonic.Light);
+  protected altText = computed(() => this.avatarConfig().altText ?? 'avatar');
 
   protected getPersonLabel(person: AvatarInfo): string {
     if (!this.showName()) return '';
@@ -68,9 +61,8 @@ export class PersonsWidgetComponent {
     return (this.showLabel() && person.label && person.label.length > 0) ? `${name} (${person.label})` : name;
   }
 
-  // tbd: add a group and show all persons of this group
   public showPerson(person: AvatarInfo): void {
-    if (this.editMode()) return; // prevent navigation in edit mode
+    if (this.editMode()) return;
     navigateByUrl(this.router, `/person/${person.key}`);
   }
 }

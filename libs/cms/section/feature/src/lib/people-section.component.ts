@@ -1,15 +1,14 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { AvatarInfo, PeopleSection, ViewPosition } from "@bk2/shared-models";
+import { PeopleSection } from "@bk2/shared-models";
 import { SpinnerComponent } from "@bk2/shared-ui";
 
 import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
 import { SectionViewModal } from '@bk2/cms-section-feature';
 import { SectionService } from '@bk2/cms-section-data-access';
-import { MembershipService } from '@bk2/relationship-membership-data-access';
+import { PeopleSectionStore } from './people-section.store';
 
 @Component({
   selector: 'bk-people-section',
@@ -18,6 +17,7 @@ import { MembershipService } from '@bk2/relationship-membership-data-access';
     SpinnerComponent, PersonsWidgetComponent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
+  providers: [PeopleSectionStore],
   styles: [`
     ion-card-content { padding: 0px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
@@ -35,12 +35,12 @@ import { MembershipService } from '@bk2/relationship-membership-data-access';
                   </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="9">
-                  <bk-persons-widget [section]="section" [editMode]="editMode()" [overridePersons]="groupMembers()" />
+                  <bk-persons-widget [persons]="store.persons()" [avatarConfig]="store.avatarConfig()" [editMode]="editMode()" />
                 </ion-col>
               } @else {
-              <ion-col size="12">
-                <bk-persons-widget [section]="section" [editMode]="editMode()" [overridePersons]="groupMembers()" />
-              </ion-col>
+                <ion-col size="12">
+                  <bk-persons-widget [persons]="store.persons()" [avatarConfig]="store.avatarConfig()" [editMode]="editMode()" />
+                </ion-col>
               }
             </ion-row>
           </ion-grid>
@@ -52,56 +52,35 @@ import { MembershipService } from '@bk2/relationship-membership-data-access';
   `
 })
 export class PeopleSectionComponent {
+  protected readonly store = inject(PeopleSectionStore);
   private readonly modalController = inject(ModalController);
   private readonly sectionService = inject(SectionService);
-  private readonly membershipService = inject(MembershipService);
 
-  // inputs
   public section = input<PeopleSection>();
   public editMode = input(false);
 
-  // fields
-  protected readonly sectionTitle = computed(() => this.section()?.title);
-  protected readonly subTitle = computed(() => this.section()?.subTitle);
-  protected doShowTitle = computed(() => !!this.sectionTitle() || !!this.subTitle());
+  protected readonly avatarTitle = computed(() => this.store.avatarConfig().title);
+  private readonly linkedSectionId = computed(() => this.store.avatarConfig().linkedSection);
 
-  protected readonly avatarConfig = computed(() => this.section()?.properties.avatar);
-  protected readonly avatarTitle = computed(() => this.avatarConfig()?.title);
-  protected readonly linkedSectionId = computed(() => this.section()?.properties.avatar?.linkedSection);
-  protected readonly groupId = computed(() => this.section()?.properties.groupId ?? '');
-
-  protected readonly groupMembersResource = rxResource({
-    params: () => ({ groupId: this.groupId() }),
-    stream: ({ params }): ReturnType<typeof this.membershipService.listMembersOfOrg> => {
-      if (!params.groupId) return this.membershipService.listMembersOfOrg('');
-      return this.membershipService.listMembersOfOrg(params.groupId);
-    }
-  });
-
-  protected readonly groupMembers = computed<AvatarInfo[] | undefined>(() => {
-    if (!this.groupId()) return undefined;
-    const memberships = this.groupMembersResource.value();
-    return memberships ? this.membershipService.getMemberAvatars(memberships) : [];
-  });
-
-  // passing constants to template
-  public VP = ViewPosition;
+  constructor() {
+    effect(() => this.store.setSection(this.section()));
+  }
 
   protected async showLinkedSection(): Promise<void> {
-    if (this.editMode()) return; // prevent showing linked section in edit mode
+    if (this.editMode()) return;
     const linkedSectionId = this.linkedSectionId();
     if (!linkedSectionId || linkedSectionId.length === 0) return;
     const linkedSection = await firstValueFrom(this.sectionService.read(linkedSectionId));
     if (!linkedSection) return;
-    const _modal = await this.modalController.create({
+    const modal = await this.modalController.create({
       component: SectionViewModal,
       cssClass: 'wide-modal',
-      componentProps: { 
+      componentProps: {
         section: linkedSection,
         title: this.avatarTitle()
       }
     });
-    _modal.present();
-    await _modal.onDidDismiss();
+    modal.present();
+    await modal.onDidDismiss();
   }
 }
