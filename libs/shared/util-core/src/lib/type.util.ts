@@ -638,7 +638,7 @@ export function parseEventString(input: string): {
     .replace(/\s+/g, ' ')
     .trim();
 
-  return { startDate, startTime, name, location: '' };
+  return { startDate, startTime, name, location: '' }; // location reserved for future !! token
 }
 
   /**
