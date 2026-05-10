@@ -2,7 +2,6 @@ import { Component, computed, inject, input, linkedSignal, model, output } from 
 import { FormsModule } from '@angular/forms';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, ToastController } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { Router } from '@angular/router';
 
 import { CategoryListModel, DocumentModel, RoleName, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, ChipsComponent, DateInputComponent, NotesInputComponent, TextInputComponent } from '@bk2/shared-ui';
@@ -141,8 +140,7 @@ import { documentValidations } from '@bk2/document-util';
   }
   `
 })
-export class DocumentFormComponent {  
-  private router = inject(Router);
+export class DocumentFormComponent {
   private toastController = inject(ToastController);
   private env = inject(ENV);
 
@@ -159,6 +157,7 @@ export class DocumentFormComponent {
  // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
+  public priorVersionClicked = output<string>();
 
   // validations and errors
   protected readonly suite = documentValidations;
@@ -201,9 +200,9 @@ export class DocumentFormComponent {
     window.open(this.url(), '_blank');    
   }
 
-  protected async showPriorVersion(): Promise<void> {
+  protected showPriorVersion(): void {
     if (this.priorVersionKey()) {
-      await this.router.navigateByUrl(`/document/${this.priorVersionKey()}`);
+      this.priorVersionClicked.emit(this.priorVersionKey());
     }
   }
 

@@ -4,13 +4,11 @@ import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Browser } from '@capacitor/browser';
 import { firstValueFrom, Observable, of } from 'rxjs';
-import { Router } from '@angular/router';
-
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { CategoryListModel, DocumentCollection, DocumentModel, DocumentModelName, FolderModel } from '@bk2/shared-models';
 import { chipMatches, debugItemLoaded, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
-import { navigateByUrl, confirm, AppNavigationService } from '@bk2/shared-util-angular';
+import { confirm, AppNavigationService } from '@bk2/shared-util-angular';
 
 import { DocumentService } from '@bk2/document-data-access';
 import { FolderService } from '@bk2/folder-data-access';
@@ -41,7 +39,6 @@ export const DocumentStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
-    router: inject(Router),
     firestoreService: inject(FirestoreService),
     appNavigationService: inject(AppNavigationService),
     modalController: inject(ModalController),
@@ -233,9 +230,25 @@ export const DocumentStore = signalStore(
 
         // 4) create the document in the database
         await store.documentService.create(document, currentUser);
-        // 5) navigate to document details page
-        await navigateByUrl(store.router, `/document/${document.bkey}`, { readOnly: false });        
-        //store.documentsResource.reload();
+        // 5) open edit modal
+        const { DocumentEditModal } = await import('./document-edit.modal');
+        const modal = await store.modalController.create({
+          component: DocumentEditModal,
+          componentProps: {
+            document,
+            currentUser,
+            tags: store.appStore.getTags(DocumentModelName),
+            types: store.appStore.getCategory('document_type'),
+            sources: store.appStore.getCategory('document_source'),
+            readOnly: false
+          }
+        });
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss<DocumentModel>();
+        if (role === 'confirm' && data) {
+          await store.documentService.update(data, currentUser);
+        }
+        store.documentsResource.reload();
       },
 
       /**
@@ -330,8 +343,23 @@ export const DocumentStore = signalStore(
 
       async edit(document?: DocumentModel, readOnly = true): Promise<void> {
         if (!document) return;
-        store.appStore.appNavigationService.pushLink('/document/all/c-documents' );
-        await navigateByUrl(store.router, `/document/${document.bkey}`, { readOnly });        
+        const { DocumentEditModal } = await import('./document-edit.modal');
+        const modal = await store.modalController.create({
+          component: DocumentEditModal,
+          componentProps: {
+            document,
+            currentUser: store.currentUser(),
+            tags: store.appStore.getTags(DocumentModelName),
+            types: store.appStore.getCategory('document_type'),
+            sources: store.appStore.getCategory('document_source'),
+            readOnly
+          }
+        });
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss<DocumentModel>();
+        if (role === 'confirm' && data && !readOnly) {
+          await store.documentService.update(data, store.currentUser());
+        }
         store.documentsResource.reload();
       },
 
