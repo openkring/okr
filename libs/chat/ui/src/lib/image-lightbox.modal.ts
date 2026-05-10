@@ -26,6 +26,11 @@ export interface LightboxImage {
       object-fit: contain;
       display: block;
     }
+    .lightbox-img--svg {
+      background: #fff;
+      padding: 16px;
+      box-sizing: border-box;
+    }
     ion-title { color: #fff; font-size: 0.9rem; }
   `],
   template: `
@@ -58,7 +63,7 @@ export interface LightboxImage {
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <img class="lightbox-img" [src]="currentImage().mediaUrl" [alt]="currentImage().filename" />
+      <img class="lightbox-img" [class.lightbox-img--svg]="isSvg()" [src]="currentImage().mediaUrl" [alt]="currentImage().filename" />
     </ion-content>
   `
 })
@@ -70,6 +75,7 @@ export class ImageLightboxModal {
 
   protected currentIndex = linkedSignal(() => this.initialIndex());
   protected currentImage = computed(() => this.images()[this.currentIndex()]);
+  protected isSvg = computed(() => this.currentImage().filename.toLowerCase().endsWith('.svg'));
 
   protected prev(): void {
     if (this.currentIndex() > 0) this.currentIndex.set(this.currentIndex() - 1);

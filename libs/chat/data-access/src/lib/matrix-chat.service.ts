@@ -204,8 +204,9 @@ export class MatrixChatService {
   /**
    * Fetch a Matrix media URL with auth and return a blob URL.
    * Caches results to avoid redundant fetches.
+   * @param mimeTypeHint - expected MIME type; used to fix generic content-types returned by some homeservers
    */
-  private async resolveMediaUrl(mxcUrl: string | undefined): Promise<string> {
+  private async resolveMediaUrl(mxcUrl: string | undefined, mimeTypeHint?: string): Promise<string> {
     if (!this.client || !mxcUrl || !mxcUrl.startsWith('mxc://')) return '';
     const cached = this._mediaCache.get(mxcUrl);
     if (cached) return cached;
@@ -217,7 +218,12 @@ export class MatrixChatService {
         headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}
       });
       if (!resp.ok) return '';
-      const blob = await resp.blob();
+      const raw = await resp.blob();
+      // Some homeservers serve media with mismatched or generic content-types (e.g. application/octet-stream).
+      // Re-wrap with the known MIME type so browsers render it correctly (especially critical for SVG in <img>).
+      const blob = (mimeTypeHint && !raw.type.startsWith(mimeTypeHint.split(';')[0].trim()))
+        ? new Blob([await raw.arrayBuffer()], { type: mimeTypeHint })
+        : raw;
       const blobUrl = URL.createObjectURL(blob);
       this._mediaCache.set(mxcUrl, blobUrl);
       return blobUrl;
@@ -358,7 +364,7 @@ export class MatrixChatService {
       // Async-resolve media URL for the confirmed event (local echo has no mediaUrl yet)
       const mxcUrl = newMsg.content?.url ?? newMsg.content?.file?.url;
       if ((newMsg.type === 'm.image' || newMsg.type === 'm.file' || newMsg.type === 'm.audio') && mxcUrl) {
-        this.resolveMediaUrl(mxcUrl).then(url => {
+        this.resolveMediaUrl(mxcUrl, newMsg.content?.info?.mimetype).then(url => {
           if (!url) return;
           const current = subject.value ?? [];
           const idx = current.findIndex(m => m.eventId === newMsg.eventId);
@@ -584,7 +590,7 @@ export class MatrixChatService {
             }
 
             if ((msg.type === 'm.image' || msg.type === 'm.file' || msg.type === 'm.audio') && mxcUrl) {
-              return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.resolveMediaUrl(mxcUrl) };
+              return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.resolveMediaUrl(mxcUrl, msg.content.info?.mimetype) };
             }
             return { ...msg, senderAvatar: senderAvatar || undefined };
           })
