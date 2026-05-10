@@ -42,7 +42,9 @@ export const onAddressChange = onDocumentWritten(
     const addressId = event.params.addressId;
     logger.info(`address ${addressId} has changed`);
     try {
-      const address = event.data?.after.data();
+      // Use after data for writes/updates; fall back to before data for deletes
+      // so the parent's fav* fields are refreshed even when an address is removed.
+      const address = event.data?.after.data() ?? event.data?.before.data();
       if (address) {
         await updateFavoriteAddressInfo(firestore, address as AddressModel, addressId);
       }

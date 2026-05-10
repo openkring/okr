@@ -53,11 +53,11 @@ export async function updateFavoriteAddressInfo(firestore: Firestore, address: A
  */
 async function getFavoriteAddressInfo(firestore: Firestore, parentKey: string): Promise<FavoriteAddressInfo> {
   let query: FirebaseFirestore.Query = firestore.collection(AddressCollection);
-  query = query.where('parentKey', '==', parentKey);
+  query = query.where('parentKey', '==', parentKey).where('isFavorite', '==', true);
   const favoriteAddressInfo = getEmptyFavoriteAddressInfo();
   const snapshot = await query.get();
   if (snapshot.empty) {
-    logger.info(`getFavoriteAddressInfo: no favorite addresses found for ${parentKey})`);
+    logger.info(`getFavoriteAddressInfo: no favorite addresses found for ${parentKey}`);
   } else {
     const favoriteAddresses = snapshot.docs.map(doc => {
       return { ...doc.data(), bkey: doc.id } as AddressModel;
@@ -65,20 +65,11 @@ async function getFavoriteAddressInfo(firestore: Firestore, parentKey: string): 
     logger.info(`getFavoriteAddressInfo: found ${favoriteAddresses.length} favorite addresses for ${parentKey}`);
     for (const favoriteAddress of favoriteAddresses) {
       switch (favoriteAddress.addressChannel) {
-        case 'email':
-          favoriteAddressInfo.favEmail = favoriteAddress.email;
-          break;
-        case 'phone':
-          favoriteAddressInfo.favPhone = favoriteAddress.phone;
-          break;
-        case 'postal':
-          favoriteAddressInfo.favZipCode = favoriteAddress.zipCode;
-          break;
-        case 'web':
-          favoriteAddressInfo.favWeb = favoriteAddress.url;
-          break;
+        case 'email':  favoriteAddressInfo.favEmail   = favoriteAddress.email;   break;
+        case 'phone':  favoriteAddressInfo.favPhone   = favoriteAddress.phone;   break;
+        case 'postal': favoriteAddressInfo.favZipCode = favoriteAddress.zipCode; break;
         default:
-          die(`AddressUtil.getEmptyFavoriteAddressInfo: unknown channel type ${favoriteAddress.addressChannel}`);
+          logger.info(`getFavoriteAddressInfo: skipping channel ${favoriteAddress.addressChannel} for ${parentKey}`);
       }
     }
   }
@@ -90,6 +81,5 @@ function getEmptyFavoriteAddressInfo(): FavoriteAddressInfo {
     favEmail: DEFAULT_EMAIL,
     favPhone: DEFAULT_PHONE,
     favZipCode: '',
-    favWeb: DEFAULT_URL,
   };
 }
