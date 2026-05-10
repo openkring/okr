@@ -18,6 +18,7 @@ export * from './lib/counter.component';
 export * from './lib/date-input.component';
 export * from './lib/date-picker.modal';
 export * from './lib/date-select.modal';
+export * from './lib/date-time-select.modal';
 export * from './lib/editor.component';
 export * from './lib/editor-toolbar.component';
 export * from './lib/email-addresses.modal';
