@@ -354,6 +354,21 @@ export class MatrixChatService {
           subject.next([...msgs, newMsg]);
         }
       }
+
+      // Async-resolve media URL for the confirmed event (local echo has no mediaUrl yet)
+      const mxcUrl = newMsg.content?.url ?? newMsg.content?.file?.url;
+      if ((newMsg.type === 'm.image' || newMsg.type === 'm.file' || newMsg.type === 'm.audio') && mxcUrl) {
+        this.resolveMediaUrl(mxcUrl).then(url => {
+          if (!url) return;
+          const current = subject.value ?? [];
+          const idx = current.findIndex(m => m.eventId === newMsg.eventId);
+          if (idx >= 0) {
+            const patched = [...current];
+            patched[idx] = { ...patched[idx], mediaUrl: url };
+            subject.next(patched);
+          }
+        });
+      }
     });
 
     // Typing notifications
