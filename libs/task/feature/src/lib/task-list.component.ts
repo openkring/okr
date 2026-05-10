@@ -1,13 +1,13 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { RoleName, TaskModel } from '@bk2/shared-models';
+import { PersonModel, RoleName, TaskModel } from '@bk2/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
-import { extractTagAndDate, getAvatarInfo, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, QuickEntryService } from '@bk2/shared-util-angular';
+import { convertDateFormatToString, DateFormat, getAvatarInfo, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -66,8 +66,9 @@ import { TaskStore } from './task.store';
       <!-- quick entry -->
       @if(canChange()) {
         <ion-item lines="none">
-          <ion-textarea #bkQuickEntry 
+          <ion-textarea #bkQuickEntry
             (keyup.enter)="quickEntry(bkQuickEntry)"
+            (ionInput)="onQuickEntryInput(bkQuickEntry)"
             label = "{{'@input.taskQuickEntry.label' | translate | async }}"
             labelPlacement = "floating"
             placeholder = "{{'@input.taskQuickEntry.placeholder' | translate | async }}"
@@ -142,6 +143,10 @@ import { TaskStore } from './task.store';
 export class TaskListComponent {
   protected store = inject(TaskStore);
   private actionSheetController = inject(ActionSheetController);
+  private readonly modalController = inject(ModalController);
+  private readonly quickEntryService = inject(QuickEntryService);
+  private selectedQuickEntryPerson = signal<PersonModel | null>(null);
+  private isSettingQuickEntryValue = false;
 
   public listId = input.required<string>(); // all, my, calendarId
   public contextMenuName = input.required<string>();
@@ -204,10 +209,73 @@ export class TaskListComponent {
    */
   protected async quickEntry(bkQuickEntry: IonTextarea): Promise<void> {
     const task = new TaskModel(this.store.tenantId());
-    [task.tags, task.dueDate, task.name] = extractTagAndDate(bkQuickEntry.value?.trim() ?? '');
+    const rawValue = bkQuickEntry.value?.trim() ?? '';
+    const tagMatch = rawValue.match(/:(\S+)/);
+    task.tags = tagMatch ? tagMatch[1] : '';
+    const dateMatch = rawValue.match(/\b(\d{2}\.\d{2}\.\d{4})(?:,\d{4})?\b/);
+    if (dateMatch) {
+      task.dueDate = convertDateFormatToString(dateMatch[1], DateFormat.ViewDate, DateFormat.StoreDate, false);
+    }
+    task.name = rawValue
+      .replace(/@[^\s@]+(?:\s+[^\s@]+)?/g, '')
+      .replace(/\b\d{2}\.\d{2}\.\d{4}(?:,\d{4})?\b/g, '')
+      .replace(/:\S+/g, '')
+      .replace(/\s+/g, ' ').trim();
     task.author = getAvatarInfo(this.store.currentUser(), 'user');
+    const person = this.selectedQuickEntryPerson();
+    if (person) {
+      task.assignee = getAvatarInfo(person, 'person');
+      this.selectedQuickEntryPerson.set(null);
+    }
     await this.store.quickEntry(task);
     bkQuickEntry.value = '';
+  }
+
+  protected async onQuickEntryInput(textarea: IonTextarea): Promise<void> {
+    if (this.isSettingQuickEntryValue) return;
+    const value = textarea.value ?? '';
+    const trigger = this.quickEntryService.detectTrigger(value);
+    if (!trigger) return;
+    this.isSettingQuickEntryValue = true;
+    try {
+      if (trigger === 'person') {
+        const { PersonSelectModalComponent } = await import('@bk2/shared-feature');
+        const modal = await this.modalController.create({
+          component: PersonSelectModalComponent,
+          cssClass: 'list-modal',
+          componentProps: {
+            selectedTag: '',
+            currentUser: this.currentUser(),
+          },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<PersonModel>();
+        if (role === 'confirm' && data) {
+          this.selectedQuickEntryPerson.set(data);
+          textarea.value = this.quickEntryService.replaceToken(value, '@', `@${data.firstName} ${data.lastName}`);
+        } else {
+          textarea.value = value.slice(0, -1);
+        }
+      } else if (trigger === 'date') {
+        const { DateTimeSelectModalComponent } = await import('@bk2/shared-ui');
+        const modal = await this.modalController.create({
+          component: DateTimeSelectModalComponent,
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<string>();
+        if (role === 'confirm' && data) {
+          const datePart = data.substring(0, 10);
+          const viewDate = convertDateFormatToString(datePart, DateFormat.IsoDate, DateFormat.ViewDate);
+          const timePart = data.length >= 16 ? data.substring(11, 16) : '00:00';
+          const token = timePart === '00:00' ? viewDate : `${viewDate},${timePart.replace(':', '')}`;
+          textarea.value = this.quickEntryService.replaceToken(value, '//', token);
+        } else {
+          textarea.value = value.slice(0, -2);
+        }
+      }
+    } finally {
+      this.isSettingQuickEntryValue = false;
+    }
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
@@ -286,6 +354,7 @@ export class TaskListComponent {
 
   protected clear(bkQuickEntry: IonTextarea): void {
     bkQuickEntry.value = '';
+    this.selectedQuickEntryPerson.set(null);
   }
 
   /******************************* helpers *************************************** */
