@@ -122,6 +122,18 @@ import { ButtonCopyComponent } from '@bk2/shared-ui';
       display: block;
     }
 
+    .pending-thumb-fallback {
+      width: 52px;
+      height: 52px;
+      border-radius: 6px;
+      background: var(--ion-color-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ion-color-medium);
+      font-size: 24px;
+    }
+
     .pending-thumb-remove {
       position: absolute;
       top: -6px;
@@ -186,7 +198,14 @@ import { ButtonCopyComponent } from '@bk2/shared-ui';
         <div class="pending-images-strip">
           @for (file of pendingImages(); track file; let i = $index) {
             <div class="pending-thumb-wrapper">
-              <img [src]="getObjectUrl(file)" [alt]="file.name" class="pending-thumb" />
+              @if (_failedThumbs().has(file)) {
+                <div class="pending-thumb pending-thumb-fallback">
+                  <ion-icon src="{{'image' | svgIcon}}"></ion-icon>
+                </div>
+              } @else {
+                <img [src]="getObjectUrl(file)" [alt]="file.name" class="pending-thumb"
+                     (error)="onThumbError(file)" />
+              }
               <ion-button
                 fill="clear"
                 size="small"
@@ -328,7 +347,7 @@ export class MatrixMessageInput {
       this.messageText.set(draft);
     });
 
-    // Revoke object URLs for files removed from the pending list
+    // Revoke object URLs and clean up failed-thumb state for removed files
     effect(() => {
       const current = new Set(this.pendingImages());
       for (const [file, url] of this._objectUrlCache) {
@@ -337,6 +356,10 @@ export class MatrixMessageInput {
           this._objectUrlCache.delete(file);
         }
       }
+      this._failedThumbs.update(s => {
+        const pruned = new Set([...s].filter(f => current.has(f)));
+        return pruned.size === s.size ? s : pruned;
+      });
     });
 
     // Revoke all remaining object URLs on destroy
@@ -375,6 +398,11 @@ export class MatrixMessageInput {
 
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _objectUrlCache = new Map<File, string>();
+  protected readonly _failedThumbs = signal<Set<File>>(new Set());
+
+  protected onThumbError(file: File): void {
+    this._failedThumbs.update(s => new Set(s).add(file));
+  }
 
   protected getObjectUrl(file: File): string {
     if (!this._objectUrlCache.has(file)) {
