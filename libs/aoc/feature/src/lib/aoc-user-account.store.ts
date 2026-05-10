@@ -17,6 +17,7 @@ import { confirm, error, navigateByUrl } from '@bk2/shared-util-angular';
 import { Router } from '@angular/router';
 import { AuthService } from '@bk2/auth-data-access';
 import { UserService } from '@bk2/user-data-access';
+import { PersonService } from '@bk2/subject-person-data-access';
 import { createFirebaseAccount, generatePassword, getUidByEmail, isValidEmail } from '@bk2/aoc-util';
 
 export type FirebaseAuthUser = {
@@ -61,6 +62,7 @@ export const AocUserAccountStore = signalStore(
     toastController: inject(ToastController),
     authService: inject(AuthService),
     userService: inject(UserService),
+    personService: inject(PersonService),
   })),
   withProps(store => ({
     usersResource: rxResource({
@@ -239,13 +241,49 @@ export const AocUserAccountStore = signalStore(
 
       /******************************** actions ******************************************* */
       async editPerson(account: UserAccount): Promise<void> {
-        await navigateByUrl(store.router, `/person/${account.personKey}`, { readOnly: false });
+        if (!account.personKey) return;
+        const person = store.appStore.getPerson(account.personKey);
+        if (!person) return;
+        const { PersonEditModal } = await import('@bk2/subject-person-feature');
+        const modal = await store.modalController.create({
+          component: PersonEditModal,
+          componentProps: {
+            person,
+            currentUser: store.appStore.currentUser(),
+            tags: store.appStore.getTags('person'),
+            tenantId: store.appStore.tenantId(),
+            genders: store.appStore.getCategory('gender'),
+            readOnly: false,
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data) {
+          await store.personService.update(data, store.appStore.currentUser());
+        }
       },
 
       async editMembership(account: UserAccount): Promise<void> {
         if (!account.personKey) return;
-        // No direct membership-edit route exists; navigate to the person page where memberships are accessible.
-        await navigateByUrl(store.router, `/person/${account.personKey}`, { readOnly: false });
+        const person = store.appStore.getPerson(account.personKey);
+        if (!person) return;
+        const { PersonEditModal } = await import('@bk2/subject-person-feature');
+        const modal = await store.modalController.create({
+          component: PersonEditModal,
+          componentProps: {
+            person,
+            currentUser: store.appStore.currentUser(),
+            tags: store.appStore.getTags('person'),
+            tenantId: store.appStore.tenantId(),
+            genders: store.appStore.getCategory('gender'),
+            readOnly: false,
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data) {
+          await store.personService.update(data, store.appStore.currentUser());
+        }
       },
 
       async editUser(account: UserAccount): Promise<void> {

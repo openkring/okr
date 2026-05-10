@@ -2,8 +2,9 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { PeopleSection } from "@bk2/shared-models";
+import { AvatarInfo, PeopleSection, PersonModelName } from "@bk2/shared-models";
 import { SpinnerComponent } from "@bk2/shared-ui";
+import { AppStore } from '@bk2/shared-feature';
 
 import { PersonsWidgetComponent } from '@bk2/cms-section-ui';
 import { SectionViewModal } from '@bk2/cms-section-feature';
@@ -35,11 +36,11 @@ import { PeopleSectionStore } from './people-section.store';
                   </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="9">
-                  <bk-persons-widget [persons]="store.persons()" [avatarConfig]="store.avatarConfig()" [editMode]="editMode()" />
+                  <bk-persons-widget [persons]="store.persons()" [avatarConfig]="store.avatarConfig()" [editMode]="editMode()" (personClicked)="showPerson($event)" />
                 </ion-col>
               } @else {
                 <ion-col size="12">
-                  <bk-persons-widget [persons]="store.persons()" [avatarConfig]="store.avatarConfig()" [editMode]="editMode()" />
+                  <bk-persons-widget [persons]="store.persons()" [avatarConfig]="store.avatarConfig()" [editMode]="editMode()" (personClicked)="showPerson($event)" />
                 </ion-col>
               }
             </ion-row>
@@ -55,6 +56,7 @@ export class PeopleSectionComponent {
   protected readonly store = inject(PeopleSectionStore);
   private readonly modalController = inject(ModalController);
   private readonly sectionService = inject(SectionService);
+  private readonly appStore = inject(AppStore);
 
   public section = input<PeopleSection>();
   public editMode = input(false);
@@ -64,6 +66,25 @@ export class PeopleSectionComponent {
 
   constructor() {
     effect(() => this.store.setSection(this.section()));
+  }
+
+  protected async showPerson(avatar: AvatarInfo): Promise<void> {
+    const person = this.appStore.getPerson(avatar.key);
+    if (!person) return;
+    const { PersonEditModal } = await import('@bk2/subject-person-feature');
+    const modal = await this.modalController.create({
+      component: PersonEditModal,
+      componentProps: {
+        person,
+        currentUser: this.appStore.currentUser(),
+        tags: this.appStore.getTags(PersonModelName),
+        tenantId: this.appStore.tenantId(),
+        genders: this.appStore.getCategory('gender'),
+        readOnly: true,
+      }
+    });
+    modal.present();
+    await modal.onDidDismiss();
   }
 
   protected async showLinkedSection(): Promise<void> {

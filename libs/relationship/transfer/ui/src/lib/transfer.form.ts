@@ -1,8 +1,7 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
-import { Router } from '@angular/router';
 
 import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, NAME_LENGTH } from '@bk2/shared-constants';
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -139,9 +138,6 @@ import { transferValidations } from '@bk2/relationship-transfer-util';
   `,
 })
 export class TransferFormComponent {
-  private readonly router = inject(Router);
-  protected modalController = inject(ModalController);
-
   // inputs
   public readonly formData = model.required<TransferModel>();
   public currentUser = input<UserModel | undefined>();
@@ -161,6 +157,7 @@ export class TransferFormComponent {
   public selectSubject = output<boolean>();
   public selectObject = output<boolean>();
   public selectResource = output<boolean>();
+  public showPersonOutput = output<string>();
 
   // validation and errors
   protected readonly suite = transferValidations;
@@ -208,8 +205,7 @@ export class TransferFormComponent {
     return hasRole(role, this.currentUser());
   }
 
-  protected async showPerson(personKey: string): Promise<void> {
-    if (this.modalController) this.modalController.dismiss(null, 'cancel');
-    await this.router.navigateByUrl(`/person/${personKey}`);
+  protected showPerson(personKey: string): void {
+    this.showPersonOutput.emit(personKey);
   }
 }

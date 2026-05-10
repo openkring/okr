@@ -31,6 +31,8 @@
     {"path": "../../../relationship/membership/ui/tsconfig.lib.json"},
     {"path": "../../../relationship/membership/util/tsconfig.lib.json"},
     {"path": "../../../subject/org/data-access/tsconfig.lib.json"},
+    {"path": "../../../subject/person/data-access/tsconfig.lib.json"},
+    {"path": "../../../subject/person/feature/tsconfig.lib.json"},
     {"path": "../../../avatar/ui/tsconfig.lib.json"},
     {"path": "../../../comment/feature/tsconfig.lib.json"},
     {"path": "../../../document/feature/tsconfig.lib.json"},

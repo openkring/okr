@@ -1,11 +1,9 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, computed, input, output } from '@angular/core';
 import { IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { AsyncPipe } from '@angular/common';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, ColorIonic, NameDisplay } from '@bk2/shared-models';
-import { navigateByUrl } from '@bk2/shared-util-angular';
 import { getFullName } from '@bk2/shared-util-core';
 
 import { AvatarLabelComponent } from '@bk2/avatar-ui';
@@ -41,8 +39,6 @@ import { calculateCols } from '@bk2/cms-section-util';
   `
 })
 export class PersonsWidgetComponent {
-  private readonly router = inject(Router);
-
   public persons = input.required<AvatarInfo[]>();
   public avatarConfig = input<AvatarConfig>(AVATAR_CONFIG_SHAPE);
   public editMode = input(false);
@@ -55,6 +51,8 @@ export class PersonsWidgetComponent {
   protected color = computed(() => this.avatarConfig().color ?? ColorIonic.Light);
   protected altText = computed(() => this.avatarConfig().altText ?? 'avatar');
 
+  public personClicked = output<AvatarInfo>();
+
   protected getPersonLabel(person: AvatarInfo): string {
     if (!this.showName()) return '';
     const name = getFullName(person.name1, person.name2, this.nameDisplay());
@@ -63,6 +61,6 @@ export class PersonsWidgetComponent {
 
   public showPerson(person: AvatarInfo): void {
     if (this.editMode()) return;
-    navigateByUrl(this.router, `/person/${person.key}`);
+    this.personClicked.emit(person);
   }
 }

@@ -10,8 +10,8 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName, TaskModel } from '@bk2/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@bk2/shared-util-core';
-import { confirm, copyToClipboardWithConfirmation, exportXlsx, navigateByUrl, showToast } from '@bk2/shared-util-angular';
-import { selectDate } from '@bk2/shared-ui';
+import { confirm, copyToClipboardWithConfirmation, exportXlsx, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@bk2/shared-util-angular';
+import { EmailAddressesModal, selectDate } from '@bk2/shared-ui';
 import { END_FUTURE_DATE_STR } from '@bk2/shared-constants';
 
 import { TaskService } from '@bk2/task-data-access';
@@ -26,7 +26,6 @@ import { MatrixChatService } from '@bk2/chat-data-access';
 import { MemberNewModal } from './member-new.modal';
 import { MembershipEditModalComponent } from './membership-edit.modal';
 import { CategoryChangeModalComponent } from './membership-category-change.modal';
-import { EmailEntry, MemberEmailAddressesModal } from './membership-email-addresses.modal';
 import { InvoiceNewModal } from '@bk2/finance-invoice-feature';
 
 export type MembershipState = {
@@ -794,41 +793,64 @@ export const _MembershipStore = signalStore(
         const memberKeySet = new Set(filteredMemberships.map(m => m.memberKey));
         const filteredPersons = persons.filter(p => p.bkey && memberKeySet.has(p.bkey));
 
-        const mainEmails: EmailEntry[] = filteredPersons
-          .filter(p => !!p.favEmail)
-          .map(p => ({ email: p.favEmail, memberKey: p.bkey ?? '', memberName: getFullName(p.firstName, p.lastName) }))
-          .sort((a, b) => a.email.localeCompare(b.email));
+        const mainEmails = getMainEmailAddresses(filteredPersons);
 
         const ccQuery = getSystemQuery(store.tenantId());
         ccQuery.push({ key: 'addressChannel', operator: '==', value: 'email' });
         ccQuery.push({ key: 'isCc', operator: '==', value: true });
-        const parentKeySet = new Set(filteredPersons.map(p => `person.${p.bkey}`));
         const allCcAddresses = await firstValueFrom(store.firestoreService.searchData<AddressModel>(AddressCollection, ccQuery));
-        const ccEmails: EmailEntry[] = allCcAddresses
-          .filter(a => parentKeySet.has(a.parentKey) && !!a.email)
-          .map(a => {
-            const person = filteredPersons.find(p => `person.${p.bkey}` === a.parentKey);
-            return { email: a.email, memberKey: person?.bkey ?? '', memberName: getFullName(person?.firstName, person?.lastName) };
-          })
-          .sort((a, b) => a.email.localeCompare(b.email));
+        const ccEmails = getCcEmailAddresses(filteredPersons, allCcAddresses);
 
         const modal = await store.modalController.create({
-          component: MemberEmailAddressesModal,
+          component: EmailAddressesModal,
           componentProps: { mainEmails, ccEmails, canChange: !readOnly }
         });
         await modal.present();
         const { data, role } = await modal.onWillDismiss<{ memberKey: string; readOnly: boolean }>();
         if (role === 'navigate' && data?.memberKey) {
-          await navigateByUrl(store.router, `/person/${data.memberKey}`, { readOnly: data.readOnly });
+          const person = store.appStore.getPerson(data.memberKey);
+          if (!person) return;
+          const { PersonEditModal } = await import('@bk2/subject-person-feature');
+          const personModal = await store.modalController.create({
+            component: PersonEditModal,
+            componentProps: {
+              person,
+              currentUser: store.currentUser(),
+              tags: store.appStore.getTags(PersonModelName),
+              tenantId: store.tenantId(),
+              genders: store.genders(),
+              readOnly: data.readOnly
+            }
+          });
+          personModal.present();
+          const { data: personData, role: personRole } = await personModal.onDidDismiss();
+          if (personRole === 'confirm' && personData && !data.readOnly) {
+            await store.personService.update(personData, store.currentUser());
+          }
         }
       },
 
-      async editPerson(membership?: MembershipModel, url?: string, readOnly = true): Promise<void> {
-        if (!membership) return; // we pass readonly to the edit form
-        if (url) {
-          store.appStore.appNavigationService.pushLink(url);
+      async editPerson(membership?: MembershipModel, readOnly = true): Promise<void> {
+        if (!membership) return;
+        const person = store.appStore.getPerson(membership.memberKey);
+        if (!person) return;
+        const { PersonEditModal } = await import('@bk2/subject-person-feature');
+        const modal = await store.modalController.create({
+          component: PersonEditModal,
+          componentProps: {
+            person,
+            currentUser: store.currentUser(),
+            tags: store.appStore.getTags(PersonModelName),
+            tenantId: store.tenantId(),
+            genders: store.genders(),
+            readOnly
+          }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data && !readOnly) {
+          await store.personService.update(data, store.currentUser());
         }
-        await navigateByUrl(store.router, `/person/${membership.memberKey}`, { readOnly });
       },
 
       async copy(value: string, label: string): Promise<void> {

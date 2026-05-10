@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from "@angular/core";
+import { Component, computed, inject, input, output } from "@angular/core";
 import { IonAvatar, IonImg, IonLabel } from "@ionic/angular/standalone";
 import { rxResource } from "@angular/core/rxjs-interop";
 
@@ -7,8 +7,6 @@ import { coerceBoolean, getFullName } from "@bk2/shared-util-core";
 import { FirestoreService } from '@bk2/shared-data-access';
 import { addImgixParams } from '@bk2/shared-util-core';
 import { ENV } from "@bk2/shared-config";
-import { navigateByUrl } from "@bk2/shared-util-angular";
-import { Router } from "@angular/router";
 
 
 @Component({
@@ -34,11 +32,13 @@ import { Router } from "@angular/router";
 export class AvatarUserComponent {
   private firestoreService = inject(FirestoreService);
   private env = inject(ENV);
-  private router = inject(Router);
 
   // inputs
   public currentUser = input<UserModel | undefined>();
   public showName = input(false);
+
+  // outputs
+  public profileClicked = output<void>();
 
   // computed
   protected shouldShowName = computed(() => coerceBoolean(this.showName()));
@@ -58,7 +58,7 @@ export class AvatarUserComponent {
     return avatar ? `${imgixBaseUrl}/${addImgixParams(avatar.storagePath, 60)}` : `${imgixBaseUrl}/logo/icons/${PersonModelName}.svg`;
   });
 
-  protected async showProfile(): Promise<void> {
-    await navigateByUrl(this.router, '/person/profile');
+  protected showProfile(): void {
+    this.profileClicked.emit();
   }
 }

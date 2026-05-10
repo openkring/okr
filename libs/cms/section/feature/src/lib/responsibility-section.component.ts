@@ -1,15 +1,13 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { AlertController, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { AlertController, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { AvatarInfo, ColorIonic, ResponsibilitySection } from '@bk2/shared-models';
+import { AvatarInfo, ColorIonic, PersonModelName, ResponsibilitySection } from '@bk2/shared-models';
 import { SpinnerComponent } from '@bk2/shared-ui';
 import { getAvatarName, getFullName } from '@bk2/shared-util-core';
+import { AppStore } from '@bk2/shared-feature';
 
 import { ResponsibilitySectionStore } from './responsibility-section.store';
 import { AvatarLabelComponent } from '@bk2/avatar-ui';
-import { calculateCols } from '@bk2/cms-section-util';
-import { AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'bk-responsibility-section',
@@ -57,8 +55,8 @@ import { Router } from '@angular/router';
 export class ResponsibilitySectionComponent {
   protected readonly store = inject(ResponsibilitySectionStore);
   private readonly alertController = inject(AlertController);
-  private readonly router = inject(Router);
-  private readonly appNavigationService = inject(AppNavigationService);
+  private readonly appStore = inject(AppStore);
+  private readonly modalController = inject(ModalController);
 
   public section = input<ResponsibilitySection>();
   public editMode = input(false);
@@ -99,9 +97,23 @@ export class ResponsibilitySectionComponent {
   }
 
   // tbd: add a group and show all persons of this group
-  public showPerson(person: AvatarInfo): void {
-    if (this.editMode()) return; // prevent navigation in edit mode
-    this.appNavigationService.pushLink(this.router.url);
-    navigateByUrl(this.router, `/person/${person.key}`);
+  public async showPerson(avatar: AvatarInfo): Promise<void> {
+    if (this.editMode()) return;
+    const person = this.appStore.getPerson(avatar.key);
+    if (!person) return;
+    const { PersonEditModal } = await import('@bk2/subject-person-feature');
+    const modal = await this.modalController.create({
+      component: PersonEditModal,
+      componentProps: {
+        person,
+        currentUser: this.appStore.currentUser(),
+        tags: this.appStore.getTags(PersonModelName),
+        tenantId: this.appStore.tenantId(),
+        genders: this.appStore.getCategory('gender'),
+        readOnly: true,
+      }
+    });
+    modal.present();
+    await modal.onDidDismiss();
   }
 }

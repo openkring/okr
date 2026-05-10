@@ -2,14 +2,13 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { combineLatest, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
-import { Router } from '@angular/router';
 import { ActionSheetController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
 import { ContextDiagramConfig, ContextDiagramSection, GroupModelName, MembershipModel, OrgModelName, PersonalRelModel, PersonModelName, ResponsibilityModel, WorkrelModel } from '@bk2/shared-models';
-import { getFullName } from '@bk2/shared-util-core';
-import { navigateByUrl } from '@bk2/shared-util-angular';
+import { getFullName, isPerson } from '@bk2/shared-util-core';
+import { PersonService } from '@bk2/subject-person-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { WorkrelService } from '@bk2/relationship-workrel-data-access';
@@ -103,7 +102,7 @@ export const ContextDiagramStore = signalStore(
     modalController: inject(ModalController),
     actionSheetController: inject(ActionSheetController),
     groupEditModal: inject(GROUP_EDIT_MODAL),
-    router: inject(Router),
+    personService: inject(PersonService),
     responsibilityService: inject(ResponsibilityService),
   })),
   withProps((store) => ({
@@ -220,7 +219,26 @@ export const ContextDiagramStore = signalStore(
         await modal.present();
         await modal.onWillDismiss();
       } else if (modelType === PersonModelName) {
-        await navigateByUrl(store.router, `/person/${key}`, { readOnly: false });
+        const person = store.appStore.getPerson(key);
+        if (!person) return;
+        const { PersonEditModal } = await import('@bk2/subject-person-feature');
+        const modal = await store.modalController.create({
+          cssClass: 'wide-modal',
+          component: PersonEditModal,
+          componentProps: {
+            person,
+            currentUser: store.appStore.currentUser(),
+            tags: store.appStore.getTags(PersonModelName),
+            tenantId: store.appStore.tenantId(),
+            genders: store.appStore.getCategory('gender'),
+            readOnly: false,
+          },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss();
+        if (role === 'confirm' && data && isPerson(data, store.appStore.tenantId())) {
+          await store.personService.update(data, store.appStore.currentUser());
+        }
       }
     },
   })),

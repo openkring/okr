@@ -140,7 +140,6 @@ export class MembershipListComponent {
   protected isoDate = signal(getTodayStr(DateFormat.IsoDate));
 
   // computed
-  protected membershipListUrl = computed(() => 'membership/' + this.listId() + '/' + this.orgId() + '/' + this.contextMenuName());
   protected hasYearFilter = computed(() => this.listId() === 'entries' || this.listId() === 'exits' || this.listId() === 'deceased'); 
   protected membershipCategory = linkedSignal(() => this.hasYearFilter() ? undefined : this.membershipStore.membershipCategory());
   protected genders = computed(() => this.membershipStore.genders());
@@ -380,10 +379,10 @@ export class MembershipListComponent {
           await this.membershipStore.chat(membership);
           break;
         case 'person.edit':
-          await this.membershipStore.editPerson(membership, this.membershipListUrl(), this.readOnly());
+          await this.membershipStore.editPerson(membership, this.readOnly());
           break;
         case 'person.view':
-          await this.membershipStore.editPerson(membership, this.membershipListUrl(), true);
+          await this.membershipStore.editPerson(membership, true);
           break;
         case 'membership.end':
           await this.membershipStore.end(membership, undefined, this.readOnly());

@@ -1,7 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
-import { Router } from '@angular/router';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { vestForms } from 'ngx-vest-forms';
 
 import { LowercaseWordMask } from '@bk2/shared-config';
@@ -217,9 +216,6 @@ import { groupValidations } from '@bk2/subject-group-util';
   `
 })
 export class GroupFormComponent {
-  private readonly modalController = inject(ModalController);
-  private readonly router = inject(Router);
-
   // inputs
   public formData = model.required<GroupModel>();
   public currentUser = input<UserModel | undefined>();
@@ -234,6 +230,7 @@ export class GroupFormComponent {
   public dirty = output<boolean>();
   public valid = output<boolean>();
   public selectPerson = output<void>();
+  public showPersonOutput = output<string>();
 
   // validation and errors
   protected readonly suite = groupValidations;
@@ -285,8 +282,7 @@ export class GroupFormComponent {
     return hasRole(role, this.currentUser());
   }
 
-  protected async showPerson(personKey: string): Promise<void> {
-    if (this.modalController) this.modalController.dismiss(null, 'cancel');
-    await this.router.navigateByUrl(`/person/${personKey}`);
+  protected showPerson(personKey: string): void {
+    this.showPersonOutput.emit(personKey);
   }
 }

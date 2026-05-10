@@ -59,7 +59,7 @@ import { PersonalRelFormComponent } from '@bk2/relationship-personal-rel-ui';
 })
 export class PersonalRelEditModalComponent {
   private readonly modalController = inject(ModalController);
-  private readonly router = inject(Router);
+  private readonly appStore = inject(AppStore);
   protected readonly env = inject(ENV);
 
   // inputs
@@ -159,8 +159,22 @@ export class PersonalRelEditModalComponent {
   }
 
   protected async onShowPerson(personKey: string): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
-    await this.router.navigateByUrl(`/person/${personKey}`);
+    const person = this.appStore.getPerson(personKey);
+    if (!person) return;
+    const { PersonEditModal } = await import('@bk2/subject-person-feature');
+    const modal = await this.modalController.create({
+      component: PersonEditModal,
+      componentProps: {
+        person,
+        currentUser: this.currentUser(),
+        tags: this.appStore.getTags(PersonModelName),
+        tenantId: this.appStore.tenantId(),
+        genders: this.appStore.getCategory('gender'),
+        readOnly: true,
+      }
+    });
+    modal.present();
+    await modal.onDidDismiss();
   }
 
  protected hasRole(role: RoleName | undefined): boolean {
