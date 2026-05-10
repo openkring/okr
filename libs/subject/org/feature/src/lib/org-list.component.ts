@@ -123,7 +123,7 @@ import { OrgStore } from './org.store';
     `
 })
 export class OrgListComponent {
-  protected readonly orgStore = inject(OrgStore);
+  protected readonly store = inject(OrgStore);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -131,38 +131,38 @@ export class OrgListComponent {
   public contextMenuName = input.required<string>();
 
   // derived signals
-  protected filteredOrgs = computed(() => this.orgStore.filteredOrgs() ?? []);
-  protected orgsCount = computed(() => this.orgStore.orgsCount());
+  protected filteredOrgs = computed(() => this.store.filteredOrgs() ?? []);
+  protected orgsCount = computed(() => this.store.orgsCount());
   protected selectedOrgsCount = computed(() => this.filteredOrgs().length);
-  protected isLoading = computed(() => this.orgStore.isLoading());
-  protected tags = computed(() => this.orgStore.tags());
-  protected types = computed(() => this.orgStore.types());
-  protected currentUser = computed(() => this.orgStore.appStore.currentUser());
+  protected isLoading = computed(() => this.store.isLoading());
+  protected tags = computed(() => this.store.tags());
+  protected types = computed(() => this.store.types());
+  protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.orgStore.appStore.env.services.imgixBaseUrl;
+  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
-    this.orgStore.setSearchTerm(searchTerm);
+    this.store.setSearchTerm(searchTerm);
   }
 
   protected onTagSelected(tag: string): void {
-    this.orgStore.setSelectedTag(tag);
+    this.store.setSelectedTag(tag);
   }
 
   protected onTypeSelected(type: string): void {
-    this.orgStore.setSelectedType(type);
+    this.store.setSelectedType(type);
   }
 
   /******************************** actions ******************************************* */
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
-      case 'add': await this.orgStore.add(this.readOnly()); break;
-      case 'exportAddresses': await this.orgStore.export("addresses"); break;
-      case 'exportRaw': await this.orgStore.export("raw_orgs"); break;
-      case 'copyEmailAddresses': await this.orgStore.copyEmailAddresses(); break;
+      case 'add': await this.store.add(this.readOnly()); break;
+      case 'exportAddresses': await this.store.export("addresses"); break;
+      case 'exportRaw': await this.store.export("raw_orgs"); break;
+      case 'copyEmailAddresses': await this.store.copyEmailAddresses(); break;
       default: error(undefined, `OrgListComponent.call: unknown method ${selectedMethod}`);
     }
   }
@@ -175,16 +175,15 @@ export class OrgListComponent {
   protected async showActions(org: OrgModel): Promise<void> {
     if (this.hasRole('memberAdmin')) {
       if (this.hasRole('admin')) {
-
+        const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+        this.addActionSheetButtons(actionSheetOptions, org);
+        await this.executeActions(actionSheetOptions, org);
       } else {
-        await this.orgStore.edit(org, this.readOnly());
+        await this.store.edit(org, this.readOnly());
       }
     } else {
-      await this.orgStore.edit(org, true);
+      await this.store.edit(org, true);
     }
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    this.addActionSheetButtons(actionSheetOptions, org);
-    await this.executeActions(actionSheetOptions, org);
   }
 
   /**
@@ -211,10 +210,10 @@ export class OrgListComponent {
       if (!data) return;
       switch (data.action) {
         case 'org.delete':
-          await this.orgStore.delete(org, this.readOnly());
+          await this.store.delete(org, this.readOnly());
           break;
         case 'org.edit':
-          await this.orgStore.edit(org, this.readOnly());
+          await this.store.edit(org, this.readOnly());
           break;
       }
     }
@@ -222,6 +221,6 @@ export class OrgListComponent {
 
   /******************************** helpers ******************************************* */
   protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.orgStore.currentUser());
+    return hasRole(role, this.store.currentUser());
   }
 }
