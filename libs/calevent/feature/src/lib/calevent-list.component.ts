@@ -11,11 +11,11 @@ import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
-import { AvatarInfo, CalEventModel, PersonModel, RoleName } from '@bk2/shared-models';
+import { CalEventModel, PersonModel, RoleName } from '@bk2/shared-models';
 import { PartPipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, QuickEntryService } from '@bk2/shared-util-angular';
-import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceState, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
+import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceState, getAvatarInfo, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
 import { AvatarDisplayComponent } from '@bk2/avatar-ui';
@@ -445,16 +445,10 @@ export class CalEventListComponent implements OnInit {
     calevent.locationKey = parts.location || '';
     const person = this.selectedQuickEntryPerson();
     if (person) {
-      const avatarInfo: AvatarInfo = {
-        key: person.bkey,
-        name1: person.firstName,
-        name2: person.lastName,
-        modelType: 'person',
-        type: person.gender,
-        subType: '',
-        label: `${person.firstName} ${person.lastName}`,
-      };
-      calevent.responsiblePersons = [avatarInfo];
+      const avatarInfo = getAvatarInfo(person, 'person');
+      if (avatarInfo) {
+        calevent.responsiblePersons = [avatarInfo];
+      }
       this.selectedQuickEntryPerson.set(null);
     }
     await this.store.quickEntry(calevent);
@@ -464,6 +458,7 @@ export class CalEventListComponent implements OnInit {
 
   protected clear(bkQuickEntry: IonTextarea): void {
     bkQuickEntry.value = '';
+    this.selectedQuickEntryPerson.set(null);
   }
 
   protected async onQuickEntryInput(textarea: IonTextarea): Promise<void> {
@@ -471,48 +466,46 @@ export class CalEventListComponent implements OnInit {
     const value = textarea.value ?? '';
     const trigger = this.quickEntryService.detectTrigger(value);
     if (!trigger) return;
-
-    if (trigger === 'person') {
-      const { PersonSelectModalComponent } = await import('@bk2/shared-feature');
-      const modal = await this.modalController.create({
-        component: PersonSelectModalComponent,
-        cssClass: 'list-modal',
-        componentProps: {
-          selectedTag: '',
-          currentUser: this.currentUser(),
-        },
-      });
-      await modal.present();
-      const { data, role } = await modal.onWillDismiss<PersonModel>();
-      this.isSettingQuickEntryValue = true;
-      if (role === 'confirm' && data) {
-        this.selectedQuickEntryPerson.set(data);
-        textarea.value = this.quickEntryService.replaceToken(value, '@', `@${data.firstName} ${data.lastName}`);
-      } else {
-        textarea.value = value.slice(0, -1); // remove stray '@'
+    this.isSettingQuickEntryValue = true;
+    try {
+      if (trigger === 'person') {
+        const { PersonSelectModalComponent } = await import('@bk2/shared-feature');
+        const modal = await this.modalController.create({
+          component: PersonSelectModalComponent,
+          cssClass: 'list-modal',
+          componentProps: {
+            selectedTag: '',
+            currentUser: this.currentUser(),
+          },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<PersonModel>();
+        if (role === 'confirm' && data) {
+          this.selectedQuickEntryPerson.set(data);
+          textarea.value = this.quickEntryService.replaceToken(value, '@', `@${data.firstName} ${data.lastName}`);
+        } else {
+          textarea.value = value.slice(0, -1); // remove stray '@'
+        }
+      } else if (trigger === 'date') {
+        const { DateTimeSelectModalComponent } = await import('@bk2/shared-ui');
+        const modal = await this.modalController.create({
+          component: DateTimeSelectModalComponent,
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<string>();
+        if (role === 'confirm' && data) {
+          const datePart = data.substring(0, 10); // 'yyyy-MM-dd'
+          const viewDate = convertDateFormatToString(datePart, DateFormat.IsoDate, DateFormat.ViewDate);
+          const timePart = data.length >= 16 ? data.substring(11, 16) : '00:00'; // 'HH:mm'
+          const token = timePart === '00:00'
+            ? viewDate
+            : `${viewDate},${timePart.replace(':', '')}`;
+          textarea.value = this.quickEntryService.replaceToken(value, '//', token);
+        } else {
+          textarea.value = value.slice(0, -2); // remove stray '//'
+        }
       }
-      this.isSettingQuickEntryValue = false;
-    }
-
-    if (trigger === 'date') {
-      const { DateTimeSelectModalComponent } = await import('@bk2/shared-ui');
-      const modal = await this.modalController.create({
-        component: DateTimeSelectModalComponent,
-      });
-      await modal.present();
-      const { data, role } = await modal.onWillDismiss<string>();
-      this.isSettingQuickEntryValue = true;
-      if (role === 'confirm' && data) {
-        const datePart = data.substring(0, 10); // 'yyyy-MM-dd'
-        const viewDate = convertDateFormatToString(datePart, DateFormat.IsoDate, DateFormat.ViewDate);
-        const timePart = data.length >= 16 ? data.substring(11, 16) : '00:00'; // 'HH:mm'
-        const token = timePart === '00:00'
-          ? viewDate
-          : `${viewDate},${timePart.replace(':', '')}`;
-        textarea.value = this.quickEntryService.replaceToken(value, '//', token);
-      } else {
-        textarea.value = value.slice(0, -2); // remove stray '//'
-      }
+    } finally {
       this.isSettingQuickEntryValue = false;
     }
   }
