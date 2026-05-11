@@ -174,3 +174,7 @@ export const onTaskWritten = Task.onTaskWritten;
 export const getEcho = Test.getEcho;
 export const getIpInfo = Test.getIpInfo;
 
+// public api (SCS website)
+import * as PublicApi from './publicApi';
+export const publicApi = PublicApi.publicApi;
+
