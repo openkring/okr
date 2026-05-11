@@ -16,7 +16,8 @@
     "e2e": "nx e2e $1",
     "dev": "nx serve test-app",
     "format": "nx run-many --target=format --all",
-    "format:check": "nx run-many --target=format:check --all"
+    "format:check": "nx run-many --target=format:check --all",
+    "copy:website": "mkdir -p dist/apps/scs-app/browser/public && cp -r apps/scs-website/* dist/apps/scs-app/browser/public/"
   },
   "private": true,
   "dependencies": {
