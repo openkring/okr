@@ -10,25 +10,25 @@
       ],
       "rewrites": [
         {
-          "source": "/public/api/**",
+          "source": "/web/api/**",
           "function": "publicApi",
           "region": "europe-west6"
         },
         {
-          "source": "/public/bootshaus",
-          "destination": "/public/bootshaus.html"
+          "source": "/web/bootshaus",
+          "destination": "/web/bootshaus.html"
         },
         {
-          "source": "/public/kontakt",
-          "destination": "/public/kontakt.html"
+          "source": "/web/kontakt",
+          "destination": "/web/kontakt.html"
         },
         {
-          "source": "/public/news-artikel",
-          "destination": "/public/news-artikel.html"
+          "source": "/web/news-artikel",
+          "destination": "/web/news-artikel.html"
         },
         {
-          "source": "/public",
-          "destination": "/public/index.html"
+          "source": "/web",
+          "destination": "/web/index.html"
         },
         {
           "source": "/**",
