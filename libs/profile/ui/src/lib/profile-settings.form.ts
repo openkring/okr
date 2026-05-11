@@ -1,11 +1,12 @@
 import { AsyncPipe } from "@angular/common";
-import { Component, computed, inject, input, linkedSignal, model, output } from "@angular/core";
-import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
+import { Component, computed, inject, input, linkedSignal, model, output, signal } from "@angular/core";
+import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 import { vestForms, vestFormsViewProviders } from "ngx-vest-forms";
 
 import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@bk2/shared-categories";
 import { TranslatePipe } from "@bk2/shared-i18n";
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@bk2/shared-models";
+import { FcmService } from "@bk2/shared-data-access";
 import { CategoryComponent, CheckboxComponent, ErrorNoteComponent, TextInputComponent } from "@bk2/shared-ui";
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from "@bk2/shared-util-core";
 
@@ -14,10 +15,10 @@ import { userValidations } from "@bk2/user-util";
 @Component({
   selector: 'bk-profile-settings-accordion',
   standalone: true,
-  imports: [ 
+  imports: [
     TranslatePipe, AsyncPipe,
     vestForms,
-    IonAccordion, IonItem, IonLabel, IonGrid, IonRow, IonCol,
+    IonAccordion, IonButton, IonItem, IonLabel, IonGrid, IonRow, IonCol,
     CategoryComponent, CheckboxComponent, TextInputComponent, ErrorNoteComponent,
   ],
   styles: [`ion-icon { padding-right: 5px; }`],
@@ -87,12 +88,35 @@ import { userValidations } from "@bk2/user-util";
                 <bk-cat name="personSortCriteria" [value]="personSortCriteria()" (valueChange)="onFieldChange('personSortCriteria', $event)" [categories]="personSortCriterias" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="newsDelivery" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />  
+                <bk-cat name="newsDelivery" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />  
+                <bk-cat name="invoiceDelivery" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" [showHelper]="showHelper()" />
               </ion-col>
             </ion-row>
+            @if (fcmService.isSupported()) {
+              <ion-row>
+                <ion-col size="12">
+                  <ion-item lines="none">
+                    <ion-label>
+                      <h3>Push-Benachrichtigungen</h3>
+                      @if (notificationPermission() === 'granted') {
+                        <p style="color: var(--ion-color-success)">Aktiv</p>
+                      } @else if (notificationPermission() === 'denied') {
+                        <p style="color: var(--ion-color-danger)">Blockiert – Systemeinstellungen → Mitteilungen öffnen</p>
+                      } @else {
+                        <p>Aktivieren, um auch ausserhalb der App benachrichtigt zu werden.</p>
+                      }
+                    </ion-label>
+                    @if (notificationPermission() !== 'denied') {
+                      <ion-button slot="end" fill="outline" size="small" (click)="enableNotifications()">
+                        {{ notificationPermission() === 'granted' ? 'Erneuern' : 'Aktivieren' }}
+                      </ion-button>
+                    }
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            }
           </ion-grid>
         </form>
       }
@@ -102,6 +126,11 @@ import { userValidations } from "@bk2/user-util";
 })
 export class ProfileSettingsAccordionComponent {
   protected readonly modalController = inject(ModalController);
+  protected readonly fcmService = inject(FcmService);
+
+  protected notificationPermission = signal<NotificationPermission>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  );
 
   // inputs
   public formData = model.required<UserModel>();
@@ -145,6 +174,15 @@ export class ProfileSettingsAccordionComponent {
   protected personSortCriterias = PersonSortCriterias;
   protected deliveryTypes = DeliveryTypes;
   protected languages = Languages;
+
+  protected async enableNotifications(): Promise<void> {
+    const uid = this.currentUser()?.bkey;
+    if (!uid) return;
+    await this.fcmService.registerAndSave(uid);
+    if (typeof Notification !== 'undefined') {
+      this.notificationPermission.set(Notification.permission);
+    }
+  }
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, value: string | string[] | number | boolean): void {

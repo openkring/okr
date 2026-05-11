@@ -12,6 +12,7 @@
     "@bk2/shared-config": "*",
     "@bk2/shared-i18n": "*",
     "@bk2/shared-ui": "*",
+    "@bk2/shared-data-access": "*",
     "@bk2/shared-util-core": "*"
   }
 }

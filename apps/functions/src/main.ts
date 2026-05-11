@@ -95,6 +95,7 @@ export const getAllMembersFromRoom = MatrixSimple.getAllMembersFromRoom;
 export const getMemberDetails = MatrixSimple.getMemberDetails;
 export const addMatrixRoomAlias = MatrixSimple.addMatrixRoomAlias;
 export const sendCallNotification = MatrixSimple.sendCallNotification;
+export const matrixPushGateway = MatrixSimple.matrixPushGateway;
 
 // oidc-bridge (Full OIDC Identity Provider for Matrix - Complex but native Matrix SSO)
 export const oidcDiscovery = OidcBridge.oidcDiscovery;

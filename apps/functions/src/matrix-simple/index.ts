@@ -22,7 +22,7 @@
  * - Not using Matrix's native SSO capabilities
  */
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
@@ -1438,8 +1438,20 @@ export const sendCallNotification = onCall(
         priority: 'high',
       },
       apns: {
-        headers: { 'apns-priority': '10', 'apns-push-type': 'background' },
-        payload: { aps: { badge: 1, 'content-available': 1 } },
+        // 'alert' push type is required for iOS to show a banner when the app is closed.
+        // 'background' would deliver silently and never show a banner.
+        headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
+        payload: {
+          aps: {
+            alert: {
+              title: `📹 Video-Anruf von ${callerName}`,
+              body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
+            },
+            badge: 1,
+            sound: 'default',
+            'content-available': 1,
+          },
+        },
       },
     });
 
@@ -1459,5 +1471,114 @@ export const sendCallNotification = onCall(
 
     console.log(`sendCallNotification: sent=${response.successCount} failed=${response.failureCount} room=${roomId}`);
     return { sent: response.successCount };
+  }
+);
+
+/**
+ * Matrix Push Gateway (https://spec.matrix.org/v1.6/push-gateway-api/)
+ *
+ * The Synapse homeserver calls this endpoint (server-to-server) whenever a
+ * push rule fires for a user.  We forward it as an FCM message so the device
+ * shows a notification banner even when the app is not running.
+ *
+ * The FCM token ("pushkey") arrives in the payload from Synapse — no Firestore
+ * look-up required.  The client registers this pusher via MatrixChatService.setPusher().
+ */
+interface MatrixPushDevice {
+  app_id: string;
+  pushkey: string;
+  pushkey_ts?: number;
+  data?: Record<string, string>;
+  tweaks?: Record<string, string>;
+}
+
+interface MatrixPushPayload {
+  notification?: {
+    event_id?: string;
+    room_id?: string;
+    type?: string;
+    sender?: string;
+    sender_display_name?: string;
+    room_name?: string;
+    room_alias?: string;
+    content?: Record<string, unknown>;
+    counts?: { unread?: number; missed_calls?: number };
+    devices?: MatrixPushDevice[];
+    priority?: string;
+  };
+}
+
+export const matrixPushGateway = onRequest(
+  { cors: false, region: 'europe-west6' },
+  async (req, res) => {
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    try {
+      const body = req.body as MatrixPushPayload;
+      const notification = body?.notification;
+
+      if (!notification?.devices?.length) {
+        res.status(200).json({ rejected: [] });
+        return;
+      }
+
+      const senderName = notification.sender_display_name ?? notification.sender ?? 'Unbekannt';
+      const roomName   = notification.room_name ?? notification.room_alias ?? '';
+      const unread     = notification.counts?.unread ?? 1;
+      const title      = roomName ? `${senderName} in ${roomName}` : senderName;
+      const msgBody    = (notification.content?.['body'] as string | undefined) ?? 'Neue Nachricht';
+      const roomId     = notification.room_id ?? '';
+
+      const rejectedTokens: string[] = [];
+
+      for (const device of notification.devices) {
+        const token = device.pushkey;
+        if (!token) continue;
+
+        try {
+          await getMessaging().send({
+            token,
+            data: {
+              type: 'chat',
+              title,
+              body: msgBody,
+              roomId,
+              badgeCount: String(Math.max(1, unread)),
+            },
+            android: { priority: 'high' },
+            apns: {
+              headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
+              payload: {
+                aps: {
+                  alert: { title, body: msgBody },
+                  badge: Math.max(1, unread),
+                  sound: 'default',
+                  'content-available': 1,
+                },
+              },
+            },
+          });
+        } catch (err: unknown) {
+          const code = (err as { code?: string })?.code ?? '';
+          if (
+            code === 'messaging/registration-token-not-registered' ||
+            code === 'messaging/invalid-registration-token'
+          ) {
+            rejectedTokens.push(token);
+          } else {
+            console.error(`matrixPushGateway: FCM send failed for ${token.substring(0, 20)}…:`, err);
+          }
+        }
+      }
+
+      console.log(`matrixPushGateway: room=${roomId} rejected=${rejectedTokens.length}`);
+      res.status(200).json({ rejected: rejectedTokens });
+    } catch (err) {
+      console.error('matrixPushGateway: Unexpected error:', err);
+      res.status(200).json({ rejected: [] }); // always 200 so Synapse doesn't retry
+    }
   }
 );

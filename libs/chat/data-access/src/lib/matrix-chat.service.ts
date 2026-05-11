@@ -1,6 +1,6 @@
 
 import { effect, inject, Injectable } from '@angular/core';
-import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, createNewMatrixCall, CallEvent, type MatrixCall } from 'matrix-js-sdk';
+import { createClient, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, createNewMatrixCall, CallEvent, type MatrixCall, type IPusherRequest } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -230,6 +230,15 @@ export class MatrixChatService {
     } catch {
       return '';
     }
+  }
+
+  /**
+   * Register an HTTP pusher with the Matrix homeserver so Synapse delivers
+   * background notifications to our push gateway Cloud Function.
+   */
+  async setPusher(pusher: IPusherRequest): Promise<void> {
+    if (!this.client) throw new Error('MatrixChatService: client not initialized');
+    await this.client.setPusher(pusher);
   }
 
   /**

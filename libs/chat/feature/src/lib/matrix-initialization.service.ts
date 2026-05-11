@@ -89,13 +89,36 @@ export class MatrixInitializationService {
 
       console.log('MatrixInitializationService: Matrix client initialized successfully');
 
-      // Register for FCM push notifications (for incoming call alerts).
-      // Non-blocking — a denied permission or missing VAPID key must not break anything.
+      // Register for FCM push notifications and wire up the Matrix push gateway.
+      // Awaited so the token is available for pusher registration below.
       const uid = getAuth(getApp()).currentUser?.uid;
       if (uid && this.fcmService.isSupported()) {
-        this.fcmService.registerAndSave(uid).catch(err =>
-          console.warn('MatrixInitializationService: FCM registration failed (non-critical):', err)
-        );
+        const fcmToken = await this.fcmService.registerAndSave(uid).catch(err => {
+          console.warn('MatrixInitializationService: FCM registration failed (non-critical):', err);
+          return null;
+        });
+
+        // Register an HTTP pusher with Synapse so background messages reach this device
+        // even when the app is not running.
+        if (fcmToken) {
+          try {
+            await this.matrixService.setPusher({
+              kind: 'http',
+              app_id: 'bkaiser.scs.chat',
+              app_display_name: 'BK2 Chat',
+              device_display_name: (navigator.userAgent ?? 'Unknown').substring(0, 100),
+              pushkey: fcmToken,
+              lang: navigator.language || 'de',
+              data: {
+                url: 'https://europe-west6-bkaiser-org.cloudfunctions.net/matrixPushGateway',
+              },
+              append: false,
+            });
+            console.log('MatrixInitializationService: Matrix HTTP pusher registered');
+          } catch (err) {
+            console.warn('MatrixInitializationService: Failed to register Matrix pusher (non-critical):', err);
+          }
+        }
       }
 
       if (Capacitor.isNativePlatform()) {
@@ -164,13 +187,6 @@ export class MatrixInitializationService {
         }
       }
 
-      // Clear the badge immediately when the user brings the app to the foreground.
-      // The reactive subscription above will update it to the accurate count once rooms sync.
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && 'clearAppBadge' in navigator) {
-          (navigator as any).clearAppBadge().catch(() => {});
-        }
-      });
     } catch (error) {
       console.error('MatrixInitializationService: Failed to initialize Matrix', error);
       // Don't throw - this is a background initialization, shouldn't break the app
