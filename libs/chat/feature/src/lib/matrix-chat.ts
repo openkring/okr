@@ -4,9 +4,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ToastController, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
-import { SpinnerComponent } from '@bk2/shared-ui';
+import { ImageLightboxModal, LightboxImage, SpinnerComponent } from '@bk2/shared-ui';
 
-import { ImageLightboxModal, LightboxImage, MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
+import { MatrixMessageInput, MatrixMessageList, MatrixRoomList } from '@bk2/chat-ui';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';

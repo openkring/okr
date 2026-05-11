@@ -61,6 +61,7 @@ export * from './lib/text-list';
 export * from './lib/time-input.component';
 export * from './lib/time-select.modal';
 export * from './lib/ui.util';
+export * from './lib/image-lightbox.modal';
 export * from './lib/upload-task.modal';
 export * from './lib/url-input.component';
 export * from './lib/video.component';
