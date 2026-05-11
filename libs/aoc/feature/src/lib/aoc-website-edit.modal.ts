@@ -74,7 +74,11 @@ export class AocWebsiteEditModal {
   protected formData = linkedSignal(() => safeStructuredClone(this.item()) ?? {} as WebsiteContentModel);
   protected deContent = linkedSignal(() => this.formData().de ?? '');
   protected enContent = linkedSignal(() => this.formData().en ?? '');
-  protected isDirty = computed(() => !deepEqual(this.formData(), safeStructuredClone(this.item())));
+  protected isDirty = computed(() =>
+    !deepEqual(this.formData(), safeStructuredClone(this.item())) ||
+    this.deContent() !== (this.item().de ?? '') ||
+    this.enContent() !== (this.item().en ?? '')
+  );
 
   protected onToggleHtml(event: Event): void {
     this.formData.update(d => ({ ...d, isHtml: (event as CustomEvent).detail.checked }));

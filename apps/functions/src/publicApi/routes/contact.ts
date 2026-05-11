@@ -24,6 +24,15 @@ export function validateContact(body: Partial<ContactRequest>): string | null {
   return null;
 }
 
+function escHtml(str: string | undefined): string {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export async function contactRouter(req: Request, res: Response): Promise<void> {
   const body = req.body as Partial<ContactRequest>;
 
@@ -37,15 +46,15 @@ export async function contactRouter(req: Request, res: Response): Promise<void> 
   const provider = process.env['EMAIL_PROVIDER'] ?? 'mailgun_smtp';
   const reference = `msg_${Date.now().toString(36)}`;
 
-  const phoneText = body.phone ? `<br><strong>Telefon:</strong> ${body.phone}` : '';
+  const phoneText = body.phone ? `<br><strong>Telefon:</strong> ${escHtml(body.phone)}` : '';
   const html = `
     <p><strong>Kontaktformular-Nachricht</strong> (Ref: ${reference})</p>
     <p>
-      <strong>Name:</strong> ${body.name}<br>
-      <strong>E-Mail:</strong> ${body.email}${phoneText}<br>
-      <strong>Betreff:</strong> ${body.subject}
+      <strong>Name:</strong> ${escHtml(body.name)}<br>
+      <strong>E-Mail:</strong> ${escHtml(body.email)}${phoneText}<br>
+      <strong>Betreff:</strong> ${escHtml(body.subject)}
     </p>
-    <p><strong>Nachricht:</strong><br>${body.message.replace(/\n/g, '<br>')}</p>
+    <p><strong>Nachricht:</strong><br>${escHtml(body.message?.replace(/\n/g, '<br>'))}</p>
   `;
 
   try {
