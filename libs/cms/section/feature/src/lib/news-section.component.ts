@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
 import { EmptyListComponent, MoreButton, OptionalCardHeaderComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { debugMessage, hasRole } from '@bk2/shared-util-core';
+import { debugMessage, hasRole, shortenText } from '@bk2/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, isBrowser, navigateByUrl } from '@bk2/shared-util-angular';
 import { ArticleSection, IMAGE_STYLE_SHAPE, NewsConfig, SectionModel } from '@bk2/shared-models';
 import { ThumbnailUrlPipe } from '@bk2/shared-pipes';
@@ -107,10 +107,8 @@ export class NewsSectionComponent implements OnInit {
     }
   }
 
-  /** Strip HTML tags and return plain-text excerpt of the first 30 words. */
   protected articleExcerpt(article: ArticleSection): string {
-    const text = (article.content?.htmlContent ?? '').replace(/<[^>]*>/g, '').trim();
-    return text.split(/\s+/).slice(0, 30).join(' ') + '...';
+    return shortenText(article.content?.htmlContent ?? '', 30, true);
   }
 
   protected async showActions(article: ArticleSection): Promise<void> {
