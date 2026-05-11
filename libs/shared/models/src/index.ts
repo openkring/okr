@@ -59,6 +59,8 @@ export * from './lib/trip.model';
 export * from './lib/user.model';
 export * from './lib/workrel.model';
 export * from './lib/year-config.model';
+export * from './lib/i18n.model';
+export * from './lib/website-content.model';
 
 // enums
 export * from './lib/enums/album-style.enum';
