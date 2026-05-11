@@ -18,6 +18,7 @@
     "@bk2/shared-ui": "*",
     "@bk2/shared-util-angular": "*",
     "@bk2/shared-util-core": "*",
+    "@bk2/subject-person-ui": "*",
     "@bk2/relationship-membership-data-access": "*",
     "@bk2/relationship-membership-ui": "*",
     "@bk2/relationship-membership-util": "*",

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal, Type } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, PersonModelName, RoleName, UserModel } from '@bk2/shared-models';
@@ -7,6 +7,7 @@ import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@bk2/shar
 import { getTitleLabel } from '@bk2/shared-util-angular';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { ENV } from '@bk2/shared-config';
+import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
 
 import { CommentsAccordionComponent } from '@bk2/comment-feature';
 import { DocumentsAccordionComponent } from '@bk2/document-feature';
@@ -61,6 +62,7 @@ export class PersonalRelEditModalComponent {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
   protected readonly env = inject(ENV);
+  private readonly personEditModalClass = inject<Type<unknown> | null>(PERSON_EDIT_MODAL, { optional: true });
 
   // inputs
   public personalRel = input.required<PersonalRelModel>();
@@ -160,10 +162,9 @@ export class PersonalRelEditModalComponent {
 
   protected async onShowPerson(personKey: string): Promise<void> {
     const person = this.appStore.getPerson(personKey);
-    if (!person) return;
-    const { PersonEditModal } = await import('@bk2/subject-person-feature');
+    if (!person || !this.personEditModalClass) return;
     const modal = await this.modalController.create({
-      component: PersonEditModal,
+      component: this.personEditModalClass,
       componentProps: {
         person,
         currentUser: this.currentUser(),

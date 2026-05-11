@@ -18,6 +18,7 @@ import { TaskService } from '@bk2/task-data-access';
 import { OwnershipService } from '@bk2/relationship-ownership-data-access';
 import { MembershipService } from '@bk2/relationship-membership-data-access';
 import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getRelLogEntry, MemberNewFormModel } from '@bk2/relationship-membership-util';
+import { PERSON_EDIT_MODAL } from '@bk2/subject-person-ui';
 import { AddressService } from '@bk2/subject-address-data-access';
 import { PersonService } from '@bk2/subject-person-data-access';
 import { browseUrl } from '@bk2/subject-address-util';
@@ -83,6 +84,7 @@ export const _MembershipStore = signalStore(
     taskService: inject(TaskService),
     ownershipService: inject(OwnershipService),
     matrixService: inject(MatrixChatService),
+    personEditModalClass: inject(PERSON_EDIT_MODAL, { optional: true }),
   })),
 
   withProps((store) => ({
@@ -820,10 +822,9 @@ export const _MembershipStore = signalStore(
         const { data, role } = await modal.onWillDismiss<{ memberKey: string; readOnly: boolean }>();
         if (role === 'navigate' && data?.memberKey) {
           const person = store.appStore.getPerson(data.memberKey);
-          if (!person) return;
-          const { PersonEditModal } = await import('@bk2/subject-person-feature');
+          if (!person || !store.personEditModalClass) return;
           const personModal = await store.modalController.create({
-            component: PersonEditModal,
+            component: store.personEditModalClass,
             componentProps: {
               person,
               currentUser: store.currentUser(),
@@ -844,10 +845,9 @@ export const _MembershipStore = signalStore(
       async editPerson(membership?: MembershipModel, readOnly = true): Promise<void> {
         if (!membership) return;
         const person = store.appStore.getPerson(membership.memberKey);
-        if (!person) return;
-        const { PersonEditModal } = await import('@bk2/subject-person-feature');
+        if (!person || !store.personEditModalClass) return;
         const modal = await store.modalController.create({
-          component: PersonEditModal,
+          component: store.personEditModalClass,
           componentProps: {
             person,
             currentUser: store.currentUser(),

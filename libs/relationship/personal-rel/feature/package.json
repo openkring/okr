@@ -17,6 +17,7 @@
     "@bk2/shared-util-core": "*",
     "@bk2/avatar-ui": "*",
     "@bk2/avatar-data-access": "*",
+    "@bk2/subject-person-ui": "*",
     "@bk2/relationship-personal-rel-data-access": "*",
     "@bk2/relationship-personal-rel-ui": "*",
     "@bk2/relationship-personal-rel-util": "*",
