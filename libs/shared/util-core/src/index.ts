@@ -15,6 +15,7 @@ export * from './lib/query.util';
 export * from './lib/regasoft.util';
 export * from './lib/search.util';
 export * from './lib/sort.util';
+export * from './lib/text.util';
 export * from './lib/type.util';
 export * from './lib/validate.util';
 export * from './lib/vest.util';
