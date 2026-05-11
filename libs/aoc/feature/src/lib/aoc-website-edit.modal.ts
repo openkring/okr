@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import {
   IonButton, IonButtons, IonContent, IonItem, IonInput, IonLabel,
   IonToggle, IonToolbar, ModalController,
+  IonTextarea,
 } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@bk2/shared-i18n';
@@ -18,7 +19,7 @@ import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
     AsyncPipe, FormsModule, TranslatePipe,
     HeaderComponent, EditorComponent,
     IonContent, IonToolbar, IonButtons, IonButton,
-    IonItem, IonLabel, IonInput, IonToggle,
+    IonItem, IonLabel, IonInput, IonToggle, IonTextarea
   ],
   template: `
     <bk-header title="@aoc.website.edit.title" [isModal]="true" />
@@ -29,35 +30,38 @@ import { deepEqual, safeStructuredClone } from '@bk2/shared-util-core';
       </ion-item>
 
       <ion-item>
-        <ion-label>{{ '@aoc.website.isHtml.label' | translate | async }}</ion-label>
         <ion-toggle [checked]="formData().isHtml" (ionChange)="onToggleHtml($event)" />
+        <ion-label>{{ '@aoc.website.isHtml.label' | translate | async }}</ion-label>
       </ion-item>
 
-      <ion-item lines="none">
-        <ion-label>{{ '@lang.de' | translate | async }}</ion-label>
-      </ion-item>
+
       @if (formData().isHtml) {
+        <ion-item lines="none">
+          <ion-label>DE:</ion-label>
+        </ion-item>
         <bk-editor [(content)]="deContent" [readOnly]="false" />
       } @else {
         <ion-item>
-          <ion-input [value]="formData().de" (ionInput)="onDeInput($event)" />
+          <ion-textarea [value]="formData().de" label="DE" (ionInput)="onDeInput($event)" />
         </ion-item>
       }
 
-      <ion-item lines="none">
-        <ion-label>{{ '@lang.en' | translate | async }}</ion-label>
-      </ion-item>
       @if (formData().isHtml) {
+        <ion-item lines="none">
+          <ion-label>EN:</ion-label>
+        </ion-item>
         <bk-editor [(content)]="enContent" [readOnly]="false" />
       } @else {
         <ion-item>
-          <ion-input [value]="formData().en" (ionInput)="onEnInput($event)" />
+          <ion-textarea [value]="formData().en" label="EN" (ionInput)="onEnInput($event)" />
         </ion-item>
       }
 
       <ion-toolbar>
-        <ion-buttons slot="end">
+        <ion-buttons slot="start">
           <ion-button (click)="cancel()">{{ '@general.operation.cancel' | translate | async }}</ion-button>
+        </ion-buttons>
+        <ion-buttons slot="end">
           <ion-button [disabled]="!isDirty()" (click)="save()" color="primary">
             {{ '@general.operation.save' | translate | async }}
           </ion-button>

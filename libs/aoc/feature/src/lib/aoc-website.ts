@@ -34,7 +34,7 @@ import { AocWebsiteEditModal } from './aoc-website-edit.modal';
       <ion-toolbar>
         <ion-searchbar
           [value]="store.searchTerm()"
-          [placeholder]="('@general.search.placeholder' | translate | async) ?? ''"
+          [placeholder]="('@general.operation.search.placeholder' | translate | async) ?? ''"
           (ionInput)="onSearch($event)"
           debounce="300" />
         <ion-buttons slot="end">
