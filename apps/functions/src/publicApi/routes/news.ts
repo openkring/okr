@@ -3,6 +3,20 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { setCacheHeaders, parseTags, storeDateToIso, titleToI18n } from '../utils';
 import type { I18nString } from '@bk2/shared-models';
+import { shortenText } from '@bk2/shared-util-core';
+
+const IMGIX_BASE = 'https://bkaiser.imgix.net';
+
+function toImgixUrl(path: string): string {
+  if (!path) return '';
+  if (path.startsWith('https://')) return path;
+  return `${IMGIX_BASE}/${path}?auto=compress,format=jpg`;
+}
+
+interface StoredImage {
+  url: string;
+  altText?: string;
+}
 
 interface ArticleSectionDoc {
   bkey: string;
@@ -15,7 +29,7 @@ interface ArticleSectionDoc {
   type: string;
   content: { htmlContent: string };
   properties?: {
-    images?: Array<{ url: string; alt?: string; width?: number; height?: number }>;
+    images?: StoredImage[];
     titleI18n?: I18nString;
     subTitleI18n?: I18nString;
     excerptI18n?: I18nString;
@@ -24,30 +38,49 @@ interface ArticleSectionDoc {
   };
 }
 
+function excerptFromContent(contentI18n: I18nString | undefined, htmlContent: string): I18nString {
+  if (contentI18n) {
+    const result: I18nString = {};
+    for (const [lang, html] of Object.entries(contentI18n)) {
+      result[lang] = shortenText(html as string, 30, true);
+    }
+    if (Object.keys(result).length > 0) return result;
+  }
+  return { de: shortenText(htmlContent, 30, true) };
+}
+
+function hasContent(i18n: I18nString | undefined): boolean {
+  return !!i18n && Object.values(i18n).some(v => (v as string).trim().length > 0);
+}
+
+function mapImage(img: StoredImage) {
+  return { url: toImgixUrl(img.url), alt: { de: img.altText ?? '' } };
+}
+
 function sectionToNewsSummary(doc: ArticleSectionDoc) {
   const props = doc.properties ?? {};
   const img = props.images?.[0];
+  const excerpt = hasContent(props.excerptI18n)
+    ? props.excerptI18n!
+    : excerptFromContent(props.contentI18n, doc.content?.htmlContent ?? '');
   return {
     slug: doc.name,
     date: storeDateToIso(props.datePublished ?? ''),
     title: titleToI18n(doc.title, props.titleI18n),
     subTitle: titleToI18n(doc.subTitle, props.subTitleI18n),
-    excerpt: props.excerptI18n ?? { de: '' },
-    coverImage: img ? {
-      url: img.url,
-      alt: img.alt ? { de: img.alt } : { de: '' },
-      width: img.width ?? 0,
-      height: img.height ?? 0,
-    } : undefined,
+    excerpt,
+    coverImage: img ? mapImage(img) : undefined,
     tags: parseTags(doc.tags),
   };
 }
 
 function sectionToNewsDetail(doc: ArticleSectionDoc) {
   const props = doc.properties ?? {};
+  const images = (props.images ?? []).map(mapImage);
   return {
     ...sectionToNewsSummary(doc),
     content: props.contentI18n ?? { de: doc.content?.htmlContent ?? '' },
+    images,
   };
 }
 
@@ -87,13 +120,32 @@ export async function newsRouter(req: Request, res: Response): Promise<void> {
     const limit = isNaN(limitParam) || limitParam < 1 ? 50 : Math.min(limitParam, 200);
     const tag = (req.query['tag'] as string)?.trim();
 
-    const snap = await db.collection('sections')
-      .where('type', '==', 'article')
-      .where('tenants', 'array-contains', tenantId)
-      .where('isArchived', '==', false)
-      .get();
+    // Load the 'news' page by its document ID to get the ordered list of section bkeys
+    const pageDoc = await db.collection('pages').doc('news').get();
+    if (!pageDoc.exists) {
+      res.status(404).json({ error: { code: 'not_found', message: 'News page not found' } });
+      return;
+    }
+    const pageData = pageDoc.data()!;
+    if (!pageData['tenants']?.includes(tenantId) || pageData['isArchived'] === true) {
+      res.status(404).json({ error: { code: 'not_found', message: 'News page not found' } });
+      return;
+    }
 
-    let docs = snap.docs.map(d => ({ bkey: d.id, ...d.data() } as ArticleSectionDoc));
+    const sectionKeys: string[] = pageData['sections'] ?? [];
+    if (sectionKeys.length === 0) {
+      setCacheHeaders(res);
+      res.json([]);
+      return;
+    }
+
+    const sectionRefs = sectionKeys.map(key => db.collection('sections').doc(key));
+    const sectionDocs = await db.getAll(...sectionRefs);
+
+    let docs = sectionDocs
+      .filter(d => d.exists)
+      .map(d => ({ bkey: d.id, ...d.data() } as ArticleSectionDoc))
+      .filter(d => d.type === 'article' && !d.isArchived);
 
     if (tag) {
       docs = docs.filter(d => parseTags(d.tags).includes(tag));

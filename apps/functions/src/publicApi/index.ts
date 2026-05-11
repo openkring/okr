@@ -8,6 +8,7 @@ import { newsRouter } from './routes/news';
 import { calendarRouter } from './routes/calendar';
 import { contactRouter } from './routes/contact';
 import { coursesRouter, resultsRouter } from './routes/stubs';
+import { pageRouter } from './routes/page';
 
 const cors = corsLib({ origin: true });
 
@@ -23,6 +24,7 @@ app.get(`${BASE}/news/:slug`,    newsRouter);
 app.get(`${BASE}/calendar`,      calendarRouter);
 app.get(`${BASE}/courses`,       coursesRouter);
 app.get(`${BASE}/results`,       resultsRouter);
+app.get(`${BASE}/pages/:pageKey`, pageRouter);
 app.post(`${BASE}/contact`,      contactRouter);
 
 export const publicApi = onRequest({ region: 'europe-west6' }, app);
