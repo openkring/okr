@@ -10,6 +10,7 @@ import { NameDisplay } from './enums/name-display.enum';
 import { RoleName } from './menu-item.model';
 import { AvatarInfo } from './avatar-info';
 import { ImageStyle, ImageConfig, Slot } from './image.model';
+import type { I18nString } from './i18n.model';
 
 export const SectionCollection = 'sections';
 export const SectionModelName = 'section';
@@ -151,8 +152,13 @@ export interface ArticleSection extends BaseSection {
 }
 
 export interface ArticleConfig {
-    images: ImageConfig[];
-    imageStyle: ImageStyle;
+  images: ImageConfig[];
+  imageStyle: ImageStyle;
+  titleI18n?: I18nString;
+  subTitleI18n?: I18nString;
+  excerptI18n?: I18nString;
+  contentI18n?: I18nString;
+  datePublished?: string;
 }
 
 // --------------------------------------- BUTTON ----------------------------------------
