@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HashMap, TranslocoService, getBrowserLang } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { selectLanguage } from './i18n.util';
 
 import { AvailableLanguages } from '@bk2/shared-models';
@@ -36,14 +37,23 @@ export class I18nService {
    */
   public translate(key: string | null | undefined, argument?: HashMap): Observable<string> {
     if (!key || key.length === 0) return of('');
-    if (key.startsWith('@')) {
-      if (argument) {
-        return this.translocoService.selectTranslate(key.substring(1), argument);
-      } else {
-        return this.translocoService.selectTranslate(key.substring(1));
-      }
-    } else {
-      return of(key);
+    if (!key.startsWith('@')) return of(key);
+
+    const translationKey = key.substring(1);
+    const dotIndex = translationKey.indexOf('.');
+    const prefix = dotIndex === -1 ? translationKey : translationKey.substring(0, dotIndex);
+
+    if (prefix.includes('/')) {
+      const lang = this.translocoService.getActiveLang();
+      return this.translocoService.load(`${prefix}/${lang}`).pipe(
+        switchMap(() => argument
+          ? this.translocoService.selectTranslate(translationKey, argument)
+          : this.translocoService.selectTranslate(translationKey))
+      );
     }
+
+    return argument
+      ? this.translocoService.selectTranslate(translationKey, argument)
+      : this.translocoService.selectTranslate(translationKey);
   }
 }

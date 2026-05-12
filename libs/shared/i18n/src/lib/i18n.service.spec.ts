@@ -5,10 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@jsverse/transloco', () => ({
   TranslocoService: class {
     setActiveLang = vi.fn();
-    getActiveLang = vi.fn(() => 'en');
+    getActiveLang = vi.fn(() => 'de');
     selectTranslate = vi.fn((key, arg) => of(`translated:${key}${arg ? ':' + JSON.stringify(arg) : ''}`));
+    load = vi.fn(() => of({}));
   },
-  getBrowserLang: vi.fn(() => 'en'),
+  getBrowserLang: vi.fn(() => 'de'),
   HashMap: Object,
 }));
 
@@ -28,8 +29,9 @@ describe('I18nService', () => {
   beforeEach(() => {
     const mockTranslocoService = {
       setActiveLang: vi.fn(),
-      getActiveLang: vi.fn(() => 'en'),
+      getActiveLang: vi.fn(() => 'de'),
       selectTranslate: vi.fn((key, arg) => of(`translated:${key}${arg ? ':' + JSON.stringify(arg) : ''}`)),
+      load: vi.fn(() => of({})),
     };
     service = new I18nService(mockTranslocoService as any);
   });
@@ -39,7 +41,7 @@ describe('I18nService', () => {
   });
 
   it('should get browser language', () => {
-    expect(service.getBrowserLang()).toBe('en');
+    expect(service.getBrowserLang()).toBe('de');
   });
 
   it('should set active language using selectLanguage', () => {
@@ -48,7 +50,7 @@ describe('I18nService', () => {
   });
 
   it('should get active language', () => {
-    expect(service.getActiveLang()).toBe('en');
+    expect(service.getActiveLang()).toBe('de');
   });
 
   it('should translate @-prefixed key with argument', () => {
@@ -77,5 +79,23 @@ describe('I18nService', () => {
     let result = 'not empty';
     obs.subscribe((val: string) => { result = val; });
     expect(result).toBe('');
+  });
+
+  it('should translate scoped key by loading the scope file first', () => {
+    const results: string[] = [];
+    service.translate('@chat/feature.fields.reconnecting').subscribe(v => results.push(v));
+    expect(results).toEqual(['translated:chat/feature.fields.reconnecting']);
+  });
+
+  it('should translate scoped key with argument', () => {
+    const results: string[] = [];
+    service.translate('@chat/feature.fields.count', { n: 3 }).subscribe(v => results.push(v));
+    expect(results).toEqual(['translated:chat/feature.fields.count:{"n":3}']);
+  });
+
+  it('should not call load for legacy root keys', () => {
+    const loadSpy = vi.spyOn((service as any).translocoService, 'load');
+    service.translate('@chat.fields.reconnecting').subscribe();
+    expect(loadSpy).not.toHaveBeenCalled();
   });
 });
