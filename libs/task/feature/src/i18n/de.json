@@ -1,0 +1,24 @@
+{
+  "input": {
+    "calendarName": {
+      "label": "Kalender",
+      "description": "In diesen Kalendern wird das Ereignis eingetragen.",
+      "addLabel": "Kalendername hinzufügen"
+    },
+    "taskQuickEntry": {
+      "label": "Schnelleingabe",
+      "placeholder": "Text [@Person] [//Datum]"
+    }
+  },
+  "task": {
+    "plural": "Todos",
+    "field": {
+      "empty": "Keine Todos gefunden."
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

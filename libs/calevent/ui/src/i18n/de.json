@@ -1,0 +1,28 @@
+{
+  "calevent": {
+    "field": {
+      "responsible": {
+        "label": "Organisierende",
+        "description": "Personen, die für den Anlass verantwortlich sind.",
+        "addLabel": "Organisierende hinzufügen"
+      }
+    },
+    "operation": {
+      "seriesupdate": {
+        "intro": "Dieses Ereignis ist Teil einer Serie von wiederkehrenden Ereignissen. Möchtest du nur dieses eine Ereignis ändern, oder alle zukünftigen Ereignisse der Serie?",
+        "current": "Nur dieses Ereignis ändern (das Ereignis wird von der Serie abgekoppelt)",
+        "future": "Alle zukünftigen Ereignisse ändern",
+        "all": "Alle Ereignisse der Serie ändern",
+        "label": "Ereignis-Serie ändern"
+      }
+    }
+  },
+  "input": {
+    "calendarName": {
+      "label": "Kalender",
+      "description": "In diesen Kalendern wird das Ereignis eingetragen.",
+      "addLabel": "Kalendername hinzufügen",
+      "select": "Kalender wählen"
+    }
+  }
+}

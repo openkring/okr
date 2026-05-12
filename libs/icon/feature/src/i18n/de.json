@@ -1,0 +1,33 @@
+{
+  "icon": {
+    "plural": "Icons",
+    "operation": {
+      "create": {
+        "label": "Icon hinzufügen"
+      },
+      "exportRaw": {
+        "label": "Icons exportieren"
+      },
+      "sync": {
+        "label": "Icons synchronisieren"
+      },
+      "select": {
+        "label": "Icon auswählen"
+      }
+    },
+    "field": {
+      "name": {
+        "label": "Icon Name"
+      },
+      "type": {
+        "label": "Icon Set"
+      }
+    },
+    "empty": "Keine Icons gefunden."
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

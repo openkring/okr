@@ -1,0 +1,11 @@
+{
+  "document": {
+    "operation": {
+      "upload": {
+        "avatar": {
+          "title": "Avatar Bild hochladen"
+        }
+      }
+    }
+  }
+}

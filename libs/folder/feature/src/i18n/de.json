@@ -1,0 +1,10 @@
+{
+  "folder": {
+    "plural": "Ordner"
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

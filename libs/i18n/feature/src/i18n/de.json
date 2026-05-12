@@ -1,0 +1,69 @@
+{
+  "i18n": {
+    "default": {
+      "edit": {
+        "title": "Übersetzung bearbeiten"
+      },
+      "module": {
+        "label": "Modul",
+        "prompt": "Modul (z.B. chat/feature)"
+      },
+      "key": {
+        "label": "Schlüssel",
+        "prompt": "Schlüssel (z.B. fields.reconnecting)"
+      },
+      "isHtml": {
+        "label": "HTML-Inhalt"
+      },
+      "title": "Übersetzungen",
+      "list": {
+        "title": "Alle Standardübersetzungen"
+      },
+      "operation": {
+        "create": "Übersetzung erstellt",
+        "update": "Übersetzung gespeichert",
+        "delete": "Übersetzung gelöscht"
+      }
+    },
+    "override": {
+      "edit": {
+        "title": "Überschreibung bearbeiten"
+      },
+      "module": {
+        "label": "Modul",
+        "prompt": "Modul (z.B. chat/feature)"
+      },
+      "key": {
+        "label": "Schlüssel",
+        "prompt": "Schlüssel"
+      },
+      "isHtml": {
+        "label": "HTML-Inhalt"
+      },
+      "title": "Überschreibungen",
+      "list": {
+        "title": "Alle Überschreibungen"
+      },
+      "operation": {
+        "create": "Überschreibung erstellt",
+        "update": "Überschreibung gespeichert",
+        "delete": "Überschreibung gelöscht"
+      }
+    }
+  },
+  "general": {
+    "operation": {
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "search": {
+        "placeholder": "Suchen..."
+      },
+      "loading": "Wird geladen..."
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

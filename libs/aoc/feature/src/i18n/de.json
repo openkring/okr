@@ -1,0 +1,287 @@
+{
+  "aoc": {
+    "title": "AOC - Application Operation Center",
+    "adminops": {
+      "title": "Admin Operationen",
+      "iban": {
+        "label": "IBAN Nummern auflisten",
+        "button": "Anzeigen"
+      },
+      "oldJuniors": {
+        "label": "Umzuteilende (zu alte) Junioren auflisten",
+        "button": "Anzeigen"
+      }
+    },
+    "bexio": {
+      "index": {
+        "title": "Bexio Kontakte synchronisieren",
+        "content": "Es werden alle Personen, Organisationen und ihre Mitgliedschaften mit der Default Organisation geladen. Die BexioID in diesen Entitäten wird abgeglichen. Dann werden alle Kontakte von Bexio geladen und in die gleiche Liste eingefügt und geprüft. Bei fehlenden Einträgen erscheint ein add Button für den Abgleich.",
+        "button": "Sync"
+      },
+      "title": "Verwaltung der Bexio Integration"
+    },
+    "chat": {
+      "title": "Chat Admin (Matrix)"
+    },
+    "content": {
+      "title": "Content-Management",
+      "content": "Inhalte (Pages, Sections, Menus) verwalten.",
+      "orphanedSections": {
+        "title": "Verwaiste Sektionen",
+        "content": "Liste Sektionen, welche von keiner Page verwendet werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "missingSections": {
+        "title": "Fehlende Sektionen",
+        "content": "Liste nicht existierende Sektionsnamen, welche von einer Page referenziert werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "orphanedMenus": {
+        "title": "Verwaiste Menüs",
+        "content": "Liste Menüs, welche nicht verwendet werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "missingMenus": {
+        "title": "Fehlende Menüs",
+        "content": "Liste nicht existierende Menüs, welche von einem anderen Menü referenziert werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "checkLinks": {
+        "title": "Links prüfen",
+        "content": "Prüfe alle Links in allen Pages und Sektionen auf Funktionsfähigkeit.",
+        "show": "Anzeigen"
+      }
+    },
+    "data": {
+      "title": "Daten",
+      "content": "Daten validierung und korrigieren",
+      "fix": {
+        "title": "Daten-Korrektur",
+        "content": "Bulk-Operation (adminops/fixModels) mit Korrektur-Operationen auf eine Collection. BITTE AUFPASSEN: Die Korrektur-Operationen können nicht rückgängig gemacht werden. Backup machen, Implementierung in fix-Operation testen und zuerst ein dry run ohne update machen.",
+        "operation": {
+          "fix": "Daten korrigieren"
+        }
+      },
+      "validate": {
+        "title": "Daten-Validierung",
+        "content": "Bulk-Operation (adminops/validateModels) mit Validierungs-Operationen auf eine Collection.",
+        "operation": {
+          "validate": "Daten validieren"
+        }
+      },
+      "createIndex": {
+        "title": "Index erstellen",
+        "content": "Erstellt einen Index auf einer Collection. Dies ist nützlich, wenn ein Index in der Datenbank fehlt und eine Abfrage nicht ausgeführt werden kann.",
+        "operation": {
+          "create": "Index erstellen"
+        }
+      }
+    },
+    "doc": {
+      "delete": {
+        "confirm": "Soll diese Datei aus dem Firebase Storage gelöscht werden?"
+      },
+      "title": "Dokumente prüfen",
+      "content": "Prüft ob alle Dateien in Firebase Storage einen entsprechenden Eintrag in der Datenbank haben.",
+      "checkFiles": {
+        "title": "Dateien ohne DB-Eintrag",
+        "content": "Listet alle Dateien in Firebase Storage auf, für die kein Eintrag in der Firestore docs-Kollektion existiert.",
+        "button": "Prüfen"
+      }
+    },
+    "roles": {
+      "title": "Autorisierung und Rollen",
+      "personSelect": {
+        "title": "Person auswählen",
+        "content": "Die meisten der untenstehenden Operationen basieren auf einer Person. Deshalb muss hier zuerst eine Person ausgewählt werden. Danach können die Operationen auf dieser Person durchgeführt werden."
+      },
+      "account": {
+        "select": "Person auswählen",
+        "title": "User Account erstellen",
+        "content": "Eine bestehende Person wird als User in Firebase Auth registriert, dh. das Firebase-Account und der User werden erzeugt. Falls das Firebase-Account bereits existiert, wird nur ein User erstellt, welcher das Firebase Account und die Person verlinkt.",
+        "button": "Konto erstellen"
+      },
+      "check": {
+        "title": "User Account prüfen",
+        "content": "Prüfen, ob eine Person einen User-Account in Firebase Auth hat oder ob die Voraussetzungen für die Erstellung des Accounts erfüllt sind.",
+        "button": "Prüfen"
+      },
+      "fbuser": {
+        "title": "Firebase User ändern",
+        "content": "Ändere einen bestehenden Firebase User. Die Aenderung erfolgt nur in Firebase Auth, allenfalls müssen auch das UserModel oder PersonModel geändert werden.",
+        "button": "Firebase User ändern"
+      },
+      "impersonate": {
+        "title": "Benutzer impersonifizieren",
+        "content": "Die Rolle des Users wird temporär auf den ausgewählten User gesetzt. Dadurch kann der Admin die Applikation als dieser User benutzen. Um wieder in die Admin-Rolle zurückzukehren, muss der Admin sich abmelden und wieder anmelden.",
+        "button": "Impersonate"
+      }
+    },
+    "srv": {
+      "title": "Verwaltung der SRV / Regasoft Integration",
+      "index": {
+        "title": "SRV Mitglieder synchronisieren",
+        "subtitle": "Vergleicht die aktuellen SRV-Mitgliedschaften (orgKey=srv) mit den Mitgliedern im Regasoft-Portal. Primärer Abgleich via memberId = serviceId, Fallback via Name.",
+        "reset": "Index zurücksetzen",
+        "button": "Index aufbauen"
+      }
+    },
+    "statistics": {
+      "header": "AOC Statistiken",
+      "content": "Gewisse Statistiken können hier aus den aktuellen Daten neu berechnet werden. Diese Berechnung sollte nur durchgeführt werden, wenn die Datenbank in einem stabilen Zustand ist. Die Berechnung kann einige Zeit in Anspruch nehmen. Die Statistiken sollten anschliessend überprüft werden und allenfalls manuell korrigiert werden.",
+      "title": "Statistiken aktualisieren",
+      "competitionLevels": {
+        "label": "Wettkampf-Kategorien aktualisieren",
+        "button": "Ausführen"
+      },
+      "clStats": {
+        "label": "Statistik der Wettkampf-Kategorien aktualisieren",
+        "button": "Ausführen"
+      },
+      "ageByGender": {
+        "label": "Alters-Statistik neu berechnen",
+        "button": "Ausführen"
+      },
+      "categoryByGender": {
+        "label": "Mitglieder-Struktur neu berechnen",
+        "button": "Ausführen"
+      },
+      "memberLocation": {
+        "label": "Wohnort-Statistik neu berechnen",
+        "button": "Ausführen"
+      }
+    },
+    "storage": {
+      "title": "Firebase Storage",
+      "info": {
+        "title": "Firebase Storage Info",
+        "content": "Zeigt Informationen über ein Dokument im Firebase Storage an. Dazu muss die relative URL zu diesem Dokument eingegeben werden.",
+        "buttonLabel": "Informationen anzeigen"
+      },
+      "sizes": {
+        "title": "Benutzter Speicherplatz",
+        "content": "Berechnet den Speicherplatz, den alle Dokument in einem Firebase Storage Folder belelegen. Dazu muss der relative Pfad zum Folder eingegeben werden.",
+        "buttonLabel": "Grösse berechnen"
+      }
+    },
+    "tag": {
+      "create": {
+        "header": "Neue TagList",
+        "placeholder": "Model-Typ (z.B. person, org, section)"
+      },
+      "delete": {
+        "confirm": "Soll dieses Tag-Dokument wirklich archiviert werden?"
+      },
+      "string": {
+        "add": {
+          "header": "Tag hinzufügen",
+          "placeholder": "@tag.beispiel",
+          "button": "Tag hinzufügen"
+        },
+        "edit": {
+          "header": "Tag bearbeiten",
+          "placeholder": "@tag.beispiel"
+        }
+      },
+      "title": "Tag-Verwaltung",
+      "search": {
+        "placeholder": "TagList suchen..."
+      },
+      "list": {
+        "title": "TagList"
+      },
+      "strings": {
+        "title": "Tag",
+        "empty": "Keine TagList ausgewählt"
+      }
+    },
+    "account": {
+      "user": {
+        "delete": {
+          "confirm": "Soll der User wirklich gelöscht werden ?"
+        }
+      },
+      "fbuser": {
+        "delete": {
+          "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
+        }
+      }
+    },
+    "website": {
+      "edit": {
+        "title": "Texte ändern"
+      },
+      "key": {
+        "label": "ID"
+      },
+      "isHtml": {
+        "label": "Inhalt ist HTML"
+      },
+      "title": "Website Texte",
+      "list": {
+        "title": "Texte"
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  },
+  "content": {
+    "section": {
+      "operation": {
+        "delete": {
+          "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
+        }
+      }
+    },
+    "menuItem": {
+      "operation": {
+        "delete": {
+          "conf": "Menüeintrag wurde gelöscht."
+        }
+      }
+    }
+  },
+  "input": {
+    "passwordAoc": {
+      "label": "Passwort",
+      "placeholder": "Passwort",
+      "helper": "Du kannst hier ein Passwort für den selektierten User setzen (z.B. für Testzwecke). Ein leeres Passwort-Feld führt zu einem zufälligen Passwort. Der User kann anschliessend mit Passwort Reset sein eigenes Passwort setzen.",
+      "set": "Setze ein neues Passwort für den ausgewählten User, ohne eine Passwort-Reset Email auszulösen. Ein leeres Passwort-Feld führt zu einem zufälligen Passwort.",
+      "reset": "Sende eine Passwort-Reset Email an den ausgewählten User."
+    },
+    "emailAoc": {
+      "label": "Login Email",
+      "placeholder": "Email Adresse"
+    }
+  },
+  "general": {
+    "operation": {
+      "copy": {
+        "conf": "Der Wert wurde kopiert."
+      },
+      "loading": "Wird geladen...",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "search": {
+        "placeholder": "Suchen..."
+      }
+    }
+  },
+  "account": {
+    "plural": "Konti"
+  },
+  "user": {
+    "field": {
+      "loginEmail": "Login E-Mail",
+      "name": "Name",
+      "empty": "Keine User gefunden"
+    }
+  }
+}

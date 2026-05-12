@@ -1,0 +1,18 @@
+{
+  "icon": {
+    "field": {
+      "name": {
+        "label": "Icon Name"
+      },
+      "type": {
+        "label": "Icon Set"
+      },
+      "fullPath": {
+        "label": "Storage Path"
+      },
+      "index": {
+        "label": "Index"
+      }
+    }
+  }
+}

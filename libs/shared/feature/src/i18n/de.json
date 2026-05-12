@@ -1,0 +1,66 @@
+{
+  "input": {
+    "calendarName": {
+      "select": "Kalender wählen"
+    }
+  },
+  "subject": {
+    "group": {
+      "operation": {
+        "select": {
+          "label": "Gruppe wählen"
+        }
+      },
+      "field": {
+        "empty": "Keine Gruppen gefunden."
+      }
+    },
+    "org": {
+      "field": {
+        "empty": "Keine Organisationen gefunden."
+      },
+      "operation": {
+        "select": {
+          "label": "Organisation wählen"
+        }
+      }
+    },
+    "person": {
+      "field": {
+        "empty": "Keine Personen gefunden."
+      },
+      "operation": {
+        "select": {
+          "label": "Person wählen"
+        }
+      }
+    }
+  },
+  "shared": {
+    "operation": {
+      "select": {
+        "label": "Auswählen"
+      }
+    }
+  },
+  "resource": {
+    "operation": {
+      "select": {
+        "label": "Resource wählen"
+      }
+    },
+    "field": {
+      "empty": "Keine Resourcen gefunden."
+    }
+  },
+  "responsibility": {
+    "operation": {
+      "select": {
+        "label": "Verantwortliche wählen"
+      }
+    },
+    "field": {
+      "empty": "Keine Verantwortungen gefunden."
+    }
+  }
+}

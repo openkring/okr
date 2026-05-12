@@ -1,0 +1,8 @@
+{
+  "profile": {
+    "addresses": {
+      "description": "Hier kannst du deine Adressen verwalten. Du kannst verschiedene Adressen für unterschiedliche Verwendungszwecke angeben, z.B. Privat, Geschäft, Notfallkontakt, etc. Die Sichtbarkeit dieser Adressen kannst du unten bei den Datenschutz-Einstellungen einstellen. Bank-Konto Informationen (IBAN-Nummer) für Rückerstattungen kannst du als Adressen mit Typ Bank-Konto eingeben. "
+    },
+    "intro": "Hier kannst du deine Kontaktdaten festlegen und das Verhalten der Applikation an deine Bedürfnisse anpassen. Gewisse Felder kannst du nicht selber ändern, weil sie im System benötigt werden. Bitte wende dich für solche Korrekturen an "
+  }
+}

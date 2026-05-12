@@ -1,0 +1,12 @@
+{
+  "comment": {
+    "operation": {
+      "initial": {
+        "conf": "erstellt"
+      },
+      "update": {
+        "conf": "geändert"
+      }
+    }
+  }
+}

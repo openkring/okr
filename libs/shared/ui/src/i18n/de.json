@@ -1,0 +1,102 @@
+{
+  "general": {
+    "operation": {
+      "copy": {
+        "conf": "Der Wert wurde kopiert.",
+        "label": "Kopieren"
+      },
+      "select": {
+        "category": "Kategorie wählen",
+        "date": "Datum wählen",
+        "tag": "Tag wählen",
+        "time": "Zeit wählen"
+      },
+      "change": {
+        "confirm": "Speichern ?",
+        "ok": "OK",
+        "cancel": "Abbrechen"
+      },
+      "deleteContent": "Inhalt löschen",
+      "search": {
+        "placeholder": "Suchen...",
+        "byTag": "Tag"
+      }
+    },
+    "util": {
+      "allYears": "Alle Jahre",
+      "year": "Jahr"
+    }
+  },
+  "input": {
+    "categoryItems": {
+      "empty": "Es sind noch keine Elemente in dieser Kategorie definiert.",
+      "title": "Elemente",
+      "subTitle": "Die einzelnen Elemente einer Kategorie. Jedes Element wird in einer eigenen Zeile angezeigt."
+    },
+    "color": {
+      "select": "Farbwahl",
+      "label": "Farbe"
+    },
+    "meta": {
+      "empty": "Keine MetaTags vorhanden.",
+      "label": "MetaTags (SEO)"
+    },
+    "strings": {
+      "addString": "Wort hinzufügen"
+    }
+  },
+  "menu": {
+    "connection": {
+      "title": "Internet Verbindungsstatus",
+      "intro": "Dein Verbindungsstatus zum Internet wird laufend aktualisiert und farblich wie folgt dargestellt:",
+      "good": "Gute Verbindung",
+      "goodExplanation": "Alle Funktionen der App stehen uneingeschränkt zur Verfügung. Du kannst problemlos Inhalte laden, Daten übertragen und mit anderen Benutzern interagieren.",
+      "slow": "Langsame Verbindung",
+      "slowExplanation": "Einige Funktionen der App sind möglicherweise eingeschränkt. Das Laden von Inhalten kann länger dauern, und es kann zu Verzögerungen bei der Datenübertragung kommen.",
+      "offline": "Keine Verbindung",
+      "offlineExplanation": "Du bist derzeit offline. Einige Funktionen der App sind nicht verfügbar, und du kannst keine neuen Daten laden oder übertragen. Bitte überprüfe deine Internetverbindung."
+    },
+    "main": {
+      "info": {
+        "map": "Karte"
+      }
+    }
+  },
+  "membership": {
+    "operation": {
+      "emailAddresses": {
+        "title": "E-Mail Adressen",
+        "empty": "Keine E-Mail Adressen",
+        "copy": "Kopieren"
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  },
+  "subject": {
+    "address": {
+      "operation": {
+        "emailCopy": {
+          "conf": "E-Mail Adressen wurden kopiert."
+        }
+      }
+    }
+  },
+  "content": {
+    "section": {
+      "forms": {
+        "imageConfig": {
+          "title": "Konfiguration des Bildes (Datei)"
+        }
+      }
+    }
+  },
+  "aoc": {
+    "result": {
+      "title": "Resultat"
+    }
+  }
+}

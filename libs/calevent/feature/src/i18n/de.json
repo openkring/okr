@@ -1,0 +1,63 @@
+{
+  "general": {
+    "noData": {
+      "attendance": "Es sind noch keine Teilnehmenden erfasst."
+    }
+  },
+  "calevent": {
+    "field": {
+      "attendance": {
+        "accepted": "Teilnahmen",
+        "plural": "Teilnehmende",
+        "exists": "Diese Person ist bereits als Teilnehmende erfasst."
+      },
+      "empty": "Es sind noch keine Ereignisse erstellt worden. Erstelle eines mit Klicken des + Buttons.",
+      "date": "Datum",
+      "periodicity": "periodisch",
+      "location": "Ort",
+      "responsiblePersons": "Verantwortlich"
+    },
+    "plural": "Ereignisse",
+    "list": {
+      "header": {
+        "duration": "von-bis",
+        "name": "Anlass",
+        "location": "Ort",
+        "responsible": "Organisierende",
+        "year": "Jahr",
+        "description": "Thema"
+      }
+    },
+    "operation": {
+      "delete": {
+        "confirm": "Soll das Ereignis wirklich gelöscht werden ?"
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  },
+  "input": {
+    "eventQuickEntry": {
+      "label": "Schnelleingabe",
+      "placeholder": "Name[,Ort] [//Datum] [@Person]"
+    }
+  },
+  "schedule": {
+    "closeTitle": "Abstimmung schliessen",
+    "closeMessage": "{{date}} wird als definitiver Termin gewählt. Alle anderen Vorschläge werden entfernt.",
+    "optionalMessage": "Optionale Nachricht an die Gruppe...",
+    "confirm": "Bestätigen",
+    "title": "Termin finden",
+    "topic": "Thema / Titel",
+    "description": "Beschreibung (optional)",
+    "dates": "Terminvorschläge",
+    "addDate": "+ Termin",
+    "confirmDates": "{{count}} Tage übernehmen",
+    "invite": "Mitglieder einladen",
+    "tableTitle": "Terminabstimmung",
+    "pendingCount": "{{count}} noch nicht geantwortet"
+  }
+}

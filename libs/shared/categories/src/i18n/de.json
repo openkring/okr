@@ -1,0 +1,9 @@
+{
+  "general": {
+    "category": {
+      "undefined": {
+        "description": "Die Kategorie wurde entweder noch nicht zugewiesen oder ist nicht bekannt."
+      }
+    }
+  }
+}

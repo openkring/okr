@@ -1,0 +1,10 @@
+{
+  "validation": {
+    "tenantsLength": "Es muss mind. ein Mandant existieren.",
+    "tenantsType": "Die Mandanten müssen aus einem Array von Strings bestehen.",
+    "urlStart": "Die URL muss mit https:// oder assets oder tenant oder / starten.",
+    "urlValidProtocol": "Die URL muss ein gültiges Protokoll haben (https://).",
+    "urlHost": "Die URL muss einen gültigen Hostnamen haben.",
+    "urlParts": "Die URL darf keine _ oder . enthalten."
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "general": {
+    "operation": {
+      "change": {
+        "ok": "OK",
+        "cancel": "Abbrechen"
+      },
+      "copy": {
+        "conf": "Der Wert wurde kopiert."
+      }
+    }
+  },
+  "document": {
+    "operation": {
+      "delete": {
+        "conf": "Das Dokument wurde gelöscht."
+      }
+    }
+  }
+}

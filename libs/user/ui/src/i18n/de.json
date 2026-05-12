@@ -1,0 +1,45 @@
+{
+  "user": {
+    "auth": {
+      "title": "Authentifizierung",
+      "description": "Einstellungen zur Authentifizierung des Users. Diese Einstellungen gelten nur für den selektierten User."
+    },
+    "display": {
+      "title": "Anzeige",
+      "description": "Einstellungen zur Darstellungsart von verschiedenen Daten. Diese Einstellungen überschreiben die Standardeinstellungen und gelten nur für den selektierten User."
+    },
+    "model": {
+      "title": "User Attribute",
+      "description": "Allgemeine Attribute, welche diesen User beschreiben."
+    },
+    "notification": {
+      "title": "Notifizierungen",
+      "description": "Wie soll der selektierte User notifiziert werden ?"
+    },
+    "privacy": {
+      "title": "Datenschutz",
+      "description": "Wie dürfen die sensitiven Daten des selektierten Users verwendet werden."
+    }
+  },
+  "input": {
+    "userKey": {
+      "label": "Benutzer ID",
+      "placeholder": "key"
+    },
+    "displayName": {
+      "label": "Angezeigter Name",
+      "placeholder": "ssssssss"
+    },
+    "photoUrl": {
+      "label": "Photo URL",
+      "placeholder": "URL"
+    }
+  },
+  "auth": {
+    "privacyUsage": {
+      "srv": {
+        "description": "Der Seeclub Stäfa ist Mitglied beim Schweizerischen Ruderverband SRV. Als Mitglied beim SCS bist du automatisch auch Mitglied beim SRV. Der SRV verlangt von uns die Weiterleitung von persönlichen Informationen (Name, Vorname, Post-Adresse, Tel Nr.) von allen unseren Mitgliedern. Mit der Mitgliedschaft beim SCS willigst du implizit ein, dass diese Daten jährlich an SRV weiter gegeben werden."
+      }
+    }
+  }
+}

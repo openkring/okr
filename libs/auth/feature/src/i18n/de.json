@@ -1,0 +1,33 @@
+{
+  "auth": {
+    "operation": {
+      "pwdconfirm": {
+        "title": "Passwort setzen"
+      },
+      "login": {
+        "title": "Anmelden"
+      },
+      "pwdreset": {
+        "title": "Passwort zurücksetzen..."
+      }
+    }
+  },
+  "user": {
+    "auth": {
+      "pwdreset": {
+        "newpwd": "Neues Passwort festlegen",
+        "invalidLink": "Dieser Link ist ungültig oder bereits abgelaufen. Bitte fordere einen neuen Reset-Link an.",
+        "success": "Passwort erfolgreich geändert. Du wirst zur Anmeldeseite weitergeleitet.",
+        "savepwd": "Passwort speichern"
+      }
+    }
+  },
+  "general": {
+    "operation": {
+      "change": {
+        "cancel": "Abbrechen",
+        "ok": "OK"
+      }
+    }
+  }
+}

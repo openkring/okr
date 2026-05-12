@@ -1,0 +1,9 @@
+{
+  "chat": {
+    "fields": {
+      "isTypeing": "tippt...",
+      "areTypeing": "tippen...",
+      "severalTypeing": "Mehrere Personen tippen..."
+    }
+  }
+}

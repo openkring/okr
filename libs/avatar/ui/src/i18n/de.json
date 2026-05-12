@@ -1,0 +1,10 @@
+{
+  "general": {
+    "operation": {
+      "select": {
+        "subject": "Auswählen",
+        "label": "Auswählen"
+      }
+    }
+  }
+}

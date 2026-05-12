@@ -1,0 +1,45 @@
+{
+  "general": {
+    "noData": {
+      "documents": "Es sind keine Dokumente vorhanden."
+    }
+  },
+  "document": {
+    "plural": "Dokumente",
+    "list": {
+      "header": {
+        "name": "Filename",
+        "size": "Grösse",
+        "lastUpdate": "Letzte Änderung"
+      }
+    },
+    "empty": "Keine Dokumente gefunden",
+    "revision": {
+      "list": {
+        "title": "Versionsverlauf"
+      }
+    },
+    "operation": {
+      "upload": {
+        "single": {
+          "title": "Dokument hochladen"
+        }
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  },
+  "content": {
+    "section": {
+      "operation": {
+        "selectImage": {
+          "title": "Bild hinzufügen",
+          "upload": "Bild wählen"
+        }
+      }
+    }
+  }
+}

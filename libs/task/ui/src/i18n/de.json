@@ -1,0 +1,13 @@
+{
+  "input": {
+    "state": {
+      "label": "Status"
+    },
+    "priority": {
+      "label": "Priorität"
+    },
+    "importance": {
+      "label": "Wichtigkeit"
+    }
+  }
+}

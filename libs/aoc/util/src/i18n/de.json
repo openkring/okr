@@ -1,0 +1,9 @@
+{
+  "auth": {
+    "operation": {
+      "create": {
+        "confirmation": "Das Benutzerkonto wurde erfolgreich erstellt"
+      }
+    }
+  }
+}

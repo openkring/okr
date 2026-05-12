@@ -1,0 +1,65 @@
+{
+  "input": {
+    "keyName": {
+      "label": "Schlüsselname"
+    },
+    "description": {
+      "label": "Beschreibung"
+    },
+    "lockerNr": {
+      "label": "Garderobe Nr."
+    },
+    "keyNr": {
+      "label": "Schlüssel Nr."
+    },
+    "name": {
+      "label": "Name"
+    },
+    "value": {
+      "label": "Wert"
+    },
+    "boatName": {
+      "label": "Bootsname"
+    },
+    "boatType": {
+      "label": "Bootstyp"
+    },
+    "load": {
+      "label": "Beladung"
+    }
+  },
+  "resource": {
+    "key": {
+      "field": {
+        "empty": "Es sind noch keine Schlüssel erfasst."
+      },
+      "plural": "Schlüssel"
+    },
+    "locker": {
+      "field": {
+        "empty": "Keine Garderoben gefunden."
+      },
+      "plural": "Garderoben"
+    },
+    "plural": "Resourcen",
+    "field": {
+      "empty": "Keine Resourcen gefunden."
+    },
+    "boat": {
+      "plural": "Boote",
+      "field": {
+        "empty": "Keine Boote gefunden."
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  },
+  "general": {
+    "util": {
+      "description": "Beschreibung"
+    }
+  }
+}

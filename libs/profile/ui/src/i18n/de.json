@@ -1,0 +1,23 @@
+{
+  "profile": {
+    "data": {
+      "description": "Aktualisiere hier deine persönlichen Daten wie z.B die AHV-Nummer.",
+      "title": "Persönliche Daten"
+    },
+    "privacy": {
+      "description": "In diesen Datenschutzeinstellungen kannst du für alle sensitiven Attribute (z.B. Geburtsdatum) festlegen, wer diese sehen darf. Öffentliche Attribute sind für alle sichtbar, also auch ausserhalb des Vereins z.B. auf der Website. Eingeschränkte Attribute sind nur für Mitglieder innerhalb der App sichtbar. Geschützte Attribute sind nur für chargierte Personen sichtbar (z.B. Vorstand), welche diese Daten für die Arbeit im Verein benötigen. Das Teilen deiner Daten mit anderen Seeclub-Mitgliedern ist in deinem eigenen Interesse, weil du so z.B. für Ruderausfahrten kontaktiert werden kannst.",
+      "title": "Datenschutz"
+    },
+    "settings": {
+      "description": "Hier kannst du das Verhalten der App an deine Bedürfnisse anpassen. Die Einstellungen gelten nur für dich und nicht für andere Benutzer.",
+      "title": "Applikations-Einstellungen"
+    }
+  },
+  "auth": {
+    "privacyUsage": {
+      "srv": {
+        "description": "Der Seeclub Stäfa ist Mitglied beim Schweizerischen Ruderverband SRV. Als Mitglied beim SCS bist du automatisch auch Mitglied beim SRV. Der SRV verlangt von uns die Weiterleitung von persönlichen Informationen (Name, Vorname, Post-Adresse, Tel Nr.) von allen unseren Mitgliedern. Mit der Mitgliedschaft beim SCS willigst du implizit ein, dass diese Daten jährlich an SRV weiter gegeben werden."
+      }
+    }
+  }
+}

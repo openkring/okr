@@ -1,0 +1,13 @@
+{
+  "category": {
+    "plural": "Kategorien",
+    "field": {
+      "empty": "Keine Kategorien gefunden."
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "activity": {
+    "list": {
+      "title": "Aktivitäten"
+    },
+    "field": {
+      "empty": "Keine Aktivitäten vorhanden.",
+      "timestamp": "Zeitstempel",
+      "scope": "Bereich",
+      "action": "Aktion",
+      "author": "Autor",
+      "payload": "Inhalt"
+    },
+    "view": {
+      "title": "Aktivität anzeigen"
+    }
+  }
+}
