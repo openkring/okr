@@ -1,0 +1,21 @@
+{
+  "user": {
+    "operation": {
+      "create": {
+        "label": "User hinzufügen",
+        "error": "Der User konnte nicht erstellt werden.",
+        "conf": "Der User wurde erstellt."
+      },
+      "update": {
+        "label": "User ändern",
+        "error": "Die Aenderungen konnten nicht gespeichert werden",
+        "conf": "Die Aenderungen wurden gespeichert."
+      },
+      "delete": {
+        "label": "User löschen",
+        "error": "Der User konnte nicht gelöscht werden",
+        "conf": "Der User wurde gelöscht"
+      }
+    }
+  }
+}

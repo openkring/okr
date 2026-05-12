@@ -1,0 +1,43 @@
+{
+  "finance": {
+    "invoice": {
+      "field": {
+        "title": {
+          "label": "Betreff"
+        },
+        "bexioId": {
+          "label": "BexioID"
+        },
+        "header": {
+          "label": "Kopfzeile"
+        },
+        "footer": {
+          "label": "Fusszeile"
+        },
+        "position": {
+          "text": {
+            "label": "Text"
+          }
+        },
+        "invoiceId": {
+          "label": "Rechnungsnummer"
+        },
+        "invoiceDate": {
+          "label": "Rechnungsdatum"
+        },
+        "dueDate": {
+          "label": "Zahlbar bis"
+        },
+        "amount": {
+          "label": "Betrag"
+        },
+        "paymentDate": {
+          "label": "Bezahlt am"
+        },
+        "notes": {
+          "label": "Notizen"
+        }
+      }
+    }
+  }
+}

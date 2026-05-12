@@ -1,0 +1,23 @@
+{
+  "transfer": {
+    "plural": "Transfers",
+    "list": {
+      "header": {
+        "dateOfTransfer": "Datum",
+        "subject": "von",
+        "object": "an",
+        "resource": "Objekt",
+        "name": "Anlass",
+        "state": "Status"
+      }
+    },
+    "field": {
+      "empty": "Keine Transfers gefunden."
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

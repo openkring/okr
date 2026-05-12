@@ -21,7 +21,15 @@
       "title": "Verwaltung der Bexio Integration"
     },
     "chat": {
-      "title": "Chat Admin (Matrix)"
+      "title": "Chat Admin (Matrix)",
+      "operation": {
+        "select": {
+          "roomMember": {
+            "label": "Person wählen",
+            "description": "Wenn das Feld leer ist, werden alle Chat Räume angezeigt. Mit der Auswahl einer Person begränzst du die Auswahl auf alle Räume, wo diese Person Member ist."
+          }
+        }
+      }
     },
     "content": {
       "title": "Content-Management",
@@ -173,6 +181,17 @@
         "header": "Neue TagList",
         "placeholder": "Model-Typ (z.B. person, org, section)"
       },
+      "operation": {
+        "create": {
+          "conf": "Der Tag wurde gespeichert"
+        },
+        "delete": {
+          "conf": "Der Tag wurde gelöscht"
+        },
+        "update": {
+          "conf": "Der Tag wurde geändert."
+        }
+      },
       "delete": {
         "confirm": "Soll dieses Tag-Dokument wirklich archiviert werden?"
       },
@@ -248,6 +267,29 @@
       }
     }
   },
+  "document": {
+    "operation": {
+      "create": {
+        "label": "Dokument hinzufügen",
+        "conf": "Das neue Dokument wurde hinzugefügt.",
+        "error": "Das Dokument konnte nicht gespeichert werden."
+      }
+    }
+  },
+  "user": {
+    "operation": {
+      "update": {
+        "label": "User ändern",
+        "error": "Die Aenderungen konnten nicht gespeichert werden",
+        "conf": "Die Aenderungen wurden gespeichert."
+      }
+    },
+    "field": {
+      "loginEmail": "Login E-Mail",
+      "name": "Name",
+      "empty": "Keine User gefunden"
+    }
+  },
   "input": {
     "passwordAoc": {
       "label": "Passwort",
@@ -276,12 +318,5 @@
   },
   "account": {
     "plural": "Konti"
-  },
-  "user": {
-    "field": {
-      "loginEmail": "Login E-Mail",
-      "name": "Name",
-      "empty": "Keine User gefunden"
-    }
   }
 }

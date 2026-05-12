@@ -1,0 +1,59 @@
+{
+  "membership": {
+    "operation": {
+      "create": {
+        "label": "Mitgliedschaft hinzufügen",
+        "error": "Die Mitgliedschaft konnte nicht erstellt werden.",
+        "conf": "Die Mitgliedschaft wurde erstellt.",
+        "alreadyMember": "Dieses Mitglied ist bereits vorhanden."
+      },
+      "update": {
+        "label": "Mitgliedschaft ändern",
+        "error": "Die Aenderungen konnten nicht gespeichert werden",
+        "conf": "Die Aenderungen wurden gespeichert."
+      },
+      "delete": {
+        "label": "Mitgliedschaft löschen",
+        "error": "Die Mitgliedschaft konnte nicht gelöscht werden",
+        "conf": "Die Mitgliedschaft wurde gelöscht",
+        "confirm": "Normalerweise sollte eine Mitgliedschaft beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Mitgliedschaft wirklich löschen?"
+      },
+      "end": {
+        "title": "Mitgliedschaft beenden",
+        "select": "Austrittsdatum wählen",
+        "confirm": "Möchtest du die Mitgliedschaft wirklich beenden?",
+        "conf": "Die Mitgliedschaft wurde beendet.",
+        "error": "Die Mitgliedschaft konnte nicht beendet werden.",
+        "comment": "Mitgliedschaft beendet",
+        "intro": "<p>Das Austrittsdatum ist der letzte Tag der Mitgliedschaft. Ab dem nächsten Tag ist die Person kein Mitglied mehr.<br /> Meistens ist dies der 31.12. des aktuellen Jahres.</p>"
+      },
+      "select": {
+        "default": "Rohdaten",
+        "srv": "SRV-Liste",
+        "address": "Adressliste",
+        "title": "Listenart für Export wählen"
+      }
+    }
+  },
+  "finance": {
+    "scsMemberFee": {
+      "operation": {
+        "update": {
+          "label": "Rechnung ändern",
+          "error": "Die Aenderungen konnten nicht gespeichert werden",
+          "conf": "Die Aenderungen wurden gespeichert."
+        },
+        "create": {
+          "label": "Rechnung hinzufügen",
+          "error": "Die Rechnung konnte nicht erstellt werden.",
+          "conf": "Die Rechnung wurde erstellt."
+        },
+        "delete": {
+          "label": "Rechnung löschen",
+          "error": "Die Rechnung konnte nicht gelöscht werden",
+          "conf": "Die Rechnung wurde gelöscht"
+        }
+      }
+    }
+  }
+}

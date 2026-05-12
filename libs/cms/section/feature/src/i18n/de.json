@@ -1,0 +1,122 @@
+{
+  "activity": {
+    "field": {
+      "empty": "Keine Aktivitäten vorhanden."
+    }
+  },
+  "content": {
+    "section": {
+      "error": {
+        "noImages": "Es sind noch keine Bilder definiert, die hier angezeigt werden sollen.",
+        "noSuchSection": "Die Sektion {{ type }} existiert nicht. ev. wurde sie noch nicht implementiert oder falsch konfiguriert.",
+        "emptyTable": "Leere Tabelle"
+      },
+      "plural": "Sektionen",
+      "field": {
+        "description": "Sektionen sind Teile einer Website. Sie enthalten Text, Bilder, Videos oder andere Elemente.",
+        "empty": "Es sind noch keine Sektionen erstellt worden. Erstelle eine mit Klicken des + Buttons."
+      },
+      "list": {
+        "header": {
+          "key": "ID",
+          "name": "Name",
+          "type": "Typ"
+        }
+      },
+      "operation": {
+        "select": {
+          "label": "Sektion wählen"
+        },
+        "delete": {
+          "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
+        },
+        "send": {
+          "confirm": "Sollen wirklich {{ amount }} emails verschickt werden ?"
+        }
+      }
+    }
+  },
+  "chat": {
+    "fields": {
+      "needsHelp": "{{name}} braucht Hilfe an diesem Ort: ",
+      "needsHelpUnknownLocation": "{{name}} braucht Hilfe (Ort unbekannt)"
+    }
+  },
+  "calevent": {
+    "plural": "Ereignisse",
+    "operation": {
+      "update": {
+        "label": "Ereignis ändern",
+        "conf": "Das Ereignis wurde geändert.",
+        "error": "Das Ereignis konnte nicht geändert werden."
+      }
+    }
+  },
+  "invitation": {
+    "operation": {
+      "update": {
+        "label": "Einladung ändern",
+        "conf": "Die Einladung wurde geändert.",
+        "error": "Die Einladung konnte nicht geändert werden."
+      }
+    }
+  },
+  "cms": {
+    "contextDiagram": {
+      "config": {
+        "title": "Anzeigeoptionen",
+        "showAvatar": "Avatar anzeigen",
+        "showName": "Name anzeigen",
+        "showMembers": "Mitglieder anzeigen",
+        "showMemberships": "Mitgliedschaften anzeigen",
+        "showResponsibilities": "Verantwortlichkeiten anzeigen",
+        "showPersonalRels": "Persönliche Beziehungen anzeigen",
+        "showWorkRels": "Beschäftigungen anzeigen",
+        "saveChanges": "Änderungen speichern"
+      }
+    },
+    "messages": {
+      "empty": "Du hast keine offenen Mitteilungen."
+    },
+    "news": {
+      "empty": "Es gibt keine Neuigkeiten."
+    },
+    "orgchart": {
+      "view": {
+        "accordion": "Liste",
+        "chart": "Organigramm"
+      }
+    },
+    "rag": {
+      "placeholder": "Frage irgendetwas über den Seeclub Stäfa",
+      "upload": "Dokumente in den RAG-Store hochladen"
+    }
+  },
+  "general": {
+    "operation": {
+      "change": {
+        "cancel": "Abbrechen",
+        "ok": "OK"
+      },
+      "email": {
+        "conf": "Email(s) wurde(n) abgeschickt.",
+        "error": "Email(s) konnte(n) nicht verschickt werden."
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  },
+  "subject": {
+    "group": {
+      "singular": "Gruppe",
+      "operation": {
+        "detach": {
+          "confirm": "Soll die Gruppe wirklich entfernt werden ?"
+        }
+      }
+    }
+  }
+}

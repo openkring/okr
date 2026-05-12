@@ -1,0 +1,22 @@
+{
+  "icon": {
+    "operation": {
+      "create": {
+        "label": "Icon hinzufügen",
+        "conf": "Das Icon wurde hinzugefügt.",
+        "error": "Das Icon konnte nicht hinzugefügt werden."
+      },
+      "update": {
+        "label": "Icon ändern",
+        "conf": "Das Icon wurde geändert.",
+        "error": "Das Icon konnte nicht geändert werden."
+      },
+      "delete": {
+        "label": "Icon löschen",
+        "conf": "Das Icon wurde gelöscht.",
+        "error": "Das Icon konnte nicht gelöscht werden.",
+        "confirm": "Soll das Icon wirklich gelöscht werden ?"
+      }
+    }
+  }
+}

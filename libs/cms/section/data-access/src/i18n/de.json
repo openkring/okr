@@ -1,0 +1,24 @@
+{
+  "content": {
+    "section": {
+      "operation": {
+        "create": {
+          "label": "Neue Sektion erstellen",
+          "conf": "Sektion wurde erstellt.",
+          "error": "Sektion konnte nicht erstellt werden."
+        },
+        "update": {
+          "label": "Sektion ändern",
+          "conf": "Sektion wurde geändert.",
+          "error": "Sektion konnte nicht geändert werden."
+        },
+        "delete": {
+          "label": "Sektion löschen",
+          "conf": "Sektion wurde gelöscht.",
+          "error": "Sektion konnte nicht gelöscht werden.",
+          "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "workrel": {
+    "field": {
+      "empty": "Keine Arbeits-Beziehungen gefunden."
+    },
+    "plural": "Beschäftigungen",
+    "list": {
+      "title": "Beschäftigungen",
+      "header": {
+        "subject": "Person",
+        "type": "Beziehungsart",
+        "object": "Organisation"
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

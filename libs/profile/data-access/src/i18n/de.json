@@ -1,0 +1,11 @@
+{
+  "profile": {
+    "operation": {
+      "update": {
+        "label": "Profil ändern",
+        "error": "Die Änderungen konnten nicht gespeichert werden",
+        "conf": "Die Änderungen wurden gespeichert."
+      }
+    }
+  }
+}

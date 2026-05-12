@@ -1,0 +1,30 @@
+{
+  "general": {
+    "noData": {
+      "addresses": "Es sind keine Adressen erfasst."
+    }
+  },
+  "subject": {
+    "address": {
+      "plural": "Adressen",
+      "field": {
+        "empty": "Keine solche Adressen gefunden"
+      },
+      "operation": {
+        "delete": {
+          "askConfirmation": "Soll die Adresse wirklich gelöscht werden ?"
+        }
+      }
+    },
+    "list": {
+      "header": {
+        "name": "Name"
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

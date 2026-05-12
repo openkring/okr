@@ -1,0 +1,48 @@
+{
+  "subject": {
+    "person": {
+      "plural": "Personen",
+      "field": {
+        "empty": "Keine Personen gefunden."
+      },
+      "operation": {
+        "copy": {
+          "email": {
+            "conf": "Die E-Mail Adresse wurde kopiert."
+          },
+          "phone": {
+            "conf": "Die Telefonnummer wurde kopiert."
+          }
+        },
+        "create": {
+          "label": "Neue Person erfassen"
+        },
+        "delete": {
+          "confirm": "Soll die Person wirklich gelöscht werden ?"
+        }
+      }
+    },
+    "list": {
+      "header": {
+        "name": "Name",
+        "phone": "Tel.",
+        "email": "E-Mail"
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  },
+  "membership": {
+    "operation": {
+      "create": {
+        "label": "Mitgliedschaft hinzufügen",
+        "error": "Die Mitgliedschaft konnte nicht erstellt werden.",
+        "conf": "Die Mitgliedschaft wurde erstellt.",
+        "alreadyMember": "Dieses Mitglied ist bereits vorhanden."
+      }
+    }
+  }
+}

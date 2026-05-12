@@ -17,6 +17,16 @@
       "location": "Ort",
       "responsiblePersons": "Verantwortlich"
     },
+    "operation": {
+      "update": {
+        "label": "Ereignis ändern",
+        "conf": "Das Ereignis wurde geändert.",
+        "error": "Das Ereignis konnte nicht geändert werden."
+      },
+      "delete": {
+        "confirm": "Soll das Ereignis wirklich gelöscht werden ?"
+      }
+    },
     "plural": "Ereignisse",
     "list": {
       "header": {
@@ -26,11 +36,6 @@
         "responsible": "Organisierende",
         "year": "Jahr",
         "description": "Thema"
-      }
-    },
-    "operation": {
-      "delete": {
-        "confirm": "Soll das Ereignis wirklich gelöscht werden ?"
       }
     }
   },
@@ -59,5 +64,19 @@
     "invite": "Mitglieder einladen",
     "tableTitle": "Terminabstimmung",
     "pendingCount": "{{count}} noch nicht geantwortet"
+  },
+  "invitation": {
+    "operation": {
+      "create": {
+        "label": "Person einladen",
+        "conf": "Die Einladung wurde hinzugefügt.",
+        "error": "Die Einladung konnte nicht hinzugefügt werden."
+      },
+      "update": {
+        "label": "Einladung ändern",
+        "conf": "Die Einladung wurde geändert.",
+        "error": "Die Einladung konnte nicht geändert werden."
+      }
+    }
   }
 }

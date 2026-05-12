@@ -1,0 +1,53 @@
+{
+  "finance": {
+    "invoice": {
+      "field": {
+        "empty": "Keine Rechnungen gefunden",
+        "invoiceId": {
+          "label": "Rechnungsnummer"
+        },
+        "title": {
+          "label": "Betreff"
+        },
+        "invoiceDate": {
+          "label": "Rechnungsdatum"
+        },
+        "dueDate": {
+          "label": "Zahlbar bis"
+        },
+        "amount": {
+          "label": "Betrag"
+        },
+        "state": {
+          "label": "Rechnungsstatus"
+        },
+        "paymentDate": {
+          "label": "Bezahlt am"
+        },
+        "notes": {
+          "label": "Notizen"
+        }
+      },
+      "operation": {
+        "create": {
+          "label": "Rechnung hinzufügen",
+          "error": "Die Rechnung konnte nicht erstellt werden."
+        },
+        "update": {
+          "label": "Rechnung ändern"
+        },
+        "view": {
+          "label": "Rechnung anzeigen"
+        }
+      },
+      "list": {
+        "title": "Rechnungsübersicht"
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

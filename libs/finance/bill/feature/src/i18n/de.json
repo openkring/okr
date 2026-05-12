@@ -1,0 +1,43 @@
+{
+  "finance": {
+    "bill": {
+      "accordion": {
+        "title": "Lieferanten-Rechnungen"
+      },
+      "field": {
+        "empty": "Keine Rechnungen gefunden",
+        "billId": {
+          "label": "Rechnungs-Nr."
+        },
+        "title": {
+          "label": "Betreff"
+        },
+        "billDate": {
+          "label": "Rechnungsdatum"
+        },
+        "dueDate": {
+          "label": "zu zahlen bis"
+        },
+        "amount": {
+          "label": "Rechnungsbetrag"
+        },
+        "state": {
+          "label": "Status"
+        }
+      },
+      "list": {
+        "title": "Kreditoren-Rechnungen"
+      },
+      "operation": {
+        "view": {
+          "label": "Rechnung anzeigen"
+        }
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

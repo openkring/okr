@@ -1,0 +1,23 @@
+{
+  "content": {
+    "menuItem": {
+      "plural": "Menüpunkte",
+      "field": {
+        "description": "Menu-Einträge verweisen auf interne (Navigation) oder externe (Browse) Webseiten.",
+        "empty": "Es sind noch keine Menüpunkte erstellt worden. Erstelle einen mit Klicken des + Buttons."
+      },
+      "list": {
+        "header": {
+          "name": "Name",
+          "link": "URL oder Menüs",
+          "action": "Aktion"
+        }
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "finance": {
+    "journal": {
+      "list": {
+        "title": "Buchungsjournal"
+      },
+      "field": {
+        "empty": "Keine Buchungen gefunden",
+        "date": {
+          "label": "Buchungsdatum"
+        },
+        "title": {
+          "label": "Beschreibung"
+        },
+        "debitAccount": {
+          "label": "Sollkonto"
+        },
+        "creditAccount": {
+          "label": "Habenkonto"
+        },
+        "amount": {
+          "label": "Betrag"
+        },
+        "notes": {
+          "label": "Notizen"
+        }
+      },
+      "operation": {
+        "view": {
+          "label": "Buchung anzeigen"
+        }
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "invitation": {
+    "operation": {
+      "create": {
+        "label": "Person einladen",
+        "conf": "Die Einladung wurde hinzugefügt.",
+        "error": "Die Einladung konnte nicht hinzugefügt werden."
+      },
+      "update": {
+        "label": "Einladung ändern",
+        "conf": "Die Einladung wurde geändert.",
+        "error": "Die Einladung konnte nicht geändert werden."
+      },
+      "delete": {
+        "label": "Einladung löschen",
+        "conf": "Die Einladung wurde gelöscht.",
+        "error": "Die Einladung konnte nicht gelöscht werden.",
+        "confirm": "Soll diese Einladung wirklich gelöscht werden ?"
+      }
+    }
+  }
+}

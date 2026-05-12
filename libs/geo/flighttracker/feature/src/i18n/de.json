@@ -1,0 +1,30 @@
+{
+  "flighttracker": {
+    "detail": {
+      "title": "Flugdetails",
+      "departure": "Abflug",
+      "airport": "Flughafen",
+      "terminal": "Terminal",
+      "gate": "Gate",
+      "delay": "Verspätung",
+      "scheduled": "Geplant",
+      "estimated": "Erwartet",
+      "arrival": "Ankunft",
+      "aircraft": "Flugzeug",
+      "registration": "Kennzeichen",
+      "live": "Live Position",
+      "altitude": "Höhe",
+      "direction": "Kurs",
+      "speed": "Geschwindigkeit"
+    },
+    "title": "Flugradar",
+    "search": {
+      "placeholder": "Flugnummer (z.B. LX1234)",
+      "button": "Suchen",
+      "prompt": "Flugnummer eingeben und auf Suchen drücken."
+    },
+    "error": {
+      "generic": "Fehler beim Abrufen der Flugdaten."
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "personalRel": {
+    "operation": {
+      "create": {
+        "label": "Persönliche Beziehung hinzufügen",
+        "conf": "Persönliche Beziehung wurde erstellt.",
+        "error": "Persönliche Beziehung konnte nicht erstellt werden."
+      },
+      "update": {
+        "label": "Persönliche Beziehung ändern",
+        "conf": "Persönliche Beziehung wurde geändert.",
+        "error": "Persönliche Beziehung konnte nicht geändert werden."
+      },
+      "delete": {
+        "label": "Persönliche Beziehung löschen",
+        "conf": "Persönliche Beziehung wurde gelöscht.",
+        "error": "Persönliche Beziehung konnte nicht gelöscht werden."
+      }
+    }
+  }
+}

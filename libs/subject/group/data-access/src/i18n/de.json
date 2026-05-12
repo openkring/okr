@@ -1,0 +1,24 @@
+{
+  "subject": {
+    "group": {
+      "operation": {
+        "create": {
+          "label": "Neue Gruppe",
+          "error": "Die neue Gruppe konnte nicht gespeichert werden.",
+          "conf": "Die neue Gruppe wurde gespeichert."
+        },
+        "update": {
+          "label": "Gruppe ändern",
+          "error": "Die Aenderungen konnten nicht gespeichert werden",
+          "conf": "Die Aenderungen wurden gespeichert."
+        },
+        "delete": {
+          "label": "Gruppe löschen",
+          "error": "Die Gruppe konnte nicht gelöscht werden.",
+          "conf": "Die Gruppe wurde gelöscht.",
+          "confirm": "Soll die Gruppe wirklich gelöscht werden ?"
+        }
+      }
+    }
+  }
+}

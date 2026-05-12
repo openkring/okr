@@ -1,0 +1,21 @@
+{
+  "workrel": {
+    "operation": {
+      "create": {
+        "label": "Beschäftigung hinzufügen",
+        "conf": "Beschäftigung wurde erstellt.",
+        "error": "Beschäftigung konnte nicht erstellt werden."
+      },
+      "update": {
+        "label": "Beschäftigung ändern",
+        "conf": "Beschäftigung wurde geändert.",
+        "error": "Beschäftigung konnte nicht geändert werden."
+      },
+      "delete": {
+        "label": "Beschäftigung löschen",
+        "conf": "Beschäftigung wurde gelöscht.",
+        "error": "Beschäftigung konnte nicht gelöscht werden."
+      }
+    }
+  }
+}

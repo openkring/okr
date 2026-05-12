@@ -1,0 +1,26 @@
+{
+  "calevent": {
+    "operation": {
+      "create": {
+        "label": "Ereignis hinzufügen",
+        "conf": "Das Ereignis wurde hinzugefügt.",
+        "error": "Das Ereignis konnte nicht hinzugefügt werden."
+      },
+      "update": {
+        "label": "Ereignis ändern",
+        "conf": "Das Ereignis wurde geändert.",
+        "error": "Das Ereignis konnte nicht geändert werden."
+      },
+      "delete": {
+        "label": "Ereignis löschen",
+        "confirm": "Soll das Ereignis wirklich gelöscht werden ?",
+        "conf": "Das Ereignis wurde gelöscht.",
+        "error": "Das Ereignis konnte nicht gelöscht werden.",
+        "intro": "Dieses Ereignis ist Teil einer Serie von wiederkehrenden Ereignissen. Möchtest du nur dieses eine Ereignis löschen, oder alle zukünftigen Ereignisse der Serie?",
+        "current": "Nur dieses Ereignis löschen (das Ereignis wird von der Serie abgekoppelt)",
+        "future": "Alle zukünftigen Ereignisse löschen",
+        "all": "Alle Ereignisse der Serie löschen"
+      }
+    }
+  }
+}

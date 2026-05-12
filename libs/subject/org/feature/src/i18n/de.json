@@ -1,0 +1,41 @@
+{
+  "subject": {
+    "org": {
+      "plural": "Organisationen",
+      "field": {
+        "empty": "Keine Organisationen gefunden."
+      },
+      "operation": {
+        "create": {
+          "label": "Neue Organisation"
+        }
+      }
+    },
+    "list": {
+      "header": {
+        "name": "Name",
+        "phone": "Tel.",
+        "email": "E-Mail"
+      }
+    },
+    "person": {
+      "operation": {
+        "delete": {
+          "confirm": "Soll die Person wirklich gelöscht werden ?"
+        }
+      }
+    },
+    "address": {
+      "operation": {
+        "emailCopy": {
+          "conf": "E-Mail Adressen wurden kopiert."
+        }
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

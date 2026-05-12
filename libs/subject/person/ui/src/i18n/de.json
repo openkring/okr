@@ -1,0 +1,19 @@
+{
+  "subject": {
+    "person": {
+      "field": {
+        "details": "Angaben zur Person",
+        "address": "Adressen",
+        "misc": "Verschiedenes",
+        "membership": "Mitgliedschaft (optional)"
+      }
+    }
+  },
+  "general": {
+    "operation": {
+      "select": {
+        "label": "Auswählen"
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "cms": {
+    "blog": {
+      "search": "Artikel suchen"
+    }
+  },
+  "content": {
+    "section": {
+      "error": {
+        "emptyPage": "Es gibt noch keine Sektionen für diese Seite. Bitte zuerst Sektionen erstellen.",
+        "emptyPageReadOnly": "Diese Seite ist noch leer."
+      },
+      "operation": {
+        "add": {
+          "label": "Neue Sektion hinzufügen"
+        }
+      }
+    },
+    "page": {
+      "type": {
+        "graph": {
+          "nomain": "Kein Hauptmenu gefunden.",
+          "description": "Die Sitemap gibt einen graphischen Überblick über die Struktur der App. Sie listet alle konfigurierten Menu, Seiten und Sektionen und zeigt ihre Abhängigkeiten.",
+          "description2": "Die Elemente in diesem Graph können selektiert und editiert werden."
+        }
+      },
+      "plural": "Webseiten",
+      "field": {
+        "description": "Eine Website enthält einen Titel und mehrere Sektionen. Die Reihenfolge der Sektionen kann geändert werden.",
+        "name": "Name der Seite"
+      },
+      "list": {
+        "header": {
+          "key": "ID",
+          "name": "Name",
+          "sections": "Sektionen"
+        }
+      },
+      "operation": {
+        "sort": {
+          "label": "Webseiten sortieren",
+          "noSections": "Es sind keine Sektionen zum Sortieren vorhanden.",
+          "onlyOneSection": "Es ist nur eine Sektion vorhanden, Sortieren ist nicht nötig."
+        },
+        "add": {
+          "label": "Webseite hinzufügen"
+        }
+      }
+    },
+    "field": {
+      "empty": "Es sind noch keine Inhalte erfasst worden."
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "account": {
+    "plural": "Konti"
+  },
+  "finance": {
+    "account": {
+      "field": {
+        "selectRoot": "Kontoplan wählen",
+        "selectRootHint": "Bitte zuerst einen Kontoplan wählen.",
+        "empty": "Keine Konti gefunden."
+      },
+      "list": {
+        "header": {
+          "id": "Konto Nr",
+          "name": "Konto Name"
+        }
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

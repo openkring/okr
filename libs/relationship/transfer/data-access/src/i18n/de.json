@@ -1,0 +1,21 @@
+{
+  "transfer": {
+    "operation": {
+      "create": {
+        "label": "Transfer hinzufügen",
+        "conf": "Transfer wurde erstellt.",
+        "error": "Transfer konnte nicht erstellt werden."
+      },
+      "update": {
+        "label": "Transfer ändern",
+        "conf": "Transfer wurde geändert.",
+        "error": "Transfer konnte nicht geändert werden."
+      },
+      "delete": {
+        "label": "Transfer löschen",
+        "conf": "Transfer wurde gelöscht.",
+        "error": "Transfer konnte nicht gelöscht werden."
+      }
+    }
+  }
+}

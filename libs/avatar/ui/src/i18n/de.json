@@ -6,5 +6,26 @@
         "label": "Auswählen"
       }
     }
+  },
+  "task": {
+    "field": {
+      "empty": "Keine Todos gefunden.",
+      "empty-my": "Gratulation ! - Du hast keine offenen Aufgaben.",
+      "name": "Name",
+      "dueDate": "Termin",
+      "assignee": {
+        "label": "Zuständig",
+        "description": "Person, die für die Erledigung der Aufgabe verantwortlich ist."
+      },
+      "author": {
+        "label": "Autor/-in",
+        "description": "Person, die die Aufgabe erstellt hat."
+      },
+      "scope": {
+        "label": "Kontext",
+        "description": "Die Aufgabe ist normalerweise sichtbar für Autor/in, Zuständige/n und Privilegierte User. Mit dem Kontext kann die Sichtbarkeit auf eine Gruppe erweitert werden."
+      },
+      "state": "Status"
+    }
   }
 }

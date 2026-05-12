@@ -1,4 +1,3 @@
-import { computed } from '@angular/core';
 import { MaskitoOptions } from '@maskito/core';
 import { maskitoDateOptionsGenerator, maskitoNumberOptionsGenerator, maskitoTimeOptionsGenerator } from '@maskito/kit';
 

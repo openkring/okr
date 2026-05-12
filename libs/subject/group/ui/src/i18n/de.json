@@ -1,0 +1,19 @@
+{
+  "subject": {
+    "group": {
+      "field": {
+        "attributes": "Gruppen-Eigenschaften",
+        "groupId": "Gruppen ID",
+        "display": "Darstellung",
+        "access": "Zugang & Benachrichtigungen"
+      }
+    }
+  },
+  "calevent": {
+    "field": {
+      "responsible": {
+        "addLabel": "Organisierende hinzufügen"
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "reservation": {
+    "operation": {
+      "create": {
+        "label": "Reservation hinzufügen",
+        "conf": "Reservation wurde erstellt.",
+        "error": "Reservation konnte nicht erstellt werden."
+      },
+      "update": {
+        "label": "Reservation ändern",
+        "conf": "Reservation wurde geändert.",
+        "error": "Reservation konnte nicht geändert werden."
+      },
+      "delete": {
+        "label": "Reservation löschen",
+        "conf": "Reservation wurde gelöscht.",
+        "error": "Reservation konnte nicht gelöscht werden.",
+        "confirm": "Normalerweise sollte eine Reservation beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Reservation wirklich löschen?"
+      }
+    }
+  }
+}

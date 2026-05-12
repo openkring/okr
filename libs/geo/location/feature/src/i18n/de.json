@@ -1,0 +1,25 @@
+{
+  "location": {
+    "plural": "Orte",
+    "description": "Ein Ort, der mittels Koordinaten genau lokalisiert werden kann.",
+    "list": {
+      "header": {
+        "name": "Name",
+        "locationType": "Typ"
+      }
+    },
+    "field": {
+      "empty": "Es sind noch keine Orte erfasst. Erstelle einen neuen Ort mit Klicken des + Buttons."
+    },
+    "operation": {
+      "copy": {
+        "conf": "Der Ort wurde kopiert."
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  }
+}

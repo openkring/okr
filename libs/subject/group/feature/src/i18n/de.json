@@ -1,0 +1,63 @@
+{
+  "subject": {
+    "group": {
+      "plural": "Gruppen",
+      "field": {
+        "empty": "Keine Gruppen gefunden."
+      },
+      "segment": {
+        "content": "Inhalt",
+        "chat": "Chat",
+        "calendar": "Kalender",
+        "tasks": "Todos",
+        "files": "Dateien",
+        "album": "Alben",
+        "members": "Mitglieder"
+      },
+      "operation": {
+        "delete": {
+          "confirm": "Soll die Gruppe wirklich gelöscht werden ?"
+        }
+      }
+    },
+    "list": {
+      "header": {
+        "name": "Name"
+      }
+    }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  },
+  "content": {
+    "page": {
+      "operation": {
+        "create": {
+          "label": "Neue Webseite erstellen",
+          "conf": "Webseite wurde erstellt.",
+          "error": "Webseite konnte nicht erstellt werden."
+        }
+      }
+    },
+    "section": {
+      "operation": {
+        "create": {
+          "label": "Neue Sektion erstellen",
+          "conf": "Sektion wurde erstellt.",
+          "error": "Sektion konnte nicht erstellt werden."
+        }
+      }
+    }
+  },
+  "calendar": {
+    "operation": {
+      "create": {
+        "label": "Kalender hinzufügen",
+        "conf": "Der Kalender wurde hinzugefügt.",
+        "error": "Der Kalender konnte nicht hinzugefügt werden."
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "transfer": {
+    "field": {
+      "subjects": "Von",
+      "objects": "An"
+    },
+    "operation": {
+      "addSubject": {
+        "label": "Person oder Organisation hinzufügen"
+      },
+      "addObject": {
+        "label": "Person oder Organisation hinzufügen"
+      }
+    }
+  },
+  "input": {
+    "resourceName": {
+      "label": "Name"
+    }
+  },
+  "general": {
+    "operation": {
+      "select": {
+        "resource": "Auswählen"
+      }
+    }
+  }
+}

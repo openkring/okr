@@ -1,0 +1,20 @@
+{
+  "actionsheet": {
+    "label": {
+      "choose": "Wähle eine Aktion"
+    }
+  },
+  "responsibility": {
+    "list": {
+      "title": "Verantwortlichkeiten"
+    },
+    "field": {
+      "empty": "Keine Verantwortungen gefunden."
+    },
+    "operation": {
+      "delete": {
+        "confirm": "Möchtest du die Verantwortlichkeit wirklich löschen?"
+      }
+    }
+  }
+}

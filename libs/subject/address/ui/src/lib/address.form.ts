@@ -5,7 +5,7 @@ import { vestForms } from 'ngx-vest-forms';
 import { AddressModel, CategoryListModel, RoleName, SwissCity, UserModel } from '@bk2/shared-models';
 import { CategorySelectComponent, CheckboxComponent, ChipsComponent, EmailInputComponent, ErrorNoteComponent, IbanComponent, NotesInputComponent, PhoneInputComponent, TextInputComponent } from '@bk2/shared-ui';
 import { coerceBoolean, debugFormErrors, debugFormModel, hasRole } from '@bk2/shared-util-core';
-import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_ADDRESS_USAGE, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
+import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@bk2/shared-constants';
 
 import { SwissCitySearchComponent } from '@bk2/subject-swisscities-ui';
 import { addressValidations } from '@bk2/subject-address-util';
