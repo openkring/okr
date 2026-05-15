@@ -1,13 +1,12 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { AlertController } from '@ionic/angular/standalone';
-
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { debugListLoaded } from '@bk2/shared-util-core';
 
 import { CommentService } from '@bk2/comment-data-access';
-import { bkPrompt } from '@bk2/shared-util-angular';
+import { AlertService } from '@bk2/shared-util-angular';
 
 export type CommentListState = {
   parentKey: string; // modelType.key of the parent model
@@ -19,11 +18,15 @@ export const initialState: CommentListState = {
 
 export const CommentListStore = signalStore(
   withState(initialState),
-  withProps(() => ({
-    commentService : inject(CommentService),
-    alertController: inject(AlertController),
-    appStore: inject(AppStore),
-  })),
+  withProps(() => {
+    const i18nService = inject(I18nService);
+    return {
+      commentService: inject(CommentService),
+      alertService: inject(AlertService),
+      appStore: inject(AppStore),
+      i18n: i18nService.translateAll({ add_title: '@comment.operation.add.title', add_placeholder: '@comment.operation.add.placeholder' }),
+    };
+  }),
   withProps((store) => ({
     commentsResource: rxResource({
       params: () => ({
@@ -58,7 +61,7 @@ export const CommentListStore = signalStore(
       /******************************* actions *************************************** */
       async add(comment?: string): Promise<void> {
         if (!comment || comment.length === 0) {
-          comment = await bkPrompt(store.alertController, '@comment.operation.add.title', '@comment.operation.add.placeholder');
+          comment = await store.alertService.bkPrompt(store.i18n.add_title(), store.i18n.add_placeholder());
         }
         if (!comment || comment.length === 0) return;
         await store.commentService.create(store.parentKey(), comment, store.currentUser());

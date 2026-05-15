@@ -1,14 +1,15 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable } from 'rxjs';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
+import { I18nService } from '@bk2/shared-i18n';
 import { FolderCollection, FolderModel } from '@bk2/shared-models';
 import { debugItemLoaded, debugListLoaded, getSystemQuery, nameMatches } from '@bk2/shared-util-core';
-import { confirm } from '@bk2/shared-util-angular';
+import { AlertService } from '@bk2/shared-util-angular';
 
 import { FolderService } from '@bk2/folder-data-access';
 import { newFolderModel } from '@bk2/folder-util';
@@ -28,13 +29,17 @@ const initialState: FolderState = {
 
 export const FolderStore = signalStore(
   withState(initialState),
-  withProps(() => ({
-    appStore: inject(AppStore),
-    firestoreService: inject(FirestoreService),
-    modalController: inject(ModalController),
-    alertController: inject(AlertController),
-    folderService: inject(FolderService),
-  })),
+  withProps(() => {
+    const i18nService = inject(I18nService);
+    return {
+      appStore: inject(AppStore),
+      firestoreService: inject(FirestoreService),
+      modalController: inject(ModalController),
+      alertService: inject(AlertService),
+      folderService: inject(FolderService),
+      i18n: i18nService.translateAll({ delete_confirm: '@folder.operation.delete.confirm' }),
+    };
+  }),
   withProps((store) => ({
     foldersResource: rxResource({
       params: () => ({ currentUser: store.appStore.currentUser() }),
@@ -107,7 +112,7 @@ export const FolderStore = signalStore(
 
     async delete(folder?: FolderModel): Promise<void> {
       if (!folder) return;
-      const result = await confirm(store.alertController, '@folder.operation.delete.confirm', true);
+      const result = await store.alertService.confirm(store.i18n.delete_confirm(), true);
       if (result === true) {
         await store.folderService.delete(folder, store.currentUser());
         this.reload();
