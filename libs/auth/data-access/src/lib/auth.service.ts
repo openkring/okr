@@ -5,11 +5,10 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { AUTH, ENV } from '@bk2/shared-config';
-import { bkTranslate } from '@bk2/shared-i18n';
 import { AuthCredentials } from '@bk2/shared-models';
-import { confirm, navigateByUrl, showToast } from '@bk2/shared-util-angular';
+import { AlertService, navigateByUrl } from '@bk2/shared-util-angular';
 import { die, warn } from '@bk2/shared-util-core';
-import { AlertController, ToastController } from '@ionic/angular/standalone';
+import { I18nService } from '@bk2/shared-i18n';
 
 /**
  * This provider centralizes the authentication functions
@@ -31,9 +30,17 @@ import { AlertController, ToastController } from '@ionic/angular/standalone';
 export class AuthService {
   private readonly auth = inject(AUTH);
   private readonly env = inject(ENV);
-  private readonly toastController = inject(ToastController);
-  private readonly alertController = inject(AlertController);
   private readonly router = inject(Router);
+  private readonly alertService = inject(AlertService);
+  private readonly i18n = inject(I18nService).translateAll({
+    login_conf:     '@auth.operation.login.confirmation',
+    login_error:    '@auth.operation.login.error',
+    pwdreset_conf:  '@auth.operation.pwdreset.confirmation',
+    pwdreset_error: '@auth.operation.pwdreset.error',
+    logout_conf:    '@auth.operation.logout.confirmation',
+    logout_error:   '@auth.operation.logout.error',
+    logout_confirm: '@content.menuItem.action.logout.confirm',
+  });
 
   /*-------------------------- login / logout / password reset --------------------------------*/
   /**
@@ -54,11 +61,11 @@ export class AuthService {
       */
       await setPersistence(this.auth, browserLocalPersistence);
       await signInWithEmailAndPassword(this.auth, credentials.loginEmail, credentials.loginPassword);
-      showToast(this.toastController, '@auth.operation.login.confirmation');
+      await this.alertService.showToast(this.i18n.login_conf());
       await navigateByUrl(this.router, rootUrl);
     } catch (ex) {
       console.error('AuthService.login: error: ', ex);
-      await showToast(this.toastController, '@auth.operation.login.error');
+      await this.alertService.showToast(this.i18n.login_error());
       await navigateByUrl(this.router, loginUrl);
     }
   }
@@ -66,11 +73,11 @@ export class AuthService {
   public async loginWithToken(token: string, url: string): Promise<void> {
     try {
       await signInWithCustomToken(this.auth, token);
-      showToast(this.toastController, '@auth.operation.login.confirmation');
+      await this.alertService.showToast(this.i18n.login_conf());
       await navigateByUrl(this.router, url);
     } catch (ex) {
       console.error('AuthService.loginWithToken: error: ', ex);
-      await showToast(this.toastController, '@auth.operation.login.error');
+      await this.alertService.showToast(this.i18n.login_error());
       await navigateByUrl(this.router, url);
     }
   }
@@ -85,11 +92,11 @@ export class AuthService {
       if (!loginEmail || loginEmail.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
       const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
       await fn({ to: [loginEmail], appId: this.env.appId, provider: 'mailtrap_api', template: 'scs_password_reset' });
-      await showToast(this.toastController, bkTranslate('@auth.operation.pwdreset.confirmation') + loginEmail);
+      await this.alertService.showToast(this.i18n.pwdreset_conf() + loginEmail);
       await navigateByUrl(this.router, loginUrl);
     } catch (ex) {
       console.error('AuthService.resetPassword: error: ', ex);
-      await showToast(this.toastController, '@auth.operation.pwdreset.error');
+      await this.alertService.showToast(this.i18n.pwdreset_error());
       await navigateByUrl(this.router, loginUrl);
     }
   }
@@ -113,15 +120,15 @@ export class AuthService {
   }
 
   public async logout(): Promise<boolean> {
-    const result = await confirm(this.alertController, '@content.menuItem.action.logout.confirm', true);
+    const result = await this.alertService.confirm(this.i18n.logout_confirm(), true);
     if (result === true) {
       try {
         await signOut(this.auth);
-        await showToast(this.toastController, '@auth.operation.logout.confirmation');
+        await this.alertService.showToast(this.i18n.logout_conf());
         return true;
       } catch (ex) {
         console.error('AuthService.logout: error: ', ex);
-        await showToast(this.toastController, '@auth.operation.logout.error');
+        await this.alertService.showToast(this.i18n.logout_error());
       }
     }
     return false;
