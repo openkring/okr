@@ -10,14 +10,14 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { AppStore } from '@bk2/shared-feature';
 import { MatrixAuthToken, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, ROOM_SHAPE } from '@bk2/shared-models';
 import { debugItemLoaded, debugMessage } from '@bk2/shared-util-core';
-import { bkPrompt, confirm, copyToClipboardWithConfirmation, showToast } from '@bk2/shared-util-angular';
+import { AlertService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { ActivityService } from '@bk2/activity-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@bk2/chat-data-access';
 
 import { RoomEditModal } from './room-edit.modal';
-import { bkTranslate } from '@bk2/shared-i18n';
 
 export type MatrixChatState = {
   isMatrixInitialized: boolean;
@@ -42,10 +42,39 @@ export const _MatrixChatStore = signalStore(
     matrixService: inject(MatrixChatService),
     avatarService: inject(AvatarService),
     modalController: inject(ModalController),
-    toastController: inject(ToastController),
     alertController: inject(AlertController),
+    toastController: inject(ToastController),
+    alertService: inject(AlertService),
+    i18nService: inject(I18nService),
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      room_create_conf:          '@chat.operation.room.create.conf',
+      room_create_error:         '@chat.operation.room.create.error',
+      room_update_conf:          '@chat.operation.room.update.conf',
+      room_update_error:         '@chat.operation.room.update.error',
+      thread_reply_header:       '@chat.operation.thread.reply.header',
+      thread_reply_placeholder:  '@chat.operation.thread.reply.placeholder',
+      thread_reply_error:        '@chat.operation.thread.reply.error',
+      msg_report_header:         '@chat.operation.message.report.header',
+      msg_report_placeholder:    '@chat.operation.message.report.placeholder',
+      msg_report_noChannel:      '@chat.operation.message.report.noChannel',
+      msg_report_conf:           '@chat.operation.message.report.conf',
+      msg_report_error:          '@chat.operation.message.report.error',
+      msg_update_header:         '@chat.operation.message.update.header',
+      msg_update_placeholder:    '@chat.operation.message.update.placeholder',
+      msg_update_conf:           '@chat.operation.message.update.conf',
+      msg_update_error:          '@chat.operation.message.update.error',
+      msg_delete_confirm:        '@chat.operation.message.delete.confirm',
+      msg_delete_conf:           '@chat.operation.message.delete.conf',
+      msg_delete_error:          '@chat.operation.message.delete.error',
+      react_header:              '@chat.operation.message.react.header',
+      react_cancel:              '@chat.operation.message.react.cancel',
+      msg_report_messageFrom:    '@chat.operation.message.report.messageFrom',
+      msg_report_message:        '@chat.operation.message.report.message',
+      msg_report_comment:        '@chat.operation.message.report.comment',
+      msg_report_showMessage:    '@chat.operation.message.report.showMessage',
+    }),
     syncStateResource: rxResource({ stream: () => store.matrixService.syncState }),
     roomsResource: rxResource({ stream: () => store.matrixService.rooms }),
     imageUrlResource: rxResource({
@@ -414,12 +443,12 @@ export const _MatrixChatStore = signalStore(
             if (roomId && roomInfo.avatar?.startsWith('http')) {
               await store.matrixService.setRoomAvatarFromUrl(roomId, roomInfo.avatar);
             }
-            showToast(store.toastController, '@chat.operation.room.create.conf');
+            await store.alertService.showToast(store.i18n.room_create_conf());
             patchState(store, { currentRoomId: roomId });
 
           } catch (error) {
             console.error('MatrixChatStore.createRoom: Failed to create room:', error);
-            showToast(store.toastController, '@chat.operation.room.create.error');
+            await store.alertService.showToast(store.i18n.room_create_error());
           }
         }
       },
@@ -446,10 +475,10 @@ export const _MatrixChatStore = signalStore(
           if (updated.avatar?.startsWith('http') && updated.avatar !== room.avatar) {
             await store.matrixService.setRoomAvatarFromUrl(room.roomId, updated.avatar);
           }
-          showToast(store.toastController, '@chat.operation.room.update.conf');
+          await store.alertService.showToast(store.i18n.room_update_conf());
         } catch (error) {
           console.error('MatrixChatStore.editRoom: Failed to update room:', error);
-          showToast(store.toastController, '@chat.operation.room.update.error');
+          await store.alertService.showToast(store.i18n.room_update_error());
         }
       },
 
@@ -609,7 +638,7 @@ export const _MatrixChatStore = signalStore(
         const roomId = store.currentRoomId();
         if (!roomId) return;
         const alert = await store.alertController.create({
-          header: bkTranslate('@chat.operation.message.react.header'),
+          header: store.i18n.react_header(),
           buttons: [
             ...QUICK_REACTIONS.map(emoji => ({
               text: emoji,
@@ -619,7 +648,7 @@ export const _MatrixChatStore = signalStore(
                 );
               }
             })),
-            { text: bkTranslate('@chat.operation.message.react.cancel'), role: 'cancel' }
+            { text: store.i18n.react_cancel(), role: 'cancel' }
           ],
           cssClass: 'emoji-reaction-alert',
         });
@@ -652,14 +681,14 @@ export const _MatrixChatStore = signalStore(
       async replyInThread(message: MatrixMessage): Promise<void> {
         const roomId = store.currentRoomId();
         if (!roomId) return;
-        const text = await bkPrompt(store.alertController as any, '@chat.operation.thread.reply.header', '@chat.operation.thread.reply.placeholder');
+        const text = await store.alertService.bkPrompt(store.i18n.thread_reply_header(), store.i18n.thread_reply_placeholder());
         if (!text?.trim()) return;
         try {
           await store.matrixService.sendMessage(roomId, text.trim(), message.eventId);
           patchState(store, { selectedThreadId: message.eventId });
         } catch (error) {
           console.error('MatrixChatStore.replyInThread: Failed:', error);
-          showToast(store.toastController, '@chat.operation.thread.reply.error');
+          await store.alertService.showToast(store.i18n.thread_reply_error());
         }
       },
 
@@ -667,21 +696,21 @@ export const _MatrixChatStore = signalStore(
        * Ask for a comment and send a report to the support channel.
        */
       async reportMessage(message: MatrixMessage): Promise<void> {
-        const comment = await bkPrompt(store.alertController as any, '@chat.operation.message.report.header', '@chat.operation.message.report.placeholder');
+        const comment = await store.alertService.bkPrompt(store.i18n.msg_report_header(), store.i18n.msg_report_placeholder());
         if (!comment?.trim()) return;
         const rooms = store.matrixService.roomsCurrentValue;
         const supportRoom = rooms.find(r => r.name?.toLowerCase() === 'support');
         if (!supportRoom) {
-          showToast(store.toastController, '@chat.operation.message.report.noChannel');
+          await store.alertService.showToast(store.i18n.msg_report_noChannel());
           return;
         }
         const user = store.currentUser();
         const senderLabel = user ? `${user.firstName} ${user.lastName}` : message.sender;
         const matrixLink = `https://matrix.to/#/${message.roomId}/${message.eventId}`;
-        const from = bkTranslate('@chat.operation.message.report.messageFrom');
-        const msg = bkTranslate('@chat.operation.message.report.message');
-        const cmt = bkTranslate('@chat.operation.message.report.comment');
-        const showMessage = bkTranslate('@chat.operation.message.report.showMessage');
+        const from = store.i18n.msg_report_messageFrom();
+        const msg = store.i18n.msg_report_message();
+        const cmt = store.i18n.msg_report_comment();
+        const showMessage = store.i18n.msg_report_showMessage();
         const reportText =
           `🚨 ${from} ${senderLabel}\n` +
           `${msg}: "${message.body}"\n` +
@@ -695,10 +724,10 @@ export const _MatrixChatStore = signalStore(
           `<a href="${matrixLink}">${showMessage}</a>`;
         try {
           await store.matrixService.sendHtmlMessage(supportRoom.roomId, reportText, reportHtml);
-          showToast(store.toastController, '@chat.operation.message.report.conf');
+          await store.alertService.showToast(store.i18n.msg_report_conf());
         } catch (error) {
           console.error('MatrixChatStore.reportMessage: Failed:', error);
-          showToast(store.toastController, '@chat.operation.message.report.error');
+          await store.alertService.showToast(store.i18n.msg_report_error());
         }
       },
 
@@ -729,14 +758,14 @@ export const _MatrixChatStore = signalStore(
       async editMessage(message: MatrixMessage): Promise<void> {
         const roomId = store.currentRoomId();
         if (!roomId) return;
-        const newText = await bkPrompt(store.alertController as any, '@chat.operation.message.update.header', '@chat.operation.message.update.placeholder', message.body);
+        const newText = await store.alertService.bkPrompt(store.i18n.msg_update_header(), store.i18n.msg_update_placeholder(), message.body);
         if (!newText?.trim() || newText.trim() === message.body) return;
         try {
           await store.matrixService.editMessage(roomId, message.eventId, newText.trim());
-          showToast(store.toastController, '@chat.operation.message.update.conf');
+          await store.alertService.showToast(store.i18n.msg_update_conf());
         } catch (error) {
           console.error('MatrixChatStore.editMessage: Failed:', error);
-          showToast(store.toastController, '@chat.operation.message.update.error');
+          await store.alertService.showToast(store.i18n.msg_update_error());
         }
       },
 
@@ -746,14 +775,14 @@ export const _MatrixChatStore = signalStore(
       async deleteMessage(message: MatrixMessage): Promise<void> {
         const roomId = store.currentRoomId();
         if (!roomId) return;
-        const ok = await confirm(store.alertController as any, '@chat.operation.message.delete.confirm', true);
+        const ok = await store.alertService.confirm(store.i18n.msg_delete_confirm(), true);
         if (!ok) return;
         try {
           await store.matrixService.deleteMessage(roomId, message.eventId);
-          showToast(store.toastController, '@chat.operation.message.delete.conf');
+          await store.alertService.showToast(store.i18n.msg_delete_conf());
         } catch (error) {
           console.error('MatrixChatStore.deleteMessage: Failed:', error);
-          showToast(store.toastController, '@chat.operation.message.delete.error');
+          await store.alertService.showToast(store.i18n.msg_delete_error());
         }
       },
 
