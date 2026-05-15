@@ -1,6 +1,7 @@
 export * from './lib/action-sheet.util';
 export * from './lib/ahv.util';
 export * from './lib/alert.util';
+export * from './lib/alert.service';
 export * from './lib/app-navigation.service';
 export * from './lib/copy.util';
 export * from './lib/email.util';
