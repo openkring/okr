@@ -9,8 +9,9 @@ import { Photo } from '@capacitor/camera';
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore, PersonSelectModalComponent } from '@bk2/shared-feature';
 import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@bk2/shared-models';
-import { confirm, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
+import { AlertService, AppNavigationService, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugData, debugItemLoaded, debugListLoaded, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { GroupService } from '@bk2/subject-group-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
@@ -20,6 +21,7 @@ import { MatrixChatService } from '@bk2/chat-data-access';
 import { getVisibleGroupKeys } from '@bk2/subject-group-util';
 
 import { GroupEditModalComponent } from './group-edit.modal';
+import { PFX } from './scope';
 
 export type GroupState = {
   searchTerm: string;
@@ -46,10 +48,37 @@ export const GroupStore = signalStore(
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
+    alertService: inject(AlertService),
     toastController: inject(ToastController),
-    chatService: inject(MatrixChatService)
+    chatService: inject(MatrixChatService),
+    i18nService: inject(I18nService)
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      group_create_conf:  PFX + 'group.create.conf',
+      group_create_error:  PFX + 'group.create.error',
+      group_create_duplicate: PFX + 'group.create.duplicate',
+      group_create_exists: PFX + 'group.create.exists',
+      content: PFX + 'content',
+      group_delete_confirm: PFX + 'group.delete.confirm',
+      page_create_conf: PFX + 'page.create.conf',
+      page_create_error: PFX + 'page.create.error',
+      article_create_conf: PFX + 'article.create.conf',
+      article_create_error: PFX + 'article.create.error',
+      article_title: PFX + 'article.title',
+      article_content: PFX + 'article.content',
+      chat_name: PFX + 'chat.name',
+      chat_create_conf: PFX + 'chat.create.conf',
+      chat_create_error: PFX + 'chat.create.error',
+      chat_group_name: PFX + 'chat.group.name',
+      chat_group_description: PFX + 'chat.group.description',
+      calendar_name: PFX + 'calendar.name',
+      calendar_create_conf: PFX + 'calendar.create.conf',
+      calendar_create_error: PFX + 'calendar.create.error',
+      ok: '@general.operation.change.ok',
+      cancel: '@cancel'
+    }),
+
     groupsResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),
@@ -141,20 +170,6 @@ export const GroupStore = signalStore(
       store.groupsResource.reload();
       store.groupResource.reload();
     },
-    printState() {
-      console.log('------------------------------------');
-      console.log('GroupStore state:');
-      console.log('  searchTerm: ' + store.searchTerm());
-      console.log('  selectedTag: ' + store.selectedTag());
-      console.log('  groupKey: ' + store.groupKey());
-      console.log('  selectedSegment: ' + store.selectedSegment());
-      console.log('  groups: ' + JSON.stringify(store.groups()));
-      console.log('  groupsCount: ' + store.groupsCount());
-      console.log('  filteredGroups: ' + JSON.stringify(store.filteredGroups()));
-      console.log('  currentUser: ' + JSON.stringify(store.currentUser()));
-      console.log('  tenantId: ' + store.tenantId());
-      console.log('------------------------------------');
-    },
 
     /******************************** setters (filter) ******************************************* */
     setSearchTerm(searchTerm: string) {
@@ -219,9 +234,9 @@ export const GroupStore = signalStore(
             const existingGroup = store.groups()?.find((g: GroupModel) => g.bkey === data.bkey);
             if (existingGroup) {
               const alert = await store.alertController.create({
-                header: 'Duplicate ID',
-                message: `A group with ID "${data.bkey}" already exists. Please use a different ID.`,
-                buttons: ['OK']
+                header: store.i18n.group_create_duplicate(),
+                message: store.i18n.group_create_exists(),
+                buttons: [store.i18n.ok()]
               });
               await alert.present();
               return;
@@ -237,12 +252,12 @@ export const GroupStore = signalStore(
 
             // create default content page with initial article section
             const articleId = await this.createArticleSection(data);
-            await this.createGroupPage(data, 'content', 'Inhalt', articleId);
+            await this.createGroupPage(data, 'content', store.i18n.content(), articleId);
 
             // create default chat section/page and chat room
             const chatId = await this.createChatSection(data);
-            await this.createGroupPage(data, 'chat', 'Chat', chatId);
-            await store.chatService.createGroupRoom(data.bkey, [], 'Gruppen Chat: ' + data.name);
+            await this.createGroupPage(data, 'chat', store.i18n.chat_group_name(), chatId);
+            await store.chatService.createGroupRoom(data.bkey, [], store.i18n.chat_group_name() + ': ' + data.name);
           } else {
             await store.groupService.update(data, store.currentUser());
             await this.ensureAllAdminsAreMember(data);
@@ -260,7 +275,7 @@ export const GroupStore = signalStore(
 
     async delete(group?: GroupModel, readOnly = true): Promise<void> {
       if (!group || readOnly) return;
-      const result = await confirm(store.alertController, '@subject.group.operation.delete.confirm', true);
+      const result = await store.alertService.confirm(store.i18n.group_delete_confirm(), true);
       if (result === true) {
         await store.groupService.delete(group, store.currentUser());
         this.reload();
@@ -305,7 +320,8 @@ export const GroupStore = signalStore(
       if (sectionId) {
         page.sections = [sectionId];
       }
-      await store.firestoreService.createModel<PageModel>(PageCollection, page, '@content.page.operation.create', store.currentUser());
+      await store.firestoreService.createModel<PageModel>(PageCollection, page, 
+        store.i18n.page_create_conf(), store.i18n.page_create_error(), store.currentUser());
     },
 
     async createChatSection(group: GroupModel): Promise<string | undefined> {
@@ -314,7 +330,7 @@ export const GroupStore = signalStore(
         bkey: name,
         type: 'chat',
         name: name,
-        title: 'Chat',
+        title: store.i18n.chat_name(),
         subTitle: '',
         index: '',
         color: ColorIonic.Light,
@@ -326,9 +342,9 @@ export const GroupStore = signalStore(
           position: ViewPosition.None
         },
         properties: {
-          description: 'Hier können sich alle Mitglieder der Gruppe austauschen.',
+          description: store.i18n.chat_group_description(),
           id: `group-chat-${group.bkey}`,
-          name: 'Gruppen Chat',
+          name: store.i18n.chat_group_name(),
           showChannelList: true,
           type: 'messaging',
           url: ''
@@ -337,7 +353,8 @@ export const GroupStore = signalStore(
         tags: '',
         tenants: [store.tenantId()],
       } as ChatSection;
-      return await store.firestoreService.createModel<ChatSection>(SectionCollection, section, '@content.section.operation.create', store.currentUser())
+      return await store.firestoreService.createModel<ChatSection>(SectionCollection, section, 
+        store.i18n.chat_create_conf(), store.i18n.chat_create_error(), store.currentUser())
     },
 
     async createArticleSection(group: GroupModel): Promise<string | undefined> {
@@ -346,7 +363,7 @@ export const GroupStore = signalStore(
         type: 'article',
         state: 'published',
         name: `group-intro-${group.bkey}`,
-        title: 'Anleitung',
+        title: store.i18n.article_title(),
         subTitle: '',
         index: '',
         color: ColorIonic.Light,
@@ -354,7 +371,7 @@ export const GroupStore = signalStore(
         roleNeeded: 'groupAdmin',
         isArchived: false,
         content: { 
-          htmlContent: '<p>Dies ist deine Gruppen-Homepage. </p><p>Nur Gruppenmitglieder sehen diesen Inhalt.</p><p>Der Gruppen-Administrator kann den Inhalt dieser Seite beliebig ändern. Benutze dazu die Operationen im Kontext-Menü oben rechts.</p><p>Aktuell findest du hier eine Anleitung zu den Gruppen Funktionen.</p><p>Je nach Konfiguration kann eine Gruppe folgende Funktionen enthalten:</p><ul><li><p>Homepage (diese hier): längere Zeit gleichbleibende Informationen, die für die Gruppenmitglieder relevant sind.</p></li><li><p>Kalender</p></li><li><p>Todos</p></li><li><p>Mitglieder: eine Liste der Gruppenmitglieder, der Gruppen-Administrator kann neue Mitglieder hinzufügen oder bestehende löschen.</p></li><li><p>Dateien: eine Fileablage zum Teilen von Dateien innerhalb der Gruppe</p></li></ul><p>Der Gruppen-Administrator kann diese Funktionen ein- und ausschalten.</p>',
+          htmlContent: store.i18n.article_content(),
           colSize: 3,
           position: ViewPosition.None
         },
@@ -379,7 +396,8 @@ export const GroupStore = signalStore(
         tags: '',
         tenants: [store.tenantId()],
       } as ArticleSection;
-      return await store.firestoreService.createModel<ArticleSection>(SectionCollection, section, '@content.section.operation.create', store.currentUser())
+      return await store.firestoreService.createModel<ArticleSection>(SectionCollection, section, 
+        store.i18n.article_create_conf(), store.i18n.article_create_error(), store.currentUser())
     },
 
     /******************************* events / calendar *************************************** */
@@ -387,9 +405,10 @@ export const GroupStore = signalStore(
       const cal = new CalendarModel(store.tenantId());
       cal.bkey = group.bkey;
       cal.name = group.name;
-      cal.description = `Calendar for group ${group.bkey}`;
+      cal.description = store.i18n.calendar_name + group.bkey;
       cal.owner = `${GroupModelName}.${group.bkey}`;
-      await store.firestoreService.createModel<CalendarModel>(CalendarCollection, cal, '@calendar.operation.create', store.currentUser());
+      await store.firestoreService.createModel<CalendarModel>(CalendarCollection, cal, 
+        store.i18n.calendar_create_conf(), store.i18n.calendar_create_error(), store.currentUser());
     },
 
     addEvent(): void {

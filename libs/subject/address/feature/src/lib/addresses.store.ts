@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { AlertController, ModalController, Platform, ToastController } from '@ionic/angular/standalone';
+import { ModalController, Platform, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, of } from 'rxjs';
 import { getApp } from 'firebase/app';
@@ -12,7 +12,7 @@ import { FirestoreService } from '@bk2/shared-data-access';
 import { STORAGE } from '@bk2/shared-config';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, AddressModelName, CategoryListModel, DefaultLanguage, DocumentModel, OrgModel, PersonModel } from '@bk2/shared-models';
-import { confirm, downloadToBrowser } from '@bk2/shared-util-angular';
+import { AlertService, downloadToBrowser } from '@bk2/shared-util-angular';
 import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@bk2/shared-util-core';
 import { Languages } from '@bk2/shared-categories';
 import { MapViewModalComponent } from '@bk2/shared-ui';
@@ -26,6 +26,8 @@ import { browseUrl, copyAddress, isAddress, stringifyPostalAddress } from '@bk2/
 
 import { AddressEditModalComponent } from './address-edit.modal';
 import { DEFAULT_MIMETYPES } from '@bk2/shared-constants';
+import { I18nService } from '@bk2/shared-i18n';
+import { PFX } from 'libs/subject/address/feature/src/lib/scope';
 
 export type AddressState = {
   parentKey: string;
@@ -55,13 +57,14 @@ export const AddressStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
-    alertController: inject(AlertController),
+    alertService: inject(AlertService),
     toastController: inject(ToastController),
     geocodeService: inject(GeocodingService),
     platform: inject(Platform),
     uploadService: inject(UploadService),
     documentService: inject(DocumentService),
     folderService: inject(FolderService),
+    i18nService: inject(I18nService),
     storage: inject(STORAGE),
     qrBillFn: httpsCallable<{ tenantId: string; addressBkey: string; data: Record<string, unknown> }, { storagePath: string }>(
       getFunctions(getApp(), 'europe-west6'),
@@ -69,6 +72,15 @@ export const AddressStore = signalStore(
     )
   })),
   withProps((store) => ({
+
+    i18n: store.i18nService.translateAll({
+      copy_conf:  PFX + 'copy.conf',
+      delete_confirm: PFX + 'delete.confirm',
+      currency: PFX + 'currency',
+      qrinvoice: PFX + 'qrinvoice',
+      ok: '@ok',
+      cancel: '@cancel'
+    }),
     addressesResource: rxResource({
       params: () => ({
         parentKey: store.parentKey(),
@@ -206,7 +218,7 @@ export const AddressStore = signalStore(
 
       async delete(address?: AddressModel, readOnly = true): Promise<void> {
         if (!address || readOnly) return;
-        const result = await confirm(store.alertController, '@subject.address.operation.delete.askConfirmation', true);
+        const result = await store.alertService.confirm(store.i18n.delete_confirm(), true);
         if (result === true) {
           await store.addressService.delete(address, store.currentUser());
           this.reload();
@@ -218,7 +230,7 @@ export const AddressStore = signalStore(
       * @param address 
       */
       async copy(address: AddressModel): Promise<void> {
-        await copyAddress(store.toastController, address, Languages[DefaultLanguage].abbreviation ?? 'de');
+        await copyAddress(store.toastController, address, Languages[DefaultLanguage].abbreviation ?? 'de', store.i18n.copy_conf());
       },
 
       async sendEmail(email: string): Promise<void> {
@@ -292,7 +304,7 @@ export const AddressStore = signalStore(
         const debtorCountry = debtorPostal?.countryCode || 'CH';
 
         const data: Record<string, unknown> = {
-          currency: 'CHF',
+          currency: store.i18n.currency(),
           creditor: {
             account: address.iban,
             name: creditorName,
@@ -325,7 +337,7 @@ export const AddressStore = signalStore(
         doc.fullPath = storagePath;
         doc.mimeType = 'application/pdf';
         doc.url = url;
-        doc.title = `QR-Rechnung ${creditorName}`;
+        doc.title = store.i18n.qrinvoice() + ' ' + creditorName;
         doc.folderKeys = [ezsKey];
         await store.documentService.create(doc, store.currentUser());
 
