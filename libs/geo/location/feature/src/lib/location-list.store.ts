@@ -44,6 +44,9 @@ export const LocationListStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      copy_conf: '@location.operation.copy.conf',
+    }),
     locationsResource: rxResource({
       stream: () => {
         return store.locationService.list();
@@ -181,7 +184,7 @@ export const LocationListStore = signalStore(
 
       async copy(location: LocationModel): Promise<void> {
         await copyToClipboard(location.latitude + ', ' + location.longitude);
-        await store.alertService.showToast(store.i18nService.translateAll({ copy_conf: '@location.operation.copy.conf' }).copy_conf());
+        await store.alertService.showToast(store.i18n.copy_conf());
       },
   }})
 );
