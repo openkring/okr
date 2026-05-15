@@ -23,13 +23,16 @@ vi.mock('@bk2/shared-i18n', () => ({
   I18nService: class I18nService {},
 }));
 
-vi.mock('./alert.util', () => ({
-  initAlertTranslation: vi.fn(),
-  confirm: vi.fn().mockResolvedValue(true),
-  bkPrompt: vi.fn().mockResolvedValue('typed'),
-  showToast: vi.fn().mockResolvedValue(undefined),
-  error: vi.fn().mockReturnValue(undefined),
-}));
+vi.mock('./alert.util', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./alert.util')>();
+  return {
+    ...actual,
+    initAlertTranslation: vi.fn(),
+    confirm: vi.fn().mockResolvedValue(true),
+    bkPrompt: vi.fn().mockResolvedValue('typed'),
+    error: vi.fn().mockReturnValue(undefined),
+  };
+});
 
 import { inject } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular/standalone';
@@ -41,7 +44,8 @@ import { AlertService } from './alert.service';
 describe('AlertService', () => {
   let service: AlertService;
   const mockAlertController = { create: vi.fn() };
-  const mockToastController = { create: vi.fn() };
+  const mockToast = { present: vi.fn() };
+  const mockToastController = { create: vi.fn().mockResolvedValue(mockToast) };
   const mockTransloco = { translate: vi.fn((k: string) => k) };
   const mockOkSignal = signal('OK');
   const mockCancelSignal = signal('Abbrechen');
@@ -52,6 +56,8 @@ describe('AlertService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    (mockToastController.create as any).mockResolvedValue(mockToast);
+    (mockToast.present as any).mockReset();
     (inject as any).mockImplementation((token: unknown) => {
       if (token === AlertController) return mockAlertController;
       if (token === ToastController) return mockToastController;
@@ -137,9 +143,12 @@ describe('AlertService', () => {
   });
 
   describe('showToast', () => {
-    it('should delegate to showToast util with the provided message', async () => {
+    it('should create toast with the provided message', async () => {
       await service.showToast('Saved');
-      expect(showToast).toHaveBeenCalledWith(mockToastController, 'Saved');
+      expect(mockToastController.create).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Saved' })
+      );
+      expect(mockToast.present).toHaveBeenCalled();
     });
   });
 
