@@ -1,14 +1,15 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressModel, CategoryListModel, OrgCollection, OrgModel } from '@bk2/shared-models';
-import { confirm, AppNavigationService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
+import { AlertService, AppNavigationService, copyToClipboardWithConfirmation } from '@bk2/shared-util-angular';
 import { chipMatches, debugItemLoaded, debugListLoaded, getSystemQuery, isOrg, nameMatches } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { AddressService } from '@bk2/subject-address-data-access';
 import { OrgService } from '@bk2/subject-org-data-access';
@@ -44,10 +45,15 @@ export const OrgStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
-    alertController: inject(AlertController),
+    alertService: inject(AlertService),
     toastController: inject(ToastController),
+    i18nService: inject(I18nService),
   })),
   withProps((store) => ({
+    i18n: store.i18nService.translateAll({
+      delete_confirm: '@subject.person.operation.delete.confirm'
+    }),
+
     orgsResource: rxResource({
       stream: () => {
         return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
@@ -197,7 +203,7 @@ export const OrgStore = signalStore(
 
     async delete(org?: OrgModel, readOnly = true): Promise<void> {
       if (!org || readOnly) return;
-      const result = await confirm(store.alertController, '@subject.person.operation.delete.confirm', true);
+      const result = await store.alertService.confirm(store.i18n.delete_confirm(), true);
       if (result === true) {
         await store.orgService.delete(org, store.currentUser());
         this.reload();

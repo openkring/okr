@@ -2,14 +2,14 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
-import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@bk2/shared-data-access';
 import { AppStore } from '@bk2/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@bk2/shared-models';
-import { confirm, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl } from '@bk2/shared-util-angular';
+import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl } from '@bk2/shared-util-angular';
 import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches } from '@bk2/shared-util-core';
 import { EmailAddressesModal, MapViewModalComponent } from '@bk2/shared-ui';
 import { Languages } from '@bk2/shared-categories';
@@ -22,6 +22,8 @@ import { browseUrl, stringifyPostalAddress } from '@bk2/subject-address-util';
 import { MatrixChatService } from '@bk2/chat-data-access';
 import { UserService } from '@bk2/user-data-access';
 import { AvatarService } from '@bk2/avatar-data-access';
+import { PFX } from './scope';
+import { I18nService } from '@bk2/shared-i18n';
 
 
 export type PersonState = {
@@ -54,10 +56,12 @@ export const PersonStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
-    alertController: inject(AlertController),
+    alertService: inject(AlertService),
     toastController: inject(ToastController),
     geocodeService: inject(GeocodingService),
     matrixService: inject(MatrixChatService),
+    i18nService: inject(I18nService),
+
   })),
 
   withComputed((state) => {
@@ -74,6 +78,14 @@ export const PersonStore = signalStore(
   }),
 
   withProps((store) => ({
+
+    i18n: store.i18nService.translateAll({
+      membership_create_conf:  PFX + 'membership.create.conf',
+      membership_create_error:  PFX + 'membership.create.error',
+      person_delete_confirm: PFX + 'person.delete.confirm',
+      create_exists_error: '@subject.person.operation.create.exists.error'
+    }),
+
     personUserModelResource: rxResource({
       params: () => ({ personKey: store.personKey() }),
       stream: ({ params }) => store.userService.readByPersonKey(params.personKey ?? '')
@@ -190,7 +202,7 @@ export const PersonStore = signalStore(
                 const p = data as PersonNewFormModel;
 
                 if (store.personService.checkIfExists(store.persons(), p.firstName, p.lastName)) {
-                if (!confirm(store.alertController, '@subject.person.operation.create.exists.error', true)) return;           
+                if (!await store.alertService.confirm(store.i18n.create_exists_error(), true)) return;           
                 }
 
                 const personKey = await store.personService.create(convertFormToNewPerson(p, store.tenantId()), store.currentUser());
@@ -228,7 +240,8 @@ export const PersonStore = signalStore(
             }
             const membership = convertNewPersonFormToMembership(vm, personKey, store.tenantId());
             membership.index = 'mn:' + membership.memberName1 + ' ' + membership.memberName2 + ' mk:' + membership.memberKey + ' ok:' + membership.orgKey;
-            return await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, '@membership.operation.create', store.appStore.currentUser());
+            return await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, 
+                store.i18n.membership_create_conf(), store.i18n.membership_create_error(), store.appStore.currentUser());
         },
 
         async save(person: PersonModel): Promise<void> {
@@ -279,7 +292,7 @@ export const PersonStore = signalStore(
 
         async delete(person?: PersonModel, readOnly = true): Promise<void> {
             if (!person || readOnly) return;
-            const result = await confirm(store.alertController, '@subject.person.operation.delete.confirm', true);
+            const result = await store.alertService.confirm(store.i18n.person_delete_confirm(), true);
             if (result === true) {
                 await store.personService.delete(person, store.currentUser());
                 this.reset();
