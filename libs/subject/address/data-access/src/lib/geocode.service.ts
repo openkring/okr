@@ -1,11 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 
 import { ENV } from '@bk2/shared-config';
 import { AddressModel } from '@bk2/shared-models';
-import { error } from '@bk2/shared-util-angular';
+import { AlertService } from '@bk2/shared-util-angular';
 
 import { stringifyAddress } from '@bk2/subject-address-util';
 
@@ -18,7 +17,7 @@ export interface GeoCoordinates {
   providedIn: 'root'
 })
 export class GeocodingService {
-  private readonly toastController = inject(ToastController);
+  private readonly alertService = inject(AlertService);
   private readonly env = inject(ENV);
   private readonly apiUrl = 'https://maps.googleapis.com/maps/api/geocode/json';
   private readonly http = inject(HttpClient);
@@ -46,12 +45,12 @@ export class GeocodingService {
         const location = result.results[0].geometry.location;
         return { lat: location.lat, lng: location.lng };
       } else {
-        error(this.toastController, 'Address not found');
+        this.alertService.error('Address not found');
         return undefined;
       }  
     }
     catch (ex) {
-      error(this.toastController, 'Error geocoding address');
+      this.alertService.error('Error geocoding address');
       console.error('GeocodingService.geocodeAddress -> ERROR: ', ex);
       return undefined;
     }

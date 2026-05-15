@@ -1,13 +1,13 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@bk2/shared-feature';
 import { LocationModel } from '@bk2/shared-models';
 import { chipMatches, nameMatches } from '@bk2/shared-util-core';
-import { bkTranslate } from '@bk2/shared-i18n';
-import { copyToClipboard, showToast } from '@bk2/shared-util-angular';
+import { AlertService, copyToClipboard } from '@bk2/shared-util-angular';
+import { I18nService } from '@bk2/shared-i18n';
 import { MapViewModalComponent } from '@bk2/shared-ui';
 
 import { LocationConversionService, LocationService } from '@bk2/location-data-access';
@@ -40,7 +40,8 @@ export const LocationListStore = signalStore(
     locationConversionService: inject(LocationConversionService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
-    toastController: inject(ToastController),
+    alertService: inject(AlertService),
+    i18nService: inject(I18nService),
   })),
   withProps((store) => ({
     locationsResource: rxResource({
@@ -180,7 +181,7 @@ export const LocationListStore = signalStore(
 
       async copy(location: LocationModel): Promise<void> {
         await copyToClipboard(location.latitude + ', ' + location.longitude);
-        await showToast(store.toastController, bkTranslate('@location.operation.copy.conf'));
+        await store.alertService.showToast(store.i18nService.translateAll({ copy_conf: '@location.operation.copy.conf' }).copy_conf());
       },
   }})
 );

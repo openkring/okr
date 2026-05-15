@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ToastController, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { ImageLightboxModal, LightboxImage, SpinnerComponent } from '@bk2/shared-ui';
@@ -14,7 +14,7 @@ import { MatrixPollData } from '@bk2/chat-data-access';
 import { convertHeicToJpeg, isSupportedImageFile } from '@bk2/chat-util';
 import { TranslatePipe } from '@bk2/shared-i18n';
 import { debugMessage, hasRole } from '@bk2/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions, downloadToBrowser, isBrowser, showToast } from '@bk2/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions, downloadToBrowser, isBrowser } from '@bk2/shared-util-angular';
 import { MatrixMessage, RoleName } from '@bk2/shared-models';
 
 @Component({
@@ -501,7 +501,7 @@ import { MatrixMessage, RoleName } from '@bk2/shared-models';
 export class MatrixChat implements OnDestroy {
   private readonly store = inject(MatrixChatStore);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly toastController = inject(ToastController);
+  private readonly alertService = inject(AlertService);
   private actionSheetController = inject(ActionSheetController);
   private readonly modalController = inject(ModalController);
 
@@ -686,7 +686,7 @@ export class MatrixChat implements OnDestroy {
     } catch (error) {
       console.error('MatrixChat: Failed to request room access:', error);
       const msg = error instanceof Error ? error.message : 'Room access failed';
-      await showToast(this.toastController, msg);
+      await this.alertService.showToast(msg);
     } finally {
       this.isRequestingRoomAccess = false;
     }
@@ -855,7 +855,7 @@ export class MatrixChat implements OnDestroy {
     const results = await Promise.allSettled(files.map(f => this.store.sendFile(f)));
     const failures = results.filter(r => r.status === 'rejected').length;
     if (failures > 0) {
-      await showToast(this.toastController, `${failures} Bild(er) konnten nicht gesendet werden`);
+      await this.alertService.showToast(`${failures} Bild(er) konnten nicht gesendet werden`);
     }
   }
 
@@ -947,7 +947,7 @@ export class MatrixChat implements OnDestroy {
       const results = await Promise.allSettled(otherFiles.map(f => this.store.sendFile(f)));
       const failures = results.filter(r => r.status === 'rejected').length;
       if (failures > 0) {
-        await showToast(this.toastController, `${failures} Datei(en) konnten nicht gesendet werden`);
+        await this.alertService.showToast(`${failures} Datei(en) konnten nicht gesendet werden`);
       }
     }
   }
@@ -975,7 +975,7 @@ export class MatrixChat implements OnDestroy {
     const results = await Promise.allSettled(files.map(f => this.store.sendFile(f, threadId)));
     const failures = results.filter(r => r.status === 'rejected').length;
     if (failures > 0) {
-      await showToast(this.toastController, `${failures} Datei(en) konnten nicht gesendet werden`);
+      await this.alertService.showToast(`${failures} Datei(en) konnten nicht gesendet werden`);
     }
   }
 
@@ -998,7 +998,7 @@ export class MatrixChat implements OnDestroy {
       await this.store.startVideoCall();
     } catch (error) {
       console.error('MatrixChat: Failed to start video call:', error);
-      await showToast(this.toastController, 'Video-Call fehlgeschlagen');
+      await this.alertService.showToast('Video-Call fehlgeschlagen');
     }
   }
 
