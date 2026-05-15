@@ -78,8 +78,6 @@ export const AddressStore = signalStore(
       delete_confirm: PFX + 'delete.confirm',
       currency: PFX + 'currency',
       qrinvoice: PFX + 'qrinvoice',
-      ok: '@ok',
-      cancel: '@cancel'
     }),
     addressesResource: rxResource({
       params: () => ({
