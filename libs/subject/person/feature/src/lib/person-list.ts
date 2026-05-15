@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@bk2/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 import { SIZE_MD } from '@bk2/shared-constants';
 
@@ -104,6 +104,7 @@ import { PersonStore } from './person.store';
 export class PersonList {
   protected readonly store = inject(PersonStore);
   private readonly actionSheetController = inject(ActionSheetController);
+  private readonly alertService = inject(AlertService);
 
   // inputs
   public readonly listId = input.required<string>();
@@ -146,7 +147,7 @@ export class PersonList {
       case 'add': await this.store.add(this.readOnly()); break;
       case 'exportRaw': await this.store.export('raw'); break;
       case 'copyEmailAddresses': await this.store.copyEmailAddresses(); break;
-      default: error(undefined, `PersonListComponent.call: unknown method ${selectedMethod}`);
+      default: this.alertService.error(`PersonListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 

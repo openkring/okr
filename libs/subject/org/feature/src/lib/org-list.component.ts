@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { OrgModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe } from '@bk2/avatar-ui';
@@ -125,6 +125,7 @@ import { OrgStore } from './org.store';
 export class OrgListComponent {
   protected readonly store = inject(OrgStore);
   private actionSheetController = inject(ActionSheetController);
+  private readonly alertService = inject(AlertService);
 
   // inputs
   public listId = input.required<string>();
@@ -163,7 +164,7 @@ export class OrgListComponent {
       case 'exportAddresses': await this.store.export("addresses"); break;
       case 'exportRaw': await this.store.export("raw_orgs"); break;
       case 'copyEmailAddresses': await this.store.copyEmailAddresses(); break;
-      default: error(undefined, `OrgListComponent.call: unknown method ${selectedMethod}`);
+      default: this.alertService.error(`OrgListComponent.call: unknown method ${selectedMethod}`);
     }
   }
 

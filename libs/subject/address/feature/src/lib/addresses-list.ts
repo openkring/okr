@@ -1,24 +1,25 @@
-import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAccordionGroup, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { TranslatePipe } from '@bk2/shared-i18n';
 import { AddressModel, OrgModel, PersonModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser, error, navigateByUrl } from '@bk2/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser, navigateByUrl } from '@bk2/shared-util-angular';
 import { generateRandomString, getCategoryIcon, hasRole } from '@bk2/shared-util-core';
+import { I18nService } from '@bk2/shared-i18n';
 
 import { FavoriteColorPipe, FormatAddressPipe } from '@bk2/subject-address-util';
+import { AvatarPipe } from '@bk2/avatar-ui';
 
 import { AddressStore } from './addresses.store';
-import { AvatarPipe } from '@bk2/avatar-ui';
+
+import { PFX } from './scope';
 
 @Component({
   selector: 'bk-addresses-list',
   standalone: true,
   imports: [
-    TranslatePipe, AsyncPipe, SvgIconPipe, FavoriteColorPipe, FormatAddressPipe, AvatarPipe,
+    SvgIconPipe, FavoriteColorPipe, FormatAddressPipe, AvatarPipe,
     SpinnerComponent, EmptyListComponent, ListFilterComponent,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonImg,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonAvatar,
@@ -35,7 +36,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ filteredAddressesCount()}}/{{addressesCount()}} {{ '@subject.address.plural' | translate | async }}</ion-title>
+        <ion-title>{{ filteredAddressesCount()}}/{{addressesCount()}} {{ i18n.addresses() }}</ion-title>
       </ion-toolbar>
 
     <!-- search and filters -->
@@ -57,7 +58,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
         <ion-grid>
           <ion-row>
             <ion-col>
-              <ion-label><strong>{{ '@subject.list.header.name' | translate | async }}</strong></ion-label>
+              <ion-label><strong>{{ i18n.name() }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -70,7 +71,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
       <bk-spinner />
     } @else {
       @if(filteredAddressesCount() === 0) {
-        <bk-empty-list message="@subject.address.field.empty" />
+        <bk-empty-list [message]="i18n.empty()" />
       } @else {
         @if(selectedChannel()) {
           <ion-list lines="inset">
@@ -84,7 +85,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                   @if(address.isCc) { <ion-icon src="{{ 'cc-circle' | svgIcon }}" /> }
                   @if(address.isValidated) { <ion-icon src="{{ 'shield' | svgIcon }}" /> }
                   <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
-                  <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
+                  <span class="ion-hide-md-down"> {{ getAddressUsage(address) }}</span>
                   {{ address | formatAddress }}
                 </ion-label>
                 @if((address.addressChannel === 'bankaccount' || address.addressChannel === 'twint') && address.url) {
@@ -112,7 +113,7 @@ import { AvatarPipe } from '@bk2/avatar-ui';
                           @if(address.isCc) { <ion-icon src="{{ 'cc-circle' | svgIcon }}" /> }
                           @if(address.isValidated) { <ion-icon src="{{ 'shield' | svgIcon }}" /> }
                           <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
-                          <span class="ion-hide-md-down"> {{ getAddressUsage(address) | translate | async }}</span>
+                          <span class="ion-hide-md-down"> {{ getAddressUsage(address) }}</span>
                           {{ address | formatAddress }}
                         </ion-label>
                         @if((address.addressChannel === 'bankaccount' || address.addressChannel === 'twint') && address.url) {
@@ -134,10 +135,33 @@ import { AvatarPipe } from '@bk2/avatar-ui';
 export class AddressesList {
   protected readonly addressStore = inject(AddressStore);
   private actionSheetController = inject(ActionSheetController);
+  private i18nService = inject(I18nService);
+  private readonly alertService = inject(AlertService);
 
   // inputs
   // we keep this for later, but dont use it yet
   public contextMenuName = input.required<string>();
+
+    // i18n
+  protected readonly i18n = this.i18nService.translateAll({
+    addresses: PFX + 'addresses',
+    empty: PFX + 'nodata',
+    name: PFX + 'name',
+    as_title: PFX + 'actionsheet.title',
+    as_edit: PFX + 'actionsheet.edit',
+    as_delete: PFX + 'actionsheet.delete',
+    as_copy: PFX + 'actionsheet.copy',
+    as_iban_view: PFX + 'actionsheet.iban.view',
+    as_iban_genqr: PFX + 'actionsheet.iban.generateQr',
+    as_email_send: PFX + 'actionsheet.email.send', 
+    as_phone_call: PFX + 'actionsheet.phone.call', 
+    as_postal_view: PFX + 'actionsheet.postal.view', 
+    as_file_view: PFX + 'actionsheet.file.view', 
+    as_file_upload: PFX + 'actionsheet.file.upload', 
+    as_web_open: PFX + 'actionsheet.web.open', 
+    as_subject_edit: PFX + 'actionsheet.subject.edit',
+    cancel: '@operation.cancel'
+  });
 
   // derived signals
   protected addressesCount = computed(() => this.addressStore.addresses()?.length ?? 0);
@@ -152,6 +176,7 @@ export class AddressesList {
 
   private imgixBaseUrl = this.addressStore.appStore.env.services.imgixBaseUrl;
   protected channels = computed(() => this.addressStore.getChannels());
+  protected listHeaderName = `${PFX}list.header.name`;
 
   // grouping
   protected allExpanded = signal(false);
@@ -208,7 +233,7 @@ export class AddressesList {
     switch (selectedMethod) {
       case 'add': await this.addressStore.add(this.readOnly()); break;
       case 'exportRaw': await this.addressStore.export("raw"); break;
-      default: error(undefined, `AddressesList.call: unknown method ${selectedMethod}`);
+      default: this.alertService.error(`AddressesList.call: unknown method ${selectedMethod}`);
     }
   }
 
@@ -218,7 +243,7 @@ export class AddressesList {
    * @param address 
    */
   protected async showActions(address: AddressModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, address);
     await this.executeActions(actionSheetOptions, address);
   }
@@ -228,51 +253,50 @@ export class AddressesList {
    * We assume that the user is always at least memberAdmin, because this view is only shown in AOC.
    * @param address 
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
+  private addActionSheetButtons(options: ActionSheetOptions, address: AddressModel): void {
     if (!hasRole('memberAdmin', this.currentUser())) return;
     // on address
-    actionSheetOptions.buttons.push(createActionSheetButton('address.edit', this.imgixBaseUrl, 'edit'));
-    actionSheetOptions.buttons.push(createActionSheetButton('address.delete', this.imgixBaseUrl, 'trash'));
-    actionSheetOptions.buttons.push(createActionSheetDivider());
+    options.buttons.push(createActionSheetButton('actionsheet.edit', this.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('actionsheet.delete', this.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetDivider());
 
     // with address (usage)
-    actionSheetOptions.buttons.push(createActionSheetButton('address.copy', this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('actionsheet.copy', this.i18n.as_copy(), this.imgixBaseUrl, 'copy'));
     switch(address.addressChannel) {
       case 'bankaccount':
         if (address.url) {
-          actionSheetOptions.buttons.push(createActionSheetButton('address.iban.view', this.imgixBaseUrl, 'qrcode'));
+          options.buttons.push(createActionSheetButton('actionsheet.iban.view', this.i18n.as_iban_view(), this.imgixBaseUrl, 'qrcode'));
         } else {
-          actionSheetOptions.buttons.push(createActionSheetButton('address.iban.generateQr', this.imgixBaseUrl, 'qrcode'));
+          options.buttons.push(createActionSheetButton('actionsheet.iban.generateQr', this.i18n.as_iban_genqr(), this.imgixBaseUrl, 'qrcode'));
         }
         break;
       case 'email':
-        actionSheetOptions.buttons.push(createActionSheetButton('address.email.send', this.imgixBaseUrl, 'email'));
+          options.buttons.push(createActionSheetButton('actionsheet.email.send', this.i18n.as_email_send(), this.imgixBaseUrl, 'email'));
         break;
       case 'phone':
-        actionSheetOptions.buttons.push(createActionSheetButton('address.phone.call', this.imgixBaseUrl, 'tel'));
+        options.buttons.push(createActionSheetButton('actionsheet.phone.call', this.i18n.as_phone_call(), this.imgixBaseUrl, 'tel'));
         break;
       case 'postal':
-        actionSheetOptions.buttons.push(createActionSheetButton('address.postal.view', this.imgixBaseUrl, 'location'));
+        options.buttons.push(createActionSheetButton('actionsheet.postal.view', this.i18n.as_postal_view(), this.imgixBaseUrl, 'location'));
         break;
       case 'twint':
         if (address.url) {
-          actionSheetOptions.buttons.push(createActionSheetButton('address.file.view', this.imgixBaseUrl, 'qrcode'));
+          options.buttons.push(createActionSheetButton('actionsheet.file.view', this.i18n.as_file_view(), this.imgixBaseUrl, 'document'));
         } else {
-          actionSheetOptions.buttons.push(createActionSheetButton('address.file.upload', this.imgixBaseUrl, 'qrcode'));
+          options.buttons.push(createActionSheetButton('actionsheet.file.upload', this.i18n.as_file_upload(), this.imgixBaseUrl, 'upload'));
         }
         break;
       case 'web':
-        actionSheetOptions.buttons.push(createActionSheetButton('address.web.open', this.imgixBaseUrl, 'link'));
+          options.buttons.push(createActionSheetButton('actionsheet.web.open', this.i18n.as_web_open(), this.imgixBaseUrl, 'link'));
         break;
     }
-    actionSheetOptions.buttons.push(createActionSheetDivider());
+    options.buttons.push(createActionSheetDivider());
 
     // on subject
-    actionSheetOptions.buttons.push(createActionSheetButton('subject.edit', this.imgixBaseUrl, 'edit'));
-
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.imgixBaseUrl, 'cancel'));
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
+    options.buttons.push(createActionSheetButton('actionsheet.subject.edit', this.i18n.as_subject_edit(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
+    if (options.buttons.length === 1) { // only cancel button
+      options.buttons = [];
     }
   }
 
@@ -339,7 +363,7 @@ export class AddressesList {
     if (address.addressUsage === 'custom') {
       return address.addressUsageLabel;
     } else {
-      return `@${this.addressStore.getUsages().i18nBase}.${address.addressUsage}.label`;
+      return `${PFX}usage.${address.addressUsage}.label`;
     }
   }
 

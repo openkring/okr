@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { CategoryListModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 import { AppStore } from '@bk2/shared-feature';
 
@@ -96,6 +96,7 @@ export class CategoryListComponent {
   protected categoryListStore = inject(CategoryStore);
   private actionSheetController = inject(ActionSheetController);
   private readonly appStore = inject(AppStore);
+  private readonly alertService = inject(AlertService);
 
   // inputs
   public listId = input.required<string>();
@@ -132,7 +133,7 @@ export class CategoryListComponent {
     switch(selectedMethod) {
       case 'add':  await this.categoryListStore.add(this.readOnly()); break;
       case 'exportRaw': await this.categoryListStore.export("raw"); break;
-      default: error(undefined, `CategoryListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
+      default: this.alertService.error(`CategoryListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 

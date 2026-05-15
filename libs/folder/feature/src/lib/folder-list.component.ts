@@ -2,11 +2,11 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal, effect } from '@angular/core';
 import { ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { bkTranslate, TranslatePipe } from '@bk2/shared-i18n';
+import { TranslatePipe } from '@bk2/shared-i18n';
 import { FolderModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { hasRole } from '@bk2/shared-util-core';
 
 import { MenuComponent } from '@bk2/cms-menu-feature';
@@ -76,6 +76,7 @@ import { FolderStore } from './folder.store';
 export class FolderListComponent {
   protected readonly folderStore = inject(FolderStore);
   private readonly actionSheetController = inject(ActionSheetController);
+  private readonly alertService = inject(AlertService);
 
   // inputs
   public readonly contextMenuName = input.required<string>();
@@ -103,7 +104,7 @@ export class FolderListComponent {
     const selectedMethod = $event.detail.data;
     switch (selectedMethod) {
       case 'add': await this.folderStore.add(); break;
-      default: error(undefined, `FolderListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
+      default: this.alertService.error(`FolderListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
 

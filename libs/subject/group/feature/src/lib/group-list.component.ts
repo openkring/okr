@@ -6,7 +6,7 @@ import { TranslatePipe } from '@bk2/shared-i18n';
 import { GroupModel, RoleName } from '@bk2/shared-models';
 import { SvgIconPipe } from '@bk2/shared-pipes';
 import { EmptyListComponent, ListFilterComponent, SpinnerComponent } from '@bk2/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@bk2/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@bk2/shared-util-angular';
 import { generateRandomString, hasRole } from '@bk2/shared-util-core';
 
 import { AvatarPipe, AvatarDisplayComponent } from '@bk2/avatar-ui';
@@ -98,6 +98,7 @@ import { GroupStore } from './group.store';
 export class GroupListComponent {
   protected readonly store = inject(GroupStore);
   private actionSheetController = inject(ActionSheetController);
+  private readonly alertService = inject(AlertService);
 
   // inputs
   public listId = input.required<string>();           // my, all, 
@@ -136,7 +137,7 @@ export class GroupListComponent {
     switch (selectedMethod) {
       case 'add': await this.store.add(this.readOnly()); break;
       case 'exportRaw': await this.store.export("raw"); break;
-      default: error(undefined, `GroupComponent.call: unknown method ${selectedMethod}`);
+      default: this.alertService.error(`GroupComponent.call: unknown method ${selectedMethod}`);
     }
   }
 
