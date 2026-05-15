@@ -4,9 +4,8 @@ import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonTe
 
 import { AppStore } from '@bk2/shared-feature';
 import { HeaderComponent } from '@bk2/shared-ui';
-import { navigateByUrl, showToast } from '@bk2/shared-util-angular';
+import { AlertService, navigateByUrl } from '@bk2/shared-util-angular';
 import { getImgixUrlWithAutoParams } from '@bk2/shared-util-core';
-import { ToastController } from '@ionic/angular/standalone';
 
 import { AuthService } from '@bk2/auth-data-access';
 import { LoginForm } from '@bk2/auth-ui';
@@ -104,7 +103,7 @@ export class ConfirmPasswordResetPage {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly appStore = inject(AppStore);
-  private readonly toastController = inject(ToastController);
+  private readonly alertService = inject(AlertService);
 
   // inputs
   private readonly oobCode = this.route.snapshot.queryParamMap.get('oobCode') ?? '';
@@ -140,7 +139,7 @@ export class ConfirmPasswordResetPage {
     const email = await this.authService.confirmPasswordReset(this.oobCode, this.currentCredentials().loginPassword);
     if (email) {
       this.success.set(true);
-      await showToast(this.toastController, `Passwort für ${email} wurde geändert.`);
+      await this.alertService.showToast(`Passwort für ${email} wurde geändert.`);
       navigateByUrl(this.router, this.continueUrl);
     } else {
       this.invalidCode.set(true);
